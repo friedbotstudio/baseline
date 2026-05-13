@@ -1,0 +1,18 @@
+# Canonical label set for friedbotstudio/baseline.
+#
+# Synced to the repo by .github/workflows/labels.yml whenever this file
+# changes on main (or via workflow_dispatch). Labels NOT listed here are
+# left alone — delete-other-labels is false in the workflow so GitHub's
+# default labels (bug, documentation, enhancement, ...) survive.
+#
+# The current set exists to satisfy the labels declared in
+# .github/dependabot.yml; future labels for triage automation can be
+# added here without touching any workflow.
+
+- name: dependencies
+  color: '0366d6'
+  description: Pull requests that update a dependency file
+
+- name: github-actions
+  color: '000000'
+  description: Pull requests that update GitHub Actions code

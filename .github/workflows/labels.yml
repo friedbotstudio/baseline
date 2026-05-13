@@ -1,0 +1,39 @@
+# Sync the repo's labels to the canonical set in .github/labels.yml.
+#
+# Triggers on push to main when labels.yml changes (so an edit to the
+# config file is the single source of truth) and on workflow_dispatch
+# (so an operator can re-run a sync without an edit, e.g. after creating
+# a fresh fork). delete-other-labels is left off — this workflow only
+# creates/updates the labels listed in labels.yml; it does NOT prune
+# anything else, including GitHub's default labels.
+
+name: Sync labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/labels.yml
+      - .github/workflows/labels.yml
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          sparse-checkout: .github/labels.yml
+
+      - uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2
+        with:
+          config-file: .github/labels.yml
+          delete-other-labels: false
