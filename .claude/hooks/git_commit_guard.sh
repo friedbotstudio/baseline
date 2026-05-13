@@ -57,7 +57,7 @@ case "$CMD" in
 esac
 
 # Hard-blocks (apply always, consent cannot override).
-FORBIDDEN_RE='(\bgit\s+push\b|\bgit\s+commit\b[^|&;]*--amend|--no-verify|--no-gpg-sign|\bgit\s+reset\s+--hard\b|\bgit\s+clean\s+-[a-zA-Z]*f\b|\bgit\s+checkout\s+--\s|\bgit\s+branch\s+-D\b|\bgit\s+config\b|\bgit\s+rebase\s+-i\b|\bgit\s+add\s+-i\b|\bgit\s+add\s+(-A|\.)\b)'
+FORBIDDEN_RE='(\bgit\s+push\b|\bgit\s+commit\b[^|&;]*--amend|--no-verify|--no-gpg-sign|\bgit\s+reset\s+--hard\b|\bgit\s+clean\s+-[a-zA-Z]*f\b|\bgit\s+checkout\s+--\s|\bgit\s+branch\s+-D\b|\bgit\s+config\b|\bgit\s+rebase\s+-i\b|\bgit\s+add\s+-i\b|\bgit\s+add\s+(-A|\.)(?![A-Za-z0-9_/.\-]))'
 if python3 -c "import re,sys; sys.exit(0 if re.search(r'''$FORBIDDEN_RE''', sys.argv[1]) else 1)" "$CMD"; then
   log_line git_commit_guard "BLOCKED forbidden git op: $CMD"
   emit_block "Git Commit Guard: forbidden git operation detected. seed.md forbids git push / --amend / --no-verify / reset --hard / clean -f / checkout -- / branch -D / config / rebase -i / add -A|. unless the user explicitly names the operation. Ask the user to approve by stating the exact command."
