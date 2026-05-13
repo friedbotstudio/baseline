@@ -1,0 +1,48 @@
+create-baseline — Claude Code baseline scaffolder
+Copyright 2026 Konark Bhardwaj
+
+This product includes software developed by The PlantUML Project
+(https://plantuml.com/).
+
+================================================================================
+PlantUML — deferred-fetch model
+================================================================================
+
+This baseline depends on PlantUML for diagram syntax validation
+(`plantuml_syntax_guard` hook) and rendering (`/spec-render` skill). The
+PlantUML jar itself is NOT bundled in this package; it is fetched at install
+time from the upstream GitHub release, with the bytes verified against a
+pinned sha256 before being written to disk.
+
+Upstream artifact:    plantuml-asl-1.2026.2.jar
+Upstream URL:         https://github.com/plantuml/plantuml/releases/download/v1.2026.2/plantuml-asl-1.2026.2.jar
+Pinned sha256:        c348f6a26d999f81fd05b5d49834bb70df9cf35fab0939c4edecb0909e64022b
+Pinned size:          19,395,808 bytes
+Local install path:   <target>/.claude/bin/plantuml.jar
+Upstream license:     Apache License, Version 2.0 (the `plantuml-asl-*.jar`
+                      build is the explicit Apache-only redistribution variant
+                      maintained by the PlantUML project for compatibility with
+                      Apache 2.0 redistribution requirements; see the LICENSE
+                      file in this directory for the full Apache 2.0 text).
+
+The fetcher (src/cli/plantuml.js) auto-detects an existing system `plantuml`
+binary on PATH and skips the download in that case. The flags `--no-plantuml`
+and `--require-plantuml` modify behavior: the former disables the fetch
+entirely, the latter promotes any fetch failure (network error or sha256
+mismatch) to exit code 4.
+
+================================================================================
+Why this NOTICE preserves the deferred-fetch framing
+================================================================================
+
+Apache 2.0 §4(d) requires that any pre-existing NOTICE file in the upstream
+distribution be preserved in derivative works. The `plantuml-asl-1.2026.2.jar`
+artifact carries Apache 2.0 licensing throughout; its META-INF may contain
+upstream attribution that should propagate forward when this baseline ships.
+This NOTICE file is the in-package record of that attribution, even though
+the jar itself is fetched rather than redistributed by this package.
+
+If you are auditing this package for compliance: the jar is the upstream
+artifact identified above, fetched verbatim from the upstream URL, byte-equal
+to the pinned sha256. This package redistributes the LICENSE and this NOTICE
+(both small text files) but not the jar.

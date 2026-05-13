@@ -1,0 +1,36 @@
+{
+  "primary": [
+    { "href": "/",                       "label": "Overview", "key": "overview" },
+    { "href": "/hooks/",                 "label": "Hooks",    "key": "hooks" },
+    { "href": "/memory/",                "label": "Memory",   "key": "memory" },
+    { "href": "/swarm/",                 "label": "Swarm",    "key": "swarm" },
+    { "href": "/skills/",                "label": "Skills",   "key": "skills" },
+    { "href": "/cli/",                   "label": "CLI",      "key": "cli" }
+  ],
+  "sidebar": [
+    {
+      "label": "Getting started",
+      "items": [
+        { "href": "/",         "label": "Overview", "key": "overview" },
+        { "href": "/install/", "label": "Install",  "key": "install" }
+      ]
+    },
+    {
+      "label": "Reference",
+      "items": [
+        { "href": "/hooks/",  "label": "Hooks",       "key": "hooks" },
+        { "href": "/memory/", "label": "Memory",      "key": "memory" },
+        { "href": "/swarm/",  "label": "Swarm mode",  "key": "swarm" },
+        { "href": "/cli/",    "label": "CLI",         "key": "cli" }
+      ]
+    },
+    {
+      "label": "Skills",
+      "items": [
+        { "href": "/skills/",              "label": "Overview",     "key": "skills" },
+        { "href": "/skills/core/",         "label": "Core skills",  "key": "skills-core" },
+        { "href": "/skills/third-party/",  "label": "Third-party",  "key": "skills-third-party" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+# Manually-triggered release pipeline for `create-baseline`.
+#
+# Architecture: four jobs.
+#   build-verify  — bumps version, builds the site, gates on publish:check, uploads artifacts.
+#   publish-npm   — needs: build-verify. OIDC trusted publishing with provenance.
+#   deploy-pages  — needs: publish-npm. Deploys obj/site to GitHub Pages.
+#   push-bump     — needs: publish-npm. Pushes bump commit + vX.Y.Z tag to main.
+#   install-smoke — needs: publish-npm. Post-publish materialization check.
+#
+# Runbook: docs/runbooks/npm-publish.md (manual fallback) + docs/specs/release-workflow.md.
+#
+# Action SHA verification (operator MUST verify before first run):
+#   Pin policy per CLAUDE.md Art VII + runbook §Future-CI invariants Rule 1:
+#   every third-party action pinned to a 40-char SHA, tag in trailing comment.
+#   The SHAs below correspond to the listed version tags as of authoring;
+#   re-resolve via `gh api repos/<owner>/<repo>/git/ref/tags/<tag>` and update
+#   if any drift is detected. Tag refs are mutable — never relax to `@vX`.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'release = bump + publish + deploy + push-bump; docs-only = deploy site only (skips publish-npm, push-bump, install-smoke).'
+        type: choice
+        required: true
+        default: release
+        options:
+          - release
+          - docs-only
+      bump_type:
+        description: 'Semver bump (major|minor|patch). Applies only when mode=release; ignored when mode=docs-only.'
+        type: choice
+        required: false
+        default: patch
+        options:
+          - major
+          - minor
+          - patch
+
+concurrency:
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  build-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+          cache: false
+      - name: Verify pinned action SHAs match upstream tags
+        run: node scripts/verify-action-shas.mjs
+      - name: Install dependencies
+        run: npm ci
+      - id: bump
+        name: Bump version (release mode only; no git tag side effect)
+        if: inputs.mode == 'release'
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+        run: |
+          set -euo pipefail
+          npm version "$BUMP_TYPE" --no-git-tag-version
+          new_version=$(node -p "require('./package.json').version")
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "Bumped to v${new_version}"
+      - name: Pre-publish check (runs prepack → publish:check)
+        run: npm run publish:check
+      - name: Build docs site
+        run: npm run build:site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: obj/site
+      - name: Upload bumped package.json
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: bump-diff
+          path: package.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-npm:
+    needs: build-verify
+    if: inputs.mode == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: false
+      - name: Restore bumped package.json
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: bump-diff
+      - name: Install dependencies
+        run: npm ci
+      - name: Publish to npm with provenance (OIDC trusted publishing)
+        run: npm publish --access public --provenance
+
+  deploy-pages:
+    needs: publish-npm
+    if: always() && (needs.publish-npm.result == 'success' || needs.publish-npm.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - id: deployment
+        name: Deploy artifact to GitHub Pages
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  push-bump:
+    needs: publish-npm
+    if: inputs.mode == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Restore bumped package.json
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: bump-diff
+      - name: Configure git identity (github-actions[bot])
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Commit, tag, and push (fail-on-conflict)
+        env:
+          NEW_VERSION: ${{ needs.build-verify.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          git add package.json
+          git commit -m "chore: release v${NEW_VERSION}"
+          git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+          git push origin "HEAD:main" "v${NEW_VERSION}"
+
+  install-smoke:
+    needs: publish-npm
+    if: inputs.mode == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+          cache: false
+      - name: Wait for registry replication (poll until version resolves)
+        env:
+          NEW_VERSION: ${{ needs.build-verify.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          deadline=$((SECONDS + 180))
+          until npm view "create-baseline@${NEW_VERSION}" version >/dev/null 2>&1; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "registry replication timed out after 180s for create-baseline@${NEW_VERSION}" >&2
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "create-baseline@${NEW_VERSION} resolves on registry"
+      - name: Install published tarball and verify materialized manifest
+        env:
+          NEW_VERSION: ${{ needs.build-verify.outputs.new_version }}
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          cd "$tmp"
+          npm init -y >/dev/null
+          npm install --no-save "create-baseline@${NEW_VERSION}" >/dev/null
+          node node_modules/create-baseline/bin/cli.js ./target
+          node "${WORKSPACE}/scripts/install-smoke-verify.mjs" \
+            "${tmp}/node_modules/create-baseline/obj/template/manifest.json" \
+            "${tmp}/target/.claude/.baseline-manifest.json"

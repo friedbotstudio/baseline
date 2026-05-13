@@ -1,0 +1,8 @@
+<aside class="toc" aria-label="On this page">
+  <h5>On this page</h5>
+  <ul>
+    {%- for item in toc %}
+    <li><a href="#{{ item.id }}"{% if loop.first %} class="is-active{% if item.lvl == 3 %} lvl-3{% endif %}" aria-current="location"{% elif item.lvl == 3 %} class="lvl-3"{% endif %}>{{ item.label }}</a></li>
+    {%- endfor %}
+  </ul>
+</aside>

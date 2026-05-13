@@ -1,0 +1,295 @@
+{
+  "slug": "create-baseline-cli",
+  "spec": "docs/specs/create-baseline-cli.md",
+  "created_at": 1777410500,
+  "status": "planned",
+  "isolation": "shared",
+  "notes": [
+    "Tasks correspond to spec components C1-C13, with C10 (README split) deferred to /document phase since it has no AC driving it.",
+    "Test files under tests/<name>.test.mjs declared explicitly. Test fixtures (tests/fixtures/<name>/) deliberately NOT declared upfront \u2014 workers extend their write_set when /scenario authors specific fixtures.",
+    "C12 (vendored licenses) and C13 (audit extension) are AC-012 / AC-014-driven (audit-baseline must require .claude/bin/{LICENSE,NOTICE}); kept in swarm.",
+    "C13's audit.sh extension and C12's LICENSE/NOTICE creation co-fire in wave 1 \u2014 the post-dispatch /verify run sees both changes simultaneously, no transient failure window."
+  ],
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Bootstrap package.json + .gitignore for the npm package",
+      "component": "C1",
+      "acs": [
+        "AC-009",
+        "AC-010",
+        "AC-013"
+      ],
+      "write_set": [
+        "package.json",
+        ".gitignore"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "docs/create-baseline.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-002",
+      "title": "IO module \u2014 color, log, prompt, TTY detection",
+      "component": "C2",
+      "acs": [
+        "AC-003",
+        "AC-004",
+        "AC-005"
+      ],
+      "write_set": [
+        "src/cli/io.js",
+        "tests/io.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-003",
+      "title": "Conflict scan \u2014 sentinel-path detection",
+      "component": "C3",
+      "acs": [
+        "AC-001",
+        "AC-002"
+      ],
+      "write_set": [
+        "src/cli/conflict.js",
+        "tests/conflict.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-004",
+      "title": "Manifest module \u2014 sha256 hashing, load/save/buildFromDir",
+      "component": "C4",
+      "acs": [
+        "AC-001",
+        "AC-005",
+        "AC-008"
+      ],
+      "write_set": [
+        "src/cli/manifest.js",
+        "tests/manifest.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-005",
+      "title": "MCP merge \u2014 additive deep-merge of mcpServers",
+      "component": "C5",
+      "acs": [
+        "AC-006"
+      ],
+      "write_set": [
+        "src/cli/mcp.js",
+        "tests/mcp.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        ".mcp.json"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-006",
+      "title": "Install module \u2014 fresh + force install via fs.cp",
+      "component": "C6",
+      "acs": [
+        "AC-001",
+        "AC-003",
+        "AC-006",
+        "AC-007",
+        "AC-008"
+      ],
+      "write_set": [
+        "src/cli/install.js",
+        "tests/install.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "src/cli/io.js",
+        "src/cli/manifest.js",
+        "src/cli/mcp.js"
+      ],
+      "depends_on": [
+        "T-002",
+        "T-004",
+        "T-005"
+      ]
+    },
+    {
+      "id": "T-007",
+      "title": "Merge module \u2014 three-way merge with NEVER_TOUCH and SPECIAL_MERGE tables",
+      "component": "C7",
+      "acs": [
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008"
+      ],
+      "write_set": [
+        "src/cli/merge.js",
+        "tests/merge.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "src/cli/io.js",
+        "src/cli/manifest.js",
+        "src/cli/mcp.js"
+      ],
+      "depends_on": [
+        "T-002",
+        "T-004",
+        "T-005"
+      ]
+    },
+    {
+      "id": "T-008",
+      "title": "CLI entry \u2014 bin/cli.js argv routing and mode dispatch",
+      "component": "C8",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-014",
+        "AC-015",
+        "AC-016"
+      ],
+      "write_set": [
+        "bin/cli.js",
+        "tests/cli.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "src/cli/io.js",
+        "src/cli/conflict.js",
+        "src/cli/install.js",
+        "src/cli/merge.js",
+        "src/cli/plantuml.js"
+      ],
+      "depends_on": [
+        "T-002",
+        "T-003",
+        "T-006",
+        "T-007",
+        "T-010"
+      ]
+    },
+    {
+      "id": "T-009",
+      "title": "Build script \u2014 scripts/build-template.sh + scripts/build-manifest.mjs",
+      "component": "C9",
+      "acs": [
+        "AC-009",
+        "AC-011",
+        "AC-012",
+        "AC-013"
+      ],
+      "write_set": [
+        "scripts/build-template.sh",
+        "scripts/build-manifest.mjs",
+        "tests/build-template.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "src/CLAUDE.template.md",
+        "src/seed.template.md",
+        "src/project.template.json",
+        "src/.mcp.template.json",
+        "src/settings.template.json",
+        "src/agents/swarm-worker.template.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-010",
+      "title": "PlantUML fetcher \u2014 deferred install-time download with sha256 verification",
+      "component": "C11",
+      "acs": [
+        "AC-014",
+        "AC-015",
+        "AC-016"
+      ],
+      "write_set": [
+        "src/cli/plantuml.js",
+        "tests/plantuml.test.mjs"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        "src/cli/io.js",
+        ".claude/bin/plantuml.jar"
+      ],
+      "depends_on": [
+        "T-002"
+      ]
+    },
+    {
+      "id": "T-011",
+      "title": "Vendored license files \u2014 Apache 2.0 LICENSE + PlantUML deferred-fetch NOTICE",
+      "component": "C12",
+      "acs": [
+        "AC-009",
+        "AC-012",
+        "AC-014"
+      ],
+      "write_set": [
+        ".claude/bin/LICENSE",
+        ".claude/bin/NOTICE"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md",
+        ".claude/skills/claude-automation-recommender/LICENSE",
+        ".claude/skills/claude-automation-recommender/NOTICE"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-012",
+      "title": "Audit-baseline extension \u2014 vendored-license check for .claude/bin/{LICENSE,NOTICE}",
+      "component": "C13",
+      "acs": [
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/audit-baseline/audit.sh"
+      ],
+      "read_set": [
+        "docs/specs/create-baseline-cli.md"
+      ],
+      "depends_on": []
+    }
+  ],
+  "waves": [
+    [
+      "T-001",
+      "T-002",
+      "T-003",
+      "T-004",
+      "T-005",
+      "T-009",
+      "T-011",
+      "T-012"
+    ],
+    [
+      "T-006",
+      "T-007",
+      "T-010"
+    ],
+    [
+      "T-008"
+    ]
+  ],
+  "validated_at": 1777411227
+}

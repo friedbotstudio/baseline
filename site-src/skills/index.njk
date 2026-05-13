@@ -1,0 +1,74 @@
+---
+layout: docs.njk
+permalink: /skills/index.html
+pageTitle: "Skills · baseline"
+title: Skills
+titlePrimary: Skills
+titleAccent: "."
+eyebrow: Skills
+eleventyComputed:
+  description: "{{ baseline.skills.total }} skills organized into {{ baseline.skills.categoriesWord }} categories. Core skills ship with the baseline; third-party skills are vendored from external sources with their licenses preserved."
+  lead: "{{ baseline.skills.total }} skills organized into {{ baseline.skills.categoriesWord }} categories. Core skills ship with the baseline; third-party skills are vendored from external sources with their licenses preserved."
+active: skills
+sidebarActive: skills
+heroSymbol: skills
+toc:
+  - { id: what,       label: "Skills vs subagents" }
+  - { id: categories, label: "By category" }
+  - { id: rule,       label: "Mandatory invocation" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="what">Skills versus subagents</h2>
+    </div>
+    <p>A skill is a code-loaded capability that runs in main context. It has access to the current conversation, prior tool results, and the user's screenshots.</p>
+  </div>
+  <p>Skills compose: one skill can invoke another, and most phase skills mandatorily invoke a sub-skill (for example, every code-generation step invokes <code>code-structure</code>).</p>
+  <p>A subagent is different. Subagents run in isolated context with only a Task brief. The baseline ships exactly one subagent (<code>swarm-worker</code>) for parallel execution of pre-decided recipes. Every other capability is a skill in main context.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="categories">By category</h2>
+    </div>
+    <p>Skills group by what they produce or which phase they belong to. Two reference pages cover the full set.</p>
+  </div>
+
+  <div class="concepts is-2col">
+    <a class="concept" href="/skills/core/">
+      <p class="num">01 · Core</p>
+      <h3>Core skills</h3>
+      <p>The {{ baseline.skills.total }} skills that ship with the baseline. Phase skills, artifact drafters, phase workers, spec helpers, orchestration, memory, audit, alt tracks.</p>
+    </a>
+    <a class="concept" href="/skills/third-party/">
+      <p class="num">02 · Third-party</p>
+      <h3>Third-party skills</h3>
+      <p>Vendored skills from outside this repository. Licenses are preserved alongside; behavior is not edited. The pattern, with one worked example.</p>
+    </a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="rule">The mandatory invocation rule</h2>
+    </div>
+    <p>Five execution skills mandatorily invoke a sub-skill. The pairings are not conventions; they are constitutional (Article II).</p>
+  </div>
+  <table>
+    <thead><tr><th>Skill</th><th>Mandatory sub-skill</th><th>Conditional</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">scenario</td><td><code>code-structure</code></td><td>none</td></tr>
+      <tr><td class="phase">implement</td><td><code>code-structure</code></td><td><code>context7</code> for any third-party API</td></tr>
+      <tr><td class="phase">verify</td><td>none (mechanical)</td><td>none</td></tr>
+      <tr><td class="phase">design-ui</td><td><code>impeccable</code></td><td>none</td></tr>
+      <tr><td class="phase">prose</td><td><code>humanizer</code> (always)</td><td><code>copywriting</code> / <code>documentation</code> / <code>technical-tutorials</code> by register</td></tr>
+    </tbody>
+  </table>
+</section>

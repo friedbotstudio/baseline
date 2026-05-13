@@ -1,0 +1,24 @@
+{
+  "request": "Make harness model-invokable and add a Stop-hook re-fire mechanism so the workflow auto-continues between phases unless human input is required. Restructure phase skills so workers (verify, scenario, implement, design-ui) are hoisted into the harness chain as their own phase ticks rather than nested inside parent phase skills; inline verify's mechanical work into callers. Resolves pending-questions Q-003.",
+  "slug": "harness-auto-continuation",
+  "entry_phase": "intake",
+  "exceptions": [
+    "brd",
+    "grant-commit",
+    "commit"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive"
+  ],
+  "created_at": 1778585268,
+  "updated_at": 1778594223
+}

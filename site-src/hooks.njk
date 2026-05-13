@@ -1,0 +1,120 @@
+---
+layout: docs.njk
+permalink: /hooks/index.html
+pageTitle: "Hooks · baseline"
+title: Hooks
+titlePrimary: Hooks
+titleAccent: "."
+eyebrow: Reference
+eleventyComputed:
+  description: "The {{ baseline.hooks.total }} hooks are the structural enforcement layer of the baseline. Each runs at a tool boundary or lifecycle event, outside Claude's control."
+  lead: "The {{ baseline.hooks.total }} hooks are the structural enforcement layer of the baseline. Each runs at a tool boundary or lifecycle event, outside Claude's control."
+active: hooks
+sidebarActive: hooks
+heroSymbol: hooks
+toc:
+  - { id: why,      label: "Why hooks" }
+  - { id: boundary, label: "By tool boundary" }
+  - { id: article,  label: "What each enforces" }
+  - { id: consent,  label: "Unforgeable consent" }
+  - { id: amend,    label: "Modifying a hook" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="why">Why hooks</h2>
+    </div>
+    <p>The baseline ships {{ baseline.hooks.total }} hooks wired into Claude Code's PreToolUse, PostToolUse, UserPromptSubmit, and lifecycle events. They form the part of the constitution that cannot be overridden by memory or prompt text alone.</p>
+  </div>
+  <p>A hook runs outside Claude's tool boundary. When a hook blocks a write, Claude never executes the tool call. This matters because Claude cannot forge a consent marker (written by <code>consent_gate_grant</code> on the UserPromptSubmit path) by invoking a tool: the block happens before Claude gets the chance. Memory is helpful, prompts are helpful, hooks are load-bearing.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="boundary">Hooks by tool boundary</h2>
+    </div>
+    <p>Most hooks run on Write, Edit, MultiEdit, or Bash before the tool fires. A small set runs on the surrounding session lifecycle.</p>
+  </div>
+  <table>
+  <thead><tr><th>Event</th><th>Hooks</th></tr></thead>
+  <tbody>
+    <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, process_lifecycle_guard</td></tr>
+    <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, spec_approval_guard, swarm_approval_guard, verify_pass_guard, track_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
+    <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner</td></tr>
+    <tr><td>UserPromptSubmit</td><td class="phase">consent_gate_grant</td></tr>
+    <tr><td>SessionStart</td><td class="phase">memory_session_start</td></tr>
+    <tr><td>Stop</td><td class="phase">memory_stop</td></tr>
+    <tr><td>PreCompact</td><td class="phase">memory_pre_compact</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="article">What each hook enforces</h2>
+    </div>
+    <p>The constitution maps each hook to the article it backs. Modifying or disabling a hook requires user approval and a corresponding amendment in <code>seed.md</code>.</p>
+  </div>
+  <table>
+  <thead><tr><th>Hook</th><th>Article</th><th>Behavior</th></tr></thead>
+  <tbody>
+    <tr><td class="phase">setup_guard</td><td>III</td><td>Advisory reminder when project is unconfigured (rate-limited 10 minutes). Does not block.</td></tr>
+    <tr><td class="phase">destructive_cmd_guard</td><td>VII</td><td>Hard-block catastrophic commands; ask risky.</td></tr>
+    <tr><td class="phase">git_commit_guard</td><td>IV (gate C), VII</td><td>Require fresh consent for <code>git commit</code>; block forbidden flags. Gate writes to the commit-consent marker.</td></tr>
+    <tr><td class="phase">env_guard</td><td>VII</td><td>Block writes to <code>.env*</code> files (allows <code>.env.example</code>).</td></tr>
+    <tr><td class="phase">spec_approval_guard</td><td>IV (gate A)</td><td>Validate fresh marker before allowing approval-token writes; block self-approval inside spec markdown.</td></tr>
+    <tr><td class="phase">swarm_approval_guard</td><td>IV (gate B)</td><td>Validate fresh marker before allowing swarm-approval writes.</td></tr>
+    <tr><td class="phase">verify_pass_guard</td><td>V, VI</td><td>Block writing PASS to verify artifacts when truth source says FAIL.</td></tr>
+    <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce {{ baseline.phases }}-phase ordering for workflow artifacts.</td></tr>
+    <tr><td class="phase">artifact_template_guard</td><td>IV</td><td>Block artifact writes missing required sections.</td></tr>
+    <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Validate PlantUML fences in <code>docs/specs/*.md</code>.</td></tr>
+    <tr><td class="phase">spec_diagram_presence_guard</td><td>IV (phase 4)</td><td>Block specs missing required diagram kinds.</td></tr>
+    <tr><td class="phase">spec_design_calls_guard</td><td>X.2</td><td>Block specs whose <code>write_set</code> intersects <code>tdd.ui_globs</code> from omitting a populated <code>## Design calls</code> section.</td></tr>
+    <tr><td class="phase">swarm_boundary_guard</td><td>IV (phase 6c)</td><td>Enforce write-set discipline in shared isolation mode.</td></tr>
+    <tr><td class="phase">tdd_order_guard</td><td>VI.4</td><td>Require a test before a new source file lands.</td></tr>
+    <tr><td class="phase">process_lifecycle_guard</td><td>IX</td><td>Advisory. Surfaces relevant memory entries (e.g. <code>landmines.md → lsof-port-kill-takes-firefox-with-it</code>, <code>conventions.md → dev-server-ownership</code>) verbatim before any <code>kill</code>, <code>lsof</code>, or <code>serve</code> Bash. Never blocks.</td></tr>
+    <tr><td class="phase">lint_runner</td><td>VI</td><td>Run <code>lint.cmd</code> on code changes (guide mode until configured).</td></tr>
+    <tr><td class="phase">test_runner</td><td>VI</td><td>Run <code>test.cmd</code> on code changes (guide mode until configured).</td></tr>
+    <tr><td class="phase">memory_session_start</td><td>III, IX</td><td>Inject memory index and resume snapshot at session start.</td></tr>
+    <tr><td class="phase">memory_stop</td><td>IX</td><td>Auto-extract memory candidates each turn-end.</td></tr>
+    <tr><td class="phase">memory_pre_compact</td><td>IX</td><td>Capture resume snapshot before context compaction.</td></tr>
+    <tr><td class="phase">consent_gate_grant</td><td>IV (gates A / B / C)</td><td>Detect approve and grant slash commands in user input and write the gate-specific consent marker. Runs outside Claude's tool boundary.</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="consent">Why consent gates are unforgeable</h2>
+    </div>
+    <p>Each gate is a slash command typed by the user (<code>/approve-spec</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>). Claude cannot reach the UserPromptSubmit code path, so it cannot write the marker.</p>
+  </div>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>Consent gates are not bypassable.</strong>
+      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, before Claude sees the prompt. It writes a short-lived marker that the corresponding PreToolUse guard validates. Markers expire after sixty seconds and are deleted on use, so a gate cannot be replayed.</p>
+    </div>
+  </div>
+  <p>The PreToolUse guard then allows Claude's slash-command-body write of the approval token only if the marker is present, fresh, and slug-matched. The marker is single-use and deleted on the allowed write.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="amend">Modifying or disabling a hook</h2>
+    </div>
+    <p>Disabling, modifying, or bypassing a hook requires explicit user approval and a corresponding amendment in <code>seed.md</code> (the genesis prompt). The order of precedence is <code>seed.md</code> &gt; <code>CLAUDE.md</code> &gt; implementation.</p>
+  </div>
+  <p>Hooks are the implementation layer: they cannot be loosened by a memory entry or a CLAUDE.md amendment alone.</p>
+  <p>For a one-shot exception inside a workflow, use the <code>exceptions</code> array in <code>.claude/state/workflow.json</code>, written only by <code>/triage</code>. Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
+</section>

@@ -1,0 +1,38 @@
+# Dependabot configuration for friedbotstudio/baseline.
+#
+# Scope: GitHub Actions only — this repo's runtime is a CLI scaffolder with
+# zero npm `dependencies` (enforced by scripts/check-files-diff.mjs). The only
+# third-party surface that needs version-management automation is the actions
+# pinned in .github/workflows/.
+#
+# When any action's pinned SHA falls behind its named tag's upstream commit,
+# Dependabot opens a PR with the new SHA + updated trailing tag comment. That
+# closes the SEC-MEDIUM "SHA authenticity is not test-enforced" gap continuously
+# (the in-repo verifier at scripts/verify-action-shas.mjs catches the same drift
+# at test time, when VERIFY_ACTION_SHAS=1; Dependabot makes drift surface as a
+# reviewable PR without a manual prompt).
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: 'chore(actions)'
+      include: scope
+    groups:
+      first-party-actions:
+        patterns:
+          - 'actions/*'
+          - 'github/*'
+      security-actions:
+        patterns:
+          - 'step-security/*'

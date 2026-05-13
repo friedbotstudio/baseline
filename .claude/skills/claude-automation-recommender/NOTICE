@@ -1,0 +1,69 @@
+claude-automation-recommender
+==============================
+
+This skill is vendored from the `claude-code-setup` plugin published by
+Anthropic and is redistributed here under the terms of the Apache License,
+Version 2.0 (see LICENSE in this directory).
+
+Upstream:
+  Plugin name:    claude-code-setup
+  Upstream version: 1.0.0
+  Author:         Anthropic <support@anthropic.com>
+  Vendored into:  .claude/skills/claude-automation-recommender/
+  Vendored on:    2026-04-25
+
+Modifications:
+  See "Local changes" below.
+
+Local changes:
+  - 2026-04-25: Added "Working with the baseline" section to SKILL.md.
+    Lists the 14 hooks / 8 subagents / 26 skills / 4 commands / 2 MCPs the
+    baseline already provides, instructing the recommender to surface
+    *gaps* and project-specific tailoring rather than duplicate baseline
+    components. Also added a JSON output schema for /init-project to
+    consume the recommender's findings programmatically.
+  - 2026-04-28: Refreshed "Working with the baseline" counts in SKILL.md
+    to match the current shape: 14 → 17 hooks (the 3 lifecycle hooks
+    `memory_session_start`, `memory_stop`, `memory_pre_compact` were
+    added between 2026-04-25 and now), 34 → 36 skills (the `chore`
+    alternate track and `memory-flush` memory-curation skill were added).
+    The historical 2026-04-25 entry above is preserved verbatim as a
+    record of the snapshot at that date.
+  - 2026-04-28 (later): 36 → 37 skills — the user added a vendored
+    `developer-audience-context` skill that `technical-tutorials` now
+    references as its audience-loader. Updated SKILL.md skill count and
+    breakdown; added the new mandatory-sub-skill chain
+    (`technical-tutorials` → `developer-audience-context`) to the
+    bullet's "Several skills mandatorily invoke another skill" list.
+  - 2026-04-28 (final): 37 → 36 skills — consolidated the standalone
+    `developer-audience-context` skill into `technical-tutorials` per the
+    user's call ("not generic enough; exists solely for technical-tutorials").
+    Audience-context content moved into `technical-tutorials/references/`
+    as `audience-context.md`, `audience-template.md`, `audience-example.md`,
+    and `audience-context-README.md`. Apache 2.0 attribution preserved via
+    the consolidated README in that references directory. Updated SKILL.md
+    skill count + breakdown; removed the mandatory-sub-skill chain
+    (`technical-tutorials` no longer invokes a separate skill — the
+    audience reference is local).
+  - 2026-05-12: Refreshed the "Working with the baseline" hook count in
+    SKILL.md to match the current shape: 17 → 22 hooks. The breakdown is
+    now "17 write/run-boundary guards plus 4 lifecycle hooks plus 1
+    input-boundary hook". The list of write/run-boundary guards was
+    completed (previously omitted `swarm_approval_guard`,
+    `spec_design_calls_guard`, and `process_lifecycle_guard`); the
+    lifecycle list now includes `harness_continuation` (the workflow
+    auto-continuation Stop hook added by the `harness-auto-continuation`
+    workflow at `docs/archive/2026-05-12/harness-auto-continuation/`);
+    `consent_gate_grant` is named as the input-boundary hook. Skill count
+    unchanged at 36. No upstream behavior was modified; only the local
+    baseline-inventory paragraph was updated.
+  - References/ directory unchanged from upstream.
+
+License:
+  Apache License 2.0. Full text in ./LICENSE.
+
+Why vendored:
+  The recommender is a mandatory first step in this baseline (see
+  docs/init/seed.md §0). Vendoring removes the runtime dependency on
+  having the `claude-code-setup` plugin installed and ensures the
+  capability travels with the repository.

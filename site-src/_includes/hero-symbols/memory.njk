@@ -1,0 +1,57 @@
+{# Memory hero symbol — symbolic, not workflow.
+   Vocabulary rhymes with strata-svg: filled (anchor), stroke (canonical),
+   dotted (staging stream), line+accent (cite). The ring composition
+   represents accumulation around a re-verified core. #}
+<svg class="hero-symbol-svg memring-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="memring-title">
+  <title id="memring-title">A re-verified anchor at the center, six canonical entries on the inner ring, and an unverified candidate stream on the outer dotted ring.</title>
+  <defs>
+    <pattern id="memring-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+      <circle class="pattern-dot" cx="3" cy="3" r="0.9"/>
+    </pattern>
+    <mask id="memring-outer-mask">
+      <circle cx="180" cy="180" r="138" fill="white"/>
+      <circle cx="180" cy="180" r="126" fill="black"/>
+    </mask>
+    <marker id="memring-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="memring-arrow"/>
+    </marker>
+  </defs>
+
+  {# Outer dotted band — candidate stream (_pending.md). #}
+  <circle class="memring-outer-fill" cx="180" cy="180" r="138" mask="url(#memring-outer-mask)"/>
+  <circle class="memring-outer" cx="180" cy="180" r="138"/>
+  <circle class="memring-outer" cx="180" cy="180" r="126"/>
+
+  {# Sparse outer candidate marks. #}
+  <circle class="memring-cand" cx="48"    cy="180" r="2.6"/>
+  <circle class="memring-cand" cx="180"   cy="312" r="2.6"/>
+  <circle class="memring-cand" cx="76"    cy="98"  r="2.6"/>
+  <circle class="memring-cand" cx="244"   cy="304" r="2.6"/>
+  <circle class="memring-cand-active" cx="294.3" cy="114" r="4.5"/>
+
+  {# Promotion arc: outer candidate → inner canonical tick. Dashed accent. #}
+  <path class="memring-promote" d="M 290,116 C 277,123 267,130 259,135" marker-end="url(#memring-arr)"/>
+
+  {# Inner stroke ring — canonical files boundary. #}
+  <circle class="memring-inner" cx="180" cy="180" r="88"/>
+
+  {# Six canonical-file ticks on the inner ring (every 60°). #}
+  <circle class="memring-tick" cx="256.2" cy="136"   r="3.6"/>
+  <circle class="memring-tick" cx="180"   cy="92"    r="3.6"/>
+  <circle class="memring-tick" cx="103.8" cy="136"   r="3.6"/>
+  <circle class="memring-tick" cx="103.8" cy="224"   r="3.6"/>
+  <circle class="memring-tick" cx="180"   cy="268"   r="3.6"/>
+  <circle class="memring-tick" cx="256.2" cy="224"   r="3.6"/>
+
+  {# Cite — accent orbit dot on the inner ring at 60°. #}
+  <circle class="memring-cite" cx="224" cy="103.8" r="5"/>
+
+  {# Cite-to-anchor radial — re-verification on use. #}
+  <line class="memring-radial" x1="224" y1="103.8" x2="186" y2="174"/>
+
+  {# Anchor — filled ink core. #}
+  <circle class="memring-anchor" cx="180" cy="180" r="8"/>
+
+  {# Roman-numeral mono ticker (visual rhyme with strata). #}
+  <text class="memring-key" x="180" y="332" text-anchor="middle">re-verify on cite</text>
+</svg>

@@ -1,0 +1,152 @@
+{
+  "slug": "skill-ownership",
+  "created_at": 1778603208,
+  "single_pass": true,
+  "note": "All 9 ACs are tightly coupled — frontmatter, builder, audit, and constitution must land together for any single AC to pass. One scenario + one implement pass.",
+  "recipe": [
+    {
+      "name": "test_when_every_baseline_SKILL_md_then_owner_field_is_baseline_or_user",
+      "covers": "AC-001",
+      "assertion": "Every .claude/skills/<slug>/SKILL.md has frontmatter with key `owner` whose value is exactly `baseline` or `user` (unquoted, lowercase).",
+      "fixtures": "Real .claude/skills/ tree (36 SKILL.md files); read with node:fs/promises.readFile; parse frontmatter via regex `^---\\n([\\s\\S]*?)\\n---\\n`; match line `^owner:\\s*(baseline|user)\\s*$`."
+    },
+    {
+      "name": "test_when_clean_build_then_manifest_v2_with_owners_skills",
+      "covers": "AC-002",
+      "assertion": "After running `npm run build`, obj/template/manifest.json has manifest_version === 2 AND owners.skills is a non-empty object whose values are all the string `baseline`.",
+      "fixtures": "execFileSync('bash', ['scripts/build-template.sh']) in a tmp dir clone; assert JSON shape."
+    },
+    {
+      "name": "test_when_audit_runs_after_clean_build_then_exits_zero",
+      "covers": "AC-003",
+      "assertion": "`bash .claude/skills/audit-baseline/audit.sh` exits 0 immediately after a clean build of the dev repo.",
+      "fixtures": "execFileSync('bash', ['.claude/skills/audit-baseline/audit.sh'], {env: { CLAUDE_PROJECT_DIR: <repo root> }}); assert status === 0."
+    },
+    {
+      "name": "test_when_baseline_SKILL_md_body_tampered_then_audit_reports_hash_mismatch",
+      "covers": "AC-004",
+      "assertion": "Mutating one byte in any baseline SKILL.md body (after build, before audit) causes audit exit non-zero with output containing literal `hash mismatch` AND the affected slug name.",
+      "fixtures": "tmp clone of repo via cp -r; run build there; appendFile a single space to one SKILL.md body; run audit; assert exit !== 0 and stdout includes 'hash mismatch' + slug."
+    },
+    {
+      "name": "test_when_user_skill_added_then_audit_ignores_it",
+      "covers": "AC-005",
+      "assertion": "Adding .claude/skills/user-example/SKILL.md with `owner: user` frontmatter to a tmp clone (post-build) leaves audit exit === 0.",
+      "fixtures": "tmp clone; build; create user-example dir with SKILL.md carrying frontmatter `name: user-example\\nowner: user\\ndescription: test`; run audit; assert exit === 0."
+    },
+    {
+      "name": "test_when_owner_field_removed_then_audit_reports_missing_owner_frontmatter",
+      "covers": "AC-006",
+      "assertion": "Removing the `owner:` line from one baseline SKILL.md causes audit exit non-zero with output containing literal `missing owner frontmatter` AND the slug.",
+      "fixtures": "tmp clone; build; sed-out the owner line from .claude/skills/spec/SKILL.md; run audit; assert exit !== 0 and message names 'spec'."
+    },
+    {
+      "name": "test_when_section_17_missing_from_seed_then_audit_reports_missing_citation",
+      "covers": "AC-007",
+      "assertion": "Removing the §17 paragraph from docs/init/seed.md (post-build) causes audit exit non-zero with output containing `seed.md missing §17 citation` or equivalent.",
+      "fixtures": "tmp clone; build; rewrite seed.md without §17; run audit; assert exit !== 0 and message names seed.md missing §17 citation."
+    },
+    {
+      "name": "test_when_two_consecutive_builds_then_manifests_byte_identical",
+      "covers": "AC-008",
+      "assertion": "Running build-manifest.mjs twice on identical input produces byte-identical manifest.json (deterministic build).",
+      "fixtures": "tmp clone; run scripts/build-template.sh twice; read obj/template/manifest.json after each; assert string equality."
+    },
+    {
+      "name": "test_when_baseline_skill_directory_removed_then_audit_reports_baseline_skill_missing",
+      "covers": "AC-009",
+      "assertion": "Removing an entire .claude/skills/<slug>/ directory (post-build, so manifest still lists it) causes audit exit non-zero with output containing `baseline skill missing` AND the slug.",
+      "fixtures": "tmp clone; build; rm -rf .claude/skills/spec; run audit; assert exit !== 0 and message names 'spec'."
+    },
+    {
+      "name": "test_when_manifest_built_then_v2_shape_has_owners_skills_present",
+      "covers": "AC-002 (extension in tests/manifest.test.mjs)",
+      "assertion": "tests/manifest.test.mjs gains a `manifest v2 shape` describe block that asserts manifest_version is 2 (not 1) and owners.skills is an object with 36 entries all valued `baseline`.",
+      "fixtures": "Read obj/template/manifest.json directly from the dev repo (built before test run); assert shape."
+    },
+    {
+      "name": "test_when_target_has_v2_manifest_then_doctor_tolerates",
+      "covers": "AC-002 round-trip (extension in tests/doctor.test.mjs)",
+      "assertion": "tests/doctor.test.mjs gains a case where the target's .claude/.baseline-manifest.json carries manifest_version: 2 AND an owners field; doctor must run without error.",
+      "fixtures": "Existing tests/doctor.test.mjs harness; write a v2 manifest into target tmp; spawn the doctor subcommand; assert clean output."
+    }
+  ],
+  "out_of_scope_scenarios": [
+    "Per-skill aggregate (merkle) hash — explicitly rejected in spec (per-file map suffices).",
+    "doctor surfacing owners.skills to user — deferred to future upgrade subcommand.",
+    "Migration script for the 36 SKILL.md files — spec position is manual edits inside this /tdd pass.",
+    "Lock-file source-of-truth at src/.claude/baseline.lock.json — spec chose build-output-only.",
+    "Cryptographic supply-chain attestation — out of scope per spec non-goals."
+  ],
+  "contract": {
+    "failing_test_paths": [
+      "tests/skill-ownership.test.mjs",
+      "tests/manifest.test.mjs",
+      "tests/doctor.test.mjs"
+    ],
+    "write_set": [
+      "scripts/build-manifest.mjs",
+      ".claude/skills/audit-baseline/audit.sh",
+      ".claude/skills/intake/SKILL.md",
+      ".claude/skills/brd/SKILL.md",
+      ".claude/skills/spec/SKILL.md",
+      ".claude/skills/rca/SKILL.md",
+      ".claude/skills/triage/SKILL.md",
+      ".claude/skills/scout/SKILL.md",
+      ".claude/skills/research/SKILL.md",
+      ".claude/skills/tdd/SKILL.md",
+      ".claude/skills/simplify/SKILL.md",
+      ".claude/skills/security/SKILL.md",
+      ".claude/skills/integrate/SKILL.md",
+      ".claude/skills/document/SKILL.md",
+      ".claude/skills/archive/SKILL.md",
+      ".claude/skills/commit/SKILL.md",
+      ".claude/skills/scenario/SKILL.md",
+      ".claude/skills/implement/SKILL.md",
+      ".claude/skills/verify/SKILL.md",
+      ".claude/skills/prose/SKILL.md",
+      ".claude/skills/design-ui/SKILL.md",
+      ".claude/skills/spec-lint/SKILL.md",
+      ".claude/skills/spec-render/SKILL.md",
+      ".claude/skills/spec-diagram-review/SKILL.md",
+      ".claude/skills/spec-traceability-review/SKILL.md",
+      ".claude/skills/harness/SKILL.md",
+      ".claude/skills/swarm-plan/SKILL.md",
+      ".claude/skills/swarm-dispatch/SKILL.md",
+      ".claude/skills/memory-flush/SKILL.md",
+      ".claude/skills/audit-baseline/SKILL.md",
+      ".claude/skills/chore/SKILL.md",
+      ".claude/skills/claude-automation-recommender/SKILL.md",
+      ".claude/skills/code-structure/SKILL.md",
+      ".claude/skills/humanizer/SKILL.md",
+      ".claude/skills/documentation/SKILL.md",
+      ".claude/skills/technical-tutorials/SKILL.md",
+      ".claude/skills/copywriting/SKILL.md",
+      ".claude/skills/impeccable/SKILL.md",
+      "bin/cli.js",
+      "tests/skill-ownership.test.mjs",
+      "tests/manifest.test.mjs",
+      "tests/doctor.test.mjs",
+      "CLAUDE.md",
+      "src/CLAUDE.template.md",
+      "docs/init/seed.md",
+      "src/seed.template.md"
+    ],
+    "behavior_excerpts": [
+      "spec §Behavior #1 (build path) — manifest.json v2 emitted with sorted owners.skills keys; fails build with exit 1 on missing/invalid owner frontmatter.",
+      "spec §Behavior #2 (audit path) — load_manifest, check_skill_ownership (frontmatter + per-file sha256), check_constitutional_citations.",
+      "spec §Behavior #3 (install path) — CLI loader treats manifest_version: 2 opaquely; mirrors to target/.claude/.baseline-manifest.json verbatim.",
+      "spec Class diagram — Manifest.owners is { skills: Map<slug, 'baseline'|'user'> } (only 'baseline' is emitted by build; 'user' may appear in user-added SKILL.md frontmatter but is not in the manifest)."
+    ],
+    "project_conventions": {
+      "test_cmd": "bash .claude/skills/audit-baseline/audit.sh",
+      "lint_cmd": null,
+      "node_engine": ">=18.17.0",
+      "frontmatter_position": "owner: line directly after name: in YAML frontmatter (position 2)",
+      "frontmatter_value": "exactly `baseline` or `user`, unquoted lowercase",
+      "manifest_determinism": "sorted keys, two-space indent, trailing newline, JSON.stringify(obj, null, 2) + \"\\n\"",
+      "hash_alg": "sha256 via node:crypto.createHash('sha256').update(buf).digest('hex')"
+    }
+  },
+  "design_calls_rows": []
+}

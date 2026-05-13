@@ -1,0 +1,108 @@
+---
+layout: docs.njk
+permalink: /swarm/index.html
+pageTitle: "Swarm mode · baseline"
+title: Swarm mode
+titlePrimary: Swarm mode
+titleAccent: "."
+description: "Swarm mode parallelizes TDD across isolated worktrees. Decisions live in main context; the single subagent executes pre-decided recipes."
+eyebrow: Reference
+lead: "Swarm mode parallelizes TDD across isolated worktrees. Decisions live in main context; the single subagent executes pre-decided recipes."
+active: swarm
+sidebarActive: swarm
+heroSymbol: swarm
+toc:
+  - { id: principle, label: "The principle" }
+  - { id: subagent,  label: "The single subagent" }
+  - { id: pipeline,  label: "The pipeline" }
+  - { id: plan,      label: "/swarm-plan",      lvl: 3 }
+  - { id: approve,   label: "/approve-swarm",   lvl: 3 }
+  - { id: dispatch,  label: "/swarm-dispatch",  lvl: 3 }
+  - { id: threshold, label: "When to swarm" }
+  - { id: isolation, label: "Worktree vs shared" }
+  - { id: recovery,  label: "Failure recovery" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="principle">The principle</h2>
+    </div>
+    <p>Decisions live in main context. Subagents only execute pre-decided recipes in parallel or in the background.</p>
+  </div>
+  <p>The main context owns architecture, scenario selection, and recipe design, work that depends on conversational visibility (screenshots, prior rounds, off-hand corrections). Subagents get a task brief and execute it. They do not design around it.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="subagent">The single subagent</h2>
+    </div>
+    <p>The baseline ships exactly one subagent: <code>swarm-worker</code>. Its job is narrow: run <code>Skill(scenario)</code> to write failing tests, then run <code>Skill(implement)</code> to make them pass, inside an isolated worktree.</p>
+  </div>
+  <p>It receives a fully-specified recipe from the main context and executes it verbatim. It does not pick abstractions, expand scope, or make architectural choices.</p>
+  <p><code>swarm-worker</code> is sanctioned for use only inside <code>/swarm-dispatch</code>. Invoking it outside that path is a constitutional violation (Article II).</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="pipeline">The pipeline</h2>
+    </div>
+    <p>Three commands form the swarm path. The first two are decisions in main context; the third is the only place <code>swarm-worker</code> may run.</p>
+  </div>
+
+  <h3 id="plan">/swarm-plan</h3>
+  <p>Decomposes an approved spec into a dependency-ordered set of tasks. Each task has a name, a write set (the exact source paths it may touch), a behavior contract, and a wave assignment. Tasks in the same wave have disjoint write sets and can run in parallel. Tasks in later waves depend on earlier-wave output.</p>
+
+  <h3 id="approve">/approve-swarm &lt;slug&gt;</h3>
+  <p>Consent gate B, the second of three gates in the workflow. The user types this command; Claude cannot invoke it. <code>consent_gate_grant</code> detects the command in the user's submission and writes a short-lived marker. <code>swarm_approval_guard</code> validates the marker before allowing the swarm-approval token to be written. Without a valid marker, the write is blocked.</p>
+
+  <h3 id="dispatch">/swarm-dispatch</h3>
+  <p>Executes the approved swarm plan wave by wave. For each wave, the main context decides each task's recipe and spawns <code>swarm-worker</code> instances in parallel, each running inside an isolated git worktree (or under <code>swarm_boundary_guard</code> enforcement in shared mode). After each wave, a merge audit verifies write-set discipline before changes land. Waves proceed in dependency order; a failed wave stops further dispatch.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="threshold">When to swarm vs solo</h2>
+    </div>
+    <p>The threshold is three or more independent components in the spec, where the dependency graph has at least two nodes with no cross-edge. Below that threshold, run <code>/tdd</code> solo.</p>
+  </div>
+  <p>The coordination overhead of <code>/swarm-plan</code> &rarr; <code>/approve-swarm</code> &rarr; <code>/swarm-dispatch</code> exceeds the parallelism benefit for small changes.</p>
+  <p>The threshold is configurable per project via <code>project.json &rarr; swarm.min_tasks_worth_swarming</code>. Default is 3.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="isolation">Worktree isolation vs shared mode</h2>
+    </div>
+    <p>When git is available, <code>/swarm-dispatch</code> creates a separate git worktree per task. Each worker writes only to its assigned worktree; the merge audit checks write-set membership before merging changes back.</p>
+  </div>
+  <p>Physical isolation means workers cannot accidentally touch each other's files.</p>
+  <p>When git is not available (a fresh directory with no repository), the harness falls back to shared mode. <code>swarm_boundary_guard</code> enforces write-set discipline at the Write boundary: any attempted write outside the declared write set is blocked before it lands. Shared mode is weaker than worktree isolation (no merge audit, no branch history) but functional for environments without git.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="recovery">Failure recovery</h2>
+    </div>
+    <p>A failed wave stops further dispatch immediately. No subsequent waves run. The failed worktrees are preserved on disk for inspection.</p>
+  </div>
+  <p>The orchestrator does not auto-retry or auto-clean. The <code>swarm-worker</code> reports <code>status: "failed"</code> with a note; the main context decides whether to re-plan, fix the recipe, or escalate.</p>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>The merge audit is mandatory.</strong>
+      <p>Even when a worker reports success, the merge audit runs against the worktree to verify the changes match the declared write set. A worker that wrote outside its set fails the audit, and its wave fails.</p>
+    </div>
+  </div>
+</section>

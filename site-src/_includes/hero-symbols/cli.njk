@@ -1,0 +1,51 @@
+{# CLI hero symbol — the command fork.
+   A single command axis (filled ink) branches into three modes (fresh,
+   force, merge) that converge on a single output. An accent dot at the
+   fork marks the decision point; a single mode is highlighted in accent
+   to suggest "pick the right one". Vocabulary: filled ink = command, open
+   stroke = mode branches, dashed accent = active path, accent dot = fork
+   decision, mono caps caption. #}
+<svg class="hero-symbol-svg cmdfork-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cmdfork-title">
+  <title id="cmdfork-title">One command, three modes — fresh, force, merge — converging on a single installed target.</title>
+
+  {# The command — filled ink rect at the top with the npx invocation. #}
+  <rect class="cf-cmd" x="64" y="40" width="232" height="42" rx="6"/>
+  <text class="cf-cmd-label on-fill" x="180" y="66" text-anchor="middle">npx create-baseline</text>
+
+  {# Fork decision dot. #}
+  <circle class="cf-fork" cx="180" cy="106" r="5.5"/>
+  <line class="cf-spine" x1="180" y1="82" x2="180" y2="106"/>
+
+  {# Three branches diverging out of the fork. #}
+  <path class="cf-branch"      d="M 180 110 Q 180 140 88 152 L 88 188"/>
+  <path class="cf-branch-act"  d="M 180 110 L 180 188"/>
+  <path class="cf-branch"      d="M 180 110 Q 180 140 272 152 L 272 188"/>
+
+  {# Three mode nodes — open stroke rects, one filled with accent. #}
+  <g class="cf-mode">
+    <rect class="cf-mode-frame" x="48" y="188" width="80" height="56" rx="6"/>
+    <text class="cf-mode-tag" x="88" y="220" text-anchor="middle">fresh</text>
+    <text class="cf-mode-sub" x="88" y="234" text-anchor="middle">default</text>
+  </g>
+  <g class="cf-mode is-active">
+    <rect class="cf-mode-frame-act" x="140" y="188" width="80" height="56" rx="6"/>
+    <text class="cf-mode-tag on-fill" x="180" y="220" text-anchor="middle">merge</text>
+    <text class="cf-mode-sub-act" x="180" y="234" text-anchor="middle">upgrade</text>
+  </g>
+  <g class="cf-mode">
+    <rect class="cf-mode-frame" x="232" y="188" width="80" height="56" rx="6"/>
+    <text class="cf-mode-tag" x="272" y="220" text-anchor="middle">force</text>
+    <text class="cf-mode-sub" x="272" y="234" text-anchor="middle">overwrite</text>
+  </g>
+
+  {# Converge: three branches merge into a single result line. #}
+  <path class="cf-converge" d="M 88 246 Q 88 274 180 280"/>
+  <line class="cf-converge-act" x1="180" y1="246" x2="180" y2="280"/>
+  <path class="cf-converge" d="M 272 246 Q 272 274 180 280"/>
+
+  {# Target — single filled-ink dot at the bottom. #}
+  <circle class="cf-target" cx="180" cy="288" r="6"/>
+
+  {# Caption. #}
+  <text class="cf-caption" x="180" y="334" text-anchor="middle">one command · three modes · one target</text>
+</svg>

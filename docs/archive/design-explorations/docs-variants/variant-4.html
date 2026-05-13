@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+VARIANT 4 — Variant 2's bones, dressed in DESIGN.md (phantomflow register)
+- Type: Plus Jakarta Sans 800/700 for display + Inter 400/500/600 for body + JetBrains Mono for UI furniture and code. H1 is a two-color statement: first phrase ink, second phrase accent-dark.
+- Color: cool neutral page bg with a 12px paper-grain dot pattern, paper white for lifted surfaces, orange accent reserved per the DESIGN.md contract: brand mark, H1 second-color, section eyebrows, primary pill CTA, callout-bar "warning" label. Active sidebar/TOC rails belong to INK, never accent.
+- Density: high (variant-2 inheritance). 4px grid, breadcrumb sub-nav, sidebar with chevrons + counts + file glyphs, code block with mac traffic-lights + filename + line numbers + copy button, page-nav cards.
+- Editorial moments (one-per-page rule): ONE bicolor H1 · ONE full-bleed ink section (Consent gates) · ONE dev-window plate (the workflow.json code block) · 4 section eyebrows · ONE primary accent pill (header GitHub CTA).
+- Reacts against: variant 2's monochrome cool-blue indigo. Same density, warmer voice. Reads like a serious product, not a token gallery.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workflow phases — Aurora docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* DESIGN.md tokens */
+    --color-ink      : oklch(15%  0    0);
+    --color-text     : oklch(15%  0    0);
+    --color-charcoal : oklch(28%  0    0);
+    --color-ash      : oklch(45%  .026 257);
+    --color-mist     : oklch(89%  .013 257);
+    --color-mist-soft: oklch(93%  .010 257);
+    --color-bg       : oklch(96.5% 0   0);
+    --color-paper    : oklch(99%  0    0);
+    --color-cream    : oklch(94%  0    0);
+    --color-accent       : oklch(70.3% .187 41.5);
+    --color-accent-dark  : oklch(55.8% .187 41.5);
+    --color-accent-soft  : oklch(70.3% .187 41.5 / .15);
+    --color-accent-faint : oklch(70.3% .187 41.5 / .08);
+    --color-grain        : oklch(82% 0 0 / .35);
+
+    /* code-window (dev plate) */
+    --code-bg      : oklch(15% .015 260);   /* near #0a0e1a */
+    --code-bg-bar  : oklch(20% .015 260);
+    --code-rule    : oklch(28% .015 260);
+    --code-fg      : oklch(91% 0 0);
+    --code-muted   : oklch(55% 0 0);
+
+    --header: 64px;
+    --subhead: 40px;
+    --sidebar: 248px;
+    --toc: 224px;
+    --content-max: 760px;
+    --display: "Plus Jakarta Sans", system-ui, sans-serif;
+    --body: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.5;
+    color:var(--color-text);
+    background-color:var(--color-bg);
+    background-image: radial-gradient(var(--color-grain) 1px, transparent 1px);
+    background-size:12px 12px;
+    background-position:0 0;
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:"cv11","ss01";
+  }
+  a{color:var(--color-ink);text-decoration:none}
+  a:hover{color:var(--color-accent-dark)}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--color-ink);outline-offset:2px;border-radius:3px}
+  .skip{position:absolute;left:-9999px;background:var(--color-ink);color:var(--color-paper);padding:8px 12px;border-radius:6px;font-weight:600}
+  .skip:focus{left:12px;top:12px;z-index:100}
+
+  /* ========== header (64px) ========== */
+  header.top{
+    position:sticky;top:0;z-index:30;
+    height:var(--header);
+    background:color-mix(in oklch, var(--color-bg) 92%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--color-mist);
+    display:flex;align-items:center;
+    padding:0 28px;
+    font-size:14px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;color:var(--color-ink)}
+  .brand .mark{
+    width:22px;height:22px;border-radius:6px;
+    background:var(--color-ink);
+    display:grid;place-items:center;
+    color:var(--color-paper);
+    font-family:var(--display);font-weight:800;font-size:12px;
+    position:relative;
+  }
+  .brand .mark::after{
+    content:"";position:absolute;
+    bottom:3px;right:3px;
+    width:5px;height:5px;border-radius:50%;
+    background:var(--color-accent);
+  }
+  .brand .name{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--color-ink)}
+  .brand .sub{
+    font-family:var(--mono);font-size:11px;
+    color:var(--color-ash);text-transform:uppercase;
+    letter-spacing:.06em;font-weight:500;
+    border-left:1px solid var(--color-mist);
+    padding-left:10px;margin-left:6px;
+  }
+  nav.primary{margin-left:36px;display:flex;font-size:15px;align-items:stretch;height:100%}
+  nav.primary a{
+    display:flex;align-items:center;
+    padding:0 16px;
+    color:var(--color-ash);
+    font-family:var(--display);font-weight:700;
+    letter-spacing:-.015em;
+    border-bottom:2px solid transparent;
+    height:100%;margin-bottom:-1px;
+  }
+  nav.primary a:hover{color:var(--color-ink)}
+  nav.primary a.is-active{color:var(--color-ink);border-bottom-color:var(--color-ink)}
+  .head-spacer{flex:1}
+  .search{
+    display:flex;align-items:center;gap:8px;
+    background:var(--color-paper);
+    border:1px solid var(--color-mist);
+    border-radius:8px;padding:6px 12px;
+    font-size:13px;color:var(--color-ash);
+    min-width:240px;
+  }
+  .search kbd{
+    margin-left:auto;
+    font-family:var(--mono);font-size:11px;
+    background:var(--color-bg);
+    border:1px solid var(--color-mist);
+    border-radius:4px;padding:1px 6px;
+    color:var(--color-ash);
+  }
+  .pill-cta{
+    margin-left:14px;
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--color-accent-dark);
+    color:var(--color-paper);
+    font-family:var(--display);font-weight:700;
+    font-size:14px;letter-spacing:-.01em;
+    padding:8px 16px;
+    border-radius:9999px;
+    transition:background .1s linear;
+  }
+  .pill-cta:hover{background:var(--color-accent);color:var(--color-paper)}
+  .pill-cta .arr{font-weight:700;transform:translateY(-.5px)}
+
+  /* ========== sub-nav (breadcrumb + status pill) ========== */
+  .subhead{
+    position:sticky;top:var(--header);z-index:20;
+    height:var(--subhead);
+    background:color-mix(in oklch, var(--color-bg) 92%, transparent);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--color-mist);
+    display:flex;align-items:center;
+    padding:0 28px;
+    font-size:12.5px;
+    color:var(--color-ash);
+    font-family:var(--mono);
+  }
+  .crumbs{display:flex;align-items:center;gap:6px}
+  .crumbs span.sep{color:var(--color-mist)}
+  .crumbs strong{color:var(--color-ink);font-weight:600}
+  .head-spacer-2{flex:1}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:11px;
+    background:var(--color-paper);border:1px solid var(--color-mist);
+    padding:3px 9px;border-radius:9999px;color:var(--color-ash);
+  }
+  .status-pill .dot{width:6px;height:6px;border-radius:50%;background:oklch(65% 0.15 145)}
+
+  /* ========== shell ========== */
+  .shell{
+    display:grid;
+    grid-template-columns:var(--sidebar) 1fr var(--toc);
+    max-width:1480px;margin:0 auto;
+  }
+
+  /* ========== sidebar ========== */
+  aside.sidebar{
+    position:sticky;top:calc(var(--header) + var(--subhead));align-self:start;
+    height:calc(100vh - var(--header) - var(--subhead));
+    overflow-y:auto;
+    border-right:1px solid var(--color-mist);
+    padding:20px 0 96px;
+    font-size:13px;
+  }
+  .nav-group{padding:0 12px;margin-bottom:8px}
+  .nav-group + .nav-group{border-top:1px solid var(--color-mist-soft);padding-top:14px;margin-top:8px}
+  .nav-group .head{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 10px;
+    color:var(--color-accent-dark);
+    font-family:var(--display);
+    font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.10em;
+  }
+  .nav-group .head .chev{font-family:var(--mono);font-size:9px;color:var(--color-ash);font-weight:500}
+  .nav-group .head .count{
+    margin-left:auto;
+    font-family:var(--mono);font-size:10.5px;
+    color:var(--color-ash);font-weight:500;
+    text-transform:none;letter-spacing:0;
+  }
+  .nav-group ul{list-style:none;padding:0;margin:0}
+  .nav-group a{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 10px;
+    border-radius:6px;
+    color:var(--color-charcoal);
+    font-size:13.5px;line-height:1.5;
+    font-weight:500;
+    font-family:var(--body);
+  }
+  .nav-group a .glyph{
+    font-family:var(--mono);font-size:10.5px;
+    color:var(--color-ash);width:14px;text-align:center;font-weight:500;
+  }
+  .nav-group a:hover{background:var(--color-paper);color:var(--color-ink)}
+  /* active rail belongs to INK, not accent (DESIGN.md contract) */
+  .nav-group a.is-active{
+    background:var(--color-ink);
+    color:var(--color-paper);
+    font-weight:600;
+  }
+  .nav-group a.is-active .glyph{color:var(--color-accent)}
+
+  /* ========== article ========== */
+  main.article{
+    padding:56px 56px 96px;
+    min-width:0;
+    border-right:1px solid var(--color-mist);
+    background:linear-gradient(to bottom, var(--color-paper) 0, var(--color-paper) 100%);
+    background-clip:padding-box;
+  }
+  /* paper plate sits over the dot-grain bg */
+  main.article{
+    background-color:var(--color-paper);
+  }
+  .meta-row{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:16px;
+    font-family:var(--mono);font-size:11.5px;
+    color:var(--color-ash);
+  }
+  .meta-row .dot-sep{color:var(--color-mist)}
+  /* Page-level section eyebrow (the one that sits above the H1) */
+  .eyebrow{
+    display:inline-block;
+    font-family:var(--display);
+    font-size:13px;font-weight:700;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:var(--color-accent-dark);
+    margin-bottom:14px;
+  }
+  /* Bicolor H1: first phrase ink, second phrase accent-dark */
+  h1{
+    font-family:var(--display);
+    font-size:60px;
+    font-weight:800;
+    line-height:1.0;
+    letter-spacing:-.045em;
+    color:var(--color-ink);
+    margin:0 0 18px;
+    max-width:680px;
+  }
+  h1 .accent{color:var(--color-accent-dark)}
+  /* Lead paragraph: Inter 20/1.625 in --color-ash */
+  .lead{
+    font-family:var(--body);
+    font-size:20px;line-height:1.625;
+    color:var(--color-ash);
+    font-weight:400;
+    margin:0 0 40px;
+    max-width:620px;
+  }
+  /* H2 with a small mono section number */
+  h2{
+    font-family:var(--display);
+    font-size:30px;font-weight:800;
+    letter-spacing:-.025em;line-height:1.1;
+    color:var(--color-ink);
+    margin:64px 0 16px;
+    scroll-margin-top:96px;
+    display:flex;align-items:baseline;gap:14px;
+  }
+  h2::before{
+    content:attr(data-num);
+    font-family:var(--mono);font-size:13px;
+    color:var(--color-accent-dark);
+    font-weight:600;
+    letter-spacing:0;
+    text-transform:uppercase;
+  }
+  h2:first-of-type{margin-top:0}
+  h3{
+    font-family:var(--display);
+    font-size:18px;font-weight:700;
+    letter-spacing:-.015em;
+    color:var(--color-ink);
+    margin:36px 0 12px;
+  }
+  p{margin:0 0 18px;max-width:680px;color:var(--color-text)}
+  code{
+    font-family:var(--mono);font-size:.86em;
+    background:var(--color-bg);
+    color:var(--color-ink);
+    padding:1.5px 6px;border-radius:4px;
+    border:1px solid var(--color-mist);
+    font-weight:500;
+  }
+
+  /* ========== dev-window code block (the page's one code-window plate) ========== */
+  .codeblock{
+    margin:20px 0 32px;
+    max-width:760px;
+    border-radius:10px;
+    overflow:hidden;
+    background:var(--code-bg);
+    border:1px solid var(--code-rule);
+    box-shadow:0 1px 0 0 var(--color-mist);
+  }
+  .codeblock .cb-head{
+    display:flex;align-items:center;
+    background:var(--code-bg-bar);
+    color:oklch(72% 0 0);
+    border-bottom:1px solid var(--code-rule);
+    padding:9px 14px;
+    font-family:var(--mono);font-size:11.5px;
+  }
+  .traffic{display:flex;gap:6px;margin-right:14px}
+  .traffic span{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .traffic .r{background:#ff5f56}
+  .traffic .y{background:#ffbd2e}
+  .traffic .g{background:#27c93f}
+  .codeblock .cb-head .file{display:flex;align-items:center;gap:6px}
+  .codeblock .cb-head .lang{margin-left:auto;color:oklch(58% 0 0);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+  .codeblock .cb-head .copy{
+    margin-left:12px;
+    color:oklch(78% 0 0);background:transparent;
+    border:1px solid var(--code-rule);
+    padding:3px 8px;border-radius:4px;
+    font-family:inherit;font-size:10.5px;font-weight:500;
+    cursor:pointer;
+    transition:background .1s linear;
+  }
+  .codeblock .cb-head .copy:hover{background:var(--code-rule);color:var(--code-fg)}
+  .codeblock pre{
+    font-family:var(--mono);
+    color:var(--code-fg);
+    margin:0;
+    padding:14px 0;
+    font-size:13px;line-height:1.7;
+    overflow-x:auto;
+  }
+  .codeblock pre code{background:none;border:none;padding:0;font-size:inherit;font-weight:400;color:inherit;display:block}
+  .codeblock .ln{display:inline-block;width:40px;text-align:right;padding-right:18px;color:var(--code-muted);user-select:none}
+  /* Syntax tokens use accent-orange for strings (the dev-window's accent moment) */
+  .tok-key{color:#a5b4fc}
+  .tok-str{color:#fdba74}        /* orange-300, sibling to accent */
+  .tok-num{color:#fde047}
+  .tok-com{color:oklch(50% 0 0);font-style:italic}
+
+  /* ========== table ========== */
+  table{
+    border-collapse:collapse;width:100%;max-width:760px;
+    font-size:13.5px;
+    margin:20px 0 32px;
+    border:1px solid var(--color-mist);
+    border-radius:8px;overflow:hidden;
+    background:var(--color-paper);
+  }
+  thead tr{background:var(--color-bg)}
+  th{
+    font-family:var(--display);font-weight:700;
+    font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--color-ash);
+    text-align:left;padding:10px 14px;
+    border-bottom:1px solid var(--color-mist);
+  }
+  td{
+    padding:10px 14px;text-align:left;
+    border-bottom:1px solid var(--color-mist-soft);
+    vertical-align:top;
+  }
+  tbody tr:nth-child(even){background:var(--color-bg)}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-size:12px;color:var(--color-ash);width:40px;font-weight:500}
+  td.phase{font-weight:600;color:var(--color-ink);font-family:var(--display);letter-spacing:-.005em}
+  td.skill code{background:var(--code-bg);color:#fdba74;border-color:transparent;padding:1.5px 6px}
+  td.out{font-family:var(--mono);font-size:12px;color:var(--color-ash)}
+
+  /* ========== diagram (phase strip) ========== */
+  .diagram{
+    margin:20px 0 32px;
+    max-width:760px;
+    background:var(--color-bg);
+    border:1px solid var(--color-mist);
+    border-radius:8px;
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+    gap:8px;
+    font-family:var(--mono);font-size:11.5px;
+  }
+  .diagram .step{
+    background:var(--color-paper);
+    border:1px solid var(--color-mist);
+    border-radius:6px;
+    padding:11px 8px;
+    text-align:center;
+    color:var(--color-ink);
+    font-weight:500;
+  }
+  .diagram .step .n{display:block;color:var(--color-ash);font-size:10px;margin-bottom:3px;font-weight:500}
+  .diagram .step.gate{
+    background:var(--color-accent-soft);
+    color:var(--color-accent-dark);
+    border-color:transparent;
+    font-weight:700;
+  }
+  .diagram .step.gate .n{color:var(--color-accent-dark)}
+
+  /* ========== full-bleed INK section (Consent gates, the page's one ink band) ========== */
+  .ink-band{
+    margin:64px -56px 32px;
+    padding:56px 56px 48px;
+    background:var(--color-ink);
+    color:var(--color-paper);
+    position:relative;
+  }
+  .ink-band::before{
+    content:"";
+    position:absolute;left:0;right:0;top:0;
+    height:3px;background:var(--color-accent-dark);
+  }
+  .ink-band .eyebrow{color:var(--color-accent);margin-bottom:12px}
+  .ink-band h2{
+    color:var(--color-paper);
+    margin:0 0 18px;
+    font-size:36px;
+    letter-spacing:-.03em;
+  }
+  .ink-band h2::before{color:var(--color-accent)}
+  .ink-band p{color:oklch(78% 0 0);max-width:620px;font-size:16.5px;line-height:1.625}
+  .ink-band code{
+    background:oklch(22% 0 0);
+    color:var(--color-paper);
+    border-color:oklch(28% 0 0);
+  }
+  .ink-band .warn-tag{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;
+    color:var(--color-ink);
+    background:var(--color-accent);
+    padding:5px 12px;border-radius:9999px;
+    margin:0 0 16px;
+  }
+  .ink-band .warn-tag::before{content:"!";font-weight:800;font-family:var(--display);font-size:13px}
+
+  /* ========== TOC ========== */
+  aside.toc{
+    position:sticky;top:calc(var(--header) + var(--subhead));align-self:start;
+    height:calc(100vh - var(--header) - var(--subhead));
+    overflow-y:auto;
+    padding:56px 28px 96px;
+    font-size:13px;
+  }
+  .toc h5{
+    margin:0 0 14px;
+    font-family:var(--display);
+    font-size:11px;font-weight:700;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:var(--color-accent-dark);
+  }
+  .toc ul{list-style:none;padding:0;margin:0}
+  .toc li{margin:0 0 6px;line-height:1.45}
+  .toc a{
+    color:var(--color-ash);
+    font-size:13px;display:block;
+    padding:3px 0 3px 14px;
+    border-left:2px solid transparent;
+    font-weight:500;
+  }
+  .toc a:hover{color:var(--color-ink)}
+  /* TOC active rail belongs to INK, not accent */
+  .toc a.is-active{
+    color:var(--color-ink);
+    border-left-color:var(--color-ink);
+    font-weight:600;
+  }
+  .toc a.lvl-3{padding-left:26px;font-size:12.5px}
+  .toc .num{font-family:var(--mono);font-size:11px;color:var(--color-ash);margin-right:8px;font-weight:500}
+  .toc a.is-active .num{color:var(--color-accent-dark)}
+  .toc-meta{
+    margin-top:36px;padding-top:18px;
+    border-top:1px solid var(--color-mist);
+    font-family:var(--mono);font-size:11.5px;
+    color:var(--color-ash);line-height:1.8;
+  }
+  .toc-meta div span{color:var(--color-ink);font-weight:600}
+
+  /* ========== page nav (prev / next pill cards) ========== */
+  .pgnav{display:flex;gap:12px;margin:40px 0 0;max-width:760px}
+  .pgnav a{
+    flex:1;
+    border:1px solid var(--color-mist);
+    border-radius:12px;
+    padding:14px 18px;
+    background:var(--color-paper);
+    transition:border-color .1s linear, transform .1s linear;
+  }
+  .pgnav a:hover{border-color:var(--color-ink);color:var(--color-ink);transform:translateY(-1px)}
+  .pgnav .lbl{
+    display:block;
+    font-family:var(--mono);font-size:10.5px;
+    color:var(--color-ash);
+    text-transform:uppercase;letter-spacing:.06em;
+    margin-bottom:5px;font-weight:600;
+  }
+  .pgnav .ti{font-family:var(--display);font-weight:700;font-size:14.5px;color:var(--color-ink);letter-spacing:-.01em}
+  .pgnav a.next{text-align:right}
+
+  /* ========== footer ========== */
+  footer.docfoot{
+    border-top:1px solid var(--color-mist);
+    margin:48px 0 0;
+    padding:22px 0 0;
+    font-size:12.5px;
+    color:var(--color-ash);
+    display:flex;justify-content:space-between;align-items:center;
+    max-width:760px;
+    font-family:var(--mono);
+  }
+  footer.docfoot a{color:var(--color-ash)}
+  footer.docfoot a:hover{color:var(--color-ink)}
+
+  /* ========== responsive ========== */
+  @media (max-width:1180px){
+    aside.toc{display:none}
+    .shell{grid-template-columns:var(--sidebar) 1fr}
+  }
+  @media (max-width:740px){
+    aside.sidebar{display:none}
+    .shell{grid-template-columns:1fr}
+    main.article{padding:28px 22px 64px;border-right:none}
+    nav.primary{display:none}
+    .pill-cta{display:none}
+    .search{min-width:0}
+    h1{font-size:42px;letter-spacing:-.04em}
+    .lead{font-size:18px}
+    h2{font-size:24px}
+    .ink-band{margin:48px -22px 28px;padding:36px 22px 32px}
+    .crumbs{font-size:11px}
+    header.top{padding:0 18px}
+    .subhead{padding:0 18px}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="brand" href="#">
+    <span class="mark">A</span>
+    <span class="name">Aurora</span>
+    <span class="sub">Docs</span>
+  </a>
+  <nav class="primary" aria-label="Primary">
+    <a href="#" class="is-active">Docs</a>
+    <a href="#">Skills</a>
+    <a href="#">Hooks</a>
+    <a href="#">Reference</a>
+    <a href="#">Changelog</a>
+  </nav>
+  <div class="head-spacer"></div>
+  <div class="search">Search docs <kbd>⌘K</kbd></div>
+  <a class="pill-cta" href="#">View on GitHub <span class="arr">→</span></a>
+</header>
+
+<div class="subhead">
+  <div class="crumbs">
+    <span>docs</span><span class="sep">/</span>
+    <span>core-concepts</span><span class="sep">/</span>
+    <strong>workflow-phases</strong>
+  </div>
+  <div class="head-spacer-2"></div>
+  <span class="status-pill"><span class="dot"></span> Stable · v0.4</span>
+</div>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Documentation navigation">
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Getting started <span class="count">4</span></div>
+      <ul>
+        <li><a href="#"><span class="glyph">M</span>Introduction</a></li>
+        <li><a href="#"><span class="glyph">M</span>Installation</a></li>
+        <li><a href="#"><span class="glyph">M</span>Quickstart</a></li>
+        <li><a href="#"><span class="glyph">M</span>Configuration</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Core concepts <span class="count">5</span></div>
+      <ul>
+        <li><a href="#" class="is-active"><span class="glyph">›</span>Workflow phases</a></li>
+        <li><a href="#"><span class="glyph">M</span>Hooks and guards</a></li>
+        <li><a href="#"><span class="glyph">M</span>Skills and subagents</a></li>
+        <li><a href="#"><span class="glyph">M</span>Memory system</a></li>
+        <li><a href="#"><span class="glyph">M</span>Consent gates</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Reference <span class="count">8</span></div>
+      <ul>
+        <li><a href="#"><span class="glyph">F</span>CLI commands</a></li>
+        <li><a href="#"><span class="glyph">{}</span>settings.json</a></li>
+        <li><a href="#"><span class="glyph">{}</span>project.json</a></li>
+        <li><a href="#"><span class="glyph">{}</span>workflow.json</a></li>
+        <li><a href="#"><span class="glyph">F</span>Hook events</a></li>
+        <li><a href="#"><span class="glyph">F</span>Skill index</a></li>
+        <li><a href="#"><span class="glyph">F</span>Memory schema</a></li>
+        <li><a href="#"><span class="glyph">F</span>Glossary</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main id="main" class="article">
+    <div class="meta-row">
+      <span>5 min read</span>
+      <span class="dot-sep">·</span>
+      <span>Edited 2026-04-29</span>
+      <span class="dot-sep">·</span>
+      <span>v0.4</span>
+    </div>
+    <p class="eyebrow">Core concepts</p>
+    <h1>Workflow <span class="accent">phases.</span></h1>
+    <p class="lead">The eleven-phase pipeline that takes a request from intake to commit. Every phase produces exactly one artifact, and every transition is enforced at the write boundary by a hook.</p>
+
+    <h2 id="overview" data-num="§ 01">Overview</h2>
+    <p>Aurora ships a constitutional workflow with eleven ordered phases. Order is enforced at the write boundary by <code>track_guard</code>, so phases cannot be skipped or reordered without an explicit exception in <code>.claude/state/workflow.json</code>.</p>
+    <p>Three of the eleven phases are consent gates: user-typed slash commands that Claude is structurally unable to invoke. Approval authority lives outside the model.</p>
+
+    <h2 id="phases" data-num="§ 02">The eleven phases</h2>
+    <p>Each phase has exactly one mandated output. The output of phase <em>n</em> is the contract for phase <em>n + 1</em>.</p>
+    <table>
+      <thead><tr><th style="width:40px">#</th><th>Phase</th><th>Skill</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td class="phase">Intake</td><td class="skill"><code>/intake</code></td><td class="out">docs/intake/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">02</td><td class="phase">Scout</td><td class="skill"><code>/scout</code></td><td class="out">docs/scout/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">03</td><td class="phase">Research</td><td class="skill"><code>/research</code></td><td class="out">docs/research/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">04</td><td class="phase">Spec</td><td class="skill"><code>/spec</code></td><td class="out">docs/specs/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">05</td><td class="phase">Approve spec</td><td class="skill"><code>/approve-spec</code></td><td class="out">approval token</td></tr>
+        <tr><td class="num">06</td><td class="phase">TDD</td><td class="skill"><code>/tdd</code></td><td class="out">code</td></tr>
+        <tr><td class="num">07</td><td class="phase">Simplify</td><td class="skill"><code>/simplify</code></td><td class="out">clean diff</td></tr>
+        <tr><td class="num">08</td><td class="phase">Security</td><td class="skill"><code>/security</code></td><td class="out">findings report</td></tr>
+        <tr><td class="num">09</td><td class="phase">Integrate</td><td class="skill"><code>/integrate</code></td><td class="out">verify verdict</td></tr>
+        <tr><td class="num">10</td><td class="phase">Document</td><td class="skill"><code>/document</code></td><td class="out">prose</td></tr>
+        <tr><td class="num">11</td><td class="phase">Commit</td><td class="skill"><code>/commit</code></td><td class="out">commit</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="diagram">Phase flow</h3>
+    <div class="diagram" role="img" aria-label="Phase flow diagram">
+      <div class="step"><span class="n">01</span>Intake</div>
+      <div class="step"><span class="n">02</span>Scout</div>
+      <div class="step"><span class="n">03</span>Research</div>
+      <div class="step"><span class="n">04</span>Spec</div>
+      <div class="step gate"><span class="n">05</span>Approve</div>
+      <div class="step"><span class="n">06</span>TDD</div>
+      <div class="step"><span class="n">07</span>Simplify</div>
+      <div class="step"><span class="n">08</span>Security</div>
+      <div class="step"><span class="n">09</span>Integrate</div>
+      <div class="step"><span class="n">10</span>Document</div>
+      <div class="step gate"><span class="n">11</span>Commit</div>
+    </div>
+
+    <section class="ink-band" aria-labelledby="consent">
+      <p class="eyebrow">Article III · the gate contract</p>
+      <h2 id="consent" data-num="§ 03">Consent gates</h2>
+      <p>Each gate writes a short-lived consent marker that the corresponding PreToolUse guard validates before allowing the approval-token write. Markers expire after sixty seconds and are deleted on use, so a gate cannot be replayed.</p>
+      <span class="warn-tag">Not bypassable</span>
+      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, outside Claude's tool boundary. Claude cannot forge or replay an approval marker, which keeps approval authority outside the model.</p>
+    </section>
+
+    <h2 id="customize" data-num="§ 04">Customizing the pipeline</h2>
+    <p>To skip a phase for a specific request, add it to the <code>exceptions</code> array. <code>/triage</code> is the only sanctioned writer of this file.</p>
+    <div class="codeblock">
+      <div class="cb-head">
+        <span class="traffic" aria-hidden="true"><span class="r"></span><span class="y"></span><span class="g"></span></span>
+        <span class="file">.claude/state/workflow.json</span>
+        <span class="lang">JSON</span>
+        <button class="copy" type="button">Copy</button>
+      </div>
+      <pre><code><span class="ln"> 1</span><span class="tok-com">// workflow state for slug `site-react-ssg-seo`</span>
+<span class="ln"> 2</span>{
+<span class="ln"> 3</span>  <span class="tok-key">"slug"</span>: <span class="tok-str">"site-react-ssg-seo"</span>,
+<span class="ln"> 4</span>  <span class="tok-key">"entry_phase"</span>: <span class="tok-str">"intake"</span>,
+<span class="ln"> 5</span>  <span class="tok-key">"exceptions"</span>: [<span class="tok-str">"security"</span>],
+<span class="ln"> 6</span>  <span class="tok-key">"completed"</span>: [<span class="tok-str">"intake"</span>, <span class="tok-str">"scout"</span>],
+<span class="ln"> 7</span>  <span class="tok-key">"current"</span>: <span class="tok-str">"research"</span>
+<span class="ln"> 8</span>}</code></pre>
+    </div>
+    <p>Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
+
+    <div class="pgnav">
+      <a href="#" class="prev"><span class="lbl">← Prev</span><span class="ti">Configuration</span></a>
+      <a href="#" class="next"><span class="lbl">Next →</span><span class="ti">Hooks and guards</span></a>
+    </div>
+
+    <footer class="docfoot">
+      <span>last-modified: 2026-04-29</span>
+      <span><a href="#">edit-on-github</a> · <a href="#">report-issue</a> · <a href="#">license MIT</a></span>
+    </footer>
+  </main>
+
+  <aside class="toc" aria-label="On this page">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#overview" class="is-active"><span class="num">01</span>Overview</a></li>
+      <li><a href="#phases"><span class="num">02</span>The eleven phases</a></li>
+      <li><a href="#diagram" class="lvl-3"><span class="num">2.1</span>Phase flow</a></li>
+      <li><a href="#consent"><span class="num">03</span>Consent gates</a></li>
+      <li><a href="#customize"><span class="num">04</span>Customizing</a></li>
+    </ul>
+    <div class="toc-meta">
+      <div>commit <span>a3f81e2</span></div>
+      <div>updated <span>2026-04-29</span></div>
+      <div>contribs <span>3</span></div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

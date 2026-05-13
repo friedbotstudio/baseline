@@ -1,0 +1,102 @@
+---
+owners: [scenario, implement]
+category: repo-specific test and code conventions
+size-cap: 500
+key: short slug
+verifies-against: codebase
+---
+
+# Conventions
+
+Repo-specific patterns the `scenario` and `implement` skills should match. Fixture locations, helper idioms, naming, file layout quirks. Not generic best practices — specific facts about *this* codebase.
+
+Each entry's stable key is a short slug.
+
+---
+
+## hook-script-shape
+
+- Convention: every `.claude/hooks/*.sh` script sources `lib/common.sh` and calls `read_payload` first. Decision emitters: `emit_allow`, `emit_block`, `emit_ask`, `emit_info`. JSON parsing exclusively via `python3` heredoc — no `jq`.
+- Why: portability (jq isn't always present), uniform error handling.
+- Verified-at: HEAD
+- Last-touched: 2026-04-27
+
+## skill-ownership-frontmatter
+
+- Convention: every `.claude/skills/<slug>/SKILL.md` declares `owner: baseline` or `owner: user` in its YAML frontmatter, on the line directly after `name:`. The build script `scripts/build-manifest.mjs` reads each `owner:` and emits `obj/template/manifest.json → owners.skills` as the canonical baseline-skill enumeration. `audit-baseline` consumes that map (no hard-coded `EXPECTED_SKILLS` set anymore) and verifies per-file sha256 drift for every baseline-owned skill.
+- Why: provenance — baseline-owned skills can be re-overlaid by a future `npx create-baseline upgrade` while user-owned skills are left alone. The redesign also removed an old hard-coded slug list in `audit.sh`, leaving the manifest as the single source of truth.
+- Constraint: a new SKILL.md without `owner:` fails the audit at the `check_skill_ownership` row (`missing owner frontmatter`). Invalid values fail with `invalid owner=<value>`.
+- Reference: CLAUDE.md Article XI, seed.md §17.
+- Verified-at: HEAD
+- Last-touched: 2026-05-12
+
+## dev-server-ownership
+
+> verbatim (user, 2026-04-29, recorded in `_resume.md` snapshot):
+> "if dev server is running (on 4321) do not start a new server and kill; only use playwright to open chrome; test and kill chrome; not the server; but if server is started by claude (in background shell) then kill it"
+
+> verbatim (user, 2026-04-30, clarification after observed drift across multiple `/impeccable` passes that churned the dev server up/down):
+> "if dev server is already running (say I manually started it), then do not kill the pid; else if dev server was started by claude (via bg shell) then it can choose to kill it after the work is finished."
+
+- source: user-instruction
+- key clause: **"after the work is finished"** — ownership lifetime is **session-end** (or explicit user signal that the server is no longer needed), **not per-task or per-pass**. Iterative work across multiple Edits, Plays, and verifications shares one server. The 2026-04-30 clarification was issued after Claude killed and respawned the server three times across a single conversation; that pattern is the failure mode to avoid.
+- detection: before any spawn, run `lsof -ti:<PORT> -sTCP:LISTEN`. If something is listening, the user owns it: connect Playwright to the existing server, never kill the listener. If nothing is listening, Claude may spawn (capture PID at spawn) and owns the lifecycle until session-end.
+- cleanup pattern: kill **only the captured PID** (`kill "$(cat /tmp/devserver-<PORT>.pid)"`). Never `lsof -ti:PORT | xargs kill` — see `landmines.md → lsof-port-kill-takes-firefox-with-it`.
+- session-end signals: end of conversation, explicit user message ("done with the server", "kill it now"), `/grant-commit` typed, or context window exit. Mid-conversation pauses, edits, Playwright runs, or test cycles are NOT session-end.
+- **Pattern (single-spawn, session-lifetime):**
+  ```bash
+  PORT=4321
+  PID_FILE="/tmp/devserver-$PORT.pid"
+  if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+    SERVER_OWNED_BY_CLAUDE=1                 # already spawned earlier this session
+  elif lsof -ti:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
+    SERVER_OWNED_BY_CLAUDE=0                 # user owns it; don't touch
+  else
+    npx eleventy --serve --port=$PORT &      # spawn once, hold across passes
+    echo $! > "$PID_FILE"
+    SERVER_OWNED_BY_CLAUDE=1
+  fi
+  # … iterative work: edits, playwright open/close, verification, more edits …
+  mcp__playwright__browser_close                # always close the browser between checks
+  # … only at session-end (or on explicit user signal) …
+  if [ "$SERVER_OWNED_BY_CLAUDE" = 1 ]; then
+    kill "$(cat "$PID_FILE")" 2>/dev/null
+    rm -f "$PID_FILE"
+  fi
+  ```
+- applies-to: every skill or session needing a live preview — `impeccable live`, `verify` smoke, `integrate` browser tests, ad-hoc visual review during `/design-ui` or `/polish`, multi-pass `/impeccable` runs. Cross-reference with `landmines.md → lsof-port-kill-takes-firefox-with-it`.
+- surfaced-by: `process_lifecycle_guard` PreToolUse hook on Bash matching `kill|pkill|lsof|fuser|npm run.*serve|npm run.*dev|eleventy --serve|vite|next dev|astro dev|http.server`.
+- verified-at: HEAD
+- last-touched: 2026-04-30
+
+## test-yaml-line-parsing
+
+- source: inferred-from-code
+- convention: this repo enforces empty `dependencies` via `scripts/check-files-diff.mjs` (the `DEPS_FORBIDDEN` sub-check), so YAML-invariant tests cannot add `yaml` as a devDependency. Instead, parse `.github/workflows/*.yml` with line-based regex helpers that exploit YAML's indent structure: `topLevelBlock(text, key)` returns the body of a column-0 key (e.g., `on:`, `jobs:`, `concurrency:`); `jobBlock(text, name)` returns the body of a `  <name>:`-indented job under `jobs:`; `subBlock(blockText, subKey)` returns the body of an inner `    <key>:`-indented section (e.g., `permissions:`, `steps:`); `parsePermissions(blockText)` turns a permissions sub-block into a flat `{key: value}` map for `assert.deepEqual` checks; `usesDirectives(text)` returns every `uses:` line's value verbatim for SHA-pin assertions; `inputBlock(onBlockText, inputName)` returns the body of an `      <name>:`-indented input under `workflow_dispatch.inputs:`.
+- why: the project's tarball-shape contract (`check-files-diff.mjs → DEVDEP_RANGE_FORBIDDEN`, `DEVDEP_NON_REGISTRY`) blocks loose devDep additions, and the runtime `dependencies` array is asserted empty. Importing a yaml parser would break either invariant or push churn.
+- placement: helpers live ~10 lines each inside the test file that needs them. Do not extract a shared YAML utility module just for one or two test suites; DRY emerges from structure, not from premature extraction.
+- reference: `tests/release-workflow.test.mjs:30–87` (the 6 helpers).
+- applies-to: any test asserting on `.github/workflows/*.yml` shape or other project-controlled YAML.
+- verified-at: HEAD
+- last-touched: 2026-05-13
+
+## test-esm-env-cache-bust
+
+- source: inferred-from-code
+- convention: ESM tests that dynamically import a target module under multiple env states MUST cache-bust the import URL by appending a unique query suffix: `pathToFileURL(file).href + '?t=' + Date.now() + '-' + Math.random()`. Node's ESM loader caches modules by URL string; without a unique suffix, the second `import()` returns the first call's evaluation regardless of env changes between calls. Save/restore `process.env.<VAR>` in a try/finally so concurrent test files don't pollute each other.
+- why: eleventy global data files at `site-src/_data/*.js` read `process.env.GITHUB_RUN_ID` at import time. The same module needs to return `'gha-…'` in one test and `'dev'` in the next; without cache-busting, the second test sees the first test's frozen value.
+- reference: `tests/site-build-id.test.mjs:39–58` (`importBuildData` helper).
+- applies-to: any eleventy-data-file test or env-driven ESM module test where the import surface depends on `process.env`.
+- verified-at: HEAD
+- last-touched: 2026-05-13
+
+## test-regression-trap-semantics
+
+- source: inferred-from-code
+- convention: when `/scenario` authors a new test suite, the per-test report must distinguish three pre-implement states: **RED** (test fails as expected, awaiting implement), **PASS_UNEXPECTEDLY** (test passes when it shouldn't — the assertion is probably too soft, or the implementation already accidentally satisfies it), and **REGRESSION_TRAP_PRE_PASSING** (test defends an invariant that must hold both before and after the change, e.g., "key X is absent from the manifest" — passing pre-implement is the correct initial state).
+- why: the third category is easy to misclassify as PASS_UNEXPECTEDLY, which prompts implement-tick to "fix" a test that's actually working as designed. Surface it explicitly in the `## Written` block so implement leaves it alone.
+- example: `tests/build-template-build-id.test.mjs` has two tests — one for `GITHUB_RUN_ID` set (RED pre-implement; goes green after stamping logic lands) and one for unset (REGRESSION_TRAP_PRE_PASSING — must continue to pass after implement adds the conditional stamp; ensures the dev manifest stays byte-identical when env is unset).
+- reference: `.claude/skill-memory/scenario/MEMORY.md` (the originating note, now scratch-only after promotion).
+- applies-to: `/scenario` per-test report; any TDD pass where an AC is "X is absent" or "X is unchanged".
+- verified-at: HEAD
+- last-touched: 2026-05-13

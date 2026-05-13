@@ -1,0 +1,10 @@
+{
+  "request": "Add a skill-ownership system: every SKILL.md declares owner: baseline|user, and a generated .claude/baseline.lock.json records baseline-owned slugs with content hashes. Lock is consumed by audit-baseline (drift detection) and a future upgrade subcommand (out of scope here). Scope: frontmatter convention, lock format/generator, audit integration, seed.md/CLAUDE.md amendments.",
+  "slug": "skill-ownership",
+  "entry_phase": "intake",
+  "exceptions": ["swarm-plan", "approve-swarm", "swarm-dispatch", "grant-commit", "commit"],
+  "completed": ["intake", "scout", "research", "spec"],
+  "created_at": 1747094400,
+  "updated_at": 1778602000,
+  "phase_6_route": "solo /tdd (forced by new non-git rule landed in swarm-requires-git chore; stale swarm plan + approval invalidated)"
+}

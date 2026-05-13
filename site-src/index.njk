@@ -1,0 +1,416 @@
+---
+layout: base.njk
+pageTitle: "baseline · A discipline layer for Claude Code"
+active: overview
+eleventyComputed:
+  subtitle: "/ {{ site.versionMinor }}"
+  description: "Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent."
+---
+<main id="main" class="marketing">
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-content">
+        <p class="eyebrow">Claude Code · constitutional baseline</p>
+        <h1>A discipline layer<br>for Claude<span class="accent">.</span></h1>
+        <p class="lead">Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. Every phase produces one artifact, every gate is user-typed, and Claude cannot self-approve.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="/install/">Get the baseline <span class="arr">→</span></a>
+          <a class="btn btn-secondary" href="/swarm/">Read the docs</a>
+        </div>
+        <div class="meta-strip" aria-label="Baseline counts">
+          <div class="stat"><span class="num">{{ baseline.hooks.total }}</span><span class="label">Hooks</span></div>
+          <div class="stat"><span class="num">{{ baseline.skills.total }}</span><span class="label">Skills</span></div>
+          <div class="stat"><span class="num">{{ baseline.subagents.total }}</span><span class="label">Subagent</span></div>
+          <div class="stat"><span class="num">{{ baseline.phases }}</span><span class="label">Phases</span></div>
+          <div class="stat"><span class="num">{{ baseline.gates }}</span><span class="label">Gates</span></div>
+        </div>
+      </div>
+
+      <div class="wobble-frame dc-frame">
+        <div class="dev-console" aria-label="A live Claude Code session running through the baseline workflow">
+          <div class="dc-bar" aria-hidden="true">
+            <div class="dc-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <div class="dc-file">~/your-project · claude</div>
+          </div>
+          <pre class="dc-body"><code id="dc-stream"></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ I</p>
+        <h2>What it is</h2>
+      </div>
+      <p>A repository overlay for Claude Code. It sets the rules Claude follows in this codebase, in this session, with the hooks that enforce them at the tool boundary. Memory, prompts, and skills are helpful. Hooks are load-bearing.</p>
+    </div>
+
+    <div class="columns">
+      <figure class="figure-strata" aria-labelledby="strata-cap">
+        <svg class="strata-svg" viewBox="0 0 360 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="strata-cap">
+          <defs>
+            <pattern id="strata-dots" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+              <circle class="pattern-dot" cx="7" cy="7" r="1.4"/>
+            </pattern>
+            <mask id="strata-mask-iii">
+              <rect x="0" y="0" width="360" height="470" fill="white"/>
+              <circle cx="180" cy="288" r="26" fill="black"/>
+            </mask>
+          </defs>
+          <g class="strata-form strata-i">
+            <rect class="form-fill" x="152" y="32" width="56" height="56"/>
+            <text class="numeral on-fill" x="180" y="68" text-anchor="middle">I</text>
+          </g>
+          <g class="strata-form strata-ii">
+            <rect class="form-stroke" x="108" y="128" width="144" height="72"/>
+            <text class="numeral" x="180" y="172" text-anchor="middle">II</text>
+          </g>
+          <g class="strata-form strata-iii">
+            <rect class="form-dotted" x="70" y="240" width="220" height="96" mask="url(#strata-mask-iii)"/>
+            <rect class="form-stroke" x="70" y="240" width="220" height="96"/>
+            <text class="numeral" x="180" y="296" text-anchor="middle">III</text>
+          </g>
+          <g class="strata-form strata-iv">
+            <line class="form-line" x1="20" y1="400" x2="340" y2="400"/>
+            <circle class="form-accent" cx="200" cy="400" r="5"/>
+            <text class="numeral-mono" x="180" y="436" text-anchor="middle">IV</text>
+          </g>
+        </svg>
+        <figcaption id="strata-cap" class="strata-key">
+          <span><strong>I</strong>Genesis</span>
+          <span><strong>II</strong>Constitution</span>
+          <span><strong>III</strong>Implementation</span>
+          <span><strong>IV</strong>Tool boundary</span>
+        </figcaption>
+      </figure>
+
+      <div class="concepts is-row">
+        <div class="concept">
+          <p class="num">01 · Constitution</p>
+          <h3>CLAUDE.md as in-session contract</h3>
+          <p>Ten articles bind authority, architecture, workflow ordering, engineering rules, git rules, and project memory. Genesis lives in <code>seed.md</code>; the constitution governs in-session behavior; hooks enforce the constitution.</p>
+        </div>
+        <div class="concept">
+          <p class="num">02 · Enforcement</p>
+          <h3>{{ baseline.hooks.total }} hooks at every boundary</h3>
+          <p>Pre and post tool-use guards block destructive commands, gate consent markers, validate spec diagrams, and enforce phase ordering. Hooks run outside Claude's tool boundary, which is why Claude cannot forge an approval.</p>
+        </div>
+        <div class="concept">
+          <p class="num">03 · Workflow</p>
+          <h3>Eleven phases, three gates</h3>
+          <p>Intake to commit, in order. Three consent gates are user-typed slash commands: <code>/approve-spec</code> at phase 5, <code>/approve-swarm</code> at phase 6's swarm fork, and <code>/grant-commit</code> at phase 11. Skipping any phase requires an explicit exception in <code>workflow.json</code>, written by triage.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ II</p>
+        <h2>Why hooks</h2>
+      </div>
+      <p>Hooks run outside Claude's tool boundary. When a hook blocks a tool call, Claude never executes it. The dashed lines below are the surfaces Claude cannot reach. Memory is helpful, prompts are helpful, hooks are load-bearing.</p>
+    </div>
+    <figure class="figure">
+      <svg class="diagram-svg" viewBox="0 0 880 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hook-diag-title">
+        <title id="hook-diag-title">Hooks intercept the path between user, Claude, and tools.</title>
+        <defs>
+          <marker id="arr-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="conn-arrow"/>
+          </marker>
+        </defs>
+        <line class="conn" x1="150" y1="150" x2="252" y2="150" marker-end="url(#arr-end)"/>
+        <line class="conn" x1="390" y1="150" x2="492" y2="150" marker-end="url(#arr-end)"/>
+        <line class="conn" x1="630" y1="150" x2="732" y2="150" marker-end="url(#arr-end)"/>
+        <g>
+          <rect class="stage" x="20" y="120" width="130" height="60" rx="8"/>
+          <text class="stage-label" x="85" y="146" text-anchor="middle">User</text>
+          <text class="stage-sub" x="85" y="166" text-anchor="middle">types a prompt</text>
+        </g>
+        <g>
+          <rect class="stage" x="260" y="120" width="130" height="60" rx="8"/>
+          <text class="stage-label" x="325" y="146" text-anchor="middle">Claude</text>
+          <text class="stage-sub" x="325" y="166" text-anchor="middle">reads, plans, picks tool</text>
+        </g>
+        <g>
+          <rect class="stage" x="500" y="120" width="130" height="60" rx="8"/>
+          <text class="stage-label" x="565" y="146" text-anchor="middle">Tool</text>
+          <text class="stage-sub" x="565" y="166" text-anchor="middle">Write · Edit · Bash</text>
+        </g>
+        <g>
+          <rect class="stage" x="740" y="120" width="120" height="60" rx="8"/>
+          <text class="stage-label" x="800" y="146" text-anchor="middle">Result</text>
+          <text class="stage-sub" x="800" y="166" text-anchor="middle">diff · output · error</text>
+        </g>
+        <g>
+          <line class="hook-line" x1="205" y1="84" x2="205" y2="216"/>
+          <text class="hook-event" x="205" y="70" text-anchor="middle">UserPromptSubmit</text>
+          <text class="hook-list" x="205" y="240" text-anchor="middle">consent_gate_grant</text>
+          <text class="hook-sub" x="205" y="258" text-anchor="middle">outside Claude's reach</text>
+        </g>
+        <g>
+          <line class="hook-line" x1="445" y1="84" x2="445" y2="216"/>
+          <text class="hook-event" x="445" y="70" text-anchor="middle">PreToolUse</text>
+          <text class="hook-list" x="445" y="240" text-anchor="middle">12 guards</text>
+          <text class="hook-sub" x="445" y="258" text-anchor="middle">block · ask · allow</text>
+        </g>
+        <g>
+          <line class="hook-line" x1="685" y1="84" x2="685" y2="216"/>
+          <text class="hook-event" x="685" y="70" text-anchor="middle">PostToolUse</text>
+          <text class="hook-list" x="685" y="240" text-anchor="middle">lint_runner</text>
+          <text class="hook-sub" x="685" y="258" text-anchor="middle">test_runner</text>
+        </g>
+      </svg>
+      <figcaption><strong>The tool boundary.</strong> Hooks fire at the dashed lines. Three of those events are guarded enough to make consent unforgeable: the consent_gate_grant hook on UserPromptSubmit writes the marker; the corresponding PreToolUse guard validates it before allowing the approval-token write.</figcaption>
+    </figure>
+  </section>
+
+  <section class="section">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ III</p>
+        <h2>How it flows</h2>
+      </div>
+      <p>One pipeline from request to commit. Order is enforced at the write boundary by <code>track_guard</code>. The two filled squares are the consent gates on the main path; a third gate (<code>/approve-swarm</code>) sits inside the TDD-swarm fork of phase 6. All three are user-typed commands that Claude is structurally unable to invoke.</p>
+    </div>
+    <figure class="figure">
+      <svg class="diagram-svg" viewBox="0 0 940 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title">
+        <title id="workflow-diag-title">The eleven-phase workflow with three consent gates (two shown on the main path; /approve-swarm sits inside phase 6's swarm fork).</title>
+        <line class="axis" x1="40" y1="76" x2="895" y2="76"/>
+
+        <text class="num" x="40" y="48" text-anchor="middle">01</text>
+        <circle class="node-circle" cx="40" cy="76" r="8"/>
+        <text class="node-label" x="40" y="106" text-anchor="middle">Intake</text>
+
+        <text class="num" x="124" y="48" text-anchor="middle">02</text>
+        <circle class="node-circle" cx="124" cy="76" r="8"/>
+        <text class="node-label" x="124" y="106" text-anchor="middle">Scout</text>
+
+        <text class="num" x="208" y="48" text-anchor="middle">03</text>
+        <circle class="node-circle" cx="208" cy="76" r="8"/>
+        <text class="node-label" x="208" y="106" text-anchor="middle">Research</text>
+
+        <text class="num" x="292" y="48" text-anchor="middle">04</text>
+        <circle class="node-circle" cx="292" cy="76" r="8"/>
+        <text class="node-label" x="292" y="106" text-anchor="middle">Spec</text>
+
+        {# Gate A: /approve-spec — full-weight consent annotation. #}
+        <g class="gate-anno">
+          <text class="gate-tag" x="376" y="22" text-anchor="middle">USER-TYPED</text>
+          <line class="gate-rule" x1="376" y1="30" x2="376" y2="58"/>
+          <line class="gate-bracket" x1="354" y1="58" x2="354" y2="94"/>
+          <line class="gate-bracket" x1="398" y1="58" x2="398" y2="94"/>
+          <line class="gate-bracket" x1="354" y1="58" x2="358" y2="58"/>
+          <line class="gate-bracket" x1="394" y1="58" x2="398" y2="58"/>
+          <line class="gate-bracket" x1="354" y1="94" x2="358" y2="94"/>
+          <line class="gate-bracket" x1="394" y1="94" x2="398" y2="94"/>
+          <rect class="node-gate" x="361" y="61" width="30" height="30" rx="5"/>
+          <path class="gate-glyph" d="M 367,77 L 374,84 L 387,69" fill="none"/>
+          <text class="node-label-gate" x="376" y="111" text-anchor="middle">Approve</text>
+          <text class="gate-cmd" x="376" y="128" text-anchor="middle">/approve-spec</text>
+        </g>
+
+        <text class="num" x="460" y="48" text-anchor="middle">06</text>
+        <circle class="node-circle" cx="460" cy="76" r="8"/>
+        <text class="node-label" x="460" y="106" text-anchor="middle">TDD</text>
+
+        <text class="num" x="544" y="48" text-anchor="middle">07</text>
+        <circle class="node-circle" cx="544" cy="76" r="8"/>
+        <text class="node-label" x="544" y="106" text-anchor="middle">Simplify</text>
+
+        <text class="num" x="628" y="48" text-anchor="middle">08</text>
+        <circle class="node-circle" cx="628" cy="76" r="8"/>
+        <text class="node-label" x="628" y="106" text-anchor="middle">Security</text>
+
+        <text class="num" x="712" y="48" text-anchor="middle">09</text>
+        <circle class="node-circle" cx="712" cy="76" r="8"/>
+        <text class="node-label" x="712" y="106" text-anchor="middle">Integrate</text>
+
+        <text class="num" x="796" y="48" text-anchor="middle">10</text>
+        <circle class="node-circle" cx="796" cy="76" r="8"/>
+        <text class="node-label" x="796" y="106" text-anchor="middle">Document</text>
+
+        {# Gate C: /grant-commit — full-weight consent annotation. #}
+        <g class="gate-anno">
+          <text class="gate-tag" x="880" y="22" text-anchor="middle">USER-TYPED</text>
+          <line class="gate-rule" x1="880" y1="30" x2="880" y2="58"/>
+          <line class="gate-bracket" x1="858" y1="58" x2="858" y2="94"/>
+          <line class="gate-bracket" x1="902" y1="58" x2="902" y2="94"/>
+          <line class="gate-bracket" x1="858" y1="58" x2="862" y2="58"/>
+          <line class="gate-bracket" x1="898" y1="58" x2="902" y2="58"/>
+          <line class="gate-bracket" x1="858" y1="94" x2="862" y2="94"/>
+          <line class="gate-bracket" x1="898" y1="94" x2="902" y2="94"/>
+          <rect class="node-gate" x="865" y="61" width="30" height="30" rx="5"/>
+          <path class="gate-glyph" d="M 871,77 L 878,84 L 891,69" fill="none"/>
+          <text class="node-label-gate" x="880" y="111" text-anchor="middle">Commit</text>
+          <text class="gate-cmd" x="880" y="128" text-anchor="middle">/grant-commit</text>
+        </g>
+      </svg>
+      <figcaption><strong>Eleven phases, three gates.</strong> Each phase produces exactly one artifact. The two filled squares above are <code>/approve-spec</code> and <code>/grant-commit</code>; the third gate, <code>/approve-swarm</code>, sits inside phase 6's swarm fork (6a/6b/6c) and is omitted from the linear diagram for clarity. For every gate the corresponding <code>UserPromptSubmit</code> hook writes a short-lived consent marker, which the next <code>PreToolUse</code> guard validates before allowing the approval-token write. Claude cannot reach the marker path.</figcaption>
+    </figure>
+  </section>
+
+  <section class="section">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ IV</p>
+        <h2>Architectural principle</h2>
+      </div>
+      <p>Decisions live in main context. Subagents only execute pre-decided recipes in parallel. The baseline ships exactly one subagent: <code>swarm-worker</code>. It runs <code>scenario</code> then <code>implement</code> against a fully-specified recipe inside an isolated git worktree, and never makes design choices.</p>
+    </div>
+    <div class="arch" role="img" aria-label="Main context decides; isolated worktree executes; merge audit gates the merge.">
+      <div class="arch-col main">
+        <span class="label">Main context</span>
+        <h3>Where decisions live</h3>
+        <p>Architecture, scenario selection, recipe design, security calls. Anything that depends on conversational visibility, including screenshots and prior rounds.</p>
+        <ul>
+          <li>scout · research · spec</li>
+          <li>scenario decide</li>
+          <li>implement decide</li>
+          <li>merge audit</li>
+        </ul>
+      </div>
+      <div class="arch-spine" aria-hidden="true">
+        <div class="arrow right">
+          <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="0" y1="6" x2="92" y2="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M92,2 L100,6 L92,10 z" fill="currentColor"/>
+          </svg>
+          <span>recipe</span>
+        </div>
+        <div class="audit">
+          Merge audit
+          <div class="audit-sub">write_set check</div>
+        </div>
+        <div class="arrow left">
+          <svg viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="8" y1="6" x2="100" y2="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8,2 L0,6 L8,10 z" fill="currentColor"/>
+          </svg>
+          <span>status</span>
+        </div>
+      </div>
+      <div class="arch-col worker">
+        <span class="label">Isolated worktree</span>
+        <h3>Where execution runs</h3>
+        <p>The single subagent (<code>swarm-worker</code>) executes a fully-specified recipe. No design choices, no scope expansion, no test edits.</p>
+        <ul>
+          <li>Skill(scenario)</li>
+          <li>Skill(implement)</li>
+          <li class="dim">tests pass · fail</li>
+          <li class="dim">JSON status returns</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ V</p>
+        <h2>Adoption</h2>
+      </div>
+      <p>One npx command lays down the full overlay: hooks, skills, subagent, MCP servers, and the constitutional documents. Then run <code>/init-project</code> in Claude Code to scout the repo and tailor the config to your stack.</p>
+    </div>
+    <div class="install">
+      <div class="install-copy">
+        <ol class="install-steps">
+          <li><span class="n">01</span><span>Run the overlay command in a clean working tree.</span></li>
+          <li><span class="n">02</span><span>Open the repo in Claude Code (or the JetBrains / VS Code extension).</span></li>
+          <li><span class="n">03</span><span>Run <code>/init-project</code> to populate <code>project.json</code> for your stack.</span></li>
+          <li><span class="n">04</span><span>Drive work through <code>/triage</code> or <code>/harness</code>.</span></li>
+        </ol>
+      </div>
+      <div class="wobble-frame is-tilt-rev">
+        <div class="install-snippet" aria-label="Install command">
+          <div class="bar">
+            <span class="dots" aria-hidden="true"><span class="r"></span><span class="y"></span><span class="g"></span></span>
+            <span class="file">~/your-repo · zsh</span>
+          </div>
+<pre><code><span class="tok-com"># inside a clean git working tree</span>
+<span class="tok-kw">$</span> npx create-baseline@latest .
+
+<span class="tok-com"># open in claude code, then:</span>
+<span class="tok-kw">&gt;</span> /init-project
+<span class="tok-kw">&gt;</span> /triage <span class="tok-str">"add user-facing onboarding flow"</span>
+</code></pre>
+        </div>
+      </div>
+    </div>
+    <button class="cli-strip" data-copy="npx create-baseline@latest ." aria-label="Copy install command to clipboard">
+      <span class="cli-prompt" aria-hidden="true">$</span>
+      <span class="cli-cmd">npx create-baseline@latest .</span>
+      <span class="cli-caret" aria-hidden="true"></span>
+      <svg class="cli-check" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14">
+        <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="cli-hint" data-default="click to copy" data-copied="copied to clipboard">click to copy</span>
+    </button>
+  </section>
+
+  <section class="section">
+    <div class="lede">
+      <div class="lede-head">
+        <p class="section-num">§ VI</p>
+        <h2>Common questions<span class="accent">.</span></h2>
+      </div>
+      <p>The questions evaluators ask before installing, and the structural answers. Every answer names the mechanism that backs it.</p>
+    </div>
+    <div class="faq-list">
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Will it commit to my repo without me knowing?</summary>
+        <div class="faq-a">No. Gate C requires a typed <code>/grant-commit</code> within the last five minutes; without a fresh consent token at <code>.claude/state/commit_consent</code>, the <code>git_commit_guard</code> hook blocks the <code>git commit</code> Bash call. The consent marker is written on <code>UserPromptSubmit</code>, outside Claude's tool boundary. Claude cannot forge it.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">What if I want Claude to do something the baseline forbids?</summary>
+        <div class="faq-a">Add a named exception to <code>.claude/state/workflow.json</code> via <code>/triage</code>. The exception is recorded, scoped to the current workflow, and visible to the audit. Nothing else changes; the rest of the constitution still binds.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Can I disable a hook?</summary>
+        <div class="faq-a">Yes, but it requires an explicit amendment to <code>seed.md</code> §4.1 plus the corresponding edit to <code>.claude/settings.json</code>. The disable is constitutional, not silent. The audit (<code>audit-baseline</code>) will catch a settings.json that does not match the seed declaration.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Does it work without git?</summary>
+        <div class="faq-a">Yes. On a non-git project, gate C and phase 11 auto-except at triage time; the workflow ends after <code>/archive</code>. Persistence is on you. Article VII of the constitution scopes git rules to repositories that have <code>.git/</code> on disk.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Will my existing <code>.claude/</code> customizations survive an upgrade?</summary>
+        <div class="faq-a">Run <code>npx create-baseline ./project --merge</code>. The CLI does a three-way reconcile against <code>.claude/.baseline-manifest.json</code>: untouched files refresh from the new template, customized files preserve byte-for-byte (exit code 3 reports them), and baseline files removed upstream that you had not touched are pruned automatically.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Does the baseline ship its own Claude Code?</summary>
+        <div class="faq-a">No. The baseline is a repository overlay: the in-session ruleset, the hooks, the skills, the workflow. You bring your own Claude Code. Install Claude Code separately (claude.com/claude-code), run <code>npx create-baseline</code> in your project, then open the project in Claude Code.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">What if <code>/init-project</code> gets my stack wrong?</summary>
+        <div class="faq-a">Re-run it, or hand-edit <code>.claude/project.json</code> directly. Both are sanctioned. The drift check at <code>bash .claude/skills/audit-baseline/audit.sh</code> reports any mismatch between your declarations and the implementation.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Where do my project secrets go?</summary>
+        <div class="faq-a">Not into the baseline. The <code>env_guard</code> hook blocks every <code>Edit</code> / <code>Write</code> targeting <code>.env</code> or <code>.env.*</code> files (the one exception is <code>.env.example</code>, which is template-shaped). Secrets stay in your existing secret store; the baseline never touches them.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">Will it work on a large existing codebase?</summary>
+        <div class="faq-a">The baseline is project-agnostic by default. It installs without scanning your code. <code>/init-project</code> then scouts the repo, runs the recommender, and proposes a tailored <code>project.json</code> (test command, lint command, TDD source globs, destructive-pattern extensions, optional stack-specific MCP servers and skills). You approve each addition before it lands.</div>
+      </details>
+
+      <details class="faq-item" name="baseline-faq">
+        <summary class="faq-q">How big is the install?</summary>
+        <div class="faq-a">About {{ baseline.size.unpacked }} unpacked: {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, the constitution, the genesis prompt, and {{ baseline.mcpServersWord }} MCP server declarations. The PlantUML jar is a {{ baseline.size.plantumlJar }} side-fetch and is skipped if <code>plantuml</code> is already on your <code>$PATH</code>.</div>
+      </details>
+
+    </div>
+  </section>
+</main>

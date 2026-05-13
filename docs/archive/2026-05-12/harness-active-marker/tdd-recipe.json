@@ -1,0 +1,132 @@
+{
+  "slug": "harness-active-marker",
+  "created_at": 1778607550,
+  "single_pass": true,
+  "note": "Tightly-coupled redesign — every AC depends on hook + 5 SKILL.md state-write recipes + project.json + tests being in place together. One scenario + one implement pass.",
+  "recipe": [
+    {
+      "name": "test_stop_hook_emits_block_when_state_is_continue_and_marker_present",
+      "covers": "AC-004 (REWRITE of _fresh_and_under_cap)",
+      "assertion": "Given state=continue + marker present + stop_hook_active absent, the hook emits decision block JSON to stdout and exits 0.",
+      "fixtures": "createTempProject; writeHarnessState({state:'continue', slug:'test-slug', reason:'r'}); fs.writeFile('.claude/state/.harness_active', 'test-slug\\n'); invokeHook(defaultPayload())."
+    },
+    {
+      "name": "test_stop_hook_silent_when_marker_absent",
+      "covers": "AC-005 (NEW)",
+      "assertion": "Given state=continue but no .harness_active on disk, the hook stays silent (exit 0, stdout empty).",
+      "fixtures": "createTempProject; writeHarnessState continue; do NOT create marker; invokeHook."
+    },
+    {
+      "name": "test_stop_hook_silent_when_stop_hook_active_true",
+      "covers": "AC-007 (KEEP existing)",
+      "assertion": "Given stop_hook_active=true in payload, the hook stays silent regardless of marker/state.",
+      "fixtures": "createTempProject; writeHarnessState continue; create marker; invokeHook({stop_hook_active:true})."
+    },
+    {
+      "name": "test_stop_hook_silent_when_harness_state_missing",
+      "covers": "defensive (KEEP existing)",
+      "assertion": "When harness_state file is absent, hook stays silent.",
+      "fixtures": "createTempProject (no harness_state written); invokeHook."
+    },
+    {
+      "name": "test_stop_hook_silent_when_harness_state_malformed_json",
+      "covers": "defensive (KEEP existing)",
+      "assertion": "When harness_state contains malformed JSON, hook stays silent.",
+      "fixtures": "createTempProject; fs.writeFile harness_state with 'not parseable json {{{'; invokeHook."
+    },
+    {
+      "name": "test_stop_hook_silent_when_state_is_yielded",
+      "covers": "AC-006 (KEEP existing)",
+      "assertion": "Given state=yielded, hook stays silent even if marker happens to be present.",
+      "fixtures": "createTempProject; writeHarnessState({state:'yielded',...}); optionally create marker; invokeHook."
+    },
+    {
+      "name": "test_stop_hook_logs_warn_on_slug_mismatch",
+      "covers": "AC-008 (NEW)",
+      "assertion": "When marker content slug disagrees with workflow.json slug, hook appends a WARN line to harness_continuation.log AND still emits block (decision unchanged).",
+      "fixtures": "createTempProject; writeHarnessState({state:'continue', slug:'right'}); marker contents 'wrong\\n'; workflow.json slug='right'; invokeHook. Assert: stdout JSON .decision='block' AND tail of harness_continuation.log contains 'WARN' + 'slug mismatch' + 'wrong' + 'right'."
+    },
+    {
+      "name": "test_stop_hook_chain_within_turn",
+      "covers": "AC-012 (NEW)",
+      "assertion": "Two consecutive invocations: first with stop_hook_active=false emits block; second with stop_hook_active=true stays silent — preserving the in-turn recursion guard.",
+      "fixtures": "createTempProject; writeHarnessState continue; create marker; invokeHook({stop_hook_active:false}) then invokeHook({stop_hook_active:true})."
+    },
+    {
+      "name": "test_memory_session_start_removes_stale_marker",
+      "covers": "AC-003 (NEW, in new describe block 'memory_session_start marker cleanup')",
+      "assertion": "Given a stale .harness_active on disk, when memory_session_start.sh runs, the marker is removed AND a one-line INFO entry is appended to harness_continuation.log containing the slug that was removed.",
+      "fixtures": "createTempProject; fs.writeFile('.claude/state/.harness_active', 'stale-slug\\n'); execFileSync('bash', ['.claude/hooks/memory_session_start.sh'], {input: JSON.stringify({source:'startup'}), env:{CLAUDE_PROJECT_DIR: tmp}, ...}). Assert: marker gone AND log line contains 'INFO' + 'removed stale .harness_active' + 'stale-slug'."
+    },
+    {
+      "name": "test_harness_state_is_3_fields_only",
+      "covers": "AC-009 (NEW, in 'post-refactor invariants' describe block)",
+      "assertion": "After harness skill writes harness_state per its documented recipe, the JSON keys are exactly {state, slug, reason} (no written_at, no tick_count).",
+      "fixtures": "Read .claude/state/harness_state from the dev repo (this workflow's state); JSON.parse; assert Object.keys(parsed).sort() deepEqual ['reason','slug','state']. NOTE: this test is expected to FAIL initially against the dev-repo state file (which currently has 5 fields from in-flight workflows) — that's the failing test. Implementation makes it pass by having the harness skill write only 3 fields going forward."
+    },
+    {
+      "name": "test_project_json_has_no_harness_key",
+      "covers": "AC-010 (NEW, in 'post-refactor invariants' describe block)",
+      "assertion": "After the redesign lands, .claude/project.json has no top-level 'harness' key.",
+      "fixtures": "Read .claude/project.json; JSON.parse; assert !('harness' in parsed)."
+    }
+  ],
+  "out_of_scope_scenarios": [
+    "Concurrent-tick races (no real concurrency).",
+    "Performance/latency tests (hook overhead already measured: <500ms; no SLA in scope).",
+    "session_id-based fallback (Option A) — rejected in research.",
+    "Transcript-walking fallback (Option B) — rejected in research.",
+    "Backward-compatibility migration tooling for old harness_state shape — forward-compat is symmetric and runtime-state files are overwritten on every tick."
+  ],
+  "contract": {
+    "failing_test_paths": [
+      "tests/harness_continuation.test.mjs"
+    ],
+    "write_set": [
+      ".claude/hooks/harness_continuation.sh",
+      ".claude/hooks/memory_session_start.sh",
+      ".claude/skills/harness/SKILL.md",
+      ".claude/skills/chore/SKILL.md",
+      ".claude/skills/integrate/SKILL.md",
+      ".claude/skills/simplify/SKILL.md",
+      ".claude/skills/tdd/SKILL.md",
+      "CLAUDE.md",
+      "src/CLAUDE.template.md",
+      "docs/init/seed.md",
+      "src/seed.template.md",
+      ".claude/project.json",
+      "src/project.template.json",
+      "tests/harness_continuation.test.mjs"
+    ],
+    "behavior_excerpts": [
+      "spec §Behavior 1 (continue tick): harness writes marker FIRST then harness_state; Stop hook 3-rung gate passes; emits block; in-turn recursion guard handles second fire.",
+      "spec §Behavior 2 (yield tick): harness deletes marker FIRST then writes state=yielded; Stop hook Rung 2 sees marker absent; silent.",
+      "spec §Behavior 3 (SessionStart ghost prevention): memory_session_start.sh rm -f marker unconditionally + log INFO line; next user prompt's Stop event sees marker absent; silent.",
+      "spec Class diagram: HarnessState = {state, slug, reason} only (3 fields).",
+      "spec Class diagram: HarnessActiveMarker = file existence + slug content; created on continue / deleted on yielded|done.",
+      "spec Class diagram: ProjectConfig — removed: harness.continue_window_seconds, harness.max_ticks_per_session."
+    ],
+    "project_conventions": {
+      "test_cmd": "bash .claude/skills/audit-baseline/audit.sh",
+      "lint_cmd": null,
+      "node_engine": ">=18.17.0",
+      "hook_style": "bash + python3 stdlib heredoc; no jq, no Node",
+      "test_style": "node:test + node:assert/strict; existing fixtures createTempProject/writeHarnessState/invokeHook/defaultPayload at tests/harness_continuation.test.mjs:1-60",
+      "marker_write": "echo \"<slug>\" > .claude/state/.harness_active (touch-or-overwrite)",
+      "marker_delete": "rm -f .claude/state/.harness_active (no error if absent)",
+      "ordering_rule": "marker FIRST, harness_state SECOND on every state-write boundary (continue OR yielded/done)"
+    }
+  },
+  "design_calls_rows": [],
+  "implementation_order": [
+    "1. .claude/hooks/harness_continuation.sh — rewrite header + decision logic",
+    "2. .claude/hooks/memory_session_start.sh — add marker cleanup stanza",
+    "3. .claude/skills/harness/SKILL.md — rewrite Per-tick atomicity section",
+    "4. .claude/skills/{chore,integrate,simplify,tdd}/SKILL.md — update state-write recipes (4 files)",
+    "5. CLAUDE.md + src/CLAUDE.template.md — Article V + Article VIII edits, byte-equal mirror",
+    "6. docs/init/seed.md + src/seed.template.md — §4.1 intro + §4.1 row + §7 auto-continuation, §16 reservation preserved",
+    "7. .claude/project.json + src/project.template.json — remove harness top-level key",
+    "8. tests/harness_continuation.test.mjs — delete 2, rewrite 1, add 6 (5 hook tests + 1 SessionStart cleanup test in new describe)",
+    "9. Run audit-baseline as binding verify"
+  ]
+}

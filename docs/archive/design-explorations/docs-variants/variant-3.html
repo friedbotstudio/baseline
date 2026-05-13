@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+VARIANT 3 — Terminal brutalism (the swing)
+- Type: JetBrains Mono dominant. H1 mono 800 lowercase 64px with -.04em tracking. Sidebar, eyebrows, TOC, all UI furniture in mono. Inter is reserved for body prose only. The headline reads as a filename, not a marketing claim.
+- Color: warm grid-paper bg with a subtle 24px grid, near-black ink, single lime accent (oklch 80% 0.18 132) used only on the active sidebar item, the cursor-blink, and one highlighted inline-code phrase per page.
+- Density: medium with deliberate friction. ASCII rule lines, sidebar uses ├── └── tree glyphs, phase grid is an 11-column strip, callout has a black bar header. No rounded corners anywhere — corners are 0px. No shadows.
+- Accent strategy: lime is the cursor. It blinks. It marks the active item. It tags exactly one inline-code phrase per page. Anywhere else it gets demoted to ink.
+- Reacts against: rounded SaaS sameness and dark-mode-by-reflex developer chrome. This is for people who run their day in terminals and want the docs to feel like the tool, not like a Notion page.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>workflow-phases.md — aurora docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: oklch(15% 0.005 80);
+    --text: oklch(22% 0.005 80);
+    --muted: oklch(42% 0.008 80);
+    --faint: oklch(60% 0.012 80);
+    --rule: oklch(15% 0.005 80);
+    --bg: oklch(95% 0.012 88);
+    --paper: oklch(97% 0.008 88);
+    --grid: oklch(80% 0.012 88 / .35);
+    --accent: oklch(80% 0.18 132);
+    --accent-deep: oklch(58% 0.18 132);
+    --header: 56px;
+    --sidebar: 280px;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.65;
+    color:var(--text);
+    background:var(--bg);
+    background-image:
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size:24px 24px;
+    background-position:-1px -1px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+  a:hover{background:var(--ink);color:var(--bg)}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--accent-deep);outline-offset:2px}
+  .skip{position:absolute;left:-9999px;background:var(--ink);color:var(--bg);padding:6px 10px;border:none}
+  .skip:focus{left:12px;top:12px;z-index:100}
+
+  /* header */
+  header.top{
+    position:sticky;top:0;z-index:30;
+    height:var(--header);
+    background:var(--bg);
+    border-bottom:2px solid var(--rule);
+    display:flex;align-items:center;
+    padding:0 24px;
+    font-family:var(--mono);
+    font-size:13px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--ink);letter-spacing:-.025em;font-size:16px;border:none}
+  .brand:hover{background:none;color:var(--ink)}
+  .brand .blk{display:inline-block;width:14px;height:14px;background:var(--ink);position:relative}
+  .brand .blk::after{content:"";position:absolute;inset:auto auto 2px 2px;width:5px;height:5px;background:var(--accent);animation:blink 1.05s steps(2,end) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .brand .slash{color:var(--faint);font-weight:500;margin:0 2px}
+  .brand .sub{color:var(--muted);font-weight:500}
+  nav.primary{margin-left:36px;display:flex;gap:20px;font-family:var(--mono);font-size:13px}
+  nav.primary a{color:var(--muted);font-weight:500;border:none;padding:2px 0}
+  nav.primary a:hover{background:none;color:var(--ink);box-shadow:0 2px 0 0 var(--ink)}
+  nav.primary a.is-active{color:var(--ink);box-shadow:0 2px 0 0 var(--ink)}
+  .head-spacer{flex:1}
+  .search{font-family:var(--mono);font-size:12.5px;color:var(--muted);border:1px solid var(--rule);padding:5px 12px;background:var(--paper);display:flex;align-items:center;gap:8px;min-width:200px}
+  .search::before{content:"$"; color:var(--accent-deep);font-weight:700}
+  .search kbd{margin-left:auto;background:var(--bg);border:1px solid var(--rule);padding:1px 5px;font-family:inherit;font-size:11px}
+  .gh{margin-left:14px;font-family:var(--mono);font-size:12.5px;color:var(--muted);border:none;padding:5px 10px}
+  .gh:hover{background:var(--ink);color:var(--bg)}
+
+  /* shell */
+  .shell{display:grid;grid-template-columns:var(--sidebar) 1fr;max-width:1320px;margin:0 auto;border-left:1px solid var(--rule);border-right:1px solid var(--rule);background:var(--paper)}
+
+  /* sidebar */
+  aside.sidebar{
+    position:sticky;top:var(--header);align-self:start;
+    height:calc(100vh - var(--header));
+    overflow-y:auto;
+    border-right:1px solid var(--rule);
+    padding:24px 0 80px;
+    font-family:var(--mono);
+    font-size:13px;
+  }
+  .nav-group + .nav-group{margin-top:24px}
+  .nav-group .head{
+    display:flex;align-items:baseline;gap:0;
+    padding:0 20px 8px;
+    color:var(--ink);
+    font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.08em;
+  }
+  .nav-group .head::before{content:"// "; color:var(--faint);font-weight:400}
+  .nav-group ul{list-style:none;padding:0;margin:0;font-family:var(--mono)}
+  .nav-group a{
+    display:block;
+    padding:4px 20px 4px 28px;
+    color:var(--text);
+    font-size:13px;line-height:1.6;
+    font-weight:400;
+    border:none;
+    position:relative;
+  }
+  .nav-group a::before{
+    content:"├──";
+    position:absolute;left:8px;top:4px;
+    color:var(--faint);
+    font-size:11px;
+  }
+  .nav-group li:last-child a::before{content:"└──"}
+  .nav-group a:hover{background:none;color:var(--ink)}
+  .nav-group a:hover::before{color:var(--ink)}
+  .nav-group a.is-active{
+    background:var(--ink);
+    color:var(--bg);
+    font-weight:600;
+  }
+  .nav-group a.is-active::before{color:var(--accent)}
+  .nav-group a.is-active::after{
+    content:"_";
+    color:var(--accent);
+    margin-left:4px;
+    animation:blink 1.05s steps(2,end) infinite;
+    font-weight:700;
+  }
+
+  /* main */
+  main.article{padding:48px 56px 96px;min-width:0}
+  .meta-row{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:18px}
+  .meta-row::before{content:"$ cat "; color:var(--accent-deep);font-weight:600}
+  .meta-row span.path{color:var(--ink);font-weight:500}
+  .eyebrow{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:var(--bg);
+    padding:3px 8px;
+    margin-bottom:18px;
+    border:1px solid var(--rule);
+  }
+  h1{
+    font-family:var(--mono);
+    font-size:64px;
+    font-weight:800;
+    line-height:1.0;
+    letter-spacing:-.04em;
+    color:var(--ink);
+    margin:0 0 22px;
+    text-transform:lowercase;
+    word-break:break-word;
+  }
+  h1 .punc{color:var(--accent-deep)}
+  .lead{
+    font-family:var(--body);
+    font-size:18px;line-height:1.55;
+    color:var(--text);
+    font-weight:400;
+    margin:0 0 28px;
+    max-width:640px;
+  }
+
+  /* inline contents tree (replaces right-rail TOC) */
+  .contents{
+    margin:0 0 36px;
+    max-width:560px;
+    border:1px solid var(--rule);
+    background:var(--bg);
+    font-family:var(--mono);
+  }
+  .contents summary{
+    list-style:none;
+    cursor:pointer;
+    padding:6px 14px;
+    font-size:11.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink);
+    background:var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .contents summary::-webkit-details-marker{display:none}
+  .contents summary::before{content:"▾ "; color:var(--accent-deep);font-weight:700}
+  .contents-tree{
+    margin:0;
+    padding:10px 14px;
+    font-size:13px;
+    color:var(--text);
+    line-height:1.7;
+    white-space:pre;
+    overflow-x:auto;
+  }
+  .contents-tree a{color:var(--text);border:none}
+  .contents-tree a:hover{background:none;color:var(--ink)}
+  .contents-tree .glyph{color:var(--faint)}
+
+  .ascii-rule{
+    font-family:var(--mono);
+    color:var(--rule);
+    margin:36px 0 28px;
+    font-size:12px;
+    overflow:hidden;
+    white-space:nowrap;
+    user-select:none;
+  }
+
+  h2{
+    font-family:var(--mono);
+    font-size:24px;font-weight:700;
+    letter-spacing:-.02em;line-height:1.2;
+    color:var(--ink);
+    margin:48px 0 14px;
+    scroll-margin-top:80px;
+    text-transform:lowercase;
+  }
+  h2::before{
+    content:attr(data-n) " ";
+    color:var(--faint);
+    font-weight:500;
+    margin-right:4px;
+  }
+  h3{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--ink);margin:28px 0 10px;text-transform:lowercase}
+  h3::before{content:"› "; color:var(--accent-deep);font-weight:700}
+  p{margin:0 0 16px;max-width:640px;font-family:var(--body)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);color:var(--ink);padding:1px 6px;border:1px solid var(--rule);font-weight:500}
+  code.hl{background:var(--accent);border-color:var(--accent-deep);color:var(--ink);font-weight:600}
+
+  /* code block */
+  pre{
+    font-family:var(--mono);
+    background:var(--ink);
+    color:var(--bg);
+    padding:0;
+    margin:18px 0 28px;
+    font-size:13px;line-height:1.7;
+    overflow:hidden;
+    max-width:720px;
+    border:1px solid var(--rule);
+  }
+  pre .cb-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    background:oklch(20% 0.005 80);
+    color:oklch(72% 0.005 80);
+    padding:6px 14px;
+    font-size:11.5px;
+    border-bottom:1px solid oklch(28% 0.005 80);
+  }
+  pre .cb-bar .file::before{content:"$ cat "; color:var(--accent);font-weight:600}
+  pre .cb-bar .lang{color:oklch(50% 0 0);text-transform:uppercase;font-size:10.5px;letter-spacing:.06em}
+  pre .body{padding:14px 18px;overflow-x:auto;display:block}
+  .tok-key{color:#a5b4fc}
+  .tok-str{color:var(--accent)}
+  .tok-com{color:oklch(55% 0 0);font-style:italic}
+
+  /* phase flow strip */
+  .diagram{
+    margin:18px 0 28px;
+    max-width:760px;
+    border:1px solid var(--rule);
+    background:var(--bg);
+    font-family:var(--mono);
+    display:grid;grid-template-columns:repeat(11,1fr);
+  }
+  .diagram .step{
+    padding:14px 6px;
+    text-align:center;
+    border-right:1px solid var(--rule);
+    color:var(--ink);font-size:10.5px;font-weight:600;
+    line-height:1.3;
+    text-transform:lowercase;
+  }
+  .diagram .step:last-child{border-right:none}
+  .diagram .step .n{display:block;color:var(--faint);font-size:18px;font-weight:800;margin-bottom:4px;letter-spacing:-.05em}
+  .diagram .step.gate{background:var(--ink);color:var(--bg)}
+  .diagram .step.gate .n{color:var(--accent)}
+
+  /* table */
+  table{border-collapse:collapse;width:100%;max-width:720px;font-size:13.5px;margin:18px 0 28px;border:1px solid var(--rule);font-family:var(--mono)}
+  thead th{background:var(--ink);color:var(--bg);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:8px 12px;border-right:1px solid var(--bg)}
+  thead th:last-child{border-right:none}
+  td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);vertical-align:top;font-size:13px}
+  td:last-child{border-right:none}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{color:var(--muted);width:36px}
+  td.phase{font-weight:600;color:var(--ink)}
+  td.skill{color:var(--accent-deep)}
+  td.out{color:var(--muted)}
+
+  /* callout */
+  .callout{
+    margin:18px 0 28px;
+    max-width:720px;
+    border:2px solid var(--rule);
+    padding:0;
+    background:var(--bg);
+    font-family:var(--body);
+  }
+  .callout .bar{
+    background:var(--ink);
+    color:var(--bg);
+    padding:6px 14px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    display:flex;align-items:center;gap:8px;
+  }
+  .callout .bar::before{content:"!";color:var(--accent);font-size:14px;font-weight:800}
+  .callout .body{padding:14px 18px;font-size:14.5px;line-height:1.6;color:var(--text)}
+  .callout .body p{margin:0;max-width:none}
+
+  /* footer */
+  footer.docfoot{
+    border-top:2px solid var(--rule);
+    margin:64px 0 0;
+    padding:18px 0 0;
+    font-family:var(--mono);font-size:12px;
+    color:var(--muted);
+    display:flex;justify-content:space-between;align-items:center;
+    max-width:720px;
+  }
+  footer.docfoot a{color:var(--muted);border:none;border-bottom:1px solid var(--muted);padding:0 0 1px}
+  footer.docfoot a:hover{color:var(--ink);background:none;border-bottom-color:var(--ink)}
+  footer.docfoot .left::before{content:"$ git log "; color:var(--accent-deep);font-weight:600}
+
+  /* responsive */
+  @media (max-width:920px){
+    aside.sidebar{display:none}
+    .shell{grid-template-columns:1fr}
+    main.article{padding:32px 24px 64px}
+    h1{font-size:42px}
+    nav.primary{display:none}
+    .search{min-width:0;width:auto}
+    .diagram{grid-template-columns:repeat(4,1fr)}
+    .diagram .step{border-bottom:1px solid var(--rule)}
+    .contents-tree{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<header class="top">
+  <a class="brand" href="#">
+    <span class="blk" aria-hidden="true"></span>
+    <span>aurora</span>
+    <span class="slash">/</span>
+    <span class="sub">docs</span>
+  </a>
+  <nav class="primary" aria-label="Primary">
+    <a href="#" class="is-active">docs</a>
+    <a href="#">skills</a>
+    <a href="#">hooks</a>
+    <a href="#">ref</a>
+    <a href="#">log</a>
+  </nav>
+  <div class="head-spacer"></div>
+  <div class="search">grep docs <kbd>⌘K</kbd></div>
+  <a class="gh" href="#">github →</a>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Documentation navigation">
+    <div class="nav-group">
+      <div class="head">getting-started</div>
+      <ul>
+        <li><a href="#">introduction</a></li>
+        <li><a href="#">installation</a></li>
+        <li><a href="#">quickstart</a></li>
+        <li><a href="#">configuration</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head">core-concepts</div>
+      <ul>
+        <li><a href="#" class="is-active">workflow-phases</a></li>
+        <li><a href="#">hooks-and-guards</a></li>
+        <li><a href="#">skills-and-subagents</a></li>
+        <li><a href="#">memory-system</a></li>
+        <li><a href="#">consent-gates</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head">reference</div>
+      <ul>
+        <li><a href="#">cli-commands</a></li>
+        <li><a href="#">settings.json</a></li>
+        <li><a href="#">project.json</a></li>
+        <li><a href="#">workflow.json</a></li>
+        <li><a href="#">hook-events</a></li>
+        <li><a href="#">glossary</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main id="main" class="article">
+    <p class="meta-row"><span class="path">docs/core-concepts/workflow-phases.md</span></p>
+    <span class="eyebrow">core-concepts · 5 min</span>
+    <h1>workflow<span class="punc">-</span>phases</h1>
+    <p class="lead">The eleven-phase pipeline that takes a request from intake to commit. Every phase produces exactly one artifact, and every transition is enforced at the write boundary by a hook.</p>
+
+    <details class="contents" open>
+      <summary>contents</summary>
+<pre class="contents-tree">.
+<span class="glyph">├──</span> <a href="#overview">01 overview</a>
+<span class="glyph">├──</span> <a href="#phases">02 the eleven phases</a>
+<span class="glyph">│   └──</span> <a href="#diagram">phase flow</a>
+<span class="glyph">├──</span> <a href="#consent">03 consent gates</a>
+<span class="glyph">└──</span> <a href="#customize">04 customizing the pipeline</a></pre>
+    </details>
+
+    <h2 id="overview" data-n="01">overview</h2>
+    <p>Aurora ships a constitutional workflow with eleven ordered phases. Order is enforced at the write boundary by <code>track_guard</code>, so phases cannot be skipped or reordered without an explicit exception in <code class="hl">.claude/state/workflow.json</code>.</p>
+    <p>Three of the eleven phases are consent gates: user-typed slash commands that Claude is structurally unable to invoke. Approval authority lives outside the model.</p>
+
+    <h2 id="phases" data-n="02">the eleven phases</h2>
+    <p>Each phase has one mandated output. The output of phase <em>n</em> is the contract for phase <em>n+1</em>.</p>
+    <table>
+      <thead><tr><th style="width:36px">#</th><th>phase</th><th>skill</th><th>output</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td class="phase">intake</td><td class="skill">/intake</td><td class="out">docs/intake/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">02</td><td class="phase">scout</td><td class="skill">/scout</td><td class="out">docs/scout/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">03</td><td class="phase">research</td><td class="skill">/research</td><td class="out">docs/research/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">04</td><td class="phase">spec</td><td class="skill">/spec</td><td class="out">docs/specs/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">05</td><td class="phase">approve-spec</td><td class="skill">/approve-spec</td><td class="out">approval token</td></tr>
+        <tr><td class="num">06</td><td class="phase">tdd</td><td class="skill">/tdd</td><td class="out">code</td></tr>
+        <tr><td class="num">07</td><td class="phase">simplify</td><td class="skill">/simplify</td><td class="out">clean diff</td></tr>
+        <tr><td class="num">08</td><td class="phase">security</td><td class="skill">/security</td><td class="out">findings</td></tr>
+        <tr><td class="num">09</td><td class="phase">integrate</td><td class="skill">/integrate</td><td class="out">verdict</td></tr>
+        <tr><td class="num">10</td><td class="phase">document</td><td class="skill">/document</td><td class="out">prose</td></tr>
+        <tr><td class="num">11</td><td class="phase">commit</td><td class="skill">/commit</td><td class="out">commit</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="diagram">phase flow</h3>
+    <div class="diagram" role="img" aria-label="Phase flow diagram">
+      <div class="step"><span class="n">01</span>intake</div>
+      <div class="step"><span class="n">02</span>scout</div>
+      <div class="step"><span class="n">03</span>resrch</div>
+      <div class="step"><span class="n">04</span>spec</div>
+      <div class="step gate"><span class="n">05</span>approve</div>
+      <div class="step"><span class="n">06</span>tdd</div>
+      <div class="step"><span class="n">07</span>simply</div>
+      <div class="step"><span class="n">08</span>sec</div>
+      <div class="step"><span class="n">09</span>intgr8</div>
+      <div class="step"><span class="n">10</span>doc</div>
+      <div class="step gate"><span class="n">11</span>commit</div>
+    </div>
+
+    <h2 id="consent" data-n="03">consent gates</h2>
+    <p>Each gate writes a short-lived consent marker that the corresponding PreToolUse guard validates before allowing the approval-token write. Markers expire after sixty seconds and are deleted on use, so a gate cannot be replayed.</p>
+    <div class="callout" role="note">
+      <div class="bar">warning · not bypassable</div>
+      <div class="body"><p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, outside Claude's tool boundary. Claude cannot forge or replay an approval marker.</p></div>
+    </div>
+
+    <h2 id="customize" data-n="04">customizing the pipeline</h2>
+    <p>To skip a phase for a specific request, add it to the <code>exceptions</code> array. <code>/triage</code> is the only sanctioned writer of this file.</p>
+    <pre><span class="cb-bar"><span class="file">.claude/state/workflow.json</span><span class="lang">json</span></span><span class="body"><span class="tok-com">// workflow state for slug `site-react-ssg-seo`</span>
+{
+  <span class="tok-key">"slug"</span>: <span class="tok-str">"site-react-ssg-seo"</span>,
+  <span class="tok-key">"entry_phase"</span>: <span class="tok-str">"intake"</span>,
+  <span class="tok-key">"exceptions"</span>: [<span class="tok-str">"security"</span>],
+  <span class="tok-key">"completed"</span>: [<span class="tok-str">"intake"</span>, <span class="tok-str">"scout"</span>],
+  <span class="tok-key">"current"</span>: <span class="tok-str">"research"</span>
+}</span></pre>
+    <p>Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
+
+    <footer class="docfoot">
+      <span class="left">2026-04-29 · a3f81e2</span>
+      <span><a href="#">edit-on-github</a> · <a href="#">license MIT</a></span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<aside class="sidebar" id="docs-sidebar" aria-label="Documentation navigation">
+  {%- for group in nav.sidebar %}
+  <div class="nav-group">
+    <h4>{{ group.label }}</h4>
+    <ul>
+      {%- for item in group.items %}
+      <li><a href="{{ item.href }}"{% if item.key == sidebarActive %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
+      {%- endfor %}
+    </ul>
+  </div>
+  {%- endfor %}
+</aside>
+<div class="nav-backdrop" aria-hidden="true"></div>

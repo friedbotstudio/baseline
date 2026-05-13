@@ -1,0 +1,221 @@
+{
+  "$schema_version": 1,
+  "configured": false,
+  "test": {
+    "cmd": "bash .claude/skills/audit-baseline/audit.sh",
+    "affected_resolver": null,
+    "file_globs": [
+      "**/*"
+    ],
+    "timeout_seconds": 120
+  },
+  "lint": {
+    "cmd": null,
+    "file_globs": [
+      "**/*"
+    ],
+    "timeout_seconds": 60
+  },
+  "tdd": {
+    "enabled": true,
+    "source_globs": [
+      "src/**",
+      "bin/**",
+      "scripts/**",
+      "site/assets/src/**",
+      ".claude/skills/**",
+      ".claude/hooks/**"
+    ],
+    "test_globs": [
+      "tests/**",
+      "test/**",
+      "spec/**",
+      "__tests__/**",
+      "**/*_test.*",
+      "**/*.test.*",
+      "**/*.spec.*"
+    ],
+    "mapping": "conventional",
+    "exempt_globs": [
+      "**/*.md",
+      "**/*.json",
+      "**/*.yaml",
+      "**/*.yml",
+      "**/*.toml",
+      "docs/**",
+      ".claude/**",
+      ".config/**",
+      "src/**.template.*",
+      "site/assets/brandmark*",
+      "site/assets/favicon/**"
+    ],
+    "ui_globs": [
+      "site-src/**",
+      "app/**/*.{tsx,jsx}",
+      "components/**/*.{tsx,jsx,vue,svelte}",
+      "pages/**/*.{tsx,jsx,vue,svelte}",
+      "src/**/*.{tsx,jsx,vue,svelte}",
+      "**/*.html",
+      "**/*.css",
+      "**/*.scss",
+      "**/*.njk"
+    ]
+  },
+  "destructive": {
+    "mode": "ask",
+    "hard_block_patterns": [
+      "^\\s*rm\\s+.*-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*\\s+/(\\s|$)",
+      "^\\s*rm\\s+.*-[a-zA-Z]*f[a-zA-Z]*r[a-zA-Z]*\\s+/(\\s|$)",
+      ":\\(\\)\\s*\\{\\s*:\\|:&\\s*\\};:",
+      "\\bdd\\b.*of=/dev/(sd|nvme|hd|disk)",
+      "\\bmkfs(\\.[a-z0-9]+)?\\b",
+      "\\b(shutdown|halt|poweroff|reboot)\\b",
+      ">\\s*/dev/sda",
+      "\\bchmod\\s+-R\\s+000\\s+/"
+    ],
+    "ask_patterns": [
+      "\\brm\\s+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*\\b",
+      "\\bgit\\s+reset\\s+--hard\\b",
+      "\\bgit\\s+clean\\s+-[a-zA-Z]*f[a-zA-Z]*\\b",
+      "\\bgit\\s+checkout\\s+--\\b",
+      "\\bgit\\s+branch\\s+-D\\b",
+      "\\bgit\\s+push\\s+.*(--force|--force-with-lease|-f\\b)",
+      "\\bdrop\\s+(table|database|schema)\\b",
+      "\\btruncate\\s+table\\b",
+      "\\bkill\\s+-9\\b",
+      "\\bchown\\s+-R\\b.*\\s/",
+      "\\bnpm\\s+publish\\b",
+      "\\bnpm\\s+version\\b",
+      "\\bgit\\s+init\\b"
+    ]
+  },
+  "workflow": {
+    "phases": [
+      "intake",
+      "scout",
+      "research",
+      "spec",
+      "review",
+      "tdd",
+      "simplify",
+      "security",
+      "integrate",
+      "document",
+      "commit"
+    ],
+    "optional_phases": [
+      "security"
+    ],
+    "artifacts": {
+      "intake": "docs/intake/*.md",
+      "scout": "docs/scout/*.md",
+      "research": "docs/research/*.md",
+      "spec": "docs/specs/*.md",
+      "review": ".claude/state/spec_approvals/*.approval",
+      "tdd": null,
+      "simplify": null,
+      "security": "docs/security/*.md",
+      "integrate": null,
+      "document": "site/dist/**",
+      "commit": null
+    }
+  },
+  "artifacts": {
+    "required_sections": {
+      "intake": [
+        "Problem",
+        "Goal",
+        "Acceptance criteria"
+      ],
+      "brd": [
+        "Business objective",
+        "Scope",
+        "Business requirements"
+      ],
+      "spec": [
+        "Goal",
+        "Design",
+        "Design calls",
+        "Acceptance criteria",
+        "Test plan"
+      ],
+      "rca": [
+        "Summary",
+        "Timeline",
+        "Impact",
+        "Root cause",
+        "Action items"
+      ]
+    },
+    "required_diagrams": {
+      "spec": {
+        "c4_context": {
+          "min": 1,
+          "marker": "!include <C4/C4_Context>"
+        },
+        "c4_container": {
+          "min": 1,
+          "marker": "!include <C4/C4_Container>"
+        },
+        "c4_component": {
+          "min": 1,
+          "marker": "!include <C4/C4_Component>"
+        },
+        "sequence": {
+          "min": 1,
+          "any_of": [
+            "^\\s*participant\\b",
+            "^\\s*actor\\b"
+          ]
+        },
+        "class": {
+          "min": 1,
+          "any_of": [
+            "^\\s*class\\s+\\w"
+          ]
+        },
+        "dependency_graph": {
+          "min": 1,
+          "any_of": [
+            "'\\s*@kind\\s+dependency-graph"
+          ]
+        }
+      }
+    }
+  },
+  "consent": {
+    "commit_ttl_seconds": 300,
+    "gate_marker_ttl_seconds": 120
+  },
+  "swarm": {
+    "max_parallel": 4,
+    "granularity": "component",
+    "min_tasks_worth_swarming": 3,
+    "isolation": "shared",
+    "refuse_dirty_tree": true,
+    "exempt_path_prefixes": [
+      ".claude/",
+      ".git/",
+      ".venv/",
+      "node_modules/"
+    ],
+    "enforced_path_prefixes": [
+      "src/",
+      "lib/",
+      "app/",
+      "pkg/",
+      "internal/",
+      "tests/",
+      "test/",
+      "spec/",
+      "docs/"
+    ]
+  },
+  "additions": {
+    "agents": [],
+    "skills": [],
+    "hooks": [],
+    "mcp_servers": [],
+    "swarm_worker_skills": []
+  }
+}

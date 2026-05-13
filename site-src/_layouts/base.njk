@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ pageTitle }}</title>
+  <meta name="description" content="{{ description }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%23111%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%224.5%22%20fill%3D%22%23ea6a25%22%2F%3E%3C%2Fsvg%3E">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+{# Inline SVG filter defs: hand-drawn-ish wobble for dev-window + plate outlines.
+   The displacement only perturbs the pseudo-element border that calls filter:url(#wobble),
+   so content inside the wobble-frame stays pixel-sharp. #}
+<svg class="svg-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <filter id="wobble" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="wobble-fine" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+{% include "topnav.njk" %}
+
+{{ content | safe }}
+
+{% include "footer.njk" %}
+<script>
+/* Console signature for engineers who open DevTools. Quiet, attributable,
+   names the mechanism. Counts come from _data/baseline.json so they cannot
+   drift from the rest of the site. */
+(function(){
+  if (typeof console === "undefined" || typeof console.log !== "function") return;
+  console.log(
+    "%cbaseline%c constitutional discipline for Claude Code. {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, {{ baseline.subagents.total }} subagent. github.com/friedbotstudio/baseline",
+    "background:#c2410c;color:#fff;padding:2px 8px;border-radius:3px;font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;",
+    "color:#888;font:400 12px ui-monospace,SFMono-Regular,Menlo,monospace;padding-left:6px;"
+  );
+})();
+</script>
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

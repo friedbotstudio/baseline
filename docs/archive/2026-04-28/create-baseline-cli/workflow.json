@@ -1,0 +1,21 @@
+{
+  "request": "feature: bootstrap `npx create-baseline .` CLI feature",
+  "slug": "create-baseline-cli",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "swarm-plan", "swarm-dispatch", "tdd", "simplify", "security", "integrate", "document", "archive"],
+  "created_at": 1777394903,
+  "updated_at": 1777413618,
+  "completed_notes": {
+    "tdd": "satisfied via swarm-plan + swarm-dispatch (Phase 6 swarm equivalent); track_guard requires literal 'tdd' so adding it explicitly. Track-guard limitation noted in seed.md §16 #5 follow-up.",
+    "integrate": "61/61 tests pass; audit-baseline overall PASS",
+    "document": "README install section updated for npx create-baseline; landmarks memory extended with bin/cli.js, src/cli/plantuml.js, scripts/build-template.sh; seed.md §16 #5 follow-up extended with worker-chain-stop and track-guard observations from production exercise",
+    "archive": "8 artifacts moved to docs/archive/2026-04-28/create-baseline-cli/. The deferred consent-gate-grant-mechanism security report at docs/security/ is intentionally NOT in this bundle (different slug); preserved on disk for separate archival or historical reference."
+  },
+  "resumed_after": {
+    "slug": "consent-gate-grant-mechanism",
+    "completed_phases": ["chore", "simplify", "security", "integrate", "document"],
+    "deferred_phases": ["archive", "grant-commit", "commit"],
+    "deferral_reason": "no git repo (deferred per project memory); archive of security report can land alongside future commit"
+  }
+}

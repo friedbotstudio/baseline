@@ -1,0 +1,406 @@
+{
+  "slug": "site-react-ssg-seo",
+  "spec": "docs/specs/site-react-ssg-seo.md",
+  "created_at": 1777418800,
+  "status": "complete",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Bootstrap: Astro project + npm workspaces + project.json wiring + .gitignore + smoke test + tarball test",
+      "component": "buildScript",
+      "acs": [
+        "AC-001",
+        "AC-003",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        "package.json",
+        ".gitignore",
+        "site/package.json",
+        "site/astro.config.mjs",
+        "site/tsconfig.json",
+        ".claude/project.json",
+        "site/tests/build-smoke.test.mjs",
+        "tests/npm-pack-tarball.test.mjs"
+      ],
+      "read_set": [
+        "DESIGN.md",
+        "docs/specs/site-react-ssg-seo.md",
+        "docs/init/seed.md"
+      ],
+      "depends_on": [],
+      "status": "done"
+    },
+    {
+      "id": "T-002",
+      "title": "Tokens: tokens.css mirroring DESIGN.md + reset.css + global.css + drift checker (check-tokens.mjs) + unit tests",
+      "component": "tokensCss+driftCheck",
+      "acs": [
+        "AC-006",
+        "AC-008"
+      ],
+      "write_set": [
+        "site/src/styles/tokens.css",
+        "site/src/styles/reset.css",
+        "site/src/styles/global.css",
+        "site/tools/check-tokens.mjs",
+        "site/tests/check-tokens.test.mjs"
+      ],
+      "read_set": [
+        "DESIGN.md",
+        "docs/specs/site-react-ssg-seo.md"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-003",
+      "title": "Layout shell + SEO helpers: Page.astro + buildMeta.ts + jsonld.ts + per-page-meta and JSON-LD tests",
+      "component": "layout-seo",
+      "acs": [
+        "AC-002",
+        "AC-004"
+      ],
+      "write_set": [
+        "site/src/layouts/Page.astro",
+        "site/src/seo/buildMeta.ts",
+        "site/src/seo/jsonld.ts",
+        "site/tests/seo-meta.test.mjs",
+        "site/tests/jsonld.test.mjs"
+      ],
+      "read_set": [
+        "site/src/styles/tokens.css",
+        "site/src/styles/global.css",
+        "docs/specs/site-react-ssg-seo.md"
+      ],
+      "depends_on": [
+        "T-002"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-004",
+      "title": "MDX content collection schema (zod) for reference pages",
+      "component": "content-schema",
+      "acs": [
+        "AC-012"
+      ],
+      "write_set": [
+        "site/src/content/config.ts"
+      ],
+      "read_set": [
+        "docs/specs/site-react-ssg-seo.md"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-005",
+      "title": "Public assets: copy brandmark+favicon to site/public/, fix site.webmanifest, add og/default.png placeholder + robots.txt + brand-passthrough and webmanifest tests",
+      "component": "public-assets",
+      "acs": [
+        "AC-003",
+        "AC-010",
+        "AC-015"
+      ],
+      "write_set": [
+        "site/public/brandmark.png",
+        "site/public/brandmark@2x.png",
+        "site/public/brandmark.svg",
+        "site/public/favicon/favicon.ico",
+        "site/public/favicon/favicon-16x16.png",
+        "site/public/favicon/favicon-32x32.png",
+        "site/public/favicon/apple-touch-icon.png",
+        "site/public/favicon/android-chrome-192x192.png",
+        "site/public/favicon/android-chrome-512x512.png",
+        "site/public/favicon/site.webmanifest",
+        "site/public/og/default.png",
+        "site/public/robots.txt",
+        "site/tests/brand-passthrough.test.mjs",
+        "site/tests/webmanifest.test.mjs"
+      ],
+      "read_set": [
+        "site/assets/brandmark.png",
+        "site/assets/brandmark@2x.png",
+        "site/assets/brandmark.svg",
+        "site/assets/favicon/favicon.ico",
+        "site/assets/favicon/favicon-16x16.png",
+        "site/assets/favicon/favicon-32x32.png",
+        "site/assets/favicon/apple-touch-icon.png",
+        "site/assets/favicon/android-chrome-192x192.png",
+        "site/assets/favicon/android-chrome-512x512.png",
+        "site/assets/favicon/site.webmanifest"
+      ],
+      "depends_on": [],
+      "status": "done"
+    },
+    {
+      "id": "T-006",
+      "title": "nginx sample config + servability integration test",
+      "component": "nginx-conf",
+      "acs": [
+        "AC-014"
+      ],
+      "write_set": [
+        "site/tools/nginx.sample.conf",
+        "site/tests/nginx-servability.test.mjs"
+      ],
+      "read_set": [
+        "site/astro.config.mjs",
+        "docs/specs/site-react-ssg-seo.md"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-007",
+      "title": "Determinism check (two-build SHA256 compare) + smoke test",
+      "component": "detCheck",
+      "acs": [
+        "AC-007"
+      ],
+      "write_set": [
+        "site/tools/check-determinism.sh",
+        "site/tests/check-determinism.test.mjs"
+      ],
+      "read_set": [
+        "site/package.json",
+        "site/astro.config.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-008",
+      "title": "Islands check (verify pages with no client:* directive emit no _astro JS) + positive/negative tests",
+      "component": "islandsCheck",
+      "acs": [
+        "AC-013"
+      ],
+      "write_set": [
+        "site/tools/check-islands.mjs",
+        "site/tests/check-islands.test.mjs"
+      ],
+      "read_set": [
+        "site/astro.config.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-009",
+      "title": "Static .astro components: Masthead, Topnav, ToC, Sidebar, DevWindow (server-rendered, no client:*)",
+      "component": "static-components",
+      "acs": [
+        "AC-009",
+        "AC-013"
+      ],
+      "write_set": [
+        "site/src/components/Masthead.astro",
+        "site/src/components/Topnav.astro",
+        "site/src/components/ToC.astro",
+        "site/src/components/Sidebar.astro",
+        "site/src/components/DevWindow.astro"
+      ],
+      "read_set": [
+        "site/src/styles/tokens.css",
+        "site/src/styles/global.css",
+        "site/assets/src/app.jsx"
+      ],
+      "depends_on": [
+        "T-002"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-010",
+      "title": "TSX plate components (server-rendered): PipelineSubway, MemoryFlowPlate, HookBoundaryGrid, SkillCatalog",
+      "component": "plate-components",
+      "acs": [
+        "AC-009",
+        "AC-013"
+      ],
+      "write_set": [
+        "site/src/components/PipelineSubway.tsx",
+        "site/src/components/MemoryFlowPlate.tsx",
+        "site/src/components/HookBoundaryGrid.tsx",
+        "site/src/components/SkillCatalog.tsx"
+      ],
+      "read_set": [
+        "site/src/styles/tokens.css",
+        "site/assets/src/app.jsx"
+      ],
+      "depends_on": [
+        "T-002"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-011",
+      "title": "React islands: CopyButton (client:visible), ScrollSpy (client:idle)",
+      "component": "islands",
+      "acs": [
+        "AC-013"
+      ],
+      "write_set": [
+        "site/src/components/islands/CopyButton.tsx",
+        "site/src/components/islands/ScrollSpy.tsx"
+      ],
+      "read_set": [
+        "site/src/styles/tokens.css",
+        "site/assets/src/app.jsx"
+      ],
+      "depends_on": [
+        "T-002"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-012",
+      "title": "Static pages: homepage (index.astro) + skills index (skills.astro) + no-JS critical content test",
+      "component": "pages-static",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-004",
+        "AC-005",
+        "AC-009",
+        "AC-012",
+        "AC-013"
+      ],
+      "write_set": [
+        "site/src/pages/index.astro",
+        "site/src/pages/skills.astro",
+        "site/tests/no-js-critical.test.mjs"
+      ],
+      "read_set": [
+        "site/src/layouts/Page.astro",
+        "site/src/seo/buildMeta.ts",
+        "site/src/seo/jsonld.ts",
+        "site/src/components/Masthead.astro",
+        "site/src/components/Topnav.astro",
+        "site/src/components/ToC.astro",
+        "site/src/components/Sidebar.astro",
+        "site/src/components/DevWindow.astro",
+        "site/src/components/PipelineSubway.tsx",
+        "site/src/components/MemoryFlowPlate.tsx",
+        "site/src/components/HookBoundaryGrid.tsx",
+        "site/src/components/SkillCatalog.tsx",
+        "site/src/components/islands/CopyButton.tsx",
+        "site/src/components/islands/ScrollSpy.tsx",
+        "site/assets/src/app.jsx"
+      ],
+      "depends_on": [
+        "T-003",
+        "T-009",
+        "T-010",
+        "T-011"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-013",
+      "title": "MDX reference pages: hooks, memory, skills/core, skills/third-party, swarm + page-set integration test (sitemap, robots, all 7 routes)",
+      "component": "pages-mdx",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-012",
+        "AC-013"
+      ],
+      "write_set": [
+        "site/src/pages/hooks.mdx",
+        "site/src/pages/memory.mdx",
+        "site/src/pages/skills/core.mdx",
+        "site/src/pages/skills/third-party.mdx",
+        "site/src/pages/swarm.mdx",
+        "site/tests/page-set.test.mjs"
+      ],
+      "read_set": [
+        "site/src/content/config.ts",
+        "site/src/layouts/Page.astro",
+        "CLAUDE.md",
+        "docs/init/seed.md",
+        ".claude/settings.json",
+        "site/assets/src/app.jsx"
+      ],
+      "depends_on": [
+        "T-003",
+        "T-004"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-014",
+      "title": "Cleanup: delete legacy site/index.html, site/assets/src/app.jsx, site/assets/brandmark*, site/assets/favicon/**, .DS_Store files",
+      "component": "cleanup",
+      "acs": [
+        "AC-010"
+      ],
+      "write_set": [
+        "site/index.html",
+        "site/assets/src/app.jsx",
+        "site/assets/brandmark.png",
+        "site/assets/brandmark@2x.png",
+        "site/assets/brandmark.svg",
+        "site/assets/favicon/favicon.ico",
+        "site/assets/favicon/favicon-16x16.png",
+        "site/assets/favicon/favicon-32x32.png",
+        "site/assets/favicon/apple-touch-icon.png",
+        "site/assets/favicon/android-chrome-192x192.png",
+        "site/assets/favicon/android-chrome-512x512.png",
+        "site/assets/favicon/site.webmanifest",
+        "site/assets/.DS_Store",
+        "site/.DS_Store"
+      ],
+      "read_set": [],
+      "depends_on": [
+        "T-005",
+        "T-012",
+        "T-013"
+      ],
+      "status": "done"
+    }
+  ],
+  "waves": [
+    [
+      "T-001",
+      "T-005"
+    ],
+    [
+      "T-002",
+      "T-004",
+      "T-006",
+      "T-007",
+      "T-008"
+    ],
+    [
+      "T-003",
+      "T-009",
+      "T-010",
+      "T-011"
+    ],
+    [
+      "T-012",
+      "T-013"
+    ],
+    [
+      "T-014"
+    ]
+  ],
+  "validated_at": 1777418775,
+  "completed_at": 1777452709
+}

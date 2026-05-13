@@ -1,0 +1,51 @@
+{# Swarm hero symbol — fan and merge.
+   A filled recipe (decision in main context) splays into three stroke
+   worker frames (worktrees), which converge into a single accent merge-audit
+   gate, which writes a filled commit anchor. Vocabulary: filled = anchor,
+   stroke = isolated execution, accent = audit gate. #}
+<svg class="hero-symbol-svg fanmerge-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fanmerge-title">
+  <title id="fanmerge-title">A recipe in main context fans into three isolated worktrees and re-converges through a merge-audit gate.</title>
+  <defs>
+    <marker id="fm-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="fm-arrow"/>
+    </marker>
+    <marker id="fm-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="fm-arrow-acc"/>
+    </marker>
+  </defs>
+
+  {# Top: filled ink square — the recipe / decision moment. #}
+  <rect class="fm-recipe" x="166" y="22" width="28" height="28"/>
+  <text class="fm-tag" x="180" y="14" text-anchor="middle">recipe</text>
+
+  {# Splay: three lines branching from the recipe to the three worktrees. #}
+  <line class="fm-conn" x1="180" y1="50" x2="80"  y2="120"/>
+  <line class="fm-conn" x1="180" y1="50" x2="180" y2="120"/>
+  <line class="fm-conn" x1="180" y1="50" x2="280" y2="120"/>
+
+  {# Three stroke worktrees — workers in isolated git worktrees. #}
+  <rect class="fm-worker" x="40"  y="120" width="80" height="60" rx="4"/>
+  <rect class="fm-worker" x="140" y="120" width="80" height="60" rx="4"/>
+  <rect class="fm-worker" x="240" y="120" width="80" height="60" rx="4"/>
+  <text class="fm-tag" x="80"  y="156" text-anchor="middle">T-A</text>
+  <text class="fm-tag" x="180" y="156" text-anchor="middle">T-B</text>
+  <text class="fm-tag" x="280" y="156" text-anchor="middle">T-C</text>
+
+  {# Convergence: three lines merging back into the merge-audit gate. #}
+  <line class="fm-conn" x1="80"  y1="180" x2="180" y2="232"/>
+  <line class="fm-conn" x1="180" y1="180" x2="180" y2="232"/>
+  <line class="fm-conn" x1="280" y1="180" x2="180" y2="232"/>
+
+  {# Merge audit — accent rotated square, the write-set discipline gate. #}
+  <g transform="rotate(45 180 248)">
+    <rect class="fm-audit" x="160" y="228" width="40" height="40" rx="3"/>
+  </g>
+  <path class="fm-audit-glyph" d="M 169,247 L 177,255 L 192,239" fill="none"/>
+
+  {# Result: line down to the filled ink commit anchor. #}
+  <line class="fm-conn" x1="180" y1="270" x2="180" y2="312"/>
+  <circle class="fm-result" cx="180" cy="312" r="9"/>
+
+  {# Caption. #}
+  <text class="fm-caption" x="180" y="346" text-anchor="middle">main decides · workers execute</text>
+</svg>

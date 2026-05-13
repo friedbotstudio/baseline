@@ -1,0 +1,45 @@
+---
+layout: base.njk
+subtitle: "/ docs"
+---
+<div class="docs-shell">
+  {% include "sidebar.njk" %}
+
+  <main id="main" class="article">
+    {%- if heroSymbol %}
+    <header class="docs-hero">
+      <div class="docs-hero-text">
+        {%- if eyebrow %}
+        <p class="eyebrow">{{ eyebrow }}</p>
+        {%- endif %}
+        <h1>{{ titlePrimary or title }}<span class="accent">{{ titleAccent or "." }}</span></h1>
+        {%- if lead %}
+        <p class="lead">{{ lead | safe }}</p>
+        {%- endif %}
+      </div>
+      <div class="docs-hero-symbol">
+        {% include "hero-symbols/" + heroSymbol + ".njk" %}
+      </div>
+    </header>
+    {%- else %}
+    {%- if eyebrow %}
+    <p class="eyebrow">{{ eyebrow }}</p>
+    {%- endif %}
+    <h1>{{ titlePrimary or title }}<span class="accent">{{ titleAccent or "." }}</span></h1>
+    {%- if lead %}
+    <p class="lead">{{ lead | safe }}</p>
+    {%- endif %}
+    {%- endif %}
+
+    {{ content | safe }}
+
+    <footer class="docfoot">
+      <span>Last updated {{ site.lastUpdated }}</span>
+      <a href="{{ site.repo }}" class="docfoot-edit">Edit on GitHub <span class="arr">→</span></a>
+    </footer>
+  </main>
+
+  {%- if toc %}
+  {% include "toc.njk" %}
+  {%- endif %}
+</div>

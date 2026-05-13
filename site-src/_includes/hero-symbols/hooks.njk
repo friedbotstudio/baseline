@@ -1,0 +1,37 @@
+{# Hooks hero symbol — the boundary.
+   A filled ink band (Claude's domain) sits above a dashed accent rule
+   (the tool boundary) above a stroke band (tools/filesystem). Hook events
+   fire as small accent ticks ON the boundary; the consent marker is a
+   filled accent dot living on the boundary, structurally outside Claude's
+   reach. Vocabulary: filled = Claude (above), stroke = tool (below),
+   dashed accent = boundary, accent dot = consent marker. #}
+<svg class="hero-symbol-svg boundary-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="boundary-title">
+  <title id="boundary-title">Claude's domain above the dashed boundary; tools below; hooks fire on the boundary itself, outside Claude's reach.</title>
+
+  {# Above the boundary — filled ink, Claude's domain. #}
+  <rect class="bnd-claude" x="36" y="40" width="288" height="100" rx="6"/>
+  <text class="bnd-numeral on-fill" x="180" y="98" text-anchor="middle">CLAUDE</text>
+
+  {# The boundary — thick dashed accent rule + dotted gap below it. #}
+  <line class="bnd-rule" x1="20" y1="180" x2="340" y2="180"/>
+
+  {# Hook fire ticks on the boundary. #}
+  <line class="bnd-tick" x1="80"  y1="170" x2="80"  y2="190"/>
+  <line class="bnd-tick" x1="150" y1="170" x2="150" y2="190"/>
+  <line class="bnd-tick" x1="220" y1="170" x2="220" y2="190"/>
+  <line class="bnd-tick" x1="290" y1="170" x2="290" y2="190"/>
+
+  {# Consent marker — filled accent dot living ON the boundary. #}
+  <circle class="bnd-consent" cx="115" cy="180" r="5.5"/>
+
+  {# Boundary-zone tag, mono caps. #}
+  <text class="bnd-zone" x="20"  y="158" text-anchor="start">inside · claude's reach</text>
+  <text class="bnd-zone" x="340" y="206" text-anchor="end">outside · hooks fire here</text>
+
+  {# Below the boundary — stroke rect, tool/filesystem domain. #}
+  <rect class="bnd-tool" x="36" y="220" width="288" height="100" rx="6"/>
+  <text class="bnd-numeral" x="180" y="278" text-anchor="middle">TOOL</text>
+
+  {# Caption. #}
+  <text class="bnd-caption" x="180" y="346" text-anchor="middle">load-bearing at the boundary</text>
+</svg>

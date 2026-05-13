@@ -1,0 +1,179 @@
+---
+layout: docs.njk
+permalink: /memory/index.html
+pageTitle: "Memory · baseline"
+title: Memory
+titlePrimary: Memory
+titleAccent: "."
+description: "The memory system at .claude/memory/ accumulates project facts across sessions. Six canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+eyebrow: Reference
+lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Six canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+active: memory
+sidebarActive: memory
+heroSymbol: memory
+toc:
+  - { id: shape,     label: "The shape" }
+  - { id: what,      label: "What memory is" }
+  - { id: lifecycle, label: "The lifecycle" }
+  - { id: reverify,  label: "Re-verification" }
+  - { id: prune,     label: "Pruning and staleness" }
+  - { id: schema,    label: "Entry schema" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="shape">The shape</h2>
+    </div>
+    <p>Memory lives at <code>.claude/memory/</code>. Six canonical files hold long-term project knowledge. Two underscore files serve transient roles: a staging inbox and a session-continuity snapshot. The underscore files are gitignored.</p>
+  </div>
+  <table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="phase">landmarks.md</td><td>Files, modules, and symbols worth remembering across sessions, with stable line references.</td></tr>
+    <tr><td class="phase">libraries.md</td><td>Pinned versions and gotchas for third-party libraries used in the project.</td></tr>
+    <tr><td class="phase">decisions.md</td><td>Architectural choices and the reasoning behind them, recorded close to the moment they were made.</td></tr>
+    <tr><td class="phase">landmines.md</td><td>Patterns that look right but fail in this codebase. Each entry names the trap and the safe alternative.</td></tr>
+    <tr><td class="phase">conventions.md</td><td>Project-specific style or structure rules that diverge from common defaults.</td></tr>
+    <tr><td class="phase">pending-questions.md</td><td>Open questions for the user. Skill outputs append here when something needs human resolution.</td></tr>
+    <tr><td class="phase">_pending.md</td><td>Auto-extraction inbox. The <code>memory_stop</code> hook appends candidates each turn-end. Curate via <code>/memory-flush</code>.</td></tr>
+    <tr><td class="phase">_resume.md</td><td>Session-continuity snapshot. Refreshed every turn-end and before context compaction.</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="what">What memory is, and isn't</h2>
+    </div>
+    <p>Memory is for facts that survive the session and that cannot be recovered cheaply by reading the codebase. Library pin reasons, the locations of long-lived hot paths, decisions whose rationale is not obvious from the diff.</p>
+  </div>
+  <p>Memory is not a place to record code patterns or conventions that the code itself already shows. The session-start hook injects a one-page index of memory plus a short resume snapshot into your additional context. Files are read on demand by the relevant skill. The scout skill reads landmarks; research reads libraries; integrate reads landmines. Every cited entry is re-verified before use.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="lifecycle">The lifecycle</h2>
+    </div>
+    <p>Memory accumulates in a deliberately small loop. Each step is owned by a single hook or skill, and each touches exactly one canonical surface.</p>
+  </div>
+
+  <figure class="figure plate-flow" aria-labelledby="memflow-cap">
+    <svg class="diagram-svg memflow-svg" viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="memflow-cap">
+      <defs>
+        <marker id="mf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow"/>
+        </marker>
+        <marker id="mf-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow-acc"/>
+        </marker>
+      </defs>
+
+      {# Forward path: turn-end → _pending → /memory-flush → canonical → cite #}
+      <path class="mf-conn" d="M 130,80 C 175,72 215,88 230,80" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 305,80 C 350,72 390,88 410,80" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 495,80 C 540,72 580,88 600,80" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 680,108 C 686,140 686,170 680,196" marker-end="url(#mf-arr)"/>
+
+      {# Re-verify: ok → loop back to canonical (dashed accent). #}
+      <path class="mf-conn-ok" d="M 600,200 C 540,205 540,150 580,108" marker-end="url(#mf-arr-acc)"/>
+      <text class="mf-edge" x="540" y="170" text-anchor="middle">re-verify ok</text>
+
+      {# Re-verify: fail → exit (correct or delete). #}
+      <path class="mf-conn-fail" d="M 685,228 L 700,250"/>
+      <text class="mf-edge mf-edge-fail" x="700" y="244" text-anchor="end">correct · delete</text>
+
+      {# Nodes — rounded plate frames, 1.5px ink hairlines. #}
+      <g class="mf-node">
+        <rect x="48" y="58" width="84" height="44" rx="6"/>
+        <text class="mf-title" x="90" y="78" text-anchor="middle">turn end</text>
+        <text class="mf-sub" x="90" y="93" text-anchor="middle">memory_stop</text>
+      </g>
+      <g class="mf-node">
+        <rect x="222" y="58" width="84" height="44" rx="6"/>
+        <text class="mf-title" x="264" y="78" text-anchor="middle">staging</text>
+        <text class="mf-sub" x="264" y="93" text-anchor="middle">_pending.md</text>
+      </g>
+      <g class="mf-node">
+        <rect x="404" y="58" width="92" height="44" rx="6"/>
+        <text class="mf-title" x="450" y="78" text-anchor="middle">curate</text>
+        <text class="mf-sub" x="450" y="93" text-anchor="middle">/memory-flush</text>
+      </g>
+      <g class="mf-node mf-node-canonical">
+        <rect x="594" y="58" width="92" height="50" rx="6"/>
+        <text class="mf-title" x="640" y="78" text-anchor="middle">canonical</text>
+        <text class="mf-sub" x="640" y="94" text-anchor="middle">6 files</text>
+      </g>
+      <g class="mf-node">
+        <rect x="594" y="194" width="92" height="44" rx="6"/>
+        <text class="mf-title" x="640" y="214" text-anchor="middle">cite</text>
+        <text class="mf-sub" x="640" y="229" text-anchor="middle">re-verify on use</text>
+      </g>
+
+      {# Phase tags above the forward path. #}
+      <text class="mf-step" x="180" y="38" text-anchor="middle">01 · auto-extract</text>
+      <text class="mf-step" x="356" y="38" text-anchor="middle">02 · review</text>
+      <text class="mf-step" x="540" y="38" text-anchor="middle">03 · promote</text>
+      <text class="mf-step" x="640" y="138" text-anchor="middle">04 · cite</text>
+    </svg>
+    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Auto-extracted candidates stage in <code>_pending.md</code> at every turn-end. <code>/memory-flush</code> promotes keepers to the six canonical files. Skills cite entries with re-verification on every use; verified entries close the loop, failed verifications correct or delete in the same run.</figcaption>
+  </figure>
+
+  <ol>
+    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and appends candidate facts to <code>_pending.md</code>.</li>
+    <li>At session start, the index hook reports the pending count. If non-zero, the next phase is <code>/memory-flush</code>.</li>
+    <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file, drops the rest, and clears <code>_pending.md</code>.</li>
+    <li>Skills that consume memory (scout, research, integrate, simplify) re-verify each entry before citing it.</li>
+    <li>Failed verification corrects or deletes the entry in the same run.</li>
+  </ol>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="reverify">Re-verification before citation</h2>
+    </div>
+    <p>Every skill that cites a memory entry re-verifies it. Verification means: the file still exists, the symbol is still at the named line, the library version is still pinned.</p>
+  </div>
+  <p>A landmark that says <code>src/auth/session.ts:42 — token rotation</code> is checked: file present, line still relevant. If the line moved, the skill updates the entry. If the symbol is gone, the skill deletes the entry.</p>
+  <p>This is the discipline that keeps memory load-bearing rather than misleading. A stale entry that says <code>X exists</code> can be worse than no entry at all because it leads to confident wrong recommendations. Re-verification catches drift early.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="prune">Pruning and staleness</h2>
+    </div>
+    <p>The size cap is 500 entries per canonical file. When a write exceeds the cap, the same write prunes the oldest unverified entries. Entries unverified for thirty commits or ninety days are stale; the next phase that touches them either re-verifies or deletes.</p>
+  </div>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">i</span>
+    <div class="body">
+      <strong>Memory accelerates triage. It never authorizes a skip.</strong>
+      <p>An entry can suggest where to look or which library to consult, but it cannot waive a phase, an approval gate, or a verify verdict. Workflow ordering is enforced by hooks, not by memory.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="schema">Entry schema</h2>
+    </div>
+    <p>Canonical files share a small, line-oriented schema. Each entry has a stable key, a one-line claim, a verification target (file path or symbol), and a last-verified marker. The schema lives in <code>.claude/memory/README.md</code>.</p>
+  </div>
+  <pre><code><span class="tok-com"># landmarks.md</span>
+<span class="tok-key">id</span>: lm-2026-04-12-001
+<span class="tok-key">claim</span>: token rotation runs on every refresh
+<span class="tok-key">target</span>: src/auth/session.ts:42 (rotateOnRefresh)
+<span class="tok-key">added</span>: 2026-04-12
+<span class="tok-key">verified</span>: 2026-04-29  <span class="tok-com"># self-healing rule: re-verify on every cite</span></code></pre>
+</section>

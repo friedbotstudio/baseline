@@ -1,0 +1,44 @@
+{
+  "name": "create-baseline",
+  "version": "0.1.0",
+  "description": "Zero-dependency Node CLI scaffolder that materializes the Claude Code baseline (hooks, skills, commands, MCP servers, governance docs) into a target project. Run via `npx create-baseline <target>`.",
+  "type": "module",
+  "bin": {
+    "create-baseline": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "obj/template/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build": "bash scripts/build-template.sh",
+    "prepack": "bash scripts/build-template.sh",
+    "test": "node --test --test-reporter=spec tests/*.test.mjs",
+    "build:site": "eleventy",
+    "dev:site": "eleventy --serve --port=4321",
+    "publish:check": "bash scripts/publish-check.sh",
+    "publish:precheck": "npm publish --dry-run",
+    "publish:files-diff": "node scripts/check-files-diff.mjs",
+    "publish:smoke": "node scripts/smoke-tarball.mjs"
+  },
+  "keywords": [
+    "claude-code",
+    "baseline",
+    "scaffolder",
+    "create-baseline"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/friedbotstudio/baseline.git"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "3.1.5",
+    "nunjucks": "3.2.4"
+  }
+}

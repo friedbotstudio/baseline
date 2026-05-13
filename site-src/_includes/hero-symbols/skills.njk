@@ -1,0 +1,55 @@
+{# Skills hero symbol — composition tree.
+   A filled ink anchor at the top (main context) branches to three stroke
+   skill nodes. The leftmost has a solid accent edge to a filled ink
+   sub-skill (mandatory invocation). The middle has a dashed accent edge
+   to a sub-skill (conditional invocation). The rightmost has no edge
+   (mechanical, no sub-skill). Vocabulary: filled = anchor / committed
+   sub-skill, stroke = skill that composes, accent solid = mandatory edge,
+   accent dashed = conditional edge. #}
+<svg class="hero-symbol-svg comptree-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="comptree-title">
+  <title id="comptree-title">Main context branches to three skills; some carry mandatory or conditional sub-skill invocations.</title>
+  <defs>
+    <marker id="ct-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="ct-arrow"/>
+    </marker>
+    <marker id="ct-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="ct-arrow-acc"/>
+    </marker>
+  </defs>
+
+  {# Top anchor — main context. #}
+  <circle class="ct-anchor" cx="180" cy="34" r="10"/>
+  <text class="ct-tag" x="180" y="20" text-anchor="middle">main context</text>
+
+  {# Hairlines from anchor to each of three skill nodes. #}
+  <line class="ct-conn" x1="180" y1="44" x2="80"  y2="120" marker-end="url(#ct-arr)"/>
+  <line class="ct-conn" x1="180" y1="44" x2="180" y2="120" marker-end="url(#ct-arr)"/>
+  <line class="ct-conn" x1="180" y1="44" x2="280" y2="120" marker-end="url(#ct-arr)"/>
+
+  {# Three stroke skills. #}
+  <rect class="ct-skill" x="40"  y="124" width="80" height="50" rx="5"/>
+  <rect class="ct-skill" x="140" y="124" width="80" height="50" rx="5"/>
+  <rect class="ct-skill" x="240" y="124" width="80" height="50" rx="5"/>
+  <text class="ct-tag" x="80"  y="156" text-anchor="middle">scenario</text>
+  <text class="ct-tag" x="180" y="156" text-anchor="middle">implement</text>
+  <text class="ct-tag" x="280" y="156" text-anchor="middle">verify</text>
+
+  {# Left — mandatory edge: solid accent line to a filled ink sub-skill. #}
+  <line class="ct-edge-must" x1="80" y1="174" x2="80" y2="232" marker-end="url(#ct-arr-acc)"/>
+  <circle class="ct-sub" cx="80" cy="246" r="8"/>
+  <text class="ct-sub-tag" x="80" y="280" text-anchor="middle">code-structure</text>
+  <text class="ct-sub-rule" x="80" y="295" text-anchor="middle">always</text>
+
+  {# Middle — conditional edge: dashed accent line to a filled ink sub-skill. #}
+  <line class="ct-edge-cond" x1="180" y1="174" x2="180" y2="232" marker-end="url(#ct-arr-acc)"/>
+  <circle class="ct-sub" cx="180" cy="246" r="8"/>
+  <text class="ct-sub-tag" x="180" y="280" text-anchor="middle">context7</text>
+  <text class="ct-sub-rule" x="180" y="295" text-anchor="middle">if 3rd-party API</text>
+
+  {# Right — no edge. Mechanical skill, no sub-invocation. Marked with — glyph. #}
+  <line class="ct-edge-none" x1="270" y1="200" x2="290" y2="200"/>
+  <text class="ct-sub-rule" x="280" y="222" text-anchor="middle">mechanical</text>
+
+  {# Caption. #}
+  <text class="ct-caption" x="180" y="338" text-anchor="middle">decisions compose · sub-skills bind</text>
+</svg>

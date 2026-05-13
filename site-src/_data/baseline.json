@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "total": 21
+  },
+  "skills": {
+    "total": 36,
+    "categoriesWord": "nine",
+    "sharedGlobalsWord": "seven",
+    "byCategory": {
+      "artifact": 4,
+      "phases": 10,
+      "workers": 5,
+      "specHelpers": 4,
+      "orchestration": 3,
+      "memory": 1,
+      "sharedGlobals": 7,
+      "audit": 1,
+      "altTracks": 1
+    }
+  },
+  "subagents": {
+    "total": 1,
+    "totalWord": "one"
+  },
+  "commands": 4,
+  "phases": 11,
+  "gates": 3,
+  "mcpServersWord": "three",
+  "size": {
+    "unpacked": "1.5 MB",
+    "plantumlJar": "19 MB"
+  }
+}

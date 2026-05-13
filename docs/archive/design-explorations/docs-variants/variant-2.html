@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+VARIANT 2 — Token system on display (technical density)
+- Type: Inter 14/1.55 body, JetBrains Mono used heavily as UI furniture (file paths, kbd, version chips, breadcrumbs, sidebar counters, line numbers). Display Inter 700 with -0.025em tracking. No serif anywhere.
+- Color: cool neutral bg, ink near-black, indigo for interactive state only. Filled active row in soft indigo. No chromatic warmth — temperature is cool by intent.
+- Density: high. 4px grid, visible borders throughout, sticky breadcrumb sub-nav, sidebar with chevrons + count badges + file glyphs. Code block has line numbers, file path header, copy button, and a language tag.
+- Accent strategy: indigo carries link/active/badge state. All other emphasis is weight, mono treatment, or border. The page wears its token system on the outside.
+- Reacts against: editorial whitespace bloat. Built for power users who want everything dense, scannable, and explicit.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workflow phases — Aurora docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: oklch(15% 0 0);
+    --text: oklch(28% 0 0);
+    --muted: oklch(48% 0 0);
+    --faint: oklch(70% 0 0);
+    --rule: oklch(91% 0 0);
+    --rule-soft: oklch(94.5% 0 0);
+    --bg: oklch(99% 0 0);
+    --panel: oklch(97.5% 0 0);
+    --panel-2: oklch(95.5% 0 0);
+    --accent: oklch(54% 0.20 268);
+    --accent-soft: oklch(54% 0.20 268 / .10);
+    --accent-faint: oklch(54% 0.20 268 / .04);
+    --code-bg: oklch(15% 0 0);
+    --code-fg: oklch(91% 0 0);
+    --warn: oklch(58% 0.18 60);
+    --ok: oklch(64% 0.16 145);
+    --header: 56px;
+    --subhead: 40px;
+    --sidebar: 248px;
+    --toc: 224px;
+    --body: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--body);
+    font-size:14px;
+    line-height:1.55;
+    color:var(--text);
+    background:var(--bg);
+    font-feature-settings:"cv11","ss01";
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--ink);text-decoration:none}
+  a:hover{color:var(--accent)}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .skip{position:absolute;left:-9999px;background:var(--ink);color:#fff;padding:6px 10px}
+  .skip:focus{left:12px;top:12px;z-index:100}
+
+  /* header */
+  header.top{
+    position:sticky;top:0;z-index:30;
+    height:var(--header);
+    background:var(--bg);
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:center;
+    padding:0 24px;
+    font-size:13px;
+  }
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);letter-spacing:-.02em;font-size:15px}
+  .brand .mark{width:18px;height:18px;background:var(--ink);border-radius:4px;display:grid;place-items:center;color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:600}
+  .brand .ver{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:500;background:var(--panel);border:1px solid var(--rule);padding:1px 6px;border-radius:4px;margin-left:6px}
+  nav.primary{margin-left:32px;display:flex;font-size:13px;align-items:stretch;height:100%}
+  nav.primary a{display:flex;align-items:center;padding:0 14px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;height:100%;margin-bottom:-1px}
+  nav.primary a:hover{color:var(--ink)}
+  nav.primary a.is-active{color:var(--ink);border-bottom-color:var(--ink)}
+  .head-spacer{flex:1}
+  .search{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:5px 10px;font-size:12.5px;color:var(--muted);min-width:220px}
+  .search kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;background:var(--bg);border:1px solid var(--rule);border-radius:3px;padding:1px 5px;color:var(--muted)}
+  .head-icons{display:flex;gap:6px;margin-left:12px}
+  .head-icons a{display:grid;place-items:center;width:30px;height:30px;border-radius:6px;color:var(--muted);font-size:12px;font-weight:600}
+  .head-icons a:hover{background:var(--panel);color:var(--ink)}
+
+  /* sub-nav (breadcrumb + status pill) */
+  .subhead{
+    position:sticky;top:var(--header);z-index:20;
+    height:var(--subhead);
+    background:var(--bg);
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:center;
+    padding:0 24px;
+    font-size:12.5px;
+    color:var(--muted);
+    font-family:var(--mono);
+  }
+  .crumbs{display:flex;align-items:center;gap:6px}
+  .crumbs span.sep{color:var(--faint)}
+  .crumbs strong{color:var(--ink);font-weight:500}
+  .head-spacer-2{flex:1}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:11px;
+    background:var(--panel);border:1px solid var(--rule);
+    padding:3px 8px;border-radius:999px;color:var(--muted);
+  }
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+
+  /* shell */
+  .shell{display:grid;grid-template-columns:var(--sidebar) 1fr var(--toc);max-width:1480px;margin:0 auto}
+
+  /* sidebar */
+  aside.sidebar{
+    position:sticky;top:calc(var(--header) + var(--subhead));align-self:start;
+    height:calc(100vh - var(--header) - var(--subhead));
+    overflow-y:auto;
+    border-right:1px solid var(--rule);
+    padding:16px 0 80px;
+    font-size:13px;
+  }
+  .nav-group{padding:0 12px;margin-bottom:8px}
+  .nav-group + .nav-group{border-top:1px solid var(--rule-soft);padding-top:12px;margin-top:8px}
+  .nav-group .head{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 8px;
+    color:var(--muted);
+    font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.06em;
+  }
+  .nav-group .head .chev{font-family:var(--mono);font-size:9px;color:var(--faint)}
+  .nav-group .head .count{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--faint);font-weight:500;text-transform:none;letter-spacing:0}
+  .nav-group ul{list-style:none;padding:0;margin:0}
+  .nav-group a{
+    display:flex;align-items:center;gap:8px;
+    padding:5px 8px;
+    border-radius:5px;
+    color:var(--text);
+    font-size:13px;line-height:1.5;
+    font-weight:400;
+  }
+  .nav-group a .glyph{font-family:var(--mono);font-size:10.5px;color:var(--faint);width:14px;text-align:center;font-weight:500}
+  .nav-group a:hover{background:var(--panel);color:var(--ink)}
+  .nav-group a.is-active{background:var(--accent-soft);color:var(--accent);font-weight:500}
+  .nav-group a.is-active .glyph{color:var(--accent)}
+
+  /* main */
+  main.article{padding:48px 56px 96px;min-width:0;border-right:1px solid var(--rule)}
+  .meta-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .meta-row .crumb{color:var(--faint)}
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:10.5px;font-weight:500;
+    background:var(--accent-soft);color:var(--accent);
+    padding:2px 7px;border-radius:4px;
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  h1{font-family:var(--body);font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-.025em;color:var(--ink);margin:0 0 14px}
+  .lead{font-size:16px;line-height:1.6;color:var(--text);font-weight:400;margin:0 0 32px;max-width:680px}
+  h2{font-family:var(--body);font-size:20px;font-weight:600;letter-spacing:-.015em;line-height:1.3;color:var(--ink);margin:48px 0 12px;padding-top:8px;scroll-margin-top:120px;display:flex;align-items:baseline;gap:10px}
+  h2::before{content:attr(data-num);font-family:var(--mono);font-size:11.5px;color:var(--faint);font-weight:500;letter-spacing:0}
+  h2:first-of-type{margin-top:0}
+  h3{font-family:var(--body);font-size:15.5px;font-weight:600;letter-spacing:-.01em;color:var(--ink);margin:32px 0 10px}
+  p{margin:0 0 16px;max-width:680px}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel);color:var(--ink);padding:1.5px 5px;border-radius:3.5px;border:1px solid var(--rule);font-weight:500}
+
+  /* code block */
+  .codeblock{
+    margin:18px 0 28px;
+    max-width:720px;
+    border:1px solid var(--rule);
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--code-bg);
+  }
+  .codeblock .cb-head{
+    display:flex;align-items:center;
+    background:oklch(20% 0 0);
+    color:oklch(80% 0 0);
+    border-bottom:1px solid oklch(28% 0 0);
+    padding:6px 10px;
+    font-family:var(--mono);font-size:11.5px;
+  }
+  .codeblock .cb-head .file{display:flex;align-items:center;gap:6px}
+  .codeblock .cb-head .lang{margin-left:auto;color:oklch(60% 0 0);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  .codeblock .cb-head .copy{margin-left:10px;color:oklch(72% 0 0);background:none;border:1px solid oklch(28% 0 0);padding:2px 7px;border-radius:4px;font-family:inherit;font-size:10.5px;cursor:pointer}
+  .codeblock .cb-head .copy:hover{background:oklch(28% 0 0);color:oklch(95% 0 0)}
+  .codeblock pre{
+    font-family:var(--mono);
+    color:var(--code-fg);
+    margin:0;
+    padding:12px 0;
+    font-size:13px;line-height:1.65;
+    overflow-x:auto;
+  }
+  .codeblock pre code{background:none;border:none;padding:0;font-size:inherit;font-weight:400;color:inherit;display:block}
+  .codeblock .ln{display:inline-block;width:36px;text-align:right;padding-right:16px;color:oklch(40% 0 0);user-select:none}
+  .tok-key{color:#a5b4fc}
+  .tok-str{color:#86efac}
+  .tok-num{color:#fde047}
+  .tok-com{color:oklch(50% 0 0);font-style:italic}
+
+  /* table */
+  table{border-collapse:collapse;width:100%;max-width:760px;font-size:13px;margin:18px 0 28px;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+  thead tr{background:var(--panel)}
+  th{font-family:var(--body);font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--rule)}
+  td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+  tbody tr:nth-child(even){background:var(--accent-faint)}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:var(--mono);font-size:12px;color:var(--muted);width:36px}
+  td.phase{font-weight:500;color:var(--ink)}
+  td.skill code{background:var(--code-bg);color:#a5b4fc;border-color:transparent}
+  td.out{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  /* callout */
+  .callout{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-top:2px solid var(--warn);
+    border-radius:0 0 8px 8px;
+    padding:14px 18px;
+    margin:18px 0 28px;
+    max-width:720px;
+    font-size:13.5px;line-height:1.55;color:var(--text);
+  }
+  .callout .lbl{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--warn);letter-spacing:.05em;text-transform:uppercase;margin-right:8px}
+  .callout p{margin:0;display:inline}
+  .callout p + p{display:block;margin-top:6px}
+
+  /* diagram */
+  .diagram{
+    margin:18px 0 28px;
+    max-width:760px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:24px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+    gap:8px;
+    font-family:var(--mono);font-size:11.5px;
+  }
+  .diagram .step{
+    background:var(--bg);
+    border:1px solid var(--rule);
+    border-radius:5px;
+    padding:10px 8px;
+    text-align:center;
+    color:var(--ink);
+    font-weight:500;
+    position:relative;
+  }
+  .diagram .step .n{display:block;color:var(--faint);font-size:10px;margin-bottom:3px;font-weight:400}
+  .diagram .step.gate{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft);font-weight:600}
+  .diagram .step.gate .n{color:var(--accent)}
+
+  /* TOC */
+  aside.toc{
+    position:sticky;top:calc(var(--header) + var(--subhead));align-self:start;
+    height:calc(100vh - var(--header) - var(--subhead));
+    overflow-y:auto;
+    padding:48px 24px 80px;
+    font-size:12.5px;
+  }
+  .toc h5{margin:0 0 12px;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .toc ul{list-style:none;padding:0;margin:0}
+  .toc li{margin:0 0 6px;line-height:1.45}
+  .toc a{color:var(--muted);font-size:13px;display:block;padding:2px 0 2px 12px;border-left:2px solid transparent}
+  .toc a:hover{color:var(--ink)}
+  .toc a.is-active{color:var(--accent);border-left-color:var(--accent);font-weight:500}
+  .toc a.lvl-3{padding-left:24px;font-size:12.5px}
+  .toc .num{font-family:var(--mono);font-size:11px;color:var(--faint);margin-right:6px}
+  .toc-meta{margin-top:32px;padding-top:16px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7}
+  .toc-meta div span{color:var(--ink);font-weight:500}
+
+  /* page nav */
+  .pgnav{display:flex;gap:10px;margin:32px 0;max-width:760px}
+  .pgnav a{flex:1;border:1px solid var(--rule);border-radius:8px;padding:12px 14px;color:var(--text);background:var(--bg)}
+  .pgnav a:hover{border-color:var(--ink);color:var(--ink)}
+  .pgnav .lbl{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .pgnav .ti{font-weight:500;font-size:13.5px}
+  .pgnav a.next{text-align:right}
+
+  /* footer */
+  footer.docfoot{
+    border-top:1px solid var(--rule);
+    margin:32px 0 0;
+    padding:20px 0 0;
+    font-size:12.5px;
+    color:var(--muted);
+    display:flex;justify-content:space-between;align-items:center;
+    max-width:760px;
+    font-family:var(--mono);
+  }
+  footer.docfoot a{color:var(--muted)}
+  footer.docfoot a:hover{color:var(--ink)}
+
+  /* responsive */
+  @media (max-width:1180px){
+    aside.toc{display:none}
+    .shell{grid-template-columns:var(--sidebar) 1fr}
+  }
+  @media (max-width:740px){
+    aside.sidebar{display:none}
+    .shell{grid-template-columns:1fr}
+    main.article{padding:24px 20px 64px;border-right:none}
+    nav.primary{display:none}
+    h1{font-size:26px}
+    .search{min-width:0}
+    .crumbs{font-size:11px}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="brand" href="#">
+    <span class="mark">A</span>
+    <span>Aurora</span>
+    <span class="ver">v0.4</span>
+  </a>
+  <nav class="primary" aria-label="Primary">
+    <a href="#" class="is-active">Docs</a>
+    <a href="#">API Reference</a>
+    <a href="#">Skills</a>
+    <a href="#">Hooks</a>
+    <a href="#">Releases</a>
+  </nav>
+  <div class="head-spacer"></div>
+  <div class="search">Find anything <kbd>⌘K</kbd></div>
+  <div class="head-icons">
+    <a href="#" title="GitHub" aria-label="GitHub">GH</a>
+    <a href="#" title="Theme" aria-label="Theme">☼</a>
+  </div>
+</header>
+
+<div class="subhead">
+  <div class="crumbs">
+    <span>docs</span><span class="sep">/</span>
+    <span>core-concepts</span><span class="sep">/</span>
+    <strong>workflow-phases</strong>
+  </div>
+  <div class="head-spacer-2"></div>
+  <span class="pill"><span class="dot"></span> Stable · v0.4</span>
+</div>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Documentation navigation">
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Getting started <span class="count">4</span></div>
+      <ul>
+        <li><a href="#"><span class="glyph">M</span>Introduction</a></li>
+        <li><a href="#"><span class="glyph">M</span>Installation</a></li>
+        <li><a href="#"><span class="glyph">M</span>Quickstart</a></li>
+        <li><a href="#"><span class="glyph">M</span>Configuration</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Core concepts <span class="count">5</span></div>
+      <ul>
+        <li><a href="#" class="is-active"><span class="glyph">›</span>Workflow phases</a></li>
+        <li><a href="#"><span class="glyph">M</span>Hooks and guards</a></li>
+        <li><a href="#"><span class="glyph">M</span>Skills and subagents</a></li>
+        <li><a href="#"><span class="glyph">M</span>Memory system</a></li>
+        <li><a href="#"><span class="glyph">M</span>Consent gates</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <div class="head"><span class="chev">▾</span> Reference <span class="count">8</span></div>
+      <ul>
+        <li><a href="#"><span class="glyph">F</span>CLI commands</a></li>
+        <li><a href="#"><span class="glyph">{}</span>settings.json</a></li>
+        <li><a href="#"><span class="glyph">{}</span>project.json</a></li>
+        <li><a href="#"><span class="glyph">{}</span>workflow.json</a></li>
+        <li><a href="#"><span class="glyph">F</span>Hook events</a></li>
+        <li><a href="#"><span class="glyph">F</span>Skill index</a></li>
+        <li><a href="#"><span class="glyph">F</span>Memory schema</a></li>
+        <li><a href="#"><span class="glyph">F</span>Glossary</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main id="main" class="article">
+    <div class="meta-row">
+      <span class="badge">Core concepts</span>
+      <span class="crumb">·</span>
+      <span>5 min read</span>
+      <span class="crumb">·</span>
+      <span>Edited 2026-04-29</span>
+    </div>
+    <h1>Workflow phases</h1>
+    <p class="lead">The eleven-phase pipeline that takes a request from intake to commit. Every phase produces exactly one artifact, and every transition is enforced at the write boundary by a hook.</p>
+
+    <h2 id="overview" data-num="§ 1">Overview</h2>
+    <p>Aurora ships a constitutional workflow with eleven ordered phases. Order is enforced at the write boundary by <code>track_guard</code>, so phases cannot be skipped or reordered without an explicit exception in <code>.claude/state/workflow.json</code>.</p>
+    <p>Three of the eleven phases are consent gates: user-typed slash commands that Claude is structurally unable to invoke. Approval authority lives outside the model.</p>
+
+    <h2 id="phases" data-num="§ 2">The eleven phases</h2>
+    <p>Each phase has exactly one mandated output. The output of phase <em>n</em> is the contract for phase <em>n + 1</em>.</p>
+    <table>
+      <thead><tr><th style="width:36px">#</th><th>Phase</th><th>Skill</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td class="num">01</td><td class="phase">Intake</td><td class="skill"><code>/intake</code></td><td class="out">docs/intake/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">02</td><td class="phase">Scout</td><td class="skill"><code>/scout</code></td><td class="out">docs/scout/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">03</td><td class="phase">Research</td><td class="skill"><code>/research</code></td><td class="out">docs/research/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">04</td><td class="phase">Spec</td><td class="skill"><code>/spec</code></td><td class="out">docs/specs/&lt;slug&gt;.md</td></tr>
+        <tr><td class="num">05</td><td class="phase">Approve spec</td><td class="skill"><code>/approve-spec</code></td><td class="out">approval token</td></tr>
+        <tr><td class="num">06</td><td class="phase">TDD</td><td class="skill"><code>/tdd</code></td><td class="out">code</td></tr>
+        <tr><td class="num">07</td><td class="phase">Simplify</td><td class="skill"><code>/simplify</code></td><td class="out">clean diff</td></tr>
+        <tr><td class="num">08</td><td class="phase">Security</td><td class="skill"><code>/security</code></td><td class="out">findings report</td></tr>
+        <tr><td class="num">09</td><td class="phase">Integrate</td><td class="skill"><code>/integrate</code></td><td class="out">verify verdict</td></tr>
+        <tr><td class="num">10</td><td class="phase">Document</td><td class="skill"><code>/document</code></td><td class="out">prose</td></tr>
+        <tr><td class="num">11</td><td class="phase">Commit</td><td class="skill"><code>/commit</code></td><td class="out">commit</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="diagram">Phase flow</h3>
+    <div class="diagram" role="img" aria-label="Phase flow diagram">
+      <div class="step"><span class="n">01</span>Intake</div>
+      <div class="step"><span class="n">02</span>Scout</div>
+      <div class="step"><span class="n">03</span>Research</div>
+      <div class="step"><span class="n">04</span>Spec</div>
+      <div class="step gate"><span class="n">05</span>Approve</div>
+      <div class="step"><span class="n">06</span>TDD</div>
+      <div class="step"><span class="n">07</span>Simplify</div>
+      <div class="step"><span class="n">08</span>Security</div>
+      <div class="step"><span class="n">09</span>Integrate</div>
+      <div class="step"><span class="n">10</span>Document</div>
+      <div class="step gate"><span class="n">11</span>Commit</div>
+    </div>
+
+    <h2 id="consent" data-num="§ 3">Consent gates</h2>
+    <p>Each gate writes a short-lived consent marker that the corresponding PreToolUse guard validates before allowing the approval-token write. Markers expire after sixty seconds and are deleted on use, so a gate cannot be replayed.</p>
+    <div class="callout" role="note">
+      <span class="lbl">Warning</span>
+      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, outside Claude's tool boundary. Claude cannot forge or replay an approval marker.</p>
+    </div>
+
+    <h2 id="customize" data-num="§ 4">Customizing the pipeline</h2>
+    <p>To skip a phase for a specific request, add it to the <code>exceptions</code> array. <code>/triage</code> is the only sanctioned writer of this file.</p>
+    <div class="codeblock">
+      <div class="cb-head">
+        <span class="file">.claude/state/workflow.json</span>
+        <span class="lang">JSON</span>
+        <button class="copy" type="button">Copy</button>
+      </div>
+      <pre><code><span class="ln"> 1</span><span class="tok-com">// workflow state for slug `site-react-ssg-seo`</span>
+<span class="ln"> 2</span>{
+<span class="ln"> 3</span>  <span class="tok-key">"slug"</span>: <span class="tok-str">"site-react-ssg-seo"</span>,
+<span class="ln"> 4</span>  <span class="tok-key">"entry_phase"</span>: <span class="tok-str">"intake"</span>,
+<span class="ln"> 5</span>  <span class="tok-key">"exceptions"</span>: [<span class="tok-str">"security"</span>],
+<span class="ln"> 6</span>  <span class="tok-key">"completed"</span>: [<span class="tok-str">"intake"</span>, <span class="tok-str">"scout"</span>],
+<span class="ln"> 7</span>  <span class="tok-key">"current"</span>: <span class="tok-str">"research"</span>
+<span class="ln"> 8</span>}</code></pre>
+    </div>
+    <p>Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
+
+    <div class="pgnav">
+      <a href="#" class="prev"><span class="lbl">← Prev</span><span class="ti">Configuration</span></a>
+      <a href="#" class="next"><span class="lbl">Next →</span><span class="ti">Hooks and guards</span></a>
+    </div>
+
+    <footer class="docfoot">
+      <span>last-modified: 2026-04-29</span>
+      <span><a href="#">edit-on-github</a> · <a href="#">report-issue</a> · <a href="#">license MIT</a></span>
+    </footer>
+  </main>
+
+  <aside class="toc" aria-label="On this page">
+    <h5>On this page</h5>
+    <ul>
+      <li><a href="#overview" class="is-active"><span class="num">1</span>Overview</a></li>
+      <li><a href="#phases"><span class="num">2</span>The eleven phases</a></li>
+      <li><a href="#diagram" class="lvl-3"><span class="num">2.1</span>Phase flow</a></li>
+      <li><a href="#consent"><span class="num">3</span>Consent gates</a></li>
+      <li><a href="#customize"><span class="num">4</span>Customizing</a></li>
+    </ul>
+    <div class="toc-meta">
+      <div>commit <span>a3f81e2</span></div>
+      <div>updated <span>2026-04-29</span></div>
+      <div>contribs <span>3</span></div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

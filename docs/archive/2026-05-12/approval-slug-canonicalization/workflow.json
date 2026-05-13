@@ -1,0 +1,26 @@
+{
+  "request": "Fix spec/swarm/commit approval slug-matching fragility and tight consent marker TTL. Canonicalize slug across consent_gate_grant + the three approval guards + the three approve-* commands so they all accept a bare slug with filename optional. Bump default consent.gate_marker_ttl_seconds from 60 to 120.",
+  "slug": "approval-slug-canonicalization",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd",
+    "grant-commit",
+    "commit",
+    "security"
+  ],
+  "completed": [
+    "chore",
+    "simplify",
+    "integrate",
+    "document",
+    "archive"
+  ],
+  "created_at": 1778566991,
+  "updated_at": 1778567901
+}

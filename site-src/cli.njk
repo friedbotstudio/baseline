@@ -1,0 +1,244 @@
+---
+layout: docs.njk
+permalink: /cli/index.html
+pageTitle: "CLI · baseline"
+title: CLI
+titlePrimary: CLI
+titleAccent: "."
+description: "`npx create-baseline <target>` materializes the baseline. Three install modes, one read-only doctor subcommand, three flags, five exit codes."
+eyebrow: Reference
+lead: "<code>npx create-baseline &lt;target&gt;</code> materializes the baseline. Three install modes, one read-only <code>doctor</code> subcommand, three flags, five exit codes. The CLI is zero-runtime-dependency Node; everything else ships in the npm tarball."
+active: cli
+sidebarActive: cli
+heroSymbol: cli
+toc:
+  - { id: invocation, label: "Invocation" }
+  - { id: modes,      label: "Modes" }
+  - { id: flags,      label: "Flags" }
+  - { id: exit,       label: "Exit codes" }
+  - { id: doctor,     label: "Doctor" }
+  - { id: mcp-merge,  label: ".mcp.json merge" }
+  - { id: manifest,   label: "Manifest" }
+  - { id: plantuml,   label: "PlantUML jar" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="invocation">Invocation</h2>
+    </div>
+    <p>Two shapes. The install shape takes a target; the <code>doctor</code> subcommand defaults to the current directory.</p>
+  </div>
+<pre><code><span class="tok-com"># install / merge / dry-run a target</span>
+npx create-baseline &lt;target&gt; [--force | --merge] [--dry-run]
+                              [--no-plantuml | --require-plantuml]
+
+<span class="tok-com"># read-only drift report against an installed target</span>
+npx create-baseline doctor [target]
+
+<span class="tok-com"># misc</span>
+npx create-baseline --help
+npx create-baseline --version</code></pre>
+  <p><code>--force</code> and <code>--merge</code> are mutually exclusive. <code>--no-plantuml</code> and <code>--require-plantuml</code> are mutually exclusive. Argv errors exit 2.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="modes">Modes</h2>
+    </div>
+    <p>Three install modes plus dry-run. The default refuses to clobber an existing baseline; both overwrite paths require a typed confirmation in an interactive shell.</p>
+  </div>
+  <table>
+    <thead><tr><th>Mode</th><th>Behavior</th><th>Confirmation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="phase">fresh<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);">(default)</span></td>
+        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the four sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved.</td>
+        <td>None.</td>
+      </tr>
+      <tr>
+        <td class="phase">--force</td>
+        <td>Overwrites every baseline file. Preserves <code>.claude/project.json</code> (it carries your <code>/init-project</code> tailoring; the install never touches it). Special-cases <code>.mcp.json</code> via the additive merge.</td>
+        <td>Typed <code>overwrite</code> in an interactive TTY. Non-TTY without <code>--dry-run</code> exits 2.</td>
+      </tr>
+      <tr>
+        <td class="phase">--merge</td>
+        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>. Per-file decision (see <a href="#mcp-merge">below</a>): refresh untouched files, preserve customizations, prune files removed upstream that the user hadn't touched.</td>
+        <td>Typed <code>merge</code> in an interactive TTY. Non-TTY accepted only with <code>--dry-run</code>.</td>
+      </tr>
+      <tr>
+        <td class="phase">--dry-run</td>
+        <td>Combines with any of the above. Prints intended actions; writes nothing. The PlantUML jar fetch is also skipped.</td>
+        <td>None.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Under <code>--merge</code> the per-file action is one of eight kinds:</p>
+  <table>
+    <thead><tr><th>Action</th><th>Trigger</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">ADD</td><td>New in the template; absent in the target.</td></tr>
+      <tr><td class="phase">OVERWRITE</td><td>Target hash matches the old manifest (untouched since last install). Refreshed.</td></tr>
+      <tr><td class="phase">NOOP</td><td>Target hash matches the new manifest. Already current.</td></tr>
+      <tr><td class="phase">SKIP_CUSTOMIZED</td><td>Target hash differs from both old and new. User customized it. Preserved. Contributes to exit 3.</td></tr>
+      <tr><td class="phase">PRUNE</td><td>Removed from the new template; target hash matches the old manifest. Untouched stale file. <strong>Deleted.</strong></td></tr>
+      <tr><td class="phase">PRUNE_SKIPPED_CUSTOMIZED</td><td>Removed from the new template; target hash differs from the old manifest. Customized stale file. Preserved. Contributes to exit 3.</td></tr>
+      <tr><td class="phase">NEVER_TOUCH_PRESERVE</td><td>Path is in <code>NEVER_TOUCH</code> (currently <code>.claude/project.json</code> only) and the target has it. Always preserved.</td></tr>
+      <tr><td class="phase">NEVER_TOUCH_ADD</td><td>Path is in <code>NEVER_TOUCH</code> and the target lacks it. Written from the template.</td></tr>
+      <tr><td class="phase">SPECIAL_MERGE</td><td>Path is in <code>SPECIAL_MERGE</code> (currently <code>.mcp.json</code> only). The additive merge runs (see <a href="#mcp-merge">below</a>).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="flags">Flags</h2>
+    </div>
+    <p>Three operational flags beyond the modes. Two of them control the PlantUML side-fetch.</p>
+  </div>
+  <table>
+    <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">--dry-run</td><td>Print intended actions without writing. Skips the PlantUML fetch. Combines with any install mode.</td></tr>
+      <tr><td class="phase">--no-plantuml</td><td>Skip the jar download entirely. PlantUML rendering will fall back to either system <code>plantuml</code> (if on <code>$PATH</code>) or the <code>plantuml-mcp-server</code> hosted endpoint.</td></tr>
+      <tr><td class="phase">--require-plantuml</td><td>Treat jar fetch failure (network or sha256 mismatch) as fatal. Exit 4 instead of the default behavior of warning and continuing.</td></tr>
+      <tr><td class="phase">--help, -h</td><td>Print the usage block and exit 0.</td></tr>
+      <tr><td class="phase">--version</td><td>Print the package version and exit 0.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="exit">Exit codes</h2>
+    </div>
+    <p>Five exit codes. Designed for CI scripts to branch on the structural cases.</p>
+  </div>
+  <table>
+    <thead><tr><th>Code</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">0</td><td>Success. Or a clean <code>doctor</code> report.</td></tr>
+      <tr><td class="phase">1</td><td>User abort, sentinel conflict without <code>--force</code> or <code>--merge</code>, or <code>doctor</code> reports missing baseline files.</td></tr>
+      <tr><td class="phase">2</td><td>Argv error, mutually-exclusive flag combination, non-TTY where TTY required, or <code>doctor</code> finds no manifest at the target.</td></tr>
+      <tr><td class="phase">3</td><td><code>--merge</code> produced a <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The install succeeded; you have customizations the merge could not reconcile.</td></tr>
+      <tr><td class="phase">4</td><td><code>--require-plantuml</code> and the jar fetch failed.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="doctor">Doctor</h2>
+    </div>
+    <p>A read-only drift check against an installed target's <code>.claude/.baseline-manifest.json</code>. Writes nothing. Returns a structured report.</p>
+  </div>
+
+  <div class="install-snippet">
+    <div class="bar">
+      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <span class="file">~/code · zsh</span>
+    </div>
+<pre><code>$ npx create-baseline doctor ./my-project
+
+Baseline doctor — target: /Users/you/code/my-project
+Manifest: version 1, installed 2026-05-11T14:00:00Z
+
+  matched:    160
+  customized: 0
+  missing:    0
+  added:      0</code></pre>
+  </div>
+
+  <p>Four categories, surfaced in this order whenever non-zero:</p>
+  <table>
+    <thead><tr><th>Category</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">matched</td><td>File hash on disk equals the hash recorded in the manifest at install time. Clean.</td></tr>
+      <tr><td class="phase">customized</td><td>File hash differs from the manifest. The user (or <code>/init-project</code>, or any phase skill) has edited it. <strong>Informational only.</strong></td></tr>
+      <tr><td class="phase">missing</td><td>File is in the manifest but absent from disk. Lossy drift. Triggers exit 1.</td></tr>
+      <tr><td class="phase">added</td><td>File is under <code>.claude/</code> but not in the manifest. Likely from <code>/init-project</code> additions or your own customizations. Informational only.</td></tr>
+    </tbody>
+  </table>
+  <p>Doctor never modifies the target. To repair drift, use <code>--merge</code> (preserves customizations) or <code>--force</code> (overwrites everything except <code>.claude/project.json</code>).</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="mcp-merge"><code>.mcp.json</code> merge semantics</h2>
+    </div>
+    <p>The CLI special-cases <code>.mcp.json</code> on every install (fresh or merge). The behavior is <strong>baseline-refresh</strong>: servers the baseline owns get the template's current args; servers you added are preserved.</p>
+  </div>
+  <ul>
+    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>. The merge refreshes them from the template, so <code>--merge</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next merge.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
+    <li><strong>Servers absent from the template are user-added.</strong> Preserved byte-for-byte across merges.</li>
+    <li><strong>Top-level JSON keys</strong> outside <code>mcpServers</code> are additive: template keys are added when missing; the target's existing keys win on collision.</li>
+    <li><strong>If the target has no <code>.mcp.json</code></strong>, the template is written verbatim.</li>
+  </ul>
+  <p>The implementation lives in <code>src/cli/mcp.js</code>. The decision was recorded in <code>README.md</code> under "<code>.mcp.json</code> merge semantics".</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VII</p>
+      <h2 id="manifest">Manifest</h2>
+    </div>
+    <p>After every install, the CLI writes <code>.claude/.baseline-manifest.json</code> at the target: a sha256-keyed hash table of every file shipped, plus a version stamp and the install timestamp.</p>
+  </div>
+  <pre><code>{
+  "manifest_version": 1,
+  "generated_at": "2026-05-11T14:00:00.000Z",
+  "files": {
+    "CLAUDE.md": "9a3f...",
+    ".claude/hooks/track_guard.sh": "1c4b...",
+    ".claude/skills/intake/SKILL.md": "f0d2...",
+    ...
+  }
+}</code></pre>
+  <p>This file is the input to every subsequent <code>--merge</code> and to <code>doctor</code>. Two design notes:</p>
+  <ul>
+    <li>Each <code>--merge</code> run replaces the manifest with a fresh one stamped at the new install time. The old manifest is the "old" side of the three-way reconcile; the new template is the "new" side; the target on disk is the lived side.</li>
+    <li>The manifest is recommended for <strong>commit</strong> to the project's git history. It is the audit trail for "what baseline version was this project on as of which commit". The baseline's <code>.gitignore</code> does not exclude it.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VIII</p>
+      <h2 id="plantuml">PlantUML jar</h2>
+    </div>
+    <p>The baseline's <code>plantuml-syntax-guard</code> and <code>/spec-render</code> skill need a PlantUML binary. The install side-fetches one when the system has no <code>plantuml</code> on <code>$PATH</code>.</p>
+  </div>
+  <table>
+    <thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">Pinned version</td><td><code>plantuml-asl-1.2026.2.jar</code></td></tr>
+      <tr><td class="phase">Pinned sha256</td><td><code>c348f6a26d999f81fd05b5d49834bb70df9cf35fab0939c4edecb0909e64022b</code></td></tr>
+      <tr><td class="phase">Pinned size</td><td>19 395 808 bytes (~19 MB)</td></tr>
+      <tr><td class="phase">Destination</td><td><code>.claude/bin/plantuml.jar</code> (gitignored)</td></tr>
+      <tr><td class="phase">Write</td><td>Atomic. Writes to <code>plantuml.jar.tmp.&lt;pid&gt;</code>, then <code>rename(2)</code>.</td></tr>
+      <tr><td class="phase">License</td><td>Apache 2.0. The <code>LICENSE</code> + <code>NOTICE</code> files ship in the npm tarball at <code>.claude/bin/</code>.</td></tr>
+    </tbody>
+  </table>
+  <p>The fetch is skipped when:</p>
+  <ul>
+    <li><code>plantuml</code> is already on the system <code>$PATH</code>.</li>
+    <li><code>--no-plantuml</code> is set.</li>
+    <li><code>--dry-run</code> is set.</li>
+    <li>The destination jar is already present with a matching sha256.</li>
+  </ul>
+  <p>On network failure or sha mismatch, the install prints a warning and continues. Pass <code>--require-plantuml</code> to make the failure fatal (exit 4) so CI catches a wedged mirror.</p>
+</section>

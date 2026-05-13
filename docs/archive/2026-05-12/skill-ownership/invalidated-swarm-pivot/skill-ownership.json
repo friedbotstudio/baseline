@@ -1,0 +1,307 @@
+{
+  "slug": "skill-ownership",
+  "spec": "docs/specs/skill-ownership.md",
+  "created_at": 1778600883,
+  "status": "planned",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Add owner: baseline frontmatter to artifact-drafting skills (4)",
+      "component": "skill-frontmatter-artifact",
+      "acs": [
+        "AC-001"
+      ],
+      "write_set": [
+        ".claude/skills/intake/SKILL.md",
+        ".claude/skills/brd/SKILL.md",
+        ".claude/skills/spec/SKILL.md",
+        ".claude/skills/rca/SKILL.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-002",
+      "title": "Add owner: baseline frontmatter to workflow phase skills (10)",
+      "component": "skill-frontmatter-phases",
+      "acs": [
+        "AC-001"
+      ],
+      "write_set": [
+        ".claude/skills/triage/SKILL.md",
+        ".claude/skills/scout/SKILL.md",
+        ".claude/skills/research/SKILL.md",
+        ".claude/skills/tdd/SKILL.md",
+        ".claude/skills/simplify/SKILL.md",
+        ".claude/skills/security/SKILL.md",
+        ".claude/skills/integrate/SKILL.md",
+        ".claude/skills/document/SKILL.md",
+        ".claude/skills/archive/SKILL.md",
+        ".claude/skills/commit/SKILL.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-003",
+      "title": "Add owner: baseline frontmatter to phase-worker skills (5)",
+      "component": "skill-frontmatter-workers",
+      "acs": [
+        "AC-001"
+      ],
+      "write_set": [
+        ".claude/skills/scenario/SKILL.md",
+        ".claude/skills/implement/SKILL.md",
+        ".claude/skills/verify/SKILL.md",
+        ".claude/skills/prose/SKILL.md",
+        ".claude/skills/design-ui/SKILL.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-004",
+      "title": "Add owner: baseline frontmatter to spec-helper skills (4)",
+      "component": "skill-frontmatter-spec-helpers",
+      "acs": [
+        "AC-001"
+      ],
+      "write_set": [
+        ".claude/skills/spec-lint/SKILL.md",
+        ".claude/skills/spec-render/SKILL.md",
+        ".claude/skills/spec-diagram-review/SKILL.md",
+        ".claude/skills/spec-traceability-review/SKILL.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-005",
+      "title": "Add owner: baseline frontmatter to orchestration, memory, audit, alt, and shared-globals skills (13)",
+      "component": "skill-frontmatter-rest",
+      "acs": [
+        "AC-001"
+      ],
+      "write_set": [
+        ".claude/skills/harness/SKILL.md",
+        ".claude/skills/swarm-plan/SKILL.md",
+        ".claude/skills/swarm-dispatch/SKILL.md",
+        ".claude/skills/memory-flush/SKILL.md",
+        ".claude/skills/audit-baseline/SKILL.md",
+        ".claude/skills/chore/SKILL.md",
+        ".claude/skills/claude-automation-recommender/SKILL.md",
+        ".claude/skills/code-structure/SKILL.md",
+        ".claude/skills/humanizer/SKILL.md",
+        ".claude/skills/documentation/SKILL.md",
+        ".claude/skills/technical-tutorials/SKILL.md",
+        ".claude/skills/copywriting/SKILL.md",
+        ".claude/skills/impeccable/SKILL.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-006",
+      "title": "Verify/update bin/cli.js to tolerate manifest_version >= 1",
+      "component": "cli-tolerate-v2",
+      "acs": [
+        "AC-002"
+      ],
+      "write_set": [
+        "bin/cli.js"
+      ],
+      "read_set": [
+        "scripts/build-manifest.mjs",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-007",
+      "title": "Add Article XI to CLAUDE.md and mirror to src/CLAUDE.template.md",
+      "component": "constitution-article-xi",
+      "acs": [
+        "AC-007"
+      ],
+      "write_set": [
+        "CLAUDE.md",
+        "src/CLAUDE.template.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-008",
+      "title": "Add \u00a717 to docs/init/seed.md and mirror to src/seed.template.md",
+      "component": "seed-section-17",
+      "acs": [
+        "AC-007"
+      ],
+      "write_set": [
+        "docs/init/seed.md",
+        "src/seed.template.md"
+      ],
+      "read_set": [
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-009",
+      "title": "Extend build-manifest.mjs to read SKILL.md frontmatter and emit owners.skills; bump manifest_version to 2",
+      "component": "build-manifest-v2",
+      "acs": [
+        "AC-002",
+        "AC-008"
+      ],
+      "write_set": [
+        "scripts/build-manifest.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/intake/SKILL.md",
+        ".claude/skills/audit-baseline/audit.sh",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-002",
+        "T-003",
+        "T-004",
+        "T-005"
+      ]
+    },
+    {
+      "id": "T-010",
+      "title": "Rewrite audit.sh: drop EXPECTED_SKILLS, add manifest-driven skill-ownership and constitutional-citation checks",
+      "component": "audit-skill-ownership-check",
+      "acs": [
+        "AC-001",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-009"
+      ],
+      "write_set": [
+        ".claude/skills/audit-baseline/audit.sh"
+      ],
+      "read_set": [
+        "scripts/build-manifest.mjs",
+        "CLAUDE.md",
+        "docs/init/seed.md",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-002",
+        "T-003",
+        "T-004",
+        "T-005",
+        "T-007",
+        "T-008"
+      ]
+    },
+    {
+      "id": "T-011",
+      "title": "Add tests/skill-ownership.test.mjs covering AC-001 through AC-009",
+      "component": "tests-skill-ownership",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009"
+      ],
+      "write_set": [
+        "tests/skill-ownership.test.mjs"
+      ],
+      "read_set": [
+        "scripts/build-manifest.mjs",
+        ".claude/skills/audit-baseline/audit.sh",
+        "bin/cli.js",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": [
+        "T-009",
+        "T-010"
+      ]
+    },
+    {
+      "id": "T-012",
+      "title": "Extend tests/manifest.test.mjs to assert manifest v2 shape (owners.skills)",
+      "component": "tests-manifest-v2-extension",
+      "acs": [
+        "AC-002"
+      ],
+      "write_set": [
+        "tests/manifest.test.mjs"
+      ],
+      "read_set": [
+        "scripts/build-manifest.mjs",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": [
+        "T-009"
+      ]
+    },
+    {
+      "id": "T-013",
+      "title": "Confirm tests/doctor.test.mjs tolerates v2 manifest at target",
+      "component": "tests-doctor-tolerates-v2",
+      "acs": [
+        "AC-002"
+      ],
+      "write_set": [
+        "tests/doctor.test.mjs"
+      ],
+      "read_set": [
+        "bin/cli.js",
+        "scripts/build-manifest.mjs",
+        "docs/specs/skill-ownership.md"
+      ],
+      "depends_on": [
+        "T-006",
+        "T-009"
+      ]
+    }
+  ],
+  "waves": [
+    [
+      "T-001",
+      "T-002",
+      "T-003",
+      "T-004",
+      "T-005",
+      "T-006",
+      "T-007",
+      "T-008"
+    ],
+    [
+      "T-009",
+      "T-010"
+    ],
+    [
+      "T-011",
+      "T-012",
+      "T-013"
+    ]
+  ],
+  "validated_at": 1778600931
+}

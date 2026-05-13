@@ -1,0 +1,168 @@
+---
+layout: docs.njk
+permalink: /skills/core/index.html
+pageTitle: "Core skills · baseline"
+title: Core skills
+titlePrimary: Core
+titleAccent: " skills"
+eyebrow: Skills
+eleventyComputed:
+  description: "The {{ baseline.skills.total }} skills that ship with the baseline. Phase skills, artifact drafters, phase workers, spec helpers, orchestration, memory, audit, alt tracks."
+  lead: "The baseline ships {{ baseline.skills.total }} skills across {{ baseline.skills.categoriesWord }} categories. Each runs in main context, where conversational visibility is preserved. The single subagent is a separate mechanism."
+active: skills
+sidebarActive: skills-core
+toc:
+  - { id: artifact,      label: "Artifact drafting" }
+  - { id: phases,        label: "Workflow phases" }
+  - { id: workers,       label: "Phase workers" }
+  - { id: spec,          label: "Spec helpers" }
+  - { id: orchestration, label: "Orchestration" }
+  - { id: memory,        label: "Memory" }
+  - { id: globals,       label: "Shared globals" }
+  - { id: audit,         label: "Audit" }
+  - { id: alt,           label: "Alternate tracks" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="artifact">Artifact drafting ({{ baseline.skills.byCategory.artifact }})</h2>
+    </div>
+    <p>Each ships a <code>template.md</code> that the skill fills in. Artifact skills produce the durable workflow documents that downstream phases consume.</p>
+  </div>
+  <ul>
+    <li><code>intake</code>. Phase 1. Captures a new request: problem, desired outcome, constraints, testable acceptance criteria.</li>
+    <li><code>brd</code>. Cross-functional Business Requirements Document, written when intake is not enough.</li>
+    <li><code>spec</code>. Phase 4. Diagram-driven technical spec with C4, UML, and a dependency graph in PlantUML.</li>
+    <li><code>rca</code>. Out-of-band postmortem for incidents and outages. Often precedes a bugfix intake.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="phases">Workflow phases ({{ baseline.skills.byCategory.phases }})</h2>
+    </div>
+    <p>Auto-invocable. The orchestrator chains them in order, yielding at consent gates.</p>
+  </div>
+  <ul>
+    <li><code>triage</code>. Picks the workflow entry phase and writes <code>workflow.json</code>.</li>
+    <li><code>scout</code>. Phase 2. Maps the relevant slice of the codebase.</li>
+    <li><code>research</code>. Phase 3. Surfaces 2 to 4 candidate solution approaches with concrete tradeoffs.</li>
+    <li><code>tdd</code>. Phase 6 (solo). Decides scenario recipe and implementation contract; runs scenario then implement then verify.</li>
+    <li><code>simplify</code>. Phase 7. Mechanical cleanup pass over the branch diff.</li>
+    <li><code>security</code>. Phase 8. OWASP-aligned review of pending changes.</li>
+    <li><code>integrate</code>. Phase 9. Runs the full test suite and stamps the binding verify verdict.</li>
+    <li><code>document</code>. Phase 10. Routes technical writing through the documentation, technical-tutorials, and prose skills.</li>
+    <li><code>archive</code>. Phase 10.5. Moves slug artifacts to <code>docs/archive/&lt;date&gt;/&lt;slug&gt;/</code>.</li>
+    <li><code>commit</code>. Phase 11. Stages and creates the commit, gated by <code>/grant-commit</code>.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="workers">Phase workers ({{ baseline.skills.byCategory.workers }})</h2>
+    </div>
+    <p>Execute pre-decided recipes. Each mandatorily invokes a sub-skill so the engineering rules travel with every code-generation step.</p>
+  </div>
+  <ul>
+    <li><code>scenario</code>. Writes failing tests from a recipe. Invokes <code>code-structure</code>.</li>
+    <li><code>implement</code>. Writes production code that turns scenarios green. Invokes <code>code-structure</code>; uses <code>context7</code> for any third-party API.</li>
+    <li><code>verify</code>. Mechanical worker. Runs the test command and stamps the official PASS or FAIL verdict.</li>
+    <li><code>prose</code>. Drafts or revises English prose for any brief. Always invokes <code>humanizer</code>; conditionally <code>copywriting</code>, <code>documentation</code>, or <code>technical-tutorials</code>.</li>
+    <li><code>design-ui</code>. Orchestrates <code>impeccable</code> for UI design tasks: classifies intent, picks an impeccable recipe, runs it under a 3-iteration loop cap, persists state at <code>.claude/state/design/&lt;slug&gt;.json</code>. Writes no product code itself. Per Article X.2, every design task in a workflow phase routes through this skill.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="spec">Spec helpers ({{ baseline.skills.byCategory.specHelpers }})</h2>
+    </div>
+    <p>Validate the spec artifact before approval and render its diagrams for review.</p>
+  </div>
+  <ul>
+    <li><code>spec-lint</code>. Preflight check before save. Validates PlantUML syntax, required diagram presence, AC-to-sequence traceability.</li>
+    <li><code>spec-render</code>. User-only. Renders PlantUML diagrams to PNG.</li>
+    <li><code>spec-diagram-review</code>. Cross-consistency review. Verifies C4 components appear in the dependency graph and so on.</li>
+    <li><code>spec-traceability-review</code>. Verifies every spec AC traces to an upstream AC in the intake or BRD.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="orchestration">Orchestration ({{ baseline.skills.byCategory.orchestration }})</h2>
+    </div>
+    <p>Drive the workflow end-to-end, plan the swarm path, and dispatch the worker waves.</p>
+  </div>
+  <ul>
+    <li><code>harness</code>. User-only. Drives the workflow end-to-end, yielding at consent gates.</li>
+    <li><code>swarm-plan</code>. Decomposes an approved spec into a dependency-ordered swarm plan.</li>
+    <li><code>swarm-dispatch</code>. Executes a swarm plan wave by wave with worktree isolation.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="memory">Memory ({{ baseline.skills.byCategory.memory }})</h2>
+    </div>
+    <p>One curation skill bridges the auto-extracted inbox and the canonical files.</p>
+  </div>
+  <ul>
+    <li><code>memory-flush</code>. Reviews auto-extracted candidates in <code>_pending.md</code> and commits keepers to canonical files.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VII</p>
+      <h2 id="globals">Shared globals ({{ baseline.skills.byCategory.sharedGlobals }})</h2>
+    </div>
+    <p>Vendored or globally available. Available to any phase that needs them.</p>
+  </div>
+  <ul>
+    <li><code>claude-automation-recommender</code>. Vendored under Apache 2.0. Recommends Claude Code automations for a codebase.</li>
+    <li><code>code-structure</code>. Mandatory on every code-generation step. Enforces orchestration / domain / foundation layering.</li>
+    <li><code>humanizer</code>. Removes signs of AI-generated writing. Mandatorily invoked by <code>prose</code>.</li>
+    <li><code>documentation</code>. Reference docs, READMEs, runbooks.</li>
+    <li><code>technical-tutorials</code>. Step-by-step tutorials, quickstarts, code walkthroughs.</li>
+    <li><code>copywriting</code>. Persuasive register: landing pages, marketing copy.</li>
+    <li><code>impeccable</code>. Frontend design and iteration. Mandatorily invoked by <code>design-ui</code>.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VIII</p>
+      <h2 id="audit">Audit ({{ baseline.skills.byCategory.audit }})</h2>
+    </div>
+    <p>One drift defender keeps the implementation honest against seed.md and the constitution.</p>
+  </div>
+  <ul>
+    <li><code>audit-baseline</code>. Drift check between this constitution plus seed.md and the implementation. Read-only.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IX</p>
+      <h2 id="alt">Alternate tracks ({{ baseline.skills.byCategory.altTracks }})</h2>
+    </div>
+    <p>A stripped-down pipeline for tasks that need no failing-test-driven code change.</p>
+  </div>
+  <ul>
+    <li><code>chore</code>. Stripped-down workflow for tasks with no failing-test-driven code change: documentation edits, governance count bumps, formatting, dependency bumps. Skips scenario and implement; runs edits directly. Verify, archive, grant-commit, and commit remain mandatory.</li>
+  </ul>
+</section>

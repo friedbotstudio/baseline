@@ -1,0 +1,153 @@
+---
+layout: docs.njk
+permalink: /install/index.html
+pageTitle: "Install · baseline"
+title: Install
+titlePrimary: Install
+titleAccent: "."
+description: "The baseline is a repository overlay materialized by `npx create-baseline <target>`. Four sentinel paths land in the target project; nothing else is touched. Node ≥ 18.17 required."
+eyebrow: Getting started
+lead: "The baseline is a repository overlay materialized by <code>npx create-baseline &lt;target&gt;</code>. Four sentinel paths land in the target project; nothing else is touched. Node 18.17 or later is the only hard requirement."
+active: install
+sidebarActive: install
+heroSymbol: install
+toc:
+  - { id: requirements, label: "Requirements" }
+  - { id: one-command,  label: "One command" }
+  - { id: lands,        label: "What lands" }
+  - { id: after,        label: "After install" }
+  - { id: recover,      label: "Recover from a bad install" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="requirements">Requirements</h2>
+    </div>
+    <p>The CLI is zero-runtime-dependency Node. Everything it needs ships in the npm tarball.</p>
+  </div>
+  <table>
+    <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">Node ≥ 18.17</td><td>The CLI uses <code>node:util.parseArgs</code> with <code>strict</code> mode, available from this version.</td></tr>
+      <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec create-baseline</code> works too.</td></tr>
+      <tr><td class="phase">A target directory</td><td>An existing project root, or an empty directory you intend to populate. The CLI does not <code>mkdir</code> for you.</td></tr>
+      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 (<code>/grant-commit</code> + <code>/commit</code>) auto-excepts. See <a href="/swarm/#dispatch"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
+      <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="/cli/#plantuml">CLI · PlantUML jar</a>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="one-command">One command</h2>
+    </div>
+    <p>From the parent of your target, or anywhere with <code>npx</code> available:</p>
+  </div>
+
+  <div class="install-snippet">
+    <div class="bar">
+      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <span class="file">~/code · zsh</span>
+    </div>
+<pre><code><span class="tok-com"># preview without writing anything</span>
+$ npx create-baseline ./my-project --dry-run
+
+<span class="tok-com"># the real thing</span>
+$ npx create-baseline ./my-project
+<span class="tok-com"># → Installed manifest version 1 to /Users/you/code/my-project.</span>
+<span class="tok-com"># → Pin via "create-baseline@&lt;exact-version&gt;" in your bootstrap docs.</span></code></pre>
+  </div>
+
+  <p>The first run takes 5 to 30 seconds, dominated by the PlantUML jar fetch (~{{ baseline.size.plantumlJar }}, sha256-pinned). Subsequent runs reuse the cached jar.</p>
+
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>Pin the version in your bootstrap docs.</strong>
+      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="/cli/#modes">CLI · Modes</a>).</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="lands">What lands</h2>
+    </div>
+    <p>Four sentinel paths plus a small set of vendored bins. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present (without <code>--force</code> or <code>--merge</code>).</p>
+  </div>
+  <table>
+    <thead><tr><th>Path</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">.claude/</td><td><a href="/hooks/">{{ baseline.hooks.total }} hooks</a>, <a href="/skills/">{{ baseline.skills.total }} skills</a>, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, <a href="/memory/">memory schemas</a>, <code>project.json</code>, <code>settings.json</code>.</td></tr>
+      <tr><td class="phase">CLAUDE.md</td><td>In-session constitution. Binds Claude's behavior in this repository.</td></tr>
+      <tr><td class="phase">.mcp.json</td><td>The three baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>.</td></tr>
+      <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
+      <tr><td class="phase">.claude/bin/LICENSE, NOTICE</td><td>Apache 2.0 license + provenance for the side-fetched PlantUML jar.</td></tr>
+      <tr><td class="phase">.claude/bin/plantuml.jar</td><td>Side-fetched at install time, sha256-pinned, ~{{ baseline.size.plantumlJar }}. Skipped if <code>plantuml</code> is already on <code>$PATH</code>.</td></tr>
+      <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by <code>--merge</code> to do a three-way reconcile on the next install.</td></tr>
+    </tbody>
+  </table>
+  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="/cli/#mcp-merge">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="after">After install</h2>
+    </div>
+    <p>The baseline runs in <strong>project-agnostic mode</strong> immediately. Hooks are active. <code>test_runner</code> and <code>lint_runner</code> emit guidance only until tailored.</p>
+  </div>
+  <ol>
+    <li>
+      <strong>Open the project in Claude Code.</strong> The <code>SessionStart</code> hook injects the memory index. Claude greets you with the project-agnostic banner.
+    </li>
+    <li>
+      <strong>Run <code>/init-project</code>.</strong> Claude scouts the codebase, runs the recommender, proposes a tailored <code>project.json</code> (test command, lint command, TDD source globs, destructive patterns, optional MCP servers and skills, optional stack skills for <code>swarm-worker</code>), and writes it after you approve. The <code>configured</code> flag flips to <code>true</code>.
+    </li>
+    <li>
+      <strong>Restart Claude Code.</strong> The session re-reads <code>project.json</code>; the runner hooks switch from guide mode to enforcement.
+    </li>
+    <li>
+      <strong>Run your first <code>/triage "&lt;request&gt;"</code>.</strong> Or <code>/harness</code> to drive the full intake-to-commit pipeline.
+    </li>
+  </ol>
+  <p>Until <code>/init-project</code> runs, you can still use every phase. You just won't have stack-specific tailoring. Project-agnostic mode is a sanctioned operating state, not a partial install.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="recover">Recover from a bad install</h2>
+    </div>
+    <p>Three paths back to a clean baseline. Each is read-and-write safe: the CLI never silently overwrites user customizations.</p>
+  </div>
+  <table>
+    <thead><tr><th>Situation</th><th>Command</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="phase">Half-installed baseline</td>
+        <td><code>npx create-baseline ./project --force</code></td>
+        <td>Refuses unless you type <code>overwrite</code>. Replaces every baseline file except <code>.claude/project.json</code> (preserved).</td>
+      </tr>
+      <tr>
+        <td class="phase">Upgrade to a newer baseline</td>
+        <td><code>npx create-baseline ./project --merge</code></td>
+        <td>Three-way merge against the last install's manifest. Untouched files refresh, customizations preserve (exit 3 if any), removed-upstream files prune if you hadn't touched them.</td>
+      </tr>
+      <tr>
+        <td class="phase">Suspect drift</td>
+        <td><code>npx create-baseline doctor ./project</code></td>
+        <td>Read-only. Reports matched / customized / missing / added. Exit 0 if clean, 1 if any baseline file is missing, 2 if no manifest is present.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>For the full semantics of each mode, every flag, every exit code, and the <code>doctor</code> drift report categories, see the <a href="/cli/">CLI reference</a>.</p>
+</section>

@@ -1,0 +1,90 @@
+---
+layout: docs.njk
+permalink: /skills/third-party/index.html
+pageTitle: "Third-party skills · baseline"
+title: Third-party skills
+titlePrimary: "Third-party"
+titleAccent: " skills"
+eyebrow: Skills
+eleventyComputed:
+  description: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are shared globals vendored from external sources with their licenses preserved. Users adopt additional third-party skills by placing them in .claude/skills/."
+  lead: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are <strong>shared globals</strong> vendored from external sources with their licenses preserved. Users adopt additional third-party skills by placing them in <code>.claude/skills/</code> following the same vendoring discipline."
+active: skills
+sidebarActive: skills-third-party
+toc:
+  - { id: why,     label: "Why vendor" }
+  - { id: example, label: "The worked example" }
+  - { id: how,     label: "How to vendor" }
+  - { id: updates, label: "Tracking updates" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="why">Why vendor instead of install</h2>
+    </div>
+    <p>Skills are markdown plus optional scripts. They are read by Claude Code at session start. Vendoring means committing the skill files to your repository so the capability travels with the project.</p>
+  </div>
+  <p>The alternative (a global install) is fragile: a teammate clones the repo and the skill is missing.</p>
+  <p>The baseline ships skills as committed files. Third-party skills follow the same pattern. Place the skill folder under <code>.claude/skills/&lt;skill-name&gt;/</code>, preserve the original license file, and reference the original source in a top-of-file comment.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="example">The {{ baseline.skills.sharedGlobalsWord }} shared globals</h2>
+    </div>
+    <p>Per <code>CLAUDE.md</code> Appendix B, {{ baseline.skills.sharedGlobalsWord }} baseline skills are vendored from external sources. Each preserves its original license and behavior; the vendoring change is limited to an attribution header and a reference in the constitution's skill index.</p>
+  </div>
+  <table>
+  <thead><tr><th>Skill</th><th>Source</th><th>License</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td class="phase">claude-automation-recommender</td><td>Anthropic</td><td>Apache 2.0</td><td>Analyzes a codebase and recommends Claude Code automations; used by <code>/init-project</code>.</td></tr>
+    <tr><td class="phase">code-structure</td><td>Anthropic</td><td>Apache 2.0</td><td>Mandatory on every code-generation step. Enforces top-down composition and consistent abstraction layers.</td></tr>
+    <tr><td class="phase">humanizer</td><td>@blader</td><td>Apache 2.0</td><td>Removes signs of AI-generated writing; invoked unconditionally by <code>prose</code> as its final pass.</td></tr>
+    <tr><td class="phase">documentation</td><td>Anthropic</td><td>Apache 2.0</td><td>Reference-doc register (API docs, runbooks, architecture). Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">technical-tutorials</td><td>Anthropic</td><td>Apache 2.0</td><td>Tutorial / quickstart / step-by-step register. Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">copywriting</td><td>Anthropic</td><td>Apache 2.0</td><td>Persuasive register (landing copy, value props, CTAs). Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">impeccable</td><td>Anthropic</td><td>Apache 2.0</td><td>Frontend design and iteration. Mandatorily invoked by <code>design-ui</code>.</td></tr>
+  </tbody>
+  </table>
+  <p>Each shared global ships with its <code>LICENSE</code> file at <code>.claude/skills/&lt;name&gt;/LICENSE</code> and an attribution header in the skill's main markdown.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="how">How to vendor a third-party skill</h2>
+    </div>
+    <p>Six steps. The discipline keeps the audit-baseline drift check accurate and the upstream license honored.</p>
+  </div>
+  <ol>
+    <li>Identify the skill source. Confirm the license permits vendoring (most permissive licenses do; copyleft licenses typically do, with conditions).</li>
+    <li>Copy the skill folder to <code>.claude/skills/&lt;skill-name&gt;/</code>. Preserve the directory structure.</li>
+    <li>Copy the license file alongside, named <code>LICENSE</code> or matching the original filename.</li>
+    <li>Add a short attribution header to the skill's main file referencing the source URL and license.</li>
+    <li>Do not edit the skill's behavior. If a fork is needed, fork upstream and vendor the fork; do not edit in place.</li>
+    <li>Reference the skill in your project's <code>CLAUDE.md</code> Appendix B (the skill index) so the audit-baseline drift check knows it should be present.</li>
+  </ol>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">i</span>
+    <div class="body">
+      <strong>Vendoring is for skills, not for hooks or subagents.</strong>
+      <p>Hooks and subagents have constitutional implications. Adopting a third-party hook or subagent requires an explicit amendment to <code>seed.md</code>. Skills are safer to vendor because they are conversational tools the user can ignore; hooks are structural and run regardless.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="updates">Tracking updates</h2>
+    </div>
+    <p>A vendored skill is a snapshot. To pick up upstream improvements, replace the vendored copy from upstream and re-run <code>/audit-baseline</code> to confirm no drift in the parts that interact with the rest of the constitution.</p>
+  </div>
+  <p>Keep a short <code>VENDORED.md</code> alongside skills you have vendored, recording the upstream URL and the commit you vendored from.</p>
+</section>
