@@ -76,8 +76,8 @@ describe('runbook — Future-CI invariants (AC-009)', () => {
     const text = await readRunbook();
     assert.match(
       text,
-      /cache:\s*false/,
-      'runbook must require `cache: false` on setup-* actions in release workflows'
+      /omit the (`?)cache:(`?) key|omit the key/i,
+      'runbook must prescribe omitting the `cache:` key on setup-* actions (action rejects `cache: false`; omitting disables caching)'
     );
     assert.ok(
       text.includes('actions/cache'),

@@ -167,3 +167,10 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-05-13
 - Caveat: invokes `sweep.py` via `python3` and `--memory-dir <tempdir>` — until `sweep.py` exists, every flush test fails RED (correct TDD state, demonstrated during this workflow's scenario-tick). Test order matters for stale-sweep tests because replies are read one-per-entry-iteration from stdin in file-order.
+
+## .claude/hooks/git_commit_guard.sh:1
+
+- Role: PreToolUse hook with two matcher legs. (1) Bash leg gates `git commit` invocations on a fresh `commit_consent` token at `.claude/state/commit_consent` (default TTL 5 min, written by `/grant-commit` → `consent_gate_grant.sh`) and hard-blocks forbidden git operations (`git push`, `--force`, `--amend`, `--no-verify`, `reset --hard`, etc.) per CLAUDE.md Article VII regardless of consent. (2) Write leg gates Claude's writes to the consent files themselves: blocks direct writes to the `.commit_consent_grant` marker, and only allows writes to `commit_consent` when a fresh marker is on disk (single-use, consumed on success). Completes the symmetry with `spec_approval_guard.sh` (gate A) and `swarm_approval_guard.sh` (gate B).
+- Verified-at: 1feee24
+- Last-touched: 2026-05-14
+- Caveat: the Bash-leg FORBIDDEN_RE is a raw regex over the command string, not a tokenized argv inspection — Q-003 (pending-questions.md) tracks the trade-off and the documented `-F /tmp/msg.txt` workaround for commit messages that legitimately mention forbidden git ops. The push-leg hard-block disagrees with CLAUDE.md Article VII's user-named-operation carve-out — Q-004 tracks the resolution (push consent gate vs. status quo `! git push` shell escape).

@@ -1,54 +1,151 @@
 # Runbook — publishing `create-baseline` to npm
 
-Operator-actionable from cold. No `create-baseline` familiarity assumed beyond "I have a checkout and `npm` is installed."
+The daily path is push-driven: merge a PR into `main` or `next` and the release workflow at [`.github/workflows/release.yml`](../../.github/workflows/release.yml) cuts the right version automatically. The manual fallback (operator-workstation `npm publish`) is retained for emergencies — broken CI, repo migration, an `npm unpublish` follow-up that can't run from CI, or a misconfigured trusted-publisher that needs hands-on diagnosis.
 
-## Prerequisites
-
-- **npm account** with publish rights on `create-baseline`. Verify: `npm whoami` returns your username. If not: `npm login`.
-- **Two-factor authentication** is enabled on your npm account (npm enforces this for publish on packages with prior versions; for the first publish it's recommended).
-- **Working directory** is the repo root. Verify: `pwd` ends in `setup_exp` (or wherever you cloned), `ls package.json` succeeds.
-- **Local install present**: `ls node_modules >/dev/null 2>&1` succeeds. If not: `npm ci` first.
-- **No uncommitted scratch state** in `obj/` that you wouldn't want shipped. The `prepack` hook rebuilds `obj/template/` from `src/` + `.claude/` cleanly, but if you've manually edited `obj/template/` directly, those edits will be overwritten — which is the correct behavior.
-
-## Automated path (preferred)
-
-The day-to-day release path is the manually-triggered GitHub Actions workflow at [`.github/workflows/release.yml`](../../.github/workflows/release.yml). Trigger it from the repo's Actions tab (pick "Release", click "Run workflow", choose `major`, `minor`, or `patch`) or from a terminal: `gh workflow run release.yml --field bump_type=patch`. The workflow runs a four-job pipeline (build-verify → publish-npm → {deploy-pages, push-bump, install-smoke}) under SLSA L3 provenance via npm trusted publishing over OIDC. No long-lived `NODE_AUTH_TOKEN` is involved; the workflow is a registered trusted publisher on npmjs.com and mints a short-lived publish credential per run.
-
-The hygiene sweeps in Step 1.5 below are operator-machine checks: they scan a developer workstation for indicators of compromise that would corrupt a manual publish. They do not apply to the CI runner, which is a hosted GitHub-Actions Ubuntu image rebuilt per run. The sweeps remain mandatory for any *manual* publish from a workstation.
-
-Three one-time human prerequisites must be completed before the workflow's first run can succeed; see [`docs/specs/release-workflow.md`](../specs/release-workflow.md) → Rollout for the exact steps (register the trusted publisher on npmjs.com, set Pages source to "GitHub Actions", confirm `auth-and-writes` 2FA).
-
-The rest of this runbook below is the **manual fallback**. Use it when the workflow is unavailable (broken, repo migration, an `npm unpublish` follow-up that cannot run from CI) or for diagnostic dry runs from an operator workstation. Every Future-CI invariant in §"Future-CI invariants" near the bottom is enforced by `tests/release-workflow.test.mjs` against the workflow YAML.
+This runbook is operator-actionable from cold. No `create-baseline` familiarity assumed beyond "I have a checkout and `npm` is installed."
 
 ---
 
-## Step 1 — Bump the version
+## Automated path (preferred — the daily release)
 
-Edit `package.json` directly. Find the line:
+### How it works
+
+`semantic-release` reads commits since the last git tag, classifies them by [conventional-commit](https://www.conventionalcommits.org/) prefix, and computes the next version:
+
+| Prefix | Bump |
+|---|---|
+| `fix:`, `perf:` | patch (`X.Y.Z → X.Y.(Z+1)`) |
+| `feat:` | minor (`X.Y.Z → X.(Y+1).0`) |
+| `feat!:`, footer with `BREAKING CHANGE:` | major (`X.Y.Z → (X+1).0.0`) |
+| `chore:`, `docs:`, `style:`, `refactor:`, `test:`, `ci:` only | **no release** — workflow exits 0 without publishing |
+
+Multiple commit types: the highest bump wins.
+
+### Channels
+
+| Branch | Dist-tag | Version shape | Pages redeployed? |
+|---|---|---|---|
+| `main` | `latest` | `X.Y.Z` | yes |
+| `next` | `next` | `X.Y.Z-next.N` | no |
+
+Consumers install via `npm install create-baseline` (stable) or `npm install create-baseline@next` (prerelease). Merging `next` into `main` promotes accumulated prereleases to a single stable release on `@latest`.
+
+### What each run produces
+
+On every release (`new_release_published == true`):
+
+1. `npm publish --provenance` to the registry under the selected dist-tag, using OIDC trusted publishing (no `NPM_TOKEN`; SLSA provenance attestation auto-generated).
+2. `CHANGELOG.md` updated with the categorized commits.
+3. Bumped `package.json` + `CHANGELOG.md` committed and pushed back to the source branch under the `github-actions[bot]` identity.
+4. Annotated git tag `vX.Y.Z` pushed.
+5. GitHub Release created with release notes (prerelease-flagged on `next`).
+6. Comment on each closed PR included in the release, naming the version.
+7. Pages redeployed (main releases only) from the post-release HEAD.
+8. `install-smoke` job materializes the published tarball via `npx create-baseline ./target` and hash-verifies the manifest.
+
+### `workflow_dispatch mode=docs-only`
+
+The only dispatch path retained. Triggers a Pages redeploy without cutting a release; useful when the rendered site needs to pick up content from `main` without a version bump. Run from the Actions tab ("Release" workflow → "Run workflow" → pick `docs-only`) or from a terminal: `gh workflow run release.yml --field mode=docs-only`.
+
+---
+
+## One-time prerequisites (before the first auto-release)
+
+Complete each step once. The first run after rollout will fail loudly if any prerequisite is missing.
+
+### 1. Register the npm trusted publisher
+
+On [npmjs.com](https://www.npmjs.com/) → packages → `create-baseline` → Settings → Trusted Publishers → **Add publisher**:
+
+- Owner: `friedbotstudio`
+- Repository: `baseline`
+- Workflow filename: `release.yml`
+- Environment: (leave blank)
+
+Without this, `npm publish` returns `403 OIDC trusted publisher not configured` and the workflow exits non-zero. No silent fallback to anonymous publish exists; the failure is the forcing function.
+
+### 2. Pre-tag `v0.1.0`
+
+`semantic-release` needs a "last release" anchor. The on-disk `package.json` already declares `0.1.0`; anchor it from the repo root:
 
 ```
-"version": "0.1.0",
+git tag v0.1.0 $(git rev-parse HEAD)
+git push origin v0.1.0
 ```
 
-Change `0.1.0` to the new version per semver:
+After this, the first auto-release computes its bump from `v0.1.0` based on commits *after* that tag.
 
-- **Patch** (`0.1.0 → 0.1.1`) — bug fixes only; no API changes.
-- **Minor** (`0.1.0 → 0.2.0`) — new features; backwards-compatible API additions.
-- **Major** (`0.1.0 → 1.0.0`) — breaking changes to the CLI surface or the materialized baseline shape.
+### 3. Set GitHub Pages source
 
-`npm version <bump>` is the conventional tool for this, but it requires a clean git working tree, which this project does not maintain. **Edit by hand**, save, move on.
+Repo Settings → Pages → Source = **GitHub Actions** (not "Deploy from a branch"). The `deploy-pages` job's OIDC mint requires this.
 
-Optional: record the version's rationale in `docs/release-notes/<version>.md` (create the file). Currently the `docs/release-notes/` directory does not exist; this is a soft convention, not a release blocker.
+### 4. Confirm 2FA posture
 
-## Step 1.5 — Pre-publish hygiene sweep
+```
+npm whoami
+npm profile get tfa
+```
 
-Before `npm publish` ever runs, sweep the operator machine for known supply-chain indicators of compromise (IOCs). Skipping this step is what made the TanStack incident catastrophic — the malicious tarball was published from a developer machine that had been silently rooted.
+The `tfa` setting must read `auth-and-writes`. If it reads `auth-only`, run `npm profile set tfa auth-and-writes` before proceeding. (OIDC trusted publishing is unaffected by 2FA, but the maintainer account must still be hardened — every `npm` write the maintainer makes outside CI passes through this gate.)
+
+### 5. (Optional) Create the `next` branch
+
+Lazy: create when the first prerelease is desired.
+
+```
+git checkout -b next
+git push -u origin next
+```
+
+---
+
+## Verify a release succeeded
+
+From a fresh tmpdir, ~30 seconds after the workflow's `install-smoke` job goes green:
+
+```
+mkdir /tmp/verify-publish && cd /tmp/verify-publish
+npx --yes create-baseline@<version> ./target
+ls target/.claude target/CLAUDE.md target/.mcp.json
+```
+
+The target dir must contain the baseline structure. If `npx` errors with "package not found", wait another 30 seconds (registry replication) and retry.
+
+`install-smoke` already runs this exact verification post-publish; this manual step is for operator confidence and post-incident verification.
+
+---
+
+## Branch protection migration (deferred)
+
+v1 runs against an unprotected `main`. The default `GITHUB_TOKEN` provided by GitHub Actions has the `contents: write` scope the workflow needs to push the bump commit + tag back to the source branch.
+
+When branch protection lands on `main` (required reviews, required status checks, restricted pushers), the default token will be rejected by `@semantic-release/git`'s push step and the workflow will fail. Migration path:
+
+1. Provision a GitHub App named `release-bot` with `contents: write` and `metadata: read` on this repository only.
+2. Add the App as an exempt actor on the branch protection rule.
+3. Generate an installation access token in the workflow (e.g., via `actions/create-github-app-token@<sha>`) and replace `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` on the semantic-release step with the App token.
+
+The migration is a single PR; tracked as a follow-up.
+
+---
+
+## Manual fallback
+
+Use this path only when CI is unavailable (workflow broken, repo migration, post-72h `unpublish` follow-up that needs operator credentials). Every other release goes through the automated path.
+
+### Step 1 — Bump the version
+
+Edit `package.json` directly. Change `"version": "X.Y.Z"` to the new version per semver. `npm version <bump>` is the conventional tool but requires a clean git working tree, which this project does not maintain; edit by hand, save, move on.
+
+### Step 1.5 — Pre-publish hygiene sweep
+
+Workstation-only. The hosted CI runner is a fresh Ubuntu image per run and does not need these sweeps. Skipping this step is what made the TanStack incident catastrophic — the malicious tarball was published from a developer machine that had been silently rooted.
 
 Run each check in order. Any non-clean result is a **STOP**: rotate credentials, investigate, and do not publish until the cause is understood.
 
 **Sweep 1 — dead-man's-switch indicators.**
 
-The TanStack attack installed a persistent token-monitor daemon at three sanctioned operator-machine paths (one per OS). Their presence on a developer machine that did not deliberately install them is a strong signal of credential-stealer activity. Snyk's published forensics list these paths exactly; we vendor them so the runbook stays actionable cold:
+The TanStack attack installed a persistent token-monitor daemon at three sanctioned operator-machine paths (one per OS). Snyk's published forensics list them exactly:
 
 ```
 ls ~/.local/bin/gh-token-monitor.sh \
@@ -67,22 +164,20 @@ Long-running Claude Code sessions occasionally cache shell output or partial fil
 grep -l 'sk-\|ghp_\|AKIA\|xoxb-' ~/.claude/projects/*.jsonl 2>/dev/null
 ```
 
-The four prefixes are: `sk-` (OpenAI/Anthropic API keys), `ghp_` (GitHub personal access tokens), `AKIA` (AWS access keys), `xoxb-` (Slack bot tokens). If `grep` lists any file: STOP. Redact the offending jsonl (or delete the project's `~/.claude/projects/<id>/` directory) AND rotate the credentials that leaked. The published tarball does not ship `~/.claude/`, but credentials a model has already seen are credentials the operator must treat as breached.
+The four prefixes: `sk-` (OpenAI/Anthropic API keys), `ghp_` (GitHub personal access tokens), `AKIA` (AWS access keys), `xoxb-` (Slack bot tokens). If `grep` lists any file: STOP. Redact the offending jsonl (or delete the project's `~/.claude/projects/<id>/` directory) AND rotate the credentials that leaked.
 
 **Sweep 3 — npm 2FA posture.**
-
-The TanStack incident chain bypassed weak 2FA settings. npm offers three TFA modes: `disabled`, `auth-only`, and `auth-and-writes`. Only the third one gates publish on a token challenge. Verify:
 
 ```
 npm whoami
 npm profile get tfa
 ```
 
-The `tfa` setting must read `auth-and-writes`. If it reads `auth-only` (the npm default), enable writes-too-gated 2FA via `npm profile set tfa auth-and-writes` before continuing. Single-publish bypasses ("npm token create --read-only") are out of scope here.
+The `tfa` setting must read `auth-and-writes`. If it reads `auth-only`, enable writes-too-gated 2FA via `npm profile set tfa auth-and-writes` before continuing.
 
 **Sweep 4 — `~/.npmrc` operator defaults.**
 
-The shipped `obj/template/.npmrc` materializes `ignore-scripts=true` and `min-release-age=7` for downstream consumers of `create-baseline`. The operator's own `~/.npmrc` should mirror these defaults (and add `audit-level=moderate`) before any publish that touches third-party deps:
+The shipped `obj/template/.npmrc` materializes `ignore-scripts=true` and `min-release-age=7` for downstream consumers. The operator's own `~/.npmrc` should mirror these defaults (and add `audit-level=moderate`) before any publish that touches third-party deps:
 
 ```
 ignore-scripts=true
@@ -90,11 +185,9 @@ min-release-age=7
 audit-level=moderate
 ```
 
-This is recommended, not required by the runbook. The hardened defaults reduce blast radius from supply-chain attacks on the operator's own development tree.
-
 Only after all four sweeps come up clean, proceed to Step 2.
 
-## Step 2 — Precheck
+### Step 2 — Precheck
 
 ```
 npm run publish:check
@@ -103,110 +196,83 @@ npm run publish:check
 What this runs (in order):
 
 1. `publish:precheck` — `npm publish --dry-run` (executes `prepack` lifecycle, surfaces any policy/build error).
-2. `publish:files-diff` — verifies `package.json → files:` declared prefixes match what `npm pack` would actually emit (symmetric diff; flags both declared-not-packed and packed-not-declared).
-3. `publish:smoke` — packs the real tarball, installs it into a clean tmpdir, runs `create-baseline` against an empty target dir, verifies the materialized baseline's manifest hashes match `obj/template/manifest.json`.
+2. `publish:files-diff` — verifies `package.json → files:` declared prefixes match what `npm pack` would actually emit.
+3. `publish:smoke` — packs the real tarball, installs it into a clean tmpdir, runs `create-baseline` against an empty target dir, verifies the materialized baseline's manifest hashes match.
 
-**Expected output on green**: a single line `PASS: precheck, files-diff, smoke (3 of 3)`.
+Expected output on green: `PASS: precheck, files-diff, smoke (3 of 3)`.
 
-**If you see `FAIL: <step>`**: do NOT publish. Read the captured stderr above the FAIL line. Common causes:
+On `FAIL: <step>`, read the captured stderr above the FAIL line and reconcile before continuing.
 
-- `FAIL: precheck` — `prepack` failed; usually `audit-baseline` caught drift in `src/` or `.claude/`. Fix the drift; re-run.
-- `FAIL: files-diff` — `package.json → files:` declares a prefix that has no packed files (`DECLARED-NOT-PACKED:`), or `npm pack` emits a file outside any declared prefix (`PACKED-NOT-DECLARED:`). Reconcile both lists; re-run.
-- `FAIL: smoke` — the installed tarball failed to materialize a valid baseline. Stderr will name a missing file (often under `obj/template/`). The `prepack` step probably skipped or partially built; investigate `scripts/build-template.sh`.
+### Step 3 — Tag (optional, for pre-release)
 
-Time budget: ~30–45 seconds total on a warm machine (cold node_modules can add 1–2 minutes for the `npm install` inside the smoke step).
+For the latest stable release, `npm publish` defaults to `--tag latest`; no extra flag needed.
 
-## Step 3 — Tag (optional, for non-default releases)
-
-For the latest stable release, you DO NOT need a tag — `npm publish` defaults to `--tag latest`.
-
-For a pre-release (e.g., `0.2.0-beta.1`), publish with `--tag beta`:
+For a one-off pre-release (e.g., `0.2.0-beta.1` outside the auto `next` channel):
 
 ```
 npm publish --access public --tag beta
 ```
 
-This makes the version installable via `npm install create-baseline@beta` without disturbing the `latest` tag.
-
-## Step 4 — Publish
-
-For the first publish (the package is new on npm):
+### Step 4 — Publish
 
 ```
 npm publish --access public
 ```
 
-`--access public` is required for scoped packages and recommended for first publishes to make the public/private intent explicit. For an unscoped package like `create-baseline` it's defensive but harmless.
+You will be prompted for your npm 2FA code. Expected output: a summary line ending with `+ create-baseline@<version>` and HTTP/200.
 
-You will be prompted for your npm 2FA code (if 2FA is enabled).
+### Step 5 — Verify the install resolves
 
-**Expected output**: a npm summary line ending with `+ create-baseline@<version>` and HTTP/200 status.
+Same as the automated-path verification above.
 
-## Step 5 — Verify the install resolves
+---
 
-From a fresh tmpdir:
-
-```
-mkdir /tmp/verify-publish && cd /tmp/verify-publish
-npx --yes create-baseline@<version> ./target
-ls target/.claude target/CLAUDE.md target/.mcp.json
-```
-
-The target dir should contain the baseline structure. If `npx` errors with "package not found", wait 30 seconds (registry replication) and retry.
-
-## Step 6 — Rollback (when something is broken post-publish)
+## Rollback
 
 > **What provenance proves and does not prove.** If the broken version carries `npm publish --provenance` attestation, that proves the tarball was built by the named GitHub Actions workflow on the named commit. It does **not** prove the build was authorized to ship, nor that the build's own runtime was clean. Both Snyk's TanStack writeup and Adnan Khan's "Most Devious Backdoor" research are explicit: valid SLSA L3 provenance attests the build, not the authorization. Rollback decisions should not lean on provenance as proof of legitimacy.
 
-
 ### Within 72 hours of publish: unpublish
-
-npm allows `unpublish` for a window of 72 hours after a version was first published:
 
 ```
 npm unpublish create-baseline@<broken-version>
 ```
 
-This **removes** the version. Anyone who already ran `npm install create-baseline@<broken-version>` keeps the broken copy locally, but new installs cannot retrieve it. Use this when the broken version has had **zero or near-zero downloads** and you want it erased.
+This **removes** the version. Anyone who already ran `npm install create-baseline@<broken-version>` keeps the broken copy locally, but new installs cannot retrieve it. Use this when the broken version has had zero or near-zero downloads.
 
 ### After 72 hours: deprecate
-
-Unpublish is no longer available. Instead, mark the version deprecated so the npm CLI warns on install:
 
 ```
 npm deprecate create-baseline@<broken-version> "Broken release; install <fixed-version> instead. See <link>."
 ```
 
-The message string is shown to anyone installing the deprecated version. Keep it short, name the fixed version, and include a link to the release notes / issue if you have one.
+The message string is shown on install. Keep it short, name the fixed version, and include a link to the issue if you have one.
 
 ### Version-bump strategy for the fix
 
-A broken-then-fixed release follows this pattern:
+A broken-then-fixed release follows this pattern (auto-flow):
 
-1. **Bump patch from the broken version**, NOT from the version before the break. Example: if `0.1.0` was clean and `0.1.1` is broken, the fix ships as `0.1.2` (not `0.1.1` again — `0.1.1` is poisoned in the public registry even if unpublished).
-2. Fix the bug in code.
-3. Run `npm run publish:check` again to confirm green.
-4. `npm publish --access public`.
-5. Verify install (Step 5).
-6. If the broken version is still in the 72h window, run `npm unpublish` AFTER the fix is live (so users have a working version to fall back to).
+1. Push a `fix:` commit to `main` (or `next`). semantic-release computes the next patch from the broken version (NOT from the version before the break — `0.1.1` is poisoned in the registry even if unpublished).
+2. The workflow publishes `0.1.2` and tags it.
+3. If the broken version is still inside the 72h `unpublish` window, run `npm unpublish create-baseline@0.1.1` AFTER `0.1.2` is live (so users have a working version to fall back to).
 
 ### Order of operations under pressure
 
 When a published version is found broken and users are reporting issues:
 
-1. **Communicate first**: post the issue + ETA wherever the project's users gather (no project-specific channel today; tell them via the repo's `README.md` issues link).
+1. **Communicate first**: post the issue + ETA to the repo's issues link.
 2. **Deprecate immediately** if >72h (even if a fix is coming) — this stops new users from hitting the bug.
-3. **Bump and fix** locally.
-4. **Re-run `npm run publish:check`**.
-5. **Publish the fix**.
-6. **Unpublish the broken version** if within 72h.
-7. **Post resolution** in the same channel as step 1.
+3. **Push the `fix:` commit**; the workflow does the rest.
+4. **Verify the fix install resolves** (manual Step 5 above).
+5. **Unpublish the broken version** if within 72h.
+6. **Post resolution** in the same channel as step 1.
 
-## Future-CI invariants
+---
 
-This project does not yet run a CI pipeline. When one is introduced, these rules bind before the first release workflow lands. They are recorded here so the runbook stays the single source of truth for publish discipline.
+## CI invariants (live)
 
-**Rule 1 — third-party Actions MUST be pinned to a 40-character commit SHA, never to tag refs.**
+These were "future" in the prior runbook revision; the auto-flow makes them live.
+
+**Rule 1 — third-party Actions are pinned to a 40-character commit SHA, never to tag refs.**
 
 The `tj-actions/changed-files` compromise (CVE-2025-30066) used a mutable git tag to retroactively point published releases at an attacker-controlled commit. Every prior consumer that had pinned to `@v45` (or even `@v45.0.7`) silently picked up the malicious code on their next run. Pin to the SHA:
 
@@ -214,27 +280,31 @@ The `tj-actions/changed-files` compromise (CVE-2025-30066) used a mutable git ta
 - uses: tj-actions/changed-files@<40-char-commit-sha>  # v45.0.7
 ```
 
-The tag goes in a trailing comment for human readability; the SHA is the authoritative pin. Dependabot can manage SHA bumps via `dependabot.yml` once CI exists.
+The tag goes in a trailing comment for human readability; the SHA is the authoritative pin. `scripts/verify-action-shas.mjs` runs as a step inside the `release` job and fails the workflow on drift; `tests/release-workflow.test.mjs` also asserts the SHA-pin shape statically.
 
-**Rule 2 — release workflows MUST set `cache: false` on `setup-*` actions and MUST NOT use `actions/cache`.**
+**Rule 2 — release workflows do not use `actions/cache`, and `setup-*` actions omit the `cache:` key.**
 
-Adnan Khan's "Most Devious Backdoor" research demonstrated valid SLSA L3 provenance attesting a build whose own dependencies were poisoned through GitHub Actions cache restoration. The TanStack worm used the same vector: cached `pnpm` state seeded a malicious dependency into the build that produced the published tarball. Provenance attests build, not authorization — the build was real; what was poisoned was the runtime that fed it.
+Adnan Khan's "Most Devious Backdoor" research demonstrated valid SLSA L3 provenance attesting a build whose own dependencies were poisoned through GitHub Actions cache restoration. The TanStack worm used the same vector. Provenance attests build, not authorization — the build was real; what was poisoned was the runtime that fed it.
 
-In a release workflow:
+In `release.yml`:
 
 ```
 - uses: actions/setup-node@<sha>
   with:
     node-version: '22'
-    cache: false                       # MUST be false on release builds
+    # NOTE: no `cache:` key. setup-node@v4+ rejects `cache: false` at runtime
+    # with "Caching for 'false' is not supported"; the canonical way to disable
+    # caching is to OMIT the key entirely.
 # - uses: actions/cache@<sha>            FORBIDDEN in release workflows
 ```
 
-A non-release workflow (CI for PRs) may use caches; the rule binds only the workflow that runs `npm publish`.
+`tests/release-workflow.test.mjs` enforces both invariants statically: the file must not contain the substring `actions/cache`, and no `setup-*` step may declare a `cache:` key.
 
-**Rule 3 — egress monitoring as an evaluation candidate.**
+**Rule 3 — `step-security/harden-runner` runs as the first step of every release job in `audit` mode.**
 
-[`step-security/harden-runner`](https://github.com/step-security/harden-runner) provides runtime egress allowlisting + monitoring for GitHub Actions runners. The TanStack analysis credits Harden-Runner with detecting the cache-poisoning egress on a customer's runner before exfiltration completed. We do not adopt it in this workflow (there is no CI yet), but it is the recommended starting point when CI lands.
+Audit mode logs all egress to StepSecurity's portal without blocking. The TanStack analysis credits Harden-Runner with detecting cache-poisoning egress on a customer's runner before exfiltration completed. Block mode is the v2 evaluation candidate; the v1 posture is audit-only because we do not yet have a vetted egress allowlist.
+
+---
 
 ## Reference — what gets published
 
@@ -242,12 +312,12 @@ The published tarball contains exactly the paths declared in `package.json → f
 
 - `bin/cli.js` — the CLI entry point.
 - `src/cli/**` — the CLI's runtime source.
-- `src/*.template.*` — the pristine ship-time templates (CLAUDE.md, seed.md, project.json, settings.json, .mcp.json, swarm-worker agent, memory templates).
+- `src/*.template.*` — pristine ship-time templates (CLAUDE.md, seed.md, project.json, settings.json, .mcp.json, swarm-worker agent).
 - `src/agents/swarm-worker.template.md` — the only baseline subagent template.
-- `src/memory/**` — the 6 canonical memory file templates.
+- `src/memory/**` — canonical memory file templates.
 - `obj/template/**` — the prepack-built template tree (`.claude/`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`, `manifest.json`).
 - `README.md` — the user-facing readme.
 
 Anything outside these prefixes is excluded by npm pack. `docs/` (except `docs/init/seed.md` inside `obj/template/`), `tests/`, `site-src/`, `node_modules/`, `.git/`, `.claude/state/`, and the dev-time `.claude/` tree are all excluded.
 
-The `prepack` hook (`bash scripts/build-template.sh`) rebuilds `obj/template/` from `src/` + `.claude/` every time you run `npm pack` or `npm publish`. Audit-baseline runs first; the build aborts if any audit invariant is violated.
+The `prepack` hook (`bash scripts/build-template.sh`) rebuilds `obj/template/` from `src/` + `.claude/` every time `npm pack` or `npm publish` runs. `audit-baseline` runs first; the build aborts if any audit invariant is violated.

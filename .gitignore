@@ -65,6 +65,10 @@ create-baseline-*.tgz
 # Kept on disk for rollback; never committed.
 _archive*/
 
+# Generated PlantUML renders — /spec-render regenerates on demand from
+# the .md spec source of truth. Keep .md tracked; render byproducts not.
+docs/specs/*.rendered/
+
 # OS noise
 **/.DS_Store
 

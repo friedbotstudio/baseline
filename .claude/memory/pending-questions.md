@@ -51,7 +51,7 @@ Each entry's stable key is auto-numbered `Q-NNN`.
   - (c) Proper tokenizer: parse the Bash command (e.g., via `bashlex` in Python or a small in-repo tokenizer) into argv, then inspect each `git ...` invocation's argv list. Eliminates the entire false-positive class. Larger change; needs a Python dep or a hand-rolled tokenizer.
 - Scope on adoption: applies to every Bash-matcher hook (`git_commit_guard`, `destructive_cmd_guard`, possibly `process_lifecycle_guard`). The decision is shared infrastructure.
 - Companion landmine pending: if (a) is chosen, write a `landmines.md` entry capturing the `-F /tmp/msg.txt` workaround for commit messages that mention forbidden git ops.
-- Verified-at: HEAD (commit `064102d`)
+- Verified-at: 1feee24
 - Last-touched: 2026-05-14
 
 ---
@@ -67,6 +67,6 @@ Each entry's stable key is auto-numbered `Q-NNN`.
   - (c) Inspect the prompt: have `consent_gate_grant` (UserPromptSubmit) write a `.push_grant` marker when it detects "and push" / "push" in the user's `/grant-commit` arguments, and have `git_commit_guard` honor that marker for the next push. Cheaper than (b) but couples push to commit-consent semantics in a non-obvious way.
   - (d) Drop the hook block; trust Article VII enforcement at the model layer. Lowest friction; loses the structural guarantee that push can never happen by accident. Probably wrong for a baseline; recorded for completeness.
 - Constitutional implication: Article VII and Article VIII currently disagree about push. Either Article VII should be tightened to "push is never allowed by Claude; always use `! git push`" (matching the hook), or Article VIII's hook spec should be loosened to allow a consent-gated push path (matching the constitution). The disagreement is the bug.
-- Verified-at: HEAD (commit `095cda4`)
+- Verified-at: 1feee24
 - Last-touched: 2026-05-14
 

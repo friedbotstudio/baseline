@@ -1,0 +1,21 @@
+{
+  "request": "automate npm release via semantic-release with main (latest) and next (prerelease) channels; full automation on push/merge; OIDC trusted publishing with provenance; preserve install-smoke + Pages deploy + SHA-pinned actions",
+  "slug": "semantic-release-automation",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": [
+    "triage",
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive"
+  ],
+  "created_at": 1778758407,
+  "updated_at": 1778764864
+}
