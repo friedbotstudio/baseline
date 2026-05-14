@@ -104,7 +104,7 @@ The score is generous. The visual drift between the live site and DESIGN.md's st
 - **Location**: `site/src/pages/index.astro` hero section
 - **Category**: Layout / Anti-pattern
 - **Impact**: Phantomflow's hero is the editorial signature: H1+lead+CTAs left, dev-window code-plate (with traffic-light dots, slight rotation, hand-drawn outline) on the right. The plate carries the "this is a developer product" signal above the fold. Our hero is a centered text chunk on empty paper — reads as a marketing landing page that forgot the visual.
-- **Fix**: Restructure hero as `display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr)`. Left column: Masthead + lead + CTAs. Right column: a dev-window plate (move our existing `<DevWindow>` from Adoption into the hero, or build a hero-specific one). Shorter install snippet (just `$ npx create-baseline .` over 3 lines). DESIGN.md explicitly calls for this in "Components observed on phantomflow → Hero illustration plate."
+- **Fix**: Restructure hero as `display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr)`. Left column: Masthead + lead + CTAs. Right column: a dev-window plate (move our existing `<DevWindow>` from Adoption into the hero, or build a hero-specific one). Shorter install snippet (just `$ npx @friedbotstudio/create-baseline .` over 3 lines). DESIGN.md explicitly calls for this in "Components observed on phantomflow → Hero illustration plate."
 - **Suggested command**: `$impeccable layout`
 
 ### [P1] Paper-grain texture is barely visible

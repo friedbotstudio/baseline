@@ -66,7 +66,7 @@ The classification rule is: *if there is no failing test that should exist for t
    - Counts or inventories change — skill count, hook count, command count, MCP server count, alternate-track count.
    - New conventions are introduced — a new helper file, a new reference doc, a new directory.
    - The `seed.md §16` follow-ups list needs an entry resolved or added.
-   - The chore touches `src/` templates (the templates are user-facing once `npx create-baseline` runs).
+   - The chore touches `src/` templates (the templates are user-facing once `npx @friedbotstudio/create-baseline` runs).
    Otherwise skip — note in the summary.
 
 If a conditional phase is required, run it **before** `/grant-commit`. If you skip one, the end-of-chore summary SHALL state which conditional phases were skipped and why. Silent skips are not allowed.

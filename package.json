@@ -1,7 +1,7 @@
 {
-  "name": "create-baseline",
+  "name": "@friedbotstudio/create-baseline",
   "version": "0.1.0",
-  "description": "Zero-dependency Node CLI scaffolder that materializes the Claude Code baseline (hooks, skills, commands, MCP servers, governance docs) into a target project. Run via `npx create-baseline <target>`.",
+  "description": "Zero-dependency Node CLI scaffolder that materializes the Claude Code baseline (hooks, skills, commands, MCP servers, governance docs) into a target project. Run via `npx @friedbotstudio/create-baseline <target>`.",
   "type": "module",
   "bin": {
     "create-baseline": "bin/cli.js"
@@ -36,8 +36,13 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/friedbotstudio/baseline.git"
+    "url": "git+https://github.com/friedbotstudio/baseline.git"
   },
+  "author": {
+    "name": "Friedbot Studio Pvt Ltd",
+    "email": "hello@friedbotstudio.com"
+  },
+  "homepage": "https://baseline.friedbotstudio.com",
   "devDependencies": {
     "@11ty/eleventy": "3.1.5",
     "@semantic-release/changelog": "6.0.3",

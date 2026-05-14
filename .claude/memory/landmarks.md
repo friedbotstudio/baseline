@@ -93,7 +93,7 @@ Each entry's stable key is `path:line`.
 
 ## src/seed.template.md:1
 
-- Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.
+- Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx @friedbotstudio/create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.
 - Verified-at: HEAD
 - Last-touched: 2026-05-12
 - Caveat: byte-equal mirroring obligations: §17 (Article XI provenance citation) must match the corresponding section in `docs/init/seed.md`; the audit (`.claude/skills/audit-baseline/audit.sh`) reports `seed.md missing §17 citation` on absence. Touch this and `docs/init/seed.md` in the same commit.

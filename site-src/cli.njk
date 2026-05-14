@@ -5,9 +5,9 @@ pageTitle: "CLI · baseline"
 title: CLI
 titlePrimary: CLI
 titleAccent: "."
-description: "`npx create-baseline <target>` materializes the baseline. Three install modes, one read-only doctor subcommand, three flags, five exit codes."
+description: "`npx @friedbotstudio/create-baseline <target>` materializes the baseline. Three install modes, one read-only doctor subcommand, three flags, five exit codes."
 eyebrow: Reference
-lead: "<code>npx create-baseline &lt;target&gt;</code> materializes the baseline. Three install modes, one read-only <code>doctor</code> subcommand, three flags, five exit codes. The CLI is zero-runtime-dependency Node; everything else ships in the npm tarball."
+lead: "<code>npx @friedbotstudio/create-baseline &lt;target&gt;</code> materializes the baseline. Three install modes, one read-only <code>doctor</code> subcommand, three flags, five exit codes. The CLI is zero-runtime-dependency Node; everything else ships in the npm tarball."
 active: cli
 sidebarActive: cli
 heroSymbol: cli
@@ -31,15 +31,15 @@ toc:
     <p>Two shapes. The install shape takes a target; the <code>doctor</code> subcommand defaults to the current directory.</p>
   </div>
 <pre><code><span class="tok-com"># install / merge / dry-run a target</span>
-npx create-baseline &lt;target&gt; [--force | --merge] [--dry-run]
+npx @friedbotstudio/create-baseline &lt;target&gt; [--force | --merge] [--dry-run]
                               [--no-plantuml | --require-plantuml]
 
 <span class="tok-com"># read-only drift report against an installed target</span>
-npx create-baseline doctor [target]
+npx @friedbotstudio/create-baseline doctor [target]
 
 <span class="tok-com"># misc</span>
-npx create-baseline --help
-npx create-baseline --version</code></pre>
+npx @friedbotstudio/create-baseline --help
+npx @friedbotstudio/create-baseline --version</code></pre>
   <p><code>--force</code> and <code>--merge</code> are mutually exclusive. <code>--no-plantuml</code> and <code>--require-plantuml</code> are mutually exclusive. Argv errors exit 2.</p>
 </section>
 
@@ -148,7 +148,7 @@ npx create-baseline --version</code></pre>
       <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
       <span class="file">~/code · zsh</span>
     </div>
-<pre><code>$ npx create-baseline doctor ./my-project
+<pre><code>$ npx @friedbotstudio/create-baseline doctor ./my-project
 
 Baseline doctor — target: /Users/you/code/my-project
 Manifest: version 1, installed 2026-05-11T14:00:00Z

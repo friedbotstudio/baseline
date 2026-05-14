@@ -17,7 +17,7 @@ The job to be done: *make it structurally impossible for an AI agent to violate 
 
 ## Product Purpose
 
-The Claude Code Baseline is a repository overlay. It ships twenty-two write-boundary and lifecycle hooks, thirty-six skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed consent gates, and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx create-baseline ./my-target`.
+The Claude Code Baseline is a repository overlay. It ships twenty-two write-boundary and lifecycle hooks, thirty-six skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed consent gates, and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx @friedbotstudio/create-baseline ./my-target`.
 
 Soft engineering rules — no force-push, no `--amend` of published commits, no mocks of internal modules, no self-approved specs, no skipped phases — become structural guarantees because the hooks run *outside* Claude's tool boundary. Claude cannot forge a consent marker, cannot bypass a guard with a flag, cannot reorder the workflow without an explicit exception written by `/triage`.
 

@@ -2,7 +2,7 @@
 // install-smoke-verify.mjs — post-install manifest hash diff.
 //
 // Invoked by the release workflow's install-smoke job after `npm install
-// create-baseline@<v>` + running the CLI against a target directory. Compares
+// @friedbotstudio/create-baseline@<v>` + running the CLI against a target directory. Compares
 // every files{}-hash in the PUBLISHED manifest (shipped in the installed
 // tarball) against the MATERIALIZED manifest the CLI wrote into the target.
 // Exit non-zero with `HASH_MISMATCH: <path>` on the first mismatch. Materialized

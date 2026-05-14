@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# publish-check.sh — orchestrates pre-publish verification for create-baseline.
+# publish-check.sh — orchestrates pre-publish verification for @friedbotstudio/create-baseline.
 #
 # Sequences three sub-checks:
 #   1. precheck    — npm publish --dry-run (runs prepack; catches policy errors)

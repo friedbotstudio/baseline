@@ -32,16 +32,16 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 </div>
 
 > [!WARNING]
-> **Public alpha — under active development.** Expect breaking changes, evolving APIs, and shifting structural counts between releases. The constitution and the consent-gate semantics are stable; specifics in `docs/init/seed.md` §16 may move. Pin to a specific `create-baseline@<version>` for repeatable installs across a team.
+> **Public alpha — under active development.** Expect breaking changes, evolving APIs, and shifting structural counts between releases. The constitution and the consent-gate semantics are stable; specifics in `docs/init/seed.md` §16 may move. Pin to a specific `@friedbotstudio/create-baseline@<version>` for repeatable installs across a team.
 
 > [!IMPORTANT]
-> **Install in one line:** `npx create-baseline ./your-project`
+> **Install in one line:** `npx @friedbotstudio/create-baseline ./your-project`
 >
 > The CLI fetches the published package, runs the install, and leaves your project with `.claude/`, `CLAUDE.md`, `docs/init/seed.md`, and `.mcp.json`. Re-run with `--merge` to bring an existing install forward; with `--dry-run` to preview without writing; with `doctor` to report drift.
 
 ## What this is
 
-The Claude Code Baseline is a repository overlay shipped via `npx create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **36 skills** organised into nine categories, **1 subagent** for parallel work in isolated worktrees, an **11-phase workflow** from intake to commit, and **3 user-typed consent gates** that Claude cannot forge.
+The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **36 skills** organised into nine categories, **1 subagent** for parallel work in isolated worktrees, an **11-phase workflow** from intake to commit, and **3 user-typed consent gates** that Claude cannot forge.
 
 Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 
@@ -82,30 +82,30 @@ Every count is asserted by `audit-baseline` against `docs/init/seed.md` on every
 
 ```bash
 # Install the baseline into ./your-project
-npx create-baseline ./your-project
+npx @friedbotstudio/create-baseline ./your-project
 ```
 
 ### Modes
 
 ```bash
 # Default — install into a fresh or empty target
-npx create-baseline ./your-project
+npx @friedbotstudio/create-baseline ./your-project
 
 # Force-overwrite an existing install (interactive — type 'overwrite')
-npx create-baseline ./your-project --overwrite
+npx @friedbotstudio/create-baseline ./your-project --overwrite
 
 # Three-way merge against a previously-installed baseline:
 #   - adds new baseline files
 #   - refreshes baseline files the user has not touched
 #   - preserves user-customised files (exit 3 if any)
 #   - removes baseline files the upstream removed (only if untouched locally)
-npx create-baseline ./your-project --merge
+npx @friedbotstudio/create-baseline ./your-project --merge
 
 # Preview without writing anything
-npx create-baseline ./your-project --dry-run
+npx @friedbotstudio/create-baseline ./your-project --dry-run
 
 # Skip the install-time PlantUML jar download
-npx create-baseline ./your-project --no-plantuml
+npx @friedbotstudio/create-baseline ./your-project --no-plantuml
 ```
 
 ### Doctor
@@ -114,16 +114,16 @@ npx create-baseline ./your-project --no-plantuml
 # Report drift between a previously-installed target and its install snapshot.
 # Counts matched / customised / missing / added files.
 # Exit 0 clean, 1 if any baseline file is missing, 2 if no manifest.
-npx create-baseline doctor ./your-project
+npx @friedbotstudio/create-baseline doctor ./your-project
 
 # Strict mode — print TAMPERED: shipped vs observed sha256 for every
 # customised file and exit 1 on any drift.
-npx create-baseline doctor ./your-project --strict
+npx @friedbotstudio/create-baseline doctor ./your-project --strict
 ```
 
 ## Quickstart
 
-After `npx create-baseline ./your-project`:
+After `npx @friedbotstudio/create-baseline ./your-project`:
 
 ```bash
 cd ./your-project

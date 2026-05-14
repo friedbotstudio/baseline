@@ -331,7 +331,7 @@ eleventyComputed:
             <span class="file">~/your-repo · zsh</span>
           </div>
 <pre><code><span class="tok-com"># inside a clean git working tree</span>
-<span class="tok-kw">$</span> npx create-baseline@latest .
+<span class="tok-kw">$</span> npx @friedbotstudio/create-baseline@latest .
 
 <span class="tok-com"># open in claude code, then:</span>
 <span class="tok-kw">&gt;</span> /init-project
@@ -340,9 +340,9 @@ eleventyComputed:
         </div>
       </div>
     </div>
-    <button class="cli-strip" data-copy="npx create-baseline@latest ." aria-label="Copy install command to clipboard">
+    <button class="cli-strip" data-copy="npx @friedbotstudio/create-baseline@latest ." aria-label="Copy install command to clipboard">
       <span class="cli-prompt" aria-hidden="true">$</span>
-      <span class="cli-cmd">npx create-baseline@latest .</span>
+      <span class="cli-cmd">npx @friedbotstudio/create-baseline@latest .</span>
       <span class="cli-caret" aria-hidden="true"></span>
       <svg class="cli-check" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14">
         <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -383,12 +383,12 @@ eleventyComputed:
 
       <details class="faq-item" name="baseline-faq">
         <summary class="faq-q">Will my existing <code>.claude/</code> customizations survive an upgrade?</summary>
-        <div class="faq-a">Run <code>npx create-baseline ./project --merge</code>. The CLI does a three-way reconcile against <code>.claude/.baseline-manifest.json</code>: untouched files refresh from the new template, customized files preserve byte-for-byte (exit code 3 reports them), and baseline files removed upstream that you had not touched are pruned automatically.</div>
+        <div class="faq-a">Run <code>npx @friedbotstudio/create-baseline ./project --merge</code>. The CLI does a three-way reconcile against <code>.claude/.baseline-manifest.json</code>: untouched files refresh from the new template, customized files preserve byte-for-byte (exit code 3 reports them), and baseline files removed upstream that you had not touched are pruned automatically.</div>
       </details>
 
       <details class="faq-item" name="baseline-faq">
         <summary class="faq-q">Does the baseline ship its own Claude Code?</summary>
-        <div class="faq-a">No. The baseline is a repository overlay: the in-session ruleset, the hooks, the skills, the workflow. You bring your own Claude Code. Install Claude Code separately (claude.com/claude-code), run <code>npx create-baseline</code> in your project, then open the project in Claude Code.</div>
+        <div class="faq-a">No. The baseline is a repository overlay: the in-session ruleset, the hooks, the skills, the workflow. You bring your own Claude Code. Install Claude Code separately (claude.com/claude-code), run <code>npx @friedbotstudio/create-baseline</code> in your project, then open the project in Claude Code.</div>
       </details>
 
       <details class="faq-item" name="baseline-faq">

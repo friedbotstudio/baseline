@@ -9,7 +9,7 @@ const ROOT = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 // Files where `src/*.template.*` is the pristine ship-time copy AND must mirror the
 // live working copy byte-for-byte. These are baseline-product files: the constitution,
 // the baseline MCP server list, and the baseline hook wiring + settings keys. If they
-// drift, user projects scaffolded via `npx create-baseline` ship outdated baseline product.
+// drift, user projects scaffolded via `npx @friedbotstudio/create-baseline` ship outdated baseline product.
 //
 // NOT in this list (drift is intentional, with separate audit-baseline invariants):
 //   - `.claude/project.json` — template is pristine `configured: false`; live is this

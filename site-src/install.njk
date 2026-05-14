@@ -5,9 +5,9 @@ pageTitle: "Install · baseline"
 title: Install
 titlePrimary: Install
 titleAccent: "."
-description: "The baseline is a repository overlay materialized by `npx create-baseline <target>`. Four sentinel paths land in the target project; nothing else is touched. Node ≥ 18.17 required."
+description: "The baseline is a repository overlay materialized by `npx @friedbotstudio/create-baseline <target>`. Four sentinel paths land in the target project; nothing else is touched. Node ≥ 18.17 required."
 eyebrow: Getting started
-lead: "The baseline is a repository overlay materialized by <code>npx create-baseline &lt;target&gt;</code>. Four sentinel paths land in the target project; nothing else is touched. Node 18.17 or later is the only hard requirement."
+lead: "The baseline is a repository overlay materialized by <code>npx @friedbotstudio/create-baseline &lt;target&gt;</code>. Four sentinel paths land in the target project; nothing else is touched. Node 18.17 or later is the only hard requirement."
 active: install
 sidebarActive: install
 heroSymbol: install
@@ -31,7 +31,7 @@ toc:
     <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
     <tbody>
       <tr><td class="phase">Node ≥ 18.17</td><td>The CLI uses <code>node:util.parseArgs</code> with <code>strict</code> mode, available from this version.</td></tr>
-      <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec create-baseline</code> works too.</td></tr>
+      <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec @friedbotstudio/create-baseline</code> works too.</td></tr>
       <tr><td class="phase">A target directory</td><td>An existing project root, or an empty directory you intend to populate. The CLI does not <code>mkdir</code> for you.</td></tr>
       <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 (<code>/grant-commit</code> + <code>/commit</code>) auto-excepts. See <a href="{{ '/swarm/#dispatch' | rel }}"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
       <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="{{ '/cli/#plantuml' | rel }}">CLI · PlantUML jar</a>.</td></tr>
@@ -54,12 +54,12 @@ toc:
       <span class="file">~/code · zsh</span>
     </div>
 <pre><code><span class="tok-com"># preview without writing anything</span>
-$ npx create-baseline ./my-project --dry-run
+$ npx @friedbotstudio/create-baseline ./my-project --dry-run
 
 <span class="tok-com"># the real thing</span>
-$ npx create-baseline ./my-project
+$ npx @friedbotstudio/create-baseline ./my-project
 <span class="tok-com"># → Installed manifest version 1 to /Users/you/code/my-project.</span>
-<span class="tok-com"># → Pin via "create-baseline@&lt;exact-version&gt;" in your bootstrap docs.</span></code></pre>
+<span class="tok-com"># → Pin via "@friedbotstudio/create-baseline@&lt;exact-version&gt;" in your bootstrap docs.</span></code></pre>
   </div>
 
   <p>The first run takes 5 to 30 seconds, dominated by the PlantUML jar fetch (~{{ baseline.size.plantumlJar }}, sha256-pinned). Subsequent runs reuse the cached jar.</p>
@@ -68,7 +68,7 @@ $ npx create-baseline ./my-project
     <span class="icon" aria-hidden="true">!</span>
     <div class="body">
       <strong>Pin the version in your bootstrap docs.</strong>
-      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
+      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>@friedbotstudio/create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx @friedbotstudio/create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
     </div>
   </div>
 </section>
@@ -134,17 +134,17 @@ $ npx create-baseline ./my-project
     <tbody>
       <tr>
         <td class="phase">Half-installed baseline</td>
-        <td><code>npx create-baseline ./project --force</code></td>
+        <td><code>npx @friedbotstudio/create-baseline ./project --force</code></td>
         <td>Refuses unless you type <code>overwrite</code>. Replaces every baseline file except <code>.claude/project.json</code> (preserved).</td>
       </tr>
       <tr>
         <td class="phase">Upgrade to a newer baseline</td>
-        <td><code>npx create-baseline ./project --merge</code></td>
+        <td><code>npx @friedbotstudio/create-baseline ./project --merge</code></td>
         <td>Three-way merge against the last install's manifest. Untouched files refresh, customizations preserve (exit 3 if any), removed-upstream files prune if you hadn't touched them.</td>
       </tr>
       <tr>
         <td class="phase">Suspect drift</td>
-        <td><code>npx create-baseline doctor ./project</code></td>
+        <td><code>npx @friedbotstudio/create-baseline doctor ./project</code></td>
         <td>Read-only. Reports matched / customized / missing / added. Exit 0 if clean, 1 if any baseline file is missing, 2 if no manifest is present.</td>
       </tr>
     </tbody>

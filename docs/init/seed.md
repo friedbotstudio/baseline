@@ -113,7 +113,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── skills/                 # 36 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + shared globals (7) + audit (1) + alt tracks (1)
 │   ├── memory/                 # project memory: 6 canonical files + _pending.md (gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
-├── src/                        # pristine ship-time templates (overlay source for `npx create-baseline`)
+├── src/                        # pristine ship-time templates (overlay source for `npx @friedbotstudio/create-baseline`)
 │   ├── CLAUDE.template.md
 │   ├── seed.template.md
 │   ├── project.template.json
@@ -575,7 +575,7 @@ By: /init-project (run #1)
 ### Three deliverables in one repo (per init hint)
 
 1. **Baseline dogfood** — the live `.claude/`, `CLAUDE.md`, `docs/init/seed.md`, `src/` are the baseline being developed by using itself.
-2. **`npx create-baseline` CLI** *(planned — bootstrapping pending)* — zero-dep Node scaffolder per `docs/create-baseline.md`. `bin/`, `src/*.js`, `scripts/build-template.sh`, `package.json` not yet on disk.
+2. **`npx @friedbotstudio/create-baseline` CLI** *(planned — bootstrapping pending)* — zero-dep Node scaffolder per `docs/create-baseline.md`. `bin/`, `src/*.js`, `scripts/build-template.sh`, `package.json` not yet on disk.
 3. **Documentation site** *(skeleton)* — `site/index.html` + `site/assets/src/app.jsx` + brand assets. No build pipeline yet.
 
 ### Recommender additions adopted
@@ -610,7 +610,7 @@ By: /init-project (run #1)
 
 These are not part of init-project's scope but were surfaced by the recommender and acknowledged by the user:
 
-1. Bootstrap `package.json` for the planned `npx create-baseline` CLI (per `docs/create-baseline.md`).
+1. Bootstrap `package.json` for the planned `npx @friedbotstudio/create-baseline` CLI (per `docs/create-baseline.md`).
 2. Add `.github/workflows/audit.yml` running `audit.sh` on PRs.
 3. Add markdown linting (`markdownlint-cli2` over governance + docs).
 4. Wire site build pipeline (Vite, single-entry, static-output optimization).
@@ -658,4 +658,4 @@ The audit at `.claude/skills/audit-baseline/audit.sh` consumes `manifest.owners.
 
 The audit also verifies constitutional citation: CLAUDE.md SHALL contain the literal string "Article XI" and a reference to the manifest, and `docs/init/seed.md` SHALL contain "§17" and a manifest reference. Missing citations trigger FAIL with `CLAUDE.md missing Article XI citation` or `seed.md missing §17 citation`.
 
-This provenance system is intentionally minimal: the manifest tracks shipped-file hashes; the frontmatter declares per-skill ownership; the audit reconciles the two against on-disk reality. Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals; the per-file `manifest.files` map already covers every file in every skill directory. A future `npx create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to safely re-overlay baseline-owned files while leaving user-added skills and locally-customized baseline skills untouched — that subcommand is out of scope here.
+This provenance system is intentionally minimal: the manifest tracks shipped-file hashes; the frontmatter declares per-skill ownership; the audit reconciles the two against on-disk reality. Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals; the per-file `manifest.files` map already covers every file in every skill directory. A future `npx @friedbotstudio/create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to safely re-overlay baseline-owned files while leaving user-added skills and locally-customized baseline skills untouched — that subcommand is out of scope here.

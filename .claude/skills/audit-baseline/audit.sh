@@ -322,7 +322,7 @@ else:
 # `docs/create-baseline.md`.
 #
 # The src/ tree mirrors the canonical paths with a `.template` suffix so
-# `npx create-baseline` can discover and overlay deterministically.
+# `npx @friedbotstudio/create-baseline` can discover and overlay deterministically.
 src_dir = root / "src"
 if not src_dir.is_dir():
     add("src templates: directory", "FAIL", "missing src/")

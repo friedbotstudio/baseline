@@ -105,7 +105,7 @@ async function main() {
     timeout: 120_000,
   });
 
-  const installedPkg = path.join(installDir, 'node_modules/create-baseline');
+  const installedPkg = path.join(installDir, 'node_modules/@friedbotstudio/create-baseline');
   const cliPath = path.join(installedPkg, 'bin/cli.js');
   if (!existsSync(cliPath)) {
     throw new Error(`installed CLI missing at ${cliPath}`);

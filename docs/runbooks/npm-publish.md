@@ -1,8 +1,8 @@
-# Runbook — publishing `create-baseline` to npm
+# Runbook — publishing `@friedbotstudio/create-baseline` to npm
 
 The daily path is push-driven: merge a PR into `main` or `next` and the release workflow at [`.github/workflows/release.yml`](../../.github/workflows/release.yml) cuts the right version automatically. The manual fallback (operator-workstation `npm publish`) is retained for emergencies — broken CI, repo migration, an `npm unpublish` follow-up that can't run from CI, or a misconfigured trusted-publisher that needs hands-on diagnosis.
 
-This runbook is operator-actionable from cold. No `create-baseline` familiarity assumed beyond "I have a checkout and `npm` is installed."
+This runbook is operator-actionable from cold. No `@friedbotstudio/create-baseline` familiarity assumed beyond "I have a checkout and `npm` is installed."
 
 ---
 
@@ -23,7 +23,7 @@ Multiple commit types: the highest bump wins.
 
 ### Scope contract (which commits actually move the version)
 
-The version bump is *the version of the package consumers install via `npx create-baseline`*. Not every commit on `main` is a product change — release plumbing, the rendered docs site, and CI maintenance all land in the same repo. The scope segment of each commit message is the seam:
+The version bump is *the version of the package consumers install via `npx @friedbotstudio/create-baseline`*. Not every commit on `main` is a product change — release plumbing, the rendered docs site, and CI maintenance all land in the same repo. The scope segment of each commit message is the seam:
 
 | Scope | Bumps version? | Examples |
 |---|---|---|
@@ -36,7 +36,7 @@ The version bump is *the version of the package consumers install via `npx creat
 
 What ships to consumers (and therefore *can* bump the version): `.claude/**`, `src/**`, `bin/**`, `obj/template/**`, and `README.md`. Anything outside those prefixes should carry a non-product scope.
 
-The contract is enforced by `releaseRules` in `.releaserc.json` — scopes `release`, `site`, `ci`, `actions` and type `build` are demoted to `release: false`, which overrides the default rules even for a stray `feat!:` or `BREAKING CHANGE:` footer. The rule is a safety net, not a substitute for discipline: misclassified commits still pollute the changelog and surprise reviewers. When in doubt, ask whether `npx create-baseline` consumers will see a behavioural difference. If no, the scope is non-product.
+The contract is enforced by `releaseRules` in `.releaserc.json` — scopes `release`, `site`, `ci`, `actions` and type `build` are demoted to `release: false`, which overrides the default rules even for a stray `feat!:` or `BREAKING CHANGE:` footer. The rule is a safety net, not a substitute for discipline: misclassified commits still pollute the changelog and surprise reviewers. When in doubt, ask whether `npx @friedbotstudio/create-baseline` consumers will see a behavioural difference. If no, the scope is non-product.
 
 ### Channels
 
@@ -45,7 +45,7 @@ The contract is enforced by `releaseRules` in `.releaserc.json` — scopes `rele
 | `main` | `latest` | `X.Y.Z` | yes |
 | `next` | `next` | `X.Y.Z-next.N` | no |
 
-Consumers install via `npm install create-baseline` (stable) or `npm install create-baseline@next` (prerelease). Merging `next` into `main` promotes accumulated prereleases to a single stable release on `@latest`.
+Consumers install via `npm install @friedbotstudio/create-baseline` (stable) or `npm install @friedbotstudio/create-baseline@next` (prerelease). Merging `next` into `main` promotes accumulated prereleases to a single stable release on `@latest`.
 
 ### What each run produces
 
@@ -58,7 +58,7 @@ On every release (`new_release_published == true`):
 5. GitHub Release created with release notes (prerelease-flagged on `next`).
 6. Comment on each closed PR included in the release, naming the version.
 7. Pages redeployed (main releases only) from the post-release HEAD.
-8. `install-smoke` job materializes the published tarball via `npx create-baseline ./target` and hash-verifies the manifest.
+8. `install-smoke` job materializes the published tarball via `npx @friedbotstudio/create-baseline ./target` and hash-verifies the manifest.
 
 ### `workflow_dispatch mode=docs-only`
 
@@ -72,7 +72,7 @@ Complete each step once. The first run after rollout will fail loudly if any pre
 
 ### 1. Register the npm trusted publisher
 
-On [npmjs.com](https://www.npmjs.com/) → packages → `create-baseline` → Settings → Trusted Publishers → **Add publisher**:
+On [npmjs.com](https://www.npmjs.com/) → packages → `@friedbotstudio/create-baseline` → Settings → Trusted Publishers → **Add publisher**:
 
 - Owner: `friedbotstudio`
 - Repository: `baseline`
@@ -214,7 +214,7 @@ What this runs (in order):
 
 1. `publish:precheck` — `npm publish --dry-run` (executes `prepack` lifecycle, surfaces any policy/build error).
 2. `publish:files-diff` — verifies `package.json → files:` declared prefixes match what `npm pack` would actually emit.
-3. `publish:smoke` — packs the real tarball, installs it into a clean tmpdir, runs `create-baseline` against an empty target dir, verifies the materialized baseline's manifest hashes match.
+3. `publish:smoke` — packs the real tarball, installs it into a clean tmpdir, runs `@friedbotstudio/create-baseline` against an empty target dir, verifies the materialized baseline's manifest hashes match.
 
 Expected output on green: `PASS: precheck, files-diff, smoke (3 of 3)`.
 
@@ -236,7 +236,7 @@ npm publish --access public --tag beta
 npm publish --access public
 ```
 
-You will be prompted for your npm 2FA code. Expected output: a summary line ending with `+ create-baseline@<version>` and HTTP/200.
+You will be prompted for your npm 2FA code. Expected output: a summary line ending with `+ @friedbotstudio/create-baseline@<version>` and HTTP/200.
 
 ### Step 5 — Verify the install resolves
 
@@ -251,15 +251,15 @@ Same as the automated-path verification above.
 ### Within 72 hours of publish: unpublish
 
 ```
-npm unpublish create-baseline@<broken-version>
+npm unpublish @friedbotstudio/create-baseline@<broken-version>
 ```
 
-This **removes** the version. Anyone who already ran `npm install create-baseline@<broken-version>` keeps the broken copy locally, but new installs cannot retrieve it. Use this when the broken version has had zero or near-zero downloads.
+This **removes** the version. Anyone who already ran `npm install @friedbotstudio/create-baseline@<broken-version>` keeps the broken copy locally, but new installs cannot retrieve it. Use this when the broken version has had zero or near-zero downloads.
 
 ### After 72 hours: deprecate
 
 ```
-npm deprecate create-baseline@<broken-version> "Broken release; install <fixed-version> instead. See <link>."
+npm deprecate @friedbotstudio/create-baseline@<broken-version> "Broken release; install <fixed-version> instead. See <link>."
 ```
 
 The message string is shown on install. Keep it short, name the fixed version, and include a link to the issue if you have one.
@@ -270,7 +270,7 @@ A broken-then-fixed release follows this pattern (auto-flow):
 
 1. Push a `fix:` commit to `main` (or `next`). semantic-release computes the next patch from the broken version (NOT from the version before the break — `0.1.1` is poisoned in the registry even if unpublished).
 2. The workflow publishes `0.1.2` and tags it.
-3. If the broken version is still inside the 72h `unpublish` window, run `npm unpublish create-baseline@0.1.1` AFTER `0.1.2` is live (so users have a working version to fall back to).
+3. If the broken version is still inside the 72h `unpublish` window, run `npm unpublish @friedbotstudio/create-baseline@0.1.1` AFTER `0.1.2` is live (so users have a working version to fall back to).
 
 ### Order of operations under pressure
 

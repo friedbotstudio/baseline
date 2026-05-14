@@ -11,7 +11,7 @@
 
 ## Goal
 
-After this spec ships, the maintainer triggers a release of `create-baseline` from the GitHub Actions UI (or `gh workflow run`), choosing `major | minor | patch`; the workflow runs four jobs that bump the version, gate on `npm run publish:check`, publish to npm with SLSA L3 provenance via OIDC trusted publishing, deploy the eleventy docs site to GitHub Pages, and push the version-bump commit + `vX.Y.Z` tag back to `main` — or fails fast and irreversibly-empty if any pre-publish gate trips.
+After this spec ships, the maintainer triggers a release of `@friedbotstudio/create-baseline` from the GitHub Actions UI (or `gh workflow run`), choosing `major | minor | patch`; the workflow runs four jobs that bump the version, gate on `npm run publish:check`, publish to npm with SLSA L3 provenance via OIDC trusted publishing, deploy the eleventy docs site to GitHub Pages, and push the version-bump commit + `vX.Y.Z` tag back to `main` — or fails fast and irreversibly-empty if any pre-publish gate trips.
 
 **Extension (added 2026-05-13)**: the same workflow accepts a `mode` input with two values — `release` (the original four-job pipeline) and `docs-only` (an ad-hoc Pages refresh that skips bump / publish / push-bump / install-smoke and runs only the build steps + the deploy-pages job). The `mode` input defaults to `release`, preserving the original behavior when the operator omits it. `bump_type` is no longer `required: true`; it is ignored when `mode=docs-only`.
 
@@ -93,7 +93,7 @@ Container_Boundary(yaml, "release.yml") {
   Component(publish_npm, "Job: publish-npm", "ubuntu-latest, needs: build-verify", "permissions: id-token: write, contents: read. harden-runner, checkout, setup-node with registry-url, download bump artifact, npm publish --provenance --access public")
   Component(deploy_pages, "Job: deploy-pages", "ubuntu-latest, needs: [build-verify, publish-npm]", "permissions: pages: write, id-token: write. environment: github-pages. deploy-pages downloads github-pages artifact and serves")
   Component(push_bump, "Job: push-bump", "ubuntu-latest, needs: publish-npm", "permissions: contents: write. checkout (full history, fetch main HEAD ref). Restore bumped package.json. git commit + tag + push (fail-on-conflict)")
-  Component(smoke, "Job: install-smoke", "ubuntu-latest, needs: publish-npm", "Wait for registry replication; npx --yes create-baseline@<v> ./target; verify manifest hash match")
+  Component(smoke, "Job: install-smoke", "ubuntu-latest, needs: publish-npm", "Wait for registry replication; npx --yes @friedbotstudio/create-baseline@<v> ./target; verify manifest hash match")
 }
 Rel(trigger, concurrency, "satisfies group constraint")
 Rel(concurrency, build_verify, "schedules")
@@ -337,7 +337,7 @@ SM -> SM : step 1 — harden-runner audit
 SM -> SM : step 2 — setup-node (no cache: key)
 SM -> SM : step 3 — wait 30s (registry replication, per runbook Step 5)
 SM -> SM : step 4 — mkdir /tmp/verify && cd /tmp/verify
-SM -> NPM : npx --yes create-baseline@${{ needs.build-verify.outputs.new_version }} ./target
+SM -> NPM : npx --yes @friedbotstudio/create-baseline@${{ needs.build-verify.outputs.new_version }} ./target
 NPM --> SM : install + execute CLI
 SM -> SM : step 5 — diff target/.claude/.baseline-manifest.json files{} hashes vs published manifest.json files{}
 alt match
@@ -507,7 +507,7 @@ Notes for the design-ui invocation `/tdd` Step 6 will make:
 | AC-007 | Given any job in this workflow, when the job starts, then `step-security/harden-runner` (audit mode) is the first step | intake AC 7 | §Behavior #6 (AC-7 segment) |
 | AC-008 | Given precheck and publish both passed and the deploy-pages job runs, when `actions/deploy-pages` executes, then GitHub Pages serves the new build within the deploy step's window and `outputs.page_url` is non-empty | intake AC 8 | §Behavior #3 |
 | AC-009 | Given a successful workflow run with run id `R`, when the published tarball's `obj/template/manifest.json` is inspected and the deployed Pages site's footer is inspected, then both carry `build_id = "gha-<R>"` | intake AC 9 | §Behavior #1 (manifest stamping) + §Behavior #3 (Pages deploy consumes the same artifact tree) |
-| AC-010 | Given the publish-npm job has succeeded, when the install-smoke job runs, then `npx --yes create-baseline@<new-version> ./target` exits zero from a fresh tmpdir and the materialized `target/.claude/.baseline-manifest.json` files{} hashes match the published `obj/template/manifest.json` files{} hashes | intake AC 10 | §Behavior #5 |
+| AC-010 | Given the publish-npm job has succeeded, when the install-smoke job runs, then `npx --yes @friedbotstudio/create-baseline@<new-version> ./target` exits zero from a fresh tmpdir and the materialized `target/.claude/.baseline-manifest.json` files{} hashes match the published `obj/template/manifest.json` files{} hashes | intake AC 10 | §Behavior #5 |
 | AC-011 | Given any step in build-verify or publish-npm fails, when the step exits non-zero, then no downstream job runs (no Pages deploy, no bump push, no install-smoke) | intake AC 11 | §Behavior #1 (alt-FAIL) + §Behavior #2 (alt-FAIL) — `needs:` chain |
 | AC-012 | Given a release workflow run is in progress, when a second `workflow_dispatch` is submitted, then the second run queues (does NOT cancel the first, does NOT run in parallel) | intake AC 12 | §Behavior #6 (AC-12 segment) |
 | AC-013 | Given the operator submits `workflow_dispatch` with `mode=docs-only`, when the workflow runs, then (a) the bump step in build-verify is a no-op (package.json version unchanged), (b) jobs `publish-npm`, `push-bump`, and `install-smoke` are skipped via `if: inputs.mode == 'release'`, (c) `deploy-pages` runs (gated by `if: always() && needs.build-verify.result == 'success' && (needs.publish-npm.result == 'success' \|\| needs.publish-npm.result == 'skipped')` — the `build-verify.result == 'success'` clause prevents an artifact-less deploy attempt when `build-verify` itself fails, the exact failure mode of Release run 25821931162), and (d) the rendered site reflects the current package.json version, not a new one | extension 2026-05-13 | §Behavior #1 (mode-gating segment) + §Behavior #3 (deploy-pages run-when-skipped predicate) |
@@ -544,7 +544,7 @@ CI surface, not application runtime — "observability" here means what the oper
 | Log | `npm publish` stdout | tarball name + version + provenance subject digest | post-mortem on a bad release |
 | Metric | `outputs.page_url` from `deploy-pages` | URL string | operator confirms Pages live at the expected URL |
 | Metric | `outputs.new_version` from `build-verify` | semver string | propagates to publish-npm, push-bump, install-smoke |
-| Metric (external) | `npm view create-baseline --json` → `dist.attestations.provenance` | object (subject + predicate) | auditor confirms SLSA L3 provenance landed |
+| Metric (external) | `npm view @friedbotstudio/create-baseline --json` → `dist.attestations.provenance` | object (subject + predicate) | auditor confirms SLSA L3 provenance landed |
 | Telemetry | harden-runner audit-mode egress log (StepSecurity portal) | per-run; HTTP/DNS calls observed | follow-up data for v2 block-mode allowlist |
 | Alarm | (none) | n/a | this is a manual workflow; the operator is the on-call |
 
@@ -552,7 +552,7 @@ CI surface, not application runtime — "observability" here means what the oper
 
 - **Feature flag**: none. The workflow is gated behind `workflow_dispatch` — until the operator runs it, it has no effect.
 - **One-time prerequisites the operator MUST complete before the first run** (else first run will fail with diagnostic messages):
-  1. **npm trusted publisher**: on `npmjs.com → packages → create-baseline → Settings → Trusted Publishers`, add `friedbotstudio/baseline` + workflow filename `release.yml` + environment (none / `github-pages` is fine — the publish-npm job does NOT use the github-pages environment).
+  1. **npm trusted publisher**: on `npmjs.com → packages → @friedbotstudio/create-baseline → Settings → Trusted Publishers`, add `friedbotstudio/baseline` + workflow filename `release.yml` + environment (none / `github-pages` is fine — the publish-npm job does NOT use the github-pages environment).
   2. **GitHub Pages source**: Repo Settings → Pages → Source = "GitHub Actions" (not "Deploy from a branch").
   3. **2FA**: `npm profile get tfa` returns `auth-and-writes` (runbook mandate; OIDC trusted publishing is unaffected by `auth-and-writes`).
   4. **Branch protection on `main`** *(soft recommendation, not blocking)*: allow `github-actions[bot]` to push directly so the push-bump job's fast-forward succeeds.
@@ -565,8 +565,8 @@ CI surface, not application runtime — "observability" here means what the oper
 
 - **Workflow-level kill-switch**: disable the workflow via Actions UI ("Disable workflow" on `release.yml`). No further dispatch can run.
 - **Per-release rollback** (when a specific version is broken post-publish):
-  - **Within 72h**: `npm unpublish create-baseline@<broken-version>` (operator-run, runbook Step 6).
-  - **After 72h**: `npm deprecate create-baseline@<broken-version> "<message naming the fix>"`.
+  - **Within 72h**: `npm unpublish @friedbotstudio/create-baseline@<broken-version>` (operator-run, runbook Step 6).
+  - **After 72h**: `npm deprecate @friedbotstudio/create-baseline@<broken-version> "<message naming the fix>"`.
   - **Pages**: re-run only the `deploy-pages` job from a prior good run (Actions UI → "Re-run jobs" → select `deploy-pages`).
   - **Git**: the bump commit + tag are visible in history. To revert, `git revert <bump-commit>` from a clean tree, push, then dispatch the workflow again with the appropriate `bump_type` (you cannot "un-tag" cleanly in shared history; the deprecated version's tag remains).
 - **Signal to roll back**: the install-smoke job is the in-CI canary — a HASH_MISMATCH there means the published tarball does not materialize to its declared manifest, and rollback should be immediate. Time-to-trip: ~3 minutes from `npm publish` to install-smoke verdict (registry replication wait + install + verify). Within the 72h `unpublish` window if caught here.

@@ -13,7 +13,7 @@ const BUILD_SCRIPT = join(ROOT, 'scripts', 'build-template.sh');
 
 // THE BASELINE-PRODUCT ALLOWLIST.
 //
-// What `npx create-baseline` is for: ship the baseline product (constitution +
+// What `npx @friedbotstudio/create-baseline` is for: ship the baseline product (constitution +
 // enforcement layer + defaults) into a target project — and nothing else.
 // The baseline product is enumerated in `docs/init/seed.md` §4 + Appendix A:
 //

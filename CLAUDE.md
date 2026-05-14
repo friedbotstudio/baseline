@@ -277,7 +277,7 @@ You SHALL:
 4. **Preserve constitutional citation.** This Article XI SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations and reports `CLAUDE.md missing Article XI citation` or `seed.md missing §17 citation` on absence.
 5. **Exempt user skills from baseline checks.** User-owned skills (`owner: user`) are excluded from the baseline count, the names-match check, and the hash-drift check. Adding a local skill does not break the audit; it is the user's responsibility to maintain.
 
-Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals. The per-file `manifest.files` map already covers every file in every skill directory. A future `npx create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to re-overlay baseline-owned files safely while leaving user-added or locally-customized files untouched — that subcommand is out of scope of this Article.
+Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals. The per-file `manifest.files` map already covers every file in every skill directory. A future `npx @friedbotstudio/create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to re-overlay baseline-owned files safely while leaving user-added or locally-customized files untouched — that subcommand is out of scope of this Article.
 
 ---
 
@@ -294,7 +294,7 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 | `.claude/settings.json` | hook wiring + permissions |
 | `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
 | `.mcp.json` | three baseline MCP servers: `context7`, `plantuml`, `playwright` |
-| `src/` | pristine ship-time templates for every file `/init-project` modifies (overlay source for `npx create-baseline`) |
+| `src/` | pristine ship-time templates for every file `/init-project` modifies (overlay source for `npx @friedbotstudio/create-baseline`) |
 | `docs/init/seed.md` | genesis prompt — governing specification of the baseline |
 
 ## Appendix B — Skill index (reference)

@@ -1,0 +1,20 @@
+{
+  "request": "Rename the npm package from create-baseline to @friedbotstudio/create-baseline (unscoped name is taken on npm). Update every live reference across the repo: npm metadata, CLI runtime help/error text, build/release scripts, tests, site copy, governance/runbook docs, CI workflow, project memory, and skill docs. bin name stays as 'create-baseline' (Option A — npm-idiomatic for scoped packages). Leave docs/archive/** untouched.",
+  "slug": "package-rename-scoped",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["integrate", "document", "chore", "archive"],
+  "created_at": 1747237800,
+  "updated_at": 1747240260
+}

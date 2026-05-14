@@ -235,7 +235,7 @@ async function main(argv) {
 
   if (!dryRun && exitCode === 0) {
     io.log(`Installed manifest version 1 to ${target}.`);
-    io.log(`Pin via "create-baseline@<exact-version>" in your bootstrap docs.`);
+    io.log(`Pin via "@friedbotstudio/create-baseline@<exact-version>" in your bootstrap docs.`);
   }
 
   return exitCode;

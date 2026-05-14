@@ -2,7 +2,7 @@ import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 // `.claude/.baseline-manifest.json` is the strongest "previously installed by
-// create-baseline" signal — its presence implies a successful install. Listing
+// @friedbotstudio/create-baseline" signal — its presence implies a successful install. Listing
 // it as a sentinel surfaces a more specific conflict message than `.claude` alone
 // (which would also fire on a hand-rolled `.claude/` dir).
 //

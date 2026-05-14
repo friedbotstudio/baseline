@@ -24,7 +24,7 @@ Each entry's stable key is a short slug.
 ## skill-ownership-frontmatter
 
 - Convention: every `.claude/skills/<slug>/SKILL.md` declares `owner: baseline` or `owner: user` in its YAML frontmatter, on the line directly after `name:`. The build script `scripts/build-manifest.mjs` reads each `owner:` and emits `obj/template/manifest.json → owners.skills` as the canonical baseline-skill enumeration. `audit-baseline` consumes that map (no hard-coded `EXPECTED_SKILLS` set anymore) and verifies per-file sha256 drift for every baseline-owned skill.
-- Why: provenance — baseline-owned skills can be re-overlaid by a future `npx create-baseline upgrade` while user-owned skills are left alone. The redesign also removed an old hard-coded slug list in `audit.sh`, leaving the manifest as the single source of truth.
+- Why: provenance — baseline-owned skills can be re-overlaid by a future `npx @friedbotstudio/create-baseline upgrade` while user-owned skills are left alone. The redesign also removed an old hard-coded slug list in `audit.sh`, leaving the manifest as the single source of truth.
 - Constraint: a new SKILL.md without `owner:` fails the audit at the `check_skill_ownership` row (`missing owner frontmatter`). Invalid values fail with `invalid owner=<value>`.
 - Reference: CLAUDE.md Article XI, seed.md §17.
 - Verified-at: HEAD

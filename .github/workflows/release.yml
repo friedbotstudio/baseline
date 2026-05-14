@@ -1,4 +1,4 @@
-# Push-driven release pipeline for `create-baseline`.
+# Push-driven release pipeline for `@friedbotstudio/create-baseline`.
 #
 # Trigger: push (or merged PR) to main or next, OR workflow_dispatch with
 # mode=docs-only for a Pages-only redeploy. Bump type, changelog, git tag,
@@ -14,7 +14,7 @@
 #   deploy-pages  — needs: release. main branch only OR docs-only dispatch.
 #                   Builds obj/site against post-release HEAD; deploys Pages.
 #   install-smoke — needs: release. Runs when new_release_published==true.
-#                   Materializes published tarball via create-baseline,
+#                   Materializes published tarball via @friedbotstudio/create-baseline,
 #                   hash-verifies manifest.
 #
 # Runbook: docs/runbooks/npm-publish.md (manual fallback + branch-protection
@@ -135,14 +135,14 @@ jobs:
         run: |
           set -euo pipefail
           deadline=$((SECONDS + 180))
-          until npm view "create-baseline@${NEW_VERSION}" version >/dev/null 2>&1; do
+          until npm view "@friedbotstudio/create-baseline@${NEW_VERSION}" version >/dev/null 2>&1; do
             if [ "$SECONDS" -ge "$deadline" ]; then
               echo "registry replication timed out after 180s for create-baseline@${NEW_VERSION}" >&2
               exit 1
             fi
             sleep 5
           done
-          echo "create-baseline@${NEW_VERSION} resolves on registry"
+          echo "@friedbotstudio/create-baseline@${NEW_VERSION} resolves on registry"
       - name: Install published tarball and verify materialized manifest
         env:
           NEW_VERSION: ${{ needs.release.outputs.new_release_version }}
@@ -152,8 +152,8 @@ jobs:
           tmp=$(mktemp -d)
           cd "$tmp"
           npm init -y >/dev/null
-          npm install --no-save "create-baseline@${NEW_VERSION}" >/dev/null
-          node node_modules/create-baseline/bin/cli.js ./target
+          npm install --no-save "@friedbotstudio/create-baseline@${NEW_VERSION}" >/dev/null
+          node node_modules/@friedbotstudio/create-baseline/bin/cli.js ./target
           node "${WORKSPACE}/scripts/install-smoke-verify.mjs" \
-            "${tmp}/node_modules/create-baseline/obj/template/manifest.json" \
+            "${tmp}/node_modules/@friedbotstudio/create-baseline/obj/template/manifest.json" \
             "${tmp}/target/.claude/.baseline-manifest.json"

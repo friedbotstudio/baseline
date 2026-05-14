@@ -10,7 +10,7 @@ The v0.1 layout was a sibling npm package: `create-baseline/{bin,src,scripts,tem
 
 ## What the tool is
 
-A scaffolder. `npx create-baseline <target>` lays down the Claude Code baseline (`.claude/`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`) into a target directory. Three modes:
+A scaffolder. `npx @friedbotstudio/create-baseline <target>` lays down the Claude Code baseline (`.claude/`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`) into a target directory. Three modes:
 
 1. **Fresh install** (default) — refuses if any baseline files already exist. Lays down the template tree plus a `.claude/.baseline-manifest.json` for future merges.
 2. **`--force`** — overwrites unconditionally. Requires typing the literal word `overwrite` at the prompt.
@@ -170,7 +170,7 @@ The `create-baseline/template/` directory was **committed to git** in v0.1 even 
 ### `package.json` essentials
 ```json
 {
-  "name": "create-baseline",
+  "name": "@friedbotstudio/create-baseline",
   "type": "module",
   "bin": { "create-baseline": "bin/cli.js" },
   "files": ["bin/", "src/", "template/", "README.md"],
