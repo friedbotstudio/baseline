@@ -30,14 +30,15 @@
   </defs>
 </svg>
 
+{% include "topnav.njk" %}
+
 {# Site-wide status banner — surfaces public-alpha state on every page.
-   Subtle by design (DESIGN.md "quiet authority"); accent-tinted strip above
-   the topnav. Update wording in one place to change the message everywhere. #}
+   Subtle by design (DESIGN.md "quiet authority"); accent-tinted strip below
+   the sticky topnav, scrolls away with the page. Update wording in one
+   place to change the message everywhere. #}
 <aside class="alpha-banner" role="status" aria-label="Project status">
   <span class="alpha-banner-text"><strong>Public alpha</strong> · under active development. Pin to <code>create-baseline@&lt;version&gt;</code> for stable installs.</span>
 </aside>
-
-{% include "topnav.njk" %}
 
 {{ content | safe }}
 

@@ -129,14 +129,16 @@ button:focus-visible,
 .skip:focus { left: 16px; top: 16px; }
 
 /* ----- alpha banner (site-wide status) ---------------------------------- */
-/* Subtle accent-tinted strip above the topnav. Surfaces public-alpha state
-   on every page without dominating the layout (DESIGN.md "quiet authority").
-   Mono font, accent body on accent-soft background, single hairline at the
-   accent stop. Render order: banner → topnav → page content. The banner is
-   semantic <aside role="status"> so screen readers can skip past it. */
+/* Subtle accent-tinted strip below the sticky topnav. Surfaces public-alpha
+   state on every page without dominating the layout (DESIGN.md "quiet
+   authority"). Mono font, accent body on accent-soft background, single
+   hairline at the accent stop. Render order: topnav → banner → page content;
+   the banner scrolls away with the page while the topnav stays pinned. The
+   banner is semantic <aside role="status"> so screen readers can skip past it. */
 .alpha-banner {
   background: var(--accent-soft);
   border-bottom: 1px solid var(--accent);
+  border-top: 1px solid var(--accent);
   padding: 8px 24px;
   text-align: center;
   font: 500 12.5px/1.4 var(--mono);
@@ -459,6 +461,18 @@ footer.site {
   margin: 0;
   max-width: 32ch;
 }
+.footer-attribution {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 0;
+  letter-spacing: .01em;
+}
+.footer-attribution a {
+  color: var(--text);
+  border-bottom: 1px solid var(--rule);
+}
+.footer-attribution a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .footer-col h5 {
   font-family: var(--mono);
   font-size: 10.5px;
