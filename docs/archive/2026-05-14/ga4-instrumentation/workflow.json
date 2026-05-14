@@ -1,0 +1,9 @@
+{
+  "request": "Wire GA4 (Measurement ID G-MYCZFYXE38) into the Friedbot Studio site: add the gtag.js loader snippet to every page, then instrument three custom events (button clicks, copy-command on landing page, outbound clicks to friedbotstudio.com). First concrete step of the SEO optimization journey.",
+  "slug": "ga4-instrumentation",
+  "entry_phase": "intake",
+  "exceptions": ["brd", "swarm-plan", "approve-swarm", "swarm-dispatch"],
+  "completed": ["intake", "scout", "research", "spec", "tdd", "simplify", "security", "integrate", "document", "archive"],
+  "created_at": 1778794669,
+  "updated_at": 1778801200
+}

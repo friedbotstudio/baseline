@@ -14,8 +14,8 @@ eleventyComputed:
         <h1>A discipline layer<br>for Claude<span class="accent">.</span></h1>
         <p class="lead">Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. Every phase produces one artifact, every gate is user-typed, and Claude cannot self-approve.</p>
         <div class="ctas">
-          <a class="btn btn-primary" href="{{ '/install/' | rel }}">Get the baseline <span class="arr">→</span></a>
-          <a class="btn btn-secondary" href="{{ '/swarm/' | rel }}">Read the docs</a>
+          <a class="btn btn-primary" data-cta="get-the-baseline" href="{{ '/install/' | rel }}">Get the baseline <span class="arr">→</span></a>
+          <a class="btn btn-secondary" data-cta="read-the-docs" href="{{ '/swarm/' | rel }}">Read the docs</a>
         </div>
         <div class="meta-strip" aria-label="Baseline counts">
           <div class="stat"><span class="num">{{ baseline.hooks.total }}</span><span class="label">Hooks</span></div>

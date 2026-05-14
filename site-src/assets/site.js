@@ -257,6 +257,9 @@
         try { document.execCommand("copy"); } catch (_) {}
         ta.remove();
       }
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "copy_install_command", { command: text });
+      }
       btn.classList.add("is-copied");
       const hint = btn.querySelector(".cli-hint");
       if (hint) hint.textContent = hint.getAttribute("data-copied");
@@ -264,6 +267,22 @@
         btn.classList.remove("is-copied");
         if (hint) hint.textContent = hint.getAttribute("data-default");
       }, 1800);
+    });
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* GA4: CTA click instrumentation                                     */
+  /* ------------------------------------------------------------------ */
+  /* Separate selector ([data-cta]) from the copy handler ([data-copy]) so
+     the cli-strip button — which has [data-copy] but not [data-cta] — does
+     not double-fire as both a CTA click and a copy event. */
+  document.querySelectorAll("[data-cta]").forEach((el) => {
+    el.addEventListener("click", () => {
+      if (typeof window.gtag !== "function") return;
+      window.gtag("event", "select_content", {
+        content_type: "cta",
+        content_id: el.getAttribute("data-cta"),
+      });
     });
   });
 })();
