@@ -11,6 +11,8 @@
         { "scope": "ci", "release": false },
         { "scope": "actions", "release": false },
         { "type": "build", "release": false },
+        { "type": "refactor", "release": "patch" },
+        { "scope": "constitution", "release": "minor" },
         { "breaking": true, "release": "minor" }
       ]
     }],
