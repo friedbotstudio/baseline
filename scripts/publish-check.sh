@@ -50,7 +50,15 @@ run_step() {
 }
 
 precheck() {
-  ( cd "$REPO_ROOT" && npm publish --dry-run >/dev/null 2>&1 )
+  # Capture combined output so the PASS case stays quiet (npm publish --dry-run
+  # is verbose) but a FAIL surfaces the actual diagnostic — without this the
+  # caller sees only "FAIL: precheck (exit N)" with no postmortem context,
+  # which is opaque on CI where there is no local reproduction.
+  local out
+  if ! out=$(cd "$REPO_ROOT" && npm publish --dry-run 2>&1); then
+    printf '%s\n' "$out" >&2
+    return 1
+  fi
 }
 
 files_diff() {
