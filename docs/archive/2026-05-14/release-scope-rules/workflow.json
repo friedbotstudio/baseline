@@ -1,0 +1,20 @@
+{
+  "request": "Refine semantic-release config to stop non-product commits from triggering version bumps, add the semantic-release label to .github/labels.yml, and document the scope->release contract in docs/runbooks/npm-publish.md.",
+  "slug": "release-scope-rules",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["integrate", "document", "chore", "archive"],
+  "created_at": 1747234800,
+  "updated_at": 1747237600
+}

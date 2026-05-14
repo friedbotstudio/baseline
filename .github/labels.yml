@@ -16,3 +16,7 @@
 - name: github-actions
   color: '000000'
   description: Pull requests that update GitHub Actions code
+
+- name: semantic-release
+  color: 'b60205'
+  description: Issue opened by semantic-release when an automated release fails

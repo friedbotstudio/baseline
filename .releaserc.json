@@ -4,7 +4,15 @@
     { "name": "next", "prerelease": true }
   ],
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    ["@semantic-release/commit-analyzer", {
+      "releaseRules": [
+        { "scope": "release", "release": false },
+        { "scope": "site", "release": false },
+        { "scope": "ci", "release": false },
+        { "scope": "actions", "release": false },
+        { "type": "build", "release": false }
+      ]
+    }],
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/npm",

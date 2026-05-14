@@ -21,6 +21,23 @@ This runbook is operator-actionable from cold. No `create-baseline` familiarity 
 
 Multiple commit types: the highest bump wins.
 
+### Scope contract (which commits actually move the version)
+
+The version bump is *the version of the package consumers install via `npx create-baseline`*. Not every commit on `main` is a product change — release plumbing, the rendered docs site, and CI maintenance all land in the same repo. The scope segment of each commit message is the seam:
+
+| Scope | Bumps version? | Examples |
+|---|---|---|
+| `feat:`/`fix:` with no scope (or any product scope) | yes | `feat: add foo skill`, `fix(audit): correct hook count` |
+| `feat(release):`, `fix(release):` | no | release workflow, `.releaserc.json`, release scripts |
+| `feat(site):`, `fix(site):`, `docs(site):` | no | `site-src/**`, page-relative URL filter, Pages CNAME |
+| `feat(ci):`, `feat(actions):`, `chore(actions)(deps):` | no | `.github/workflows/**`, dependabot config, action SHA bumps |
+| `build:` | no | build scripts, `prepack`, manifest generation |
+| `chore:`, `docs:`, `style:`, `refactor:`, `test:` | no (preset default) | — |
+
+What ships to consumers (and therefore *can* bump the version): `.claude/**`, `src/**`, `bin/**`, `obj/template/**`, and `README.md`. Anything outside those prefixes should carry a non-product scope.
+
+The contract is enforced by `releaseRules` in `.releaserc.json` — scopes `release`, `site`, `ci`, `actions` and type `build` are demoted to `release: false`, which overrides the default rules even for a stray `feat!:` or `BREAKING CHANGE:` footer. The rule is a safety net, not a substitute for discipline: misclassified commits still pollute the changelog and surprise reviewers. When in doubt, ask whether `npx create-baseline` consumers will see a behavioural difference. If no, the scope is non-product.
+
 ### Channels
 
 | Branch | Dist-tag | Version shape | Pages redeployed? |
