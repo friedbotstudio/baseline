@@ -435,10 +435,10 @@ describe('release-workflow — release job structure', () => {
 // ---------- Domain: AC-001 / AC-002 ... AC-009 — .releaserc.json ----------
 
 describe('releaserc — branches + plugin chain', () => {
-  it('test_when_releaserc_parsed_then_branches_is_main_and_next_prerelease', () => {
+  it('test_when_releaserc_parsed_then_branches_is_main_capped_at_0x_and_next_prerelease', () => {
     const cfg = readReleaserc();
-    assert.deepEqual(cfg.branches, ['main', { name: 'next', prerelease: true }],
-      `.releaserc.json branches must equal ['main', {name: 'next', prerelease: true}]; got: ${JSON.stringify(cfg.branches)}`);
+    assert.deepEqual(cfg.branches, [{ name: 'main', range: '0.x' }, { name: 'next', prerelease: true }],
+      `.releaserc.json branches must equal [{name: 'main', range: '0.x'}, {name: 'next', prerelease: true}] (alpha-period safety belt: caps main at 0.x to prevent accidental 1.0.0 release); got: ${JSON.stringify(cfg.branches)}`);
   });
 
   it('test_when_releaserc_parsed_then_plugin_chain_is_correct_order', () => {

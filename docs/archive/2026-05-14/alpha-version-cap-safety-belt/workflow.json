@@ -1,0 +1,20 @@
+{
+  "request": "Add alpha-period safety belt to .releaserc.json: cap main at 0.x via `range: \"0.x\"` branch modifier; map breaking-change commits to minor bumps via `{ breaking: true, release: \"minor\" }` releaseRule. Prevents accidental 1.0.0 escalation during alpha; lets BREAKING CHANGE during 0.x cut minor (0.N+1.0) per semver convention.",
+  "slug": "alpha-version-cap-safety-belt",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["chore", "integrate", "archive"],
+  "created_at": 1747260000,
+  "updated_at": 1747260100
+}

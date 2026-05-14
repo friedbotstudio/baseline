@@ -1,6 +1,6 @@
 {
   "branches": [
-    "main",
+    { "name": "main", "range": "0.x" },
     { "name": "next", "prerelease": true }
   ],
   "plugins": [
@@ -10,7 +10,8 @@
         { "scope": "site", "release": false },
         { "scope": "ci", "release": false },
         { "scope": "actions", "release": false },
-        { "type": "build", "release": false }
+        { "type": "build", "release": false },
+        { "breaking": true, "release": "minor" }
       ]
     }],
     "@semantic-release/release-notes-generator",
