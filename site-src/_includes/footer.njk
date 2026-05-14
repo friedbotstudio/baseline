@@ -2,7 +2,7 @@
   <div class="footer-inner">
     <div class="footer-grid">
       <div class="footer-brand-col">
-        <a class="brand" href="/">
+        <a class="brand" href="{{ '/' | rel }}">
           <span class="dot"></span><span>{{ site.brand }}</span>
         </a>
         <p class="footer-tagline">{{ site.tagline }}</p>
@@ -10,10 +10,10 @@
       <div class="footer-col">
         <h5>Docs</h5>
         <ul>
-          <li><a href="/hooks/">Hooks</a></li>
-          <li><a href="/memory/">Memory</a></li>
-          <li><a href="/swarm/">Swarm mode</a></li>
-          <li><a href="/skills/">Skills</a></li>
+          <li><a href="{{ '/hooks/' | rel }}">Hooks</a></li>
+          <li><a href="{{ '/memory/' | rel }}">Memory</a></li>
+          <li><a href="{{ '/swarm/' | rel }}">Swarm mode</a></li>
+          <li><a href="{{ '/skills/' | rel }}">Skills</a></li>
         </ul>
       </div>
       <div class="footer-col">

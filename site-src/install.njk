@@ -33,8 +33,8 @@ toc:
       <tr><td class="phase">Node ≥ 18.17</td><td>The CLI uses <code>node:util.parseArgs</code> with <code>strict</code> mode, available from this version.</td></tr>
       <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec create-baseline</code> works too.</td></tr>
       <tr><td class="phase">A target directory</td><td>An existing project root, or an empty directory you intend to populate. The CLI does not <code>mkdir</code> for you.</td></tr>
-      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 (<code>/grant-commit</code> + <code>/commit</code>) auto-excepts. See <a href="/swarm/#dispatch"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
-      <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="/cli/#plantuml">CLI · PlantUML jar</a>.</td></tr>
+      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 (<code>/grant-commit</code> + <code>/commit</code>) auto-excepts. See <a href="{{ '/swarm/#dispatch' | rel }}"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
+      <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="{{ '/cli/#plantuml' | rel }}">CLI · PlantUML jar</a>.</td></tr>
     </tbody>
   </table>
 </section>
@@ -68,7 +68,7 @@ $ npx create-baseline ./my-project
     <span class="icon" aria-hidden="true">!</span>
     <div class="body">
       <strong>Pin the version in your bootstrap docs.</strong>
-      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="/cli/#modes">CLI · Modes</a>).</p>
+      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
     </div>
   </div>
 </section>
@@ -84,7 +84,7 @@ $ npx create-baseline ./my-project
   <table>
     <thead><tr><th>Path</th><th>Role</th></tr></thead>
     <tbody>
-      <tr><td class="phase">.claude/</td><td><a href="/hooks/">{{ baseline.hooks.total }} hooks</a>, <a href="/skills/">{{ baseline.skills.total }} skills</a>, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, <a href="/memory/">memory schemas</a>, <code>project.json</code>, <code>settings.json</code>.</td></tr>
+      <tr><td class="phase">.claude/</td><td><a href="{{ '/hooks/' | rel }}">{{ baseline.hooks.total }} hooks</a>, <a href="{{ '/skills/' | rel }}">{{ baseline.skills.total }} skills</a>, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, <a href="{{ '/memory/' | rel }}">memory schemas</a>, <code>project.json</code>, <code>settings.json</code>.</td></tr>
       <tr><td class="phase">CLAUDE.md</td><td>In-session constitution. Binds Claude's behavior in this repository.</td></tr>
       <tr><td class="phase">.mcp.json</td><td>The three baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>.</td></tr>
       <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
@@ -93,7 +93,7 @@ $ npx create-baseline ./my-project
       <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by <code>--merge</code> to do a three-way reconcile on the next install.</td></tr>
     </tbody>
   </table>
-  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="/cli/#mcp-merge">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
+  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
 </section>
 
 <section class="section">
@@ -149,5 +149,5 @@ $ npx create-baseline ./my-project
       </tr>
     </tbody>
   </table>
-  <p>For the full semantics of each mode, every flag, every exit code, and the <code>doctor</code> drift report categories, see the <a href="/cli/">CLI reference</a>.</p>
+  <p>For the full semantics of each mode, every flag, every exit code, and the <code>doctor</code> drift report categories, see the <a href="{{ '/cli/' | rel }}">CLI reference</a>.</p>
 </section>

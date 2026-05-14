@@ -7,12 +7,12 @@
     <span class="bars" aria-hidden="true"></span>
   </button>
   {%- endif %}
-  <a class="brand" href="/">
+  <a class="brand" href="{{ '/' | rel }}">
     <span class="dot"></span><span>{{ site.brand }}</span>{% if subtitle %}<span class="sub">{{ subtitle }}</span>{% endif %}
   </a>
   <nav class="primary" aria-label="Primary">
     {%- for item in nav.primary %}
-    <a href="{{ item.href }}"{% if item.key == active %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a>
+    <a href="{{ item.href | rel }}"{% if item.key == active %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a>
     {%- endfor %}
   </nav>
   <div class="head-spacer"></div>

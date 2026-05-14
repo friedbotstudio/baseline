@@ -23,6 +23,7 @@
       "bin/**",
       "scripts/**",
       "site/assets/src/**",
+      "site-src/_filters/**",
       ".claude/skills/**",
       ".claude/hooks/**"
     ],

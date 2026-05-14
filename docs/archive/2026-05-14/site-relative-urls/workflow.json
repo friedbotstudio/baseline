@@ -1,0 +1,18 @@
+{
+  "request": "Implement Pattern B for the Eleventy site so a single deployed artifact works at both /baseline/ (project-page URL) and / (custom domain root). Add a `rel` filter to eleventy.config.cjs that converts root-style paths to page-relative paths using this.page.url to compute depth; sweep all internal href/src in templates to use the filter; add tests/site-relative-paths.test.mjs (filter unit tests + HTML walker smoke test); add site-src/CNAME for baseline.friedbotstudio.com and an eleventy passthrough copy. External URLs and fragment links pass through the filter unchanged. The smoke test catches future regressions structurally.",
+  "slug": "site-relative-urls",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": ["simplify", "integrate", "archive", "chore", "grant-commit"],
+  "created_at": 1778739503,
+  "updated_at": 1778743280,
+  "note": "Chore-track refactor + test infra + config. The chore skill handles internal routing through simplify / integrate / document / archive based on its conditional triggers (diff touches eleventy.config.cjs code → simplify fires; new tests + behavior change → integrate fires; new build artifact (CNAME) → archive bundles; user-facing site behavior unchanged for the project URL until deployed → document likely no-op). Out-of-scope: DNS configuration, repo Pages settings flip, deploy trigger — operator actions after this lands."
+}

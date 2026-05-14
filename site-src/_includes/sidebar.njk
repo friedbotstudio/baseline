@@ -4,7 +4,7 @@
     <h4>{{ group.label }}</h4>
     <ul>
       {%- for item in group.items %}
-      <li><a href="{{ item.href }}"{% if item.key == sidebarActive %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
+      <li><a href="{{ item.href | rel }}"{% if item.key == sidebarActive %} class="is-active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
       {%- endfor %}
     </ul>
   </div>

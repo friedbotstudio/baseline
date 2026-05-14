@@ -12,8 +12,8 @@ active: ""
     <h1>Phase not found<span class="accent">.</span></h1>
     <p class="lead">This URL maps to no phase in the baseline. Either the page moved, the link is wrong, or the path you typed never existed. The constitution is fine. The router is not.</p>
     <div class="ctas">
-      <a class="btn btn-primary" href="/">Back to overview <span class="arr">→</span></a>
-      <a class="btn btn-secondary" href="/install/">Install instead</a>
+      <a class="btn btn-primary" href="{{ '/' | rel }}">Back to overview <span class="arr">→</span></a>
+      <a class="btn btn-secondary" href="{{ '/install/' | rel }}">Install instead</a>
     </div>
   </section>
 
@@ -27,37 +27,37 @@ active: ""
     </div>
 
     <div class="concepts is-2col">
-      <a class="concept" href="/">
+      <a class="concept" href="{{ '/' | rel }}">
         <p class="num">/</p>
         <h3>Overview</h3>
         <p>The landing. Hook count, skill count, phase ordering, consent-gate diagram, the live-typing dev console.</p>
       </a>
-      <a class="concept" href="/install/">
+      <a class="concept" href="{{ '/install/' | rel }}">
         <p class="num">/install/</p>
         <h3>Install</h3>
         <p>One command, four sentinel paths. Requirements, what lands, what to do after, how to recover from a bad install.</p>
       </a>
-      <a class="concept" href="/cli/">
+      <a class="concept" href="{{ '/cli/' | rel }}">
         <p class="num">/cli/</p>
         <h3>CLI reference</h3>
         <p>Three install modes, the <code>doctor</code> subcommand, the <code>.mcp.json</code> merge semantics, the manifest, the PlantUML jar.</p>
       </a>
-      <a class="concept" href="/hooks/">
+      <a class="concept" href="{{ '/hooks/' | rel }}">
         <p class="num">/hooks/</p>
         <h3>Hooks</h3>
         <p>The {{ baseline.hooks.total }} hooks at every tool boundary. Article-by-article enforcement table. Why consent is unforgeable.</p>
       </a>
-      <a class="concept" href="/memory/">
+      <a class="concept" href="{{ '/memory/' | rel }}">
         <p class="num">/memory/</p>
         <h3>Memory</h3>
         <p>Six canonical files. The lifecycle loop. Re-verification on every cite. Pruning rules.</p>
       </a>
-      <a class="concept" href="/swarm/">
+      <a class="concept" href="{{ '/swarm/' | rel }}">
         <p class="num">/swarm/</p>
         <h3>Swarm mode</h3>
         <p>Parallel TDD across isolated worktrees. Decisions live in main context; the single subagent executes pre-decided recipes.</p>
       </a>
-      <a class="concept" href="/skills/">
+      <a class="concept" href="{{ '/skills/' | rel }}">
         <p class="num">/skills/</p>
         <h3>Skills</h3>
         <p>{{ baseline.skills.total }} skills organized into {{ baseline.skills.categoriesWord }} categories. Core skills versus vendored shared globals.</p>
