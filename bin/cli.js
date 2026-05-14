@@ -43,6 +43,11 @@ PlantUML jar (~19 MB, fetched at install time from upstream):
   --no-plantuml       Skip the jar download entirely.
   --require-plantuml  Treat jar fetch failure (network/sha256) as fatal (exit 4).
 
+npm posture (off by default):
+  --with-npmrc        Materialize a security-hardened target/.npmrc
+                      (ignore-scripts=true, min-release-age=7). Existing
+                      target/.npmrc is preserved verbatim.
+
 Misc:
   --help, -h       Show this message.
   --version        Print version.
@@ -97,6 +102,7 @@ async function main(argv) {
         'dry-run': { type: 'boolean' },
         'no-plantuml': { type: 'boolean' },
         'require-plantuml': { type: 'boolean' },
+        'with-npmrc': { type: 'boolean' },
         strict: { type: 'boolean' },
       },
       strict: true,
@@ -209,10 +215,10 @@ async function main(argv) {
       }
     } else if (values.force) {
       if (dryRun) io.log(`Would force-install into ${target}`);
-      else await forceInstall(templateDir, target);
+      else await forceInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
     } else {
       if (dryRun) io.log(`Would fresh-install into ${target}`);
-      else await freshInstall(templateDir, target);
+      else await freshInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
     }
   } catch (err) {
     io.error(`install failed: ${err.message}`);

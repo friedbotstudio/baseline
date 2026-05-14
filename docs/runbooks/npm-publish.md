@@ -200,7 +200,7 @@ The `tfa` setting must read `auth-and-writes`. If it reads `auth-only`, enable w
 
 **Sweep 4 — `~/.npmrc` operator defaults.**
 
-The shipped `obj/template/.npmrc` materializes `ignore-scripts=true` and `min-release-age=7` for downstream consumers. The operator's own `~/.npmrc` should mirror these defaults (and add `audit-level=moderate`) before any publish that touches third-party deps:
+The scaffolder no longer creates `target/.npmrc` by default. Operators who want hardened npm posture in scaffolded projects pass `--with-npmrc` at install time (writes `ignore-scripts=true` + `min-release-age=7`; preserves any existing `.npmrc` verbatim). The operator's own `~/.npmrc` should still mirror these defaults regardless, plus `audit-level=moderate`, before any publish that touches third-party deps:
 
 ```
 ignore-scripts=true

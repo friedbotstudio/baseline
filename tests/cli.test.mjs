@@ -36,6 +36,16 @@ describe('cli — argv + mode routing', () => {
     assert.ok(/usage|create-baseline/i.test(r.stdout + r.stderr));
   });
 
+  it('test_when_cli_invoked_with_help_then_help_text_documents_with_npmrc', () => {
+    const r = runCli(['--help']);
+    assert.equal(r.status, 0);
+    assert.match(
+      r.stdout + r.stderr,
+      /--with-npmrc/,
+      'HELP_TEXT must document the --with-npmrc opt-in flag (regression guard against the documentation falling out of sync with the flag)'
+    );
+  });
+
   it('--version exits 0 and prints a version string', () => {
     const r = runCli(['--version']);
     assert.equal(r.status, 0);

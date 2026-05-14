@@ -106,7 +106,12 @@ npx @friedbotstudio/create-baseline ./your-project --dry-run
 
 # Skip the install-time PlantUML jar download
 npx @friedbotstudio/create-baseline ./your-project --no-plantuml
+
+# Materialize a security-hardened target/.npmrc (opt-in)
+npx @friedbotstudio/create-baseline ./your-project --with-npmrc
 ```
+
+By default the scaffolder writes only inside `.claude/`, plus `CLAUDE.md`, `.mcp.json`, and `docs/init/seed.md`. Pass `--with-npmrc` to also drop `ignore-scripts=true` + `min-release-age=7` into `target/.npmrc`. Those defaults blunt the npm post-install-hook attack class and delay consumption of fresh malicious publishes. An existing `target/.npmrc` is preserved verbatim. Operators who already set these defaults in `~/.npmrc` don't need the flag.
 
 ### Doctor
 

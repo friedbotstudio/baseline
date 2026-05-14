@@ -32,7 +32,7 @@ toc:
   </div>
 <pre><code><span class="tok-com"># install / merge / dry-run a target</span>
 npx @friedbotstudio/create-baseline &lt;target&gt; [--force | --merge] [--dry-run]
-                              [--no-plantuml | --require-plantuml]
+                              [--no-plantuml | --require-plantuml] [--with-npmrc]
 
 <span class="tok-com"># read-only drift report against an installed target</span>
 npx @friedbotstudio/create-baseline doctor [target]
@@ -100,7 +100,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <p class="section-num">§ III</p>
       <h2 id="flags">Flags</h2>
     </div>
-    <p>Three operational flags beyond the modes. Two of them control the PlantUML side-fetch.</p>
+    <p>Operational flags beyond the modes. Two control the PlantUML side-fetch; one materializes a security-hardened npm config.</p>
   </div>
   <table>
     <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
@@ -108,6 +108,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <tr><td class="phase">--dry-run</td><td>Print intended actions without writing. Skips the PlantUML fetch. Combines with any install mode.</td></tr>
       <tr><td class="phase">--no-plantuml</td><td>Skip the jar download entirely. PlantUML rendering will fall back to either system <code>plantuml</code> (if on <code>$PATH</code>) or the <code>plantuml-mcp-server</code> hosted endpoint.</td></tr>
       <tr><td class="phase">--require-plantuml</td><td>Treat jar fetch failure (network or sha256 mismatch) as fatal. Exit 4 instead of the default behavior of warning and continuing.</td></tr>
+      <tr><td class="phase">--with-npmrc</td><td>Materialize <code>target/.npmrc</code> with security-hardened defaults (<code>ignore-scripts=true</code>, <code>min-release-age=7</code>). Off by default; existing <code>.npmrc</code> preserved verbatim.</td></tr>
       <tr><td class="phase">--help, -h</td><td>Print the usage block and exit 0.</td></tr>
       <tr><td class="phase">--version</td><td>Print the package version and exit 0.</td></tr>
     </tbody>

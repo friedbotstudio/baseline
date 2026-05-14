@@ -12,6 +12,15 @@ const NPMRC_TEMPLATE_PATH = join(PACKAGE_ROOT, 'src/.npmrc.template');
 
 export const NEVER_TOUCH = Object.freeze(['.claude/project.json']);
 export const SPECIAL_MERGE = Object.freeze(['.mcp.json']);
+// Files present in the shipped template that must NOT be cp'd to target. These
+// are reference artifacts the CLI consults from templateDir (or that ship for
+// inspection-time provenance), never materialized at consumer project root.
+// `manifest.json`: the shipped sha256 table. The CLI's runtime manifest lives
+// at `target/.claude/.baseline-manifest.json` (written by writeBaselineManifest);
+// `target/manifest.json` would be a confusing duplicate. Keep the file in the
+// published tarball so anyone inspecting `node_modules/<pkg>/obj/template/` can
+// see what shipped, but exclude it from the fresh/force install copy.
+export const COPY_EXCLUDE = Object.freeze(['manifest.json']);
 
 async function listFiles(root, base = root, acc = []) {
   for (const entry of await readdir(root, { withFileTypes: true })) {
@@ -37,6 +46,7 @@ function makeFilter(opts) {
   return (src, _dest) => {
     const rel = relative(opts.templateRoot, src).split(sep).join('/');
     if (rel === '') return true;
+    if (COPY_EXCLUDE.includes(rel)) return false;
     if (NEVER_TOUCH.includes(rel) && opts.skipNeverTouch) return false;
     if (SPECIAL_MERGE.includes(rel) && opts.skipSpecialMerge) return false;
     return true;
@@ -76,18 +86,18 @@ async function materializeNpmrc(target) {
   await writeFile(dst, bytes);
 }
 
-export async function freshInstall(templateDir, target) {
+export async function freshInstall(templateDir, target, opts = {}) {
   const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: false, skipSpecialMerge: true });
   await cp(templateDir, target, { recursive: true, force: false, filter });
   await applySpecialAndNeverTouch(templateDir, target);
-  await materializeNpmrc(target);
+  if (opts.withNpmrc === true) await materializeNpmrc(target);
   await writeBaselineManifest(target);
 }
 
-export async function forceInstall(templateDir, target) {
+export async function forceInstall(templateDir, target, opts = {}) {
   const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: true, skipSpecialMerge: true });
   await cp(templateDir, target, { recursive: true, force: true, filter });
   await applySpecialAndNeverTouch(templateDir, target);
-  await materializeNpmrc(target);
+  if (opts.withNpmrc === true) await materializeNpmrc(target);
   await writeBaselineManifest(target);
 }

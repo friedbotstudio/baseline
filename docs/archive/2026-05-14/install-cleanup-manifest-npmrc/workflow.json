@@ -1,0 +1,19 @@
+{
+  "request": "Two CLI fixes: (1) bug — obj/template/manifest.json is being cp'd to target root by freshInstall/forceInstall as a side-effect of the recursive copy; filter it out so it never lands in target (keep in tarball for provenance). (2) behavior change — make .npmrc materialization opt-in via new --with-npmrc CLI flag (default: don't write). Touches src/cli/install.js, bin/cli.js, tests/, HELP_TEXT, docs.",
+  "slug": "install-cleanup-manifest-npmrc",
+  "entry_phase": "tdd",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive"],
+  "created_at": 1747242900,
+  "updated_at": 1747250600
+}

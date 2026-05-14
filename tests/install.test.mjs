@@ -48,14 +48,13 @@ describe('freshInstall', () => {
   });
 });
 
-describe('freshInstall — supply-chain-hardening (AC-007)', () => {
-  it('test_when_template_contains_npmrc_then_freshInstall_materializes_it_with_exact_bytes', async () => {
+describe('freshInstall — supply-chain-hardening (AC-007, opt-in via --with-npmrc)', () => {
+  it('test_when_install_runs_with_with_npmrc_flag_then_target_npmrc_exists_with_template_contents', async () => {
     const NPMRC_BYTES = 'ignore-scripts=true\nmin-release-age=7\n';
     const tpl = await makeTemplateFixture();
-    await writeFile(join(tpl, '.npmrc'), NPMRC_BYTES);
     const target = await mkdtemp(join(tmpdir(), 'install-npmrc-target-'));
 
-    await install.freshInstall(tpl, target);
+    await install.freshInstall(tpl, target, { withNpmrc: true });
 
     const observed = await readFile(join(target, '.npmrc'), 'utf8');
     assert.equal(
@@ -126,5 +125,100 @@ describe('forceInstall', () => {
     const after = JSON.parse(await readFile(join(target, '.mcp.json'), 'utf8'));
     assert.ok('linear' in after.mcpServers, 'user-only linear server preserved');
     assert.ok('context7' in after.mcpServers, 'baseline context7 added');
+  });
+});
+
+// `obj/template/manifest.json` exists at the root of the shipped template tree
+// (it's a sha256 table consumed by `--merge` to detect drift). The recursive cp
+// in fresh/forceInstall previously copied it to `target/manifest.json`, leaving
+// a stray reference manifest at the consumer's project root. The materialized
+// manifest the CLI itself writes lives at `target/.claude/.baseline-manifest.json`
+// — that one is the only manifest the CLI runtime reads. The shipped manifest
+// stays in the published tarball for ship-time provenance inspection but must
+// not land in target.
+describe('install — manifest.json must not land at target root', () => {
+  async function fixtureWithManifest() {
+    const tpl = await makeTemplateFixture();
+    await writeFile(
+      join(tpl, 'manifest.json'),
+      JSON.stringify({ manifest_version: 1, files: {} }, null, 2) + '\n'
+    );
+    return tpl;
+  }
+
+  it('test_when_fresh_install_completes_then_target_manifest_json_does_not_exist', async () => {
+    const tpl = await fixtureWithManifest();
+    const target = await mkdtemp(join(tmpdir(), 'install-mfst-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    await assert.rejects(
+      access(join(target, 'manifest.json')),
+      { code: 'ENOENT' },
+      'target/manifest.json must NOT exist after freshInstall (the shipped reference manifest is for inspection, not for materialization)'
+    );
+    await access(join(target, '.claude/.baseline-manifest.json'));
+  });
+
+  it('test_when_force_install_completes_then_target_manifest_json_does_not_exist', async () => {
+    const tpl = await fixtureWithManifest();
+    const target = await mkdtemp(join(tmpdir(), 'install-mfst-target-'));
+    await writeFile(join(target, 'CLAUDE.md'), 'STALE\n');
+
+    await install.forceInstall(tpl, target);
+
+    await assert.rejects(
+      access(join(target, 'manifest.json')),
+      { code: 'ENOENT' },
+      'target/manifest.json must NOT exist after forceInstall (same exclusion as fresh path)'
+    );
+  });
+});
+
+// `.npmrc` is no longer created unconditionally. Default install leaves the
+// target without a `.npmrc`. Operators who want the hardened npm posture
+// (ignore-scripts=true, min-release-age=7) opt in via the CLI flag
+// `--with-npmrc`, which the install functions receive as `opts.withNpmrc`.
+describe('install — .npmrc opt-in via opts.withNpmrc', () => {
+  it('test_when_fresh_install_completes_without_flag_then_target_npmrc_does_not_exist', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-npmrc-default-'));
+
+    await install.freshInstall(tpl, target);
+
+    await assert.rejects(
+      access(join(target, '.npmrc')),
+      { code: 'ENOENT' },
+      'default freshInstall (no withNpmrc opt) must NOT create target/.npmrc'
+    );
+  });
+
+  it('test_when_force_install_completes_without_flag_then_target_npmrc_does_not_exist', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-npmrc-default-'));
+
+    await install.forceInstall(tpl, target);
+
+    await assert.rejects(
+      access(join(target, '.npmrc')),
+      { code: 'ENOENT' },
+      'default forceInstall (no withNpmrc opt) must NOT create target/.npmrc'
+    );
+  });
+
+  it('test_when_install_runs_with_with_npmrc_flag_and_target_already_has_npmrc_then_existing_npmrc_preserved', async () => {
+    const SENTINEL = 'registry=https://example.com/\n';
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-npmrc-existing-'));
+    await writeFile(join(target, '.npmrc'), SENTINEL);
+
+    await install.freshInstall(tpl, target, { withNpmrc: true });
+
+    const observed = await readFile(join(target, '.npmrc'), 'utf8');
+    assert.equal(
+      observed,
+      SENTINEL,
+      'existing target/.npmrc must be preserved verbatim when --with-npmrc is set (the materialize step has a "do not clobber" guard)'
+    );
   });
 });
