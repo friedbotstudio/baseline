@@ -197,36 +197,41 @@ describe('release-workflow — AC-006 cache invariants', () => {
     );
   });
 
-  it('test_when_release_yaml_has_setup_node_blocks_then_each_sets_cache_false', () => {
+  it('test_when_release_yaml_has_setup_node_blocks_then_none_declare_a_cache_key', () => {
     const text = readReleaseYaml();
     const setupNodeUses = usesDirectives(text).filter((u) => u.startsWith('actions/setup-node@'));
     assert.ok(
       setupNodeUses.length > 0,
       'release.yml must use actions/setup-node in at least one job'
     );
-    // For every setup-node usage, the same block must contain `cache: false`.
-    // We assert presence count: every setup-node line is followed by a `with:`
-    // block that includes `cache: false` before the next `- ` step.
+    // For every setup-node usage, the same block MUST NOT contain a `cache:`
+    // key. The action's `cache` input only accepts a package-manager name
+    // (`npm`, `yarn`, `pnpm`); the literal `false` is rejected with "Caching
+    // for 'false' is not supported" and FAILS the step. The runbook's
+    // "no actions/cache; no caching" rule is honored by OMITTING the key
+    // (caching is off by default), not by setting it to false.
     const lines = text.split('\n');
-    let setupNodeIdx = -1;
-    let cacheFalseCount = 0;
+    const offenders = [];
+    let inBlock = false;
     for (let i = 0; i < lines.length; i++) {
       if (/uses:\s*actions\/setup-node@/.test(lines[i])) {
-        setupNodeIdx = i;
-      } else if (setupNodeIdx !== -1) {
-        if (/^\s*-\s+/.test(lines[i]) || /^[A-Za-z]/.test(lines[i])) {
-          // Hit the next step or a new top-level key — close the block.
-          setupNodeIdx = -1;
-        } else if (/^\s*cache:\s*false\s*$/.test(lines[i])) {
-          cacheFalseCount += 1;
-          setupNodeIdx = -1;
-        }
+        inBlock = true;
+        continue;
+      }
+      if (!inBlock) continue;
+      if (/^\s*-\s+/.test(lines[i]) || /^[A-Za-z]/.test(lines[i])) {
+        inBlock = false;
+        continue;
+      }
+      if (/^\s*cache:/.test(lines[i])) {
+        offenders.push(`line ${i + 1}: ${lines[i].trim()}`);
+        inBlock = false;
       }
     }
-    assert.equal(
-      cacheFalseCount,
-      setupNodeUses.length,
-      `every setup-node block must declare \`cache: false\`; found ${setupNodeUses.length} setup-node usages and ${cacheFalseCount} matching cache:false lines`
+    assert.deepEqual(
+      offenders,
+      [],
+      `setup-node blocks must NOT declare a \`cache:\` key (the action rejects \`cache: false\` and omitting the key is the canonical way to disable caching). Offenders:\n${offenders.join('\n')}`
     );
   });
 });
@@ -296,23 +301,39 @@ describe('release-workflow — AC-008 deploy-pages permissions shape', () => {
 });
 
 describe('release-workflow — AC-011 needs chain', () => {
-  it('test_when_release_yaml_has_publish_npm_and_deploy_pages_and_push_bump_and_install_smoke_then_each_needs_correct_predecessor', () => {
+  it('test_when_release_yaml_has_publish_npm_and_deploy_pages_and_push_bump_and_install_smoke_then_each_needs_correct_predecessors', () => {
     const text = readReleaseYaml();
+    // Each job's `needs:` MUST be exactly the listed predecessor set.
+    // `deploy-pages` depends on BOTH `build-verify` (for the github-pages
+    // artifact) and `publish-npm` (for sequencing on `release` mode and the
+    // skipped-allowance gate on `docs-only` mode); single-predecessor
+    // jobs use the scalar form, multi-predecessor jobs use the array form.
     const expected = {
-      'publish-npm': 'build-verify',
-      'deploy-pages': 'publish-npm',
-      'push-bump': 'publish-npm',
-      'install-smoke': 'publish-npm',
+      'publish-npm': ['build-verify'],
+      'deploy-pages': ['build-verify', 'publish-npm'],
+      'push-bump': ['publish-npm'],
+      'install-smoke': ['publish-npm'],
     };
-    for (const [job, predecessor] of Object.entries(expected)) {
+    for (const [job, predecessors] of Object.entries(expected)) {
       const block = jobBlock(text, job);
       assert.ok(block, `release.yml must declare a \`${job}\` job`);
-      const needsMatch = block.match(/^\s{4}needs:\s*(\S+)\s*$/m);
-      assert.ok(needsMatch, `job \`${job}\` must declare \`needs:\``);
-      assert.equal(
-        needsMatch[1],
-        predecessor,
-        `job \`${job}\` must declare \`needs: ${predecessor}\`; got: ${needsMatch[1]}`
+      const scalar = block.match(/^\s{4}needs:\s*(\S[^\n[]*?)\s*$/m);
+      const array = block.match(/^\s{4}needs:\s*\[\s*([^\]]+)\s*\]\s*$/m);
+      let actual;
+      if (array) {
+        actual = array[1]
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else if (scalar) {
+        actual = [scalar[1].trim()];
+      } else {
+        assert.fail(`job \`${job}\` must declare \`needs:\``);
+      }
+      assert.deepEqual(
+        [...actual].sort(),
+        [...predecessors].sort(),
+        `job \`${job}\` must declare \`needs: ${JSON.stringify(predecessors)}\`; got: ${JSON.stringify(actual)}`
       );
     }
   });
@@ -464,6 +485,11 @@ describe('release-workflow — AC-013 mode extension job gating', () => {
       pred,
       /needs\.publish-npm\.result\s*==\s*'skipped'/,
       "deploy-pages.if must include `needs.publish-npm.result == 'skipped'` (docs-only-mode allowance)"
+    );
+    assert.match(
+      pred,
+      /needs\.build-verify\.result\s*==\s*'success'/,
+      "deploy-pages.if must include `needs.build-verify.result == 'success'` so a failed build-verify (e.g., missing pages artifact) does not let deploy-pages attempt a deploy"
     );
   });
 

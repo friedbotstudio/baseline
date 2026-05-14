@@ -62,7 +62,6 @@ jobs:
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '22'
-          cache: false
       - name: Verify pinned action SHAs match upstream tags
         run: node scripts/verify-action-shas.mjs
       - name: Install dependencies
@@ -110,7 +109,6 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-          cache: false
       - name: Restore bumped package.json
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
@@ -121,8 +119,8 @@ jobs:
         run: npm publish --access public --provenance
 
   deploy-pages:
-    needs: publish-npm
-    if: always() && (needs.publish-npm.result == 'success' || needs.publish-npm.result == 'skipped')
+    needs: [build-verify, publish-npm]
+    if: always() && needs.build-verify.result == 'success' && (needs.publish-npm.result == 'success' || needs.publish-npm.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -184,7 +182,6 @@ jobs:
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '22'
-          cache: false
       - name: Wait for registry replication (poll until version resolves)
         env:
           NEW_VERSION: ${{ needs.build-verify.outputs.new_version }}

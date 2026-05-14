@@ -1,0 +1,20 @@
+{
+  "request": "Correct docs/specs/release-workflow.md to match the corrected impl + tests: AC-006 says `cache:` key must be absent on setup-node blocks (not `cache: false`, which the action rejects with 'Caching for false is not supported'); AC-011 says deploy-pages needs both build-verify and publish-npm (not publish-npm alone); AC-013 predicate includes needs.build-verify.result == 'success' so a failed build-verify prevents an artifact-less deploy. Updates the C4 + sequence diagrams that mention 'cache: false' and 'needs: publish-npm', and the test-mapping table at the bottom. Impl (.github/workflows/release.yml) and tests (tests/release-workflow.test.mjs) already corrected in working tree and pass; this workflow commits all three together.",
+  "slug": "release-workflow-spec-correction",
+  "entry_phase": "spec",
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "tdd",
+    "security",
+    "document",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["spec", "approve-spec", "simplify", "integrate", "archive", "grant-commit"],
+  "created_at": 1778701657,
+  "updated_at": 1778733250,
+  "note": "Spec correction informed by production failure (Release run 25821931162). Upstream phases (intake/scout/research) were satisfied by the parent release-workflow track; impl + tests were corrected ad-hoc earlier in this session, with the spec-doc edit blocked by Track Guard from outside an active workflow. This track exists solely to land the spec-doc correction alongside the impl+test edits in a single commit. Document and security excepted: no new doc surface (spec IS the doc), no new attack surface."
+}

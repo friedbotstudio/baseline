@@ -15,6 +15,8 @@ After this spec ships, the maintainer triggers a release of `create-baseline` fr
 
 **Extension (added 2026-05-13)**: the same workflow accepts a `mode` input with two values — `release` (the original four-job pipeline) and `docs-only` (an ad-hoc Pages refresh that skips bump / publish / push-bump / install-smoke and runs only the build steps + the deploy-pages job). The `mode` input defaults to `release`, preserving the original behavior when the operator omits it. `bump_type` is no longer `required: true`; it is ignored when `mode=docs-only`.
 
+**Correction (added 2026-05-14)**: AC-006, AC-011, and AC-013 corrected to match the action's actual behavior and the artifact dependency the original spec missed. Three production-revealed defects on the first `docs-only` dispatch (Release run 25821931162): (a) `cache: false` on `actions/setup-node@v4.x` is a runtime-fatal "Caching for 'false' is not supported" — AC-006 now requires the `cache:` key to be ABSENT; (b) `deploy-pages` depends on `build-verify` (artifact producer) as well as `publish-npm` (sequencer) — AC-011 + the C4 component now declare `needs: [build-verify, publish-npm]`; (c) `deploy-pages` `if:` predicate now gates on `needs.build-verify.result == 'success'` so a build-verify failure cannot let deploy-pages attempt an artifact-less deploy — AC-013 predicate updated. Companion: pending-questions Q-002 (silent-failure prerequisites need enforcement ACs).
+
 ## Non-goals
 
 - Pre-release / beta / rc tag handling. `bump_type` is the three-value semver choice only; the runbook's `npm publish --tag beta` path stays manual.
@@ -89,7 +91,7 @@ Container_Boundary(yaml, "release.yml") {
   Component(concurrency, "concurrency: release-${{ github.workflow }}", "YAML guard", "cancel-in-progress: false")
   Component(build_verify, "Job: build-verify", "ubuntu-latest", "harden-runner audit, checkout, setup-node, npm version --no-git-tag-version, build:site, publish:check, upload-artifact (bump-diff + pages)")
   Component(publish_npm, "Job: publish-npm", "ubuntu-latest, needs: build-verify", "permissions: id-token: write, contents: read. harden-runner, checkout, setup-node with registry-url, download bump artifact, npm publish --provenance --access public")
-  Component(deploy_pages, "Job: deploy-pages", "ubuntu-latest, needs: publish-npm", "permissions: pages: write, id-token: write. environment: github-pages. deploy-pages downloads github-pages artifact and serves")
+  Component(deploy_pages, "Job: deploy-pages", "ubuntu-latest, needs: [build-verify, publish-npm]", "permissions: pages: write, id-token: write. environment: github-pages. deploy-pages downloads github-pages artifact and serves")
   Component(push_bump, "Job: push-bump", "ubuntu-latest, needs: publish-npm", "permissions: contents: write. checkout (full history, fetch main HEAD ref). Restore bumped package.json. git commit + tag + push (fail-on-conflict)")
   Component(smoke, "Job: install-smoke", "ubuntu-latest, needs: publish-npm", "Wait for registry replication; npx --yes create-baseline@<v> ./target; verify manifest hash match")
 }
@@ -97,6 +99,7 @@ Rel(trigger, concurrency, "satisfies group constraint")
 Rel(concurrency, build_verify, "schedules")
 Rel(build_verify, publish_npm, "needs:")
 Rel(publish_npm, deploy_pages, "needs:")
+Rel(build_verify, deploy_pages, "needs: (artifact dep)")
 Rel(publish_npm, push_bump, "needs: (parallel with deploy-pages)")
 Rel(publish_npm, smoke, "needs: (parallel with deploy-pages + push-bump)")
 @enduml
@@ -186,7 +189,7 @@ GHA -> BV : schedule (concurrency group "release-...", queued not cancelled)
 == Job setup ==
 BV -> BV : step 1 — step-security/harden-runner@<sha> (egress-policy: audit)
 BV -> BV : step 2 — actions/checkout@<sha> (fetch-depth: 0)
-BV -> BV : step 3 — actions/setup-node@<sha> (node-version: 22, cache: false)
+BV -> BV : step 3 — actions/setup-node@<sha> (node-version: 22; no cache: key)
 BV -> BV : step 4 — npm ci
 
 == AC-2 bump portion ==
@@ -237,7 +240,7 @@ participant "npm registry" as NPM
 GHA -> PUB : start (needs: build-verify)
 PUB -> PUB : step 1 — harden-runner audit
 PUB -> PUB : step 2 — actions/checkout@<sha>
-PUB -> PUB : step 3 — actions/setup-node (node-version: 22, registry-url: https://registry.npmjs.org, cache: false)
+PUB -> PUB : step 3 — actions/setup-node (node-version: 22, registry-url: https://registry.npmjs.org; no cache: key)
 PUB -> PUB : step 4 — download-artifact (bump-diff → package.json)
 
 == AC-4 provenance attestation ==
@@ -268,7 +271,7 @@ participant "GitHub Actions" as GHA
 participant "deploy-pages job" as DP
 participant "GitHub Pages" as PAGES
 
-GHA -> DP : start (needs: publish-npm; env: github-pages)
+GHA -> DP : start (needs: [build-verify, publish-npm]; env: github-pages)
 DP -> DP : step 1 — harden-runner audit
 DP -> DP : step 2 — actions/deploy-pages@<sha>
 note right of DP
@@ -331,7 +334,7 @@ participant "npm registry" as NPM
 
 GHA -> SM : start (needs: publish-npm)
 SM -> SM : step 1 — harden-runner audit
-SM -> SM : step 2 — setup-node (cache: false)
+SM -> SM : step 2 — setup-node (no cache: key)
 SM -> SM : step 3 — wait 30s (registry replication, per runbook Step 5)
 SM -> SM : step 4 — mkdir /tmp/verify && cd /tmp/verify
 SM -> NPM : npx --yes create-baseline@${{ needs.build-verify.outputs.new_version }} ./target
@@ -373,7 +376,7 @@ A --> T : pass/fail per line
 T -> Y : search for /actions\/cache/
 T -> A : assert no match
 T -> Y : extract every `uses: actions/setup-*` block
-T -> A : assert cache: false present in each
+T -> A : assert cache: key absent in each
 
 == AC-7 harden-runner first ==
 T -> Y : for each job, take steps[0]
@@ -458,7 +461,7 @@ Every API confirmed via the `context7` MCP or — for `step-security/harden-runn
 | Library@version | Purpose | Key APIs | Confirmed via |
 |---|---|---|---|
 | `actions/checkout@v5` | check out the repo on the runner | `fetch-depth`, `ref`, default `persist-credentials: true` | context7 `/actions/checkout` (Versions: v5) |
-| `actions/setup-node@v4` | install Node + configure npm registry | `node-version`, `cache: false`, `registry-url` | context7 `/websites/npmjs` example: setup-node@v4 with registry-url |
+| `actions/setup-node@v4` | install Node + configure npm registry | `node-version`, `registry-url` (no `cache:` key — the action rejects `cache: false` with "Caching for 'false' is not supported"; omit the key to disable caching) | context7 `/websites/npmjs` example: setup-node@v4 with registry-url |
 | `actions/upload-artifact@v4` | inter-job transfer of bumped `package.json` | `name`, `path` | context7 `/actions/upload-artifact` (current major) |
 | `actions/upload-pages-artifact` *(pin SHA at implement-time)* | bundle `obj/site/` for the Pages deploy | `path: obj/site` (default artifact name `github-pages`) | WebFetch `github.com/actions/deploy-pages` README pair-action note |
 | `actions/deploy-pages@v4` | deploy GitHub Pages from the named artifact | `environment: name: github-pages, url: outputs.page_url`; permissions `pages: write, id-token: write`; default `artifact_name: github-pages` | WebFetch `github.com/actions/deploy-pages` |
@@ -500,14 +503,14 @@ Notes for the design-ui invocation `/tdd` Step 6 will make:
 | AC-003 | Given the workflow has reached the precheck step, when `npm run publish:check` returns non-zero, then `npm publish` is NOT executed, no Pages deploy occurs, no commit is pushed, and the workflow exits non-zero with the failed sub-step named in the run log | intake AC 3 | §Behavior #1 (precheck alt-FAIL branch) |
 | AC-004 | Given precheck passed and the publish-npm job runs, when `npm publish` invokes, then the registry record for `<new-version>` includes `dist.attestations.provenance` and the publish command was `npm publish --access public --provenance` (no `NODE_AUTH_TOKEN` on the publish step) | intake AC 4 | §Behavior #2 |
 | AC-005 | Given the release workflow YAML, when every `uses:` line is inspected, then every reference outside `actions/*` and `github/*` namespaces is pinned to a 40-character SHA with the tag in a trailing `# vX.Y.Z` comment | intake AC 5 | §Behavior #6 (AC-5 segment) |
-| AC-006 | Given the release workflow YAML, when grep'd, then `actions/cache` does not appear, and every `setup-*` action that supports caching has `cache: false` set explicitly | intake AC 6 | §Behavior #6 (AC-6 segment) |
+| AC-006 | Given the release workflow YAML, when grep'd, then `actions/cache` does not appear, and every `setup-*` action that supports caching MUST NOT declare a `cache:` key (omitting the key is the canonical way to disable caching; `cache: false` is rejected at runtime by `actions/setup-node@v4.x` with the fatal error "Caching for 'false' is not supported") | intake AC 6 | §Behavior #6 (AC-6 segment) |
 | AC-007 | Given any job in this workflow, when the job starts, then `step-security/harden-runner` (audit mode) is the first step | intake AC 7 | §Behavior #6 (AC-7 segment) |
 | AC-008 | Given precheck and publish both passed and the deploy-pages job runs, when `actions/deploy-pages` executes, then GitHub Pages serves the new build within the deploy step's window and `outputs.page_url` is non-empty | intake AC 8 | §Behavior #3 |
 | AC-009 | Given a successful workflow run with run id `R`, when the published tarball's `obj/template/manifest.json` is inspected and the deployed Pages site's footer is inspected, then both carry `build_id = "gha-<R>"` | intake AC 9 | §Behavior #1 (manifest stamping) + §Behavior #3 (Pages deploy consumes the same artifact tree) |
 | AC-010 | Given the publish-npm job has succeeded, when the install-smoke job runs, then `npx --yes create-baseline@<new-version> ./target` exits zero from a fresh tmpdir and the materialized `target/.claude/.baseline-manifest.json` files{} hashes match the published `obj/template/manifest.json` files{} hashes | intake AC 10 | §Behavior #5 |
 | AC-011 | Given any step in build-verify or publish-npm fails, when the step exits non-zero, then no downstream job runs (no Pages deploy, no bump push, no install-smoke) | intake AC 11 | §Behavior #1 (alt-FAIL) + §Behavior #2 (alt-FAIL) — `needs:` chain |
 | AC-012 | Given a release workflow run is in progress, when a second `workflow_dispatch` is submitted, then the second run queues (does NOT cancel the first, does NOT run in parallel) | intake AC 12 | §Behavior #6 (AC-12 segment) |
-| AC-013 | Given the operator submits `workflow_dispatch` with `mode=docs-only`, when the workflow runs, then (a) the bump step in build-verify is a no-op (package.json version unchanged), (b) jobs `publish-npm`, `push-bump`, and `install-smoke` are skipped via `if: inputs.mode == 'release'`, (c) `deploy-pages` runs (gated by `if: always() && (needs.publish-npm.result == 'success' \|\| needs.publish-npm.result == 'skipped')`), and (d) the rendered site reflects the current package.json version, not a new one | extension 2026-05-13 | §Behavior #1 (mode-gating segment) + §Behavior #3 (deploy-pages run-when-skipped predicate) |
+| AC-013 | Given the operator submits `workflow_dispatch` with `mode=docs-only`, when the workflow runs, then (a) the bump step in build-verify is a no-op (package.json version unchanged), (b) jobs `publish-npm`, `push-bump`, and `install-smoke` are skipped via `if: inputs.mode == 'release'`, (c) `deploy-pages` runs (gated by `if: always() && needs.build-verify.result == 'success' && (needs.publish-npm.result == 'success' \|\| needs.publish-npm.result == 'skipped')` — the `build-verify.result == 'success'` clause prevents an artifact-less deploy attempt when `build-verify` itself fails, the exact failure mode of Release run 25821931162), and (d) the rendered site reflects the current package.json version, not a new one | extension 2026-05-13 | §Behavior #1 (mode-gating segment) + §Behavior #3 (deploy-pages run-when-skipped predicate) |
 
 ## Test plan
 
@@ -520,10 +523,10 @@ Notes for the design-ui invocation `/tdd` Step 6 will make:
 | Contract violation | Run `bash scripts/publish-check.sh` with `PUBLISH_CHECK_SIMULATE_FAIL=files-diff`, assert exit non-zero and stderr matches `FAIL: files-diff` | pass | AC-003 |
 | Contract violation | YAML test asserts the publish-npm job's permissions block is `{id-token: write, contents: read}` (no `pages: write`, no `contents: write`) | pass | AC-004 (OIDC scope) |
 | Contract violation | YAML test asserts every `uses:` outside `actions/*` / `github/*` matches `/^.+@[0-9a-f]{40}\s*#\s*v[0-9.]+/` | pass | AC-005 |
-| Contract violation | YAML test asserts `release.yml` does NOT contain the substring `actions/cache`, and every `actions/setup-*` block has `cache: false` | pass | AC-006 |
+| Contract violation | YAML test asserts `release.yml` does NOT contain the substring `actions/cache`, and every `actions/setup-*` block has NO `cache:` key (the action rejects `cache: false`; omitting the key disables caching) | pass | AC-006 |
 | Contract violation | YAML test asserts `jobs.<each>.steps[0].uses` startsWith `step-security/harden-runner@` for every job | pass | AC-007 |
 | Concurrency / ordering | YAML test asserts top-level `concurrency.group` is a non-empty string and `concurrency.cancel-in-progress === false` | pass | AC-012 |
-| Concurrency / ordering | YAML test asserts `jobs.publish-npm.needs == 'build-verify'`, `jobs.deploy-pages.needs == 'publish-npm'`, `jobs.push-bump.needs == 'publish-npm'`, `jobs.install-smoke.needs == 'publish-npm'` | pass | AC-011 |
+| Concurrency / ordering | YAML test asserts `jobs.publish-npm.needs == 'build-verify'`, `jobs.deploy-pages.needs == ['build-verify', 'publish-npm']`, `jobs.push-bump.needs == 'publish-npm'`, `jobs.install-smoke.needs == 'publish-npm'` | pass | AC-011 |
 | Failure mode | Build-template fixture test: run `GITHUB_RUN_ID=12345 bash scripts/build-template.sh` against a temp fixture, assert resulting `manifest.json` contains `"build_id": "gha-12345"`; run without `GITHUB_RUN_ID`, assert the key is absent | pass | AC-009 |
 | Failure mode | Eleventy build test: rebuild `obj/site/` with `GITHUB_RUN_ID=12345`, assert rendered `obj/site/index.html` contains the literal `gha-12345` in the footer region; rebuild without the env, assert the literal `dev` appears | pass | AC-009 |
 | Regression trap | `tests/runbook-text.test.mjs` — pre-existing — still passes after `docs/runbooks/npm-publish.md` is updated additively | pass | scout landmine |
