@@ -3,7 +3,7 @@
 // Asserts the contracts the semantic-release-automation spec promises:
 //   - push-driven triggers (main + next) and a workflow_dispatch retained for
 //     docs-only redeploys
-//   - three jobs (release → {deploy-pages, install-smoke}) with per-job
+//   - three jobs (pre-publish-checks → release → deploy-pages) with per-job
 //     permission scopes
 //   - SHA-pinning, no actions/cache, no cache: key on setup-*, harden-runner
 //     first step in every job, concurrency serializes globally
@@ -218,10 +218,10 @@ describe('release-workflow — trigger contract (push branches + workflow_dispat
 // ---------- Domain: AC-012 — job graph + runs-on ----------
 
 describe('release-workflow — job graph', () => {
-  it('test_when_yaml_parsed_then_three_jobs_exist_release_deploypages_installsmoke', () => {
+  it('test_when_yaml_parsed_then_three_jobs_exist_prepublishchecks_release_deploypages', () => {
     const text = readReleaseYaml();
-    assert.deepEqual(jobNames(text), ['release', 'deploy-pages', 'install-smoke'],
-      `jobs must be exactly [release, deploy-pages, install-smoke] in order`);
+    assert.deepEqual(jobNames(text), ['pre-publish-checks', 'release', 'deploy-pages'],
+      `jobs must be exactly [pre-publish-checks, release, deploy-pages] in order`);
   });
 
   it('test_when_yaml_parsed_then_every_job_runs_on_ubuntu_latest', () => {
@@ -263,13 +263,13 @@ describe('release-workflow — per-job permissions', () => {
       'deploy-pages.permissions must be {pages: write, id-token: write, contents: read}');
   });
 
-  it('test_when_yaml_parsed_then_install_smoke_job_permissions_are_exact', () => {
+  it('test_when_yaml_parsed_then_pre_publish_checks_job_permissions_are_exact', () => {
     const text = readReleaseYaml();
-    const block = jobBlock(text, 'install-smoke');
-    assert.ok(block, 'install-smoke job must exist');
+    const block = jobBlock(text, 'pre-publish-checks');
+    assert.ok(block, 'pre-publish-checks job must exist');
     const perms = parsePermissions(subBlock(block, 'permissions'));
     assert.deepEqual(perms, { contents: 'read' },
-      'install-smoke.permissions must be {contents: read}');
+      'pre-publish-checks.permissions must be {contents: read}');
   });
 });
 
@@ -358,36 +358,26 @@ describe('release-workflow — needs + if predicates', () => {
       `deploy-pages.needs must reference \`release\`; got: ${value}`);
   });
 
-  it('test_when_yaml_parsed_then_install_smoke_needs_release', () => {
+  it('test_when_yaml_parsed_then_release_needs_pre_publish_checks', () => {
     const text = readReleaseYaml();
-    const block = jobBlock(text, 'install-smoke');
+    const block = jobBlock(text, 'release');
     const needs = block.match(/^ {4}needs:\s*(.+)$/m);
-    assert.ok(needs, 'install-smoke must declare `needs:`');
+    assert.ok(needs, 'release must declare `needs:`');
     const value = needs[1].trim();
-    assert.ok(value === 'release' || value === '[release]' || value === '[ release ]',
-      `install-smoke.needs must reference \`release\`; got: ${value}`);
+    assert.ok(value === 'pre-publish-checks' || value === '[pre-publish-checks]' || value === '[ pre-publish-checks ]',
+      `release.needs must reference \`pre-publish-checks\` (the pre-publish gate); got: ${value}`);
   });
 
-  it('test_when_yaml_parsed_then_deploy_pages_if_gates_on_main_ref_and_release_published_or_docs_only', () => {
+  it('test_when_yaml_parsed_then_deploy_pages_if_gates_on_main_only', () => {
     const text = readReleaseYaml();
     const ifValue = jobIfPredicate(text, 'deploy-pages');
     assert.ok(ifValue, 'deploy-pages must declare an `if:` predicate');
     assert.match(ifValue, /github\.ref\s*==\s*'refs\/heads\/main'/,
       'deploy-pages.if must gate on `github.ref == \'refs/heads/main\'`');
-    assert.match(ifValue, /needs\.release\.outputs\.new_release_published/,
-      'deploy-pages.if must consult `needs.release.outputs.new_release_published`');
-    assert.match(ifValue, /inputs\.mode\s*==\s*'docs-only'/,
-      'deploy-pages.if must allow `inputs.mode == \'docs-only\'`');
-  });
-
-  it('test_when_yaml_parsed_then_install_smoke_if_requires_release_published_only', () => {
-    const text = readReleaseYaml();
-    const ifValue = jobIfPredicate(text, 'install-smoke');
-    assert.ok(ifValue, 'install-smoke must declare an `if:` predicate');
-    assert.match(ifValue, /needs\.release\.outputs\.new_release_published\s*==\s*'true'/,
-      'install-smoke.if must require `needs.release.outputs.new_release_published == \'true\'`');
+    assert.equal(/new_release_published/.test(ifValue), false,
+      'deploy-pages.if must NOT consult `new_release_published` (docs deploy on every main push, regardless of release outcome)');
     assert.equal(/docs-only/.test(ifValue), false,
-      'install-smoke.if must NOT allow docs-only (no smoke without a publish)');
+      'deploy-pages.if must NOT special-case docs-only (deploy is unconditional on main; the docs-only dispatch path skips semantic-release in the release job, then deploy runs as usual)');
   });
 });
 
@@ -406,20 +396,28 @@ describe('release-workflow — release job structure', () => {
       'release.steps must gate the semantic-release step on `if: inputs.mode != \'docs-only\'`');
   });
 
-  it('test_when_yaml_parsed_then_release_job_has_verify_action_shas_step', () => {
+  it('test_when_yaml_parsed_then_pre_publish_checks_job_has_verify_action_shas_step', () => {
     const text = readReleaseYaml();
-    const block = jobBlock(text, 'release');
+    const block = jobBlock(text, 'pre-publish-checks');
     const steps = subBlock(block, 'steps');
     assert.match(steps, /node\s+scripts\/verify-action-shas\.mjs/,
-      'release.steps must invoke `node scripts/verify-action-shas.mjs` (SHA-authenticity preflight)');
+      'pre-publish-checks.steps must invoke `node scripts/verify-action-shas.mjs` (SHA-authenticity preflight runs before any other content step)');
   });
 
-  it('test_when_yaml_parsed_then_release_job_has_npm_ci_and_audit_signatures_steps', () => {
+  it('test_when_yaml_parsed_then_pre_publish_checks_job_runs_npm_ci_audit_signatures_publish_check', () => {
+    const text = readReleaseYaml();
+    const runs = jobRunScripts(text, 'pre-publish-checks');
+    assert.match(runs, /\bnpm ci\b/, 'pre-publish-checks.steps must include `npm ci`');
+    assert.match(runs, /\bnpm audit signatures\b/,
+      'pre-publish-checks.steps must include `npm audit signatures` (per semantic-release docs)');
+    assert.match(runs, /\bnpm run publish:check\b/,
+      'pre-publish-checks.steps must include `npm run publish:check` (precheck + files-diff + smoke-tarball; the gate that blocks the release job on a broken tarball)');
+  });
+
+  it('test_when_yaml_parsed_then_release_job_has_npm_ci_step', () => {
     const text = readReleaseYaml();
     const runs = jobRunScripts(text, 'release');
-    assert.match(runs, /\bnpm ci\b/, 'release.steps must include `npm ci`');
-    assert.match(runs, /\bnpm audit signatures\b/,
-      'release.steps must include `npm audit signatures` (per semantic-release docs)');
+    assert.match(runs, /\bnpm ci\b/, 'release.steps must include `npm ci` (semantic-release reads node_modules)');
   });
 
   it('test_when_yaml_parsed_then_release_job_outputs_declare_new_release_published_and_version', () => {

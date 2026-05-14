@@ -6,22 +6,31 @@
 # conventional commits.
 #
 # Architecture: three jobs.
-#   release       — runs semantic-release; publishes to npm (latest on main,
-#                   next prerelease on next), creates GH Release, comments
-#                   on closed PRs, commits CHANGELOG.md + package.json back,
-#                   tags vX.Y.Z. Exports new_release_published + version
-#                   for downstream gating.
-#   deploy-pages  — needs: release. main branch only OR docs-only dispatch.
-#                   Builds obj/site against post-release HEAD; deploys Pages.
-#   install-smoke — needs: release. Runs when new_release_published==true.
-#                   Materializes published tarball via @friedbotstudio/create-baseline,
-#                   hash-verifies manifest.
+#   pre-publish-checks — runs `npm run publish:check` (precheck dry-run +
+#                        files-diff + smoke-tarball). Pre-publish gate. If
+#                        any check fails, the release job does NOT run, so
+#                        no broken tarball reaches npm.
+#   release            — needs: pre-publish-checks. Runs semantic-release;
+#                        publishes to npm (latest on main, next prerelease
+#                        on next), creates GH Release, comments on closed
+#                        PRs, commits CHANGELOG.md + package.json back, tags
+#                        vX.Y.Z. Skipped on workflow_dispatch docs-only.
+#   deploy-pages       — needs: release. main branch only. Builds obj/site
+#                        against post-release HEAD; deploys Pages. Runs on
+#                        every main push (whether or not a release fired)
+#                        so site-src/ changes always reach the live site.
+#
+# Why no post-publish install-smoke job: pre-publish-checks runs the same
+# install-smoke logic against the locally-packed tarball BEFORE npm publish,
+# so a broken package never ships. Once `npm publish` returns success, the
+# upload is on the registry; we don't need a follow-up confirmation job.
 #
 # Runbook: docs/runbooks/npm-publish.md (manual fallback + branch-protection
-# migration callout) + docs/specs/semantic-release-automation.md.
+# migration callout) + docs/specs/release-workflow.md.
 #
-# Action SHA verification (verify-action-shas.mjs runs as a release-job step
-# before semantic-release fires, so a drifted SHA fails fast):
+# Action SHA verification (verify-action-shas.mjs runs as the first content
+# step of pre-publish-checks, so a drifted SHA fails fast before any other
+# work):
 #   Every third-party action is pinned to a 40-char SHA with tag in trailing
 #   comment per CLAUDE.md Art VII + runbook §Future-CI invariants Rule 1.
 #   Re-resolve via `gh api repos/<owner>/<repo>/git/ref/tags/<tag>` and
@@ -49,7 +58,29 @@ concurrency:
 permissions: {}
 
 jobs:
+  pre-publish-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@9ca718d3bf646d6534007c269a635b3e54cadf99 # v2.19.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '22'
+      - name: Verify pinned action SHAs match upstream tags
+        run: node scripts/verify-action-shas.mjs
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify provenance + signatures of installed dependencies
+        run: npm audit signatures
+      - name: Pre-publish checks (precheck + files-diff + smoke-tarball)
+        run: npm run publish:check
+
   release:
+    needs: pre-publish-checks
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -69,12 +100,8 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: '22'
-      - name: Verify pinned action SHAs match upstream tags
-        run: node scripts/verify-action-shas.mjs
       - name: Install dependencies
         run: npm ci
-      - name: Verify provenance + signatures of installed dependencies
-        run: npm audit signatures
       - id: semantic_release
         name: Run semantic-release
         if: inputs.mode != 'docs-only'
@@ -84,7 +111,7 @@ jobs:
 
   deploy-pages:
     needs: release
-    if: github.ref == 'refs/heads/main' && (needs.release.outputs.new_release_published == 'true' || inputs.mode == 'docs-only')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -114,46 +141,3 @@ jobs:
       - id: deployment
         name: Deploy artifact to GitHub Pages
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
-
-  install-smoke:
-    needs: release
-    if: needs.release.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: step-security/harden-runner@9ca718d3bf646d6534007c269a635b3e54cadf99 # v2.19.2
-        with:
-          egress-policy: audit
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '22'
-      - name: Wait for registry replication (poll until version resolves)
-        env:
-          NEW_VERSION: ${{ needs.release.outputs.new_release_version }}
-        run: |
-          set -euo pipefail
-          deadline=$((SECONDS + 180))
-          until npm view "@friedbotstudio/create-baseline@${NEW_VERSION}" version >/dev/null 2>&1; do
-            if [ "$SECONDS" -ge "$deadline" ]; then
-              echo "registry replication timed out after 180s for create-baseline@${NEW_VERSION}" >&2
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "@friedbotstudio/create-baseline@${NEW_VERSION} resolves on registry"
-      - name: Install published tarball and verify materialized manifest
-        env:
-          NEW_VERSION: ${{ needs.release.outputs.new_release_version }}
-          WORKSPACE: ${{ github.workspace }}
-        run: |
-          set -euo pipefail
-          tmp=$(mktemp -d)
-          cd "$tmp"
-          npm init -y >/dev/null
-          npm install --no-save "@friedbotstudio/create-baseline@${NEW_VERSION}" >/dev/null
-          node node_modules/@friedbotstudio/create-baseline/bin/cli.js ./target
-          node "${WORKSPACE}/scripts/install-smoke-verify.mjs" \
-            "${tmp}/node_modules/@friedbotstudio/create-baseline/obj/template/manifest.json" \
-            "${tmp}/target/.claude/.baseline-manifest.json"

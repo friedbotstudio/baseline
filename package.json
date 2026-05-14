@@ -22,7 +22,7 @@
     "build:site": "eleventy",
     "dev:site": "eleventy --serve --port=4321",
     "publish:check": "bash scripts/publish-check.sh",
-    "publish:precheck": "npm publish --dry-run",
+    "publish:precheck": "npm pack --dry-run",
     "publish:files-diff": "node scripts/check-files-diff.mjs",
     "publish:smoke": "node scripts/smoke-tarball.mjs",
     "release": "semantic-release"

@@ -1251,6 +1251,7 @@ a.concept:focus-visible::after {
   border-radius: 0;
   font-size: 13px;
   line-height: 1.7;
+  overflow-x: auto;
 }
 
 /* =========================================================================
@@ -1375,8 +1376,14 @@ a.concept:focus-visible::after {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.cli-prompt { color: var(--accent-light); font-weight: 700; }
-.cli-cmd { color: var(--code-fg-bright); }
+.cli-prompt { color: var(--accent-light); font-weight: 700; flex: 0 0 auto; }
+.cli-cmd {
+  color: var(--code-fg-bright);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cli-caret {
   display: inline-block;
   width: 8px;
@@ -1439,6 +1446,12 @@ a.concept:focus-visible::after {
     width: calc(100% - 48px);
   }
   .cli-hint { display: none; }
+}
+@media (max-width: 480px) {
+  .cli-strip {
+    font-size: 11.5px;
+    gap: 8px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .cli-caret { animation: none; }
@@ -1953,7 +1966,7 @@ main.article {
 .cmdfork-svg .cf-cmd { fill: var(--ink); }
 .cmdfork-svg .cf-cmd-label {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: -.005em;
   fill: var(--paper);

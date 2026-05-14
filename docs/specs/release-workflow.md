@@ -1,5 +1,14 @@
 # Release workflow — manual-trigger GitHub Action: bump, publish-to-npm, deploy-pages
 
+> **Amendment — 2026-05-14 (cli-strip-fit-scoped-name chore).** The workflow shape described below was further restructured after the initial implementation shipped. Two changes that supersede the spec's `## Behaviors` and `## Acceptance criteria` sections:
+>
+> 1. **Pre-publish gate replaces post-publish install-smoke.** The `install-smoke` job (AC-010, §Behavior #5) is gone. Its install + materialize + hash-verify logic now runs *before* `npm publish` as part of a new `pre-publish-checks` job that invokes `npm run publish:check` (precheck + files-diff + smoke-tarball). The release job declares `needs: pre-publish-checks`, so any failure in the gate blocks publication entirely. Rationale: a tarball that fails install-smoke after `npm publish` is already on the registry and forces an `npm unpublish` (within 72h) or `npm deprecate` cleanup. The pre-publish version of the same check is the same logic against the locally-packed tarball, surfaced before the unrecoverable step. `scripts/install-smoke-verify.mjs` and `tests/install-smoke-verify.test.mjs` are removed because the local `smoke-tarball.mjs` covers the same materialized-manifest hash diff against the actual packed bytes.
+> 2. **Docs deploy decoupled from release outcome.** The `deploy-pages` job's `if:` is now `github.ref == 'refs/heads/main'` only — it no longer consults `needs.release.outputs.new_release_published` or `inputs.mode == 'docs-only'`. Every push to main rebuilds and deploys the site, regardless of whether semantic-release cut a version. Rationale: `chore`, `docs`, `ci`, `site`, etc. commits that touch `site-src/**` must reach the live site without requiring a separate workflow_dispatch. `workflow_dispatch mode=docs-only` still works as a manual redeploy trigger because the release job's semantic-release step retains its `if: inputs.mode != 'docs-only'` gate (release job exits 0 without publishing; deploy-pages runs as usual).
+>
+> Job graph is now `pre-publish-checks → release → deploy-pages` (was `release → {deploy-pages, install-smoke}`). The supply-chain invariants (SHA-pinned third-party actions, no `actions/cache`, no `cache:` key on `setup-*`, harden-runner first in every job, top-level `permissions: {}`, concurrency group serialized) all hold under the new shape — they're enforced by `tests/release-workflow.test.mjs` which was updated alongside the workflow file. The `pre-publish-checks` job carries `verify-action-shas.mjs` and `npm audit signatures` (moved from the release job where they sat in the original spec); pre-publish-checks runs first so a drifted SHA or unsigned dependency fails before any other content step.
+>
+> Below: the original spec for the first iteration. Read as historical design context; the live workflow's `release.yml` and the test file are the canonical source of truth.
+
 ## Context
 
 | Input | Path |

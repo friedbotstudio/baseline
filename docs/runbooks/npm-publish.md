@@ -49,7 +49,11 @@ Consumers install via `npm install @friedbotstudio/create-baseline` (stable) or 
 
 ### What each run produces
 
-On every release (`new_release_published == true`):
+The workflow has three jobs in order: `pre-publish-checks` → `release` → `deploy-pages`.
+
+**`pre-publish-checks` (always runs)** — `npm ci`, `npm audit signatures`, then `npm run publish:check` (precheck dry-run + files-diff + smoke-tarball). The smoke step packs the real tarball, installs it in a tmpdir, and runs the CLI against an empty target — so any tarball that would fail at install time fails *here* before `npm publish` runs. If pre-publish-checks fails, the release job does NOT run and nothing reaches npm.
+
+**`release` (needs pre-publish-checks; skipped on `workflow_dispatch mode=docs-only`)** — when a qualifying commit is present:
 
 1. `npm publish --provenance` to the registry under the selected dist-tag, using OIDC trusted publishing (no `NPM_TOKEN`; SLSA provenance attestation auto-generated).
 2. `CHANGELOG.md` updated with the categorized commits.
@@ -57,8 +61,10 @@ On every release (`new_release_published == true`):
 4. Annotated git tag `vX.Y.Z` pushed.
 5. GitHub Release created with release notes (prerelease-flagged on `next`).
 6. Comment on each closed PR included in the release, naming the version.
-7. Pages redeployed (main releases only) from the post-release HEAD.
-8. `install-smoke` job materializes the published tarball via `npx @friedbotstudio/create-baseline ./target` and hash-verifies the manifest.
+
+When no commit since the last tag qualifies for a release (every commit's scope is demoted by `releaseRules`, or only `chore`/`docs`/`ci`/etc. landed), semantic-release exits 0 without publishing. The release job succeeds, deploy-pages still runs.
+
+**`deploy-pages` (needs release; main branch only)** — rebuilds `obj/site` from the post-release HEAD of main and deploys to GitHub Pages. Runs on every main push regardless of whether the release job published a new version, so site-src/ changes (including chore commits and docs-only edits) always reach the live site.
 
 ### `workflow_dispatch mode=docs-only`
 
@@ -118,17 +124,17 @@ git push -u origin next
 
 ## Verify a release succeeded
 
-From a fresh tmpdir, ~30 seconds after the workflow's `install-smoke` job goes green:
+From a fresh tmpdir, ~30 seconds after the workflow's `release` job goes green (registry replication):
 
 ```
 mkdir /tmp/verify-publish && cd /tmp/verify-publish
-npx --yes create-baseline@<version> ./target
+npx --yes @friedbotstudio/create-baseline@<version> ./target
 ls target/.claude target/CLAUDE.md target/.mcp.json
 ```
 
 The target dir must contain the baseline structure. If `npx` errors with "package not found", wait another 30 seconds (registry replication) and retry.
 
-`install-smoke` already runs this exact verification post-publish; this manual step is for operator confidence and post-incident verification.
+The `pre-publish-checks` job already runs an equivalent install + materialize + hash-verify pass against the locally-packed tarball *before* `npm publish` fires — so a broken tarball cannot reach the registry in the first place. This manual step is for operator confidence and post-incident verification of registry replication.
 
 ---
 

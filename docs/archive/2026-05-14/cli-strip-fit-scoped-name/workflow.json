@@ -1,0 +1,20 @@
+{
+  "request": "Fix two visual-fit issues from the package-rename-scoped chore: (1) hero SVG label in site-src/_includes/hero-symbols/cli.njk where 'npx @friedbotstudio/create-baseline' overflows the rect at width=232; (2) landing CLI strip in site-src/index.njk where 'npx @friedbotstudio/create-baseline@latest .' may wrap/truncate. Route UI design moves through design-ui -> impeccable per Article X.2. No new behavior, no failing test.",
+  "slug": "cli-strip-fit-scoped-name",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["chore", "integrate", "document", "archive"],
+  "created_at": 1747241000,
+  "updated_at": 1747242800
+}

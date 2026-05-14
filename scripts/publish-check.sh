@@ -50,12 +50,19 @@ run_step() {
 }
 
 precheck() {
-  # Capture combined output so the PASS case stays quiet (npm publish --dry-run
-  # is verbose) but a FAIL surfaces the actual diagnostic — without this the
-  # caller sees only "FAIL: precheck (exit N)" with no postmortem context,
-  # which is opaque on CI where there is no local reproduction.
+  # `npm pack --dry-run` exercises the prepack lifecycle and validates the
+  # packed file-set against package.json `files:`, without touching the
+  # registry. The earlier `npm publish --dry-run` form also hit the registry
+  # to verify auth and check whether the current `version` was already
+  # published — both of which are useful for an operator publishing manually,
+  # but make this orchestrator fail for non-publish reasons (stale local
+  # version, missing auth, registry-side state drift). The registry-side
+  # version-already-published case is caught by `npm publish` itself at
+  # real publish time, and operator auth checks live in the runbook's
+  # hygiene sweep. Capture combined output so PASS stays quiet but FAIL
+  # surfaces the actual diagnostic.
   local out
-  if ! out=$(cd "$REPO_ROOT" && npm publish --dry-run 2>&1); then
+  if ! out=$(cd "$REPO_ROOT" && npm pack --dry-run 2>&1); then
     printf '%s\n' "$out" >&2
     return 1
   fi
