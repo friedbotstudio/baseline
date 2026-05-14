@@ -38,6 +38,25 @@ while ! mkdir "$LOCK_DIR" 2>/dev/null; do
 done
 trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
 
+# Stage 0a — seed runtime memory placeholders in the dev repo if missing.
+# .claude/memory/_pending.md and _resume.md are runtime-managed (written by
+# memory_stop and memory_pre_compact / memory_session_start respectively) and
+# gitignored, so a fresh clone (CI build, dependabot rebase) does not contain
+# them. The audit-baseline gate below requires all 8 canonical memory files
+# present on disk, so seed the two runtime files from src/memory/*.template.md
+# if absent. Existing files are preserved (this is "seed if missing", not
+# "overwrite"). The same templates are used by stage 2 to overlay into the
+# shipped template tree, so dev repo and shipped tree start from identical
+# placeholders.
+for runtime_file in _pending _resume; do
+  src_template="$PKG_ROOT/src/memory/${runtime_file}.template.md"
+  dev_target="$PKG_ROOT/.claude/memory/${runtime_file}.md"
+  if [ -f "$src_template" ] && [ ! -f "$dev_target" ]; then
+    cp "$src_template" "$dev_target"
+    echo "build: seeded $dev_target from template (runtime file was missing)" >&2
+  fi
+done
+
 # Stage 0 — gate on audit-baseline so a polluted src/ template can't reach npm.
 # Audits the dev repo (PKG_ROOT) against seed.md §4 + pristine-template invariants
 # (configured=false, §16 reservation, swarm-worker placeholders, etc.). Skipped if
