@@ -1,0 +1,12 @@
+{
+  "request": "Commit three project-local user skills currently untracked: google-analytics, optimize-seo, pagespeed-insights. User-owned (no owner: frontmatter per Article XI). No edits — track-only.",
+  "slug": "track-user-skills",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake","brd","scout","research","spec","approve-spec","tdd",
+    "swarm-plan","approve-swarm","swarm-dispatch","review"
+  ],
+  "completed": ["chore", "integrate", "document", "archive"],
+  "created_at": 1778794268,
+  "updated_at": 1778795000
+}
