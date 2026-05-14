@@ -139,10 +139,11 @@ disk_baseline_hooks  = disk_hooks  - add_hooks
 disk_baseline_agents = disk_agents - add_agents
 
 # Skill provenance: a skill is baseline iff its SKILL.md frontmatter declares
-# owner: baseline. User-added skills (owner: user) are excluded from baseline
-# counts so headline claims and check_names match even after a user adds skills.
+# owner: baseline. Every other on-disk skill (absent owner: field, or explicit
+# owner: user) is treated as user/third-party and out-of-scope of baseline
+# audit checks. Absence-of-owner is the default so projects with pre-existing
+# skills can install the baseline without annotating every file.
 disk_baseline_skills = {s for s in disk_skills if read_skill_owner(s) == "baseline"}
-disk_user_skills     = {s for s in disk_skills if read_skill_owner(s) == "user"}
 
 # ---------- counts vs seed.md ----------
 seed = read_text("docs/init/seed.md")
@@ -219,11 +220,16 @@ check_names("commands names match seed §4.4", EXPECTED_COMMANDS, set(),        
 
 # ---------- skill ownership (per-file hash drift + frontmatter validation) ----------
 def check_skill_ownership():
-    # Frontmatter validation: every on-disk SKILL.md must declare owner: baseline|user.
+    # Frontmatter validation. Absence-of-`owner` is treated as user/third-party
+    # and silently skipped — that is the default for any skill not shipped in
+    # the baseline. Only an `owner:` field that is present but carries an
+    # invalid value (typo, wrong literal) is a FAIL. Baseline-listed slugs
+    # (per manifest.owners.skills) that fail to declare `owner: baseline` are
+    # surfaced by the names-match check ("skills names match seed §4.3"),
+    # which compares manifest keys against `disk_baseline_skills`.
     for slug in sorted(disk_skills):
         owner = read_skill_owner(slug)
         if owner is None:
-            add(f"skill ownership: {slug}", "FAIL", "missing owner frontmatter")
             continue
         if owner not in ("baseline", "user"):
             add(f"skill ownership: {slug}", "FAIL", f"invalid owner={owner}")

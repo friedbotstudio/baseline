@@ -67,7 +67,13 @@ function readOwnerFromFrontmatter(content) {
 // ---------- Domain: AC tests ----------
 
 describe('skill ownership — frontmatter (AC-001)', () => {
-  it('test_when_every_baseline_SKILL_md_then_owner_field_is_baseline_or_user', async () => {
+  it('test_when_owner_field_present_then_value_is_baseline_or_user', async () => {
+    // Per CLAUDE.md Article XI's absence-default policy: a SKILL.md without
+    // an `owner:` field is treated as user/third-party and is out-of-scope
+    // of baseline audit checks. Only a present-but-malformed `owner:` value
+    // (anything other than `baseline` or `user`) is a violation. This test
+    // enforces that exact contract: null owners are accepted; explicit owners
+    // must be one of the two sanctioned values.
     const skillsDir = path.join(REPO_ROOT, '.claude/skills');
     const entries = await fs.readdir(skillsDir, { withFileTypes: true });
     const slugs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
@@ -76,14 +82,14 @@ describe('skill ownership — frontmatter (AC-001)', () => {
       const skillPath = path.join(skillsDir, slug, 'SKILL.md');
       const content = await fs.readFile(skillPath, 'utf8');
       const owner = readOwnerFromFrontmatter(content);
-      if (owner !== 'baseline' && owner !== 'user') {
+      if (owner !== null && owner !== 'baseline' && owner !== 'user') {
         offenders.push(`${slug}: owner=${owner}`);
       }
     }
     assert.equal(
       offenders.length,
       0,
-      `every SKILL.md must declare owner: baseline|user; offenders:\n${offenders.join('\n')}`
+      `every present \`owner:\` value must be baseline or user; offenders:\n${offenders.join('\n')}`
     );
   });
 });
@@ -171,7 +177,7 @@ describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
     }
   });
 
-  it('test_when_owner_field_removed_then_audit_reports_missing_owner_frontmatter', async () => {
+  it('test_when_owner_field_removed_from_baseline_skill_then_audit_fails', async () => {
     const tmp = await cloneRepo();
     try {
       assert.equal(runBuild(tmp).status, 0);
@@ -182,7 +188,15 @@ describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
       const audit = runAudit(tmp);
       assert.notEqual(audit.status, 0, 'audit should fail when owner: is removed from a baseline SKILL.md');
       const out = audit.stdout + audit.stderr;
-      assert.match(out, /missing owner frontmatter/i, 'audit output must mention missing owner frontmatter');
+      // Stripping `owner: baseline` from a manifest-listed slug surfaces two
+      // signals: (1) the file's sha256 no longer matches the manifest, and
+      // (2) the slug drops out of disk_baseline_skills so the names-match
+      // check reports it as missing. Either string is sufficient evidence
+      // that the audit detected the tampering. Per Article XI's absence-default
+      // policy, `missing owner frontmatter` is NOT emitted for absent-owner
+      // skills — only for baseline-listed slugs whose absence is detected
+      // structurally via hash or names-match.
+      assert.match(out, /hash mismatch|missing:/i, 'audit must surface tampering via hash mismatch or names-match');
       assert.match(out, /\bspec\b/, 'audit output must name the affected slug "spec"');
     } finally {
       await fs.rm(tmp, { recursive: true, force: true });

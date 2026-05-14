@@ -48,10 +48,11 @@ function collectOwnersFromTemplate(allFiles) {
   for (const slug of sortedSlugs) {
     const skillPath = join(templateDir, '.claude/skills', slug, 'SKILL.md');
     const owner = readOwnerFrontmatter(skillPath);
-    if (owner === null) {
-      process.stderr.write(`${slug}: missing owner frontmatter\n`);
-      process.exit(1);
-    }
+    // Absence-of-`owner` is treated as user/third-party and silently skipped —
+    // mirrors the audit's policy so projects with pre-existing skills can
+    // install the baseline without annotating every file. Only `owner: baseline`
+    // ends up in manifest.owners.skills; everything else is out-of-scope.
+    if (owner === null) continue;
     if (owner !== 'baseline' && owner !== 'user') {
       process.stderr.write(`${slug}: invalid owner=${owner} (must be baseline or user)\n`);
       process.exit(1);

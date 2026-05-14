@@ -1,0 +1,21 @@
+{
+  "request": "Amend Article XI ownership-default rule: audit treats absence-of-`owner` frontmatter as out-of-scope (user/third-party skill) rather than as drift. Only `owner: baseline` is checked. Update CLAUDE.md Article XI (+ src/CLAUDE.template.md mirror), docs/init/seed.md §17 (+ src/seed.template.md mirror), and .claude/skills/audit-baseline/audit.sh accordingly.",
+  "slug": "audit-ownership-default",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch",
+    "review"
+  ],
+  "completed": ["chore", "integrate", "document", "archive"],
+  "created_at": 1778792227,
+  "updated_at": 1778800000
+}
