@@ -1,0 +1,20 @@
+{
+  "request": "Fix CI ERELEASEBRANCHES error introduced by commit 0682a28: revert .releaserc.json branches[0] from { name: 'main', range: '0.x' } to 'main' string. The range modifier in semantic-release marks a branch as a maintenance branch for an older major line, not a version cap; with no other branch carrying current dev work, semantic-release filters main out and aborts. Keep the { breaking: true, release: 'minor' } releaseRule which alone provides the alpha-period guarantee against accidental major bumps.",
+  "slug": "fix-releaserc-branches-shape",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": ["chore", "integrate", "archive"],
+  "created_at": 1747262000,
+  "updated_at": 1747262100
+}
