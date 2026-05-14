@@ -128,6 +128,33 @@ button:focus-visible,
 }
 .skip:focus { left: 16px; top: 16px; }
 
+/* ----- alpha banner (site-wide status) ---------------------------------- */
+/* Subtle accent-tinted strip above the topnav. Surfaces public-alpha state
+   on every page without dominating the layout (DESIGN.md "quiet authority").
+   Mono font, accent body on accent-soft background, single hairline at the
+   accent stop. Render order: banner → topnav → page content. The banner is
+   semantic <aside role="status"> so screen readers can skip past it. */
+.alpha-banner {
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--accent);
+  padding: 8px 24px;
+  text-align: center;
+  font: 500 12.5px/1.4 var(--mono);
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+.alpha-banner code {
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+.alpha-banner strong {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ----- topnav (shared) -------------------------------------------------- */
 
 header.top {

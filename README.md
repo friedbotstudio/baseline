@@ -1,386 +1,222 @@
-# Claude Code Baseline Setup
+<div align="center">
 
-A drop-in baseline for running Claude Code on any software project. Ships a
-set of defensive hooks, structured subagents, and a workflow-aware slash
-command set that enforce the engineering rules declared in
-[`docs/init/seed.md`](docs/init/seed.md).
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/logo-baseline.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./.github/assets/logo-baseline.svg">
+  <img alt="Claude Code Baseline" src="./.github/assets/logo-baseline.svg" width="160">
+</picture>
 
-Claude Code becomes usable on a real codebase without you having to remember
-to say "don't push, don't `--amend`, don't self-approve specs" every session —
-the hooks enforce it.
+<br/><br/>
 
-## What you get
+# Claude Code Baseline
 
-- **22 baseline hooks** — 17 write/run-boundary guards plus 4 lifecycle hooks plus 1 input-boundary hook
-  (`memory_session_start.sh` injects the memory index + resume snapshot,
-  `memory_stop.sh` extracts memory candidates and refreshes the resume
-  snapshot at end of every turn, `memory_pre_compact.sh` captures the
-  resume snapshot before context compaction so SessionStart can re-inject
-  it after). The guards block unauthorized commits, `.env` edits,
-  destructive shell commands, spec self-approval, PASS claims that
-  contradict test output, artifact writes missing required sections,
-  specs with broken or missing PlantUML diagrams, and more.
-- **1 subagent** — `swarm-worker`, the only subagent in the baseline.
-  Executes pre-decided recipes inside isolated git worktrees during
-  `/swarm-dispatch`, invoking `Skill(scenario)` then `Skill(implement)`.
-  Makes no design decisions. Every other capability that might have been
-  a subagent (code authoring, test scenario design, scouting, security
-  review, prose writing, UI design) lives instead as a **skill** that
-  runs in main context with full conversation visibility — see the skill
-  enumeration below.
-- **36 skills**, organised into nine categories that mirror seed.md §4.3:
-  - **Artifact drafting (4)** — `intake`, `brd`, `spec`, `rca`. Each ships
-    a `SKILL.md` plus a `template.md`; the `spec` template is
-    diagram-driven (C4 + UML + PlantUML dependency graph). Templates
-    travel with their skill, not scattered in `docs/`.
-  - **Workflow phases (10)** — `triage`, `scout`, `research`, `tdd`,
-    `simplify`, `security`, `integrate`, `document`, `archive`, `commit`.
-    Each is auto-invocable so `/harness` can chain them.
-  - **Phase workers (5)** — `scenario`, `implement`, `verify`, `prose`,
-    `design-ui`. Each executes a pre-decided recipe and mandatorily
-    invokes a sub-skill: `scenario` and `implement` invoke
-    `code-structure`; `design-ui` invokes `impeccable`; `prose` invokes
-    `humanizer` always (and `copywriting` / `documentation` /
-    `technical-tutorials` conditionally by register). `verify` is
-    mechanical (run tests, stamp `.claude/state/last_test_result`).
-  - **Spec helpers (4)** — `spec-lint` (preflight syntax / required
-    diagrams / AC traceability), `spec-render` (PlantUML to SVG, user-only),
-    `spec-diagram-review` (cross-consistency audit), `spec-traceability-review`
-    (upstream AC linkage).
-  - **Orchestration (3)** — `harness` (user + model invokable; a single
-    `Skill(harness)` invocation loops internally through every non-gated phase
-    boundary in one user turn, exiting cleanly at consent gates, phase failures,
-    or workflow done; the `harness_continuation` Stop hook is a safety net for
-    incomplete chains), `swarm-plan`
-    (decompose an approved spec into a wave-scheduled plan), `swarm-dispatch`
-    (parallel execution of waves with worktree isolation and merge audit).
-    `harness` delegates to the swarm pair for specs with ≥3 independent
-    components. `/triage` seeds a `TaskCreate`-backed checklist when a
-    workflow starts so `/harness` can claim the next pending task,
-    yield at consent-gate placeholders (`needs_user: true`), and
-    cross-session-resume by re-seeding from `workflow.json → completed`.
-  - **Memory (1)** — `memory-flush`. Reviews the auto-extracted candidate
-    inbox at `.claude/memory/_pending.md` and curates keepers into the six
-    canonical memory files.
-  - **Shared globals (7)** — `claude-automation-recommender` (Apache 2.0,
-    vendored from Anthropic's `claude-code-setup` plugin; modifications
-    recorded in its `NOTICE`), `code-structure` (mandatory on every
-    code-generation step), `humanizer`, `documentation`, `technical-tutorials`,
-    `copywriting`, `impeccable` (the design global; modifications recorded
-    in `PROJECT_NOTES.md`). Several ship Apache 2.0 with project-side
-    modifications under §4(b); see each skill's `NOTICE` or `PROJECT_NOTES.md`.
-  - **Drift defender (1)** — `audit-baseline`. Checks the implementation
-    against `seed.md` (hooks/agents/skills/commands names + counts,
-    settings wiring, project.json keys, MCP servers, helper scripts,
-    vendored license files, cross-doc count claims). Read-only; runs in CI.
-  - **Alternate tracks (1)** — `chore`. A stripped-down workflow for tasks
-    that need no TDD (documentation, governance counts, vendored-skill
-    content updates, configuration tweaks, formatting, dependency bumps,
-    skill consolidations). Skips `/scenario` and `/implement`; routes
-    through `simplify` / `integrate` / `document` only when their triggers
-    apply. `verify`, `archive`, `/grant-commit`, `/commit` always run.
-    Not a bypass — silent skips of triggered conditional phases are
-    forbidden.
-- **4 slash commands** — three consent gates (`/approve-spec`, `/approve-swarm`,
-  `/grant-commit`) plus one bootstrap gate (`/init-project`). Commands differ
-  from skills in exactly one way: Claude **cannot** invoke them via the Skill
-  tool. They exist to make the human-in-the-loop guarantee structural rather
-  than flag-based.
-- **`CLAUDE.md`** — distilled non-negotiables (no stubs, no mocks of internal
-  modules, no commented-out code, YAGNI, context7 for every library call,
-  task discipline for in-flight workflows) kept in-session as project memory.
+A discipline layer for Claude Code. Hooks at every tool boundary, a workflow that runs from intake to commit, and a small constitution that the agent cannot bypass.
 
-## Requirements
+<br/>
 
-- Unix/Linux/macOS (bash scripts per seed.md § Baseline Truth).
-- `bash` ≥ 4 and `python3` on `PATH`. No `jq` or other non-stdlib tools
-  required.
-- `node` + `npx` on `PATH` (for the three MCP servers: context7, plantuml, playwright — see below).
-- `plantuml` CLI on `PATH` for strict diagram validation in `docs/specs/*.md`
-  (`brew install plantuml` / `apt-get install plantuml`). If absent, the
-  syntax guard runs in guide mode and `/spec-render` will refuse.
-- Claude Code installed and authenticated.
+[![License](https://img.shields.io/github/license/friedbotstudio/baseline?style=flat&color=111111&labelColor=555555)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/friedbotstudio/baseline?style=flat&color=111111&logo=git&logoColor=white&labelColor=555555)](https://github.com/friedbotstudio/baseline/commits/main)
+[![Release](https://img.shields.io/github/v/release/friedbotstudio/baseline?style=flat&color=111111&include_prereleases&display_name=tag&label=release&labelColor=555555)](https://github.com/friedbotstudio/baseline/releases)
+[![Release CI](https://img.shields.io/github/actions/workflow/status/friedbotstudio/baseline/release.yml?style=flat&logo=githubactions&logoColor=white&label=release&labelColor=555555)](https://github.com/friedbotstudio/baseline/actions/workflows/release.yml)
+[![Built with Claude](https://img.shields.io/badge/Built_with-Claude-D4A574?style=flat&logo=anthropic&logoColor=white&labelColor=555555)](https://claude.com/claude-code)
 
-## MCP servers
+[![Get started](https://img.shields.io/badge/Get_started-Install-ea6a25?style=flat&labelColor=111111)](#installation)
+[![Docs](https://img.shields.io/badge/Docs-baseline.friedbotstudio.com-ea6a25?style=flat&labelColor=111111)](https://baseline.friedbotstudio.com/)
 
-Three servers are declared in `.mcp.json` at the repo root so their capabilities
-travel with the repo.
+<br/>
 
-**`context7`** — library-docs lookup (required by seed.md § Context7 Rule).
+[Overview](#what-this-is) · [Why](#why-this-exists) · [Install](#installation) · [Quickstart](#quickstart) · [Inventory](#what-gets-installed) · [Enforcement](#how-the-enforcement-works) · [Contributing](#contributing)
 
-- **Transport**: stdio via `npx -y @upstash/context7-mcp`. First invocation
-  downloads and caches the package; subsequent runs are fast.
-- **No API key required** for baseline use. To raise rate limits, swap the
-  config to the HTTP transport and set `CONTEXT7_API_KEY`:
+---
 
-  ```json
-  "context7": {
-    "url": "https://mcp.context7.com/mcp",
-    "headers": { "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}" }
-  }
-  ```
+</div>
 
-**`plantuml`** — interactive render and validation for the diagram-driven
-`spec` template. Backs the `plantuml_syntax_guard` hook conceptually and
-lets Claude preview diagrams while drafting.
+> [!WARNING]
+> **Public alpha — under active development.** Expect breaking changes, evolving APIs, and shifting structural counts between releases. The constitution and the consent-gate semantics are stable; specifics in `docs/init/seed.md` §16 may move. Pin to a specific `create-baseline@<version>` for repeatable installs across a team.
 
-- **Transport**: stdio via `npx -y plantuml-mcp-server`.
-- **Server URL**: defaults to the public `https://www.plantuml.com/plantuml`
-  (set via `PLANTUML_SERVER_URL`). For regulated repos, self-host Kroki
-  and point the env var at it.
+> [!IMPORTANT]
+> **Install in one line:** `npx create-baseline ./your-project`
+>
+> The CLI fetches the published package, runs the install, and leaves your project with `.claude/`, `CLAUDE.md`, `docs/init/seed.md`, and `.mcp.json`. Re-run with `--merge` to bring an existing install forward; with `--dry-run` to preview without writing; with `doctor` to report drift.
 
-**`playwright`** — Microsoft-official browser automation MCP (Apache 2.0).
-Drives Chromium, WebKit, and Firefox via stdio. Used by `design-ui` for
-cross-engine visual checks (screenshots per breakpoint, accessibility-tree
-snapshots, reserved-accent grep over the rendered DOM) and conditionally
-by `integrate` for cross-engine smoke when the diff touches the rendered
-UI.
+## What this is
 
-- **Transport**: stdio via `npx -y @playwright/mcp@latest`.
-- **First run** downloads ~300 MB of browser binaries; cost is paid once
-  per machine.
-- **Skills check `.mcp.json` for the server's presence before invoking**;
-  a project that drops the declaration silently disables those steps
-  without breaking either skill. Backend-only repos can omit it.
+The Claude Code Baseline is a repository overlay shipped via `npx create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **36 skills** organised into nine categories, **1 subagent** for parallel work in isolated worktrees, an **11-phase workflow** from intake to commit, and **3 user-typed consent gates** that Claude cannot forge.
 
-**First load**: Claude Code prompts each user to approve unknown MCP
-servers from `.mcp.json`. This is intentional and cannot be pre-approved
-from the repo — review and accept once per machine.
+Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 
-## Install into a target project
+The contract is small and traceable. `docs/init/seed.md` is the genesis prompt. `CLAUDE.md` is the in-session constitution. The hooks, skills, commands, and config files are the actuators. Order of precedence is `seed.md > CLAUDE.md > implementation`. Every claim in the docs points at a file you can open.
 
-This repo is the baseline. To apply it to a real codebase, use the
-`create-baseline` CLI:
+**Read the docs:** <https://baseline.friedbotstudio.com/>
+
+## Why this exists
+
+Claude Code on a real codebase, used unattended, will eventually do things you do not want — push to main without review, amend a published commit, mock the database in a test, mark a phase complete that never ran, sign off on its own spec. None of these are bugs in Claude Code. They are the absence of an opinion the team already has but has never written down in a way the agent must obey.
+
+The baseline is that written-down opinion. It chooses one default for every decision the team would otherwise repeat verbatim every session, and it enforces the default at the layer Claude cannot reach.
+
+A team that installs the baseline stops typing *"don't push, don't `--amend`, don't self-approve specs"* and starts trusting that the agent simply cannot.
+
+## What gets installed
+
+| What | Count | Where it lives |
+|---|---:|---|
+| **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit | 22 | `.claude/hooks/` |
+| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, audit, alternate tracks, and shared globals | 36 | `.claude/skills/` |
+| **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
+| **Workflow phases** — intake → scout → research → spec → tdd → simplify → security → integrate → document → archive → commit | 11 | enforced by `track_guard` |
+| **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude | 3 | `consent_gate_grant` UserPromptSubmit hook |
+| **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke) | 3 | `.mcp.json` |
+
+Every count is asserted by `audit-baseline` against `docs/init/seed.md` on every build. Drift fails CI.
+
+## Installation
+
+### Requirements
+
+- Node 18.17 or newer (the CLI runs as a Node script)
+- `git` — required for the commit phase, swarm worktrees, and the post-archive consent gate. Workflows on non-git projects auto-except `commit` and end at `/archive`.
+- `java` — optional. Required only for `/spec-render` (PlantUML to SVG). The install fetches a SHA-pinned `plantuml.jar` (~19 MB); you supply the JVM.
+
+### One-line install
 
 ```bash
-# From anywhere — npx fetches and runs the published package:
-npx create-baseline ./my-target
+# Install the baseline into ./your-project
+npx create-baseline ./your-project
+```
 
-# Force-overwrite an existing baseline (interactive — type 'overwrite'):
-npx create-baseline ./my-target --force
+### Modes
+
+```bash
+# Default — install into a fresh or empty target
+npx create-baseline ./your-project
+
+# Force-overwrite an existing install (interactive — type 'overwrite')
+npx create-baseline ./your-project --overwrite
 
 # Three-way merge against a previously-installed baseline:
-# - Adds new baseline files
-# - Refreshes baseline files the user hasn't touched
-# - Preserves user-customized files (exit 3 if any)
-# - Deletes baseline files removed upstream IFF the user hadn't touched them
-npx create-baseline ./my-target --merge
+#   - adds new baseline files
+#   - refreshes baseline files the user has not touched
+#   - preserves user-customised files (exit 3 if any)
+#   - removes baseline files the upstream removed (only if untouched locally)
+npx create-baseline ./your-project --merge
 
-# Skip the install-time PlantUML jar download:
-npx create-baseline ./my-target --no-plantuml
+# Preview without writing anything
+npx create-baseline ./your-project --dry-run
 
-# Preview without writing anything:
-npx create-baseline ./my-target --dry-run
-
-# Report drift between a previously-installed target and its install snapshot:
-npx create-baseline doctor ./my-target
-# Reports counts of matched / customized / missing / added files.
-# Exit 0 if clean, 1 if any baseline files are missing, 2 if no manifest.
-
-# Detect post-install tampering. Each customized file is printed as a
-# TAMPERED: line with shipped vs observed sha256, and the command exits 1
-# on any drift. Without --strict, customized files stay informational.
-npx create-baseline doctor --strict ./my-target
+# Skip the install-time PlantUML jar download
+npx create-baseline ./your-project --no-plantuml
 ```
 
-Fresh install also writes `<target>/.npmrc` with `ignore-scripts=true` and `min-release-age=7`, so downstream consumers inherit the hardened npm defaults at install time.
-
-The CLI is zero-runtime-dependency Node ≥ 18.17. It writes the four
-sentinel paths (`.claude/`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`)
-plus `.claude/bin/{LICENSE,NOTICE}` for the deferred-fetch PlantUML jar.
-A sha256-keyed manifest at `.claude/.baseline-manifest.json` enables
-deterministic upgrades via `--merge`.
-
-### `.mcp.json` merge semantics
-
-On every install (fresh or `--merge`), the CLI merges the baseline's
-`.mcp.json` into yours with **baseline-refresh** behavior:
-
-- **Servers named in the template are baseline-canonical**. The merge
-  refreshes them from the template — so `--merge` delivers baseline arg
-  and env updates (e.g., a new flag on the playwright server) to existing
-  installs. **A user who customized a baseline-named server (currently
-  `context7`, `plantuml`, `playwright`) loses that customization on the
-  next merge.** Intentional customizations belong under a non-baseline
-  name (e.g., `playwright-custom`) — those are preserved untouched.
-- **Servers absent from the template are user-added** and are preserved
-  byte-for-byte across merges.
-- **Top-level JSON keys** outside `mcpServers` are additive: template
-  keys are added when missing; the target's existing keys win.
-
-For a manual install (e.g., from a local checkout without npm):
+### Doctor
 
 ```bash
-# From the root of your target project:
-cp -R /path/to/setup_exp/.claude .
-cp /path/to/setup_exp/CLAUDE.md .
-cp /path/to/setup_exp/.mcp.json .        # context7 MCP for library docs
-# Optional — the docs/ scaffolding (intake, specs, rca, brd templates):
-cp -R /path/to/setup_exp/docs/{intake,specs,rca,brd,site} docs/
+# Report drift between a previously-installed target and its install snapshot.
+# Counts matched / customised / missing / added files.
+# Exit 0 clean, 1 if any baseline file is missing, 2 if no manifest.
+npx create-baseline doctor ./your-project
+
+# Strict mode — print TAMPERED: shipped vs observed sha256 for every
+# customised file and exit 1 on any drift.
+npx create-baseline doctor ./your-project --strict
 ```
 
-Then open Claude Code in that project and run:
+## Quickstart
 
-```
-/init-project
-```
+After `npx create-baseline ./your-project`:
 
-This detects your stack (Node/TS, Python, Go, Rust, …), proposes a
-`.claude/project.json` with `test.cmd` / `lint.cmd` / TDD conventions, and
-flips the `configured` flag. Until `/init-project` completes, the `setup_guard`
-hook is **advisory only** — it emits a one-shot reminder (rate-limited to
-10 minutes) on Write/Edit/MultiEdit so you don't forget, but writes are not
-blocked. The bypass is intentional: you may want baseline-only behaviour.
-The other guards (commit, env, spec-approval, verify-pass, track,
-swarm-boundary, etc.) remain hard regardless of `configured` state.
+```bash
+cd ./your-project
 
-## First-run quickstart
-
-```
-# 1. Configure the project
+# 1. Configure the project — runs the recommender, asks the questions,
+#    flips .claude/project.json from configured: false to true.
+#    The setup_guard hook surfaces a one-shot reminder until this runs.
 /init-project
 
-# 2. Triage an incoming request — picks the workflow entry point and
-#    records exceptions (e.g. skip OWASP review for a quickfix)
-/triage "add retry logic to the webhook worker"
+# 2. Triage an incoming request — picks the entry phase (intake, spec,
+#    tdd, or chore) and writes .claude/state/workflow.json with any
+#    exceptions the request needs.
+/triage "your request in plain English"
 
-# 3. Run the phase commands that triage directed you to:
-/intake      # Phase 1 — capture the request (intake skill)
-/scout       # Phase 2 — map the touched code (scout skill)
-/research    # Phase 3 — candidate approaches grounded in context7 (research skill)
-/spec        # Phase 4 — draft docs/specs/<slug>.md (no self-approval)
-/spec-lint <slug>       # optional — preflight syntax/presence/traceability
-/spec-render <slug>     # optional — render PlantUML to SVG for reviewers
-/approve-spec docs/specs/<slug>.md    # ← user only
-/tdd         # Phase 6 — main context decides recipe; scenario skill writes
-             #          failing tests, implement skill turns them green, verify
-             #          stamps the verdict
-             # OR for large specs: /swarm-plan → /approve-swarm → /swarm-dispatch
-/simplify    # Phase 7 — cleanup pass + re-verify
-/security    # Phase 8 — OWASP review (security skill, optional)
-/integrate   # Phase 9 — full suite (integrate skill calls verify)
-/document    # Phase 10 — docs (document skill orchestrates prose/documentation/technical-tutorials)
-/archive     # Phase 10.5 — move slug artifacts to docs/archive/<date>/<slug>/
-/grant-commit    # ← opens a 5-min consent window
-/commit          # Phase 11 — archives workflow.json, stages named paths, commits
+# 3. Run the pipeline. /harness chains every non-gated phase in one
+#    invocation; it yields at consent gates so you can review.
+/harness
 ```
 
-Or run the whole thing top to bottom:
+The three consent gates pause the workflow until you type the corresponding command:
 
-```
-/harness     # sequences all of the above; yields at each consent gate
-             # (user runs /harness again to resume after approving)
-```
+- **`/approve-spec <slug>`** — after the spec phase, before any code is written
+- **`/approve-swarm <slug>`** — after `/swarm-plan`, before parallel dispatch
+- **`/grant-commit`** — after `/archive`, before the commit lands
 
-Entry rules (per seed.md):
-- New feature → enter at `/intake`
-- Bugfix → enter at `/spec` or `/tdd` (triage decides)
-- Quickfix → enter at `/tdd`
-- Chore (no TDD-driven code change needed: documentation, governance counts,
-  vendored content, config tweaks, formatting, dependency bumps,
-  consolidations) → enter at `/chore`. Skips `/scenario` + `/implement`;
-  routes through `simplify` / `integrate` / `document` conditionally based
-  on what the diff touches.
+Each gate writes a short-lived consent marker via a UserPromptSubmit hook that runs *before* Claude is invoked on the body. Claude cannot forge the marker; the corresponding write-boundary guard validates it on disk before allowing the approval token through.
 
-## How the enforcement works (quick reference)
+## How the enforcement works
 
-Hooks run at the Claude Code tool-use boundary. Every file write, every Bash
-command, every spec approval passes through these gates before it happens:
+The 22 hooks declared in `.claude/settings.json` fire at every Claude tool boundary — PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. They run as bash and python3 in a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
 
-| Hook | Runs on | What it enforces |
-|------|---------|------------------|
-| **setup_guard** | Write/Edit/MultiEdit/NotebookEdit | Advisory only when `configured: false` — emits a one-shot reminder (rate-limited to 10 min) that `/init-project` has not run. Does **not** block writes; bypass is intentional |
-| **destructive_cmd_guard** | Bash | Hard-block catastrophic cmds (`rm -rf /`, fork bombs, `dd of=/dev/sd*`), `ask` on risky ones (`rm -rf <path>`, `git reset --hard`, `drop table`) |
-| **git_commit_guard** | Bash | `git commit` requires a fresh consent token from `/grant-commit` (5-min TTL); `push`, `--amend`, `--no-verify`, `reset --hard`, etc. are hard-blocked regardless |
-| **env_guard** | Write/Edit | Block `.env*` writes except clear template files (`.env.example`, `.env.sample`) |
-| **spec_approval_guard** | Write/Edit | Block Claude from writing `Status: Approved` in specs or from writing anything to `.claude/state/spec_approvals/` — only `/approve-spec` may grant approval |
-| **verify_pass_guard** | Write/Edit | Block Claude from writing `PASS` in a verify artifact when `.claude/state/last_test_result` says `FAIL` |
-| **track_guard** | Write/Edit | Enforce workflow phase ordering — can't create a spec before intake, can't integrate before simplify, etc. Exceptions come from `/triage` |
-| **artifact_template_guard** | Write/Edit | Block writes to `docs/{intake,brd,specs,rca}/*.md` that are missing required section headings — forces use of the corresponding micro-skill's template |
-| **plantuml_syntax_guard** | Write/Edit | Validate every ```plantuml``` fence in `docs/specs/*.md` via `plantuml -checkonly -pipe`. Block writes on any parse error. Guide-mode if the CLI is absent |
-| **spec_diagram_presence_guard** | Write/Edit | Block writes to `docs/specs/*.md` that omit required diagram kinds — C4 Context/Container/Component, sequence, class, dependency graph (configured in `project.json → artifacts.required_diagrams.spec`) |
-| **tdd_order_guard** | Write | Require a corresponding test file before creating a new source file |
-| **test_runner** | PostToolUse Write/Edit | Run `.test.cmd {file}` after each code change (guide mode until configured) |
-| **lint_runner** | PostToolUse Write/Edit | Run `.lint.cmd {file}` after each code change (guide mode until configured) |
+The architectural rule is simple: **decisions live in main context; subagents only execute pre-decided recipes**. The baseline ships exactly one subagent — `swarm-worker` — and its only sanctioned use is parallel dispatch of fully-specified recipes inside isolated git worktrees during `/swarm-dispatch`. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) lives instead as a **skill** that runs in main context with full conversation visibility.
 
-Configuration for test/lint commands, TDD conventions, and destructive
-patterns lives in `.claude/project.json`. Consent/approval/verdict state
-lives in `.claude/state/` (`commit_consent`, `spec_approvals/`,
-`workflow.json`, `last_test_result`).
+The 11-phase workflow is enforced at the write boundary by `track_guard`. Phase ordering is binding; the only mechanism to bypass a phase is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage` at workflow creation time. The chore track is a stripped-down ordering of the same gates, with the test-first phases removed because there is nothing to test-first.
 
-## Repository layout
+The constitution at `CLAUDE.md` is the source of truth for in-session behaviour; `docs/init/seed.md` is the source of truth for the baseline's shape. When the constitution and the implementation conflict, the constitution governs and the implementation gets corrected. When `seed.md` and the constitution conflict, `seed.md` governs and you stop and surface the drift before acting.
 
-```
-.mcp.json                  # project-level MCP servers (context7, plantuml, playwright)
-.claude/
-  settings.json            # hook wiring + permissions
-  project.json             # per-project config (test/lint cmd, TDD, artifacts)
-  hooks/                   # 22 hook scripts: 17 write/run-boundary guards + 4 lifecycle hooks + 1 input-boundary hook
-                           # (bash + python3, no jq)
-    lib/common.sh          # shared helpers
-  agents/                  # 1 subagent: swarm-worker (executes pre-decided recipes)
-    swarm-worker.md        # rendered from src/agents/swarm-worker.template.md
-  commands/                # 4 consent / bootstrap gates (user-only — Claude cannot invoke)
-    approve-spec.md        approve-swarm.md       grant-commit.md        init-project.md
-  skills/                  # 36 skills — both user- and model-invocable
-    intake/   brd/   spec/   rca/                       # artifact drafting (4)
-    triage/  scout/  research/  tdd/  simplify/         # workflow phases (part of 10)
-    security/  integrate/  document/  archive/  commit/ # workflow phases (rest of 10)
-    scenario/  implement/  verify/  prose/  design-ui/  # phase workers (5)
-    spec-lint/  spec-render/                            # spec helpers (part of 4)
-    spec-diagram-review/  spec-traceability-review/     # spec helpers (rest of 4)
-    harness/  swarm-plan/  swarm-dispatch/              # orchestration (3)
-    memory-flush/                                       # memory (1)
-    claude-automation-recommender/  code-structure/     # shared globals (part of 7)
-    humanizer/  documentation/  technical-tutorials/    # shared globals (part of 7)
-    copywriting/  impeccable/                           # shared globals (rest of 7)
-    audit-baseline/                                     # drift defender (1)
-    chore/                                              # alternate tracks (1)
-  memory/                  # 6 canonical knowledge files + _pending.md (staging) + _resume.md
-  state/                   # runtime: workflow, consent, approvals, verdicts
-src/                       # pristine ship-time templates (overlay source for `npx create-baseline`)
-  CLAUDE.template.md       project.template.json     seed.template.md
-  .mcp.template.json       settings.template.json
-  agents/swarm-worker.template.md
-  memory/<6 canonical>.template.md
-CLAUDE.md                  # in-session project memory — the constitution
-docs/
-  init/seed.md             # the source of truth for this setup
-  intake/ specs/ rca/ brd/ scout/ research/ security/ archive/
-                           # produced artifacts live here (not templates)
-  specs/_rendered/<slug>/  # build output from /spec-render (gitignore this)
-```
+## Documentation
 
-## Customizing
+- **Docs site:** <https://baseline.friedbotstudio.com/> — overview, hook reference, skill index, workflow walkthrough, install reference
+- **Constitution:** [`CLAUDE.md`](CLAUDE.md) — the in-session contract that binds Claude in this repository
+- **Genesis:** [`docs/init/seed.md`](docs/init/seed.md) — the governing specification of the baseline
+- **Product brief:** [`PRODUCT.md`](PRODUCT.md) — audience, voice, anti-references
+- **Design system:** [`DESIGN.md`](DESIGN.md) — type, colour, spacing, motion vocabulary for the docs site
 
-- **Change the destructive denylist**: edit
-  `.claude/project.json` → `destructive.hard_block_patterns` /
-  `ask_patterns`. Patterns are Python regexes.
-- **Change TDD mapping**: edit `.claude/project.json` → `tdd.source_globs`,
-  `test_globs`, `exempt_globs`.
-- **Change workflow phases**: edit `.claude/project.json` → `workflow.phases`
-  and `workflow.artifacts`. Phase commands under `.claude/commands/` should
-  match.
-- **Replace a hook entirely**: each script in `.claude/hooks/` is independent
-  bash. Projects are expected to replace `test_runner.sh` / `lint_runner.sh`
-  with stack-specific logic once mature — the baseline versions are
-  config-driven guides, not a final answer.
+## Contributing
 
-## Troubleshooting
+The baseline aims for a small, traceable surface. Contributions that make the structural enforcement *more* reliable — closing a hook gap, tightening a guard, fixing a regex, adding a missing test — land easily. Contributions that grow the surface need a stronger justification.
 
-- **"Setup Guard: not configured yet"** — you haven't run `/init-project`.
-  That's intentional. Run it.
-- **"Git Commit Guard: no consent granted"** — run `/grant-commit` first,
-  then re-issue the commit within 5 minutes.
-- **Hook produces no output but also doesn't block** — check
-  `.claude/state/logs/<hook>.log` for an audit trail, and verify
-  `/usr/bin/python3` resolves (the hooks require it).
-- **`env: bash: No such file or directory`** when invoking hooks manually —
-  your shell has a stripped PATH. The hooks defend against this when run by
-  Claude Code itself, but a manual test may need `/usr/local/bin/bash` or
-  similar explicitly.
+Specifically: the **hook count, skill count, subagent count, command count, and MCP-server count are constitutional**. Any change to those counts requires:
+
+1. An amendment to `docs/init/seed.md` §4 first (the genesis prompt)
+2. A matching update in `CLAUDE.md` (the constitution)
+3. The implementation change
+4. A passing `bash .claude/skills/audit-baseline/audit.sh` (which checks all four for drift)
+
+The `/triage` skill picks the right track for your contribution. Most one-file fixes are chore-track; anything adding new behaviour goes through intake → spec.
+
+Please read [`CODE-OF-CONDUCT.md`](CODE-OF-CONDUCT.md) before opening an issue or PR.
+
+## Support and feedback
+
+- **Issues:** <https://github.com/friedbotstudio/baseline/issues>
+- **Docs:** <https://baseline.friedbotstudio.com/>
+
+## Vulnerability reporting
+
+Security disclosures go to **hello@friedbotstudio.com**. See [`SECURITY.md`](SECURITY.md) for the full policy and scope.
 
 ## License
 
-See LICENSE if present. The seed's rules (`docs/init/seed.md`) are intended
-as a starting point you adapt — not a frozen standard.
+Apache License 2.0. See [`LICENSE`](LICENSE).
+
+## About
+
+The Claude Code Baseline is built and maintained by [Friedbot Studio](https://friedbotstudio.com). We build infrastructure for AI-augmented engineering teams — discipline layers, evaluation harnesses, audit trails — that make agentic tools usable on production systems.
+
+<details>
+<summary><strong>Update history</strong></summary>
+
+<br/>
+
+**2026-05-14**
+
+- `feat(site)` — page-relative URL filter + CNAME for dual-mount Pages deployment ([86cfbc7](https://github.com/friedbotstudio/baseline/commit/86cfbc7))
+- `fix(build)` — seed runtime memory placeholders so `audit-baseline` passes on fresh clones ([829f9cf](https://github.com/friedbotstudio/baseline/commit/829f9cf))
+- `fix(publish-check)` — surface `npm publish --dry-run` stderr on precheck failure ([095cda4](https://github.com/friedbotstudio/baseline/commit/095cda4))
+- `fix(release-workflow)` — correct AC-006 / AC-011 / AC-013 (cache:false fatal + missing build-verify needs edge) ([572fef7](https://github.com/friedbotstudio/baseline/commit/572fef7))
+- `fix(hook)` — `git_commit_guard` regex no longer false-positives on dot-prefixed paths ([064102d](https://github.com/friedbotstudio/baseline/commit/064102d))
+- `chore` — add `.nojekyll` guard + labels-as-code workflow ([f4f514b](https://github.com/friedbotstudio/baseline/commit/f4f514b))
+
+**2026-05-13**
+
+- Initial commit — Claude Code baseline + release workflow ([0dcf76e](https://github.com/friedbotstudio/baseline/commit/0dcf76e))
+
+</details>

@@ -1,0 +1,18 @@
+{
+  "request": "Rewrite README.md using auth0/open-source-template's README-sample.md as the structural skeleton, drawing voice from PRODUCT.md and visual/copy register from DESIGN.md. Companion files CODE-OF-CONDUCT.md, LICENSE, SECURITY.md (already present in working tree, untracked) get linked from the README and committed alongside. The chore skill: read all four sources, propose a structure, get user sign-off, apply the rewrite + commit the three companion files.",
+  "slug": "readme-rewrite",
+  "entry_phase": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": ["simplify", "integrate", "archive", "chore", "grant-commit"],
+  "created_at": 1778743547,
+  "updated_at": 1778747500,
+  "note": "Chore-track documentation rewrite. The chore skill handles internal routing through simplify / integrate / document / archive based on conditional triggers. Likely conditional decisions: simplify YES (large-ish prose diff), integrate YES (audit re-stamp), security NO (no attack surface in prose), document NO (the work IS documentation; no derivative doc to update), archive YES (mandatory). Out-of-scope: deciding whether the README design is final — that's a user judgment call after the structure proposal."
+}
