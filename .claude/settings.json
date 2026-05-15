@@ -7,7 +7,7 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/destructive_cmd_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.sh" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/process_lifecycle_guard.sh" }
         ]
       },
@@ -18,7 +18,7 @@
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/env_guard.sh" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/spec_approval_guard.sh" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/swarm_approval_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.sh" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/verify_pass_guard.sh" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/track_guard.sh" },
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/artifact_template_guard.sh" },
@@ -38,7 +38,7 @@
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/consent_gate_grant.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/consent_gate_grant.mjs" }
         ]
       }
     ],
@@ -90,7 +90,6 @@
       "Bash(git blame:*)"
     ],
     "deny": [
-      "Bash(git push:*)",
       "Bash(git commit --amend:*)",
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",

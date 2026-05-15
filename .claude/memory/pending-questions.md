@@ -56,17 +56,13 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 
 ---
 
-## Q-004
+## Q-004 — CLOSED 2026-05-15
 
-- Question: Should `git_commit_guard` honor the user-named-operation carve-out for `git push` that CLAUDE.md Article VII grants, or remain a hard structural block on push regardless?
-- Raised in: 2026-05-14, after `/grant-commit` with the note "and push" and a follow-up "commit and push" prompt. Article VII reads: "You SHALL NEVER, unless the user names the exact operation in their current request: `git push`, `git push --force`, `--force-with-lease`, ..." — i.e., push is permitted when the user explicitly names it. The hook's FORBIDDEN_RE pattern-matches `\bgit\s+push\b` unconditionally and emits a hard block, with no inspection of the user's prompt context (it can't see prompts; it sees Bash commands). Result: the constitution allows what the hook forbids. Workaround used in this session: user types `! git push origin main` to run push outside Claude's tool boundary.
-- Blocker for: deciding whether push should remain Claude-impossible (force the human-in-the-loop step every push) or whether the hook should accept a session-scoped consent marker similar to `commit_consent` so push becomes a gateable operation.
-- Options considered:
-  - (a) Status quo: keep the hard block. Push always requires `! git push` from the user. Rationale: pushing is irreversible (touches the remote) and the friction is a feature; the user-shell `!` prefix is an explicit "I am taking responsibility" signal. Two-line CLAUDE.md amendment to acknowledge the divergence: "Article VII permits push when named; `git_commit_guard` enforces a stricter rule (always-block) intentionally."
-  - (b) Add a `push_consent` gate: introduce `/grant-push` (alongside `/grant-commit`) that writes `.claude/state/push_consent` with a short TTL; the hook allows push when the token is fresh. Symmetric with the commit-consent pattern; preserves the "user explicitly named" requirement structurally; eliminates the `!` shell workaround. Cost: another consent gate to wire (UserPromptSubmit hook + Bash matcher leg).
-  - (c) Inspect the prompt: have `consent_gate_grant` (UserPromptSubmit) write a `.push_grant` marker when it detects "and push" / "push" in the user's `/grant-commit` arguments, and have `git_commit_guard` honor that marker for the next push. Cheaper than (b) but couples push to commit-consent semantics in a non-obvious way.
-  - (d) Drop the hook block; trust Article VII enforcement at the model layer. Lowest friction; loses the structural guarantee that push can never happen by accident. Probably wrong for a baseline; recorded for completeness.
-- Constitutional implication: Article VII and Article VIII currently disagree about push. Either Article VII should be tightened to "push is never allowed by Claude; always use `! git push`" (matching the hook), or Article VIII's hook spec should be loosened to allow a consent-gated push path (matching the constitution). The disagreement is the bug.
-- Verified-at: 1feee24
-- Last-touched: 2026-05-14
+- Resolution: Adopted option (b) plus generalization — branch-aware consent policy. `/grant-push` was added as a fourth consent gate (symmetric with `/grant-commit`); `git_commit_guard` was rewritten in JS (`.mjs`, JS-port pilot) to route per `project.json → git.protected_branches` glob + `git.branch_pattern` regex. Push on a protected branch requires fresh `push_consent`; push on a non-protected branch proceeds without consent. The unconditional `\bgit\s+push\b` entry was removed from `FORBIDDEN_RE`; `git push --force` / `--force-with-lease` remain forbidden unless the user names the exact operation. Article VII rewritten to match.
+- Spec: `docs/specs/branch-aware-git-policy.md` (approved 2026-05-15).
+- Closing commit: pending (committed via gate C in this workflow).
+- Original question + options below for historical reference; the resolution above supersedes them.
+
+  Question: Should `git_commit_guard` honor the user-named-operation carve-out for `git push` that CLAUDE.md Article VII grants, or remain a hard structural block on push regardless?
+  Raised in: 2026-05-14, after `/grant-commit` with the note "and push" and a follow-up "commit and push" prompt. Article VII reads: "You SHALL NEVER, unless the user names the exact operation in their current request: `git push`, `git push --force`, `--force-with-lease`, ..." — i.e., push is permitted when the user explicitly names it. The hook's FORBIDDEN_RE pattern-matched `\bgit\s+push\b` unconditionally and emitted a hard block. Workaround in active use until close: user types `! git push origin main` to run push outside Claude's tool boundary.
 

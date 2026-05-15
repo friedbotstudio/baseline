@@ -84,7 +84,7 @@ toc:
     <tr><td class="phase">memory_session_start</td><td>III, IX</td><td>Inject memory index and resume snapshot at session start.</td></tr>
     <tr><td class="phase">memory_stop</td><td>IX</td><td>Auto-extract memory candidates each turn-end.</td></tr>
     <tr><td class="phase">memory_pre_compact</td><td>IX</td><td>Capture resume snapshot before context compaction.</td></tr>
-    <tr><td class="phase">consent_gate_grant</td><td>IV (gates A / B / C)</td><td>Detect approve and grant slash commands in user input and write the gate-specific consent marker. Runs outside Claude's tool boundary.</td></tr>
+    <tr><td class="phase">consent_gate_grant</td><td>IV (gates A / B / C), VII (push gate)</td><td>Detect the four slash commands (<code>/approve-spec</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>, <code>/grant-push</code>) in user input and write the gate-specific consent marker. Runs outside Claude's tool boundary.</td></tr>
   </tbody>
 </table>
 </section>
@@ -95,13 +95,13 @@ toc:
       <p class="section-num">§ IV</p>
       <h2 id="consent">Why consent gates are unforgeable</h2>
     </div>
-    <p>Each gate is a slash command typed by the user (<code>/approve-spec</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>). Claude cannot reach the UserPromptSubmit code path, so it cannot write the marker.</p>
+    <p>Each gate is a slash command the user types. Three are workflow-phase gates (<code>/approve-spec</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>). The fourth, <code>/grant-push</code>, is a runtime gate for protected-branch pushes (Article VII). UserPromptSubmit runs outside Claude's tool boundary, so Claude has no way to write the marker.</p>
   </div>
   <div class="callout">
     <span class="icon" aria-hidden="true">!</span>
     <div class="body">
       <strong>Consent gates are not bypassable.</strong>
-      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, before Claude sees the prompt. It writes a short-lived marker that the corresponding PreToolUse guard validates. Markers expire after sixty seconds and are deleted on use, so a gate cannot be replayed.</p>
+      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, before Claude sees the prompt. It writes a short-lived marker that the matching PreToolUse guard validates. Markers expire after two minutes by default (<code>consent.gate_marker_ttl_seconds</code>) and are deleted on use, so the same gate cannot be replayed.</p>
     </div>
   </div>
   <p>The PreToolUse guard then allows Claude's slash-command-body write of the approval token only if the marker is present, fresh, and slug-matched. The marker is single-use and deleted on the allowed write.</p>

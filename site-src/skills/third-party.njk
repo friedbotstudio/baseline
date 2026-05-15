@@ -7,8 +7,8 @@ titlePrimary: "Third-party"
 titleAccent: " skills"
 eyebrow: Skills
 eleventyComputed:
-  description: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are shared globals vendored from external sources with their licenses preserved. Users adopt additional third-party skills by placing them in .claude/skills/."
-  lead: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are <strong>shared globals</strong> vendored from external sources with their licenses preserved. Users adopt additional third-party skills by placing them in <code>.claude/skills/</code> following the same vendoring discipline."
+  description: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are shared globals. Six of those are vendored from external sources with their upstream licenses preserved; one (code-structure) is written for this baseline. Users adopt additional third-party skills by placing them in .claude/skills/."
+  lead: "Of the {{ baseline.skills.total }} baseline skills, {{ baseline.skills.sharedGlobalsWord }} are <strong>shared globals</strong>. Six of those are vendored from external sources with their upstream licenses preserved; one (<code>code-structure</code>) is written for this baseline. Users adopt additional third-party skills by placing them in <code>.claude/skills/</code> following the same vendoring discipline."
 active: skills
 sidebarActive: skills-third-party
 toc:
@@ -36,21 +36,22 @@ toc:
       <p class="section-num">§ II</p>
       <h2 id="example">The {{ baseline.skills.sharedGlobalsWord }} shared globals</h2>
     </div>
-    <p>Per <code>CLAUDE.md</code> Appendix B, {{ baseline.skills.sharedGlobalsWord }} baseline skills are vendored from external sources. Each preserves its original license and behavior; the vendoring change is limited to an attribution header and a reference in the constitution's skill index.</p>
+    <p>Per <code>CLAUDE.md</code> Appendix B, {{ baseline.skills.sharedGlobalsWord }} baseline skills are shared globals. One (<code>code-structure</code>) is written for this baseline. Six are vendored from external sources, each preserving its upstream license and behavior; the local vendoring change is limited to an attribution NOTICE file and a reference in the constitution's skill index.</p>
   </div>
+  <p>One shared global (<code>code-structure</code>) is written by Friedbot Studio for this baseline. The other six are vendored from external sources, each preserving its upstream license and attribution. Sources span three publishers and two licenses.</p>
   <table>
   <thead><tr><th>Skill</th><th>Source</th><th>License</th><th>Role</th></tr></thead>
   <tbody>
-    <tr><td class="phase">claude-automation-recommender</td><td>Anthropic</td><td>Apache 2.0</td><td>Analyzes a codebase and recommends Claude Code automations; used by <code>/init-project</code>.</td></tr>
-    <tr><td class="phase">code-structure</td><td>Anthropic</td><td>Apache 2.0</td><td>Mandatory on every code-generation step. Enforces top-down composition and consistent abstraction layers.</td></tr>
-    <tr><td class="phase">humanizer</td><td>@blader</td><td>Apache 2.0</td><td>Removes signs of AI-generated writing; invoked unconditionally by <code>prose</code> as its final pass.</td></tr>
-    <tr><td class="phase">documentation</td><td>Anthropic</td><td>Apache 2.0</td><td>Reference-doc register (API docs, runbooks, architecture). Conditional invocation from <code>prose</code>.</td></tr>
-    <tr><td class="phase">technical-tutorials</td><td>Anthropic</td><td>Apache 2.0</td><td>Tutorial / quickstart / step-by-step register. Conditional invocation from <code>prose</code>.</td></tr>
-    <tr><td class="phase">copywriting</td><td>Anthropic</td><td>Apache 2.0</td><td>Persuasive register (landing copy, value props, CTAs). Conditional invocation from <code>prose</code>.</td></tr>
-    <tr><td class="phase">impeccable</td><td>Anthropic</td><td>Apache 2.0</td><td>Frontend design and iteration. Mandatorily invoked by <code>design-ui</code>.</td></tr>
+    <tr><td class="phase">claude-automation-recommender</td><td>Anthropic <code>claude-code-setup</code> plugin</td><td>Apache 2.0</td><td>Analyzes a codebase and recommends Claude Code automations; used by <code>/init-project</code>.</td></tr>
+    <tr><td class="phase">code-structure</td><td>Friedbot Studio (this project)</td><td>Repo license</td><td>Mandatory on every code-generation step. Enforces top-down composition and consistent abstraction layers.</td></tr>
+    <tr><td class="phase">humanizer</td><td><a href="https://github.com/blader/humanizer">blader/humanizer</a></td><td>MIT</td><td>Removes signs of AI-generated writing; invoked unconditionally by <code>prose</code> as its final pass.</td></tr>
+    <tr><td class="phase">documentation</td><td>Anthropic <code>claude-code-setup</code> plugin</td><td>Apache 2.0</td><td>Reference-doc register (API docs, runbooks, architecture). Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">technical-tutorials</td><td><a href="https://github.com/jonathimer/devmarketing-skills">jonathimer/devmarketing-skills</a></td><td>MIT</td><td>Tutorial / quickstart / step-by-step register. Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">copywriting</td><td><a href="https://github.com/coreyhaines31/marketingskills">coreyhaines31/marketingskills</a></td><td>MIT</td><td>Persuasive register (landing copy, value props, CTAs). Conditional invocation from <code>prose</code>.</td></tr>
+    <tr><td class="phase">impeccable</td><td><a href="https://github.com/pbakaus/impeccable">pbakaus/impeccable</a></td><td>Apache 2.0</td><td>Frontend design and iteration. Mandatorily invoked by <code>design-ui</code>.</td></tr>
   </tbody>
   </table>
-  <p>Each shared global ships with its <code>LICENSE</code> file at <code>.claude/skills/&lt;name&gt;/LICENSE</code> and an attribution header in the skill's main markdown.</p>
+  <p>Each vendored shared global ships with its <code>LICENSE</code> and <code>NOTICE</code> files at <code>.claude/skills/&lt;name&gt;/</code>. The <code>NOTICE</code> file records the upstream URL, the vendor date, and any local changes made during vendoring.</p>
 </section>
 
 <section class="section">

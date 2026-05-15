@@ -561,7 +561,7 @@ Before publishing, verify:
 
 ## Related Skills
 
-These four are upstream companion skills (from the `claude-code-setup` plugin family) and **do not ship with this baseline**. Listed here for reference only; if you need their capabilities, ask the user inline or install the plugin separately.
+These four are upstream companion skills from the same source repo as `technical-tutorials` ([`jonathimer/devmarketing-skills`](https://github.com/jonathimer/devmarketing-skills)) and **do not ship with this baseline**. Listed here for reference only; if you need their capabilities, ask the user inline or vendor them separately following the same MIT terms.
 
 - `developer-audience-context` — Understand skill level and environment
 - `devrel-content` — General technical writing principles

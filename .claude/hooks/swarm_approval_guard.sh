@@ -6,7 +6,7 @@
 #   1. Approval artifacts (.claude/state/swarm_approvals/<slug>.approval) —
 #      writable only when a fresh slug-matched marker at
 #      .claude/state/.swarm_approval_grant exists. Marker is written by
-#      consent_gate_grant.sh on /approve-swarm. Validated + consumed via
+#      consent_gate_grant.mjs on /approve-swarm. Validated + consumed via
 #      validate_consent_marker.
 #
 #   2. The marker file itself — Claude SHALL NEVER write it via tool.

@@ -186,14 +186,19 @@
   },
   "consent": {
     "commit_ttl_seconds": 300,
-    "gate_marker_ttl_seconds": 120
+    "gate_marker_ttl_seconds": 120,
+    "push_ttl_seconds": 300
+  },
+  "git": {
+    "protected_branches": null,
+    "branch_pattern": null
   },
   "swarm": {
     "max_parallel": 4,
     "granularity": "component",
     "min_tasks_worth_swarming": 3,
     "isolation": "shared",
-    "refuse_dirty_tree": true,
+    "refuse_dirty_tree": false,
     "exempt_path_prefixes": [
       ".claude/",
       ".git/",

@@ -185,7 +185,12 @@
   },
   "consent": {
     "commit_ttl_seconds": 300,
-    "gate_marker_ttl_seconds": 120
+    "gate_marker_ttl_seconds": 120,
+    "push_ttl_seconds": 300
+  },
+  "git": {
+    "protected_branches": null,
+    "branch_pattern": null
   },
   "swarm": {
     "max_parallel": 4,

@@ -1,0 +1,10 @@
+{
+  "request": "Replace unconditional git push hard-block in git_commit_guard with a branch-aware consent policy driven by project.json git.protected_branches (glob list, default null = every branch protected) and git.branch_pattern (regex, opt-out via null). Add a /grant-push consent gate symmetric with /grant-commit. Resolves Q-004. Touches hooks, new command, project.json schema, CLAUDE.md Articles IV/VII/VIII, seed.md sections 6/13/14, audit-baseline, and src/ ship-time templates.",
+  "slug": "branch-aware-git-policy",
+  "entry_phase": "intake",
+  "exceptions": ["brd"],
+  "completed": ["intake", "scout", "research", "spec", "approve-spec", "swarm-plan", "approve-swarm", "swarm-dispatch", "tdd", "simplify", "security", "integrate", "document", "archive"],
+  "created_at": 1778842602,
+  "updated_at": 1778850500,
+  "completed_notes": {"tdd": "satisfied via swarm path (swarm-plan + swarm-dispatch); track_guard literal-match workaround per seed.md §16 retrospective"}
+}

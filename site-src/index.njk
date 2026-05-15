@@ -99,8 +99,8 @@ eleventyComputed:
         </div>
         <div class="concept">
           <p class="num">03 · Workflow</p>
-          <h3>Eleven phases, three gates</h3>
-          <p>Intake to commit, in order. Three consent gates are user-typed slash commands: <code>/approve-spec</code> at phase 5, <code>/approve-swarm</code> at phase 6's swarm fork, and <code>/grant-commit</code> at phase 11. Skipping any phase requires an explicit exception in <code>workflow.json</code>, written by triage.</p>
+          <h3>Eleven phases, four gates</h3>
+          <p>Intake to commit, in order. Three workflow-phase consent gates are user-typed slash commands: <code>/approve-spec</code> at phase 5, <code>/approve-swarm</code> at phase 6's swarm fork, and <code>/grant-commit</code> at phase 11. A fourth, <code>/grant-push</code>, sits outside the phase pipeline and gates pushes to protected branches. Skipping any phase needs an explicit exception in <code>workflow.json</code>, written by triage.</p>
         </div>
       </div>
     </div>
@@ -174,11 +174,11 @@ eleventyComputed:
         <p class="section-num">§ III</p>
         <h2>How it flows</h2>
       </div>
-      <p>One pipeline from request to commit. Order is enforced at the write boundary by <code>track_guard</code>. The two filled squares are the consent gates on the main path; a third gate (<code>/approve-swarm</code>) sits inside the TDD-swarm fork of phase 6. All three are user-typed commands that Claude is structurally unable to invoke.</p>
+      <p>One pipeline, request to commit. Order is enforced at the write boundary by <code>track_guard</code>. The two filled squares are the consent gates on the main path. A third gate (<code>/approve-swarm</code>) sits inside the TDD-swarm fork of phase 6. A fourth (<code>/grant-push</code>) sits outside the phase pipeline and gates pushes to protected branches. All four are user-typed commands; Claude can't reach the code path that writes the markers.</p>
     </div>
     <figure class="figure">
-      <svg class="diagram-svg" viewBox="0 0 940 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title">
-        <title id="workflow-diag-title">The eleven-phase workflow with three consent gates (two shown on the main path; /approve-swarm sits inside phase 6's swarm fork).</title>
+      <svg class="diagram-svg" viewBox="0 0 940 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title">
+        <title id="workflow-diag-title">The eleven-phase workflow with three workflow-phase consent gates (two shown on the main path; /approve-swarm sits inside phase 6's swarm fork). A fourth gate, /grant-push, sits outside the phase pipeline as a runtime gate for protected-branch pushes.</title>
         <line class="axis" x1="40" y1="76" x2="895" y2="76"/>
 
         <text class="num" x="40" y="48" text-anchor="middle">01</text>
@@ -248,8 +248,16 @@ eleventyComputed:
           <text class="node-label-gate" x="880" y="111" text-anchor="middle">Commit</text>
           <text class="gate-cmd" x="880" y="128" text-anchor="middle">/grant-commit</text>
         </g>
+
+        {# Runtime gate: /grant-push. Distinct visual treatment because it sits OUTSIDE the linear phase pipeline. No rect+checkmark (those mean "phase gate"); a dashed-bracket underline signals "different kind of gate". #}
+        <g class="gate-anno runtime-gate">
+          <text class="gate-tag" x="470" y="150" text-anchor="middle" style="letter-spacing: 0.12em;">RUNTIME GATE</text>
+          <line x1="408" y1="160" x2="532" y2="160" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+          <text class="gate-cmd" x="470" y="178" text-anchor="middle">/grant-push</text>
+          <text x="470" y="194" text-anchor="middle" style="font-family: var(--mono); font-size: 9px; fill: var(--ink); opacity: 0.6;">fires on git push to a protected branch · Art. VII</text>
+        </g>
       </svg>
-      <figcaption><strong>Eleven phases, three gates.</strong> Each phase produces exactly one artifact. The two filled squares above are <code>/approve-spec</code> and <code>/grant-commit</code>; the third gate, <code>/approve-swarm</code>, sits inside phase 6's swarm fork (6a/6b/6c) and is omitted from the linear diagram for clarity. For every gate the corresponding <code>UserPromptSubmit</code> hook writes a short-lived consent marker, which the next <code>PreToolUse</code> guard validates before allowing the approval-token write. Claude cannot reach the marker path.</figcaption>
+      <figcaption><strong>Eleven phases, four gates.</strong> Each phase produces exactly one artifact. The two filled squares on the axis are <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside phase 6's swarm fork (6a/6b/6c) and isn't shown here. The fourth gate, <code>/grant-push</code> below the axis, is a runtime gate that opens a five-minute window for <code>git push</code> on a protected branch. For every gate, the <code>UserPromptSubmit</code> hook writes a short-lived consent marker, and the next <code>PreToolUse</code> guard validates it before the approval-token write goes through. Claude cannot reach the marker path.</figcaption>
     </figure>
   </section>
 

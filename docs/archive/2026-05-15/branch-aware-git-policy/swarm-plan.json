@@ -1,0 +1,270 @@
+{
+  "slug": "branch-aware-git-policy",
+  "spec": "docs/specs/branch-aware-git-policy.md",
+  "created_at": 1778847500,
+  "status": "planned",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Create lib/common.mjs \u2014 JS port of bash helpers + hand-rolled glob matcher",
+      "component": "lib_js",
+      "acs": [
+        "AC-014"
+      ],
+      "write_set": [
+        ".claude/hooks/lib/common.mjs"
+      ],
+      "read_set": [
+        ".claude/hooks/lib/common.sh",
+        ".claude/project.json"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-002",
+      "title": "Create /grant-push slash command (mirrors /grant-commit shape)",
+      "component": "cmds",
+      "acs": [
+        "AC-008"
+      ],
+      "write_set": [
+        ".claude/commands/grant-push.md"
+      ],
+      "read_set": [
+        ".claude/commands/grant-commit.md"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-003",
+      "title": "Add git.protected_branches + git.branch_pattern + consent.push_ttl_seconds to project.json",
+      "component": "pj",
+      "acs": [
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/project.json"
+      ],
+      "read_set": [],
+      "depends_on": []
+    },
+    {
+      "id": "T-004",
+      "title": "Mirror project.json schema additions in src/project.template.json (preserve configured=false invariant)",
+      "component": "docs",
+      "acs": [
+        "AC-019"
+      ],
+      "write_set": [
+        "src/project.template.json"
+      ],
+      "read_set": [
+        "src/project.template.json"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "T-005",
+      "title": "Port consent_gate_grant from .sh to .mjs; add /grant-push handler",
+      "component": "grant_js",
+      "acs": [
+        "AC-008"
+      ],
+      "write_set": [
+        ".claude/hooks/consent_gate_grant.mjs",
+        ".claude/hooks/consent_gate_grant.sh"
+      ],
+      "read_set": [
+        ".claude/hooks/consent_gate_grant.sh",
+        ".claude/hooks/lib/common.mjs",
+        ".claude/project.json"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-003"
+      ]
+    },
+    {
+      "id": "T-006",
+      "title": "Port git_commit_guard from .sh to .mjs; implement branch policy + push consent gate",
+      "component": "guard_js",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-009",
+        "AC-010"
+      ],
+      "write_set": [
+        ".claude/hooks/git_commit_guard.mjs",
+        ".claude/hooks/git_commit_guard.sh"
+      ],
+      "read_set": [
+        ".claude/hooks/git_commit_guard.sh",
+        ".claude/hooks/lib/common.mjs",
+        ".claude/project.json"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-003"
+      ]
+    },
+    {
+      "id": "T-007",
+      "title": "Rewire settings.json + src mirror: two ported hooks now invoked via `node`",
+      "component": "settings",
+      "acs": [
+        "AC-013"
+      ],
+      "write_set": [
+        ".claude/settings.json",
+        "src/settings.template.json"
+      ],
+      "read_set": [
+        ".claude/settings.json",
+        "src/settings.template.json"
+      ],
+      "depends_on": [
+        "T-005",
+        "T-006"
+      ]
+    },
+    {
+      "id": "T-008",
+      "title": "Write branch-aware-git-policy.test.mjs (\u00a7Behavior #1-#6); extend template-drift with section-scoped seed.md check; remove old regex test",
+      "component": "tests",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011",
+        "AC-012",
+        "AC-019",
+        "AC-020"
+      ],
+      "write_set": [
+        "tests/branch-aware-git-policy.test.mjs",
+        "tests/git-commit-guard-regex.test.mjs",
+        "tests/template-drift.test.mjs"
+      ],
+      "read_set": [
+        ".claude/hooks/git_commit_guard.mjs",
+        ".claude/hooks/consent_gate_grant.mjs",
+        ".claude/hooks/lib/common.mjs",
+        "tests/git-commit-guard-regex.test.mjs",
+        "tests/template-drift.test.mjs",
+        "src/seed.template.md",
+        "docs/init/seed.md"
+      ],
+      "depends_on": [
+        "T-005",
+        "T-006"
+      ]
+    },
+    {
+      "id": "T-009",
+      "title": "Update audit-baseline: tolerate .sh + .mjs hooks; add grant-push to EXPECTED_COMMANDS; add 3 expected_paths rows; bump cmds_claimed regex",
+      "component": "audit",
+      "acs": [
+        "AC-015",
+        "AC-016"
+      ],
+      "write_set": [
+        ".claude/skills/audit-baseline/audit.sh"
+      ],
+      "read_set": [
+        ".claude/commands/grant-push.md",
+        ".claude/project.json"
+      ],
+      "depends_on": [
+        "T-002",
+        "T-003"
+      ]
+    },
+    {
+      "id": "T-010",
+      "title": "CLAUDE.md + src mirror: Articles IV, VII, VIII reflect branch-aware policy + /grant-push",
+      "component": "docs",
+      "acs": [
+        "AC-017",
+        "AC-019"
+      ],
+      "write_set": [
+        "CLAUDE.md",
+        "src/CLAUDE.template.md"
+      ],
+      "read_set": [
+        "CLAUDE.md",
+        "src/CLAUDE.template.md",
+        "docs/specs/branch-aware-git-policy.md"
+      ],
+      "depends_on": [
+        "T-007",
+        "T-009"
+      ]
+    },
+    {
+      "id": "T-011",
+      "title": "seed.md + src mirror: \u00a74 hook/command/state tables, \u00a76 consent model, \u00a711 git rules, \u00a713 smoke tests",
+      "component": "docs",
+      "acs": [
+        "AC-018",
+        "AC-019"
+      ],
+      "write_set": [
+        "docs/init/seed.md",
+        "src/seed.template.md"
+      ],
+      "read_set": [
+        "docs/init/seed.md",
+        "src/seed.template.md",
+        "docs/specs/branch-aware-git-policy.md"
+      ],
+      "depends_on": [
+        "T-007",
+        "T-009"
+      ]
+    }
+  ],
+  "waves": [
+    [
+      "T-001",
+      "T-002",
+      "T-003",
+      "T-004"
+    ],
+    [
+      "T-005",
+      "T-006",
+      "T-009"
+    ],
+    [
+      "T-007",
+      "T-008"
+    ],
+    [
+      "T-010",
+      "T-011"
+    ]
+  ],
+  "notes": [
+    "AC-021 (Q-004 memory closure in .claude/memory/pending-questions.md) is intentionally NOT in any swarm task \u2014 per spec, it's a document-phase action with no runtime contract. Handled by /document.",
+    "T-005 and T-006 declare both the new .mjs and the old .sh in write_set so each worker can delete its old bash version atomically with the port. Same for T-008 with the old regex test file.",
+    "T-005 and T-006 explicitly depend on T-003 (project.json schema). T-003 is already in W1, so adding the dep does not change wave layout but makes the plan robust to replanning. T-006's implementation must still handle absent-key as null per AC-011.",
+    "T-008 owns tests/template-drift.test.mjs as well as the new policy test file. Section-scoped check verifies src/seed.template.md mirrors docs/init/seed.md outside the \u00a716 reservation (covers AC-019 seed-side mechanically rather than human-reviewed).",
+    "Dispatch runs in SHARED isolation mode. The wave structure has provably disjoint write_sets within each wave (validator-checked); swarm_boundary_guard enforces write-set discipline at the hook layer in lieu of worktree merge-audit. Also: project.json swarm.refuse_dirty_tree toggled to false because the workflow accumulates artifacts (intake/scout/research/spec) that are uncommitted by design until gate C. Both toggles are durable changes consistent with how the baseline actually operates mid-workflow."
+  ],
+  "validated_at": 1778847716
+}

@@ -1,6 +1,6 @@
 {
   "hooks": {
-    "total": 21
+    "total": 22
   },
   "skills": {
     "total": 36,
@@ -22,9 +22,11 @@
     "total": 1,
     "totalWord": "one"
   },
-  "commands": 4,
+  "commands": 5,
   "phases": 11,
-  "gates": 3,
+  "gates": 4,
+  "phaseGates": 3,
+  "runtimeGates": 1,
   "mcpServersWord": "three",
   "size": {
     "unpacked": "1.5 MB",

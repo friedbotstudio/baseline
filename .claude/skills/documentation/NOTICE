@@ -1,0 +1,22 @@
+documentation
+=============
+
+This skill is vendored from the `claude-code-setup` plugin published by
+Anthropic and is redistributed here under the terms of the Apache License,
+Version 2.0 (see LICENSE in this directory).
+
+Upstream:
+  Plugin name:    claude-code-setup
+  Author:         Anthropic <support@anthropic.com>
+  Skill:          documentation/
+
+Vendored into:  .claude/skills/documentation/
+Vendored on:    2026-05-15 (this commit) — prior install date unknown; LICENSE
+                + NOTICE added retroactively as part of the licensing-attribution
+                drift fix in the branch-aware-git-policy workflow.
+
+Local changes:
+  - Frontmatter `owner: baseline` added so the audit-baseline drift check
+    tracks this file as a shipped baseline artifact. The Apache 2.0 license
+    permits redistribution under attribution; this NOTICE file fulfills the
+    notice-preservation requirement.

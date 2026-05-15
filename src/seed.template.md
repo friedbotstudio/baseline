@@ -11,7 +11,7 @@
 
 **Mandatory binding language.** Each numbered section (§) below specifies a binding requirement for the baseline. Implementations SHALL conform; `CLAUDE.md` Articles SHALL reference the corresponding §; project amendments (per `CLAUDE.md` Art. X) SHALL NOT contradict any § here.
 
-The baseline turns soft engineering rules (no unauthorized commits, no stubs, no mocks of internal code, no self-approved specs) into structural guarantees enforced by write-boundary hooks. Eleven workflow phases plus one stripped-down chore track (skips TDD; runs verify + archive mandatorily, simplify/integrate/document conditionally), seventeen write/run-boundary guards plus four lifecycle hooks plus one input-boundary hook (twenty-two `.sh` scripts total), thirty-six skills, one subagent, and three consent gates. Decisions live in main context; the lone subagent (`swarm-worker`) executes pre-decided recipes in parallel worktrees during `/swarm-dispatch`. Every artifact is archived; every third-party API is looked up against live docs. Project memory accumulates across sessions in `.claude/memory/` — auto-extracted by a Stop hook, curated in main context via `/memory-flush`, self-healing via re-verification.
+The baseline turns soft engineering rules (no unauthorized commits, no stubs, no mocks of internal code, no self-approved specs) into structural guarantees enforced by write-boundary hooks. Eleven workflow phases plus one stripped-down chore track (skips TDD; runs verify + archive mandatorily, simplify/integrate/document conditionally), seventeen write/run-boundary guards plus four lifecycle hooks plus one input-boundary hook (twenty-two hook scripts total — twenty `.sh` + two `.mjs` after the JS-port pilot), thirty-six skills, one subagent, and four consent gates. Decisions live in main context; the lone subagent (`swarm-worker`) executes pre-decided recipes in parallel worktrees during `/swarm-dispatch`. Every artifact is archived; every third-party API is looked up against live docs. Project memory accumulates across sessions in `.claude/memory/` — auto-extracted by a Stop hook, curated in main context via `/memory-flush`, self-healing via re-verification.
 
 ---
 
@@ -109,7 +109,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── hooks/                  # 22 hook scripts: 17 write/run-boundary guards + 4 lifecycle hooks + 1 input-boundary hook (bash + python3, no jq)
 │   │   └── lib/common.sh       # shared helpers
 │   ├── agents/                 # 1 subagent: swarm-worker (rendered from src/agents/swarm-worker.template.md)
-│   ├── commands/               # 4 consent/bootstrap gates (user-only — structurally)
+│   ├── commands/               # 5 consent/bootstrap gates (user-only — structurally)
 │   ├── skills/                 # 36 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + shared globals (7) + audit (1) + alt tracks (1)
 │   ├── memory/                 # project memory: 6 canonical files + _pending.md (gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
@@ -140,13 +140,13 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 
 Each is an independent bash script that reads a JSON payload on stdin and emits a structured decision. Ordering within a `matcher` block matters only when one hook's decision should take precedence. The four lifecycle hooks (`memory_session_start`, `memory_stop`, `memory_pre_compact`, `harness_continuation`) are best-effort and never block; they maintain project memory, the cross-session resume snapshot, and the harness auto-continuation signal (`harness_continuation` reads `.claude/state/harness_state` on every Stop event and emits a `decision:block` directive when the harness has left `state: "continue"` AND the session-scoped marker `.claude/state/.harness_active` exists, so the next phase fires on the same turn; `memory_session_start` deletes that marker at every session boundary so yesterday's `continue` never ghost-resumes today).
 
-The single input-boundary hook (`consent_gate_grant`, on `UserPromptSubmit`) runs **before** Claude is invoked on every user turn. When the user types one of the three consent-gate slash commands (`/approve-spec <slug|path>`, `/approve-swarm <slug>`, `/grant-commit [note]`), this hook parses the prompt and writes a short-lived consent marker to `.claude/state/.<gate>_grant`. The PreToolUse approval guards (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) read these markers as the structural source of consent: a Claude write to an approval token is allowed only when a fresh, slug-matched marker is on disk; the marker is single-use (deleted on the allowed write) and expires after `consent.gate_marker_ttl_seconds` (default 120). Slug derivation is centralized in `lib/common.sh → canonical_slug` (strip directory prefix + trailing `.md`) so the marker and the expected slug always agree — `docs/specs/foo.md`, `foo.md`, and `foo` all reduce to the bare slug `foo`. This is what makes Article IV's gates structurally un-invokable by Claude — Claude cannot reach the UserPromptSubmit code path, and the PreToolUse guards block Claude from writing the markers themselves.
+The single input-boundary hook (`consent_gate_grant`, on `UserPromptSubmit`) runs **before** Claude is invoked on every user turn. When the user types one of the four consent-gate slash commands (`/approve-spec <slug|path>`, `/approve-swarm <slug>`, `/grant-commit [note]`, `/grant-push [note]`), this hook parses the prompt and writes a short-lived consent marker to `.claude/state/.<gate>_grant`. The PreToolUse approval guards (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) read these markers as the structural source of consent: a Claude write to an approval token is allowed only when a fresh, slug-matched marker is on disk; the marker is single-use (deleted on the allowed write) and expires after `consent.gate_marker_ttl_seconds` (default 120). Slug derivation is centralized in `lib/common.sh → canonical_slug` (strip directory prefix + trailing `.md`) so the marker and the expected slug always agree — `docs/specs/foo.md`, `foo.md`, and `foo` all reduce to the bare slug `foo`. This is what makes Article IV's gates structurally un-invokable by Claude — Claude cannot reach the UserPromptSubmit code path, and the PreToolUse guards block Claude from writing the markers themselves.
 
 | Hook | Event / matcher | Enforces |
 |---|---|---|
 | `setup_guard` | PreToolUse / Write\|Edit\|MultiEdit\|NotebookEdit | Advisory. When `configured: false`, emits a one-shot reminder (rate-limited to 10 minutes) that the baseline is in project-agnostic mode and `/init-project` hasn't run. Does not block writes — bypass is intentional. The user gets baseline-only behaviour (test/lint runners in guide mode, no stack-specific tailoring) until `/init-project` runs. |
 | `destructive_cmd_guard` | PreToolUse / Bash | Hard-blocks catastrophic commands (`rm -rf /`, fork bombs, `dd of=/dev/sd*`, `mkfs`, `shutdown`). Asks on risky ones (`rm -rf <path>`, `git reset --hard`, `drop table`). Patterns sourced from `project.json → destructive`. |
-| `git_commit_guard` | PreToolUse / Bash + Write\|Edit\|MultiEdit | Bash matcher: requires fresh consent (`/grant-commit`, 5-minute TTL) for `git commit`. Hard-blocks `git push`, `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`, `git config`, `git rebase -i`, `git add -A`, `git add .`. Write matcher: blocks Claude from writing `.claude/state/.commit_consent_grant` (the marker — only `consent_gate_grant` may write it) and gates writes to `.claude/state/commit_consent` on a fresh marker. |
+| `git_commit_guard` | PreToolUse / Bash + Write\|Edit\|MultiEdit | Bash matcher: enforces branch-aware policy. `git commit` on a protected branch (per `project.json → git.protected_branches` glob list; `null` = all branches protected) requires fresh `commit_consent` (`/grant-commit`, 5-min TTL); `git push` on a protected branch requires fresh `push_consent` (`/grant-push`, 5-min TTL); both proceed without consent on non-protected branches. `git.branch_pattern` regex (optional) gates commits on naming. Detached HEAD denies both. Hard-blocks remaining forbidden flags: `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`, `git config`, `git rebase -i`, `git add -A`, `git add .`. Write matcher: blocks Claude from writing `.claude/state/.commit_consent_grant` / `.push_consent_grant` (markers — only `consent_gate_grant` writes those) and gates writes to `.claude/state/commit_consent` / `push_consent` on a fresh marker. Implemented in `.claude/hooks/git_commit_guard.mjs` (Node ESM; JS-port pilot). |
 | `env_guard` | PreToolUse / Write\|Edit\|MultiEdit\|NotebookEdit | Blocks writes to `.env*`. Allows obvious templates (`.env.example`, `.env.sample`). |
 | `spec_approval_guard` | PreToolUse / Write\|Edit\|MultiEdit | Validates a fresh `.claude/state/.spec_approval_grant` marker (slug-matched, ≤ `consent.gate_marker_ttl_seconds`) before allowing Claude to write under `.claude/state/spec_approvals/`. Blocks Claude from writing the marker file itself. Blocks `Status: Approved` / `Approved: true` lines in spec markdown. |
 | `swarm_approval_guard` | PreToolUse / Write\|Edit\|MultiEdit | Symmetric to `spec_approval_guard` for gate B: validates `.claude/state/.swarm_approval_grant` before allowing writes under `.claude/state/swarm_approvals/`. Blocks Claude from writing the marker. |
@@ -165,7 +165,7 @@ The single input-boundary hook (`consent_gate_grant`, on `UserPromptSubmit`) run
 | `memory_stop` | Stop | At end of every assistant turn, reads the transcript, extracts memory candidates (touched source paths → landmarks; context7 queries → libraries), appends to `.claude/memory/_pending.md`, and refreshes `.claude/memory/_resume.md` for next session. Passive collector — never writes to canonical memory files. |
 | `memory_pre_compact` | PreCompact (manual\|auto) | Fires before context compaction. Walks the still-intact transcript and writes `.claude/memory/_resume.md` so the next `SessionStart` (source: `compact`) can re-inject the snapshot. Best-effort; never blocks compaction. |
 | `harness_continuation` | Stop | Auto-continues multi-phase workflows across non-gated boundaries. Reads `.claude/state/harness_state` (written by the harness skill on every tick) and `.claude/state/.harness_active` (session-scoped marker; created by the harness skill on `state: "continue"`, deleted on `yielded`/`done`, cleaned unconditionally by `memory_session_start.sh` on session boundary). Three-rung gate — all must pass to emit a decision: (1) `stop_hook_active` flag absent on payload; (2) `.harness_active` marker exists; (3) `harness_state.state` equals `"continue"`. When all pass, emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` so the model resumes the harness on the same turn. Sanity rail: if the marker's slug content disagrees with `workflow.json → slug`, log one `WARN` line to `harness_continuation.log`; mismatch does not change the decision. Silent on any rung fail (`yielded`/`done`/missing marker/missing state/malformed). Treats every internal error as silence. Never writes consent markers; never bypasses Article IV gates. |
-| `consent_gate_grant` | UserPromptSubmit | Runs **before** Claude is invoked on every user turn. Detects the three consent-gate slash commands (`/approve-spec <slug\|path>`, `/approve-swarm <slug>`, `/grant-commit [note]`) at the start of the user's prompt and writes a short-lived consent marker (`.claude/state/.spec_approval_grant`, `.swarm_approval_grant`, or `.commit_consent_grant`). Slugs are canonicalized through `canonical_slug` (strip directory + trailing `.md`) so the marker matches whatever shape the approval guards derive from the approval filename. The marker is single-use and expires after `consent.gate_marker_ttl_seconds` (default 120). Because this hook fires outside Claude's tool boundary, Claude cannot reach this code path — the marker is structurally unforgeable by the model. |
+| `consent_gate_grant` | UserPromptSubmit | Runs **before** Claude is invoked on every user turn. Detects the four consent-gate slash commands (`/approve-spec <slug\|path>`, `/approve-swarm <slug>`, `/grant-commit [note]`, `/grant-push [note]`) at the start of the user's prompt and writes a short-lived consent marker (`.claude/state/.spec_approval_grant`, `.swarm_approval_grant`, `.commit_consent_grant`, or `.push_consent_grant`). Slugs are canonicalized through `canonicalSlug` (strip directory + trailing `.md`) so the marker matches whatever shape the approval guards derive from the approval filename. The marker is single-use and expires after `consent.gate_marker_ttl_seconds` (default 120). Because this hook fires outside Claude's tool boundary, Claude cannot reach this code path — the marker is structurally unforgeable by the model. Implemented in `.claude/hooks/consent_gate_grant.mjs` (Node ESM; JS-port pilot). |
 
 All hooks source `.claude/hooks/lib/common.sh` for payload parsing, project-config reads, and decision emitters (`emit_allow`, `emit_block`, `emit_ask`, `emit_info`).
 
@@ -228,13 +228,15 @@ Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, pl
 
 **Shared globals (7)** — skills the baseline *uses* heavily; vendored into `.claude/skills/` so they travel with the repo and have no external runtime dependency:
 
-- `claude-automation-recommender` — Apache-2.0 vendored from upstream `claude-code-setup` plugin (Anthropic). Mandatory first step (§0); analyzes a target project and surfaces stack-specific tweaks for `/init-project`. License + attribution: `.claude/skills/claude-automation-recommender/{LICENSE,NOTICE}`.
-- `code-structure` — MANDATORY on every code-generation step. Language-agnostic three-layer model (Orchestration / Domain / Foundation). See §2.6.
-- `humanizer` — strips AI-writing tells (em-dash overuse, rule of three, inflated symbolism, AI vocabulary, superficial -ing, filler, hedging). Invoked by `prose` on every draft.
-- `documentation` — technical reference writing (API docs, architecture, runbooks). Delegate target from `/document`.
-- `technical-tutorials` — step-by-step / quickstart / walkthrough. Delegate target from `/document`. Audience-context shape lives in this skill's `references/audience-context.md` (consolidated from the upstream `developer-audience-context` skill on 2026-04-28).
-- `copywriting` — persuasive user-facing copy (landing, pricing, feature, hero, CTA). Invoked by `prose` when register is persuasive.
-- `impeccable` — production-grade frontend interface design. Loads `PRODUCT.md` / `DESIGN.md`, picks register (brand vs. product), applies shared design laws (OKLCH color, typography rhythm, layout cadence, motion tied to physics, copy with specificity). Vendored (Apache 2.0); stays untouched per Article IX. Inside workflow phases, `design-ui` orchestrates `impeccable` (per Article X.2) — every UI design move is an `impeccable` subcommand invocation chosen and run from main context.
+Each vendored shared global ships with its own `LICENSE` + `NOTICE` alongside the skill, recording the upstream URL and any local changes:
+
+- `claude-automation-recommender` — Apache 2.0, vendored from Anthropic's `claude-code-setup` plugin. Mandatory first step (§0); analyzes a target project and surfaces stack-specific tweaks for `/init-project`.
+- `code-structure` — MANDATORY on every code-generation step. Written for this baseline (Friedbot Studio); the repo license applies. Language-agnostic three-layer model (Orchestration / Domain / Foundation). See §2.6.
+- `humanizer` — MIT, vendored from [`blader/humanizer`](https://github.com/blader/humanizer). Strips AI-writing tells (em-dash overuse, rule of three, inflated symbolism, AI vocabulary, superficial -ing, filler, hedging). Invoked by `prose` on every draft.
+- `documentation` — Apache 2.0, vendored from Anthropic's `claude-code-setup` plugin. Technical reference writing (API docs, architecture, runbooks). Delegate target from `/document`.
+- `technical-tutorials` — MIT, vendored from [`jonathimer/devmarketing-skills`](https://github.com/jonathimer/devmarketing-skills). Step-by-step / quickstart / walkthrough. Delegate target from `/document`. Audience-context shape lives in this skill's `references/audience-context.md` (consolidated from the upstream `developer-audience-context` skill on 2026-04-28).
+- `copywriting` — MIT, vendored from [`coreyhaines31/marketingskills`](https://github.com/coreyhaines31/marketingskills). Persuasive user-facing copy (landing, pricing, feature, hero, CTA). Invoked by `prose` when register is persuasive.
+- `impeccable` — Apache 2.0, vendored from [`pbakaus/impeccable`](https://github.com/pbakaus/impeccable). Production-grade frontend interface design. Loads `PRODUCT.md` / `DESIGN.md`, picks register (brand vs. product), applies shared design laws (OKLCH color, typography rhythm, layout cadence, motion tied to physics, copy with specificity). Stays untouched per Article IX. Inside workflow phases, `design-ui` orchestrates `impeccable` (per Article X.2) — every UI design move is an `impeccable` subcommand invocation chosen and run from main context.
 
 **Drift defender (1)**:
 
@@ -252,10 +254,11 @@ Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly on
 |---|---|
 | `approve-spec` | Human approval of a spec draft. Accepts a bare slug, a filename, or a full path; canonicalizes via `lib/common.sh → canonical_slug` and writes `.claude/state/spec_approvals/<slug>.approval`. Only sanctioned path — `spec_approval_guard` blocks all other routes. |
 | `approve-swarm` | Human approval of a swarm plan. Writes `.claude/state/swarm_approvals/<slug>.approval`. Required before `swarm-dispatch` runs. |
-| `grant-commit` | Opens a 5-minute consent window for `git commit`. Writes `.claude/state/commit_consent`. Enforced by `git_commit_guard`. |
+| `grant-commit` | Opens a 5-minute consent window for `git commit` on a protected branch. Writes `.claude/state/commit_consent`. Enforced by `git_commit_guard`. |
+| `grant-push` | Opens a 5-minute consent window for `git push` on a protected branch. Writes `.claude/state/push_consent`. Enforced by `git_commit_guard`. Not a workflow-phase gate — a runtime consent for the branch-aware policy (§11). |
 | `init-project` | One-time bootstrap. Detects stack, proposes `.claude/project.json` (test cmd, lint cmd, TDD globs, destructive patterns, artifact required sections, swarm config). Flips `configured: true`. |
 
-**Adding a fifth command requires answering yes to both:** "does a human need to press this?" and "is 'user-only via frontmatter flag' too weak a guarantee?" Otherwise make it a skill.
+**Adding a sixth command requires answering yes to both:** "does a human need to press this?" and "is 'user-only via frontmatter flag' too weak a guarantee?" Otherwise make it a skill.
 
 ### §4.5 MCP servers (3)
 
@@ -273,6 +276,7 @@ Runtime-only; gitignore or keep out of commits per project policy.
 |---|---|---|
 | `workflow.json` | `/triage` | `track_guard`, every phase skill, `/harness` |
 | `commit_consent` | `/grant-commit` | `git_commit_guard` |
+| `push_consent` | `/grant-push` | `git_commit_guard` |
 | `spec_approvals/<slug>.approval` | `/approve-spec` | `tdd`, `swarm-plan`, `/harness` |
 | `swarm_approvals/<slug>.approval` | `/approve-swarm` | `swarm-dispatch`, `/harness` |
 | `swarm/<slug>.json` | `swarm-plan` | `swarm-dispatch`, `swarm_merge.sh` |
@@ -332,14 +336,15 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 
 ## §6 — Consent model
 
-**Three consent gates + one bootstrap gate.** All are slash commands, not skills. Commands live in `.claude/commands/`; Claude cannot invoke them via the Skill tool. The guarantee is structural (file location), not flag-based.
+**Four consent gates + one bootstrap gate.** All are slash commands, not skills. Commands live in `.claude/commands/`; Claude cannot invoke them via the Skill tool. The guarantee is structural (file location), not flag-based. Three of the four gates are workflow-phase gates (A: `/approve-spec`, B: `/approve-swarm`, C: `/grant-commit`); the fourth (`/grant-push`) is a Bash-time consent for the branch-aware push policy in §11.
 
 | Gate | When it fires | Unlocks |
 |---|---|---|
 | `/init-project` | Once per repo, before any work | Flips `configured: true`; silences the `setup_guard` advisory and lets `test_runner` / `lint_runner` move out of guide mode |
 | `/approve-spec <path>` | After `/spec` produces a draft | Writes approval token; downstream phases proceed |
 | `/approve-swarm <slug>` | After `/swarm-plan` produces a plan | Writes approval token; `swarm-dispatch` may run |
-| `/grant-commit` | Before `/commit` | Writes 5-min consent token; `git_commit_guard` allows next commit |
+| `/grant-commit` | Before `/commit` | Writes 5-min consent token; `git_commit_guard` allows next commit on a protected branch |
+| `/grant-push` | Before `git push` on a protected branch | Writes 5-min consent token; `git_commit_guard` allows next push on a protected branch (non-protected branches need no consent) |
 
 Harness yields at each gate. User re-invokes `/harness` to resume.
 
@@ -461,13 +466,20 @@ Claude may run `git add <named paths>` and `git commit` only when the user has a
 
 The following are forbidden unless the user names the exact operation in their current request:
 
-- `git push` (any remote, any branch), `git push --force`, `--force-with-lease`.
+- `git push --force`, `--force-with-lease` (the bare `git push` is governed by the branch-aware policy below, not by this list).
 - `git commit --amend` — always create a new commit.
 - `--no-verify`, `--no-gpg-sign`, or any flag that skips hooks/signing.
 - `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`.
 - `git config` changes.
 - `git rebase -i`, `git add -i` (interactive).
 - `git add -A`, `git add .` — name the paths to avoid sweeping in secrets or unrelated dirty files.
+
+**Branch-aware consent policy.** `git_commit_guard` reads the current branch via `git rev-parse --abbrev-ref HEAD` on every `git commit` / `git push` invocation and routes per:
+
+- `project.json → git.protected_branches` — glob list. `null` (default) means every branch is protected. Set e.g. `["main", "release/*"]` to limit consent enforcement.
+- `project.json → git.branch_pattern` — regex, optional. When set, commits on off-pattern branches are denied with the pattern surfaced in the error.
+
+On a **protected branch**, commit requires fresh `commit_consent` (`/grant-commit`), push requires fresh `push_consent` (`/grant-push`). On a non-protected branch, both proceed without consent. **Detached HEAD** (`git rev-parse` returns the literal `HEAD`) denies both — branch-aware policy needs a named branch.
 
 `git_commit_guard` enforces these; bypassing requires editing the hook, which is itself a visible change.
 
@@ -525,8 +537,9 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 1. `/triage "<test request>"` → writes `workflow.json`.
 2. Write a spec at `docs/specs/test.md` with all 6 diagrams → `spec_diagram_presence_guard` + `plantuml_syntax_guard` allow.
 3. Write a spec missing a diagram → guard denies with named missing kinds.
-4. Attempt `git commit` without `/grant-commit` → `git_commit_guard` denies.
-5. Attempt `git push` → hard-blocked regardless of consent.
+4. Attempt `git commit` on a protected branch without `/grant-commit` → `git_commit_guard` denies.
+5. Attempt `git push` on a protected branch without `/grant-push` → denied. Same `git push` on a non-protected branch (when `git.protected_branches` is set to e.g. `["main"]` and current branch is `feat/foo`) → allowed without consent.
+6. Attempt `git commit` or `git push` while detached (`git checkout <sha>`) → denied with explicit "Detached HEAD" message.
 
 ---
 

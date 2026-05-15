@@ -243,7 +243,7 @@ For headlines and CTAs, provide 2-3 options:
 
 ## Related Skills
 
-These five are upstream companion skills (from the `claude-code-setup` plugin family) and **do not ship with this baseline**. Listed for reference only — for the capabilities they describe, ask the user inline or install the plugin separately.
+These five are upstream companion skills from the same source repo as `copywriting` ([`coreyhaines31/marketingskills`](https://github.com/coreyhaines31/marketingskills)) and **do not ship with this baseline**. Listed for reference only — for the capabilities they describe, ask the user inline or vendor them separately following the same MIT terms.
 
 - **copy-editing**: For polishing existing copy (use after your draft)
 - **page-cro**: If page structure/strategy needs work, not just copy

@@ -6,7 +6,7 @@
 #   1. Approval artifacts (.claude/state/spec_approvals/*.approval) — only
 #      writable when a fresh slug-matched consent marker exists at
 #      .claude/state/.spec_approval_grant. The marker is written by
-#      consent_gate_grant.sh on /approve-spec invocation, OUTSIDE Claude's
+#      consent_gate_grant.mjs on /approve-spec invocation, OUTSIDE Claude's
 #      tool boundary. Validated and consumed via validate_consent_marker.
 #
 #   2. The marker file itself — Claude SHALL NEVER write it via tool. The

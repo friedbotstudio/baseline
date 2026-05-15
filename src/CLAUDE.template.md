@@ -77,7 +77,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - The only mechanism to bypass a phase is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage`.
 - **Phase 6c and Phase 11 are git-conditional.** On a project where `git rev-parse --is-inside-work-tree` exits non-zero (no `.git/`, not inside a work tree), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`. Phase 6 routes to solo `/tdd` unconditionally; the workflow ends after `/archive`. Worktree isolation (the swarm contract's physical safety mechanism) requires git; `swarm.isolation: "shared"` is a sanctioned configuration knob for git projects that opt out of worktrees but does NOT restore the cross-task write isolation the swarm-worker assumes — it is unsafe as a non-git fallback, especially when `swarm.exempt_path_prefixes` covers baseline-internal paths (e.g. `.claude/`). Persistence outside git is the user's responsibility. See Article VII for the matching rule on git operations.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
-- **How the gates are structurally enforced.** Each consent command (`/approve-spec`, `/approve-swarm`, `/grant-commit`) is a slash command typed by the user. The `consent_gate_grant` UserPromptSubmit hook (Art. VIII) parses the user's prompt **before Claude is invoked** and writes a short-lived consent marker at `.claude/state/.<gate>_grant`. The corresponding PreToolUse approval guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) then allows Claude's slash-command-body write of the approval token only when the marker is present, fresh (≤ `consent.gate_marker_ttl_seconds`, default 120), and slug-matched; the marker is single-use and deleted on the allowed write. Slug derivation is centralized in `lib/common.sh → canonical_slug` (strip directory prefix + trailing `.md`) so the marker and the expected slug always agree, whether the user typed a bare slug, a filename, or a full path. The same guards block Claude from writing the marker file itself via Write/Edit/MultiEdit. Claude cannot reach the UserPromptSubmit code path, so it cannot forge consent.
+- **How the gates are structurally enforced.** Each consent command (`/approve-spec`, `/approve-swarm`, `/grant-commit`, `/grant-push`) is a slash command typed by the user. The `consent_gate_grant` UserPromptSubmit hook (Art. VIII) parses the user's prompt **before Claude is invoked** and writes a short-lived consent marker at `.claude/state/.<gate>_grant`. The corresponding PreToolUse approval guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) then allows Claude's slash-command-body write of the approval token only when the marker is present, fresh (≤ `consent.gate_marker_ttl_seconds`, default 120), and slug-matched; the marker is single-use and deleted on the allowed write. `/grant-push` is **not** a workflow-phase gate — it is a Bash-time consent for push to a protected branch (see Article VII). Slug derivation is centralized in `lib/common.sh → canonical_slug` (strip directory prefix + trailing `.md`) so the marker and the expected slug always agree, whether the user typed a bare slug, a filename, or a full path. The same guards block Claude from writing the marker file itself via Write/Edit/MultiEdit. Claude cannot reach the UserPromptSubmit code path, so it cannot forge consent.
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
 **Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`):
@@ -157,21 +157,25 @@ The following bind every code change.
 
 **Applicability.** Article VII applies only when the project is a git repository (`git rev-parse --is-inside-work-tree` exits 0 at the project root). On a non-git project, this Article is vacuously satisfied: you SHALL NOT attempt any git operation, gate C and the `commit` phase are auto-excepted at triage time (Art. IV), and the workflow ends after `/archive`. The rules below bind only inside the git-repository case.
 
-You SHALL run `git add <named paths>` and `git commit` only when **both** hold:
+**Branch-aware consent policy.** Consent enforcement for `git commit` and `git push` is driven by two `project.json` knobs:
 
-1. The user has explicitly asked for a commit in their current request; **and**
-2. A fresh `commit_consent` token exists at `.claude/state/commit_consent` (5-minute TTL, written by `/grant-commit`).
+- `git.protected_branches` — glob list. `null` (default) means every branch is protected. Set e.g. `["main", "release/*"]` to limit consent enforcement to those branches.
+- `git.branch_pattern` — regex. `null` (default) means no naming check. Set e.g. `"^(feat|fix|chore|docs)/[a-z0-9-]+$"` to require conformant branch names on commit.
 
-`git_commit_guard` (Art. VIII) enforces both conditions.
+On a **protected branch**, commits require a fresh `commit_consent` token (written by `/grant-commit`, 5-min TTL) and pushes require a fresh `push_consent` token (written by `/grant-push`, 5-min TTL) — both gated by the user having explicitly asked for the operation in their current request. On a non-protected branch, commits and pushes proceed without consent. `git_commit_guard` (Art. VIII) is the enforcer.
 
-You SHALL NEVER, unless the user names the exact operation in their current request:
+**Detached HEAD.** When the current branch resolves to the literal string `HEAD` (detached state), the guard denies both commit and push with an explicit message. Check out a named branch before attempting either — branch-aware policy needs a named branch to evaluate `git.protected_branches` and `git.branch_pattern`.
 
-- `git push`, `git push --force`, `--force-with-lease`
-- `git commit --amend` — always create a new commit
-- `--no-verify`, `--no-gpg-sign`, or any flag that skips hooks/signing
-- `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`
-- `git config`, `git rebase -i`, `git add -i`
-- `git add -A`, `git add .` — name the paths
+**Hard-blocks regardless of consent, branch, or user request.** These operations rewrite history, skip safety, or sweep paths; `git_commit_guard`'s `FORBIDDEN_RE` blocks them flat-out:
+
+- `git commit --amend` — always create a new commit.
+- `--no-verify`, `--no-gpg-sign`, or any flag that skips hooks/signing.
+- `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`.
+- `git config` changes.
+- `git rebase -i`, `git add -i` (interactive).
+- `git add -A`, `git add .` — name the paths.
+
+`git push` is no longer in this set — it is governed by the branch-aware policy above. `git push --force` and `--force-with-lease` are still forbidden unless the user names the exact operation in their current request, AND additionally subject to the branch-aware policy (force-push to a protected branch requires fresh `push_consent` plus the user-named carve-out).
 
 ## Article VIII — Hooks (the enforcement layer)
 
@@ -181,7 +185,7 @@ The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 |---|---|---|---|
 | `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited 10 min). Does **not** block. |
 | `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask risky |
-| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Bash: require fresh consent for `git commit`; hard-block forbidden flags. Write: gate writes to `.claude/state/commit_consent` and the `.commit_consent_grant` marker |
+| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Bash: enforce branch-aware policy — `git commit` on a protected branch requires fresh `commit_consent`; `git push` on a protected branch requires fresh `push_consent`; both proceed without consent on non-protected branches; off-`branch_pattern` branches deny commits; detached HEAD denies both. Hard-block remaining forbidden flags (--amend, --no-verify, reset --hard, etc.). Write: gate writes to `.claude/state/{commit,push}_consent` and the matching `.{commit,push}_consent_grant` markers. |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
 | `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Validate fresh `.spec_approval_grant` marker before allowing approval-token writes; block self-approval inside spec markdown; block direct writes to the marker |
 | `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Validate fresh `.swarm_approval_grant` marker before allowing swarm-approval writes; block direct writes to the marker |
@@ -200,7 +204,7 @@ The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `memory_stop` | Stop | Art. IX | Auto-extract memory candidates each turn-end |
 | `harness_continuation` | Stop | Art. V | Three-rung gate: (1) `stop_hook_active` absent on payload; (2) `.claude/state/.harness_active` exists (session-scoped marker created by the harness skill on `continue`, deleted on `yielded`/`done`, cleaned by `memory_session_start.sh` on session boundary); (3) `harness_state.state == "continue"`. When all three pass, emits `{"decision":"block","reason":"…invoke Skill(harness)…"}`. Sanity rail: marker-slug-vs-`workflow.json`-slug mismatch logs WARN to `harness_continuation.log` without changing the decision. Silent on any rung fail. Never writes consent markers. |
 | `memory_pre_compact` | PreCompact | Art. IX | Capture resume snapshot before context compaction |
-| `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C | Detect `/approve-spec`/`/approve-swarm`/`/grant-commit` in user input and write the gate-specific consent marker — runs OUTSIDE Claude's tool boundary so Claude cannot forge it |
+| `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C, Art. VII | Detect `/approve-spec`/`/approve-swarm`/`/grant-commit`/`/grant-push` in user input and write the gate-specific consent marker — runs OUTSIDE Claude's tool boundary so Claude cannot forge it |
 
 ## Article IX — Project memory
 
@@ -288,11 +292,11 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 | `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Bash + python3, no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 36 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + shared globals (7) + audit (1) + alt tracks (1) |
-| `.claude/commands/` | 4 consent/bootstrap gates: `approve-spec`, `approve-swarm`, `grant-commit`, `init-project` |
+| `.claude/commands/` | 5 consent/bootstrap gates: `approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`, `init-project` |
 | `.claude/memory/` | 6 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
 | `.claude/settings.json` | hook wiring + permissions |
-| `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
+| `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
 | `.mcp.json` | three baseline MCP servers: `context7`, `plantuml`, `playwright` |
 | `src/` | pristine ship-time templates for every file `/init-project` modifies (overlay source for `npx @friedbotstudio/create-baseline`) |
 | `docs/init/seed.md` | genesis prompt — governing specification of the baseline |
@@ -317,8 +321,14 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 **Memory (1)**:
 - `memory-flush`
 
-**Shared globals (7)** — vendored / globally available:
-- `claude-automation-recommender` (Apache 2.0, vendored), `code-structure` (mandatory on all code), `humanizer`, `documentation`, `technical-tutorials`, `copywriting`, `impeccable`
+**Shared globals (7)** — one written for this baseline, six vendored from external sources with their upstream licenses preserved in `LICENSE` + `NOTICE` alongside each skill:
+- `claude-automation-recommender` — vendored from Anthropic's `claude-code-setup` plugin, Apache 2.0.
+- `code-structure` — written for this baseline (Friedbot Studio). Mandatory on every code-generation step.
+- `humanizer` — vendored from [`blader/humanizer`](https://github.com/blader/humanizer), MIT.
+- `documentation` — vendored from Anthropic's `claude-code-setup` plugin, Apache 2.0.
+- `technical-tutorials` — vendored from [`jonathimer/devmarketing-skills`](https://github.com/jonathimer/devmarketing-skills), MIT.
+- `copywriting` — vendored from [`coreyhaines31/marketingskills`](https://github.com/coreyhaines31/marketingskills), MIT.
+- `impeccable` — vendored from [`pbakaus/impeccable`](https://github.com/pbakaus/impeccable), Apache 2.0.
 
 **Audit (1)**:
 - `audit-baseline` — drift check between this constitution + seed.md and the implementation

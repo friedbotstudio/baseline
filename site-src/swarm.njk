@@ -59,7 +59,7 @@ toc:
   <p>Decomposes an approved spec into a dependency-ordered set of tasks. Each task has a name, a write set (the exact source paths it may touch), a behavior contract, and a wave assignment. Tasks in the same wave have disjoint write sets and can run in parallel. Tasks in later waves depend on earlier-wave output.</p>
 
   <h3 id="approve">/approve-swarm &lt;slug&gt;</h3>
-  <p>Consent gate B, the second of three gates in the workflow. The user types this command; Claude cannot invoke it. <code>consent_gate_grant</code> detects the command in the user's submission and writes a short-lived marker. <code>swarm_approval_guard</code> validates the marker before allowing the swarm-approval token to be written. Without a valid marker, the write is blocked.</p>
+  <p>Consent gate B, the second of three workflow-phase gates. The user types this command; Claude cannot invoke it. <code>consent_gate_grant</code> detects the command in the user's submission and writes a short-lived marker. <code>swarm_approval_guard</code> validates the marker before allowing the swarm-approval token to be written. Without a valid marker, the write is blocked.</p>
 
   <h3 id="dispatch">/swarm-dispatch</h3>
   <p>Executes the approved swarm plan wave by wave. For each wave, the main context decides each task's recipe and spawns <code>swarm-worker</code> instances in parallel, each running inside an isolated git worktree (or under <code>swarm_boundary_guard</code> enforcement in shared mode). After each wave, a merge audit verifies write-set discipline before changes land. Waves proceed in dependency order; a failed wave stops further dispatch.</p>

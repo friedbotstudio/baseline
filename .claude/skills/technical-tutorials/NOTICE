@@ -1,0 +1,23 @@
+technical-tutorials
+===================
+
+This skill is vendored from the `technical-tutorials` skill in the
+`devmarketing-skills` collection published by jonathimer and is redistributed
+here under the terms of the MIT License (see LICENSE in this directory).
+
+Upstream:
+  Repository: https://github.com/jonathimer/devmarketing-skills
+  Author:     jonathimer
+  Skill:      technical-tutorials/
+
+Vendored into:  .claude/skills/technical-tutorials/
+Vendored on:    2026-05-15 (this commit) — prior install date unknown; LICENSE
+                + NOTICE added retroactively as part of the licensing-attribution
+                drift fix in the branch-aware-git-policy workflow.
+
+Local changes:
+  - 2026-04-28: consolidated the upstream `developer-audience-context`
+    standalone skill into this skill's `references/audience-context.md`,
+    per the SKILL.md note in the body. No other behavior changes.
+  - Frontmatter `owner: baseline` added so the audit-baseline drift check
+    tracks this file as a shipped baseline artifact.

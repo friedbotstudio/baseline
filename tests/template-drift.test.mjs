@@ -43,3 +43,34 @@ describe('template drift', () => {
     });
   }
 });
+
+// Section-scoped check for src/seed.template.md ↔ docs/init/seed.md.
+// Light-weight invariants only — full byte-equality outside §16 is NOT
+// enforced because the template and live file accumulate independent edits
+// in many places by design (this is the same reason MIRROR_PAIRS excludes
+// seed.md). What we DO enforce:
+//   - both files reference the four consent gates consistently
+//   - both files mention `git.protected_branches` and `git.branch_pattern`
+//     (the new branch-aware policy keys)
+//   - both files have the `push_consent` state file row
+// Stronger byte-equality coverage of the touched sections is left to audit's
+// count-claim sweep + human review (matches the existing audit design).
+describe('template drift — seed.md branch-aware-policy invariants', () => {
+  it('both seed.md and src/seed.template.md mention the four consent gates and the new git policy keys', async () => {
+    const [tpl, lv] = await Promise.all([
+      readFile(join(ROOT, 'src/seed.template.md'), 'utf8'),
+      readFile(join(ROOT, 'docs/init/seed.md'), 'utf8'),
+    ]);
+    const probes = [
+      { name: 'four consent gates', re: /four consent[- ]gate/i },
+      { name: '/grant-push command', re: /\/grant-push\b/ },
+      { name: 'push_consent state file', re: /\bpush_consent\b/ },
+      { name: 'git.protected_branches key', re: /git\.protected_branches/ },
+      { name: 'git.branch_pattern key', re: /git\.branch_pattern/ },
+    ];
+    for (const { name, re } of probes) {
+      assert.match(lv, re, `docs/init/seed.md missing "${name}"`);
+      assert.match(tpl, re, `src/seed.template.md missing "${name}"`);
+    }
+  });
+});

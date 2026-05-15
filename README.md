@@ -148,13 +148,17 @@ cd ./your-project
 /harness
 ```
 
-The three consent gates pause the workflow until you type the corresponding command:
+The three workflow-phase consent gates pause the workflow until you type the corresponding command:
 
 - **`/approve-spec <slug>`** — after the spec phase, before any code is written
 - **`/approve-swarm <slug>`** — after `/swarm-plan`, before parallel dispatch
 - **`/grant-commit`** — after `/archive`, before the commit lands
 
-Each gate writes a short-lived consent marker via a UserPromptSubmit hook that runs *before* Claude is invoked on the body. Claude cannot forge the marker; the corresponding write-boundary guard validates it on disk before allowing the approval token through.
+A fourth consent gate sits outside the phase pipeline:
+
+- **`/grant-push`** — opens a 5-minute window for `git push` on a protected branch (per `project.json → git.protected_branches`). Pushes on non-protected branches need no consent.
+
+Each gate writes a short-lived consent marker via a UserPromptSubmit hook that runs *before* Claude is invoked on the body. Claude cannot forge the marker; the write-boundary guard validates it on disk before allowing the approval token through.
 
 ## How the enforcement works
 

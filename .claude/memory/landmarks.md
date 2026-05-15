@@ -70,19 +70,19 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-12
 - Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md.
 
-## .claude/hooks/consent_gate_grant.sh:1
+## .claude/hooks/consent_gate_grant.mjs:1
 
-- Role: UserPromptSubmit hook that parses `/approve-spec` / `/approve-swarm` / `/grant-commit` in the user's raw prompt **before Claude is invoked**, derives the canonical slug via `lib/common.sh → canonical_slug`, and writes a short-lived consent marker at `.claude/state/.<gate>_grant`. The corresponding PreToolUse approval guard (spec/swarm/commit) then allows Claude's approval-token write only when the marker is present, fresh (TTL = `consent.gate_marker_ttl_seconds`, default 120s), and slug-matched. Single-use; deleted on the allowed write.
+- Role: UserPromptSubmit hook that parses `/approve-spec` / `/approve-swarm` / `/grant-commit` / `/grant-push` in the user's raw prompt **before Claude is invoked**, derives the canonical slug via `lib/common.mjs → canonicalSlug`, and writes a short-lived consent marker at `.claude/state/.<gate>_grant`. The corresponding PreToolUse approval guard (spec/swarm/commit/push) then allows Claude's approval-token write only when the marker is present, fresh (TTL = `consent.gate_marker_ttl_seconds`, default 120s), and slug-matched. Single-use; deleted on the allowed write.
 - Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: this hook is what makes Article IV consent gates structurally un-forge-able. Runs OUTSIDE Claude's tool boundary — Claude cannot reach the UserPromptSubmit code path, so it cannot mint the marker. The matching write-time `.<gate>_grant` Write/Edit/MultiEdit block lives in each PreToolUse approval guard, not here.
+- Last-touched: 2026-05-15
+- Caveat: this hook is what makes Article IV consent gates structurally un-forge-able. Runs OUTSIDE Claude's tool boundary — Claude cannot reach the UserPromptSubmit code path, so it cannot mint the marker. The matching write-time `.<gate>_grant` Write/Edit/MultiEdit block lives in each PreToolUse approval guard, not here. JS-port pilot (one of the first two hooks ported from bash to Node ESM); the remaining 20 hooks are still `.sh`.
 
 ## .claude/hooks/spec_approval_guard.sh:1
 
 - Role: PreToolUse hook on Edit/Write/MultiEdit enforcing Article IV gate A. Validates that a fresh `.spec_approval_grant` marker exists before allowing approval-token writes to `.claude/state/spec_approvals/<slug>.approval`; blocks self-approval inside spec markdown bodies; blocks direct writes to the marker file itself.
 - Verified-at: HEAD
 - Last-touched: 2026-05-12
-- Caveat: pair this with `swarm_approval_guard.sh` and `git_commit_guard.sh` — the three approval guards share the same marker-validation pattern and `lib/common.sh → canonical_slug` is the single source of slug derivation across all three.
+- Caveat: pair this with `swarm_approval_guard.sh` and `git_commit_guard.mjs` (JS-port pilot) — the three approval guards share the same marker-validation pattern. `lib/common.sh → canonical_slug` and `lib/common.mjs → canonicalSlug` are the parallel slug-derivation entry points; both implement the same "strip directory + trailing .md" canonicalization.
 
 ## .claude/hooks/swarm_approval_guard.sh:1
 
@@ -168,9 +168,23 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-13
 - Caveat: invokes `sweep.py` via `python3` and `--memory-dir <tempdir>` — until `sweep.py` exists, every flush test fails RED (correct TDD state, demonstrated during this workflow's scenario-tick). Test order matters for stale-sweep tests because replies are read one-per-entry-iteration from stdin in file-order.
 
-## .claude/hooks/git_commit_guard.sh:1
+## .claude/skills/chore/SKILL.md:1
 
-- Role: PreToolUse hook with two matcher legs. (1) Bash leg gates `git commit` invocations on a fresh `commit_consent` token at `.claude/state/commit_consent` (default TTL 5 min, written by `/grant-commit` → `consent_gate_grant.sh`) and hard-blocks forbidden git operations (`git push`, `--force`, `--amend`, `--no-verify`, `reset --hard`, etc.) per CLAUDE.md Article VII regardless of consent. (2) Write leg gates Claude's writes to the consent files themselves: blocks direct writes to the `.commit_consent_grant` marker, and only allows writes to `commit_consent` when a fresh marker is on disk (single-use, consumed on success). Completes the symmetry with `spec_approval_guard.sh` (gate A) and `swarm_approval_guard.sh` (gate B).
-- Verified-at: 1feee24
+- Role: alternate workflow track for tasks that need no TDD — documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes, skill consolidations. Skips `/scenario` and `/implement` (no failing test to drive); runs the edits directly; conditionally routes through `simplify` / `integrate` / `document` based on diff triggers. `verify`, `archive`, `/grant-commit`, `/commit` remain mandatory. Selected at `/triage` time when the request matches the chore predicate; recorded as `entry_phase: chore` in `.claude/state/workflow.json`.
+- Verified-at: 01780d7
 - Last-touched: 2026-05-14
-- Caveat: the Bash-leg FORBIDDEN_RE is a raw regex over the command string, not a tokenized argv inspection — Q-003 (pending-questions.md) tracks the trade-off and the documented `-F /tmp/msg.txt` workaround for commit messages that legitimately mention forbidden git ops. The push-leg hard-block disagrees with CLAUDE.md Article VII's user-named-operation carve-out — Q-004 tracks the resolution (push consent gate vs. status quo `! git push` shell escape).
+- Caveat: chore is a stripped-down pipeline, not a bypass — silently skipping a triggered conditional phase (e.g., `document` when prose was touched) violates Article IV. The conditional-phase trigger predicates live inside this SKILL.md body and are the authoritative list; the `triage` skill mirrors them when routing.
+
+## src/cli/conflict.js:1
+
+- Role: `SENTINEL_PATHS` (frozen array of 5 install-marker paths: `.claude`, `.claude/.baseline-manifest.json`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`) + `scanSentinels(target)` async helper. Returns the subset of sentinels found in the target tree; `bin/cli.js` uses the non-empty result to short-circuit fresh-install mode with a "prior baseline detected" message and the `--force` / `--merge` / `--dry-run` mode hint.
+- Verified-at: 01780d7
+- Last-touched: 2026-05-14
+- Caveat: `.claude/.baseline-manifest.json` is the strongest "previously installed by create-baseline" signal because its presence implies a successful install; the file header comment in conflict.js explains why the older `README.md` sentinel was dropped (the allowlist build ships no README.md, so users keep their own). Update both `SENTINEL_PATHS` and `bin/cli.js`'s conflict-handling branch in lockstep if the install layout changes.
+
+## .claude/hooks/git_commit_guard.mjs:1
+
+- Role: PreToolUse hook with two matcher legs (JS-port pilot). (1) Bash leg enforces branch-aware policy: `git commit` on a protected branch (per `project.json → git.protected_branches` glob; `null` = every branch protected) requires fresh `commit_consent` (`/grant-commit`, 5-min TTL); `git push` on a protected branch requires fresh `push_consent` (`/grant-push`, 5-min TTL); both proceed without consent on non-protected branches. `git.branch_pattern` regex (optional) gates commits on branch-name conformance. Detached HEAD denies both with explicit error. Hard-blocks remaining forbidden flags (`--amend`, `--no-verify`, `reset --hard`, `clean -f`, `checkout --`, `branch -D`, `config`, `rebase -i`, `add -A|.`). (2) Write leg gates Claude's writes to the consent files: blocks direct writes to the `.commit_consent_grant` and `.push_consent_grant` markers, and only allows writes to `commit_consent` / `push_consent` when a fresh marker is on disk (single-use, consumed on success). Completes the symmetry with `spec_approval_guard.sh` (gate A) and `swarm_approval_guard.sh` (gate B).
+- Verified-at: HEAD
+- Last-touched: 2026-05-15
+- Caveat: the Bash-leg FORBIDDEN_RE is a raw regex over the command string, not a tokenized argv inspection — Q-003 (pending-questions.md) tracks the trade-off and the `-F /tmp/msg.txt` workaround for commit messages that legitimately mention forbidden git ops. Q-004 (the push-leg / Article VII disagreement) was closed by this hook's rewrite — push is no longer in FORBIDDEN_RE; it's governed by the branch-aware policy. JS-port pilot: one of the first two hooks ported from bash to Node ESM (the other is `consent_gate_grant.mjs`).

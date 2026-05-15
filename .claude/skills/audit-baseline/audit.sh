@@ -65,7 +65,7 @@ def read_skill_owner(slug):
     m = re.search(r'^owner:\s*(\S+)\s*$', fm.group(1), re.MULTILINE)
     return m.group(1) if m else None
 
-EXPECTED_COMMANDS = {"approve-spec", "approve-swarm", "grant-commit", "init-project"}
+EXPECTED_COMMANDS = {"approve-spec", "approve-swarm", "grant-commit", "grant-push", "init-project"}
 
 EXPECTED_MEMORY_FILES = {
     # Canonical files (six)
@@ -128,7 +128,7 @@ agents_dir  = root / ".claude/agents"
 skills_dir  = root / ".claude/skills"
 cmds_dir    = root / ".claude/commands"
 
-disk_hooks    = {p.stem for p in hooks_dir.glob("*.sh")} if hooks_dir.exists() else set()
+disk_hooks    = ({p.stem for p in hooks_dir.glob("*.sh")} | {p.stem for p in hooks_dir.glob("*.mjs")}) if hooks_dir.exists() else set()
 disk_agents   = {p.stem for p in agents_dir.glob("*.md")} if agents_dir.exists() else set()
 disk_skills   = {p.name for p in skills_dir.iterdir() if p.is_dir()} if skills_dir.exists() else set()
 disk_commands = {p.stem for p in cmds_dir.glob("*.md")} if cmds_dir.exists() else set()
@@ -171,7 +171,7 @@ skills_claimed  = find_count(
     r"\b(\d+|twenty-(?:four|five|six|seven|eight|nine)|"
     r"thirty|thirty-(?:one|two|three|four|five|six|seven|eight|nine)|forty)\s+skills?\b")
 gates_claimed   = find_count(r"\b(\d+|three)\s+consent\s+gates?\b")
-cmds_claimed    = 4 if re.search(r"three\s+consent\s+gates?\s*\+\s*one\s+bootstrap", seed, re.IGNORECASE) else None
+cmds_claimed    = 5 if re.search(r"four\s+consent\s+gates?\s*\+\s*one\s+bootstrap", seed, re.IGNORECASE) else None
 
 def check_count(label, claimed, actual):
     if claimed is None:
@@ -419,7 +419,7 @@ else:
         try:
             s_text = src_settings.read_text(encoding="utf-8")
             json.loads(s_text)
-            missing_wired = sorted(h for h in EXPECTED_HOOKS if f"{h}.sh" not in s_text)
+            missing_wired = sorted(h for h in EXPECTED_HOOKS if (f"{h}.sh" not in s_text and f"{h}.mjs" not in s_text))
             if missing_wired:
                 head = missing_wired[:3]
                 tail = f" + {len(missing_wired) - 3} more" if len(missing_wired) > 3 else ""
@@ -502,7 +502,7 @@ else:
     except Exception as e:
         add("settings.json parses", "FAIL", str(e))
     for h in sorted(EXPECTED_HOOKS):
-        if f"{h}.sh" in settings_text:
+        if f"{h}.sh" in settings_text or f"{h}.mjs" in settings_text:
             add(f"hook wired: {h}", "PASS", "")
         else:
             add(f"hook wired: {h}", "FAIL", "not in settings.json")
@@ -535,6 +535,9 @@ else:
         ("swarm.enforced_path_prefixes",        ["swarm", "enforced_path_prefixes"]),
         ("consent.commit_ttl_seconds",          ["consent", "commit_ttl_seconds"]),
         ("consent.gate_marker_ttl_seconds",     ["consent", "gate_marker_ttl_seconds"]),
+        ("consent.push_ttl_seconds",            ["consent", "push_ttl_seconds"]),
+        ("git.protected_branches",              ["git", "protected_branches"]),
+        ("git.branch_pattern",                  ["git", "branch_pattern"]),
         ("additions.agents",                    ["additions", "agents"]),
         ("additions.skills",                    ["additions", "skills"]),
         ("additions.hooks",                     ["additions", "hooks"]),

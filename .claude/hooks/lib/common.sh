@@ -229,7 +229,7 @@ else:
 PY
 }
 
-# Consent-gate marker file paths — written ONLY by consent_gate_grant.sh
+# Consent-gate marker file paths — written ONLY by consent_gate_grant.mjs
 # (UserPromptSubmit) when the user invokes the corresponding slash command,
 # read by the gate guards (PreToolUse) before allowing approval-token writes.
 # Hooks reference these constants instead of literal paths so a rename is a

@@ -1,0 +1,21 @@
+humanizer
+=========
+
+This skill is vendored from the `humanizer` skill published by @blader and is
+redistributed here under the terms of the MIT License (see LICENSE in this
+directory).
+
+Upstream:
+  Repository: https://github.com/blader/humanizer
+  Author:     @blader
+
+Vendored into:  .claude/skills/humanizer/
+Vendored on:    2026-05-15 (this commit) — prior install date unknown; LICENSE
+                + NOTICE added retroactively as part of the licensing-attribution
+                drift fix in the branch-aware-git-policy workflow.
+
+Local changes:
+  - Frontmatter `owner: baseline` added so the audit-baseline drift check
+    tracks this file as a shipped baseline artifact. The MIT license permits
+    this redistribution; attribution is preserved in the SKILL.md frontmatter
+    `description` block, which retains the upstream credit line.

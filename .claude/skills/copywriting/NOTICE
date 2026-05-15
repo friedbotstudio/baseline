@@ -1,0 +1,23 @@
+copywriting
+===========
+
+This skill is vendored from the `copywriting` skill in the `marketingskills`
+collection published by coreyhaines31 and is redistributed here under the
+terms of the MIT License (see LICENSE in this directory).
+
+Upstream:
+  Repository: https://github.com/coreyhaines31/marketingskills
+  Author:     coreyhaines31
+  Skill:      copywriting/
+
+Vendored into:  .claude/skills/copywriting/
+Vendored on:    2026-05-15 (this commit) — prior install date unknown; LICENSE
+                + NOTICE added retroactively as part of the licensing-attribution
+                drift fix in the branch-aware-git-policy workflow.
+
+Local changes:
+  - References to five companion skills (`copy-editing`, `email-sequence`,
+    `popup-cro`, etc.) that do not ship in this baseline are flagged in the
+    SKILL.md body with explicit "do not ship with this baseline" notes.
+  - Frontmatter `owner: baseline` added so the audit-baseline drift check
+    tracks this file as a shipped baseline artifact.
