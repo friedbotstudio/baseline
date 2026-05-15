@@ -17,6 +17,7 @@ Each entry's stable key is `path:line`.
 ## .claude/hooks/lib/common.sh:1
 
 - Role: shared bash helpers for every guard hook (payload parsing, decision emitters, common path constants, plus consent-gate marker helpers and `canonical_rel`)
+- Companion: `.claude/hooks/lib/common.mjs` (JS-port pilot, see landmark below). The two parallel libraries coexist while the bash → mjs port is incremental; bash hooks source `common.sh`, the two JS-ported hooks (`git_commit_guard.mjs`, `consent_gate_grant.mjs`) import from `common.mjs`.
 - Verified-at: HEAD
 - Last-touched: 2026-04-29
 - Caveat: every hook script sources this; breaking changes here cascade. Edit with the entire hook fleet in mind.
@@ -182,9 +183,33 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-14
 - Caveat: `.claude/.baseline-manifest.json` is the strongest "previously installed by create-baseline" signal because its presence implies a successful install; the file header comment in conflict.js explains why the older `README.md` sentinel was dropped (the allowlist build ships no README.md, so users keep their own). Update both `SENTINEL_PATHS` and `bin/cli.js`'s conflict-handling branch in lockstep if the install layout changes.
 
+## .claude/hooks/lib/common.mjs:1
+
+- Role: Node ESM counterpart to `lib/common.sh` (the bash version). Exports `readPayload`, `payloadGet`, `projectGet`, `emitBlock` / `emitAllow` / `emitAsk` / `emitInfo`, `logLine`, `canonicalRel`, `canonicalSlug`, `writeMarkerAtomic`, `validateConsentMarker`, `blockMarkerSelfWrite`, and the consent-marker path constants (`CONSENT_MARKER_{SPEC,SWARM,COMMIT,PUSH}` plus `_REL` siblings). Plus `matchAnyGlob(name, globs)` — a hand-rolled shell-glob matcher used by `git_commit_guard.mjs` for branch-policy evaluation (no third-party deps).
+- Imported by: `.claude/hooks/git_commit_guard.mjs`, `.claude/hooks/consent_gate_grant.mjs`. JS-port pilot for two hooks; the remaining 20 bash hooks still source `common.sh`.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+- Caveat: behavior parity with the bash version is intentional. When extending one, mirror to the other (or document why they diverge in the relevant hook header). The `matchAnyGlob` glob semantics (`*` doesn't cross `/`, `**` does) are the only addition; the bash version has no equivalent because the bash hooks don't need branch matching yet.
+
 ## .claude/hooks/git_commit_guard.mjs:1
 
 - Role: PreToolUse hook with two matcher legs (JS-port pilot). (1) Bash leg enforces branch-aware policy: `git commit` on a protected branch (per `project.json → git.protected_branches` glob; `null` = every branch protected) requires fresh `commit_consent` (`/grant-commit`, 5-min TTL); `git push` on a protected branch requires fresh `push_consent` (`/grant-push`, 5-min TTL); both proceed without consent on non-protected branches. `git.branch_pattern` regex (optional) gates commits on branch-name conformance. Detached HEAD denies both with explicit error. Hard-blocks remaining forbidden flags (`--amend`, `--no-verify`, `reset --hard`, `clean -f`, `checkout --`, `branch -D`, `config`, `rebase -i`, `add -A|.`). (2) Write leg gates Claude's writes to the consent files: blocks direct writes to the `.commit_consent_grant` and `.push_consent_grant` markers, and only allows writes to `commit_consent` / `push_consent` when a fresh marker is on disk (single-use, consumed on success). Completes the symmetry with `spec_approval_guard.sh` (gate A) and `swarm_approval_guard.sh` (gate B).
 - Verified-at: HEAD
 - Last-touched: 2026-05-15
 - Caveat: the Bash-leg FORBIDDEN_RE is a raw regex over the command string, not a tokenized argv inspection — Q-003 (pending-questions.md) tracks the trade-off and the `-F /tmp/msg.txt` workaround for commit messages that legitimately mention forbidden git ops. Q-004 (the push-leg / Article VII disagreement) was closed by this hook's rewrite — push is no longer in FORBIDDEN_RE; it's governed by the branch-aware policy. JS-port pilot: one of the first two hooks ported from bash to Node ESM (the other is `consent_gate_grant.mjs`).
+
+## src/settings.template.json:1
+
+- Role: pristine ship-time template for `.claude/settings.json` — the hook wiring + permissions file that `/init-project` copies (or merges) into a target repo. Declares all 22 baseline hooks across PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit events, plus `permissions.allow`/`deny` for tool gating. The overlay source for `npx @friedbotstudio/create-baseline`.
+- Companion: `src/project.template.json:1` (the per-project config it pairs with), `src/CLAUDE.template.md:1` (the constitution template).
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+- Caveat: adding a new hook requires touching this file AND the matching Article VIII row in `src/CLAUDE.template.md` AND `docs/init/seed.md` §4.1 — the audit cross-checks all three. `$CLAUDE_PROJECT_DIR` is the only valid path prefix for hook commands; absolute paths leak the author's home directory into installed projects.
+
+## src/project.template.json:1
+
+- Role: pristine ship-time template for `.claude/project.json` — the per-project config the CLI installs with `configured: false`, then `/init-project` populates after running the recommender. Declares `test`/`lint` runners, `tdd` source/test/ui globs, `destructive` Bash patterns, `swarm` config (`min_tasks_worth_swarming`, `isolation`, `exempt_path_prefixes`), `git` branch policy (`protected_branches`, `branch_pattern`), and the consent gate TTL.
+- Companion: `src/settings.template.json:1` (hook wiring), `src/cli/install.js:79` (CLI overlay logic).
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+- Caveat: `configured: false` is the project-agnostic operating state (Art. III). `setup_guard` surfaces a one-shot reminder when it sees this; other guards bind regardless. `git.protected_branches: null` (the default) means every branch is consent-gated — set explicitly to `["main", "release/*"]` to loosen.

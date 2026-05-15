@@ -56,6 +56,42 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 
 ---
 
+## Q-005
+
+- Question: Should `audit-baseline` enforce that every `owner: baseline` skill which is vendored from an external upstream ships both a `LICENSE` and a `NOTICE` file alongside `SKILL.md`?
+- Raised in: 2026-05-15 branch-aware-git-policy workflow. User flagged a real licensing risk: five vendored shared-globals (humanizer, documentation, technical-tutorials, copywriting, impeccable) were declared `owner: baseline` but shipped without `LICENSE`/`NOTICE` files. The site's third-party page listed all seven as "Anthropic, Apache 2.0" when the actual sources span three publishers and two licenses (MIT + Apache 2.0). The audit didn't catch this because its `check_skill_ownership` only enforces hash drift, not attribution presence.
+- Blocker for: closing the attribution gap permanently rather than relying on humans to remember.
+- Options considered:
+  - (a) Detection heuristic: every `owner: baseline` skill whose `SKILL.md` body or `NOTICE` mentions an upstream URL (`github.com/<user>/<repo>` outside the Friedbot Studio org) SHALL have a `LICENSE` file in the same directory. FAIL otherwise.
+  - (b) Stricter: every `owner: baseline` skill SHALL have either (i) a `NOTICE` file naming the upstream and license, OR (ii) a frontmatter `provenance: friedbot-studio` field explicitly marking it as our own. The audit can't infer provenance from `owner: baseline` alone.
+  - (c) Status quo: rely on review.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+
+## Q-006
+
+- Question: Should `swarm.refuse_dirty_tree` default to `false` in `src/project.template.json` (shipping default for fresh installs), to match the live value we had to set in this baseline?
+- Raised in: 2026-05-15. See `landmines.md → swarm-refuse-dirty-tree-blocks-mid-workflow`. The workflow's mid-flow state always leaves a dirty tree (uncommitted artifacts in `docs/intake/`, `docs/scout/`, etc.). `refuse_dirty_tree: true` aborts swarm-dispatch on the exact state the workflow produces.
+- Blocker for: out-of-the-box swarm-dispatch on a fresh install of the baseline. Currently a user who runs through a full workflow with swarm enters Phase 6c and hits the abort.
+- Options considered:
+  - (a) Default to `false` in `src/project.template.json`. Lose the safety check on pre-workflow runs.
+  - (b) Make the check phase-aware: enforce clean tree only when `.claude/state/workflow.json` is absent (no workflow in progress). Workflow-active = dirty tree expected.
+  - (c) Status quo: ship `true`; surface the issue at first run and document the toggle.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+
+## Q-007
+
+- Question: When `design-ui` Stage-0-classifies a brief as mixed-lane (some surfaces are design, some copy, some development), should it decompose the brief into sub-briefs and route each, or return `not_a_design_task` and ask the caller to split?
+- Raised in: 2026-05-15. The first `/design-ui` invocation in this workflow had 1 design surface + 5 copy surfaces + 1 data surface. The skill returned `not_a_design_task` per its Stage 0 contract; the caller (main context) had to execute the work outside the skill. Felt clunky.
+- Blocker for: a cleaner design-ui orchestration story when work spans lanes (which is common when changes propagate to user-facing surfaces).
+- Options considered:
+  - (a) Status quo: Stage 0 returns `not_a_design_task` on misroute; caller decomposes. Cleanest separation, most work on caller.
+  - (b) Auto-decompose at Stage 0: design-ui itself splits the brief, routes the design portions through impeccable, returns `final_state: "partial"` with a list of non-design surfaces the caller still needs to handle. More built-in coordination.
+  - (c) Per-surface classification with explicit `mixed_brief: true` flag in the input contract: caller declares upfront, design-ui returns separate results per lane.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+
 ## Q-004 — CLOSED 2026-05-15
 
 - Resolution: Adopted option (b) plus generalization — branch-aware consent policy. `/grant-push` was added as a fourth consent gate (symmetric with `/grant-commit`); `git_commit_guard` was rewritten in JS (`.mjs`, JS-port pilot) to route per `project.json → git.protected_branches` glob + `git.branch_pattern` regex. Push on a protected branch requires fresh `push_consent`; push on a non-protected branch proceeds without consent. The unconditional `\bgit\s+push\b` entry was removed from `FORBIDDEN_RE`; `git push --force` / `--force-with-lease` remain forbidden unless the user names the exact operation. Article VII rewritten to match.

@@ -14,6 +14,24 @@ Each entry's stable key is `path:line` or a short slug.
 
 ---
 
+## track-guard-tdd-literal-on-swarm-path
+
+- Path: `.claude/hooks/track_guard.sh` (literal-match logic)
+- Trap: when Phase 6 is satisfied via the swarm path (`swarm-plan` + `approve-swarm` + `swarm-dispatch` in `workflow.json → completed`), the track guard still refuses Phase 7+ artifact writes because it expects literal `"tdd"` in `completed`. First write attempt to `docs/security/<slug>-<date>.md` after a swarm dispatch fails with "phase 'security': prior phases not completed: tdd".
+- Mitigation: after swarm-dispatch finishes, manually add `"tdd"` to `workflow.json → completed` with a rationale in a `completed_notes` field (e.g., `{"tdd": "satisfied via swarm path; track_guard literal-match workaround per seed.md §16 retrospective"}`). Documented in seed.md §16 deviation log too.
+- Real fix (deferred): teach track_guard to accept `(swarm-plan + swarm-dispatch)` as Phase-6 satisfaction equivalent to `tdd`.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+
+## swarm-refuse-dirty-tree-blocks-mid-workflow
+
+- Path: `.claude/project.json → swarm.refuse_dirty_tree` (read by `swarm-dispatch` preflight)
+- Trap: `refuse_dirty_tree: true` (the original default) aborts swarm-dispatch when `git status --porcelain` is non-empty. But the 11-phase workflow ALWAYS leaves a dirty tree mid-flow: `docs/intake/<slug>.md`, `docs/scout/<slug>.md`, `docs/research/<slug>.md`, `docs/specs/<slug>.md`, `.claude/state/spec_approvals/`, etc. are all uncommitted until gate C / `/commit`. So `refuse_dirty_tree: true` is incompatible with running swarm-dispatch as part of the regular workflow — the check fires on the exact state the workflow is supposed to produce.
+- Mitigation: in branch-aware-git-policy (2026-05-15) we toggled `refuse_dirty_tree: false` permanently. The check was meant for pre-workflow runs only; it's effectively unreachable in normal flow with it true.
+- Open question (Q-007 in pending-questions): should the default ship as `false`? Currently disagreement between live `.claude/project.json` (false) and `src/project.template.json` (still true) needs resolving.
+- Verified-at: 3a3314e
+- Last-touched: 2026-05-16
+
 ## hooks-edit-cascade
 
 - Path: `.claude/hooks/lib/common.sh:1`
