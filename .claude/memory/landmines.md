@@ -14,6 +14,16 @@ Each entry's stable key is `path:line` or a short slug.
 
 ---
 
+## baseline-skill-edit-needs-manifest-rebuild
+
+- Path: `obj/template/manifest.json` (canonical hash record) + `scripts/build-template.sh` (Stage 0 audit gate creates chicken-and-egg)
+- Trap: editing any baseline-owned skill file (anything under `.claude/skills/<baseline-skill>/**` per `manifest.owners.skills`) OR `CLAUDE.md` makes the on-disk content diverge from the manifest. Next `bash .claude/skills/audit-baseline/audit.sh` reports `skill ownership: <slug> FAIL hash mismatch at <path>` and exits non-zero. Running `npm run build` to regenerate the manifest fails too, because the build script's Stage 0 gate runs the audit first and aborts on FAIL — chicken-and-egg.
+- Mitigation: bypass the Stage 0 gate by running Stages 1-3 of `scripts/build-template.sh` inline: (1) `rm -rf obj/template && mkdir -p obj/template/{.claude,docs/init}` + the rsync block from the script; (2) overlay pristine src/ templates (CLAUDE.md, seed.md, .mcp.json, project.json, settings.json, the swarm-worker agent, all `src/memory/*.template.md`); (3) `node scripts/build-manifest.mjs obj/template`. Then re-run audit — should PASS. Reproduced 2026-05-16 in the design-ui-mixed-brief workflow at the verify-tick step; yielded the harness mid-tdd until /simplify did the rebuild.
+- Companion requirement: if the edit touches `CLAUDE.md`, also update `src/CLAUDE.template.md` to the byte-equal mirror (Article XI). The build's Stage 2 overlays `src/CLAUDE.template.md` into `obj/template/CLAUDE.md`, so the manifest hash is computed from the src/ pristine — if PKG_ROOT/CLAUDE.md and src/CLAUDE.template.md aren't byte-equal, the audit will still FAIL on the CLAUDE.md hash after manifest rebuild.
+- Real fix (deferred): teach `scripts/build-template.sh` Stage 0 to bypass the audit when invoked with an explicit `--rebuild-manifest` flag (or detect that the audit's only FAIL is hash drift and proceed anyway). Or: route baseline-skill edits through a wrapper that rebuilds the manifest atomically with the edit. Either way, the chicken-and-egg should not be the operator's problem.
+- Verified-at: HEAD
+- Last-touched: 2026-05-16
+
 ## track-guard-tdd-literal-on-swarm-path
 
 - Path: `.claude/hooks/track_guard.sh` (literal-match logic)

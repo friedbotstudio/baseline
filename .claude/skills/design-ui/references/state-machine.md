@@ -21,7 +21,7 @@ The first invocation creates the directory if it does not exist (`mkdir -p`). Su
   "step_index":   <int, 0-based; index of the NEXT step to run>,
   "invocations":  [InvocationRecord, ...],
   "verifications": [VerificationRecord, ...],
-  "state":        "in_progress" | "complete" | "needs_human" | "blocked" | "not_a_design_task",
+  "state":        "in_progress" | "complete" | "needs_human" | "blocked" | "not_a_design_task" | "mixed_brief",
   "next_actions": ["<human-readable action>", ...]
 }
 ```
@@ -69,7 +69,7 @@ Every state file MUST carry these fields. Stage 3's checkpoint writes them all o
 | `step_index` | yes | The position to resume from. 0 = nothing run yet; N = N steps completed. |
 | `invocations` | yes | Append-only list. Each step's invocation appears here. |
 | `verifications` | yes | Subset of invocations[] limited to evaluation steps (audit, critique). |
-| `state` | yes | One of the five terminal/transitional states. |
+| `state` | yes | One of the six terminal/transitional states. |
 
 Optional fields:
 - `register`, `updated_at`, `next_actions` — present when the orchestration has produced them; absent before Stage 1 completes the capture.
@@ -77,7 +77,7 @@ Optional fields:
 
 ## Terminal states
 
-The five values of `state` and their meaning:
+The six values of `state` and their meaning:
 
 | State | Meaning | Caller action |
 |---|---|---|
@@ -86,6 +86,7 @@ The five values of `state` and their meaning:
 | `needs_human` | Loop cap fired (3 iterations on audit→polish or critique-driven refine). P1 issues remain unresolved. | Caller decides whether to surface and stop, or warn and continue. Per `/tdd` Step 6 policy: warn and continue. |
 | `blocked` | A gate fired. P0 blockers, register conflict declined, target_files parent missing, malformed state file, user refused recipe. | Caller surfaces the reason and stops the immediate flow. |
 | `not_a_design_task` | Stage 0 classified the intent as development or copy. Set on the first checkpoint write of the orchestration. | Caller routes to `correct_lane` (`/tdd` or `/document`). |
+| `mixed_brief` | Stage 0 classified the task_brief as spanning ≥ 2 lanes (multi-lane misroute). Set on the first checkpoint write of the orchestration; `lane_split` is persisted alongside. | Caller reads `lane_split` and fans out per row; see `references/orchestration.md` caller-policy. |
 
 ## Resume logic
 
@@ -99,6 +100,7 @@ On any `Skill(design-ui, task_brief)` invocation:
    - **Present and `state` is `needs_human`** → caller must signal intent to resume. If `task_brief` is identical to the stored intent and the caller is re-invoking explicitly, restart the loop from `step_index` (which points at the audit that fired the cap). The user is asserting that conditions have changed (e.g., P1 issues were addressed externally) and the loop should re-run.
    - **Present and `state` is `blocked`** → return the existing Report with the blocker reason. User must materially change the input (re-state intent, expand write_set, etc.) before progress.
    - **Present and `state` is `not_a_design_task`** → return the existing Report; the misroute is sticky for this slug.
+   - **Present and `state` is `mixed_brief`** → return the existing Report (including the cached `lane_split`); the misroute is sticky for this slug (mirrors `not_a_design_task`). Delete the state file to re-classify.
    - **Present but malformed JSON** → return `Report { final_state: "blocked", reason: "state file malformed", state_file }`. Do NOT overwrite — preserve for human inspection.
 
 The resume rule: **skip steps prior to `step_index`; start at `step_index`**. Completed steps are never re-run unless the user explicitly requests it (e.g., by deleting the state file and re-invoking).

@@ -17,7 +17,7 @@ These are not preferences. They are structural commitments locked by spec `docs/
 - **You ALWAYS invoke impeccable.** Every design move goes through `Skill(impeccable, …)`. No exceptions, no shortcuts.
 - **You NEVER pick aesthetic direction.** Register, palette, type scale, motion vocabulary — all decided inside impeccable's subcommands in main context. You decide *which* subcommand to invoke, not *what* design to produce.
 - **You NEVER write product code.** Files under `app/`, `site-src/`, `components/`, `src/` — all flow through impeccable's writing subcommands (`craft`, `polish`, refines, enhances, fixes). You write only thin glue: state JSON, brief snapshots, audit snapshots.
-- **You ALWAYS classify before acting.** A misrouted `task_brief` (development or copy concern) returns immediately with `final_state: "not_a_design_task"` and a pointer to the correct lane. Design tasks proceed; everything else stops at Stage 0.
+- **You ALWAYS classify before acting.** A misrouted `task_brief` returns at Stage 0 with one of two terminal states: **`not_a_design_task`** (when all surfaces classify as a single non-design lane — pure development or pure copy) with a `correct_lane` pointer, OR **`mixed_brief`** (when target_files span ≥ 2 lanes per the per-concern rule in `references/design-vs-development.md`) with a structured `lane_split` array. Design tasks proceed; everything else stops at Stage 0 without invoking impeccable or writing product code.
 
 ## Mandatory first step
 
@@ -47,7 +47,9 @@ Decide which lane this `task_brief` belongs to. The classification rule lives in
 
 Stage 0 evaluates two signals: (1) the intent string against the [`references/intent-table.md`](references/intent-table.md) rows, and (2) the `target_files` extensions as a tie-breaker.
 
-If the classification is anything other than **design**, return immediately:
+If the classification is anything other than **design**, return immediately with one of two misroute terminals.
+
+**Single-lane misroute** (all surfaces classify as pure development OR pure copy):
 
 ```jsonc
 {
@@ -58,7 +60,22 @@ If the classification is anything other than **design**, return immediately:
 }
 ```
 
-design-ui still writes a checkpoint state file even on misroute — the orchestration history is traceable.
+**Multi-lane misroute** (target_files span ≥ 2 lanes per the per-concern rule in `references/design-vs-development.md`):
+
+```jsonc
+{
+  "final_state": "mixed_brief",
+  "lane_split": [
+    { "surface": "<path>", "lane": "design" | "development" | "copy", "reason": "<plain-language>" }
+  ],
+  "reason": "task_brief spans <N> lanes",
+  "state_file": ".claude/state/design/<slug>.json"
+}
+```
+
+When `target_files` span ≥ 2 lanes, Stage 0 returns `mixed_brief` with a `lane_split` array (one entry per surface) instead of `not_a_design_task`. The caller fans out per row; design-ui does NOT execute any lane in this case (no impeccable invocation, no product-code writes). SKILL.md is the canonical source for this contract; `references/design-vs-development.md` mirrors it.
+
+design-ui still writes a checkpoint state file even on misroute — the orchestration history is traceable. See `references/state-machine.md` for the sticky-resume rule that applies to both misroute terminals.
 
 ### Stage 1 — Capture
 
@@ -117,12 +134,13 @@ Return a structured `Report`:
   "slug":              "<the slug>",
   "intent":            "<the intent>",
   "recipe_executed":   ["shape", "craft", "audit", "polish"],
-  "final_state":       "complete" | "needs_human" | "blocked" | "not_a_design_task",
+  "final_state":       "complete" | "needs_human" | "blocked" | "not_a_design_task" | "mixed_brief",
   "files_touched":     ["<path>", ...],
   "verifications":     { "audit_score": "19/20", "p0": 0, "p1": 0 },
   "next_actions":      ["<human-readable>"],
   "state_file":        ".claude/state/design/<slug>.json",
-  "thin_glue_written": ["docs/design/<slug>.brief.md", "docs/design/<slug>.audit.md"]
+  "thin_glue_written": ["docs/design/<slug>.brief.md", "docs/design/<slug>.audit.md"],
+  "lane_split":        [ { "surface": "<path>", "lane": "design" | "development" | "copy", "reason": "<plain-language>" } ]  // present only when final_state == "mixed_brief"
 }
 ```
 

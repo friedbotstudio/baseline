@@ -35,6 +35,35 @@ describe('design-ui — orchestration gates (AC-006)', () => {
       'must document that P0 issues block (rather than looping)'
     );
   });
+
+  // AC-007 — caller-policy table has a mixed_brief row instructing fan-out per lane_split
+  // and forbidding auto-invocation of /tdd or prose in the same tick.
+  it('test_when_orchestration_md_then_has_mixed_brief_caller_policy_row', async () => {
+    const text = await readFile(ORCHESTRATION, 'utf8');
+    // Find a table row mentioning mixed_brief; the row must span the table-pipe delimiters,
+    // so scan line-by-line for one starting with `|` and containing the keyword.
+    const rowLines = text.split('\n').filter(line => /^\s*\|/.test(line) && /mixed_brief/.test(line));
+    assert.ok(
+      rowLines.length >= 1,
+      'orchestration.md caller-policy table must include a row keyed on "mixed_brief"'
+    );
+    const row = rowLines.join('\n');
+    assert.match(
+      row,
+      /lane_split/,
+      'mixed_brief row must reference lane_split (the field the caller reads)'
+    );
+    assert.match(
+      row,
+      /fan[\s-]*out|per[\s-]*row|each row/i,
+      'mixed_brief row must describe per-surface fan-out behavior'
+    );
+    assert.match(
+      row,
+      /do\s*NOT\s*auto[-\s]*invoke|do\s*not\s*auto[-\s]*invoke/i,
+      'mixed_brief row must explicitly forbid auto-invoking /tdd or prose in this tick'
+    );
+  });
 });
 
 describe('design-ui — state machine (AC-007)', () => {
@@ -64,12 +93,24 @@ describe('design-ui — state machine (AC-007)', () => {
 
   it('test_when_state_machine_md_then_documents_terminal_states', async () => {
     const text = await readFile(STATE_MACHINE, 'utf8');
-    for (const state of ['complete', 'needs_human', 'blocked', 'not_a_design_task']) {
+    // AC-006 — mixed_brief joins the four pre-existing terminal states.
+    for (const state of ['complete', 'needs_human', 'blocked', 'not_a_design_task', 'mixed_brief']) {
       assert.match(
         text,
         new RegExp(`\\b${state}\\b`),
         `state-machine.md must mention the "${state}" terminal state`
       );
     }
+  });
+
+  // AC-004 — re-invocation with the same slug returns the cached lane_split (sticky).
+  it('test_when_state_machine_md_then_documents_mixed_brief_sticky_resume', async () => {
+    const text = await readFile(STATE_MACHINE, 'utf8');
+    assert.match(
+      text,
+      /mixed_brief[^.\n]{0,120}(sticky|cached|return the existing|delete the state)/i,
+      'state-machine.md resume-logic must document mixed_brief as sticky-on-resume ' +
+      '(mirroring the not_a_design_task rule)'
+    );
   });
 });

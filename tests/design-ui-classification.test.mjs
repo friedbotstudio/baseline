@@ -37,6 +37,9 @@ describe('design-ui — Stage 0 classification (AC-001/002/003)', () => {
     );
     assert.match(text, /Stage\s*0/i, 'body must describe Stage 0 (classification)');
     assert.match(text, /not_a_design_task/, 'body must mention not_a_design_task terminal state');
+    // AC-001, AC-008 — multi-lane misroute returns mixed_brief with a lane_split field.
+    assert.match(text, /mixed_brief/, 'body must mention mixed_brief terminal state');
+    assert.match(text, /lane_split/, 'body must document the lane_split field');
   });
 
   it('test_when_design_vs_development_md_exists_then_has_classification_rules', async () => {
@@ -58,6 +61,18 @@ describe('design-ui — Stage 0 classification (AC-001/002/003)', () => {
       text,
       /label|message|prose|microcopy/i,
       'should include at least one copy-lane example'
+    );
+  });
+
+  // AC-009 — design-vs-development.md is the mirror; SKILL.md is the canonical source for misroute prose.
+  it('test_when_design_vs_development_md_then_designates_skill_md_as_canonical', async () => {
+    const text = await readFile(DESIGN_VS_DEV, 'utf8');
+    const canonicalThenSkill = /canonical[^.\n]{0,80}SKILL\.md/i.test(text);
+    const skillThenCanonical = /SKILL\.md[^.\n]{0,80}canonical/i.test(text);
+    assert.ok(
+      canonicalThenSkill || skillThenCanonical,
+      'design-vs-development.md must identify SKILL.md as the canonical source for misroute prose ' +
+      '(this file is the mirror)'
     );
   });
 
@@ -111,6 +126,25 @@ describe('design-ui — Stage 0 classification (AC-001/002/003)', () => {
       missing.length,
       0,
       `SKILL.md must document all task_brief fields; missing: ${missing.join(', ')}`
+    );
+  });
+
+  // AC-002, AC-008 — lane_split entries have shape { surface, lane, reason }; lane ∈ {design, development, copy}.
+  it('test_when_design_ui_skill_md_then_documents_lane_split_shape', async () => {
+    const text = await readFile(SKILL_MD, 'utf8');
+    const subfields = ['surface', 'lane', 'reason'];
+    const missingSubfields = subfields.filter(f => !new RegExp(`\\b${f}\\b`).test(text));
+    assert.equal(
+      missingSubfields.length,
+      0,
+      `SKILL.md must name the three lane_split sub-fields; missing: ${missingSubfields.join(', ')}`
+    );
+    const lanes = ['design', 'development', 'copy'];
+    const missingLanes = lanes.filter(l => !new RegExp(`["'\`]${l}["'\`]`).test(text));
+    assert.equal(
+      missingLanes.length,
+      0,
+      `SKILL.md must list the three lane values (quoted) in the lane vocabulary; missing: ${missingLanes.join(', ')}`
     );
   });
 });

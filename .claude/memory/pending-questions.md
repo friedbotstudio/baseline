@@ -80,17 +80,19 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 - Verified-at: 3a3314e
 - Last-touched: 2026-05-16
 
-## Q-007
+## Q-007 — CLOSED 2026-05-16
 
-- Question: When `design-ui` Stage-0-classifies a brief as mixed-lane (some surfaces are design, some copy, some development), should it decompose the brief into sub-briefs and route each, or return `not_a_design_task` and ask the caller to split?
-- Raised in: 2026-05-15. The first `/design-ui` invocation in this workflow had 1 design surface + 5 copy surfaces + 1 data surface. The skill returned `not_a_design_task` per its Stage 0 contract; the caller (main context) had to execute the work outside the skill. Felt clunky.
-- Blocker for: a cleaner design-ui orchestration story when work spans lanes (which is common when changes propagate to user-facing surfaces).
-- Options considered:
-  - (a) Status quo: Stage 0 returns `not_a_design_task` on misroute; caller decomposes. Cleanest separation, most work on caller.
-  - (b) Auto-decompose at Stage 0: design-ui itself splits the brief, routes the design portions through impeccable, returns `final_state: "partial"` with a list of non-design surfaces the caller still needs to handle. More built-in coordination.
-  - (c) Per-surface classification with explicit `mixed_brief: true` flag in the input contract: caller declares upfront, design-ui returns separate results per lane.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Resolution: Adopted option (a) plus a structured decomposition hint. Stage 0 now returns two misroute terminal states: `not_a_design_task` (single-lane: pure development OR pure copy, with `correct_lane`) — unchanged from before; AND `mixed_brief` (multi-lane: target_files span ≥ 2 lanes, with a `lane_split: [{surface, lane, reason}, ...]` array). design-ui never executes any lane on a `mixed_brief` — the caller (harness `design-ui-tick`, /chore, /document, direct user) reads `lane_split` and fans out per row. Three sub-decisions: (i) caller fans out per `lane_split`; design-ui does NOT auto-execute the design portion (preserves caller agency, bounds tick blast-radius); (ii) sticky-on-resume mirrors `not_a_design_task` — re-invocation with the same slug returns the cached Report; delete the state file to re-classify; (iii) `SKILL.md` Stage 0 is the canonical source for the misroute contract; `references/design-vs-development.md` mirrors it (drift between the two is enforced by tests).
+- Spec: `docs/specs/design-ui-mixed-brief.md` (approved 2026-05-16).
+- Closing commit: pending (committed via gate C in this workflow).
+- Original question + options below for historical reference; the resolution above supersedes them.
+
+  Question: When `design-ui` Stage-0-classifies a brief as mixed-lane (some surfaces are design, some copy, some development), should it decompose the brief into sub-briefs and route each, or return `not_a_design_task` and ask the caller to split?
+  Raised in: 2026-05-15. The first `/design-ui` invocation in this workflow had 1 design surface + 5 copy surfaces + 1 data surface. The skill returned `not_a_design_task` per its Stage 0 contract; the caller (main context) had to execute the work outside the skill. Felt clunky.
+  Options considered:
+    (a) Status quo: Stage 0 returns `not_a_design_task` on misroute; caller decomposes. Cleanest separation, most work on caller.
+    (b) Auto-decompose at Stage 0: design-ui itself splits the brief, routes the design portions through impeccable, returns `final_state: "partial"` with a list of non-design surfaces the caller still needs to handle. More built-in coordination.
+    (c) Per-surface classification with explicit `mixed_brief: true` flag in the input contract: caller declares upfront, design-ui returns separate results per lane.
 
 ## Q-004 — CLOSED 2026-05-15
 

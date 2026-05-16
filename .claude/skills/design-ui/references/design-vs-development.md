@@ -21,7 +21,7 @@ When a `task_brief` arrives, Stage 0 evaluates **two signals** in order:
    - All paths match `tdd.ui_globs` AND no logic-file extensions → **design**.
    - All paths are logic files (`.ts`, `.js`, `.go`, `.py`, `.rs`, etc., excluding `.tsx` / `.jsx` / `.vue` / `.svelte`) → **development**.
    - All paths are `.md` / `.mdx` and the intent mentions "write", "rewrite", "improve", "draft" → **copy**.
-   - Mixed → return to step 1 with the user surfaced; ask which concern they mean.
+   - Mixed → Stage 0 returns `final_state: "mixed_brief"` with a `lane_split` array (one entry per surface). See `SKILL.md` (canonical) for the return shape.
 
 ## Overlap is normal — same file, three lanes
 
@@ -67,7 +67,11 @@ Backend / data-fetching performance, query optimization, memoization for re-rend
 
 ## Misroute handling
 
-If Stage 0 classifies the intent as **development** or **copy** (not design), `design-ui` immediately returns:
+*`SKILL.md` is the canonical source for Stage 0 misroute prose; this file mirrors it.*
+
+Stage 0 has two misroute terminals.
+
+**Single-lane misroute** — all surfaces classify as one non-design lane (pure development OR pure copy):
 
 ```jsonc
 {
@@ -78,12 +82,29 @@ If Stage 0 classifies the intent as **development** or **copy** (not design), `d
 }
 ```
 
-The caller (a workflow phase or the user) reads `correct_lane` and re-routes. `design-ui` never silently passes a non-design brief through to `impeccable` — that would muddy impeccable's contract.
+The caller reads `correct_lane` and re-routes.
+
+**Multi-lane misroute** — target_files span ≥ 2 lanes:
+
+```jsonc
+{
+  "final_state": "mixed_brief",
+  "lane_split": [
+    { "surface": "<path>", "lane": "design" | "development" | "copy", "reason": "<plain-language>" }
+  ],
+  "reason": "task_brief spans <N> lanes",
+  "state_file": ".claude/state/design/<slug>.json"
+}
+```
+
+The caller reads `lane_split` and fans out per row; see `references/orchestration.md` caller-policy. `design-ui` never silently passes a non-design brief through to `impeccable` — that would muddy impeccable's contract. On a `mixed_brief`, `design-ui` invokes nothing and writes no product code: the structured `lane_split` is the entire response.
 
 ## When in doubt
 
-If the per-concern split is ambiguous *and* both signals (intent string + target_files) fail to resolve, surface to the user with a one-line question:
+Multi-lane briefs (target_files span ≥ 2 lanes) route automatically to `mixed_brief` — Stage 0 returns the structured `lane_split` without asking the user. The interactive-ask path below is reserved for the rarer **single-lane ambiguity** case: the intent matches no row in `references/intent-table.md` AND `target_files` doesn't disambiguate (e.g., a single `.md` file but the intent reads like a design ask, not a copy ask).
 
-> "This task seems to span design and development: <intent>. Which concern are you asking about? (a) design — surface, motion, visual a11y; (b) development — behavior, logic, data; (c) both, in sequence — start with `/tdd` for behavior, then this skill for design."
+In that case, surface to the user with a one-line question:
+
+> "This task is ambiguous within a single lane: <intent>. Which concern are you asking about? (a) design — surface, motion, visual a11y; (b) development — behavior, logic, data; (c) copy — prose rewrite."
 
 Do not guess. The clean separation is what makes the lanes structural.

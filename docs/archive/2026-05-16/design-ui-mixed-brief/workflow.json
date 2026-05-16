@@ -1,0 +1,9 @@
+{
+  "request": "Amend design-ui Stage 0 misroute path to return structured decomposition hints for mixed-lane briefs. Replace the current `final_state: \"not_a_design_task\"` with a new `final_state: \"mixed_brief\"` when intent + target_files span lanes; include a `lane_split: [{surface, lane, reason}, ...]` array so the caller can fan out per-surface without re-classifying. Keep the existing `not_a_design_task` return for unambiguous single-lane misroutes. Architecture preserved: design-ui remains single-lane (design only); it NEVER executes non-design lanes. Closes Q-007.",
+  "slug": "design-ui-mixed-brief",
+  "entry_phase": "scout",
+  "exceptions": ["intake", "brd", "research", "security"],
+  "completed": ["scout", "spec", "tdd", "simplify", "integrate", "document", "archive"],
+  "created_at": 1778876372,
+  "updated_at": 1778876372
+}
