@@ -295,7 +295,10 @@ else:
         add("memory files present", "FAIL", "; ".join(bits))
     else:
         add("memory files present", "PASS", f"{len(disk_memory)} files")
-    # Each canonical file should have frontmatter (--- ... ---) and at least one entry.
+    # Each canonical file must have valid frontmatter (opens with `---`). Record
+    # count is not an audit signal — a freshly-initialized project legitimately
+    # has zero entries in every canonical file (overlaid from pristine
+    # src/memory/<name>.template.md). Entry count is reported informationally.
     for name in sorted(EXPECTED_MEMORY_FILES):
         p = mem_dir / f"{name}.md"
         if not p.is_file():
@@ -304,19 +307,16 @@ else:
         if not text.startswith("---"):
             add(f"memory shape: {name}.md", "FAIL", "missing frontmatter")
             continue
-        # _pending body may be empty; canonical must have at least one entry.
         if name == "_pending":
             add(f"memory shape: {name}.md", "PASS", "")
             continue
-        body = text.split("---", 2)[-1] if text.startswith("---") else text
+        body = text.split("---", 2)[-1]
         # Strip fenced code blocks so example "## <stable key>" lines inside
         # ```markdown ... ``` don't count as entries.
         body_no_fence = re.sub(r"(?ms)^```.*?^```\s*$", "", body)
         entry_count = len(re.findall(r'(?m)^##\s+\S', body_no_fence))
-        if entry_count == 0:
-            add(f"memory shape: {name}.md", "FAIL", "no entries (## headings) in body")
-        else:
-            add(f"memory shape: {name}.md", "PASS", f"{entry_count} entries")
+        detail = f"{entry_count} entries" if entry_count > 0 else "empty (preamble-only)"
+        add(f"memory shape: {name}.md", "PASS", detail)
     # README inside memory/ is a structural expectation
     add("memory README", "PASS" if (mem_dir / "README.md").is_file() else "FAIL",
         "" if (mem_dir / "README.md").is_file() else "missing .claude/memory/README.md")
