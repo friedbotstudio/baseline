@@ -66,10 +66,10 @@ Each entry's stable key is `path:line`.
 
 ## .claude/skills/audit-baseline/audit.sh:1
 
-- Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence. Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md.
+- Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence, and per-file memory-shape canonical preamble via the `is_valid_preamble(text)` helper (strict opener `^# `, full preamble must include a closing `---` separator; `_pending` and `_resume` get the same shape check). Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.
+- Verified-at: e6ca9b6
+- Last-touched: 2026-05-17
+- Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md. The `is_valid_preamble` helper allows preamble-only files (empty body after the closing separator) so a freshly-emptied `_pending.md` still PASSes; opener-only files without a closing separator FAIL (regression trap captured in `tests/preamble_check_test.sh`).
 
 ## .claude/hooks/consent_gate_grant.mjs:1
 

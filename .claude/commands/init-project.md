@@ -63,7 +63,9 @@ The recommender's SKILL.md instructs it to:
 
 Capture both the narrative and the JSON. Save the JSON to `.claude/state/init/<timestamp>.recommender.json`.
 
-## Step 5 — Aggregate + present
+## Step 5 — Aggregate + present (REVIEW ONLY — NOTHING WRITTEN YET)
+
+**This step is a proposal, not configuration.** Nothing has been written to disk yet: `.claude/project.json` still reads `configured: false`, no new skills/hooks/MCPs are wired, and the `swarm-worker` agent file has not been re-rendered. The user is reading a *proposal* that takes effect only when they explicitly approve in this step.
 
 Show the user one review surface before writing anything:
 
@@ -77,13 +79,32 @@ Show the user one review surface before writing anything:
 3. **Recommender additions** (from JSON `additions`): MCP servers, skills, hooks, and any `swarm_worker_skills` to preload — name + reason for each.
 4. **Gaps flagged** (from JSON `gaps`): things the baseline doesn't cover but might warrant a future spec.
 
-Use `AskUserQuestion` to confirm: "Apply these changes?" Options: `apply`, `apply with edits`, `cancel`.
+After presenting the four blocks, **explicitly tell the user the project is NOT yet configured**. Print this exact block above the confirmation prompt:
 
-If `apply with edits`: take the user's adjustments inline, re-show the surface, ask again.
+```
+⚠ The baseline is still in PROJECT-AGNOSTIC MODE.
+
+None of the proposal above has been applied. `project.json → configured`
+is still `false`. test_runner / lint_runner are still in guide mode.
+Closing this session now leaves the project unconfigured.
+
+The next prompt is an action gate. You must explicitly approve to proceed
+to Step 6 (apply) — otherwise nothing changes.
+```
+
+Use `AskUserQuestion` to confirm. The question SHALL be a full sentence that names the un-configured state explicitly — not "Apply these changes?" alone, but: **"The project is NOT yet configured. Proceed to apply this proposal and finish setup?"** Options:
+
+- `Proceed and apply` — advances to Step 6.
+- `Edit before applying` — take the user's adjustments inline, re-show the surface, ask again.
+- `Cancel — leave project unconfigured` — exit without writing; `configured` stays `false`; surface that the project remains in project-agnostic mode and `/init-project` can be re-run later.
+
+If `Edit before applying`: take the user's adjustments inline, re-show the surface, **ask the same gate again**. Do not silently apply — the gate fires after every edit cycle until the user picks `Proceed and apply` or `Cancel`.
 
 ## Step 6 — Apply
 
-Write to disk now. Do each sub-step in order; if any fails, stop and surface the error before continuing:
+Write to disk now. **This is the first step in the protocol that mutates files in the user's project** — until this step runs, `.claude/project.json` still reads `configured: false` and the baseline stays in project-agnostic mode. Reaching this step means the user explicitly picked `Proceed and apply` at Step 5's gate.
+
+Do each sub-step in order; if any fails, stop and surface the error before continuing:
 
 1. **Pre-create lazy directories**:
    ```bash
@@ -186,6 +207,7 @@ Print a final summary:
 ## Constraints
 
 - **Steps 6 + 7 + 8 are atomic for the user.** If Step 8 fails, do not declare success at Step 9.
+- **Step 5 is review, not setup.** Until the user explicitly picks `Proceed and apply` at Step 5's gate, the project remains in project-agnostic mode. Surfacing recommendations is not configuration; the gate prompt SHALL name the un-configured state in a full sentence so a skimming reader cannot mistake the proposal for a completion notice.
 - **Never write `configured: true` before Step 8 passes.** A FAIL at Step 8 means the project is in a broken state; leaving `configured: true` would lie to `setup_guard` and the welcome hook in CLAUDE.md.
 - **No silent decisions.** Every project-specific change appears in seed.md §16 so the next reader can see what diverged from baseline.
 - **Idempotent.** Re-running on the same project produces the same §16 (modulo timestamp + run number) and passes `/audit-baseline` cleanly.

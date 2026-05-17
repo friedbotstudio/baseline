@@ -1,0 +1,9 @@
+{
+  "request": "init-project workflow minor improvement. After running init-project, it presents the finding and setup, but it must explicitly ask the user to proceed and tell them that the project setup is incomplete. Some users may run init-project, read the recommendation, and assume the project is set up — basically need to be more explicit. Source: backlog entry init-project-explicit-proceed-confirmation-7cb1 (raised 2026-05-17 by user-instruction).",
+  "slug": "init-project-proceed-confirmation",
+  "entry_phase": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "integrate", "document"],
+  "completed": ["chore", "archive", "memory-flush"],
+  "created_at": 1779031757,
+  "updated_at": 1779032100
+}
