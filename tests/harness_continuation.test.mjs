@@ -82,6 +82,25 @@ function defaultPayload() {
   };
 }
 
+async function writeConsentToken(tmp, relPath, mtimeOffsetSec = 1) {
+  const absPath = path.join(tmp, '.claude/state', relPath);
+  await fs.mkdir(path.dirname(absPath), { recursive: true });
+  await fs.writeFile(absPath, `${Math.floor(Date.now() / 1000)}\n`);
+  const refStat = await fs.stat(path.join(tmp, '.claude/state/harness_state'));
+  const newMtime = refStat.mtimeMs / 1000 + mtimeOffsetSec;
+  await fs.utimes(absPath, newMtime, newMtime);
+  return absPath;
+}
+
+async function readLogFile(tmp) {
+  const logPath = path.join(tmp, '.claude/state/logs/harness_continuation.log');
+  try {
+    return await fs.readFile(logPath, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
 describe('harness_continuation Stop hook', () => {
   let tmp;
   beforeEach(async () => {
@@ -181,6 +200,176 @@ describe('harness_continuation Stop hook', () => {
       '',
       'second fire with stop_hook_active=true should stay silent'
     );
+  });
+});
+
+describe('harness_continuation Stop hook — rung 4 (consent gate auto-resume)', () => {
+  let tmp;
+  beforeEach(async () => {
+    tmp = await createTempProject();
+  });
+  afterEach(async () => {
+    await fs.rm(tmp, { recursive: true, force: true });
+  });
+
+  it('test_rung4_block_with_fresh_commit_consent', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded at /grant-commit',
+    });
+    await writeConsentToken(tmp, 'commit_consent', 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    const out = JSON.parse(result.stdout);
+    assert.equal(out.decision, 'block');
+    assert.match(
+      out.reason,
+      /Skill\(harness\)/,
+      'block reason should name Skill(harness)'
+    );
+  });
+
+  it('test_rung4_block_with_fresh_spec_approval', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded at /approve-spec',
+    });
+    await writeConsentToken(tmp, `spec_approvals/${SLUG}.approval`, 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    const out = JSON.parse(result.stdout);
+    assert.equal(out.decision, 'block');
+  });
+
+  it('test_rung4_block_with_fresh_swarm_approval', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded at /approve-swarm',
+    });
+    await writeConsentToken(tmp, `swarm_approvals/${SLUG}.approval`, 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    const out = JSON.parse(result.stdout);
+    assert.equal(out.decision, 'block');
+  });
+
+  it('test_rung4_block_with_fresh_push_consent', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded',
+    });
+    await writeConsentToken(tmp, 'push_consent', 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    const out = JSON.parse(result.stdout);
+    assert.equal(out.decision, 'block');
+  });
+
+  it('test_rung4_silent_when_workflow_json_absent', async () => {
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded',
+    });
+    await writeConsentToken(tmp, 'commit_consent', 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '');
+  });
+
+  it('test_rung4_silent_when_all_consent_tokens_absent', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded',
+    });
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '');
+  });
+
+  it('test_rung4_silent_when_consent_token_older_than_state', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded',
+    });
+    // Stale consent: mtime EARLIER than harness_state. Models the idempotency
+    // case where harness has already resumed once and rewritten harness_state.
+    await writeConsentToken(tmp, 'commit_consent', -5);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '');
+  });
+
+  it('test_rung4_silent_when_state_is_done', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'done',
+      slug: SLUG,
+      reason: 'workflow complete',
+    });
+    await writeConsentToken(tmp, 'commit_consent', 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '');
+  });
+
+  it('test_rung4_warn_on_slug_mismatch_still_emits', async () => {
+    await writeWorkflowJson(tmp, 'right-slug');
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: 'right-slug',
+      reason: 'yielded',
+    });
+    await writeMarker(tmp, 'wrong-slug');
+    await writeConsentToken(tmp, 'commit_consent', 2);
+
+    const result = invokeHook(tmp, defaultPayload());
+    assert.equal(result.status, 0);
+    const out = JSON.parse(result.stdout);
+    assert.equal(out.decision, 'block');
+
+    const log = await readLogFile(tmp);
+    assert.match(log, /WARN/, 'log should contain WARN line');
+    assert.match(log, /slug mismatch/, 'WARN should mention slug mismatch');
+    assert.match(log, /wrong-slug/, 'WARN should name the marker slug');
+    assert.match(log, /right-slug/, 'WARN should name the workflow slug');
+  });
+
+  it('test_rung4_silent_when_stop_hook_active', async () => {
+    await writeWorkflowJson(tmp, SLUG);
+    await writeHarnessState(tmp, {
+      state: 'yielded',
+      slug: SLUG,
+      reason: 'yielded',
+    });
+    await writeConsentToken(tmp, 'commit_consent', 2);
+
+    const result = invokeHook(tmp, {
+      ...defaultPayload(),
+      stop_hook_active: true,
+    });
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), '');
   });
 });
 

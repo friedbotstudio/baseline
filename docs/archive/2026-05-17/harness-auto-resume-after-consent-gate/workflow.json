@@ -1,0 +1,11 @@
+{
+  "request": "Make the harness auto-resume after each consent gate (/approve-spec, /approve-swarm, /grant-commit, /grant-push) when a workflow is armed. Today, after the user runs a consent slash command, the harness loop has yielded and the user must type /harness again to continue. Three candidate design surfaces: (a) the consent slash command body chains into Skill(harness) after writing its token; (b) the harness_continuation Stop hook fires on a fresh consent token; (c) the consent_gate_grant hook additionally arms a 'harness wants to resume' signal that another lifecycle hook picks up. Verbatim from user (2026-05-17): 'after each consent gate if the harness is armed we shouldn't ask the user to run harness again or ask them to continue...' Cross-cutting impact: touches consent-gate hook, Stop hook, possibly all 4 consent command bodies, and Article V wording. Security-relevant: consent gates are a primitive in the workflow's safety model.",
+  "slug": "harness-auto-resume-after-consent-gate",
+  "entry_phase": "intake",
+  "exceptions": [
+    "brd"
+  ],
+  "completed": ["intake", "scout", "research", "spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "created_at": 1779016467,
+  "updated_at": 1779016652
+}
