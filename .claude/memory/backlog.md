@@ -41,20 +41,6 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - last-touched: 2026-05-17
 - caveat: Direct-write to `backlog.md` because `memory_stop.sh` intent-detection didn't fire on this item's prose phrasing — which is itself the evidence the user cites. The intent regex set in `memory_stop.sh` (anchored line-start patterns like `TODO:`, `next we (should|need to|must)`, `let's also`, `we should also`, `backlog this`, `after this (lands|ships)`) misses descriptive numbered-list items like "1. improved backlog item detection". Scope of follow-up: widen the trigger set toward higher recall while preserving the precision contract from the backlog-memory-bucket intake ("only obvious future-intent phrasings should match; mid-sentence accidental matches should not"); add a test corpus of true-positive sentences from real conversations; consider a second pass at flush-time that lets the curator manually promote anything the hook missed.
 
-## init-project-explicit-proceed-confirmation-7cb1
-
-> verbatim (user, 2026-05-17):
-> init-project workflow minor improvement. after running init-project, it presents the finding and setup, it must explicitly ask user to proceed and tell it that the project setup is incomplete; some person may run init-project, reads the recommendation and assumes the project is setup (basically need to be more explict)
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: post-backlog-memory-bucket review (no active workflow)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: `/init-project` (the command body at `.claude/commands/init-project.md`) currently surfaces recommendations and applied changes in the same message. A reader skimming the output can mistake the recommendation block for completion. Add an explicit "proceed to apply?" gate between findings and the apply step, with copy that makes the incomplete state of the project unmistakable.
-
 ## seed-template-md-pre-redesign-drift-a1f3
 
 > assistant-deferral (claude, 2026-05-17):
@@ -96,3 +82,17 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - verified-at: HEAD
 - last-touched: 2026-05-17
 - caveat: Add a spec-to-implementation drift reconciliation step in `/tdd` (or as a sibling phase). For each AC and `## Design calls` row in the approved spec, verify the implementation realizes it; surface gaps. Distinct from `/integrate` (which runs the test suite) — this is a structural cross-check between the spec artifact and the diff. Open question for the intake: does this live inside `/tdd` Step 7, run as a new dedicated phase between `/tdd` and `/simplify`, or extend `/integrate`?
+
+## backlog-status-not-auto-flipped-after-pickup-ac5d
+
+> verbatim (user, 2026-05-17):
+> this is a bug; let's add this issue in backlog too
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-05-17
+- raised-in-context: post-init-project-proceed-confirmation chore (commit 5a79b1c)
+- estimated-effort: small
+- verified-at: 5a79b1c
+- last-touched: 2026-05-17
+- caveat: When `/triage` accepts a request whose `Source:` line names an existing backlog entry (the framing the chore for `init-project-explicit-proceed-confirmation-7cb1` just used), nothing in the workflow auto-flips that source entry's `status:` field from `open` → `picked-up` at triage time, nor stamps `superseded-at:` at commit time. The source entry stays `status: open` indefinitely until a human edits `backlog.md` by hand or runs `/memory-flush` ad-hoc. Direct-write to `backlog.md` because the bug is structural (no extraction path exists yet) and the request came outside a workflow phase. Likely fix surface: (a) `/triage` parses the `Source: backlog entry <key>` line in the request, stashes `source_backlog_key` in `workflow.json`, and emits a `_pending.md` candidate at `/commit` time that sets `superseded-at:` on the source entry (auto-deleted by `/memory-flush` Step 0a on next run); or (b) `/commit` reads `workflow.json → source_backlog_key` and writes the closure stamp directly to `backlog.md` as a final step before archive-bundle update. Option (a) routes the change through the existing memory pipeline (consistent with the curator-not-writer pattern); option (b) couples `/commit` to memory writes and is faster but breaks the seam.

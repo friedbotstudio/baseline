@@ -51,13 +51,13 @@ toc:
     <li><code>triage</code>. Picks the workflow entry phase and writes <code>workflow.json</code>.</li>
     <li><code>scout</code>. Phase 2. Maps the relevant slice of the codebase.</li>
     <li><code>research</code>. Phase 3. Surfaces 2 to 4 candidate solution approaches with concrete tradeoffs.</li>
-    <li><code>tdd</code>. Phase 6 (solo). Decides scenario recipe and implementation contract; runs scenario then implement then verify.</li>
+    <li><code>tdd</code>. Phase 6 (solo). Decides scenario recipe and implementation contract; runs scenario then implement then verify then drift-check. Drift-check compares numbered ACs and Design calls rows in the approved spec against the implementation diff and yields the workflow if any item is unresolved (no auto-loop).</li>
     <li><code>simplify</code>. Phase 7. Mechanical cleanup pass over the branch diff.</li>
     <li><code>security</code>. Phase 8. OWASP-aligned review of pending changes.</li>
     <li><code>integrate</code>. Phase 9. Runs the full test suite and stamps the binding verify verdict.</li>
     <li><code>document</code>. Phase 10. Routes technical writing through the documentation, technical-tutorials, and prose skills.</li>
     <li><code>archive</code>. Phase 10.5. Moves slug artifacts to <code>docs/archive/&lt;date&gt;/&lt;slug&gt;/</code>.</li>
-    <li><code>commit</code>. Phase 11. Stages and creates the commit, gated by <code>/grant-commit</code>. Pushes to protected branches need <code>/grant-push</code> (Article VII).</li>
+    <li><code>commit</code>. Phase 11. Stages and creates the commit, gated by <code>/grant-commit</code>. After the commit lands, if <code>workflow.json</code> declares <code>source_backlog_keys</code>, the commit step invokes <code>sweep.py stamp-closure</code> to mark each named backlog entry <code>status: picked-up</code> with <code>superseded-at: &lt;today&gt;</code>; the next <code>/memory-flush</code> auto-close sweep deletes the stamped blocks. Pushes to protected branches need <code>/grant-push</code> (Article VII).</li>
   </ul>
 </section>
 

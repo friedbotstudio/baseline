@@ -65,6 +65,10 @@ For each entry without a structured closure field, the helper scans the body aga
 
 You drive this step interactively: ask the user `Close <key> from <file>? (y / n / skip)` for each entry the helper surfaces, then feed the answers to the helper one per line.
 
+### Step 0a-bis — Stamp-closure mode (invoked from /commit, not from /memory-flush)
+
+`sweep.py` also exposes a `--mode stamp-closure --backlog-keys <csv>` mode that writes `status: picked-up` + `superseded-at: <today>` to each named `backlog.md` entry. This mode is NOT invoked by `/memory-flush` Step 0; it is invoked by `/commit` Step 6 when `workflow.json → source_backlog_keys` is non-empty. The mode is idempotent (re-running on stamped entries rewrites `superseded-at:` to today; reports them under `already_closed`). The next `/memory-flush` Step 0a auto-close sweep then deletes the stamped entries per the existing `superseded-at:` closure trigger — so `/memory-flush`'s contract is unchanged; it just sees more closures in its `auto-close` step. Report shape: `{"stamped": N, "missing": [keys], "already_closed": [keys]}`.
+
 ### Step 0c — Stale sweep
 
 Only run when `memory_session_start.sh` reported stale > 0 this session, or the user asks. Invoke:

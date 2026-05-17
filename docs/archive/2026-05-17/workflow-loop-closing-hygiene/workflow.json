@@ -1,0 +1,14 @@
+{
+  "request": "Workflow-integrity hygiene pass — three loop-closing fixes bundled into one workflow. Goal 1: regenerate stale .claude/hooks/tests/fixtures/ac008_byte_equal_reference.txt (backlog: ac008-fixture-recapture-after-memory-drift-39cc). Goal 2: add a spec-to-implementation drift reconciliation step that cross-checks every AC and '## Design calls' row in the approved spec against the implementation diff; open design question on placement — /tdd Step 7, new dedicated phase between /tdd and /simplify, or extending /integrate (backlog: tdd-spec-implementation-drift-analysis-6086). Goal 3: when /triage accepts a request sourced from a backlog entry, auto-flip that entry's status from 'open' to 'picked-up' at triage time and stamp superseded-at: at commit time; open design question on fix surface — (a) /triage stashes source_backlog_key in workflow.json and /commit emits a _pending.md candidate, or (b) /commit reads workflow.json → source_backlog_key and writes the closure stamp directly (backlog: backlog-status-not-auto-flipped-after-pickup-ac5d). Source: backlog entries ac008-fixture-recapture-after-memory-drift-39cc, tdd-spec-implementation-drift-analysis-6086, backlog-status-not-auto-flipped-after-pickup-ac5d.",
+  "slug": "workflow-loop-closing-hygiene",
+  "source_backlog_keys": [
+    "ac008-fixture-recapture-after-memory-drift-39cc",
+    "tdd-spec-implementation-drift-analysis-6086",
+    "backlog-status-not-auto-flipped-after-pickup-ac5d"
+  ],
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "created_at": 1779034726,
+  "updated_at": 1779120600
+}

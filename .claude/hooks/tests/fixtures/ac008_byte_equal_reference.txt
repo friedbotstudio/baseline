@@ -1,12 +1,12 @@
 ## Project memory — index (.claude/memory/)
 
-HEAD: `n/a`  ·  total entries: 32  ·  stale (>=30 commits old): 0
+HEAD: `n/a`  ·  total entries: 68  ·  stale (>=30 commits old): 0
 
 | File | Entries | Stale | Status |
 |---|---:|---:|---|
-| `landmarks.md` | 19 | 0 | ok |
-| `libraries.md` | 3 | 0 | ok |
-| `decisions.md` | 1 | 0 | ok |
-| `landmines.md` | 5 | 0 | ok |
-| `conventions.md` | 3 | 0 | ok |
-| `pending-questions.md` | 1 | 0 | ok |
+| `landmarks.md` | 34 | 0 | ok |
+| `libraries.md` | 5 | 0 | ok |
+| `decisions.md` | 2 | 0 | ok |
+| `landmines.md` | 8 | 0 | ok |
+| `conventions.md` | 7 | 0 | ok |
+| `pending-questions.md` | 6 | 0 | ok |

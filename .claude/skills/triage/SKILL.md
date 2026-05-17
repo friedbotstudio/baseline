@@ -23,13 +23,17 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    ```json
    {
      "request": "<the request>",
+     "slug": "<workflow slug>",
      "entry_phase": "<intake|spec|tdd|chore>",
      "exceptions": ["<phase>", ...],
      "completed": [],
+     "source_backlog_keys": ["<backlog stable key>", ...],
      "created_at": <epoch>,
      "updated_at": <epoch>
    }
    ```
+
+   The `source_backlog_keys` field is optional. When the user's request explicitly names one or more backlog entries this workflow picks up (the common framing is a `Source:` line listing backlog keys), populate the array with those keys. `/commit` (Phase 11) reads this field and invokes `sweep.py --mode stamp-closure` after the commit lands, stamping each named entry with `status: picked-up` + `superseded-at: <today>` so the next `/memory-flush` Step 0a auto-closes them. Absent / empty array → `/commit` skips the stamp step entirely (backward-compatible for any workflow that pre-dates the field). `/triage` does NOT auto-detect backlog keys from free-form prose — the user populates the field (or names them in the triage prompt and you populate it during step 4).
 5. **Seed the workflow tasklist.** Use the `TaskCreate` tool to register one task per non-excepted phase plus each applicable consent gate. The tasks are the running checklist that `/harness` (or any direct phase invocation) reads to decide the next action; consent-gate tasks block the workflow until the user runs the corresponding command. **When `grant-commit` and `commit` are in exceptions (non-git project), do NOT seed those two tasks** — the workflow ends after `/archive`. Use these canonical templates:
 
    **For `chore` track** (single phase + memory-flush + commit gate):

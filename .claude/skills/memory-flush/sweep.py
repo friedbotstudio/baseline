@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Deterministic Step 0 helper for /memory-flush.
+"""Deterministic actuator for /memory-flush Step 0 and for /commit Step 6.
 
 Scans canonical memory files for closure fields and prose closure signals,
 applies the matching action (auto-close / surface-and-confirm / stale-sweep),
-and emits a JSON action report. Invoked by SKILL.md Step 0 and exercised by
+and emits a JSON action report. Also exposes a non-interactive stamp-closure
+mode invoked by /commit (Phase 11, Step 6) to write status: picked-up +
+superseded-at: today on backlog entries named in workflow.json →
+source_backlog_keys. Invoked by SKILL.md Step 0 (auto-close / prose-scan /
+stale-sweep) and by commit/SKILL.md Step 6 (stamp-closure). Exercised by
 the fixture tests at .claude/skills/memory-flush/tests/run.sh.
 
 CLI:
-  --mode {auto-close, prose-scan, stale-sweep}
+  --mode {auto-close, prose-scan, stale-sweep, stamp-closure}
   --memory-dir <path>
+  --backlog-keys <csv>   (required iff --mode stamp-closure)
 
 For interactive modes (prose-scan, stale-sweep), one reply per surfaced entry
-is read from stdin. Empty stdin / EOF defaults to "keep".
+is read from stdin. Empty stdin / EOF defaults to "keep". stamp-closure is
+non-interactive; --backlog-keys is the input channel.
 """
 from __future__ import annotations
 import argparse
@@ -234,6 +240,50 @@ def mode_prose_scan(memdir: Path) -> dict:
             write_file(memdir, name, new_text)
     return report
 
+def mode_stamp_closure(memdir: Path, keys_csv: str) -> dict:
+    """Stamp the named backlog entries with status: picked-up + superseded-at: today.
+
+    Idempotent: re-running on already-stamped entries rewrites superseded-at:
+    to today and reports them under `already_closed`. Entries the caller named
+    that aren't present in backlog.md go into `missing`. The next /memory-flush
+    Step 0a auto-close sweep deletes the stamped entries per the existing
+    superseded-at: closure-trigger contract.
+    """
+    report = {'stamped': 0, 'missing': [], 'already_closed': []}
+    keys = [k.strip() for k in keys_csv.split(',') if k.strip()]
+    if not keys:
+        return report
+    text = read_file(memdir, 'backlog')
+    if not text:
+        report['missing'] = list(keys)
+        return report
+    new_text = text
+    today = date.today().isoformat()
+    for key in keys:
+        block = _find_entry_block(new_text, key)
+        if block is None:
+            report['missing'].append(key)
+            continue
+        was_stamped = (read_field(block, 'status') or '').strip() == 'picked-up'
+        updated = update_field(block, 'status', 'picked-up')
+        updated = update_field(updated, 'superseded-at', today)
+        new_text = new_text.replace(block, updated)
+        if was_stamped:
+            report['already_closed'].append(key)
+        else:
+            report['stamped'] += 1
+    if new_text != text:
+        write_file(memdir, 'backlog', new_text)
+    return report
+
+
+def _find_entry_block(text: str, key: str):
+    for entry_key, block in split_entries(text):
+        if entry_key == key:
+            return block
+    return None
+
+
 def mode_stale_sweep(memdir: Path) -> dict:
     report = {'reverified': 0, 'deleted': 0, 'mark_closed': 0, 'kept': 0}
     root = memdir.parent.parent
@@ -276,18 +326,27 @@ MODE_DISPATCH = {
     'auto-close': mode_auto_close,
     'prose-scan': mode_prose_scan,
     'stale-sweep': mode_stale_sweep,
+    'stamp-closure': mode_stamp_closure,
 }
 
 def parse_args(argv):
     p = argparse.ArgumentParser(description='Memory Step 0 sweep helper')
     p.add_argument('--mode', required=True, choices=list(MODE_DISPATCH))
     p.add_argument('--memory-dir', required=True)
-    return p.parse_args(argv)
+    p.add_argument('--backlog-keys', default=None,
+                   help='CSV of backlog stable keys; required when --mode stamp-closure')
+    args = p.parse_args(argv)
+    if args.mode == 'stamp-closure' and args.backlog_keys is None:
+        p.error('--backlog-keys is required when --mode stamp-closure')
+    return args
 
 def main(argv) -> int:
     args = parse_args(argv)
     memdir = Path(args.memory_dir).resolve()
-    report = MODE_DISPATCH[args.mode](memdir)
+    if args.mode == 'stamp-closure':
+        report = mode_stamp_closure(memdir, args.backlog_keys or '')
+    else:
+        report = MODE_DISPATCH[args.mode](memdir)
     print(json.dumps(report))
     return 0
 

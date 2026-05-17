@@ -449,6 +449,144 @@ test_when_readme_documents_backlog_and_assistant_deferral_then_present() {
   fi
 }
 
+# --- workflow-loop-closing-hygiene: stamp-closure mode (Goal 3) --------------
+# Covers AC-005, AC-006, AC-007, AC-008 from
+# docs/specs/workflow-loop-closing-hygiene.md. All start RED until sweep.py
+# adds `mode_stamp_closure` + `--backlog-keys` arg + a 4th MODE_DISPATCH entry.
+
+# Reuse the existing `sweep` helper for stamp-closure: pass a 4th positional
+# argument forwarding the --backlog-keys CSV. The current helper signature
+# `sweep mode mem replies` — we extend behavior with a sibling invoker so the
+# existing call sites stay untouched.
+sweep_stamp_closure() {
+  local mem="$1" keys="${2:-}"
+  if [ ! -f "$SWEEP" ]; then
+    echo "{\"error\":\"sweep.py missing\"}"
+    return 127
+  fi
+  python3 "$SWEEP" --mode stamp-closure --memory-dir "$mem" --backlog-keys "$keys"
+}
+
+# Add a backlog entry shaped like the canonical write from /memory-flush.
+add_open_backlog_entry() {
+  local mem="$1" key="$2"
+  add "$mem" "backlog" "## $key
+
+> verbatim (user, $(today)):
+> stub intent line for $key
+
+- source: user-instruction
+- status: open
+- raised-on: $(today)
+- raised-in-context: test-fixture
+- verified-at: HEAD
+- last-touched: $(today)"
+}
+
+test_when_stamp_closure_runs_then_status_and_superseded_at_set() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_open_backlog_entry "$mem" "k1"
+  add_open_backlog_entry "$mem" "k2"
+  add_open_backlog_entry "$mem" "k3"
+  local report; report="$(sweep_stamp_closure "$mem" "k1,k2")" \
+    || { fail "AC-005 sweep crashed (got: $report)"; return 1; }
+  assert_contains "$report" '"stamped": 2' "AC-005 expected stamped:2 (got: $report)" || return 1
+  # k1 and k2 must now carry status: picked-up + superseded-at: today.
+  # k3 must remain status: open (no superseded-at:).
+  python3 - "$mem/backlog.md" "$(today)" <<'PY' || return 1
+import re, sys
+path, today = sys.argv[1], sys.argv[2]
+text = open(path).read()
+def find(key):
+    m = re.search(rf'^## {re.escape(key)}$(.*?)(?=^## |\Z)', text, re.M | re.DOTALL)
+    return m.group(1) if m else ''
+for key in ("k1", "k2"):
+    block = find(key)
+    if not block:
+        sys.exit(f"missing block for {key}")
+    if 'status: picked-up' not in block:
+        sys.exit(f"{key}: expected status: picked-up; got: {block!r}")
+    if f'superseded-at: {today}' not in block:
+        sys.exit(f"{key}: expected superseded-at: {today}; got: {block!r}")
+k3 = find("k3")
+if 'status: open' not in k3:
+    sys.exit(f"k3: expected status: open (untouched); got: {k3!r}")
+if 'superseded-at:' in k3:
+    sys.exit(f"k3: expected NO superseded-at: (untouched); got: {k3!r}")
+PY
+}
+
+test_when_stamp_closure_then_auto_close_deletes() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_open_backlog_entry "$mem" "k1"
+  add_open_backlog_entry "$mem" "k2"
+  sweep_stamp_closure "$mem" "k1,k2" >/dev/null \
+    || { fail "AC-007 stamp-closure crashed"; return 1; }
+  local report; report="$(sweep auto-close "$mem")" \
+    || { fail "AC-007 auto-close crashed"; return 1; }
+  assert_file_not_contains "$mem/backlog.md" "## k1" "AC-007 expected k1 deleted by auto-close" || return 1
+  assert_file_not_contains "$mem/backlog.md" "## k2" "AC-007 expected k2 deleted by auto-close" || return 1
+  assert_contains "$report" '"closed": 2' "AC-007 expected closed:2 (got: $report)" || return 1
+}
+
+test_when_stamp_closure_with_empty_keys_then_zero_stamped() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_open_backlog_entry "$mem" "k1"
+  local before; before="$(cat "$mem/backlog.md")"
+  local report; report="$(sweep_stamp_closure "$mem" "")" \
+    || { fail "AC-008 sweep crashed on empty keys"; return 1; }
+  assert_contains "$report" '"stamped": 0' "AC-008 expected stamped:0 (got: $report)" || return 1
+  local after; after="$(cat "$mem/backlog.md")"
+  if [ "$before" = "$after" ]; then return 0; fi
+  fail "AC-008 backlog.md was modified despite empty keys"
+  diff <(printf '%s' "$before") <(printf '%s' "$after") || true
+  return 1
+}
+
+test_when_stamp_closure_with_nonexistent_key_then_missing_list() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_open_backlog_entry "$mem" "k1"
+  local report; report="$(sweep_stamp_closure "$mem" "nonexistent-key")" \
+    || { fail "AC-008 sweep crashed (got: $report)"; return 1; }
+  assert_contains "$report" '"stamped": 0' "AC-008 expected stamped:0 for missing key" || return 1
+  assert_contains "$report" '"missing"' "AC-008 expected missing list in report (got: $report)" || return 1
+  assert_contains "$report" 'nonexistent-key' "AC-008 expected key in missing list" || return 1
+}
+
+test_when_stamp_closure_called_twice_then_idempotent() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_open_backlog_entry "$mem" "k1"
+  sweep_stamp_closure "$mem" "k1" >/dev/null \
+    || { fail "AC-005 first stamp crashed"; return 1; }
+  sweep_stamp_closure "$mem" "k1" >/dev/null \
+    || { fail "AC-005 second stamp crashed"; return 1; }
+  # status: picked-up should appear exactly once; superseded-at: today exactly once.
+  local picked_count; picked_count="$(grep -c 'status: picked-up' "$mem/backlog.md")"
+  local sup_count; sup_count="$(grep -c "superseded-at: $(today)" "$mem/backlog.md")"
+  if [ "$picked_count" -ne 1 ] || [ "$sup_count" -ne 1 ]; then
+    fail "AC-005 idempotency violated: status-count=$picked_count, superseded-count=$sup_count (expected 1, 1)"
+    return 1
+  fi
+}
+
+test_when_stamp_closure_missing_keys_arg_then_argparse_error() {
+  if [ ! -f "$SWEEP" ]; then
+    fail "AC-005 sweep.py missing"
+    return 1
+  fi
+  python3 "$SWEEP" --mode stamp-closure --memory-dir "$REPO_ROOT/.claude/memory" >/dev/null 2>&1
+  local ec=$?
+  if [ "$ec" -ne 2 ]; then
+    fail "AC-005 expected argparse exit 2 when --backlog-keys missing, got $ec"
+    return 1
+  fi
+}
+
 # --- runner -------------------------------------------------------------------
 
 run test_when_resolved_at_present_on_pending_then_flush_removes_block
@@ -470,6 +608,14 @@ run test_when_promote_user_candidate_writes_canonical_entry_with_status_open_and
 run test_when_bootstrap_entry_has_superseded_at_today_then_auto_close_removes_it
 run test_when_backlog_entry_verified_at_old_sha_then_not_classified_stale
 run test_when_readme_documents_backlog_and_assistant_deferral_then_present
+
+# workflow-loop-closing-hygiene: stamp-closure coverage
+run test_when_stamp_closure_runs_then_status_and_superseded_at_set
+run test_when_stamp_closure_then_auto_close_deletes
+run test_when_stamp_closure_with_empty_keys_then_zero_stamped
+run test_when_stamp_closure_with_nonexistent_key_then_missing_list
+run test_when_stamp_closure_called_twice_then_idempotent
+run test_when_stamp_closure_missing_keys_arg_then_argparse_error
 
 echo "----"
 echo "Passed: $PASS  Failed: $FAIL"

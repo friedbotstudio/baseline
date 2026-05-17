@@ -150,10 +150,10 @@ Each entry's stable key is `path:line`.
 
 ## .claude/skills/memory-flush/sweep.py:1
 
-- Role: deterministic Step 0 actuator for /memory-flush. Three modes via `--mode {auto-close, prose-scan, stale-sweep}` + `--memory-dir`. auto-close deletes blocks carrying valid `resolved-at:` (pending-questions) or `superseded-at:` (other five canonical files) and flags malformed dates + per-file invariant violations. prose-scan surfaces entries whose body matches R1/R2/R3 (Resolution path/Superseded by/Resolved by, anchored, case-insensitive) and applies stdin replies (y deletes, n keeps, skip defers). stale-sweep re-derives the stale set with the same predicate as `memory_session_start.sh:1` and applies stdin replies (re-verify / delete / mark-closed / skip). Emits JSON action report on stdout.
-- Verified-at: HEAD
-- Last-touched: 2026-05-13
-- Caveat: the stale predicate's non-git threshold (30 days) MUST stay in sync with `memory_session_start.sh:1`'s `STALE_DAYS` — they re-derive the same set. Spec design diagram says 90 days; the 30-day choice matches the test plan AC-003 row and the index header label `stale (>=30 commits old)`. The helper trusts argv strings reaching `git rev-list` (e.g., the verified-at value as `<stamp>..HEAD`); a malicious memory file could feed a `--exec`-style argv flag — low risk because filesystem write to `.claude/memory/` already implies broader compromise. See `docs/archive/2026-05-13/memory-lifecycle-closure/security.md` LOW finding.
+- Role: deterministic actuator for /memory-flush Step 0 AND for /commit Step 6. Four modes via `--mode {auto-close, prose-scan, stale-sweep, stamp-closure}` + `--memory-dir`. auto-close deletes blocks carrying valid `resolved-at:` (pending-questions) or `superseded-at:` (other five canonical files) and flags malformed dates + per-file invariant violations. prose-scan surfaces entries whose body matches R1/R2/R3 (Resolution path/Superseded by/Resolved by, anchored, case-insensitive) and applies stdin replies (y deletes, n keeps, skip defers). stale-sweep re-derives the stale set with the same predicate as `memory_session_start.sh:1` and applies stdin replies (re-verify / delete / mark-closed / skip). stamp-closure (non-interactive) takes `--backlog-keys <csv>` and writes `status: picked-up` + `superseded-at: <today>` to each named backlog.md entry; invoked by /commit Step 6 when workflow.json → source_backlog_keys is populated; report shape `{stamped, missing, already_closed}`. Emits JSON action report on stdout.
+- Verified-at: 5a79b1c
+- Last-touched: 2026-05-17
+- Caveat: the stale predicate's non-git threshold (30 days) MUST stay in sync with `memory_session_start.sh:1`'s `STALE_DAYS` — they re-derive the same set. Spec design diagram says 90 days; the 30-day choice matches the test plan AC-003 row and the index header label `stale (>=30 commits old)`. The helper trusts argv strings reaching `git rev-list` (e.g., the verified-at value as `<stamp>..HEAD`); a malicious memory file could feed a `--exec`-style argv flag — low risk because filesystem write to `.claude/memory/` already implies broader compromise. See `docs/archive/2026-05-13/memory-lifecycle-closure/security.md` LOW finding. stamp-closure has its own LOW finding (CWE-22 path traversal via slug; CWE-78 shell quoting of backlog-keys CSV) — see `docs/archive/2026-05-17/workflow-loop-closing-hygiene/security.md`; mitigations are non-blocking carve-outs for a future hardening workflow.
 
 ## .claude/hooks/tests/memory_session_start_test.sh:1
 
@@ -253,6 +253,20 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-05-17
 - Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline/audit.sh`); run manually during /tdd, /simplify, /integrate alongside the two `.claude/hooks/tests/memory_*.sh` test files. Bash dynamic-scoping gotcha during authoring: helper functions that loop over a list (e.g. `for name in ...`) MUST declare the loop variable local OR rename it (`mem_name`) so the parent `run()`'s `local name="$1"` isn't clobbered — captured in `.claude/skill-memory/scenario/MEMORY.md` post-fix.
+
+## .claude/skills/tdd/drift_check.py:1
+
+- Role: spec-to-implementation drift analysis helper. Invoked by the harness as a drift-check-tick inside /tdd's seeded worker chain (between the last design-ui-tick / verify-tick and tdd-finalize). CLI: `--slug <slug>` (required), `--project-root <path>` (default `.`), `--diff <path>` (override of `git diff <merge-base>..HEAD`). Parses numbered AC IDs from the spec's ## Acceptance criteria table (regex on `| AC-NNN |` rows) and row-slugs from the ## Design calls table; scores each as `resolved` (item ID literal in any diff added-line) or `unresolved` (no diff added-line references it). Writes `<project-root>/.claude/state/drift/<slug>.md` with a `| kind | id | verdict | evidence |` markdown table per item. Exit 0 on zero-unresolved, exit 1 on `≥ 1 unresolved`, exit 2 on tool error. Special case: spec absent → "no spec; skipped" on stdout, exit 0, no report file (chore-track support per AC-011 of the wf-loop-closing-hygiene spec).
+- Verified-at: 5a79b1c
+- Last-touched: 2026-05-17
+- Caveat: the workflow that first shipped drift_check.py (workflow-loop-closing-hygiene) did NOT exercise the harness's drift-check-tick path at runtime — the harness instance in flight predated the tdd/SKILL.md update and could not inline the helper. Unit-tested via `.claude/skills/tdd/tests/drift_check_test.sh` (4 scenarios covering all-resolved / one-unresolved / no-spec / *(none)*-design-calls). Live runtime exercise begins in the next spec-track workflow after the shipping commit. Path-traversal LOW finding on the `--slug` argument is non-blocking (operator trust model) — see `docs/archive/2026-05-17/workflow-loop-closing-hygiene/security.md` Finding #1.
+
+## .claude/hooks/tests/fixtures/regenerate-ac008.sh:1
+
+- Role: regenerator for the AC-008 byte-equality fixture (`.claude/hooks/tests/fixtures/ac008_byte_equal_reference.txt`). Runs `memory_session_start.sh` against the live `.claude/memory/` tree, extracts the "## Project memory" header through the "| `pending-questions.md`" row, normalizes captured HEAD short SHA to the literal sentinel `n/a`, overwrites the fixture. Idempotent: same tree state → identical bytes. Re-run whenever the canonical memory tree drifts in per-file entry counts. The matching test in `memory_session_start_test.sh` AC-008 case applies the same HEAD normalization to the live capture before byte-comparing — the helper and the test share the extraction shape.
+- Verified-at: 5a79b1c
+- Last-touched: 2026-05-17
+- Caveat: HEAD-sentinel normalization is option (i) from the wf-loop-closing-hygiene research memo — keeps the fixture byte-stable across commits. The extraction cutoff (`| \`pending-questions.md\``) is a hidden coupling between the helper and the test; if memory_session_start.sh ever reorders or renames pending-questions.md, both files need updating in lockstep.
 
 ## .claude/memory/backlog.md:1
 

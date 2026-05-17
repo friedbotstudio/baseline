@@ -223,11 +223,15 @@ test_when_audit_runs_against_changed_repo_then_exit_0() {
 
 test_when_hook_runs_unchanged_tree_then_header_and_table_byte_equal() {
   # Run hook against the real repo memory tree and compare header+table to
-  # the captured pre-spec reference.
+  # the captured pre-spec reference. The fixture's HEAD field is the literal
+  # sentinel `n/a` (see fixtures/regenerate-ac008.sh); the test normalizes
+  # any captured `HEAD: \`<short-sha>\`` to `HEAD: \`n/a\`` before comparing
+  # so the test is byte-stable across commits.
   local out; out="$(run_hook "$REPO_ROOT")"
   local actual_block
   actual_block="$(printf '%s\n' "$out" | python3 -c '
-import sys
+import re, sys
+HEAD_RE = re.compile(r"^(HEAD:\s*`)[^`]+(`)")
 lines = sys.stdin.read().split("\n")
 started = False
 out = []
@@ -236,7 +240,7 @@ for ln in lines:
         started = True
     if not started:
         continue
-    out.append(ln)
+    out.append(HEAD_RE.sub(r"\1n/a\2", ln))
     if ln.startswith("| `pending-questions.md`"):
         break
 sys.stdout.write("\n".join(out) + "\n")
