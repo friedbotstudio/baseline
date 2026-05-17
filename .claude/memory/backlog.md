@@ -55,44 +55,44 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - last-touched: 2026-05-17
 - caveat: Discovered while updating docs/init/seed.md for rung 4 — src/seed.template.md lines around 141, 167, 365 still describe the older mental model. Out of scope to fix here (the harness-auto-resume spec's `write_set` didn't include src/seed.template.md and the drift predates this workflow). Future workflow: bring src/seed.template.md to byte-parity with docs/init/seed.md, OR add a byte-mirror test analogous to `test_claude_template_md_byte_mirrors_claude_md`. The byte-mirror test is probably the better fix — automates detection of future drift the same way Article XI's CLAUDE.md mirror does.
 
-## ac008-fixture-recapture-after-memory-drift-39cc
+## document-phase-public-site-update-trigger-5e07
 
-> assistant-deferral (claude, 2026-05-17):
-> The fixture drift is pre-existing and unrelated to this workflow — the reference file has `total entries: 32` from before commits, and the live tree is at 67 (a 35-entry drift accumulated across many prior commits). My landmarks.md edit was an in-place replacement (entry count unchanged); the fixture has been stale for many commits already. Per integrate SKILL.md the binding verdict is from test.cmd (PASS). The sibling test failure is an advisory finding — surfacing it without flipping the verdict.
+> assistant-deferral (claude, 2026-05-18):
+> The /document phase needs a better trigger for "behavior change → public docs site update" — I treated it as internal-only when site-src/ described the workflow.
 
 - source: assistant-deferral
 - status: open
-- raised-on: 2026-05-17
-- raised-in-context: audit-preamble-strict-check /integrate phase
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: `.claude/hooks/tests/fixtures/ac008_byte_equal_reference.txt` was captured pre-spec (HEAD shown as `n/a`, total entries 32, landmarks=19). The live tree is at total=67, landmarks=33. The existing landmark for `memory_session_start_test.sh` already documents the re-capture obligation: "if the live tree's entry count or stale count drifts, the fixture needs re-capture." Concrete remediation: regenerate the fixture by running the hook against the live repo memory tree (the same path the test invokes) and overwriting `ac008_byte_equal_reference.txt` with the captured header+table block. Single-commit chore, no spec needed. Defer until a chore-track workflow has appetite, OR bundle with the next memory-tree-related change.
-
-## tdd-spec-implementation-drift-analysis-6086
-
-> verbatim (user, 2026-05-17):
-> need a drift analysis section as part of tdd to ensure what we speced out for, is what is built
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: post-backlog-memory-bucket review (no active workflow)
+- raised-on: 2026-05-18
+- raised-in-context: workflow-loop-closing-hygiene end-of-workflow lessons (commit bfad579)
 - estimated-effort: medium
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: Add a spec-to-implementation drift reconciliation step in `/tdd` (or as a sibling phase). For each AC and `## Design calls` row in the approved spec, verify the implementation realizes it; surface gaps. Distinct from `/integrate` (which runs the test suite) — this is a structural cross-check between the spec artifact and the diff. Open question for the intake: does this live inside `/tdd` Step 7, run as a new dedicated phase between `/tdd` and `/simplify`, or extend `/integrate`?
+- verified-at: bfad579
+- last-touched: 2026-05-18
+- caveat: The `/document` skill's Step 2 survey classifies touched files into documentation / technical-tutorials / prose delegate buckets. It does NOT classify by "the change modifies behavior that an existing public-docs page describes." During workflow-loop-closing-hygiene's first `/document` pass, I anchored on "no site-src/ file is in my write_set" → "no site work needed" — which got the direction backwards. The site DESCRIBES behavior; when behavior changes, the description needs updating even when no site-src/ file initially appears in the diff. Cure surfaces: (i) extend `/document` Step 2 with a "site-describes-this-behavior" check that greps the public-docs surface (site-src/**.njk) for references to skill names + workflow-phase names touched by the diff and routes any matches through the `documentation` delegate; (ii) require the spec's Archive plan section to enumerate any public-docs pages that describe behavior the spec changes, surfacing the requirement at /spec time rather than at /document time. Either path requires the trigger to be REFLECTIVE (the diff's behavior change implies a docs surface that may not be in the diff yet), not just file-presence-driven. See `workflow-loop-closing-hygiene` archive bundle's session log for the live miss-and-fix-up cycle.
 
-## backlog-status-not-auto-flipped-after-pickup-ac5d
+## commit-consent-ttl-too-tight-for-humanizer-flow-8917
 
-> verbatim (user, 2026-05-17):
-> this is a bug; let's add this issue in backlog too
+> assistant-deferral (claude, 2026-05-18):
+> The 300s commit_consent TTL is tight for commits that need humanizer + an explanation hop in between. The cure is to not add a stall ("want me to go ahead?") between grant-commit and git commit when no new question is actually pending.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-18
+- raised-in-context: workflow-loop-closing-hygiene end-of-workflow lessons (commit bfad579 required a /grant-commit re-grant after the first token expired)
+- estimated-effort: small
+- verified-at: bfad579
+- last-touched: 2026-05-18
+- caveat: `project.json → consent.commit_ttl_seconds` defaults to 300. During this workflow's `/commit` step, the elapsed time from /grant-commit consent to actual git commit was 544 seconds — the message-drafting, humanizer pass, and a redundant "want me to go ahead?" stall ate the window. Two non-exclusive cures: (i) behavioral — don't insert post-grant stalls when there is no actual decision pending; the user's /grant-commit already authorized the commit. Add this as `/commit` SOP guidance: between Step 4 (humanizer) and Step 5 (git commit), do NOT emit a clarifying question to the user — humanizer's output is the final body and the commit fires immediately. (ii) configuration — raise `consent.commit_ttl_seconds` default to 600 to absorb humanizer latency on slower runs, or have `/commit` check the token's age before Step 4 and re-grant if `< 60s` remaining. Behavioral cure is YAGNI-aligned (no config change); configuration cure is more robust but adds knobs.
+
+## setup-changelog-tracker-for-unpushed-commits-f22a
+
+> verbatim (user, 2026-05-18):
+> let's add another item in backlog to setup a changelog tracker
 
 - source: user-instruction
 - status: open
-- raised-on: 2026-05-17
-- raised-in-context: post-init-project-proceed-confirmation chore (commit 5a79b1c)
+- raised-on: 2026-05-18
+- raised-in-context: (no active workflow) — raised after the user asked "if I push, what version will be deployed to npm?" and Claude walked the 10 unpushed commits through `.releaserc.json` releaseRules by hand. The tracker is the productized version of that hand-walk.
 - estimated-effort: small
-- verified-at: 5a79b1c
-- last-touched: 2026-05-17
-- caveat: When `/triage` accepts a request whose `Source:` line names an existing backlog entry (the framing the chore for `init-project-explicit-proceed-confirmation-7cb1` just used), nothing in the workflow auto-flips that source entry's `status:` field from `open` → `picked-up` at triage time, nor stamps `superseded-at:` at commit time. The source entry stays `status: open` indefinitely until a human edits `backlog.md` by hand or runs `/memory-flush` ad-hoc. Direct-write to `backlog.md` because the bug is structural (no extraction path exists yet) and the request came outside a workflow phase. Likely fix surface: (a) `/triage` parses the `Source: backlog entry <key>` line in the request, stashes `source_backlog_key` in `workflow.json`, and emits a `_pending.md` candidate at `/commit` time that sets `superseded-at:` on the source entry (auto-deleted by `/memory-flush` Step 0a on next run); or (b) `/commit` reads `workflow.json → source_backlog_key` and writes the closure stamp directly to `backlog.md` as a final step before archive-bundle update. Option (a) routes the change through the existing memory pipeline (consistent with the curator-not-writer pattern); option (b) couples `/commit` to memory writes and is faster but breaks the seam.
+- verified-at: bfad579
+- last-touched: 2026-05-18
+- caveat: Direct-write to `backlog.md` because the request is structural (no extraction path: the trigger phrase "let's" appears mid-sentence after "let's add another item in backlog to setup…", which is exactly the kind of meta-instruction `memory_stop.sh`'s precision-over-recall regex correctly skips). Scope: a one-command pre-push preview that answers "what would my next `npm publish` ship?" — projected next semver per `.releaserc.json` releaseRules, ordered list of contributing commits with their bump impact, and a flagged note when zero commits would fire a release. Likely surfaces: (a) skill `/changelog` (or `/release-preview`) that shells `npx semantic-release --dry-run --no-ci` against `origin/main..HEAD`, parses the analyzer output, prints the projected version + commit table; (b) a `scripts/release-preview.mjs` Node helper that re-implements the releaseRules logic locally so no `--dry-run` round-trip is needed (faster, but duplicates semantic-release's analyzer). The repo already runs `@semantic-release/changelog` to write `CHANGELOG.md` at release-time, so this is NOT about generating a changelog file — it is about previewing the *pending* release before the push. Open question for the intake: should the tracker also surface uncommitted working-tree changes that would be excluded from the bump, or strictly pushed-vs-unpushed? Today's `git status -sb` shows three M files that would NOT ship even on push — easy to surprise.

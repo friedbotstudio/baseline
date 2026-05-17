@@ -57,17 +57,7 @@ for runtime_file in _pending _resume; do
   fi
 done
 
-# Stage 0 — gate on audit-baseline so a polluted src/ template can't reach npm.
-# Audits the dev repo (PKG_ROOT) against seed.md §4 + pristine-template invariants
-# (configured=false, §16 reservation, swarm-worker placeholders, etc.). Skipped if
-# the audit script is absent (e.g., in build-template fixture tests).
 AUDIT_SCRIPT="$PKG_ROOT/.claude/skills/audit-baseline/audit.sh"
-if [ -f "$AUDIT_SCRIPT" ]; then
-  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" bash "$AUDIT_SCRIPT" >&2; then
-    echo "build aborted: audit-baseline reported failures (see above)" >&2
-    exit 1
-  fi
-fi
 
 rm -rf "$TEMPLATE_DIR"
 mkdir -p "$TEMPLATE_DIR/.claude" "$TEMPLATE_DIR/docs/init"
@@ -127,3 +117,21 @@ done
 
 # Stage 3 — build the sha256 manifest.
 node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
+
+# Stage 4 — gate on audit-baseline AFTER the manifest is fresh so a polluted
+# src/ template can't reach npm. Reordered from Stage 0 (pre-2026-05-18) because
+# audit-baseline's skill-ownership hash check reads manifest.owners.skills and
+# the per-file `manifest.files` hash table — both of which are written by
+# Stage 3. Running the audit before Stage 3 created a chicken-and-egg loop on
+# any workflow that edited baseline-owned SKILL.md files: the audit's hash
+# check would fail against the stale manifest, the build would abort before
+# Stage 3, and the manifest would never be regenerated. Audit always runs
+# against PKG_ROOT (the dev repo, not obj/template), so its target is unchanged
+# by this reorder; only the manifest it reads is now fresh. Skipped if the
+# audit script is absent (e.g., in build-template fixture tests).
+if [ -f "$AUDIT_SCRIPT" ]; then
+  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" bash "$AUDIT_SCRIPT" >&2; then
+    echo "build aborted: audit-baseline reported failures (see above)" >&2
+    exit 1
+  fi
+fi

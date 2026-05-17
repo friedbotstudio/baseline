@@ -1,0 +1,11 @@
+{
+  "request": "Pick up backlog ticket setup-changelog-tracker-for-unpushed-commits-f22a. Build a new `changelog` skill that follows the keepachangelog.com 1.0.0 spec and wire it into the workflow so AFTER `/grant-commit` the changelog skill runs FIRST, THEN `/commit` runs. Additional in-scope deliverables: update the public website (site-src/**) to describe the new phase, redesign the SVG architecture image to a grid / bento-grid layout, and make SVGs responsive for mobile. Touches CLAUDE.md Article IV (phase ordering), docs/init/seed.md (genesis spec), src/CLAUDE.template.md + src/seed.template.md (byte mirrors), .claude/skills/commit/SKILL.md (prereq + ordering), settings.json hook wiring if applicable, site-src/ narrative, and the SVG asset(s).",
+  "slug": "changelog-skill-and-responsive-svgs",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "source_backlog_keys": ["setup-changelog-tracker-for-unpushed-commits-f22a"],
+  "swarm_override": "solo",
+  "created_at": 1747526400,
+  "updated_at": 1747596100
+}

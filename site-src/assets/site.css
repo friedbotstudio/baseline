@@ -983,6 +983,211 @@ a.concept:focus-visible::after {
   stroke-width: 1.5;
 }
 
+/* Architecture bento — the §III workflow diagram.
+   Single inline SVG with two <g> subtrees (.bento-desktop, .bento-mobile).
+   Desktop renders a 1000x540 bento composition; mobile (<=768px) collapses
+   to a 360x1200 vertical stack of the same eleven phases plus three gates.
+   viewBox is fixed at 0 0 1000 1200; preserveAspectRatio="xMinYMin slice"
+   clips the unused regime. CSS aspect-ratio swaps the SVG container shape;
+   display:none toggles which subtree is visible. */
+.arch-bento {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1000 / 565;
+  max-width: 1000px;
+  margin: 0 auto;
+  display: block;
+}
+.arch-bento .bento-mobile { display: none; }
+.arch-bento .bento-desktop { display: initial; }
+
+@media (max-width: 768px) {
+  .arch-bento {
+    aspect-ratio: 360 / 1200;
+    max-width: 400px;
+  }
+  .arch-bento .bento-desktop { display: none; }
+  .arch-bento .bento-mobile { display: initial; }
+}
+
+/* Hero cell — spec. Filled paper, ink 1.5 stroke. Carries the bento's visual anchor. */
+.arch-bento .stage-hero {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+/* Tall cell — tdd. Open-frame dashed stroke signals "where work happens";
+   matches the comptree conditional-edge vocabulary in the hero-symbols catalog. */
+.arch-bento .stage-tall {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}
+
+/* Ship pair cell — changelog + commit. Slightly louder ink stroke to mark the pair. */
+.arch-bento .stage-ship {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+/* Ship pair accent seam — vertical 1.5 accent rule between changelog and commit.
+   Honors the reserved-accent contract: this is the user-pinned "ship pair" device. */
+.arch-bento .ship-seam {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: square;
+}
+
+/* Cell eyebrow — mono caps inside hero/tall cells (e.g., "PLAN ANCHOR", "EXECUTION"). */
+.arch-bento .cell-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--accent);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* Cell ordinal — mono numeral aligned right inside hero/tall. */
+.arch-bento .cell-ord {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Cell title — Inter Tight 22/600 inside hero, 20/600 inside tall.
+   The xl variant carries the v2 two-hero side-by-side composition where
+   spec and tdd are both substantial cells (580x230 and 330x440) that
+   warrant a larger title. */
+.arch-bento .cell-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  fill: var(--ink);
+  letter-spacing: -0.025em;
+}
+.arch-bento .cell-tall .cell-title {
+  font-size: 20px;
+}
+.arch-bento .cell-title-xl {
+  font-size: 38px;
+  letter-spacing: -0.035em;
+}
+
+/* TDD inner chain — five sub-phase chips (scenario, implement, verify, design-ui, drift-check)
+   arranged in a 2-column grid inside the tall TDD cell, separated by arrows.
+   Chips are paper-faced with hairline borders; mono labels in muted ink. */
+.arch-bento .chain-chip {
+  fill: var(--cream);
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.arch-bento .chain-label {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  fill: var(--ink);
+  letter-spacing: -0.005em;
+}
+.arch-bento .chain-arrow {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--muted);
+}
+.arch-bento .chain-arrow-v {
+  font-size: 13px;
+}
+
+/* Cell sub — body 13/400 muted inside hero/tall. */
+.arch-bento .cell-sub {
+  font-family: var(--body);
+  font-size: 13px;
+  fill: var(--muted);
+  letter-spacing: normal;
+}
+.arch-bento .cell-tall .cell-sub {
+  font-size: 11.5px;
+}
+.arch-bento .cell-sub-step {
+  fill: var(--faint);
+  font-size: 11px;
+}
+
+/* Cell foot — mono 10/500 muted at bottom of hero/tall (e.g., file path or transition annotation). */
+.arch-bento .cell-foot {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--muted);
+  letter-spacing: 0.02em;
+}
+.arch-bento .cell-foot-r {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--accent);
+  letter-spacing: 0.02em;
+}
+/* Cell foot rule — hairline separator between chain zone and foot annotations inside TDD. */
+.arch-bento .cell-foot-rule {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+/* Cell modifier — mono 8.5 caps inside standard cells for status labels (e.g., "OPTIONAL"). */
+.arch-bento .cell-modifier {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  fill: var(--faint);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* Pair bracket — hairline rule + mono caps tag above a paired cell row. */
+.arch-bento .pair-rule {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.arch-bento .pair-rule-accent {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.arch-bento .pair-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  fill: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.arch-bento .pair-tag-accent {
+  fill: var(--accent);
+}
+
+/* Runtime gate beneath the grid — dashed accent rule + caps tag + footnote.
+   Distinct from phase-gate annotations because /grant-push sits OUTSIDE the pipeline. */
+.arch-bento .runtime-rule {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.75;
+}
+.arch-bento .runtime-tag {
+  letter-spacing: 0.14em;
+}
+.arch-bento .runtime-foot {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--muted);
+  letter-spacing: 0.02em;
+}
+
 /* Memory-flow plate — hand-drawn-ish hairline diagram for the lifecycle loop. */
 .plate-flow { padding: 32px 24px 28px; }
 .memflow-svg { max-width: 720px; margin: 0 auto; }

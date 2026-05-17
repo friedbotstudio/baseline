@@ -53,6 +53,15 @@ Each entry's stable key is `<lib>@<version>`. If the lockfile bumps, re-verify a
 - Last-touched: 2026-05-14
 - Caveat: `releaseRules` extends but does NOT replace the default preset rules (Angular convention by default) — defaults still apply for commits no custom rule matches. To make a scope explicitly NOT trigger a release, you need an explicit `{scope: "<name>", release: false}` entry that fires before the default `feat`/`fix`/`BREAKING CHANGE` rules. The minor-cap-on-breaking trick (`{breaking: true, release: "minor"}`) only works because rules are evaluated before the preset; it is the documented v0.x safety belt.
 
+## @semantic-release/changelog@6.0.3
+
+- Role: release-time plugin in the semantic-release chain. Runs in the `prepare` step; inserts the release notes (built upstream by `@semantic-release/release-notes-generator`) into `CHANGELOG.md`. Configured at `.releaserc.json:20` with `{changelogFile: "CHANGELOG.md"}`.
+- Empirical behavior (verified by `.claude/skills/changelog/tests/keepachangelog-unreleased-preserved_test.mjs:1` during the changelog-skill-and-responsive-svgs workflow): does NOT preserve the `## [Unreleased]` heading position at the top of the file. The plugin prepends `nextRelease.notes` ABOVE the file's existing content (including `# Changelog` and `## [Unreleased]` headings). The Unreleased heading survives in the file body — just displaced downward.
+- Companion: `.claude/skills/changelog/unreleased-writer.mjs:1` exports `reinsertUnreleasedHeading(changelogPath)` as the release-time fallback that lifts the heading back to canonical top position. Not yet wired into `.releaserc.json` as a post-prepare step; deferred to a follow-up workflow once the AC-013 integration test confirms wiring shape.
+- Verified-at: 25d9eb4
+- Last-touched: 2026-05-18
+- Caveat: the plugin's prepend behavior is documented empirically here because context7 did not surface the seam at research time. The fallback `reinsertUnreleasedHeading` is therefore mandatory if the workflow wants keepachangelog 1.0.0 conformance after release-time runs. A future hardening tick would wire the fallback as a `.releaserc.json` post-prepare plugin entry.
+
 ## nunjucks@3.2.4
 
 - Role: template engine for every `.njk` file in `site-src/`. Drives layouts, includes, frontmatter variable substitution.

@@ -275,3 +275,92 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-05-17
 - Caveat: backlog is **stale-exempt** — `verified-at:` distance is meaningless for intent (it's not a verifiable fact about code state). The 30-commit / 30-day decay predicates in `memory_session_start.sh:_is_stale` and `sweep.py:is_stale` both early-return False for `name == 'backlog'`. Pruning still happens via `last-touched` ordering when the 500-entry size-cap is hit. The bootstrap entry that shipped with this file (`## bootstrap`, `superseded-at: 2026-05-17`) auto-deleted on the first Phase 10.6 invocation post-install — confirmed end-to-end in the backlog-memory-bucket workflow (archive: `docs/archive/2026-05-17/backlog-memory-bucket/`).
+
+## .claude/skills/tdd/SKILL.md:1
+
+- Role: Phase 6 TDD coordinator. Thin orchestrator — decides scenario recipe + implementation contract in main context, writes state at `.claude/state/tdd/<slug>.json`, seeds per-worker tasks (scenario, implement, verify-tick, design-ui-tick, drift-check-tick, tdd-finalize) into the TaskList, yields with `harness_state.continue` so the harness invokes each worker as its own tick. No subagent delegation; no nested Skill calls. The harness inlines verify-tick mechanically rather than invoking the (contract-only) verify skill.
+- Companion: `.claude/skills/scenario/SKILL.md` (worker that writes failing tests), `.claude/skills/implement/SKILL.md` (worker that makes them pass), `.claude/skills/design-ui/SKILL.md:1` (UI surface worker per `## Design calls` row), `.claude/skills/tdd/drift_check.py:1` (drift-check-tick actuator).
+- Verified-at: bfad579
+- Last-touched: 2026-05-17
+- Caveat: prereq is approved-spec OR `entry_phase == tdd` (quickfix/bugfix). The seeded worker chain is one Skill call per tick — the coordinator does NOT loop internally over workers (that would violate Article II's "decisions in main context, workers execute pre-decided recipes" rule). drift-check-tick fires before tdd-finalize so the spec-to-implementation cross-check happens while the harness is still in the TDD phase rather than as a sibling phase.
+
+## .claude/skills/tdd/tests/drift_check_test.sh:1
+
+- Role: Fixture-based integration tests for `.claude/skills/tdd/drift_check.py:1`. 4 scenarios covering AC-002 (all-resolved → exit 0, table marks every AC `resolved`), AC-003 (one-unresolved → exit 1, evidence column names the missing AC ID), AC-011 (no-spec → exit 0, stdout `no spec; skipped`, no report file), and the `*(none)`-Design-calls case (spec present but Design calls table absent → exit 0 over ACs only). Builds tempdir project roots with synthetic spec files + `--diff` override fixtures, invokes the helper, asserts on the markdown report at `<project-root>/.claude/state/drift/<slug>.md` and the exit code.
+- Companion: `.claude/skills/tdd/drift_check.py:1` (the helper under test), `.claude/skills/tdd/tests/run.sh:1` (the aggregate runner that picks this up).
+- Verified-at: bfad579
+- Last-touched: 2026-05-17
+- Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline`); run manually during /tdd, /simplify, /integrate. The test scenarios encode the contract documented in `docs/specs/workflow-loop-closing-hygiene.md` ACs — adding behaviors to `drift_check.py` requires extending this suite in lockstep, or the next drift-check-tick will go unverified.
+
+## .claude/skills/tdd/tests/run.sh:1
+
+- Role: Aggregate test runner for `.claude/skills/tdd/`. Iterates over sibling `*_test.sh` files (currently just `drift_check_test.sh`), invokes each via bash, exits 1 if any fail. Mirrors `.claude/skills/memory-flush/tests/run.sh:1` and `.claude/hooks/tests/run.sh` shape.
+- Verified-at: bfad579
+- Last-touched: 2026-05-17
+- Caveat: not invoked by `project.json → test.cmd` — surfaced manually in /integrate's optional test surface. New `*_test.sh` files in the same directory are picked up automatically by the glob; no runner edit needed.
+
+## .claude/hooks/tests/regenerate_ac008_test.sh:1
+
+- Role: Integration test for `.claude/hooks/tests/fixtures/regenerate-ac008.sh:1`. Covers AC-001 from `workflow-loop-closing-hygiene`: runs the regenerator, then invokes the AC-008 byte-equality case inside `memory_session_start_test.sh` and asserts both PASS. Validates the regen → test loop end-to-end so future fixture drift is fixable by one bash invocation.
+- Companion: `.claude/hooks/tests/fixtures/regenerate-ac008.sh:1` (the helper under test), `.claude/hooks/tests/memory_session_start_test.sh:1` (the downstream test that consumes the regenerated fixture).
+- Verified-at: bfad579
+- Last-touched: 2026-05-17
+- Caveat: depends on the live `.claude/memory/` tree matching the fixture shape at regen time. Re-run after any canonical-file entry count change. Bash dynamic-scoping gotcha applies — declare loop variables `local` or rename them (see `preamble_check_test.sh` caveat) so the parent `run()`'s `local name="$1"` is not clobbered by `for name in …`.
+
+## .claude/skills/changelog/SKILL.md:1
+
+- Role: Workflow Phase 11.5 owner. Pre-commit changelog curation per [keepachangelog 1.0.0](https://keepachangelog.com/en/1.0.0/). Reads the staged git history + commit_consent freshness; classifies commits into Added/Changed/Deprecated/Removed/Fixed/Security; appends entries under `## [Unreleased]` in `CHANGELOG.md`; writes ChangelogState to `.claude/state/changelog/<slug>.json`. Authorized by the same `commit_consent` token as `/commit` — no new gate. Also supports `--preview-only` for ad-hoc projected-version preview outside a workflow.
+- Companion: `.claude/skills/changelog/changelog.mjs:1` (the CLI actuator the SOP invokes), `.claude/skills/commit/SKILL.md:1` (Phase 11 sibling whose prereq line now requires `changelog` alongside `archive` and `memory-flush`), `.claude/skills/harness/SKILL.md:1` (ordering text updated to insert changelog between /grant-commit and /commit), `.claude/skills/triage/SKILL.md:1` (four task-seeding templates updated + non-git auto-except list grew).
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: TTL-sensitive — the skill must complete inside the 300 s `consent.commit_ttl_seconds` window so downstream `/commit` finds a valid token. Typical runtime under 5 s (calls semantic-release JS API in dryRun mode + parses git log). The release-time `@semantic-release/changelog` plugin (`.releaserc.json:20`) does NOT preserve `## [Unreleased]` heading position when prepending a release block — the actuator's `unreleased-writer.mjs` exports `reinsertUnreleasedHeading` as a release-time fallback that lifts the heading back to canonical top position. Bootstrap: this workflow's own commit ran the OLD chain (skill didn't exist on disk yet); future workflows use the new ordering.
+
+## .claude/skills/changelog/changelog.mjs:1
+
+- Role: Phase 11.5 CLI actuator (Node ESM). Two modes: (1) active mode — verifies commit_consent freshness via mtime comparison against `consent.commit_ttl_seconds` (default 300s); reads commits since last tag; classifies via classifier.mjs; writes entries under `## [Unreleased]` in CHANGELOG.md; writes ChangelogState. (2) `--preview-only` mode — calls semantic-release JS API dryRun; prints projected version + draft fragment to stdout; no writes, no consent required. CLI: `--slug <slug>` (required), `--preview-only`, `--project-root <path>`. Exit codes: 0 success; 1 consent expired / file error / runtime error; 2 bad arguments.
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: The TTL check reads filesystem mtime, NOT the epoch written inside the consent file. Reason: `/grant-commit` writes the epoch as content for human readability, but the structural freshness signal is mtime (which matches when the file was written). If `touch -d` is used to backdate the file (as in `consent-expired_test.sh`), the mtime is what matters.
+
+## .claude/skills/changelog/classifier.mjs:1
+
+- Role: Conventional-commit type → keepachangelog 1.0.0 section mapping. Default mapping: feat→Added, fix→Fixed, perf/refactor→Changed, revert→Removed, docs/style/test/build/ci/chore→null (no entry). Breaking commits (subject suffix `!:` or body `BREAKING CHANGE:`) force section to Changed regardless of base type AND set `breaking: true` on the entry (rendered with `**BREAKING:**` prefix in CHANGELOG.md). Exports `classify(commit)` returning `{section, breaking}` or `null`. Also exports `KEEPACHANGELOG_SECTIONS` (canonical-order frozen array of the six section names).
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: Skipping `docs/style/test/build/ci/chore` matches the `.releaserc.json` releaseRules' "no release" carve-outs at the type level (the scope carve-outs `release/site/ci/actions` are NOT mirrored here because at this level we only see commit type, not scope-filtered release decisions). The hybrid auto-derive default (per spec OQ-2 decision) is the auto-derivation half; the user-confirmation half is implemented in changelog.mjs (currently auto-applies with no prompt; spec's hybrid model is intended for future interactive workflow integration).
+
+## .claude/skills/changelog/version-preview.mjs:1
+
+- Role: Projected-version preview via semantic-release JS API. Exports `previewProjectedVersion(cwd)` returning `{version, type, commits}`. Strategy: (1) shell `git describe --tags --abbrev=0` for the last tag; (2) shell `git log <lastTag>..HEAD --format=%H%x09%s%x09%b%x00` for commits, parse subjects via conventional-commit regex; (3) call `semantic-release` JS API with `{dryRun: true, ci: false, branches: ['main','master']}` for the projection; (4) fallback to a local releaseRules-mimicking computation if semantic-release rejects the run (no .releaserc.json, no remote, etc.).
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: The local fallback applies a simplified version-bump rule (breaking→minor under the project's alpha cap; feat→minor; fix/perf/refactor→patch). This intentionally does NOT mirror the full `.releaserc.json` releaseRules — the fallback exists for tempdir test environments where semantic-release can't analyze. In production, the semantic-release JS API result is authoritative.
+
+## .claude/skills/changelog/state-writer.mjs:1
+
+- Role: Idempotent writer for `.claude/state/changelog/<slug>.json`. Exports `writeState(projectRoot, slug, state)`. Creates the directory if absent; writes pretty-JSON with trailing newline. Re-invocation on the same slug overwrites the file; `idempotent-reentry_test.sh` confirms content excluding `generated_at` and `unreleased_inserted_at` is byte-equal across re-invocations.
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: The state file shape is the `ChangelogState` class from the spec — `slug`, `source_commit_sha`, `projected_version`, `projected_type`, `entries[]`, `generated_at`, `unreleased_inserted_at`. Pretty-JSON (`null, 2`) is deliberate — the file is human-readable; the archive bundle includes it; a tempting "optimize storage" pass should resist minifying.
+
+## .claude/skills/changelog/unreleased-writer.mjs:1
+
+- Role: CHANGELOG.md curation under `## [Unreleased]`. Two exports: (1) `appendUnderUnreleased(changelogPath, entries)` performs an RMW — reads CHANGELOG.md, ensures `# Changelog` + `## [Unreleased]` headings exist (inserts if absent), groups entries by keepachangelog section in canonical order (Added/Changed/Deprecated/Removed/Fixed/Security), writes the section bodies between the Unreleased heading and the next `##` heading. (2) `reinsertUnreleasedHeading(changelogPath)` is the AC-013 fallback — after `@semantic-release/changelog` prepends release notes ABOVE the file's existing headings (empirically confirmed during scenario tick), this lifts `## [Unreleased]` back to the canonical top position.
+- Verified-at: bfad579
+- Last-touched: 2026-05-18
+- Caveat: The release-time integration path (releaserc post-prepare hook calling `reinsertUnreleasedHeading`) is OUT OF SCOPE of this skill's introduction workflow — it's left to a follow-up chore once the AC-013 fallback test confirms the export shape. For now the export exists; wiring it into the release pipeline is the next ticket.
+
+## .claude/skills/changelog/tests/run.sh:1
+
+- Role: Aggregate test runner for `.claude/skills/changelog/`. Loops sibling `*_test.sh` files (bash) AND `*_test.mjs` files (`node --test`); exits non-zero if any suite fails. Mirrors the runner-shape precedent at `.claude/skills/memory-flush/tests/run.sh:1` and `.claude/skills/tdd/tests/run.sh:1`.
+- Verified-at: 25d9eb4
+- Last-touched: 2026-05-18
+- Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline`). Run manually during `/tdd`, `/simplify`, `/integrate` to exercise the changelog skill's contract. New `*_test.sh` or `*_test.mjs` siblings are picked up automatically; no runner edit needed.
+
+## .claude/skills/changelog/tests/keepachangelog-unreleased-preserved_test.mjs:1
+
+- Role: Node ESM integration test for `@semantic-release/changelog@6.0.3` plugin behavior. Two `test()` blocks: (1) AC-013 empirical contract — documents that the plugin prepends `nextRelease.notes` ABOVE the file's existing `# Changelog` and `## [Unreleased]` headings (does NOT preserve top-of-file position); asserts the heading survives in the body but appears AFTER the new versioned block. (2) AC-013 fallback — exercises `reinsertUnreleasedHeading` from `unreleased-writer.mjs:1` and asserts the canonical top position is restored.
+- Companion: `.claude/skills/changelog/unreleased-writer.mjs:1` (the fallback under test), `libraries.md → @semantic-release/changelog@6.0.3` (where the empirical behavior is documented).
+- Verified-at: 25d9eb4
+- Last-touched: 2026-05-18
+- Caveat: test (1) is a regression-trap that documents undocumented plugin behavior. If a future plugin version DOES preserve top-of-file position, test (1) will fail unexpectedly — that's the contract: the test name reads "leaves Unreleased in file but displaces it", so a failure means the plugin behavior CHANGED, not that the code broke. The fallback's wiring into `.releaserc.json` as a post-prepare step is out of scope of the workflow that introduced this test; deferred to a follow-up chore.

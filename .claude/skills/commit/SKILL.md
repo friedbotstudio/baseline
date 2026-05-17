@@ -5,7 +5,7 @@ description: Workflow Phase 11 — Commit Preparation and Execution. Stages and 
 argument-hint: "[optional commit message; otherwise drafted from the spec/intake]"
 ---
 
-Prereq: BOTH `archive` AND `memory-flush` in `completed` (Phase 10.5 moved slug artifacts to `docs/archive/<date>/<slug>/`; Phase 10.6 curated `_pending.md` and applied canonical memory writes) AND a valid consent token at `.claude/state/commit_consent` (the Git Commit Guard hook enforces this independently). On any workflow where `memory-flush` is in `exceptions` (rare), this skill SHALL refuse to proceed unless that exception is explicit in `workflow.json`.
+Prereq: ALL of `archive` AND `memory-flush` AND `changelog` in `completed` (Phase 10.5 archives slug artifacts; Phase 10.6 curates `_pending.md`; Phase 11.5 appends keepachangelog entries under `## [Unreleased]` in `CHANGELOG.md`) AND a valid consent token at `.claude/state/commit_consent` (the Git Commit Guard hook enforces this independently). On any workflow where `memory-flush` or `changelog` is in `exceptions` (e.g. non-git projects auto-except both), this skill SHALL refuse to proceed unless those exceptions are explicit in `workflow.json`.
 
 **Applicability.** This skill applies only when the project is a git repository. Non-git projects auto-except `commit` at `/triage` time (CLAUDE.md Article IV); the workflow ends after `/archive`.
 
