@@ -32,17 +32,18 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    ```
 5. **Seed the workflow tasklist.** Use the `TaskCreate` tool to register one task per non-excepted phase plus each applicable consent gate. The tasks are the running checklist that `/harness` (or any direct phase invocation) reads to decide the next action; consent-gate tasks block the workflow until the user runs the corresponding command. **When `grant-commit` and `commit` are in exceptions (non-git project), do NOT seed those two tasks** — the workflow ends after `/archive`. Use these canonical templates:
 
-   **For `chore` track** (single phase + commit gate):
+   **For `chore` track** (single phase + memory-flush + commit gate):
    - `Run /chore for <slug>` — activeForm: "Running chore", metadata: `{"phase": "chore"}`
+   - `Run /memory-flush for <slug>` — activeForm: "Running memory-flush", metadata: `{"phase": "memory-flush"}`, addBlockedBy previous
    - `Wait for /grant-commit` — metadata: `{"phase": "grant-commit", "needs_user": true}`, addBlockedBy previous
    - `Run /commit for <slug>` — activeForm: "Running commit", metadata: `{"phase": "commit"}`, addBlockedBy previous
 
    **For `tdd`-entry quickfix track** (skip intake/scout/research/spec/review):
-   - `Run /tdd`, `Run /simplify`, `Run /security` (only if not in exceptions), `Run /integrate`, `Run /document`, `Run /archive`, `Wait for /grant-commit` (`needs_user`), `Run /commit` — each with `addBlockedBy` set to the previous task's id.
+   - `Run /tdd`, `Run /simplify`, `Run /security` (only if not in exceptions), `Run /integrate`, `Run /document`, `Run /archive`, `Run /memory-flush`, `Wait for /grant-commit` (`needs_user`), `Run /commit` — each with `addBlockedBy` set to the previous task's id.
 
    **For `spec`-entry track** (skip upstream): start from `Run /spec`, then `Wait for /approve-spec <path>` (`needs_user`), then continue per the full track.
 
-   **For `intake`-entry full track**: `Run /intake`, `Run /brd` (only if stakeholder-heavy), `Run /scout`, `Run /research`, `Run /spec`, `Wait for /approve-spec <path>` (`needs_user`), `Run /tdd` OR (`Run /swarm-plan`, `Wait for /approve-swarm <slug>` (`needs_user`), `Run /swarm-dispatch`), `Run /simplify`, `Run /security` (unless excepted), `Run /integrate`, `Run /document`, `Run /archive`, `Wait for /grant-commit` (`needs_user`), `Run /commit`. **On non-git projects the swarm branch SHALL NOT be seeded** — only `Run /tdd` goes in the list, regardless of expected component count. Swarm-vs-solo is a Phase-6 main-context decision (per CLAUDE.md Article V) only on git projects; non-git workflows resolve to solo at triage time because `swarm-plan`, `approve-swarm`, and `swarm-dispatch` are already in `exceptions`.
+   **For `intake`-entry full track**: `Run /intake`, `Run /brd` (only if stakeholder-heavy), `Run /scout`, `Run /research`, `Run /spec`, `Wait for /approve-spec <path>` (`needs_user`), `Run /tdd` OR (`Run /swarm-plan`, `Wait for /approve-swarm <slug>` (`needs_user`), `Run /swarm-dispatch`), `Run /simplify`, `Run /security` (unless excepted), `Run /integrate`, `Run /document`, `Run /archive`, `Run /memory-flush`, `Wait for /grant-commit` (`needs_user`), `Run /commit`. **On non-git projects the swarm branch SHALL NOT be seeded** — only `Run /tdd` goes in the list, regardless of expected component count. Swarm-vs-solo is a Phase-6 main-context decision (per CLAUDE.md Article V) only on git projects; non-git workflows resolve to solo at triage time because `swarm-plan`, `approve-swarm`, and `swarm-dispatch` are already in `exceptions`.
 
    For every task: `subject` is imperative ("Run /scout for <slug>" / "Wait for /approve-spec <path>"); `description` names the phase + the slug; `metadata.phase` carries the phase name; consent-gate tasks set `metadata.needs_user: true`. Wire `addBlockedBy` so each task blocks until its predecessor completes — this surfaces the workflow's true dependency graph and prevents `/harness` from racing past a gate.
 

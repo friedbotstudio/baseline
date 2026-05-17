@@ -105,7 +105,8 @@ The phases the harness loops through, in order:
 
 ```
 intake → scout → research → spec → /approve-spec → tdd → simplify →
-security → integrate → document → archive → /grant-commit → commit
+security → integrate → document → archive → memory-flush →
+/grant-commit → commit
 ```
 
 - Phases listed in `workflow.json → exceptions` are skipped.

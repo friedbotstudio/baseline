@@ -304,6 +304,59 @@ test_when_pre_spec_entry_no_source_no_verbatim_then_grandfathered() {
   assert_file_contains "$mem/conventions.md" "## legacy-entry" "AC-006 grandfathered legacy entry survives" || return 1
 }
 
+# --- Phase 10.6 (memory-flush-phase) regression traps -------------------------
+# Confirms sweep.py stays scoped to canonical files and does not touch _pending.md
+# regardless of whether _pending.md body is empty (the fast-path case).
+
+PENDING_SKELETON='---
+owners: [memory_stop.sh writes; /memory-flush clears]
+category: auto-extracted candidates awaiting curation
+verifies-against: none
+---
+
+# Pending memory candidates
+
+Auto-extracted by `memory_stop.sh`. Run `/memory-flush` to review.
+
+**Content of this file is gitignored.**
+
+---
+'
+
+seed_pending_skeleton() {
+  printf '%s' "$PENDING_SKELETON" > "$1/_pending.md"
+}
+
+test_when_pending_empty_then_sweep_does_not_touch_pending() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  seed_pending_skeleton "$mem"
+  local before; before="$(cat "$mem/_pending.md")"
+  sweep auto-close "$mem" >/dev/null || { fail "sweep crashed on empty pending"; return 1; }
+  sweep prose-scan "$mem" "" >/dev/null || { fail "sweep crashed on empty pending"; return 1; }
+  sweep stale-sweep "$mem" "" >/dev/null || { fail "sweep crashed on empty pending"; return 1; }
+  local after; after="$(cat "$mem/_pending.md")"
+  if [ "$before" = "$after" ]; then return 0; fi
+  fail "_pending.md mutated by sweep.py — sweep must stay scoped to canonical files"
+  diff <(printf '%s' "$before") <(printf '%s' "$after") || true
+  return 1
+}
+
+test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  seed_pending_skeleton "$mem"
+  add "$mem" "pending-questions" "## Q-999
+
+- Question: fast-path canonical-sweep regression trap
+- verified-at: HEAD
+- last-touched: $(today)
+- resolved-at: 2026-05-17"
+  local report; report="$(sweep auto-close "$mem")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/pending-questions.md" "## Q-999" "Q-999 must be auto-closed even when _pending.md is empty" || return 1
+  assert_contains "$report" '"closed": 1' "expected closed count 1 (got: $report)" || return 1
+}
+
 # --- runner -------------------------------------------------------------------
 
 run test_when_resolved_at_present_on_pending_then_flush_removes_block
@@ -317,6 +370,8 @@ run test_when_2_stale_then_flush_offers_reverify_then_delete_prompts
 run test_when_stale_mark_closed_on_pending_then_resolved_at_added_not_deleted
 run test_when_no_closure_no_prose_no_stale_then_entry_survives_all_paths
 run test_when_pre_spec_entry_no_source_no_verbatim_then_grandfathered
+run test_when_pending_empty_then_sweep_does_not_touch_pending
+run test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept
 
 echo "----"
 echo "Passed: $PASS  Failed: $FAIL"

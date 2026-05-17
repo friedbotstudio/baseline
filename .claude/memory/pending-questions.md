@@ -14,17 +14,6 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 
 ---
 
-## Q-001
-
-- Question: Should phase skills automatically invoke `/memory-flush` at start, or only when the SessionStart hook surfaces a "K candidates pending" nag?
-- Raised in: 2026-04-27 memory-system build.
-- Blocker for: clean session-start UX vs. interrupting flow.
-- Options considered: (a) auto-invoke if pending count > 0; (b) nag only, let user decide; (c) auto-invoke with a "skip" command.
-- Verified-at: HEAD
-- Last-touched: 2026-04-27
-
----
-
 ## Q-002
 
 - Question: Should the spec phase require an enforceable runtime check (preflight, smoke, or error-mapping AC) for every one-time human prerequisite it identifies — instead of parking it in a Rollout-section bullet?
@@ -56,17 +45,18 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 
 ---
 
-## Q-005
+## Q-005 — CLOSED 2026-05-16
 
-- Question: Should `audit-baseline` enforce that every `owner: baseline` skill which is vendored from an external upstream ships both a `LICENSE` and a `NOTICE` file alongside `SKILL.md`?
-- Raised in: 2026-05-15 branch-aware-git-policy workflow. User flagged a real licensing risk: five vendored shared-globals (humanizer, documentation, technical-tutorials, copywriting, impeccable) were declared `owner: baseline` but shipped without `LICENSE`/`NOTICE` files. The site's third-party page listed all seven as "Anthropic, Apache 2.0" when the actual sources span three publishers and two licenses (MIT + Apache 2.0). The audit didn't catch this because its `check_skill_ownership` only enforces hash drift, not attribution presence.
-- Blocker for: closing the attribution gap permanently rather than relying on humans to remember.
-- Options considered:
-  - (a) Detection heuristic: every `owner: baseline` skill whose `SKILL.md` body or `NOTICE` mentions an upstream URL (`github.com/<user>/<repo>` outside the Friedbot Studio org) SHALL have a `LICENSE` file in the same directory. FAIL otherwise.
-  - (b) Stricter: every `owner: baseline` skill SHALL have either (i) a `NOTICE` file naming the upstream and license, OR (ii) a frontmatter `provenance: friedbot-studio` field explicitly marking it as our own. The audit can't infer provenance from `owner: baseline` alone.
-  - (c) Status quo: rely on review.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Resolution: No new audit check for now. The attribution-presence question rolls into the Q-002 work (silent-failure prerequisites require enforcement ACs) — when that lands, the vendored-skill `LICENSE`/`NOTICE` presence becomes one of the enforceable prerequisites covered by the general mechanism, rather than a bespoke audit clause. Until then, attribution stays a review-time concern.
+- Closing commit: pending.
+- Original question + options below for historical reference; the resolution above supersedes them.
+
+  Question: Should `audit-baseline` enforce that every `owner: baseline` skill which is vendored from an external upstream ships both a `LICENSE` and a `NOTICE` file alongside `SKILL.md`?
+  Raised in: 2026-05-15 branch-aware-git-policy workflow. User flagged a real licensing risk: five vendored shared-globals (humanizer, documentation, technical-tutorials, copywriting, impeccable) were declared `owner: baseline` but shipped without `LICENSE`/`NOTICE` files. The site's third-party page listed all seven as "Anthropic, Apache 2.0" when the actual sources span three publishers and two licenses (MIT + Apache 2.0). The audit didn't catch this because its `check_skill_ownership` only enforces hash drift, not attribution presence.
+  Options considered:
+    (a) Detection heuristic: every `owner: baseline` skill whose `SKILL.md` body or `NOTICE` mentions an upstream URL (`github.com/<user>/<repo>` outside the Friedbot Studio org) SHALL have a `LICENSE` file in the same directory. FAIL otherwise.
+    (b) Stricter: every `owner: baseline` skill SHALL have either (i) a `NOTICE` file naming the upstream and license, OR (ii) a frontmatter `provenance: friedbot-studio` field explicitly marking it as our own. The audit can't infer provenance from `owner: baseline` alone.
+    (c) Status quo: rely on review.
 
 ## Q-006
 

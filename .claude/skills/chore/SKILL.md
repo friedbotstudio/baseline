@@ -1,7 +1,7 @@
 ---
 name: chore
 owner: baseline
-description: Workflow track for tasks that need no TDD — documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes. Skips `/scenario` and `/implement` (no failing test to drive) and runs the work directly. `verify`, `archive`, `/grant-commit`, and `/commit` remain mandatory. `simplify`, `integrate`, and `document` are conditional — required when the diff hits one of the listed triggers, optional otherwise. Chore is a stripped-down pipeline, not a bypass; never silently skip a conditional phase whose triggers apply.
+description: Workflow track for tasks that need no TDD — documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes. Skips `/scenario` and `/implement` (no failing test to drive) and runs the work directly. `verify`, `archive`, `memory-flush`, `/grant-commit`, and `/commit` remain mandatory. `simplify`, `integrate`, and `document` are conditional — required when the diff hits one of the listed triggers, optional otherwise. Chore is a stripped-down pipeline, not a bypass; never silently skip a conditional phase whose triggers apply.
 argument-hint: "<one-line description of the chore>"
 ---
 
@@ -44,7 +44,8 @@ The classification rule is: *if there is no failing test that should exist for t
 1. **Edit** — apply the change directly. No `/scenario`, no `/implement` — there is no failing test to drive.
 2. **`verify`** — run the project test command and stamp `.claude/state/last_test_result`. FAIL means stop, surface, and route the user to `/triage` for a proper bugfix track. The verdict is binding (the `verify_pass_guard` hook reads this file).
 3. **`archive`** — empty bundle is fine; `/commit`'s prereq requires `archive` in `completed`.
-4. **`/grant-commit` then `/commit`** — user-required consent + commit. Same as every other workflow.
+4. **`memory-flush`** — Phase 10.6. Empty pending is fine (fast-path runs Step 0 sweeps and short-circuits). `/commit`'s prereq requires `memory-flush` in `completed`.
+5. **`/grant-commit` then `/commit`** — user-required consent + commit. Same as every other workflow.
 
 ### Conditional phases (required when triggers apply, optional otherwise)
 
@@ -81,7 +82,8 @@ If a conditional phase is required, run it **before** `/grant-commit`. If you sk
    - **Required** → invoke the phase skill and append it to `workflow.json → completed`.
    - **Skipped** → record the rationale in your end-of-chore summary; do not append to `completed`.
 6. Invoke `Skill(archive)` — mandatory.
-7. Append `"chore"`, `"archive"`, and any conditional phases that ran to `workflow.json → completed`. Update `updated_at` to the current epoch.
+6.5. Invoke `Skill(memory-flush)` — mandatory (Phase 10.6). Runs Step 0 canonical sweeps and, if `_pending.md` is non-empty, full triage. On empty pending the fast-path returns success in ≤ 3 sweep.py invocations.
+7. Append `"chore"`, `"archive"`, `"memory-flush"`, and any conditional phases that ran to `workflow.json → completed`. Update `updated_at` to the current epoch.
 8. **Marker op FIRST, then write `harness_state`, then emit end-of-chore summary.** On `state: "continue"` (more phases follow, e.g. archive is still pending): `echo "<slug>" > .claude/state/.harness_active` to refresh the active marker, then write `.claude/state/harness_state` with `{state: "continue", slug, reason}`. On `state: "done"` (archive just appended and no further phases remain): `rm -f .claude/state/.harness_active`, then write `harness_state` with `{state: "done", slug, reason}`. The state file carries exactly three keys; no `written_at`, no `tick_count`. Then tell the user:
    - "Chore green."
    - Files changed.

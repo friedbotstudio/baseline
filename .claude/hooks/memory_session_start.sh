@@ -151,6 +151,10 @@ lines = [
 ]
 for name, n, stale, status in rows:
     lines.append(f'| `{name}.md` | {n} | {stale} | {status} |')
+# Phase 10.6: surface the _pending.md row in the index so K=0 / K>0 are
+# visible without the prose nag. The body content is gitignored; only the
+# count matters here.
+lines.append(f'| `_pending.md` | {pending_count} | — | ok |')
 
 if stale_records:
     stale_records.sort(key=lambda r: (r[2] or '', f'{r[0]}:{r[1]}'))
@@ -167,13 +171,20 @@ if stale_records:
 
 lines.append('')
 
-if pending_count > 0:
+# Phase 10.6 (memory-flush as workflow phase) downgraded the SessionStart nag to
+# debt-mode only: fire when _pending.md has unflushed candidates AND no active
+# workflow is on disk. During an active workflow, Phase 10.6 will handle them;
+# the nag would be redundant. On K=0, stay silent — the index table above already
+# shows the _pending.md row count.
+workflow_json = root / '.claude/state/workflow.json'
+active_workflow = workflow_json.is_file()
+
+if pending_count > 0 and not active_workflow:
+    plural = '' if pending_count == 1 else 's'
     lines.append(
-        f'**{pending_count} candidate{"" if pending_count == 1 else "s"} pending in `_pending.md`** — '
-        'run `/memory-flush` to review and commit keepers before starting workflow phases.'
+        f'**{pending_count} pending memory candidate{plural} carried over from a prior workflow** — '
+        'run `/memory-flush` to clear before starting new work.'
     )
-else:
-    lines.append('No pending memory candidates.')
 
 lines.append('')
 lines.append(

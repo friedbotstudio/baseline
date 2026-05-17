@@ -126,7 +126,8 @@ toc:
 
   <ol>
     <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and appends candidate facts to <code>_pending.md</code>.</li>
-    <li>At session start, the index hook reports the pending count. If non-zero, the next phase is <code>/memory-flush</code>.</li>
+    <li>At session start, the index lists the <code>_pending.md</code> row alongside the canonical files.</li>
+    <li><code>/memory-flush</code> runs at workflow Phase 10.6 (between <code>/archive</code> and <code>/grant-commit</code>); the session-start nag fires only on candidates carried over from a prior incomplete workflow.</li>
     <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file, drops the rest, and clears <code>_pending.md</code>.</li>
     <li>Skills that consume memory (scout, research, integrate, simplify) re-verify each entry before citing it.</li>
     <li>Failed verification corrects or deletes the entry in the same run.</li>

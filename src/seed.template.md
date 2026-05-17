@@ -203,6 +203,7 @@ Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, pl
 - `integrate` — Phase 9. Full suite + `verify` re-adjudication.
 - `document` — Phase 10. Orchestrator. Delegates technical reference to `documentation`, tutorials to `technical-tutorials`, and **all prose** to the `prose` skill (which applies `humanizer` mandatorily).
 - `archive` — Phase 10.5. Moves `<slug>`-matched artifacts to `docs/archive/<YYYY-MM-DD>/<slug>/`. `workflow.json` is held back and archived by `/commit`.
+- `memory-flush` — Phase 10.6. Curates `_pending.md` candidates with full workflow context (or fast-paths on empty pending while still running canonical Step 0 sweeps). Canonical memory writes ship in the same commit as the work that motivated them.
 - `commit` — Phase 11. First step archives `workflow.json`; then stages named paths and commits.
 
 **Phase workers (5)** — execute pre-decided recipes; each mandatorily invokes a sub-skill. Caller (a phase skill) provides explicit inputs; the worker executes without picking architecture, register, or scope:
@@ -319,6 +320,7 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 9  integrate
 10 document
 10.5 archive
+10.6 memory-flush
 11 /grant-commit — human consent gate C
 11b commit
 ```

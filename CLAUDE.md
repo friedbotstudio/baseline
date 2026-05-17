@@ -44,7 +44,7 @@ On every new session, before any work, you SHALL:
    You SHALL then proceed with whatever the user asks. Project-agnostic mode is **allowed** — the user is not required to run `/init-project` to use the baseline. The `setup_guard` hook surfaces a one-shot reminder on Write/Edit/MultiEdit (rate-limited to 10 minutes); it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
-4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. If it reports `K candidates pending in _pending.md` with `K > 0`, you SHALL invoke `/memory-flush` before any workflow phase work — keeps canonical memory fresh for downstream skills.
+4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. The hook emits a **debt-mode nag** only when `_pending.md` has unflushed candidates AND no active workflow on disk (i.e., `.claude/state/workflow.json` is absent) — those candidates are debt from a prior workflow that didn't end-flush. During an active workflow, **Phase 10.6** (memory-flush, between archive and grant-commit) handles flushing automatically; the session-start nag stays silent. You SHALL run `/memory-flush` when the debt-mode nag fires, before starting new work.
 5. **Git-repo check.** Run `git rev-parse --is-inside-work-tree 2>/dev/null` at the project root. If non-zero (not a git repo), surface this once per session and tell the user that gate C and the `commit` phase will be auto-excepted; the workflow ends after `/archive`. This is a sanctioned operating mode — Article IV phase 11 and Article VII are git-conditional.
 6. Once per session is sufficient. You SHALL NOT repeat the greeting on every prompt.
 
@@ -68,6 +68,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | 9 | Integrate | `/integrate` | binding verify verdict |
 | 10 | Document | `/document` | docs |
 | 10.5 | Archive | `/archive` | bundle at `docs/archive/<date>/<slug>/` |
+| 10.6 | Memory flush | `/memory-flush` | curated canonical memory + reset `_pending.md` |
 | 11 | **Grant commit** (gate C) + commit | user runs **`/grant-commit`**, then `/commit` (skill) | commit |
 
 **Mandatory rules:**

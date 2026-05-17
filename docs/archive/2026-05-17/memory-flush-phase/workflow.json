@@ -1,0 +1,9 @@
+{
+  "request": "Add /memory-flush as workflow Phase 10.6 — between /archive (10.5) and /grant-commit (11). Conversation context is freshest at end-of-workflow, so candidate triage hits the highest signal-to-noise ratio there. Canonical memory writes ship in the same commit as the work that motivated them, and the tree is pristine at end-of-task. Touches Article IV (phase table + ordering), Article V (harness chaining), Article III.4 (downgrade the session-start nag to debt-only), src/CLAUDE.template.md + docs/init/seed.md + src/seed.template.md mirrors, .claude/skills/{harness,triage,memory-flush,commit}/, .claude/hooks/{track_guard,memory_session_start}, and the workflow.json/TaskList templates. Resolves pending-questions.md Q-001.",
+  "slug": "memory-flush-phase",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "created_at": 1778914376,
+  "updated_at": 1778963600
+}

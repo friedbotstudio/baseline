@@ -64,7 +64,7 @@ A team that installs the baseline stops typing *"don't push, don't `--amend`, do
 | **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit | 22 | `.claude/hooks/` |
 | **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, audit, alternate tracks, and shared globals | 36 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
-| **Workflow phases** — intake → scout → research → spec → tdd → simplify → security → integrate → document → archive → commit | 11 | enforced by `track_guard` |
+| **Workflow phases** — intake → scout → research → spec → tdd → simplify → security → integrate → document → archive → memory-flush → commit | 11 | enforced by `track_guard` |
 | **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude | 3 | `consent_gate_grant` UserPromptSubmit hook |
 | **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke) | 3 | `.mcp.json` |
 

@@ -4,6 +4,16 @@ owner: baseline
 description: Review the auto-extracted candidates in `.claude/memory/_pending.md` and commit keepers to the canonical memory files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`). Invoke at session start when the SessionStart hook reports pending candidates, or any time `_pending.md` has accumulated entries you want to curate. Reset the pending body after flushing.
 ---
 
+# When invoked as Phase 10.6
+
+This skill runs as **Phase 10.6** of every workflow track (intake / spec / tdd / chore), between `/archive` (Phase 10.5) and `/grant-commit` (Phase 11). The harness loop reads `.claude/memory/_pending.md` body, runs Step 0 canonical sweeps unconditionally, and on **empty pending** (zero `## CANDIDATE:` blocks) short-circuits the **fast-path**: Steps 1–5 are skipped, Step 6 emits a one-line "no pending candidates" report, and the skill returns success. This keeps the no-op cost bounded at ≤ 3 sweep.py invocations per Phase 10.6 invocation.
+
+The skill is also user-invokable outside the workflow (ad-hoc curation). When invoked ad-hoc and `_pending.md` is non-empty, the full Steps 1–5 flow runs identically. The fast-path activates per-invocation based on `_pending.md` body state, not on workflow context.
+
+`/commit` (Phase 11) refuses to proceed unless `memory-flush` is in `workflow.json → completed` (or in `exceptions`). Empty-pending fast-path still appends `"memory-flush"` to `completed` — the prereq is satisfied either way.
+
+(See "Method" below for the full Step 0 / Steps 1–5 / Step 6 flow.)
+
 # memory-flush — curate auto-extracted memory candidates
 
 The `memory_stop.sh` hook appends candidates to `.claude/memory/_pending.md` after every turn. This skill reviews them in main context (where conversation richness is preserved), commits the keepers to the right canonical file with proper metadata, and resets the pending body.
