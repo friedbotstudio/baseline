@@ -111,7 +111,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── agents/                 # 1 subagent: swarm-worker (rendered from src/agents/swarm-worker.template.md)
 │   ├── commands/               # 5 consent/bootstrap gates (user-only — structurally)
 │   ├── skills/                 # 36 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + shared globals (7) + audit (1) + alt tracks (1)
-│   ├── memory/                 # project memory: 6 canonical files + _pending.md (gitignored body) + README.md
+│   ├── memory/                 # project memory: 7 canonical files + _pending.md (gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
 ├── src/                        # pristine ship-time templates (overlay source for `npx @friedbotstudio/create-baseline`)
 │   ├── CLAUDE.template.md
@@ -120,7 +120,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── .mcp.template.json
 │   ├── settings.template.json
 │   ├── agents/swarm-worker.template.md
-│   └── memory/<6 canonical>.template.md
+│   └── memory/<7 canonical>.template.md
 └── docs/
     ├── init/seed.md            # this file
     ├── intake/  brd/  scout/  research/  specs/  rca/  security/  site/

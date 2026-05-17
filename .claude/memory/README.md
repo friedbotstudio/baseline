@@ -12,6 +12,7 @@ Persistent project knowledge that travels with the repo. Loaded into Claude's co
 | `landmines.md` | `security`, `integrate`, `scout` | Gotchas: "do not edit X without also editing Y" |
 | `conventions.md` | `scenario`, `implement` | Repo-specific test/code idioms (fixture patterns, naming, layout) |
 | `pending-questions.md` | any phase | Open questions the current session couldn't resolve |
+| `backlog.md` | `/memory-flush` | Future-work intent captured automatically by `memory_stop.sh` (intent-line extraction from user prompts and assistant text). Stale-exempt. |
 | `_pending.md` | `memory_stop.sh` (writes), `/memory-flush` (clears) | Auto-extracted candidates awaiting curation. **Content gitignored**; the file structure is committed. |
 | `_resume.md` | `memory_pre_compact.sh` + `memory_stop.sh` (write), `memory_session_start.sh` (reads), `harness` (reads) | **Continuity** snapshot — last completed phase, next phase due, in-flight files, recent user prompts. Refreshed every turn-end and again before compaction. Re-injected at every session start (compact / clear / resume / startup). **Gitignored** — pure session state, not project knowledge. |
 
@@ -23,6 +24,7 @@ Every entry MUST carry a `source:` field declaring how the rule was learned. All
 |---|---|---|
 | `user-instruction` | The user stated a rule or directive in conversation | **Required** |
 | `user-feedback` | The user corrected behavior or affirmed a non-obvious approach | **Required** |
+| `assistant-deferral` | Claude verbalized a deferred follow-up during conversation (captured by `memory_stop.sh` intent extraction into `backlog.md`) | **Required** (Claude's own sentence as verbatim) |
 | `incident` | Recovered from an actual failure or near-miss in this session | Recommended (incident-report quote) |
 | `inferred-from-code` | Derived by reading the codebase | Not applicable |
 | `library-pinned` | Came from a `context7` lookup | Not applicable (cited URL/version is the source) |
@@ -32,7 +34,7 @@ For `source: user-instruction` and `source: user-feedback`, the entry MUST inclu
 
 The verbatim is not a summary, not a paraphrase, and not in Claude's voice. It is the user's words. If the original turn is no longer available, the entry's source is `unrecorded` and the curator MUST flag it for the user to confirm or restate at the next opportunity.
 
-`/memory-flush` SHALL reject any candidate promotion to a canonical file when `source` is `user-instruction` or `user-feedback` and `verbatim:` is missing or empty.
+`/memory-flush` SHALL reject any candidate promotion to a canonical file when `source` is `user-instruction`, `user-feedback`, or `assistant-deferral` and `verbatim:` is missing or empty.
 
 ## Per-entry shape (canonical files)
 
@@ -61,6 +63,7 @@ Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or
 | `landmines.md` | `path:line` or short description slug |
 | `conventions.md` | short slug |
 | `pending-questions.md` | auto-numbered `Q-NNN` |
+| `backlog.md` | `<8-word-kebab-slug>-<4-char-sha256>` (derived by `memory_stop.sh` from the intent verbatim) |
 
 ## Self-healing rules
 
@@ -78,7 +81,7 @@ Two optional, register-specific closure fields cause `/memory-flush` Step 0 to d
 | File | Field | Semantics |
 |---|---|---|
 | `pending-questions.md` | `resolved-at: <ISO date>` | The question has been answered; entry is closed. |
-| `landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md` | `superseded-at: <ISO date>` | The fact is no longer true; entry is closed. |
+| `landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `backlog.md` | `superseded-at: <ISO date>` | The fact (or, for `backlog.md`, the open intent) is no longer current; entry is closed. On `backlog.md` the body `status:` field (`picked-up` / `dropped`) disambiguates which transition triggered the close. |
 
 **Per-file invariant**: on `pending-questions.md`, `superseded-at:` MUST NOT appear; on the other five canonical files, `resolved-at:` MUST NOT appear. Mutually exclusive at the file level. Not enforced by audit — documented invariant only. The `/memory-flush` Step 0a sweep flags violations in its report rather than deleting.
 
@@ -105,4 +108,4 @@ Two paths:
 
 ## Continuity vs knowledge
 
-Six canonical files plus `_pending.md` hold **project knowledge** — facts about the codebase that survive multiple sessions and get re-verified on every cite. `_resume.md` is different: it's a **continuity snapshot** describing the *current session* — what we just touched, what the user just asked, what phase we're on. It's overwritten each turn and gitignored. The split keeps long-term knowledge clean of session-state noise.
+Seven canonical files plus `_pending.md` hold **project knowledge** — facts about the codebase that survive multiple sessions and get re-verified on every cite. `_resume.md` is different: it's a **continuity snapshot** describing the *current session* — what we just touched, what the user just asked, what phase we're on. It's overwritten each turn and gitignored. The split keeps long-term knowledge clean of session-state noise.

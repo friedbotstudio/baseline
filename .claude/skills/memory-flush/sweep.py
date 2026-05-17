@@ -27,8 +27,15 @@ from pathlib import Path
 CANONICAL_FILES = [
     'landmarks', 'libraries', 'decisions',
     'landmines', 'conventions', 'pending-questions',
+    'backlog',
 ]
 PENDING_FILE = 'pending-questions'
+
+# Files whose entries do NOT stale-age. Backlog is intent, not a verifiable
+# fact about code state, so commit-distance and day-count are meaningless
+# signals. Closure is still tracked via superseded-at: per the canonical
+# closure-field-per-file rule.
+STALE_EXEMPT_FILES = {'backlog'}
 
 STALE_COMMITS = 30
 STALE_DAYS = 30
@@ -153,6 +160,8 @@ def prose_matches(block: str) -> bool:
     return any(p.search(block) for p in PROSE_PATTERNS)
 
 def is_stale(block: str, name: str, head: str, root: Path) -> bool:
+    if name in STALE_EXEMPT_FILES:
+        return False
     if is_closed(block, name):
         return False
     stamp = read_field(block, 'verified-at')

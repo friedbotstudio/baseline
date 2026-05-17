@@ -1,0 +1,21 @@
+---
+owners: [memory_stop.sh writes; /memory-flush clears]
+category: auto-extracted candidates awaiting curation
+verifies-against: none
+---
+
+# Pending memory candidates
+
+---
+
+
+<!-- session 2026-05-17T09:35Z -->
+## CANDIDATE: src/foo.py → landmarks.md
+- Touched in this session: 2 times
+- Suggested role: <fill in from session context>
+- Source: file written/edited at 2026-05-17T09:35Z
+
+## CANDIDATE: src/bar.py → landmarks.md
+- Touched in this session: 1 time
+- Suggested role: <fill in from session context>
+- Source: file written/edited at 2026-05-17T09:35Z

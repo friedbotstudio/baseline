@@ -211,7 +211,7 @@ The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 
 The memory system at `.claude/memory/` accumulates project facts across sessions. You SHALL:
 
-1. Treat the six canonical files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`) as long-term project memory. Each entry has a stable key per the schema in `.claude/memory/README.md`.
+1. Treat the seven canonical files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`, `backlog.md`) as long-term project memory. Each entry has a stable key per the schema in `.claude/memory/README.md`.
 2. **Re-verify before citing.** Every skill that cites a memory entry SHALL re-verify it (file exists, symbol still at named line, library version still pinned). Failed verification → you SHALL correct or delete the entry in the same run before proceeding.
 3. Treat `_pending.md` as the auto-extraction inbox (written by `memory_stop`). Promote candidates to canonical files only via `/memory-flush`. You SHALL NOT write directly into canonical memory files outside the natural byproduct of phase skills.
 4. Treat `_resume.md` as the cross-session continuity snapshot (refreshed every turn-end and before compaction). It is **session memory**, not project memory.
@@ -294,7 +294,7 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 36 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + shared globals (7) + audit (1) + alt tracks (1) |
 | `.claude/commands/` | 5 consent/bootstrap gates: `approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`, `init-project` |
-| `.claude/memory/` | 6 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `README.md` |
+| `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
 | `.claude/settings.json` | hook wiring + permissions |
 | `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |

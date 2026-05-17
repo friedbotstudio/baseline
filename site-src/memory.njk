@@ -5,9 +5,9 @@ pageTitle: "Memory · baseline"
 title: Memory
 titlePrimary: Memory
 titleAccent: "."
-description: "The memory system at .claude/memory/ accumulates project facts across sessions. Six canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+description: "The memory system at .claude/memory/ accumulates project facts across sessions. Seven canonical files hold long-term knowledge; two underscore files handle staging and continuity."
 eyebrow: Reference
-lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Six canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Seven canonical files hold long-term knowledge; two underscore files handle staging and continuity."
 active: memory
 sidebarActive: memory
 heroSymbol: memory
@@ -26,7 +26,7 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="shape">The shape</h2>
     </div>
-    <p>Memory lives at <code>.claude/memory/</code>. Six canonical files hold long-term project knowledge. Two underscore files serve transient roles: a staging inbox and a session-continuity snapshot. The underscore files are gitignored.</p>
+    <p>Memory lives at <code>.claude/memory/</code>. Seven canonical files hold long-term project knowledge. Two underscore files serve transient roles: a staging inbox and a session-continuity snapshot. The underscore files are gitignored.</p>
   </div>
   <table>
   <thead><tr><th>File</th><th>Purpose</th></tr></thead>
@@ -37,6 +37,7 @@ toc:
     <tr><td class="phase">landmines.md</td><td>Patterns that look right but fail in this codebase. Each entry names the trap and the safe alternative.</td></tr>
     <tr><td class="phase">conventions.md</td><td>Project-specific style or structure rules that diverge from common defaults.</td></tr>
     <tr><td class="phase">pending-questions.md</td><td>Open questions for the user. Skill outputs append here when something needs human resolution.</td></tr>
+    <tr><td class="phase">backlog.md</td><td>Future-work intent captured automatically from user prompts and assistant text. Stale-exempt; closed via <code>superseded-at:</code> when an item is picked up or dropped.</td></tr>
     <tr><td class="phase">_pending.md</td><td>Auto-extraction inbox. The <code>memory_stop</code> hook appends candidates each turn-end. Curate via <code>/memory-flush</code>.</td></tr>
     <tr><td class="phase">_resume.md</td><td>Session-continuity snapshot. Refreshed every turn-end and before context compaction.</td></tr>
   </tbody>
@@ -74,14 +75,21 @@ toc:
         </marker>
       </defs>
 
-      {# Forward path: turn-end → _pending → /memory-flush → canonical → cite #}
-      <path class="mf-conn" d="M 130,80 C 175,72 215,88 230,80" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 305,80 C 350,72 390,88 410,80" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 495,80 C 540,72 580,88 600,80" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 680,108 C 686,140 686,170 680,196" marker-end="url(#mf-arr)"/>
+      {# Three streams: memory_stop emits three candidate kinds into _pending. #}
+      <path class="mf-conn" d="M 132,68 C 175,62 205,72 222,76" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 132,82 C 175,82 205,82 222,82" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 132,96 C 175,102 205,92 222,88" marker-end="url(#mf-arr)"/>
+      <text class="mf-edge" x="177" y="56" text-anchor="middle">edit → landmark</text>
+      <text class="mf-edge" x="177" y="116" text-anchor="middle">context7 → library</text>
+      <text class="mf-edge" x="177" y="130" text-anchor="middle">text → backlog</text>
 
-      {# Re-verify: ok → loop back to canonical (dashed accent). #}
-      <path class="mf-conn-ok" d="M 600,200 C 540,205 540,150 580,108" marker-end="url(#mf-arr-acc)"/>
+      {# Forward path: _pending → /memory-flush → canonical → cite #}
+      <path class="mf-conn" d="M 306,82 C 350,74 390,90 404,82" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 496,82 C 540,74 580,90 594,82" marker-end="url(#mf-arr)"/>
+      <path class="mf-conn" d="M 680,114 C 686,140 686,170 680,196" marker-end="url(#mf-arr)"/>
+
+      {# Re-verify: ok → loop back to canonical (dashed accent; applies to the six decay-managed files). #}
+      <path class="mf-conn-ok" d="M 600,200 C 540,205 540,150 580,114" marker-end="url(#mf-arr-acc)"/>
       <text class="mf-edge" x="540" y="170" text-anchor="middle">re-verify ok</text>
 
       {# Re-verify: fail → exit (correct or delete). #}
@@ -105,9 +113,10 @@ toc:
         <text class="mf-sub" x="450" y="93" text-anchor="middle">/memory-flush</text>
       </g>
       <g class="mf-node mf-node-canonical">
-        <rect x="594" y="58" width="92" height="50" rx="6"/>
-        <text class="mf-title" x="640" y="78" text-anchor="middle">canonical</text>
-        <text class="mf-sub" x="640" y="94" text-anchor="middle">6 files</text>
+        <rect x="594" y="58" width="92" height="56" rx="6"/>
+        <text class="mf-title" x="640" y="76" text-anchor="middle">canonical</text>
+        <text class="mf-sub" x="640" y="91" text-anchor="middle">6 decay</text>
+        <text class="mf-sub" x="640" y="105" text-anchor="middle">+ 1 exempt</text>
       </g>
       <g class="mf-node">
         <rect x="594" y="194" width="92" height="44" rx="6"/>
@@ -116,21 +125,70 @@ toc:
       </g>
 
       {# Phase tags above the forward path. #}
-      <text class="mf-step" x="180" y="38" text-anchor="middle">01 · auto-extract</text>
+      <text class="mf-step" x="177" y="38" text-anchor="middle">01 · auto-extract</text>
       <text class="mf-step" x="356" y="38" text-anchor="middle">02 · review</text>
       <text class="mf-step" x="540" y="38" text-anchor="middle">03 · promote</text>
-      <text class="mf-step" x="640" y="138" text-anchor="middle">04 · cite</text>
+      <text class="mf-step" x="640" y="160" text-anchor="middle">04 · cite</text>
     </svg>
-    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Auto-extracted candidates stage in <code>_pending.md</code> at every turn-end. <code>/memory-flush</code> promotes keepers to the six canonical files. Skills cite entries with re-verification on every use; verified entries close the loop, failed verifications correct or delete in the same run.</figcaption>
+    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Three signals (file edits, context7 queries, anchored intent text in user prompts or assistant responses) stream into <code>_pending.md</code> at every turn end. <code>/memory-flush</code> promotes keepers to the seven canonical files: six participate in re-verification on every cite (failed verifications correct or delete in the same run), and one (<code>backlog.md</code>) carries intent that does not decay.</figcaption>
+  </figure>
+
+  <figure class="figure plate-flow" aria-labelledby="backlog-states-cap">
+    <svg class="diagram-svg memflow-svg" viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="backlog-states-cap">
+      <defs>
+        <marker id="bs-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow"/>
+        </marker>
+      </defs>
+
+      {# open → picked-up #}
+      <path class="mf-conn" d="M 184,86 C 240,72 300,52 360,46" marker-end="url(#bs-arr)"/>
+      <text class="mf-edge" x="272" y="56" text-anchor="middle">picked-up</text>
+
+      {# open → dropped #}
+      <path class="mf-conn" d="M 184,108 C 240,124 300,144 360,150" marker-end="url(#bs-arr)"/>
+      <text class="mf-edge" x="272" y="146" text-anchor="middle">dropped</text>
+
+      {# picked-up → auto-close #}
+      <path class="mf-conn" d="M 444,46 C 500,52 552,72 580,86" marker-end="url(#bs-arr)"/>
+      <text class="mf-edge" x="512" y="56" text-anchor="middle">superseded-at</text>
+
+      {# dropped → auto-close #}
+      <path class="mf-conn" d="M 444,150 C 500,144 552,124 580,108" marker-end="url(#bs-arr)"/>
+      <text class="mf-edge" x="512" y="146" text-anchor="middle">superseded-at</text>
+
+      {# Nodes. #}
+      <g class="mf-node">
+        <rect x="100" y="76" width="84" height="44" rx="6"/>
+        <text class="mf-title" x="142" y="96" text-anchor="middle">open</text>
+        <text class="mf-sub" x="142" y="111" text-anchor="middle">new entry</text>
+      </g>
+      <g class="mf-node">
+        <rect x="360" y="24" width="84" height="44" rx="6"/>
+        <text class="mf-title" x="402" y="44" text-anchor="middle">picked-up</text>
+        <text class="mf-sub" x="402" y="59" text-anchor="middle">into a workflow</text>
+      </g>
+      <g class="mf-node">
+        <rect x="360" y="128" width="84" height="44" rx="6"/>
+        <text class="mf-title" x="402" y="148" text-anchor="middle">dropped</text>
+        <text class="mf-sub" x="402" y="163" text-anchor="middle">decided against</text>
+      </g>
+      <g class="mf-node mf-node-canonical">
+        <rect x="580" y="76" width="100" height="44" rx="6"/>
+        <text class="mf-title" x="630" y="96" text-anchor="middle">auto-close</text>
+        <text class="mf-sub" x="630" y="111" text-anchor="middle">next /memory-flush</text>
+      </g>
+    </svg>
+    <figcaption id="backlog-states-cap" class="plate-caption"><strong>Backlog entries.</strong> A new item lands as <code>status: open</code>. Two terminal transitions exist. An entry becomes <code>picked-up</code> when the team takes it into a workflow as an intake, or <code>dropped</code> when the team decides not to pursue it. Both transitions write <code>superseded-at: &lt;ISO date&gt;</code>; the next <code>/memory-flush</code> Step 0a sweep deletes the block. The body <code>status:</code> field disambiguates which transition fired at the moment of close; the full record persists in git history.</figcaption>
   </figure>
 
   <ol>
-    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and appends candidate facts to <code>_pending.md</code>.</li>
-    <li>At session start, the index lists the <code>_pending.md</code> row alongside the canonical files.</li>
+    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and emits three kinds of candidates into <code>_pending.md</code>: file-edit events become landmark candidates, <code>context7</code> queries become library candidates, and anchored line-start intent text (in user prompts or assistant responses) becomes backlog candidates.</li>
+    <li>At session start, the index lists the <code>_pending.md</code> row alongside the canonical files. <code>backlog.md</code> is stale-exempt; it never shows up in the stale count regardless of <code>verified-at</code> age.</li>
     <li><code>/memory-flush</code> runs at workflow Phase 10.6 (between <code>/archive</code> and <code>/grant-commit</code>); the session-start nag fires only on candidates carried over from a prior incomplete workflow.</li>
-    <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file, drops the rest, and clears <code>_pending.md</code>.</li>
-    <li>Skills that consume memory (scout, research, integrate, simplify) re-verify each entry before citing it.</li>
-    <li>Failed verification corrects or deletes the entry in the same run.</li>
+    <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file (landmark, library, backlog, decision, and so on), drops the rest, and clears <code>_pending.md</code>.</li>
+    <li>Skills that consume memory (scout, research, integrate, simplify) re-verify each entry on cite. For the six decay-managed files, failed verification corrects or deletes the entry in the same run.</li>
+    <li>Backlog entries do not participate in decay. They close instead through an explicit status transition: <code>picked-up</code> when an item enters a workflow as an intake, or <code>dropped</code> when the team decides against pursuing it. Both write <code>superseded-at:</code>; the next <code>/memory-flush</code> Step 0a sweep deletes the block.</li>
   </ol>
 </section>
 

@@ -68,9 +68,9 @@ def read_skill_owner(slug):
 EXPECTED_COMMANDS = {"approve-spec", "approve-swarm", "grant-commit", "grant-push", "init-project"}
 
 EXPECTED_MEMORY_FILES = {
-    # Canonical files (six)
+    # Canonical files (seven)
     "landmarks", "libraries", "decisions", "landmines", "conventions",
-    "pending-questions",
+    "pending-questions", "backlog",
     # Auto-extraction inbox (one); body gitignored, file committed
     "_pending",
     # Cross-session continuity snapshot (one); written by memory_stop &

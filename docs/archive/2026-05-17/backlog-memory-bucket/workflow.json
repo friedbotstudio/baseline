@@ -1,0 +1,9 @@
+{
+  "slug": "backlog-memory-bucket",
+  "request": "Add a backlog bucket to the auto-extraction memory system: new canonical file backlog.md, intent-pattern detection in memory_stop.sh, routing in /memory-flush, schema docs in README. No new slash command. Foundation for a future /pm skill.",
+  "entry_phase": "intake",
+  "exceptions": ["security"],
+  "completed": ["intake", "scout", "research", "spec", "tdd", "simplify", "integrate", "document", "archive", "memory-flush"],
+  "created_at": 1779007606,
+  "updated_at": 1779013500
+}

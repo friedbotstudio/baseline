@@ -54,8 +54,9 @@ except Exception:
     head = ''
 
 # Files in canonical order. _pending.md handled separately.
-canonical = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions']
+canonical = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog']
 PENDING_FILE = 'pending-questions'
+STALE_EXEMPT_FILES = {'backlog'}
 STALE_COMMITS = 30
 STALE_DAYS = 30  # non-git fallback threshold
 
@@ -96,6 +97,8 @@ def _split_blocks(body):
 
 
 def _is_stale(block, name):
+    if name in STALE_EXEMPT_FILES:
+        return False
     closure_field = 'resolved-at' if name == PENDING_FILE else 'superseded-at'
     if _field(block, closure_field):
         return False

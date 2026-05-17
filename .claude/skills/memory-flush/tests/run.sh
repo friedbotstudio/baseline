@@ -62,7 +62,7 @@ sweep() {
 seed_skel() {
   local mem="$1"
   mkdir -p "$mem"
-  for f in landmarks libraries decisions landmines conventions pending-questions; do
+  for f in landmarks libraries decisions landmines conventions pending-questions backlog; do
     cat > "$mem/$f.md" <<EOF
 ---
 owners: [test]
@@ -357,6 +357,98 @@ test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept() {
   assert_contains "$report" '"closed": 1' "expected closed count 1 (got: $report)" || return 1
 }
 
+# --- backlog-memory-bucket: routing + bootstrap + stale-exempt + verbatim ----
+# Covers AC-005, AC-006, AC-007, AC-009, AC-011 from
+# docs/specs/backlog-memory-bucket.md. All start RED until sweep.py adds
+# 'backlog' to CANONICAL_FILES + STALE_EXEMPT_FILES, and README.md documents
+# the new register.
+
+test_when_promote_user_candidate_writes_canonical_entry_with_status_open_and_verbatim() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  # Curator-style entry: the shape /memory-flush would write on promotion.
+  add "$mem" "backlog" "## add-retry-to-webhook-worker-3f2a
+
+> verbatim (user, $(today)):
+> TODO: add retry to webhook worker
+
+- source: user-instruction
+- status: open
+- raised-on: $(today)
+- raised-in-context: backlog-memory-bucket
+- verified-at: HEAD
+- last-touched: $(today)"
+  # Auto-close should NOT touch this entry (no closure field present).
+  local report; report="$(sweep auto-close "$mem")" || { fail "AC-005 sweep crashed"; return 1; }
+  assert_file_contains "$mem/backlog.md" "## add-retry-to-webhook-worker-3f2a" "AC-005 open entry must survive auto-close" || return 1
+  assert_file_contains "$mem/backlog.md" "status: open" "AC-005 status:open missing" || return 1
+  assert_file_contains "$mem/backlog.md" "> verbatim (user," "AC-005 verbatim blockquote missing" || return 1
+  assert_file_contains "$mem/backlog.md" "raised-on: $(today)" "AC-005 raised-on missing" || return 1
+  assert_file_contains "$mem/backlog.md" "raised-in-context: backlog-memory-bucket" "AC-005 raised-in-context missing" || return 1
+  assert_contains "$report" '"closed": 0' "AC-005 expected closed:0 (open entry shouldn't auto-close)" || return 1
+}
+
+test_when_bootstrap_entry_has_superseded_at_today_then_auto_close_removes_it() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add "$mem" "backlog" "## bootstrap
+
+- source: inferred-from-code
+- status: dropped
+- raised-on: $(today)
+- raised-in-context: backlog-memory-bucket
+- verified-at: HEAD
+- last-touched: $(today)
+- superseded-at: $(today)"
+  local report; report="$(sweep auto-close "$mem")" || { fail "AC-006 sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/backlog.md" "## bootstrap" "AC-006 bootstrap must be auto-closed" || return 1
+  assert_contains "$report" '"closed": 1' "AC-006 expected closed:1 (got: $report)" || return 1
+}
+
+test_when_backlog_entry_verified_at_old_sha_then_not_classified_stale() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  # Non-git tempdir → stale predicate falls back to days-since(last-touched).
+  # 120 days ago should be stale for any other canonical file; backlog must
+  # be stale-exempt and NOT surface.
+  add "$mem" "backlog" "## ancient-intent-aaaa
+
+> verbatim (user, $(days_ago 120)):
+> TODO: this is intentionally aged
+
+- source: user-instruction
+- status: open
+- raised-on: $(days_ago 120)
+- raised-in-context: legacy-workflow
+- verified-at: HEAD
+- last-touched: $(days_ago 120)"
+  # stale-sweep reads one reply per surfaced entry from stdin; if backlog is
+  # correctly stale-exempt, NO entry is surfaced and stdin is never consumed.
+  local report; report="$(sweep stale-sweep "$mem" "")" || { fail "AC-009 sweep crashed"; return 1; }
+  assert_file_contains "$mem/backlog.md" "## ancient-intent-aaaa" "AC-009 backlog entry must survive stale-sweep" || return 1
+  assert_contains "$report" '"reverified": 0' "AC-009 expected reverified:0 (entry never surfaced)" || return 1
+  assert_contains "$report" '"deleted": 0' "AC-009 expected deleted:0" || return 1
+  assert_contains "$report" '"mark_closed": 0' "AC-009 expected mark_closed:0" || return 1
+  assert_contains "$report" '"kept": 0' "AC-009 expected kept:0 (kept counts a surfaced entry that was skipped — backlog should never surface)" || return 1
+}
+
+test_when_readme_documents_backlog_and_assistant_deferral_then_present() {
+  # Asserts the LIVE README.md (which the implement worker edits) — not a
+  # fixture. Covers AC-007 schema-doc lockstep.
+  local readme="$REPO_ROOT/.claude/memory/README.md"
+  [ -f "$readme" ] || { fail "AC-007 README missing at $readme"; return 1; }
+  assert_file_contains "$readme" "backlog.md" "AC-007 README missing backlog.md mention" || return 1
+  assert_file_contains "$readme" "assistant-deferral" "AC-007 README missing assistant-deferral provenance value" || return 1
+  # backlog.md should be listed under both the Files table and the stable-key
+  # table; greedy substring matches the row prefix.
+  local backlog_rows; backlog_rows="$(grep -cE '^\|\s*`backlog\.md`' "$readme" 2>/dev/null || true)"
+  [ -z "$backlog_rows" ] && backlog_rows=0
+  if [ "$backlog_rows" -lt 2 ]; then
+    fail "AC-007 expected backlog.md row in BOTH Files table and stable-key table (>=2 rows); got $backlog_rows"
+    return 1
+  fi
+}
+
 # --- runner -------------------------------------------------------------------
 
 run test_when_resolved_at_present_on_pending_then_flush_removes_block
@@ -372,6 +464,12 @@ run test_when_no_closure_no_prose_no_stale_then_entry_survives_all_paths
 run test_when_pre_spec_entry_no_source_no_verbatim_then_grandfathered
 run test_when_pending_empty_then_sweep_does_not_touch_pending
 run test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept
+
+# backlog-memory-bucket coverage
+run test_when_promote_user_candidate_writes_canonical_entry_with_status_open_and_verbatim
+run test_when_bootstrap_entry_has_superseded_at_today_then_auto_close_removes_it
+run test_when_backlog_entry_verified_at_old_sha_then_not_classified_stale
+run test_when_readme_documents_backlog_and_assistant_deferral_then_present
 
 echo "----"
 echo "Passed: $PASS  Failed: $FAIL"

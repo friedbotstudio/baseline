@@ -3,7 +3,7 @@
    dotted (staging stream), line+accent (cite). The ring composition
    represents accumulation around a re-verified core. #}
 <svg class="hero-symbol-svg memring-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="memring-title">
-  <title id="memring-title">A re-verified anchor at the center, six canonical entries on the inner ring, and an unverified candidate stream on the outer dotted ring.</title>
+  <title id="memring-title">A re-verified anchor at the center, seven canonical entries on the inner ring, and an unverified candidate stream on the outer dotted ring.</title>
   <defs>
     <pattern id="memring-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
       <circle class="pattern-dot" cx="3" cy="3" r="0.9"/>
@@ -35,19 +35,20 @@
   {# Inner stroke ring — canonical files boundary. #}
   <circle class="memring-inner" cx="180" cy="180" r="88"/>
 
-  {# Six canonical-file ticks on the inner ring (every 60°). #}
-  <circle class="memring-tick" cx="256.2" cy="136"   r="3.6"/>
+  {# Seven canonical-file ticks on the inner ring (every 360/7 ≈ 51.43°, top-anchored). #}
   <circle class="memring-tick" cx="180"   cy="92"    r="3.6"/>
-  <circle class="memring-tick" cx="103.8" cy="136"   r="3.6"/>
-  <circle class="memring-tick" cx="103.8" cy="224"   r="3.6"/>
-  <circle class="memring-tick" cx="180"   cy="268"   r="3.6"/>
-  <circle class="memring-tick" cx="256.2" cy="224"   r="3.6"/>
+  <circle class="memring-tick" cx="248.8" cy="125.1" r="3.6"/>
+  <circle class="memring-tick" cx="265.8" cy="199.6" r="3.6"/>
+  <circle class="memring-tick" cx="218.2" cy="259.3" r="3.6"/>
+  <circle class="memring-tick" cx="141.8" cy="259.3" r="3.6"/>
+  <circle class="memring-tick" cx="94.2"  cy="199.6" r="3.6"/>
+  <circle class="memring-tick" cx="111.2" cy="125.1" r="3.6"/>
 
-  {# Cite — accent orbit dot on the inner ring at 60°. #}
-  <circle class="memring-cite" cx="224" cy="103.8" r="5"/>
+  {# Cite — accent orbit dot floating between tick 0 and tick 1 on the inner ring. #}
+  <circle class="memring-cite" cx="225.1" cy="104.5" r="5"/>
 
   {# Cite-to-anchor radial — re-verification on use. #}
-  <line class="memring-radial" x1="224" y1="103.8" x2="186" y2="174"/>
+  <line class="memring-radial" x1="225.1" y1="104.5" x2="186" y2="174"/>
 
   {# Anchor — filled ink core. #}
   <circle class="memring-anchor" cx="180" cy="180" r="8"/>

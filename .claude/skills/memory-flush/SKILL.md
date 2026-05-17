@@ -1,7 +1,7 @@
 ---
 name: memory-flush
 owner: baseline
-description: Review the auto-extracted candidates in `.claude/memory/_pending.md` and commit keepers to the canonical memory files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`). Invoke at session start when the SessionStart hook reports pending candidates, or any time `_pending.md` has accumulated entries you want to curate. Reset the pending body after flushing.
+description: Review the auto-extracted candidates in `.claude/memory/_pending.md` and commit keepers to the canonical memory files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`, `backlog.md`). Invoke at session start when the SessionStart hook reports pending candidates, or any time `_pending.md` has accumulated entries you want to curate. Reset the pending body after flushing.
 ---
 
 # When invoked as Phase 10.6
@@ -28,13 +28,13 @@ The hook is a passive collector. **You are the curator.** Discard noise, promote
   - field: value
   - field: value
   ```
-- The six canonical files at `.claude/memory/<name>.md`. Read each before deciding where a candidate lands and whether it duplicates existing content.
+- The seven canonical files at `.claude/memory/<name>.md`. Read each before deciding where a candidate lands and whether it duplicates existing content.
 
 # Method
 
 ## Step 0 — Canonical sweep (closure semantics)
 
-Before reviewing `_pending.md`, sweep the six canonical files for closed entries and stale entries. The `sweep.py` helper at `.claude/skills/memory-flush/sweep.py` is the deterministic actuator; this SOP composes the three modes.
+Before reviewing `_pending.md`, sweep the seven canonical files for closed entries and stale entries. The `sweep.py` helper at `.claude/skills/memory-flush/sweep.py` is the deterministic actuator; this SOP composes the three modes.
 
 ### Step 0a — Auto-close structured closure fields
 
@@ -86,8 +86,10 @@ Read `_pending.md` in full. Then read the canonical file each candidate targets 
 For each `## CANDIDATE:` block, decide one of:
 
 - **Promote.** The candidate is signal. Build the canonical entry shape (see `.claude/memory/README.md`) and append to the right file. If the candidate's stable key already exists in the canonical file → **replace** that entry; do not duplicate.
-- **Discard.** The candidate is noise (touched-once file with no clear role; a context7 query that resolved nothing useful; a path under generated/vendored code). No canonical write.
+- **Discard.** The candidate is noise (touched-once file with no clear role; a context7 query that resolved nothing useful; a path under generated/vendored code; an intent line that was a passing chat phrase rather than real future work). No canonical write.
 - **Defer.** Useful but you don't have enough context to write a clean entry. Move the candidate verbatim to `pending-questions.md` as a `Q-NNN` entry phrased as "Should X be a landmark?" so the next session can decide. The pending body still gets reset at the end.
+
+**Backlog candidates** (`## CANDIDATE: backlog → <slug>-<4hash>`) route to `backlog.md` with the canonical entry shape plus these fields: `status: open` (the initial state; transitions to `picked-up` or `dropped` are later edits), `raised-on: <ISO>`, `raised-in-context: <slug-or-(no active workflow)>`, the verbatim blockquote of the user/assistant intent line. Provenance is `source: user-instruction` for `role: user` candidates or `source: assistant-deferral` for `role: assistant` candidates. The verbatim is REQUIRED for both — `/memory-flush` SHALL reject promotion without it (per `.claude/memory/README.md → Source provenance`).
 
 ## Step 3 — Verify before promoting
 
