@@ -19,6 +19,14 @@ results = []  # (name, status, detail)
 def add(name, status, detail=""):
     results.append((name, status, detail))
 
+def is_valid_preamble(text):
+    if not text.startswith("---"):
+        return False, "missing frontmatter"
+    remainder = text[3:]
+    if "\n---\n" in remainder or remainder.endswith("\n---"):
+        return True, ""
+    return False, "malformed frontmatter: missing closing separator"
+
 # ---------- expected canonical sets (mirror seed.md §4) ----------
 EXPECTED_HOOKS = {
     # Write/Bash boundary guards (17)
@@ -295,17 +303,18 @@ else:
         add("memory files present", "FAIL", "; ".join(bits))
     else:
         add("memory files present", "PASS", f"{len(disk_memory)} files")
-    # Each canonical file must have valid frontmatter (opens with `---`). Record
-    # count is not an audit signal — a freshly-initialized project legitimately
-    # has zero entries in every canonical file (overlaid from pristine
-    # src/memory/<name>.template.md). Entry count is reported informationally.
+    # Record count is not an audit signal — a freshly-initialized project
+    # legitimately has zero entries in every canonical file (overlaid from
+    # pristine src/memory/<name>.template.md). Entry count is reported
+    # informationally.
     for name in sorted(EXPECTED_MEMORY_FILES):
         p = mem_dir / f"{name}.md"
         if not p.is_file():
             continue
         text = p.read_text(encoding="utf-8", errors="replace")
-        if not text.startswith("---"):
-            add(f"memory shape: {name}.md", "FAIL", "missing frontmatter")
+        ok, reason = is_valid_preamble(text)
+        if not ok:
+            add(f"memory shape: {name}.md", "FAIL", reason)
             continue
         if name == "_pending":
             add(f"memory shape: {name}.md", "PASS", "")

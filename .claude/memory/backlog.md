@@ -41,20 +41,6 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - last-touched: 2026-05-17
 - caveat: Direct-write to `backlog.md` because `memory_stop.sh` intent-detection didn't fire on this item's prose phrasing — which is itself the evidence the user cites. The intent regex set in `memory_stop.sh` (anchored line-start patterns like `TODO:`, `next we (should|need to|must)`, `let's also`, `we should also`, `backlog this`, `after this (lands|ships)`) misses descriptive numbered-list items like "1. improved backlog item detection". Scope of follow-up: widen the trigger set toward higher recall while preserving the precision contract from the backlog-memory-bucket intake ("only obvious future-intent phrasings should match; mid-sentence accidental matches should not"); add a test corpus of true-positive sentences from real conversations; consider a second pass at flush-time that lets the curator manually promote anything the hook missed.
 
-## audit-sh-empty-memory-files-ok-2e03
-
-> verbatim (user, 2026-05-17):
-> bugfix in audit.sh; an empty memory files is not a point of failure. when we setup a new project, it will always be empty; what we need to check for is that file exist and has proper preemble, we don't care if the files are empty (or have no records as part of audit)
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: post-backlog-memory-bucket review (no active workflow)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: The audit check on canonical memory files (in `.claude/skills/audit-baseline/audit.sh`) should assert file existence + valid frontmatter preamble, not record count. New projects legitimately ship empty memory files. Confirm exact failing assertion at scout time; the fix is likely a single condition change.
-
 ## init-project-explicit-proceed-confirmation-7cb1
 
 > verbatim (user, 2026-05-17):
@@ -82,6 +68,20 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - verified-at: HEAD
 - last-touched: 2026-05-17
 - caveat: Discovered while updating docs/init/seed.md for rung 4 — src/seed.template.md lines around 141, 167, 365 still describe the older mental model. Out of scope to fix here (the harness-auto-resume spec's `write_set` didn't include src/seed.template.md and the drift predates this workflow). Future workflow: bring src/seed.template.md to byte-parity with docs/init/seed.md, OR add a byte-mirror test analogous to `test_claude_template_md_byte_mirrors_claude_md`. The byte-mirror test is probably the better fix — automates detection of future drift the same way Article XI's CLAUDE.md mirror does.
+
+## ac008-fixture-recapture-after-memory-drift-39cc
+
+> assistant-deferral (claude, 2026-05-17):
+> The fixture drift is pre-existing and unrelated to this workflow — the reference file has `total entries: 32` from before commits, and the live tree is at 67 (a 35-entry drift accumulated across many prior commits). My landmarks.md edit was an in-place replacement (entry count unchanged); the fixture has been stale for many commits already. Per integrate SKILL.md the binding verdict is from test.cmd (PASS). The sibling test failure is an advisory finding — surfacing it without flipping the verdict.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-17
+- raised-in-context: audit-preamble-strict-check /integrate phase
+- estimated-effort: small
+- verified-at: HEAD
+- last-touched: 2026-05-17
+- caveat: `.claude/hooks/tests/fixtures/ac008_byte_equal_reference.txt` was captured pre-spec (HEAD shown as `n/a`, total entries 32, landmarks=19). The live tree is at total=67, landmarks=33. The existing landmark for `memory_session_start_test.sh` already documents the re-capture obligation: "if the live tree's entry count or stale count drifts, the fixture needs re-capture." Concrete remediation: regenerate the fixture by running the hook against the live repo memory tree (the same path the test invokes) and overwriting `ac008_byte_equal_reference.txt` with the captured header+table block. Single-commit chore, no spec needed. Defer until a chore-track workflow has appetite, OR bundle with the next memory-tree-related change.
 
 ## tdd-spec-implementation-drift-analysis-6086
 

@@ -1,0 +1,9 @@
+{
+  "slug": "audit-preamble-strict-check",
+  "request": "Tighten audit-baseline preamble validator on canonical memory files: require both opening `---\\n` AND matching closing `\\n---\\n` separator (currently only checks `text.startswith(\"---\")`). Bugfix closes backlog entry `audit-sh-empty-memory-files-ok-2e03`. Adds the first test scaffold under `.claude/skills/audit-baseline/tests/`.",
+  "entry_phase": "tdd",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "security"],
+  "completed": ["tdd", "simplify", "integrate", "document", "archive", "memory-flush"],
+  "created_at": 1779028502,
+  "updated_at": 1779032500
+}

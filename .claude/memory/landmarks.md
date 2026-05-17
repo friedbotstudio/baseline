@@ -115,10 +115,10 @@ Each entry's stable key is `path:line`.
 
 ## .claude/hooks/harness_continuation.sh:1
 
-- Role: Stop hook that auto-resumes the harness across non-gated phase boundaries. Three-rung gate: (1) `stop_hook_active` absent on payload, (2) `.claude/state/.harness_active` marker exists, (3) `harness_state.state == "continue"`. Emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` only when all three pass; silent otherwise.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: sanity rail logs WARN to `.claude/state/harness/harness_continuation.log` on marker-slug vs `workflow.json` slug mismatch but does NOT change the decision — intentional, so a stale marker doesn't strand the user. Never writes consent markers; structurally cannot reach `consent_gate_grant`'s code path.
+- Role: Stop hook that auto-resumes the harness across both mid-loop phase boundaries (Path A) and consent-gate yields (Path B). All paths gated by rung 1 (`stop_hook_active` absent on payload). Path A — mid-loop continuation: (2) `.claude/state/.harness_active` marker exists, (3) `harness_state.state == "continue"`. Path B (rung 4) — gate-resume after a consent slash command: (4a) `harness_state.state == "yielded"`, (4b) `workflow.json` exists and parses, (4c) at least one consent token under `commit_consent` / `push_consent` / `spec_approvals/<slug>.approval` / `swarm_approvals/<slug>.approval` has mtime newer than `harness_state`'s mtime. Emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` when Path A or Path B passes; silent otherwise.
+- Verified-at: 1333cb7
+- Last-touched: 2026-05-17
+- Caveat: Path B was added by `1333cb7` (feat(harness): auto-resume across consent gates via Stop-hook rung 4) so the user doesn't need to type `/harness` to resume after `/approve-spec` / `/approve-swarm` / `/grant-commit` / `/grant-push`. The marker presence check moved INSIDE the Python heredoc because Path B fires with the marker absent (the harness skill deletes it on `yielded`). Sanity rail logs WARN to `.claude/state/harness/harness_continuation.log` on marker-slug vs `workflow.json` slug mismatch but does NOT change the decision — intentional, so a stale marker doesn't strand the user. Never writes consent markers; structurally cannot reach `consent_gate_grant`'s code path.
 
 ## .claude/hooks/memory_session_start.sh:1
 
@@ -245,6 +245,14 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-05-17
 - Caveat: the AC-004 byte-parity baseline was captured BEFORE the intent-extraction extension landed in `memory_stop.sh` — it's the contract that the no-intent path stays stable. Re-capturing the fixture is required any time `memory_stop.sh`'s landmark/library extraction paths change shape (path-touch threshold, file-prefix filters, ISO-timestamp format). The four mid-sentence / system-reminder / zero-content / no-intent tests are REGRESSION_TRAP_PRE_PASSING per `conventions.md → test-regression-trap-semantics` — they pass both before and after the extension and must continue to pass.
+
+## .claude/skills/audit-baseline/tests/preamble_check_test.sh:1
+
+- Role: Fixture-based integration tests for `audit.sh:1`'s strict-preamble validator (the `is_valid_preamble(text)` helper introduced 2026-05-17). 5 scenarios across the memory-shape audit branch: opener-only FAILs, no-opener FAILs (regression trap), valid-empty-body PASSes "empty (preamble-only)", valid-with-entries PASSes "N entries", `_pending` opener-only FAILs (strict rule applies to the special-case file). Test pattern: build a stub `.claude/memory/` tempdir with all 9 expected memory filenames (7 canonical + `_pending` + `_resume`), substitute one file with a fixture from `tests/fixtures/`, invoke audit.sh via `CLAUDE_PROJECT_DIR=$TMP`, grep only for the specific `memory shape: <name>.md` line in the captured output. Audit exit code is ignored (the stub tree fails hook/skill/agent counts; we only care about the memory-shape branch).
+- Companion: `.claude/skills/audit-baseline/audit.sh:1` (the helper under test), `.claude/skills/audit-baseline/tests/fixtures/` (5 synthetic preamble fixtures: opener_only, no_opener, full_empty_body, full_with_entries, _pending_opener_only). Pattern source: `.claude/hooks/tests/memory_session_start_test.sh:1` (tempdir + CLAUDE_PROJECT_DIR style anchor).
+- Verified-at: HEAD
+- Last-touched: 2026-05-17
+- Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline/audit.sh`); run manually during /tdd, /simplify, /integrate alongside the two `.claude/hooks/tests/memory_*.sh` test files. Bash dynamic-scoping gotcha during authoring: helper functions that loop over a list (e.g. `for name in ...`) MUST declare the loop variable local OR rename it (`mem_name`) so the parent `run()`'s `local name="$1"` isn't clobbered — captured in `.claude/skill-memory/scenario/MEMORY.md` post-fix.
 
 ## .claude/memory/backlog.md:1
 
