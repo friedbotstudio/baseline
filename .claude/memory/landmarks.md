@@ -24,11 +24,11 @@ Each entry's stable key is `path:line`.
 
 ## bin/cli.js:1
 
-- Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `upgrade` subcommand / `doctor` subcommand / `--dry-run`), exit codes 0/1/2/3/4
-- TTY routing: `dispatchInstall`, `dispatchUpgrade`, `dispatchDoctor` each branch on `process.stdout.isTTY` and dynamic-import the matching `src/cli/tui/*.js` module on the TTY path; non-TTY falls through to the plain path so clack never loads in CI.
-- `--merge` flag removed in branded-cli-tui; passing it now exits 2 with stderr line pointing to `create-baseline upgrade <target>`.
-- Doctor adds `--json` flag: emits `JSON.stringify(report)` on stdout with the same exit codes; `--strict` still escalates customizations to exit 1.
-- Verified-at: db291ed
+- Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `upgrade` subcommand / `doctor` subcommand / `--dry-run`), exit codes 0/1/2/3/4.
+- TTY routing: `dispatchInstall`, `dispatchUpgrade`, `dispatchDoctor` each branch on `process.stdout.isTTY` and dynamic-import the matching `src/cli/tui/*.js` module on the TTY path; non-TTY falls through to the plain path so clack never loads in CI. The `--help` and `--version` branches do the same against `src/cli/tui/meta.js` (TTY → brand banner, non-TTY → bare body).
+- `--merge` flag removed in branded-cli-tui; passing it now exits 2 with stderr line pointing to `create-baseline upgrade <target>`. The router catches `parseArgs`'s unknown-option throw and emits the migration message before exit.
+- Doctor adds `--json` flag: emits `JSON.stringify(report)` on stdout with the same exit codes; `--strict` still escalates customizations to exit 1. Error reports (no-manifest) also route through the TUI renderer when `process.stdout.isTTY` — no more short-circuit to the plain text formatter.
+- Verified-at: 2c1527a
 - Last-touched: 2026-05-18
 - Caveat: depends on every src/cli/*.js module + needs `obj/template/` to exist (run `npm pack` or `bash scripts/build-template.sh` first). Tests can override the template dir via `CREATE_BASELINE_TEMPLATE_DIR=<path>` env var without running the full build (read at `bin/cli.js:73`).
 
@@ -387,10 +387,19 @@ Each entry's stable key is `path:line`.
 ## src/cli/tui/doctor.js:1
 
 - Role: Domain — branded sectioned doctor renderer. Exports `render(report)`; consumes the structured `DoctorReport` from `src/cli/doctor.js` (unchanged) and writes a colorized, sectioned rendering to stdout. The non-TTY plain path stays on `doctor.js`'s `formatReport`; the renderer is invoked only when `process.stdout.isTTY && !values.json`.
-- Companion: `bin/cli.js → dispatchDoctor` routes between `tui/doctor.render(report)`, `JSON.stringify(report)` (when `--json`), and `formatReport(report)` (non-TTY default).
-- Verified-at: db291ed
+- Error path: when `report.error` is set (e.g., manifest-missing), renders the same `Baseline doctor` brand frame (accent header, muted target line) followed by the error message with a red `doctor:` marker. The router no longer short-circuits errors to `formatReport` in TTY mode.
+- Companion: `bin/cli.js → dispatchDoctor` routes between `tui/doctor.render(report)`, `JSON.stringify(report)` (when `--json`), and `formatReport(report)` (non-TTY default). `brandHeader(target, manifestInfo)` is a private helper inside the module — extract pattern for any future renderer that needs the same banner.
+- Verified-at: 2c1527a
 - Last-touched: 2026-05-18
-- Caveat: do not couple the renderer to the doctor data layer; the two-way separation (data in `src/cli/doctor.js`, presentation in `src/cli/tui/doctor.js`) is what makes `--json` a trivial rider.
+- Caveat: do not couple the renderer to the doctor data layer; the two-way separation (data in `src/cli/doctor.js`, presentation in `src/cli/tui/doctor.js`) is what makes `--json` a trivial rider. The error-path brand frame is intentional: even unhappy outcomes carry the brand surface.
+
+## src/cli/tui/meta.js:1
+
+- Role: Domain — branded renderers for the meta commands (`--help`, `--version`). Exports `renderHelp(helpText, version)` and `renderVersion(version)`. In a TTY, both prefix the canonical body with a brand banner (`Baseline CLI v<version>` accent + `@friedbotstudio/create-baseline` muted + a rule-coloured separator). In non-TTY, both emit the canonical body byte-clean so `$(cli --version)` and `cli --help | grep ...` keep working.
+- Companion: `bin/cli.js` `--help` and `--version` branches dynamic-import this module on the TTY path; the plain path uses `io.log(HELP_TEXT)` and `io.log(version)` respectively. `src/cli/tui/tokens.js` supplies the colors.
+- Verified-at: 2c1527a
+- Last-touched: 2026-05-18
+- Caveat: the non-TTY branch emits a BARE version (no `baseline v` prefix) on purpose. Script consumers running `$(create-baseline --version)` expect a parseable version string; adding a prefix in non-TTY would silently break them. The TTY path is the only one with brand colors.
 
 ## src/cli/tui/tokens.js:1
 
