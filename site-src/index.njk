@@ -12,11 +12,14 @@ eleventyComputed:
       <div class="hero-content">
         <p class="eyebrow">Claude Code · constitutional baseline</p>
         <h1>A discipline layer<br>for Claude<span class="accent">.</span></h1>
-        <p class="lead">Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. Every phase produces one artifact, every gate is user-typed, and Claude cannot self-approve.</p>
-        <div class="ctas">
-          <a class="btn btn-primary" data-cta="get-the-baseline" href="{{ '/install/' | rel }}">Get the baseline <span class="arr">→</span></a>
-          <a class="btn btn-secondary" data-cta="read-the-docs" href="{{ '/swarm/' | rel }}">Read the docs</a>
+        <p class="lead">Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. <em>Every phase produces one artifact</em>, <em>every gate is user-typed</em>, and <em>Claude cannot self-approve</em>.</p>
+        <div class="hero-install">
+          {% include "install-pill.njk" %}
+          <p class="pill-meta">{{ site.versionMinor }} · {{ site.license }} · open source</p>
         </div>
+        <p class="hero-readmore">
+          <a data-cta="read-the-docs" href="{{ '/skills/' | rel }}"><span class="arr" aria-hidden="true">→</span> browse the {{ baseline.skills.total }} skills</a>
+        </p>
         <div class="meta-strip" aria-label="Baseline counts">
           <div class="stat"><span class="num">{{ baseline.hooks.total }}</span><span class="label">Hooks</span></div>
           <div class="stat"><span class="num">{{ baseline.skills.total }}</span><span class="label">Skills</span></div>
@@ -555,6 +558,7 @@ eleventyComputed:
         <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       <span class="cli-hint" data-default="click to copy" data-copied="copied to clipboard">click to copy</span>
+      <span class="visually-hidden" aria-live="polite"></span>
     </button>
   </section>
 

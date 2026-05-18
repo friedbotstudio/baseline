@@ -19,13 +19,18 @@ toc:
   - { id: recover,      label: "Recover from a bad install" }
 ---
 
+<div class="page-install">
+  {% include "install-pill.njk" %}
+  <p class="pill-meta">{{ site.versionMinor }} · {{ site.license }} · open source</p>
+</div>
+
 <section class="section">
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ I</p>
       <h2 id="requirements">Requirements</h2>
     </div>
-    <p>The CLI ships one pinned runtime dependency, <code>@clack/prompts</code>, which supplies the prompt primitives behind the branded TTY flows. Everything else it needs is Node stdlib and the contents of the npm tarball.</p>
+    <p>Everything the baseline needs from your environment before it can install. Two of the rows below are optional.</p>
   </div>
   <table>
     <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
@@ -94,6 +99,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
     </tbody>
   </table>
   <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
+  <p>The CLI itself ships one pinned runtime dependency, <code>@clack/prompts</code>, which supplies the prompt primitives behind the branded TTY flows. Everything else it needs is Node stdlib and the contents of the npm tarball; the dependency stays in the CLI and never lands in your project.</p>
 </section>
 
 <section class="section">

@@ -128,6 +128,21 @@ button:focus-visible,
 }
 .skip:focus { left: 16px; top: 16px; }
 
+/* Off-screen-but-readable. Used as an aria-live target for copy-success
+   announcements on the install copy affordances (.cli-strip, .install-pill)
+   so screen readers hear "Copied install command" without focus changes. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ----- alpha banner (site-wide status) ---------------------------------- */
 /* Subtle accent-tinted strip below the sticky topnav. Surfaces public-alpha
    state on every page without dominating the layout (DESIGN.md "quiet
@@ -250,6 +265,24 @@ body.is-nav-open .nav-toggle .bars::after  { top: 0; transform: rotate(-45deg); 
   letter-spacing: .06em;
   font-weight: 500;
   min-width: 4rem;
+}
+
+/* Byline sits INSIDE the brand text span (not as a flex sibling), so the
+   parent .brand's 10px gap doesn't apply between it and the wordmark.
+   Italic differentiates it from the mono uppercase .sub crumb that follows;
+   no decorative separator needed — the type does the work. */
+.brand .byline {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 0.35em;
+  letter-spacing: -.005em;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .brand .byline { display: none; }
 }
 
 nav.primary {
@@ -538,11 +571,48 @@ footer.site {
   max-width: 640px;
   margin-bottom: 40px;
 }
+/* Emphasis on the three constitutional claims — italic at default weight
+   reads thin against the 21px lead; bump to 500 to keep the cadence even. */
+.hero .lead em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ink);
+}
 .hero .ctas {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 56px;
+}
+/* Leading accent-arrow + concrete copy: "→ browse the 37 skills" links to
+   the most concrete "what's in this baseline" page. Whole link slides
+   right on hover (forward-motion metaphor); reduced-motion zeros the
+   translate but keeps the colour change. */
+.hero .hero-readmore {
+  margin: 0 0 56px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: -.005em;
+}
+.hero .hero-readmore a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .15s ease, transform .15s cubic-bezier(.25, 1, .5, 1);
+}
+.hero .hero-readmore a:hover {
+  color: var(--ink);
+  transform: translateX(3px);
+}
+.hero .hero-readmore .arr {
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero .hero-readmore a:hover { transform: none; }
 }
 .hero .meta-strip {
   display: grid;
@@ -1560,7 +1630,7 @@ a.concept:focus-visible::after {
   width: calc(100% - 64px);
   padding: 16px 22px;
   background: var(--code-bg);
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--rule);
   font-family: var(--mono);
   font-size: 14px;
@@ -1579,7 +1649,7 @@ a.concept:focus-visible::after {
 .cli-strip:active { transform: translateY(0); }
 .cli-strip:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 .cli-prompt { color: var(--accent-light); font-weight: 700; flex: 0 0 auto; }
 .cli-cmd {
@@ -1657,6 +1727,122 @@ a.concept:focus-visible::after {
     font-size: 11.5px;
     gap: 8px;
   }
+}
+
+/* =========================================================================
+   INSTALL-PILL — quieter cousin of .cli-strip for header-adjacent contexts.
+   Reuses the [data-copy] handler in site.js (.is-copied class flips icons).
+   ========================================================================= */
+
+.install-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--code-bg);
+  color: var(--code-fg-default);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  width: max-content;
+  max-width: 100%;
+  user-select: none;
+  text-align: left;
+  transition: background-color .2s cubic-bezier(.22, 1, .36, 1),
+              border-color   .2s cubic-bezier(.22, 1, .36, 1);
+}
+.install-pill:hover {
+  background: var(--code-bar-bg);
+}
+.install-pill:active { transform: translateY(1px); }
+.install-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.install-pill .ip-prompt {
+  color: var(--code-fg-prompt);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.install-pill .ip-cmd {
+  color: var(--code-fg-bright);
+  min-width: 0;
+  white-space: nowrap;
+}
+.install-pill .ip-icon {
+  flex: 0 0 auto;
+  color: currentColor;
+  opacity: .55;
+  transition: opacity .2s cubic-bezier(.22, 1, .36, 1);
+}
+.install-pill:hover .ip-icon { opacity: .85; }
+
+/* Blinking caret — signals "live shell, ready to receive". Reuses the
+   dc-blink keyframes at line 1597 so pill and .cli-strip share the same
+   cadence. Hidden on .is-copied so the check has the success-state to itself. */
+.install-pill .ip-caret {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  background: var(--accent-light);
+  vertical-align: -2px;
+  animation: dc-blink 1.05s steps(2, end) infinite;
+  flex: 0 0 auto;
+}
+.install-pill.is-copied .ip-caret { animation: none; opacity: 0; transform: scale(.7); }
+@media (prefers-reduced-motion: reduce) {
+  .install-pill .ip-caret { animation: none; }
+}
+
+.install-pill .ip-check { display: none; color: var(--cli-success); opacity: 1; }
+.install-pill.is-copied { border-color: color-mix(in oklch, var(--accent-light) 60%, transparent); }
+.install-pill.is-copied .ip-copy { display: none; }
+.install-pill.is-copied .ip-check { display: inline-block; }
+
+/* Copy-failed recovery — when both clipboard paths refuse, the JS pre-
+   selects the command text so Ctrl+C works. Cursor + user-select hint that
+   the text is now grabable; no border-colour change (would conflict with
+   hover/copied states on .cli-strip). The ::selection highlight (line 115)
+   IS the visible failure signal. */
+.install-pill.is-copy-failed,
+.cli-strip.is-copy-failed {
+  cursor: text;
+}
+.install-pill.is-copy-failed .ip-cmd,
+.cli-strip.is-copy-failed .cli-cmd { user-select: text; }
+
+@media (max-width: 640px) {
+  /* Padding bumps the touch target from ~34px to ~42px tall on phones —
+     well clear of the 24×24 AA floor and within reach of the 44×44 AAA. */
+  .install-pill { width: 100%; font-size: 12.5px; padding: 12px 14px; }
+  .install-pill .ip-cmd {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-pill,
+  .install-pill .ip-icon { transition: none; }
+  .install-pill:active { transform: none; }
+}
+
+.hero-install { margin: 8px 0 24px; }
+.page-install { margin: 12px 0 32px; }
+
+/* Pill-meta — version + license + open-source label, sits directly under
+   the pill in both .hero-install and .page-install contexts. Answers the
+   30-second-scan question "what version and license am I getting". */
+.pill-meta {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  letter-spacing: .02em;
 }
 @media (prefers-reduced-motion: reduce) {
   .cli-caret { animation: none; }

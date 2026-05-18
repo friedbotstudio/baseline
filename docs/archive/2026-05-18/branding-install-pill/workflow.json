@@ -1,0 +1,10 @@
+{
+  "request": "header byline \"baseline · by friedbotstudio\" + new low-visual-noise install-command pill component, placed near the homepage header and at the top of the install page (and other surfaces where it earns). Design-ui owns the visual recipe per Article X.2. Pure site-src (.njk + CSS) edits, no project source code changes.",
+  "slug": "branding-install-pill",
+  "entry_phase": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "integrate", "document"],
+  "completed": ["chore", "simplify", "archive", "memory-flush", "grant-commit", "changelog"],
+  "source_backlog_keys": [],
+  "created_at": 1779123111,
+  "updated_at": 1779130120
+}

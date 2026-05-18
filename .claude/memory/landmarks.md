@@ -399,3 +399,18 @@ Each entry's stable key is `path:line`.
 - Verified-at: db291ed
 - Last-touched: 2026-05-18
 - Caveat: the RGB triples are oklch-to-sRGB *approximations*; exact perceptual match is impossible across terminal palettes. If the docs site brand palette changes, update both `site-src/assets/site.css :root` AND this RGB table so the rendered docs and the CLI stay visually aligned.
+
+## src/cli/merge.js:1
+
+- Role: Domain — three-way merge engine used by the `upgrade` subcommand. Exports `threeWayMerge(templateDir, target, oldManifest, newManifest, opts)` and the `ACTION_KINDS` enum (ADD / OVERWRITE / NOOP / SKIP_CUSTOMIZED / PRUNE / PRUNE_SKIPPED_CUSTOMIZED / NEVER_TOUCH_PRESERVE / NEVER_TOUCH_ADD / SPECIAL_MERGE). Supports `{dryRun, onSkipCustomized}` opts: dry-run returns a planned-actions list without writing; `onSkipCustomized` is the per-conflict callback the TUI uses to ask the user keep-mine / take-theirs / abort.
+- Companion: `src/cli/install.js` defines `NEVER_TOUCH` + `SPECIAL_MERGE` path sets that this module imports; `src/cli/manifest.js` supplies `hashFile` + `saveManifest`; `src/cli/mcp.js` supplies `deepMergeMcpServers` for the .mcp.json special-merge case; `src/cli/tui/upgrade.js` is the interactive consumer; `bin/cli.js → dispatchUpgrade` is the non-TTY consumer (`runPlainUpgrade`).
+- Verified-at: 2c1527a
+- Last-touched: 2026-05-18
+
+## site-src/_includes/install-pill.njk:1
+
+- Role: Domain — compact click-to-copy install-command pill, quieter cousin of `.cli-strip`. Single `<button data-copy="…">` with monospaced command, prompt glyph, and copy/check icon pair. Reuses the existing `[data-copy]` handler at `site-src/assets/site.js:244` (Clipboard API + execCommand fallback; flips `.is-copied` for ~1.8s). Feedback IS the icon swap (copy → check) — no hint-text element by design.
+- Companion: `site-src/assets/site.css` `.install-pill` block defines the dark terminal aesthetic at compact scale; `site-src/_data/site.cjs` is unrelated but the sister `site.byline` field shipped in the same workflow. Consumers: `site-src/index.njk` (hero, wrapped in `.hero-install`) and `site-src/install.njk` (page top, wrapped in `.page-install`).
+- Verified-at: 2c1527a
+- Last-touched: 2026-05-18
+- Caveat: the existing loud `.cli-strip` above the footer of `index.njk` stays unchanged — pill and strip serve different placements (header-adjacent vs. final CTA). Do not collapse them into a shared base class; the duplication is intentional system-kinship at different scales.

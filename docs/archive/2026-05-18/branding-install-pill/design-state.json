@@ -1,0 +1,37 @@
+{
+  "slug": "branding-install-pill",
+  "started_at": 1779123111,
+  "intent": "Header byline 'baseline · by friedbotstudio' + new low-noise install-command pill component (homepage above-fold + install-page top)",
+  "register": "brand",
+  "state": "complete",
+  "step_index": 1,
+  "recipe": ["shape"],
+  "mode": "auto",
+  "target_files": [
+    "site-src/_includes/topnav.njk",
+    "site-src/_includes/install-pill.njk",
+    "site-src/assets/site.css",
+    "site-src/index.njk",
+    "site-src/install.njk",
+    "site-src/_data/site.cjs"
+  ],
+  "write_set": ["site-src/**"],
+  "invocations": [
+    {
+      "step": 0,
+      "cmd": "shape",
+      "output_path": "docs/design/branding-install-pill.brief.md",
+      "result": "brief produced; chore implements from brief, no craft step"
+    }
+  ],
+  "verifications": [],
+  "thin_glue_written": [
+    ".claude/state/design/branding-install-pill.json",
+    "docs/design/branding-install-pill.brief.md"
+  ],
+  "final_state": "complete",
+  "next_actions": [
+    "chore main-context implements per docs/design/branding-install-pill.brief.md",
+    "chore runs verify (audit-baseline) after the edits"
+  ]
+}

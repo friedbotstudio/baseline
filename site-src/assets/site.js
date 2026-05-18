@@ -244,8 +244,13 @@
   document.querySelectorAll("[data-copy]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const text = btn.getAttribute("data-copy");
+      // Track actual success — both writeText and execCommand can throw OR
+      // (in execCommand's case) return false. Lying about success when both
+      // refuse is worse than admitting the failure and offering recovery.
+      let ok = false;
       try {
         await navigator.clipboard.writeText(text);
+        ok = true;
       } catch (_) {
         // Older browsers / insecure context: synthesize a textarea + execCommand.
         const ta = document.createElement("textarea");
@@ -254,19 +259,44 @@
         ta.style.opacity = "0";
         document.body.appendChild(ta);
         ta.select();
-        try { document.execCommand("copy"); } catch (_) {}
+        try { ok = document.execCommand("copy"); } catch (_) {}
         ta.remove();
       }
       if (typeof window.gtag === "function") {
-        window.gtag("event", "copy_install_command", { command: text });
+        window.gtag("event", "copy_install_command", { command: text, success: ok });
       }
-      btn.classList.add("is-copied");
       const hint = btn.querySelector(".cli-hint");
-      if (hint) hint.textContent = hint.getAttribute("data-copied");
-      setTimeout(() => {
-        btn.classList.remove("is-copied");
-        if (hint) hint.textContent = hint.getAttribute("data-default");
-      }, 1800);
+      const live = btn.querySelector("[aria-live]");
+      if (ok) {
+        btn.classList.add("is-copied");
+        if (hint) hint.textContent = hint.getAttribute("data-copied");
+        // Live region announces success without a focus change (WCAG 4.1.3).
+        if (live) live.textContent = btn.getAttribute("data-copied-status") || "Copied install command";
+        setTimeout(() => {
+          btn.classList.remove("is-copied");
+          if (hint) hint.textContent = hint.getAttribute("data-default");
+          if (live) live.textContent = "";
+        }, 1800);
+      } else {
+        // Don't lie: no check icon, no success announcement. Pre-select the
+        // command text so Ctrl+C / Cmd+C copies it without further user effort.
+        btn.classList.add("is-copy-failed");
+        const cmd = btn.querySelector(".cli-cmd, .ip-cmd");
+        if (cmd) {
+          const range = document.createRange();
+          range.selectNodeContents(cmd);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        if (hint) hint.textContent = "press Ctrl+C";
+        if (live) live.textContent = "Copy failed. Press Ctrl plus C to copy the selected command.";
+        setTimeout(() => {
+          btn.classList.remove("is-copy-failed");
+          if (hint) hint.textContent = hint.getAttribute("data-default");
+          if (live) live.textContent = "";
+        }, 4000);
+      }
     });
   });
 
