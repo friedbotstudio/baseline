@@ -24,10 +24,13 @@ Each entry's stable key is `path:line`.
 
 ## bin/cli.js:1
 
-- Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `--merge` / `--dry-run`), exit codes 0/1/2/3/4
-- Verified-at: HEAD
-- Last-touched: 2026-04-29
-- Caveat: depends on every src/cli/*.js module + needs `template/` to exist (run `npm pack` or `bash scripts/build-template.sh` first)
+- Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `upgrade` subcommand / `doctor` subcommand / `--dry-run`), exit codes 0/1/2/3/4
+- TTY routing: `dispatchInstall`, `dispatchUpgrade`, `dispatchDoctor` each branch on `process.stdout.isTTY` and dynamic-import the matching `src/cli/tui/*.js` module on the TTY path; non-TTY falls through to the plain path so clack never loads in CI.
+- `--merge` flag removed in branded-cli-tui; passing it now exits 2 with stderr line pointing to `create-baseline upgrade <target>`.
+- Doctor adds `--json` flag: emits `JSON.stringify(report)` on stdout with the same exit codes; `--strict` still escalates customizations to exit 1.
+- Verified-at: db291ed
+- Last-touched: 2026-05-18
+- Caveat: depends on every src/cli/*.js module + needs `obj/template/` to exist (run `npm pack` or `bash scripts/build-template.sh` first). Tests can override the template dir via `CREATE_BASELINE_TEMPLATE_DIR=<path>` env var without running the full build (read at `bin/cli.js:73`).
 
 ## src/cli/plantuml.js:1
 
@@ -364,3 +367,35 @@ Each entry's stable key is `path:line`.
 - Verified-at: 25d9eb4
 - Last-touched: 2026-05-18
 - Caveat: test (1) is a regression-trap that documents undocumented plugin behavior. If a future plugin version DOES preserve top-of-file position, test (1) will fail unexpectedly — that's the contract: the test name reads "leaves Unreleased in file but displaces it", so a failure means the plugin behavior CHANGED, not that the code broke. The fallback's wiring into `.releaserc.json` as a post-prepare step is out of scope of the workflow that introduced this test; deferred to a follow-up chore.
+
+## src/cli/tui/install.js:1
+
+- Role: Domain — branded install flow. Exports `run({target, opts, prompts})`; composes `freshInstall` / `forceInstall` from `src/cli/install.js` and `fetchPlantumlIfMissing` from `src/cli/plantuml.js` behind a clack-style intro / spinner / outro presentation seam. The `prompts` parameter defaults to `@clack/prompts` and is injected in tests.
+- Companion: `src/cli/tui/tokens.js:1` (brand colors), `tests/tui-install.test.mjs` (unit tests with `prompts` stub), `bin/cli.js → dispatchInstall` (router that picks tui vs plain).
+- Verified-at: db291ed
+- Last-touched: 2026-05-18
+- Caveat: never invoked from the non-TTY path. The router's `process.stdout.isTTY` check decides; if you add a new install entry point, route the same way or clack output will land in CI logs.
+
+## src/cli/tui/upgrade.js:1
+
+- Role: Domain — interactive upgrade flow that replaces today's `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts, (2) `prompts.select` per conflict (keep-mine / take-theirs / abort), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. Cancel sentinel: `Symbol.for('clack:cancel')`.
+- Companion: `src/cli/merge.js → threeWayMerge` (the data layer, now accepts `{dryRun, onSkipCustomized}` opts), `bin/cli.js → dispatchUpgrade` (router), `tests/upgrade.test.mjs` (test name is stem-pattern, not `tui-upgrade.test.mjs`, to satisfy `tdd_order_guard` matching).
+- Verified-at: db291ed
+- Last-touched: 2026-05-18
+- Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback — producing today's exit-3 behavior. If you change the apply logic in the tui flow, mirror the change in the plain branch or the two paths diverge.
+
+## src/cli/tui/doctor.js:1
+
+- Role: Domain — branded sectioned doctor renderer. Exports `render(report)`; consumes the structured `DoctorReport` from `src/cli/doctor.js` (unchanged) and writes a colorized, sectioned rendering to stdout. The non-TTY plain path stays on `doctor.js`'s `formatReport`; the renderer is invoked only when `process.stdout.isTTY && !values.json`.
+- Companion: `bin/cli.js → dispatchDoctor` routes between `tui/doctor.render(report)`, `JSON.stringify(report)` (when `--json`), and `formatReport(report)` (non-TTY default).
+- Verified-at: db291ed
+- Last-touched: 2026-05-18
+- Caveat: do not couple the renderer to the doctor data layer; the two-way separation (data in `src/cli/doctor.js`, presentation in `src/cli/tui/doctor.js`) is what makes `--json` a trivial rider.
+
+## src/cli/tui/tokens.js:1
+
+- Role: Foundation — ANSI brand-color helpers translating Friedbot Studio's oklch tokens (from `site-src/assets/site.css :root`) to 24-bit truecolor escape sequences. Exports `accent`, `accentLight`, `muted`, `success`, `warn`, `error`, `rule`. Respects `NO_COLOR` env var and `process.stdout.isTTY`; falls back to the plain string when either condition disables color.
+- Companion: `src/cli/tui/{install,upgrade,doctor}.js` (consumers), `site-src/assets/site.css` (the canonical brand palette these tokens approximate).
+- Verified-at: db291ed
+- Last-touched: 2026-05-18
+- Caveat: the RGB triples are oklch-to-sRGB *approximations*; exact perceptual match is impossible across terminal palettes. If the docs site brand palette changes, update both `site-src/assets/site.css :root` AND this RGB table so the rendered docs and the CLI stay visually aligned.

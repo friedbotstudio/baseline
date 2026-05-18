@@ -2,7 +2,7 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 
 import * as io from '../src/cli/io.js';
@@ -17,18 +17,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = resolve(__dirname, '..');
 
 const HELP_TEXT = `Usage:
-  create-baseline <target> [options]      install/merge the baseline
+  create-baseline <target> [options]      install the baseline
+  create-baseline upgrade [target]        three-way merge against an installed baseline
   create-baseline doctor [target]         report drift in an installed target
 
 Materializes the Claude Code baseline (.claude/, CLAUDE.md, .mcp.json,
 docs/init/seed.md, plus vendored LICENSE/NOTICE) into <target>.
 
-Modes:
+Install modes:
   (default)        Fresh install. Refuses if any sentinel path already present.
   --force          Overwrite unconditionally (requires typing 'overwrite' in TTY).
-  --merge          Three-way merge against existing .baseline-manifest.json.
-                   Prunes baseline files removed upstream that the user hadn't
-                   touched; customized stale files are preserved (exit 3).
+  --dry-run        Print intended actions without writing.
+
+Upgrade:
+  Replaces the prior --merge flag. Reads <target>/.claude/.baseline-manifest.json
+  and runs a three-way merge against the shipped template. Prunes baseline files
+  removed upstream that the user hadn't touched; customized-stale files are
+  preserved (exit 3) — or interactively resolved when stdout is a TTY (keep
+  mine / take theirs / abort).
   --dry-run        Print intended actions without writing.
 
 Doctor:
@@ -38,6 +44,8 @@ Doctor:
   --strict          Promote customized to exit 1 and prefix tampered paths
                     with "TAMPERED:" with shipped vs observed sha256. Detects
                     post-install supply-chain tampering of the baseline tree.
+  --json            Emit the structured report as JSON to stdout instead of
+                    the text renderer. Honours --strict; same exit codes.
 
 PlantUML jar (~19 MB, fetched at install time from upstream):
   --no-plantuml       Skip the jar download entirely.
@@ -54,11 +62,23 @@ Misc:
 
 Exit codes:
   0  success / clean doctor
-  1  user abort, conflict-without-force/merge, or doctor reports missing files
-  2  argv error, non-TTY where TTY required, or doctor finds no manifest
-  3  --merge had skipped customizations (or stale-customized prunes)
+  1  user abort, conflict-without-force, doctor reports missing files, or upgrade aborted
+  2  argv error, non-TTY where TTY required, doctor finds no manifest, or --merge passed
+  3  upgrade had skipped customizations (or stale-customized prunes)
   4  --require-plantuml fetch failure
 `;
+
+const OPTIONS = {
+  help: { type: 'boolean', short: 'h' },
+  version: { type: 'boolean' },
+  force: { type: 'boolean' },
+  'dry-run': { type: 'boolean' },
+  'no-plantuml': { type: 'boolean' },
+  'require-plantuml': { type: 'boolean' },
+  'with-npmrc': { type: 'boolean' },
+  strict: { type: 'boolean' },
+  json: { type: 'boolean' },
+};
 
 async function readPackageVersion() {
   try {
@@ -77,16 +97,141 @@ function getTemplateDir() {
   throw new Error(`Template directory not found at ${candidate}. Run \`npm run build\` (or rely on prepack).`);
 }
 
-function listShippedFiles(templateDir) {
-  const files = [];
-  const walk = (dir, base) => {
-    for (const entry of require('node:fs').readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full, base);
-      else if (entry.isFile()) files.push(full.slice(base.length + 1).split(require('node:path').sep).join('/'));
+async function listShippedFiles(templateDir) {
+  const out = [];
+  await walkFiles(templateDir, templateDir, out);
+  return out;
+}
+
+async function walkFiles(dir, base, acc) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) await walkFiles(full, base, acc);
+    else if (entry.isFile()) acc.push(full.slice(base.length + 1).split('/').join('/'));
+  }
+}
+
+async function dispatchInstall(target, values, templateDir) {
+  const dryRun = !!values['dry-run'];
+  if (process.stdout.isTTY && !values.force && !dryRun) {
+    return await runBrandedInstall(target, values, templateDir);
+  }
+  return await runPlainInstall(target, values, templateDir);
+}
+
+async function runBrandedInstall(target, values, templateDir) {
+  const tui = await import('../src/cli/tui/install.js');
+  return tui.run({
+    target,
+    opts: {
+      templateDir,
+      noPlantuml: !!values['no-plantuml'],
+      requirePlantuml: !!values['require-plantuml'],
+      withNpmrc: !!values['with-npmrc'],
+    },
+  });
+}
+
+async function runPlainInstall(target, values, templateDir) {
+  const dryRun = !!values['dry-run'];
+  if (values.force) {
+    if (!process.stdin.isTTY) {
+      io.error('--force requires an interactive TTY for the confirmation prompt');
+      return 2;
     }
-  };
-  return files;
+    if (!dryRun) {
+      const answer = await io.ask("type 'overwrite' to proceed: ");
+      if (answer.toLowerCase() !== 'overwrite') {
+        io.error('confirmation declined');
+        return 1;
+      }
+    }
+  }
+
+  try {
+    if (values.force) {
+      if (dryRun) io.log(`Would force-install into ${target}`);
+      else await forceInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
+    } else {
+      if (dryRun) io.log(`Would fresh-install into ${target}`);
+      else await freshInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
+    }
+  } catch (err) {
+    io.error(`install failed: ${err.message}`);
+    return 1;
+  }
+
+  if (!dryRun) {
+    const plantumlExit = await fetchPlantumlPlain(target, values);
+    if (plantumlExit !== 0) return plantumlExit;
+    io.log(`Installed manifest version 1 to ${target}.`);
+    io.log(`Pin via "@friedbotstudio/create-baseline@<exact-version>" in your bootstrap docs.`);
+  }
+  return 0;
+}
+
+async function fetchPlantumlPlain(target, values) {
+  const result = await fetchPlantumlIfMissing(target, {
+    noPlantuml: values['no-plantuml'],
+    requirePlantuml: values['require-plantuml'],
+  });
+  if (result.outcome === FETCH_OUTCOMES.WARNED_NETWORK_FAILURE
+      || result.outcome === FETCH_OUTCOMES.WARNED_HASH_MISMATCH) {
+    io.warn(`PlantUML jar fetch failed (${result.reason}); install continued. Retry with --require-plantuml or set system plantuml on PATH.`);
+    return 0;
+  }
+  if (result.outcome === FETCH_OUTCOMES.ERRORED_REQUIRE_PLANTUML) {
+    io.error(`--require-plantuml: ${result.reason}`);
+    return 4;
+  }
+  return 0;
+}
+
+async function dispatchUpgrade(target, values, templateDir) {
+  const manifestPath = join(target, '.claude/.baseline-manifest.json');
+  if (!existsSync(manifestPath)) {
+    io.error(`No baseline manifest at ${manifestPath}. Run a fresh install first.`);
+    return 2;
+  }
+  if (process.stdout.isTTY) {
+    const tui = await import('../src/cli/tui/upgrade.js');
+    return tui.run({
+      target,
+      opts: { templateDir, dryRun: !!values['dry-run'] },
+    });
+  }
+  return await runPlainUpgrade(target, values, templateDir, manifestPath);
+}
+
+async function runPlainUpgrade(target, values, templateDir, manifestPath) {
+  const oldManifest = await loadManifest(manifestPath);
+  const tplFiles = await listShippedFiles(templateDir);
+  const newManifest = await buildManifestFromDir(templateDir, tplFiles);
+  if (values['dry-run']) {
+    io.log(`Would upgrade ${tplFiles.length} files into ${target}`);
+    return 0;
+  }
+  const report = await threeWayMerge(templateDir, target, oldManifest, newManifest);
+  for (const action of report.actions) {
+    io.log(`${action.kind.padEnd(24)} ${action.path}`);
+  }
+  return report.exitCode;
+}
+
+async function dispatchDoctor(positionals, values) {
+  const target = resolve(positionals[1] ?? '.');
+  const report = await runDoctor(target, { strict: !!values.strict });
+  if (values.json) {
+    io.log(JSON.stringify(report));
+    return report.exitCode;
+  }
+  if (process.stdout.isTTY) {
+    const tui = await import('../src/cli/tui/doctor.js');
+    tui.render(report);
+  } else {
+    process.stdout.write(formatReport(report));
+  }
+  return report.exitCode;
 }
 
 async function main(argv) {
@@ -94,21 +239,15 @@ async function main(argv) {
   try {
     parsed = parseArgs({
       args: argv.slice(2),
-      options: {
-        help: { type: 'boolean', short: 'h' },
-        version: { type: 'boolean' },
-        force: { type: 'boolean' },
-        merge: { type: 'boolean' },
-        'dry-run': { type: 'boolean' },
-        'no-plantuml': { type: 'boolean' },
-        'require-plantuml': { type: 'boolean' },
-        'with-npmrc': { type: 'boolean' },
-        strict: { type: 'boolean' },
-      },
+      options: OPTIONS,
       strict: true,
       allowPositionals: true,
     });
   } catch (err) {
+    if (/--merge/.test(err.message)) {
+      io.error('--merge has been removed; use `create-baseline upgrade <target>` instead.');
+      return 2;
+    }
     io.error(err.message);
     return 2;
   }
@@ -116,26 +255,42 @@ async function main(argv) {
   const { values, positionals } = parsed;
 
   if (values.help) {
-    io.log(HELP_TEXT);
+    const version = await readPackageVersion();
+    if (process.stdout.isTTY) {
+      const meta = await import('../src/cli/tui/meta.js');
+      meta.renderHelp(HELP_TEXT, version);
+    } else {
+      io.log(HELP_TEXT);
+    }
     return 0;
   }
   if (values.version) {
-    io.log(await readPackageVersion());
+    const version = await readPackageVersion();
+    if (process.stdout.isTTY) {
+      const meta = await import('../src/cli/tui/meta.js');
+      meta.renderVersion(version);
+    } else {
+      io.log(version);
+    }
     return 0;
   }
 
-  // `doctor` subcommand: read-only drift check against an installed target's manifest.
   if (positionals[0] === 'doctor') {
-    const target = resolve(positionals[1] ?? '.');
-    const report = await runDoctor(target, { strict: !!values.strict });
-    io.log(formatReport(report));
-    return report.exitCode;
+    return await dispatchDoctor(positionals, values);
   }
 
-  if (values.force && values.merge) {
-    io.error('--force and --merge are mutually exclusive');
-    return 2;
+  if (positionals[0] === 'upgrade') {
+    const target = resolve(positionals[1] ?? '.');
+    let templateDir;
+    try {
+      templateDir = getTemplateDir();
+    } catch (err) {
+      io.error(err.message);
+      return 2;
+    }
+    return await dispatchUpgrade(target, values, templateDir);
   }
+
   if (values['no-plantuml'] && values['require-plantuml']) {
     io.error('--no-plantuml and --require-plantuml are mutually exclusive');
     return 2;
@@ -151,8 +306,6 @@ async function main(argv) {
   }
 
   const target = resolve(positionals[0]);
-  const dryRun = !!values['dry-run'];
-
   let templateDir;
   try {
     templateDir = getTemplateDir();
@@ -163,88 +316,13 @@ async function main(argv) {
 
   const sentinels = await scanSentinels(target);
   const hasConflict = sentinels.length > 0;
-
-  if (hasConflict && !values.force && !values.merge) {
+  if (hasConflict && !values.force) {
     io.error(`existing baseline detected at ${target}: ${sentinels.join(', ')}`);
-    io.error('pass --force to overwrite or --merge to three-way merge');
+    io.error('pass --force to overwrite or use `create-baseline upgrade <target>` to three-way merge');
     return 1;
   }
 
-  if (values.force) {
-    if (!process.stdin.isTTY) {
-      io.error('--force requires an interactive TTY for the confirmation prompt');
-      return 2;
-    }
-    if (!dryRun) {
-      const answer = await io.ask("type 'overwrite' to proceed: ");
-      if (answer.toLowerCase() !== 'overwrite') {
-        io.error('confirmation declined');
-        return 1;
-      }
-    }
-  }
-
-  if (values.merge) {
-    if (!process.stdin.isTTY && !dryRun) {
-      io.error('--merge requires an interactive TTY for the confirmation prompt');
-      return 2;
-    }
-    if (!dryRun) {
-      const answer = await io.ask("type 'merge' to proceed: ");
-      if (answer.toLowerCase() !== 'merge') {
-        io.error('confirmation declined');
-        return 1;
-      }
-    }
-  }
-
-  let exitCode = 0;
-  try {
-    if (values.merge) {
-      const oldManifest = await loadManifest(join(target, '.claude/.baseline-manifest.json'));
-      const tplFiles = listShippedFiles(templateDir);
-      const newManifest = await buildManifestFromDir(templateDir, tplFiles);
-      if (dryRun) {
-        io.log(`Would merge ${tplFiles.length} files into ${target}`);
-      } else {
-        const report = await threeWayMerge(templateDir, target, oldManifest, newManifest);
-        for (const a of report.actions) {
-          io.log(`${a.kind.padEnd(24)} ${a.path}`);
-        }
-        exitCode = report.exitCode;
-      }
-    } else if (values.force) {
-      if (dryRun) io.log(`Would force-install into ${target}`);
-      else await forceInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
-    } else {
-      if (dryRun) io.log(`Would fresh-install into ${target}`);
-      else await freshInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
-    }
-  } catch (err) {
-    io.error(`install failed: ${err.message}`);
-    return 1;
-  }
-
-  if (!dryRun) {
-    const fetchResult = await fetchPlantumlIfMissing(target, {
-      noPlantuml: values['no-plantuml'],
-      requirePlantuml: values['require-plantuml'],
-    });
-    if (fetchResult.outcome === FETCH_OUTCOMES.WARNED_NETWORK_FAILURE
-        || fetchResult.outcome === FETCH_OUTCOMES.WARNED_HASH_MISMATCH) {
-      io.warn(`PlantUML jar fetch failed (${fetchResult.reason}); install continued. Retry with --require-plantuml or set system plantuml on PATH.`);
-    } else if (fetchResult.outcome === FETCH_OUTCOMES.ERRORED_REQUIRE_PLANTUML) {
-      io.error(`--require-plantuml: ${fetchResult.reason}`);
-      return 4;
-    }
-  }
-
-  if (!dryRun && exitCode === 0) {
-    io.log(`Installed manifest version 1 to ${target}.`);
-    io.log(`Pin via "@friedbotstudio/create-baseline@<exact-version>" in your bootstrap docs.`);
-  }
-
-  return exitCode;
+  return await dispatchInstall(target, values, templateDir);
 }
 
 main(process.argv).then((code) => { process.exit(code); }).catch((err) => {

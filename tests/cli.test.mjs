@@ -103,13 +103,4 @@ describe('cli — argv + mode routing', () => {
     assert.equal(r.status, 2);
   });
 
-  it('--dry-run on conflict prints intent and exits 0', async () => {
-    const tpl = await makeTemplateFixture();
-    const target = await mkdtemp(join(tmpdir(), 'cli-target-'));
-    await writeFile(join(target, 'CLAUDE.md'), 'existing');
-    const r = runCli([target, '--merge', '--dry-run', '--no-plantuml'], {
-      env: { CREATE_BASELINE_TEMPLATE_DIR: tpl },
-    });
-    assert.equal(r.status, 0);
-  });
 });

@@ -25,7 +25,7 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="requirements">Requirements</h2>
     </div>
-    <p>The CLI is zero-runtime-dependency Node. Everything it needs ships in the npm tarball.</p>
+    <p>The CLI ships one pinned runtime dependency, <code>@clack/prompts</code>, which supplies the prompt primitives behind the branded TTY flows. Everything else it needs is Node stdlib and the contents of the npm tarball.</p>
   </div>
   <table>
     <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
@@ -68,7 +68,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
     <span class="icon" aria-hidden="true">!</span>
     <div class="body">
       <strong>Pin the version in your bootstrap docs.</strong>
-      <p>The baseline evolves. Teams sharing a repository should commit to a specific <code>@friedbotstudio/create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Re-running <code>npx @friedbotstudio/create-baseline ./project --merge</code> at a newer version brings the baseline forward (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
+      <p>The baseline changes between releases. Teams sharing a repository should pin to a specific <code>@friedbotstudio/create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Running <code>npx @friedbotstudio/create-baseline upgrade ./project</code> at a newer version reconciles the target against the new template; in a TTY each customised file becomes an interactive prompt, and in CI the prior batch-merge semantics apply (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
     </div>
   </div>
 </section>
@@ -79,7 +79,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <p class="section-num">§ III</p>
       <h2 id="lands">What lands</h2>
     </div>
-    <p>Four sentinel paths plus a small set of vendored bins. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present (without <code>--force</code> or <code>--merge</code>).</p>
+    <p>Four sentinel paths plus a small set of vendored bins. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present, unless you pass <code>--force</code> or use the <code>upgrade</code> subcommand.</p>
   </div>
   <table>
     <thead><tr><th>Path</th><th>Role</th></tr></thead>
@@ -90,7 +90,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
       <tr><td class="phase">.claude/bin/LICENSE, NOTICE</td><td>Apache 2.0 license + provenance for the side-fetched PlantUML jar.</td></tr>
       <tr><td class="phase">.claude/bin/plantuml.jar</td><td>Side-fetched at install time, sha256-pinned, ~{{ baseline.size.plantumlJar }}. Skipped if <code>plantuml</code> is already on <code>$PATH</code>.</td></tr>
-      <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by <code>--merge</code> to do a three-way reconcile on the next install.</td></tr>
+      <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by the <code>upgrade</code> subcommand to do a three-way reconcile on the next install.</td></tr>
     </tbody>
   </table>
   <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
@@ -139,8 +139,8 @@ $ npx @friedbotstudio/create-baseline ./my-project
       </tr>
       <tr>
         <td class="phase">Upgrade to a newer baseline</td>
-        <td><code>npx @friedbotstudio/create-baseline ./project --merge</code></td>
-        <td>Three-way merge against the last install's manifest. Untouched files refresh, customizations preserve (exit 3 if any), removed-upstream files prune if you hadn't touched them.</td>
+        <td><code>npx @friedbotstudio/create-baseline upgrade ./project</code></td>
+        <td>Three-way merge against the last install's manifest. In a TTY, each customised file becomes a keep-mine / take-theirs / abort prompt. In CI, untouched files refresh, customizations are preserved (exit 3 if any), and removed-upstream files prune when you had not touched them.</td>
       </tr>
       <tr>
         <td class="phase">Suspect drift</td>

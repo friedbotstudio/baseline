@@ -5,9 +5,9 @@ pageTitle: "CLI · baseline"
 title: CLI
 titlePrimary: CLI
 titleAccent: "."
-description: "`npx @friedbotstudio/create-baseline <target>` materializes the baseline. Three install modes, one read-only doctor subcommand, three flags, five exit codes."
+description: "`npx @friedbotstudio/create-baseline <target>` materializes the baseline. Install, upgrade, and doctor subcommands; branded interactive flows in a TTY; plain output in CI."
 eyebrow: Reference
-lead: "<code>npx @friedbotstudio/create-baseline &lt;target&gt;</code> materializes the baseline. Three install modes, one read-only <code>doctor</code> subcommand, three flags, five exit codes. The CLI is zero-runtime-dependency Node; everything else ships in the npm tarball."
+lead: "<code>npx @friedbotstudio/create-baseline &lt;target&gt;</code> materializes the baseline. The install, <code>upgrade</code>, and <code>doctor</code> subcommands each route to a branded interactive flow in a TTY and to plain output in CI. One pinned runtime dependency, <code>@clack/prompts</code>, supplies the prompt primitives; everything else is Node stdlib."
 active: cli
 sidebarActive: cli
 heroSymbol: cli
@@ -28,19 +28,22 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="invocation">Invocation</h2>
     </div>
-    <p>Two shapes. The install shape takes a target; the <code>doctor</code> subcommand defaults to the current directory.</p>
+    <p>Three shapes. Install takes a target; <code>upgrade</code> defaults to the current directory and runs against an existing install; <code>doctor</code> defaults to the current directory and reports drift.</p>
   </div>
-<pre><code><span class="tok-com"># install / merge / dry-run a target</span>
-npx @friedbotstudio/create-baseline &lt;target&gt; [--force | --merge] [--dry-run]
+<pre><code><span class="tok-com"># install or dry-run a target</span>
+npx @friedbotstudio/create-baseline &lt;target&gt; [--force] [--dry-run]
                               [--no-plantuml | --require-plantuml] [--with-npmrc]
 
+<span class="tok-com"># three-way upgrade against an installed target</span>
+npx @friedbotstudio/create-baseline upgrade [target] [--dry-run]
+
 <span class="tok-com"># read-only drift report against an installed target</span>
-npx @friedbotstudio/create-baseline doctor [target]
+npx @friedbotstudio/create-baseline doctor [target] [--strict] [--json]
 
 <span class="tok-com"># misc</span>
 npx @friedbotstudio/create-baseline --help
 npx @friedbotstudio/create-baseline --version</code></pre>
-  <p><code>--force</code> and <code>--merge</code> are mutually exclusive. <code>--no-plantuml</code> and <code>--require-plantuml</code> are mutually exclusive. Argv errors exit 2.</p>
+  <p><code>--no-plantuml</code> and <code>--require-plantuml</code> are mutually exclusive. Argv errors exit 2.</p>
 </section>
 
 <section class="section">
@@ -49,14 +52,14 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <p class="section-num">§ II</p>
       <h2 id="modes">Modes</h2>
     </div>
-    <p>Three install modes plus dry-run. The default refuses to clobber an existing baseline; both overwrite paths require a typed confirmation in an interactive shell.</p>
+    <p>Three modes: a default fresh install, an opt-in <code>--force</code> overwrite, and the <code>upgrade</code> subcommand that reconciles an existing install against a newer baseline. The <code>--merge</code> flag was retired in this release; passing it now exits 2 with a stderr line pointing to <code>create-baseline upgrade &lt;target&gt;</code>.</p>
   </div>
   <table>
     <thead><tr><th>Mode</th><th>Behavior</th><th>Confirmation</th></tr></thead>
     <tbody>
       <tr>
         <td class="phase">fresh<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);">(default)</span></td>
-        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the four sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved.</td>
+        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the four sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved. In a TTY, a branded intro / spinner / outro frames the install; in CI, plain text matches the prior output line-for-line.</td>
         <td>None.</td>
       </tr>
       <tr>
@@ -65,19 +68,19 @@ npx @friedbotstudio/create-baseline --version</code></pre>
         <td>Typed <code>overwrite</code> in an interactive TTY. Non-TTY without <code>--dry-run</code> exits 2.</td>
       </tr>
       <tr>
-        <td class="phase">--merge</td>
-        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>. Per-file decision (see <a href="#mcp-merge">below</a>): refresh untouched files, preserve customizations, prune files removed upstream that the user hadn't touched.</td>
-        <td>Typed <code>merge</code> in an interactive TTY. Non-TTY accepted only with <code>--dry-run</code>.</td>
+        <td class="phase">upgrade</td>
+        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>. The per-file decision (see the action kinds below) refreshes untouched files, preserves customizations, and prunes files removed upstream that the user had not touched. In a TTY, each <code>SKIP_CUSTOMIZED</code> path becomes a keep-mine / take-theirs / abort prompt. In CI the prior <code>--merge</code> semantics apply unchanged: every action is reported, and exit 3 fires when any customisation cannot be reconciled.</td>
+        <td>None in CI. In a TTY, an interactive prompt per conflict; abort or Ctrl+C exits 1 with the tree unchanged.</td>
       </tr>
       <tr>
         <td class="phase">--dry-run</td>
-        <td>Combines with any of the above. Prints intended actions; writes nothing. The PlantUML jar fetch is also skipped.</td>
+        <td>Combines with the install or with <code>upgrade</code>. Prints intended actions; writes nothing. The PlantUML jar fetch is also skipped.</td>
         <td>None.</td>
       </tr>
     </tbody>
   </table>
 
-  <p>Under <code>--merge</code> the per-file action is one of eight kinds:</p>
+  <p>Under <code>upgrade</code> the per-file action is one of eight kinds:</p>
   <table>
     <thead><tr><th>Action</th><th>Trigger</th></tr></thead>
     <tbody>
@@ -127,9 +130,9 @@ npx @friedbotstudio/create-baseline --version</code></pre>
     <thead><tr><th>Code</th><th>Reason</th></tr></thead>
     <tbody>
       <tr><td class="phase">0</td><td>Success. Or a clean <code>doctor</code> report.</td></tr>
-      <tr><td class="phase">1</td><td>User abort, sentinel conflict without <code>--force</code> or <code>--merge</code>, or <code>doctor</code> reports missing baseline files.</td></tr>
-      <tr><td class="phase">2</td><td>Argv error, mutually-exclusive flag combination, non-TTY where TTY required, or <code>doctor</code> finds no manifest at the target.</td></tr>
-      <tr><td class="phase">3</td><td><code>--merge</code> produced a <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The install succeeded; you have customizations the merge could not reconcile.</td></tr>
+      <tr><td class="phase">1</td><td>User abort (install confirmation declined, or interactive <code>upgrade</code> aborted), sentinel conflict without <code>--force</code> or the <code>upgrade</code> subcommand, or <code>doctor</code> reports missing baseline files.</td></tr>
+      <tr><td class="phase">2</td><td>Argv error (including the retired <code>--merge</code> flag), mutually-exclusive flag combination, non-TTY where TTY is required, <code>doctor</code> finds no manifest at the target, or <code>upgrade</code> runs against a target without a baseline manifest.</td></tr>
+      <tr><td class="phase">3</td><td><code>upgrade</code> produced a <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The reconcile succeeded; you have customizations the upgrade could not auto-resolve.</td></tr>
       <tr><td class="phase">4</td><td><code>--require-plantuml</code> and the jar fetch failed.</td></tr>
     </tbody>
   </table>
@@ -170,7 +173,9 @@ Manifest: version 1, installed 2026-05-11T14:00:00Z
       <tr><td class="phase">added</td><td>File is under <code>.claude/</code> but not in the manifest. Likely from <code>/init-project</code> additions or your own customizations. Informational only.</td></tr>
     </tbody>
   </table>
-  <p>Doctor never modifies the target. To repair drift, use <code>--merge</code> (preserves customizations) or <code>--force</code> (overwrites everything except <code>.claude/project.json</code>).</p>
+  <p>Doctor never modifies the target. To repair drift, run the <code>upgrade</code> subcommand (preserves customizations; interactive in a TTY) or <code>--force</code> (overwrites everything except <code>.claude/project.json</code>).</p>
+
+  <p>For CI parsers, add <code>--json</code> to emit the structured report on stdout instead of the human renderer. The schema preserves <code>matched</code>, <code>customized</code>, <code>missing</code>, <code>added</code>, plus <code>strict</code>, <code>target</code>, <code>manifestVersion</code>, <code>generatedAt</code>, <code>tampered</code>, and the <code>exitCode</code>. Exit codes are unchanged; <code>--strict</code> still escalates customizations to exit 1.</p>
 </section>
 
 <section class="section">
@@ -182,7 +187,7 @@ Manifest: version 1, installed 2026-05-11T14:00:00Z
     <p>The CLI special-cases <code>.mcp.json</code> on every install (fresh or merge). The behavior is <strong>baseline-refresh</strong>: servers the baseline owns get the template's current args; servers you added are preserved.</p>
   </div>
   <ul>
-    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>. The merge refreshes them from the template, so <code>--merge</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next merge.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
+    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>. The merge refreshes them from the template, so an <code>upgrade</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next upgrade.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
     <li><strong>Servers absent from the template are user-added.</strong> Preserved byte-for-byte across merges.</li>
     <li><strong>Top-level JSON keys</strong> outside <code>mcpServers</code> are additive: template keys are added when missing; the target's existing keys win on collision.</li>
     <li><strong>If the target has no <code>.mcp.json</code></strong>, the template is written verbatim.</li>
@@ -208,9 +213,9 @@ Manifest: version 1, installed 2026-05-11T14:00:00Z
     ...
   }
 }</code></pre>
-  <p>This file is the input to every subsequent <code>--merge</code> and to <code>doctor</code>. Two design notes:</p>
+  <p>This file is the input to every subsequent <code>upgrade</code> and to <code>doctor</code>. Two design notes:</p>
   <ul>
-    <li>Each <code>--merge</code> run replaces the manifest with a fresh one stamped at the new install time. The old manifest is the "old" side of the three-way reconcile; the new template is the "new" side; the target on disk is the lived side.</li>
+    <li>Each <code>upgrade</code> run replaces the manifest with a fresh one stamped at the new install time. The old manifest is the "old" side of the three-way reconcile; the new template is the "new" side; the target on disk is the lived side.</li>
     <li>The manifest is recommended for <strong>commit</strong> to the project's git history. It is the audit trail for "what baseline version was this project on as of which commit". The baseline's <code>.gitignore</code> does not exclude it.</li>
   </ul>
 </section>

@@ -91,11 +91,18 @@ function checkFilesSymmetric(pkg, packedPaths) {
   return { violations, declaredCount: declared.length };
 }
 
+// Runtime dependency allowlist. The baseline ships exactly one runtime dep:
+// @clack/prompts, the prompt primitives behind the branded TUI in src/cli/tui/*.
+// Any other top-level `dependencies` entry is a supply-chain expansion that
+// requires a spec amendment + update to this allowlist.
+const DEPS_ALLOWLIST = new Set(['@clack/prompts']);
+
 function checkPackageIntegrity(pkg) {
   const violations = [];
   const deps = pkg.dependencies || {};
-  if (Object.keys(deps).length > 0) {
-    violations.push(`DEPS_FORBIDDEN: dependencies must be empty (got: ${Object.keys(deps).join(', ')})`);
+  const unsanctioned = Object.keys(deps).filter((name) => !DEPS_ALLOWLIST.has(name));
+  if (unsanctioned.length > 0) {
+    violations.push(`DEPS_FORBIDDEN: only the allowlist may appear in dependencies; unsanctioned: ${unsanctioned.join(', ')}`);
   }
   if (pkg.optionalDependencies && Object.keys(pkg.optionalDependencies).length > 0) {
     for (const name of Object.keys(pkg.optionalDependencies)) {

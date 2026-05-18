@@ -37,7 +37,7 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 > [!IMPORTANT]
 > **Install in one line:** `npx @friedbotstudio/create-baseline ./your-project`
 >
-> The CLI fetches the published package, runs the install, and leaves your project with `.claude/`, `CLAUDE.md`, `docs/init/seed.md`, and `.mcp.json`. Re-run with `--merge` to bring an existing install forward; with `--dry-run` to preview without writing; with `doctor` to report drift.
+> The CLI fetches the published package, runs the install, and leaves your project with `.claude/`, `CLAUDE.md`, `docs/init/seed.md`, and `.mcp.json`. Re-run with the `upgrade` subcommand to bring an existing install forward (interactive in a TTY, batch-mode in CI). Add `--dry-run` to preview, and run `doctor` to report drift (pass `--json` for machine output).
 
 ## What this is
 
@@ -94,12 +94,14 @@ npx @friedbotstudio/create-baseline ./your-project
 # Force-overwrite an existing install (interactive — type 'overwrite')
 npx @friedbotstudio/create-baseline ./your-project --overwrite
 
-# Three-way merge against a previously-installed baseline:
+# Upgrade an existing install against a newer baseline version.
+# In a TTY, each customised file becomes a keep-mine / take-theirs / abort
+# prompt. In CI / piped stdout, reproduces the prior --merge behaviour:
 #   - adds new baseline files
 #   - refreshes baseline files the user has not touched
 #   - preserves user-customised files (exit 3 if any)
 #   - removes baseline files the upstream removed (only if untouched locally)
-npx @friedbotstudio/create-baseline ./your-project --merge
+npx @friedbotstudio/create-baseline upgrade ./your-project
 
 # Preview without writing anything
 npx @friedbotstudio/create-baseline ./your-project --dry-run
@@ -124,6 +126,10 @@ npx @friedbotstudio/create-baseline doctor ./your-project
 # Strict mode — print TAMPERED: shipped vs observed sha256 for every
 # customised file and exit 1 on any drift.
 npx @friedbotstudio/create-baseline doctor ./your-project --strict
+
+# JSON mode — emit the structured report on stdout for CI parsers.
+# Same exit codes; honours --strict.
+npx @friedbotstudio/create-baseline doctor ./your-project --json
 ```
 
 ## Quickstart

@@ -22,7 +22,8 @@ async function copyFile(src, dst) {
   await cp(src, dst, { force: true });
 }
 
-export async function threeWayMerge(templateDir, target, oldManifest, newManifest) {
+export async function threeWayMerge(templateDir, target, oldManifest, newManifest, opts = {}) {
+  const { dryRun = false, onSkipCustomized = null } = opts;
   const actions = [];
   const oldFiles = oldManifest?.files ?? {};
   const newFiles = newManifest?.files ?? {};
@@ -36,7 +37,7 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
       if (await pathExists(tgtPath)) {
         actions.push({ kind: ACTION_KINDS.NEVER_TOUCH_PRESERVE, path: rel, reason: 'NEVER_TOUCH path present in target' });
       } else if (rel in newFiles) {
-        await copyFile(tplPath, tgtPath);
+        if (!dryRun) await copyFile(tplPath, tgtPath);
         actions.push({ kind: ACTION_KINDS.NEVER_TOUCH_ADD, path: rel, reason: 'NEVER_TOUCH path absent; written from template' });
       }
       continue;
@@ -44,7 +45,7 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
 
     if (SPECIAL_MERGE.includes(rel)) {
       if (rel in newFiles && await pathExists(tplPath)) {
-        await deepMergeMcpServers(tplPath, tgtPath);
+        if (!dryRun) await deepMergeMcpServers(tplPath, tgtPath);
         actions.push({ kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'additive deep-merge applied' });
       }
       continue;
@@ -56,7 +57,7 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     const tgtHash = targetExists ? await hashFile(tgtPath) : null;
 
     if (!targetExists && newHash) {
-      await copyFile(tplPath, tgtPath);
+      if (!dryRun) await copyFile(tplPath, tgtPath);
       actions.push({ kind: ACTION_KINDS.ADD, path: rel, reason: 'new in template; not present in target' });
       continue;
     }
@@ -67,13 +68,19 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     }
 
     if (newHash && oldHash && tgtHash === oldHash) {
-      await copyFile(tplPath, tgtPath);
+      if (!dryRun) await copyFile(tplPath, tgtPath);
       actions.push({ kind: ACTION_KINDS.OVERWRITE, path: rel, reason: 'target untouched since last install; updated' });
       continue;
     }
 
     if (newHash && tgtHash && tgtHash !== oldHash) {
-      actions.push({ kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: 'target customized since last install' });
+      const choice = onSkipCustomized ? await onSkipCustomized(rel) : 'keep-mine';
+      if (choice === 'take-theirs') {
+        if (!dryRun) await copyFile(tplPath, tgtPath);
+        actions.push({ kind: ACTION_KINDS.OVERWRITE, path: rel, reason: 'customized file; user chose take-theirs' });
+      } else {
+        actions.push({ kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: 'target customized since last install' });
+      }
       continue;
     }
 
@@ -84,10 +91,8 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
       //     prune. Otherwise the user accumulates stale baseline files forever.
       //   - target customized (tgtHash != oldHash) → preserve to avoid
       //     destroying user work; report drift via exit 3.
-      // Pruning only runs when --merge already applies; there is no separate
-      // flag (decision recorded in README).
       if (targetExists && tgtHash === oldHash) {
-        await unlink(tgtPath);
+        if (!dryRun) await unlink(tgtPath);
         actions.push({ kind: ACTION_KINDS.PRUNE, path: rel, reason: 'removed from new template; target was untouched — deleted' });
       } else if (targetExists) {
         actions.push({ kind: ACTION_KINDS.PRUNE_SKIPPED_CUSTOMIZED, path: rel, reason: 'removed from new template; target customized — preserved' });
@@ -96,7 +101,7 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     }
   }
 
-  if (newManifest) {
+  if (newManifest && !dryRun) {
     await mkdir(join(target, '.claude'), { recursive: true });
     await saveManifest(join(target, '.claude/.baseline-manifest.json'), newManifest);
   }

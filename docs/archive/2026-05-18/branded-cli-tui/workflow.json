@@ -1,0 +1,25 @@
+{
+  "request": "Introduce a branded TUI for create-baseline: pretty install output, colorized doctor report, and a new `upgrade` subcommand that REPLACES today's `--merge` flag (interactive conflict resolution). Use @clack/prompts (~5 deps; retires the zero-dep claim). Design in Friedbot Studio house style via design-ui+impeccable. Back-compat decision for `--merge` (hard-remove / deprecation warning / hidden alias) is a spec-time choice.",
+  "slug": "branded-cli-tui",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1779104419,
+  "updated_at": 1779120558
+}
