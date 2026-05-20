@@ -57,11 +57,14 @@ function verifyInstalledTreeHashes(installedPkg) {
   // verify only asserts that every shipped file is byte-identical to what the
   // manifest recorded at pack time.
   const sortedEntries = Object.entries(shippedFiles).sort(([a], [b]) => a.localeCompare(b));
-  for (const [rel, expected] of sortedEntries) {
+  for (const [rel, entry] of sortedEntries) {
     const abs = path.join(templateRoot, rel);
     if (!existsSync(abs)) {
       return { ok: false, reason: `HASH_MISMATCH: obj/template/${rel} (listed in shipped manifest but absent on disk)` };
     }
+    // Shipped manifest v3+ wraps each entry as `{sha256, tier}`; v2 ships bare
+    // sha strings. Accept both shapes at read time.
+    const expected = typeof entry === 'string' ? entry : (entry && entry.sha256);
     const observed = sha256File(abs);
     if (observed !== expected) {
       return { ok: false, reason: `HASH_MISMATCH: obj/template/${rel} (shipped=${expected} observed=${observed})` };
@@ -177,14 +180,16 @@ async function main() {
   const installedFiles = installedManifest.files || {};
   const shippedFiles = shippedManifest.files || {};
   let mismatches = 0;
-  for (const [p, hash] of Object.entries(shippedFiles)) {
+  for (const [p, entry] of Object.entries(shippedFiles)) {
     // The shipped manifest hashes itself? No — build-manifest.mjs self-skips
     // `.claude/manifest.json`. But the runtime `.baseline-manifest.json` also
     // records `.claude/manifest.json` (CLI hashes the target's full tree), so
     // both sides contain matching hashes for everything ELSE. Treat absence
     // of a shipped path on the installed side as a mismatch — keeps the
     // contract symmetric.
-    if (installedFiles[p] !== hash) mismatches++;
+    // Shipped v3+ wraps each entry as `{sha256, tier}`; installed always bare sha.
+    const shippedSha = typeof entry === 'string' ? entry : (entry && entry.sha256);
+    if (installedFiles[p] !== shippedSha) mismatches++;
   }
   if (mismatches > 0) {
     console.error(`smoke FAILED: ${mismatches} manifest-hash mismatches between installed and shipped`);
