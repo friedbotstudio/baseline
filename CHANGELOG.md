@@ -13,15 +13,14 @@ All notable changes to this project will be documented in this file.
 
 The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.0/). The `## [Unreleased]` section is curated locally by the Phase 11.5 `changelog` skill before each `/commit`; versioned sections are inserted by `@semantic-release/changelog` at release time.
 
-### Added
-
-- branded TUI for install / upgrade / doctor + retire --merge
-- add Phase 11.5 changelog skill + responsive bento SVG
 
 ## [Unreleased]
 
 ### Added
 
+- BASELINE pixel-art wordmark splash for the CLI. New `src/cli/tui/splash.js` renders the wordmark in three bands of FBS orange (bevel: shadow / mid / highlight / mid / shadow) plus a thin `▔` outline trace. Surfaces: `--help` (splash + canonical HELP_TEXT), `--version` (wordmark + version line marquee), no-arg TTY landing (splash, exit 0), and slim brand strip on the install / upgrade intros (`▲ BASELINE v<ver> / <action>`). Non-TTY paths and narrow terminals (< 60 cols) degrade gracefully to the plain HELP_TEXT body. The docs-site CLI page (`site-src/cli.njk`) embeds a frozen PNG of the splash inside the existing `.install-snippet` terminal chrome; PNG background uses `#080b12` (sRGB of `oklch(15% 0.015 260)`) so it merges seamlessly with the site's `--code-bg`.
+- New `paintRGB` + `PALETTE` exports on `src/cli/tui/tokens.js` plus a third `accentShadow` orange triple (`#7a2907` ≈ `oklch(35% 0.15 41.5)`) so the wordmark can paint each row in its bevel-band color.
+- Regression test suites: `tests/splash.test.mjs` covers wordmark structure (6 rows: 5 letter bands + 1 outline trace), uniform width, `wordmarkFits()` thresholds (treats falsy `columns` as wide-enough so `script(1)` ptys still render the marquee), command-table presence, version-line absence (docs-PNG-staleness regression guard), and brand-strip composition. `tests/cli-tui.test.mjs` gained five regression tests asserting that every usage-class error (parseArgs failure, unknown flag, missing target, mutually-exclusive flags, existing-baseline conflict) prints `HELP_TEXT` after the branded error message — closing the `Error: Unknown option '--upgrade'` UX gap where Node's `parseArgs` noise leaked into stderr.
 - Phase 11.5 `changelog` skill that curates per-commit entries under `## [Unreleased]` in this file before `/commit` stages the diff. Same `commit_consent` token authorizes both the changelog step and the commit step; no new gate. `--preview-only` mode prints the projected next version without writing files.
 - Asymmetric bento composition for the architecture diagram on the public docs site. Single inline SVG, two layout regimes: bento at viewports wider than 768px and a vertical stack at narrower viewports. CSS custom properties carry the cell coordinates; `@media (max-width: 768px)` swaps the regime.
 - `reinsertUnreleasedHeading` export in `unreleased-writer.mjs` as a release-time fallback. The `@semantic-release/changelog` plugin prepends release notes above existing headings; the export restores the canonical `# Changelog` then `## [Unreleased]` ordering at the top of the file.
@@ -32,6 +31,8 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 ### Changed
 
+- Shipped manifest relocated from `obj/template/manifest.json` (template root) to `obj/template/.claude/manifest.json` (inside the `.claude/` subtree). The recursive install now delivers it directly to `<target>/.claude/manifest.json` with no special-case copy step, fixing both the visual clutter of a top-level `manifest.json` in consumer projects AND the consumer-side audit's hash-drift detection (`audit-baseline/audit.sh` reads the manifest from `<root>/.claude/manifest.json` first, with a fallback to `obj/template/.claude/manifest.json` for the dev repo). CLAUDE.md Article XI, `seed.md` §17, and their `src/*.template.md` byte-mirrors all carry the new path. `COPY_EXCLUDE` is now empty (the previous `manifest.json` exclusion is no longer needed — the manifest lives inside `.claude/` so the recursive walk picks it up at the same path the consumer expects). Legacy-buggy installs that already have a stray `target/manifest.json` at root from a prior upgrade get it auto-pruned on the next upgrade (newFiles lacks the top-level path; oldFiles has it; threeWayMerge takes the PRUNE branch).
+- Every usage-class error in the CLI now flows through a single `usageError(msg)` helper in `bin/cli.js` that routes to `meta.renderUsageError` — branded banner + `Error: <msg>` + canonical HELP_TEXT, all to stderr. The parseArgs catch translates `Unknown option '--upgrade'` into a friendly "Did you mean `create-baseline upgrade <target>`? `upgrade` is a subcommand, not a flag." hint (and same for `--doctor`). Help-text accompanies every non-success exit so users always see usage guidance alongside the failure.
 - CLAUDE.md Article IV phase table grew a Phase 11.5 sub-row mirroring the 10.5 and 10.6 pattern.
 - `commit/SKILL.md` prereq line tightened from "BOTH archive AND memory-flush" to "ALL of archive AND memory-flush AND changelog".
 - `harness/SKILL.md` phase ordering text and state-machine resume table now name the changelog step between `/grant-commit` and `commit`.

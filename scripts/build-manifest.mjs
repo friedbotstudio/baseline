@@ -1,7 +1,14 @@
-import { readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+
+// The shipped manifest lives at `<template>/.claude/manifest.json` (NOT the
+// template root) so the recursive install copies it straight to
+// `<target>/.claude/manifest.json` without special-casing. Same path is used
+// by the consumer-side audit (.claude/skills/audit-baseline/audit.sh) for
+// hash-drift detection — the file follows the baseline into every project.
+const MANIFEST_REL = '.claude/manifest.json';
 
 const templateDir = process.argv[2];
 if (!templateDir) {
@@ -69,7 +76,8 @@ allFiles.sort();
 
 const files = {};
 for (const rel of allFiles) {
-  if (rel === 'manifest.json') continue;
+  // Self-skip: the manifest hashes every file EXCEPT itself.
+  if (rel === MANIFEST_REL) continue;
   files[rel] = hashFile(join(templateDir, rel));
 }
 
@@ -93,4 +101,6 @@ if (process.env.GITHUB_RUN_ID) {
   manifest.build_id = `gha-${process.env.GITHUB_RUN_ID}`;
 }
 
-await writeFile(join(templateDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+const manifestPath = join(templateDir, MANIFEST_REL);
+await mkdir(join(templateDir, '.claude'), { recursive: true });
+await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');

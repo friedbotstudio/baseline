@@ -12,15 +12,13 @@ const NPMRC_TEMPLATE_PATH = join(PACKAGE_ROOT, 'src/.npmrc.template');
 
 export const NEVER_TOUCH = Object.freeze(['.claude/project.json']);
 export const SPECIAL_MERGE = Object.freeze(['.mcp.json']);
-// Files present in the shipped template that must NOT be cp'd to target. These
-// are reference artifacts the CLI consults from templateDir (or that ship for
-// inspection-time provenance), never materialized at consumer project root.
-// `manifest.json`: the shipped sha256 table. The CLI's runtime manifest lives
-// at `target/.claude/.baseline-manifest.json` (written by writeBaselineManifest);
-// `target/manifest.json` would be a confusing duplicate. Keep the file in the
-// published tarball so anyone inspecting `node_modules/<pkg>/obj/template/` can
-// see what shipped, but exclude it from the fresh/force install copy.
-export const COPY_EXCLUDE = Object.freeze(['manifest.json']);
+// The shipped manifest now lives at `.claude/manifest.json` (inside the
+// template's .claude/ subtree), so the recursive cp drops it at the correct
+// consumer path without any special-case filtering. The consumer-side audit
+// (`.claude/skills/audit-baseline/audit.sh`) reads it from there for
+// hash-drift detection. COPY_EXCLUDE stays as a list (currently empty) so
+// future never-copy artifacts can be added without API churn at the callers.
+export const COPY_EXCLUDE = Object.freeze([]);
 
 async function listFiles(root, base = root, acc = []) {
   for (const entry of await readdir(root, { withFileTypes: true })) {

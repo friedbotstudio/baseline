@@ -69,10 +69,10 @@ Each entry's stable key is `path:line`.
 
 ## .claude/skills/audit-baseline/audit.sh:1
 
-- Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence, and per-file memory-shape canonical preamble via the `is_valid_preamble(text)` helper (strict opener `^# `, full preamble must include a closing `---` separator; `_pending` and `_resume` get the same shape check). Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.
-- Verified-at: e6ca9b6
-- Last-touched: 2026-05-17
-- Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md. The `is_valid_preamble` helper allows preamble-only files (empty body after the closing separator) so a freshly-emptied `_pending.md` still PASSes; opener-only files without a closing separator FAIL (regression trap captured in `tests/preamble_check_test.sh`).
+- Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence, and per-file memory-shape canonical preamble via the `is_valid_preamble(text)` helper (strict opener `^# `, full preamble must include a closing `---` separator; `_pending` and `_resume` get the same shape check). Skill-ownership drift uses `load_manifest()` which tries `<root>/.claude/manifest.json` first (consumer projects) and falls back to `<root>/obj/template/.claude/manifest.json` (dev repo) — keep both paths in mind when reasoning about why the audit found or didn't find the manifest. Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md. The `is_valid_preamble` helper allows preamble-only files (empty body after the closing separator) so a freshly-emptied `_pending.md` still PASSes; opener-only files without a closing separator FAIL (regression trap captured in `tests/preamble_check_test.sh`). When the manifest is missing from BOTH lookup paths (e.g. fresh clone before `npm run build`), the audit emits a WARN-level "skill ownership: manifest" line and falls back to frontmatter scanning — drift detection is degraded but not failing.
 
 ## .claude/hooks/consent_gate_grant.mjs:1
 
@@ -97,17 +97,17 @@ Each entry's stable key is `path:line`.
 
 ## src/seed.template.md:1
 
-- Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx @friedbotstudio/create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: byte-equal mirroring obligations: §17 (Article XI provenance citation) must match the corresponding section in `docs/init/seed.md`; the audit (`.claude/skills/audit-baseline/audit.sh`) reports `seed.md missing §17 citation` on absence. Touch this and `docs/init/seed.md` in the same commit.
+- Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx @friedbotstudio/create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `obj/template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: byte-equal mirroring obligations apply only to specific sections, not the whole file. §17 (manifest provenance) must carry the same manifest paths in both files — `obj/template/.claude/manifest.json` for the shipped manifest and `<target>/.claude/manifest.json` for the consumer install location. The §16 (project-specific configuration) section MUST stay pristine in the template (no `Generated:` stamp, no detected-stack table); the audit emits `seed.template.md: §16 has been populated` if it drifts from the placeholder. Touch the template and `docs/init/seed.md` in the same commit but never bulk-cp from live seed.md to template — the live seed.md has §16 populated and would contaminate the template. Edit §17 by hand in both files.
 
 ## src/CLAUDE.template.md:1
 
-- Role: pristine ship-time template for the in-session constitution (`CLAUDE.md`). Per Article XI, this file SHALL remain byte-equal to `CLAUDE.md` for the Article XI block; `audit-baseline` enforces `CLAUDE.md missing Article XI citation` on drift.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: touch this and `CLAUDE.md` in the same commit. The audit hashes every file under tracked skill paths against `manifest.files`, but the constitution mirror is verified via citation-presence checks, not hash equality — that's why the byte-equal obligation lives in this caveat rather than in a hash entry.
+- Role: pristine ship-time template for the in-session constitution (`CLAUDE.md`). Per Article XI, this file SHALL remain byte-equal to `CLAUDE.md` for the Article XI block; `audit-baseline` enforces `CLAUDE.md missing Article XI citation` on drift. Article XI carries the manifest-path contract: shipped manifest at `obj/template/.claude/manifest.json`, consumer install at `<target>/.claude/manifest.json`, runtime hash table separately at `<target>/.claude/.baseline-manifest.json`.
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: touch this and `CLAUDE.md` in the same commit. The byte-mirror test (`tests/template-drift.test.mjs`) flips to failure when CLAUDE.md and src/CLAUDE.template.md diverge. The audit hashes every file under tracked skill paths against `manifest.files`, but the constitution mirror is verified via citation-presence checks, not hash equality — that's why the byte-equal obligation lives in this caveat rather than in a hash entry. Pre-existing drift between the two files (e.g., Phase 11.5 changelog row missing from one side) is OUT of scope for the splash workflow but breaks the `tests/template-drift.test.mjs` invariant; fix in its own chore.
 
 ## .claude/skills/triage/SKILL.md:1
 
@@ -139,10 +139,10 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/install.js:79
 
-- Role: `freshInstall(templateDir, target)` — bulk `cp -r templateDir target` with a filter that skips `SPECIAL_MERGE` paths (`.mcp.json` → deep-merge); then applies `NEVER_TOUCH` (preserve user's `.claude/project.json` if present) and `SPECIAL_MERGE`; then `materializeNpmrc(target)` (line 71) writes `<target>/.npmrc` from `src/.npmrc.template`; finally writes the baseline manifest. `forceInstall` parallels the shape but with `force: true` and `skipNeverTouch: true`.
-- Verified-at: HEAD
-- Last-touched: 2026-05-13
-- Caveat: `materializeNpmrc` reads `NPMRC_TEMPLATE_PATH` (resolved relative to `import.meta.url` → package root → `src/.npmrc.template`) — it's a no-op when the template path doesn't exist (fixture / dev tree without the file) AND when `target/.npmrc` already exists (never overwrite operator config). This indirection exists because npm pack mechanically drops top-level `.npmrc` files from published tarballs (see landmines.md → `npm-pack-excludes-dotnpmrc`), so the bytes ship under a non-excluded basename in `src/` and are materialized at install time.
+- Role: `freshInstall(templateDir, target)` — bulk `cp -r templateDir target` with a filter that skips `SPECIAL_MERGE` paths (`.mcp.json` → deep-merge) and `COPY_EXCLUDE` paths; then applies `NEVER_TOUCH` (preserve user's `.claude/project.json` if present) and `SPECIAL_MERGE`; then `materializeNpmrc(target)` writes `<target>/.npmrc` from `src/.npmrc.template`; finally writes `<target>/.claude/.baseline-manifest.json` as the runtime hash table. `forceInstall` parallels the shape but with `force: true` and `skipNeverTouch: true`. The shipped sha256 manifest at `obj/template/.claude/manifest.json` (with `owners.skills`) is delivered to `<target>/.claude/manifest.json` by the recursive cp itself — no special-case step — because it lives inside the `.claude/` subtree of the template; `COPY_EXCLUDE` is empty since path-level exclusion is no longer needed.
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: `materializeNpmrc` reads `NPMRC_TEMPLATE_PATH` (resolved relative to `import.meta.url` → package root → `src/.npmrc.template`) — it's a no-op when the template path doesn't exist (fixture / dev tree without the file) AND when `target/.npmrc` already exists (never overwrite operator config). This indirection exists because npm pack mechanically drops top-level `.npmrc` files from published tarballs (see landmines.md → `npm-pack-excludes-dotnpmrc`), so the bytes ship under a non-excluded basename in `src/` and are materialized at install time. The runtime `<target>/.claude/.baseline-manifest.json` and the shipped `<target>/.claude/manifest.json` are two distinct files: shipped is frozen at release time and carries `owners.skills`; runtime is built from `buildManifestFromDir(target, listFiles(target))` post-install and is hash-only. `writeBaselineManifest` excludes `.claude/.baseline-manifest.json` from its own hash table to avoid the self-reference, but DOES hash `.claude/manifest.json` so `upgrade`'s threeWayMerge tracks it as a normal file.
 
 ## src/.npmrc.template:1
 
@@ -370,19 +370,19 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/tui/install.js:1
 
-- Role: Domain — branded install flow. Exports `run({target, opts, prompts})`; composes `freshInstall` / `forceInstall` from `src/cli/install.js` and `fetchPlantumlIfMissing` from `src/cli/plantuml.js` behind a clack-style intro / spinner / outro presentation seam. The `prompts` parameter defaults to `@clack/prompts` and is injected in tests.
-- Companion: `src/cli/tui/tokens.js:1` (brand colors), `tests/tui-install.test.mjs` (unit tests with `prompts` stub), `bin/cli.js → dispatchInstall` (router that picks tui vs plain).
-- Verified-at: db291ed
-- Last-touched: 2026-05-18
-- Caveat: never invoked from the non-TTY path. The router's `process.stdout.isTTY` check decides; if you add a new install entry point, route the same way or clack output will land in CI logs.
+- Role: Domain — branded install flow. Exports `run({target, opts, prompts})`; composes `freshInstall` / `forceInstall` from `src/cli/install.js` and `fetchPlantumlIfMissing` from `src/cli/plantuml.js` behind a clack-style intro / spinner / outro presentation seam. Writes `renderBrandStrip({version, subtitle: 'install'})` from `src/cli/tui/splash.js:1` to stdout ABOVE the clack intro so the BASELINE wordmark identity carries onto the install surface. The `prompts` parameter defaults to `@clack/prompts` and is injected in tests.
+- Companion: `src/cli/tui/splash.js:1` (brand strip renderer), `src/cli/tui/tokens.js:1` (brand colors), `tests/tui-install.test.mjs` (unit tests with `prompts` stub), `bin/cli.js → dispatchInstall` (router that picks tui vs plain).
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: never invoked from the non-TTY path. The router's `process.stdout.isTTY` check decides; if you add a new install entry point, route the same way or clack output will land in CI logs. The brand strip write happens BEFORE `prompts.intro(...)` so the strip sits above clack's framing characters; reordering hides the wordmark beneath the clack box.
 
 ## src/cli/tui/upgrade.js:1
 
-- Role: Domain — interactive upgrade flow that replaces today's `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts, (2) `prompts.select` per conflict (keep-mine / take-theirs / abort), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. Cancel sentinel: `Symbol.for('clack:cancel')`.
-- Companion: `src/cli/merge.js → threeWayMerge` (the data layer, now accepts `{dryRun, onSkipCustomized}` opts), `bin/cli.js → dispatchUpgrade` (router), `tests/upgrade.test.mjs` (test name is stem-pattern, not `tui-upgrade.test.mjs`, to satisfy `tdd_order_guard` matching).
-- Verified-at: db291ed
-- Last-touched: 2026-05-18
-- Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback — producing today's exit-3 behavior. If you change the apply logic in the tui flow, mirror the change in the plain branch or the two paths diverge.
+- Role: Domain — interactive upgrade flow that replaces the retired `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts, (2) `prompts.select` per conflict (keep-mine / take-theirs / abort), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. Writes `renderBrandStrip({version, subtitle: 'upgrade'})` from `src/cli/tui/splash.js:1` above the clack intro. `listShippedFiles` filters `COPY_EXCLUDE` (imported from `src/cli/install.js`) so `manifest.json` is never sent into `threeWayMerge` as an ADD candidate — single source of truth shared with fresh-install. Cancel sentinel: `Symbol.for('clack:cancel')`.
+- Companion: `src/cli/install.js` (`COPY_EXCLUDE` source-of-truth), `src/cli/tui/splash.js:1` (brand strip), `src/cli/merge.js → threeWayMerge` (data layer with `{dryRun, onSkipCustomized}` opts), `bin/cli.js → dispatchUpgrade` (router), `tests/upgrade.test.mjs`.
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback. Both branches use the COPY_EXCLUDE-filtered `listShippedFiles`. If you change the apply logic or the exclude set in one branch, mirror the change in the other or the two paths diverge.
 
 ## src/cli/tui/doctor.js:1
 
@@ -395,19 +395,19 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/tui/meta.js:1
 
-- Role: Domain — branded renderers for the meta commands (`--help`, `--version`). Exports `renderHelp(helpText, version)` and `renderVersion(version)`. In a TTY, both prefix the canonical body with a brand banner (`Baseline CLI v<version>` accent + `@friedbotstudio/create-baseline` muted + a rule-coloured separator). In non-TTY, both emit the canonical body byte-clean so `$(cli --version)` and `cli --help | grep ...` keep working.
-- Companion: `bin/cli.js` `--help` and `--version` branches dynamic-import this module on the TTY path; the plain path uses `io.log(HELP_TEXT)` and `io.log(version)` respectively. `src/cli/tui/tokens.js` supplies the colors.
-- Verified-at: 2c1527a
-- Last-touched: 2026-05-18
-- Caveat: the non-TTY branch emits a BARE version (no `baseline v` prefix) on purpose. Script consumers running `$(create-baseline --version)` expect a parseable version string; adding a prefix in non-TTY would silently break them. The TTY path is the only one with brand colors.
+- Role: Domain — branded renderers for the meta commands (`--help`, `--version`) AND for usage-class errors. Three exports: `renderHelp(helpText, _version)`, `renderVersion(version)`, `renderUsageError(msg, helpText, version)`. `renderHelp` in TTY prepends the full splash marquee from `src/cli/tui/splash.js:1` (wordmark + tagline + commands + try line + discover URL) before the canonical HELP_TEXT body; non-TTY emits HELP_TEXT byte-clean. `renderVersion` in TTY prints the wordmark + version marquee; non-TTY emits the bare version string. `renderUsageError` writes to stderr (banner + `Error: <msg>` + HELP_TEXT) so every parseArgs/usage-class exit ships brand-framed guidance.
+- Companion: `src/cli/tui/splash.js:1` (wordmark + brand strip + marquee renderers), `src/cli/tui/tokens.js:1` (colors), `bin/cli.js` (every non-success return path routes through `usageError(msg)` which delegates here).
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: the non-TTY branch emits a BARE version (no `baseline v` prefix) on purpose — script consumers running `$(create-baseline --version)` expect a parseable version string. `renderHelp` deliberately ignores its `version` parameter (renamed `_version`) because the splash no longer renders a version line; version lives on `--version` only. Restoring version to the splash would force the docs-site cli-splash.png to re-render every release.
 
 ## src/cli/tui/tokens.js:1
 
-- Role: Foundation — ANSI brand-color helpers translating Friedbot Studio's oklch tokens (from `site-src/assets/site.css :root`) to 24-bit truecolor escape sequences. Exports `accent`, `accentLight`, `muted`, `success`, `warn`, `error`, `rule`. Respects `NO_COLOR` env var and `process.stdout.isTTY`; falls back to the plain string when either condition disables color.
-- Companion: `src/cli/tui/{install,upgrade,doctor}.js` (consumers), `site-src/assets/site.css` (the canonical brand palette these tokens approximate).
-- Verified-at: db291ed
-- Last-touched: 2026-05-18
-- Caveat: the RGB triples are oklch-to-sRGB *approximations*; exact perceptual match is impossible across terminal palettes. If the docs site brand palette changes, update both `site-src/assets/site.css :root` AND this RGB table so the rendered docs and the CLI stay visually aligned.
+- Role: Foundation — ANSI brand-color helpers translating Friedbot Studio's oklch tokens (from `site-src/assets/site.css :root`) to 24-bit truecolor escape sequences. Exports named helpers (`accentShadow`, `accent`, `accentLight`, `muted`, `success`, `warn`, `error`, `rule`), plus the raw `paintRGB(rgb, text)` function and a frozen `PALETTE` map used by `src/cli/tui/splash.js:1` to paint the wordmark row-by-row (bevel banding: shadow / mid / highlight / mid / shadow). Respects `NO_COLOR` env var and `process.stdout.isTTY`; falls back to plain when either disables color.
+- Companion: `src/cli/tui/splash.js:1` (consumes `paintRGB` + `PALETTE.accentShadow/accent/accentLight`), `src/cli/tui/{install,upgrade,doctor,meta}.js` (consume named helpers), `site-src/assets/site.css` (the canonical brand palette these tokens approximate).
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: the RGB triples are oklch-to-sRGB *approximations*; exact perceptual match is impossible across terminal palettes. The new `accentShadow` triple (122,41,7 ≈ #7a2907) approximates `oklch(35% 0.15 41.5)` — keep it in sync with both the docs-site value and the wordmark's outer bevel bands. If you add another paint helper, also add the matching `PALETTE.<name>` key so splash.js can reach it without importing every helper individually.
 
 ## src/cli/merge.js:1
 
@@ -423,3 +423,11 @@ Each entry's stable key is `path:line`.
 - Verified-at: 2c1527a
 - Last-touched: 2026-05-18
 - Caveat: the existing loud `.cli-strip` above the footer of `index.njk` stays unchanged — pill and strip serve different placements (header-adjacent vs. final CTA). Do not collapse them into a shared base class; the duplication is intentional system-kinship at different scales.
+
+## src/cli/tui/splash.js:1
+
+- Role: Domain — branded splash surfaces. Holds the BASELINE wordmark (ANSI-Shadow style, 5 letter rows + 1 outline trace row in `▔`) and exports four renderers: `renderWordmark()` (paints each row with `SHADES[i]` from `PALETTE` in bevel order shadow/mid/highlight/mid/shadow + outline in accentShadow), `renderSplash({tagline, tryLine, discoverUrl})` (full marquee for `--help` and no-arg TTY landing — intentionally version-LESS so the docs-site PNG doesn't go stale every release), `renderBrandStrip({version, subtitle})` (slim two-row strip used by install / upgrade intros), and `renderVersionMarquee(version)` (wordmark + version line for `--version`). Also exports `wordmarkFits(columns)` which treats falsy columns (0 under `script(1)` pty) as wide-enough so the marquee still renders.
+- Companion: `src/cli/tui/tokens.js:1` (`paintRGB` + `PALETTE` source), `src/cli/tui/meta.js:1` (consumer for `--help` and `--version`), `src/cli/tui/install.js:1` and `src/cli/tui/upgrade.js:1` (consumers for the brand strip), `bin/cli.js` no-arg landing (TTY branch consumes `renderSplash`), `tests/splash.test.mjs` (structural assertions on rows, banding, outline trace, command table, brand strip composition), `site-src/assets/cli-splash.png` (frozen PNG rendered with freeze on `#080b12` background to match the site's `--code-bg`).
+- Verified-at: 0d4f8c8
+- Last-touched: 2026-05-20
+- Caveat: the wordmark width is 60 cols. Narrow terminals (< 60 cols) fall through to the plain HELP_TEXT body via `wordmarkFits()`. If you change the WORDMARK array, update WORDMARK_WIDTH (auto-derived) and re-render `site-src/assets/cli-splash.png` with `freeze --background "#080b12"` so the docs preview stays in sync. The version is intentionally absent from `renderSplash` — restoring it would regress the docs-PNG-staleness fix; version belongs to `renderVersionMarquee` and `renderBrandStrip` only.

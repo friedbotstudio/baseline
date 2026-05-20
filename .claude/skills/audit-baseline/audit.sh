@@ -49,18 +49,25 @@ EXPECTED_AGENTS = {
     # from main context; they never make decisions.
     "swarm-worker",
 }
-# Skill provenance comes from the shipped manifest at obj/template/manifest.json.
+# Skill provenance comes from the shipped manifest. Two possible locations,
+# tried in order:
+#   1. <root>/.claude/manifest.json — present in consumer projects after the
+#      CLI installs the baseline (the recursive cp puts it there directly).
+#   2. <root>/obj/template/.claude/manifest.json — present in the baseline
+#      dev repo, where `npm run build` writes the manifest before publishing.
 # The build (scripts/build-manifest.mjs) reads owner: frontmatter from every
 # .claude/skills/<slug>/SKILL.md and emits the canonical baseline-skill set as
 # manifest.owners.skills. See CLAUDE.md Article XI and seed.md §17.
 def load_manifest():
-    path = root / "obj/template/manifest.json"
-    if not path.exists():
-        return None
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
+    for rel in (".claude/manifest.json", "obj/template/.claude/manifest.json"):
+        path = root / rel
+        if not path.exists():
+            continue
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+    return None
 
 def read_skill_owner(slug):
     p = root / f".claude/skills/{slug}/SKILL.md"
@@ -245,7 +252,7 @@ def check_skill_ownership():
     # Manifest-driven baseline-skill presence + per-file hash check.
     manifest = load_manifest()
     if manifest is None:
-        add("skill ownership: manifest", "WARN", "obj/template/manifest.json missing — run npm run build")
+        add("skill ownership: manifest", "WARN", ".claude/manifest.json (or obj/template/.claude/manifest.json) missing — run npm run build")
         return
     owners_skills = (manifest.get("owners") or {}).get("skills", {}) or {}
     files_map = manifest.get("files") or {}

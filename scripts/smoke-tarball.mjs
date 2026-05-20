@@ -13,7 +13,7 @@
 //      first mismatch fails with `HASH_MISMATCH: <path>`.
 //   4. exec: run the installed CLI against a fresh empty target dir
 //   5. assert: target has .claude/.baseline-manifest.json and its hashes match
-//      obj/template/manifest.json
+//      obj/template/.claude/manifest.json
 //
 // Exits 0 on clean smoke; non-zero with a named violation on fail.
 
@@ -44,9 +44,9 @@ function sha256File(abs) {
 }
 
 function verifyInstalledTreeHashes(installedPkg) {
-  const manifestPath = path.join(installedPkg, 'obj/template/manifest.json');
+  const manifestPath = path.join(installedPkg, 'obj/template/.claude/manifest.json');
   if (!existsSync(manifestPath)) {
-    return { ok: false, reason: `obj/template/manifest.json missing inside installed package` };
+    return { ok: false, reason: `obj/template/.claude/manifest.json missing inside installed package` };
   }
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const shippedFiles = manifest.files || {};
@@ -117,7 +117,7 @@ async function main() {
   // that these specific files are present in the tarball. The smoke test asserts
   // the contract, not the fallback.
   const baselineRequiredInPackage = [
-    'obj/template/manifest.json',
+    'obj/template/.claude/manifest.json',
     'obj/template/CLAUDE.md',
     'obj/template/.mcp.json',
     'obj/template/docs/init/seed.md',
@@ -173,11 +173,17 @@ async function main() {
   }
 
   const installedManifest = JSON.parse(await readFile(path.join(targetDir, '.claude/.baseline-manifest.json'), 'utf8'));
-  const shippedManifest = JSON.parse(await readFile(path.join(REPO, 'obj/template/manifest.json'), 'utf8'));
+  const shippedManifest = JSON.parse(await readFile(path.join(REPO, 'obj/template/.claude/manifest.json'), 'utf8'));
   const installedFiles = installedManifest.files || {};
   const shippedFiles = shippedManifest.files || {};
   let mismatches = 0;
   for (const [p, hash] of Object.entries(shippedFiles)) {
+    // The shipped manifest hashes itself? No — build-manifest.mjs self-skips
+    // `.claude/manifest.json`. But the runtime `.baseline-manifest.json` also
+    // records `.claude/manifest.json` (CLI hashes the target's full tree), so
+    // both sides contain matching hashes for everything ELSE. Treat absence
+    // of a shipped path on the installed side as a mismatch — keeps the
+    // contract symmetric.
     if (installedFiles[p] !== hash) mismatches++;
   }
   if (mismatches > 0) {

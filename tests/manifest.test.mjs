@@ -120,7 +120,10 @@ describe('manifest v2 shape (skill-ownership)', () => {
     if (build.status !== 0) {
       throw new Error(`build failed: ${build.stderr || build.stdout}`);
     }
-    const m = JSON.parse(await readFile(join(tmp, 'obj/template/manifest.json'), 'utf8'));
+    // Shipped manifest now lives inside the .claude/ subtree so the recursive
+    // install delivers it at <target>/.claude/manifest.json without special-
+    // casing — see CLAUDE.md Article XI.
+    const m = JSON.parse(await readFile(join(tmp, 'obj/template/.claude/manifest.json'), 'utf8'));
     assert.equal(m.manifest_version, 2);
     assert.ok(m.owners && typeof m.owners.skills === 'object', 'owners.skills must be an object');
     const slugs = Object.keys(m.owners.skills);

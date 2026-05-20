@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs';
 
 import * as io from '../src/cli/io.js';
 import { scanSentinels } from '../src/cli/conflict.js';
-import { freshInstall, forceInstall } from '../src/cli/install.js';
+import { freshInstall, forceInstall, COPY_EXCLUDE } from '../src/cli/install.js';
 import { threeWayMerge } from '../src/cli/merge.js';
 import { loadManifest, buildManifestFromDir } from '../src/cli/manifest.js';
 import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../src/cli/plantuml.js';
@@ -100,7 +100,13 @@ function getTemplateDir() {
 async function listShippedFiles(templateDir) {
   const out = [];
   await walkFiles(templateDir, templateDir, out);
-  return out;
+  // COPY_EXCLUDE was used to keep the legacy `manifest.json` at the template
+  // root from being copied to the consumer target root. The manifest now
+  // ships at `.claude/manifest.json` so no path-level exclusion is needed;
+  // COPY_EXCLUDE is currently empty but the filter stays so future entries
+  // (e.g., dev-only artifacts that accidentally leak into obj/template) can
+  // be added in one place. See src/cli/install.js → COPY_EXCLUDE.
+  return out.filter((p) => !COPY_EXCLUDE.includes(p));
 }
 
 async function walkFiles(dir, base, acc) {
@@ -109,6 +115,34 @@ async function walkFiles(dir, base, acc) {
     if (entry.isDirectory()) await walkFiles(full, base, acc);
     else if (entry.isFile()) acc.push(full.slice(base.length + 1).split('/').join('/'));
   }
+}
+
+// Renders a usage error and the canonical HELP_TEXT through the branded TUI
+// when stderr is a TTY, falling back to plain `Error: <msg>` + help body
+// otherwise. Every non-success exit from `main()` flows through here so the
+// user always sees usage guidance alongside the failure.
+async function usageError(msg) {
+  const version = await readPackageVersion();
+  const meta = await import('../src/cli/tui/meta.js');
+  meta.renderUsageError(msg, HELP_TEXT, version);
+}
+
+// Translates Node's parseArgs error noise into a short, branded message.
+// Node emits e.g. `Unknown option '--upgrade'. To specify a positional ...`
+// which leaks library implementation detail; we collapse it and, where we
+// can identify the user's likely intent (typing `--upgrade` for the
+// `upgrade` subcommand), we hint at the correct shape.
+function friendlyParseArgsMessage(rawMessage) {
+  const firstLine = (rawMessage || '').split('\n')[0];
+  if (/Unknown option ['"]?--upgrade['"]?/.test(firstLine)) {
+    return 'Did you mean `create-baseline upgrade <target>`? `upgrade` is a subcommand, not a flag.';
+  }
+  if (/Unknown option ['"]?--doctor['"]?/.test(firstLine)) {
+    return 'Did you mean `create-baseline doctor <target>`? `doctor` is a subcommand, not a flag.';
+  }
+  const unknown = /Unknown option ['"]?([^'"]+?)['"]?(?:\.|$)/.exec(firstLine);
+  if (unknown) return `Unknown option '${unknown[1]}'.`;
+  return firstLine;
 }
 
 async function dispatchInstall(target, values, templateDir) {
@@ -136,13 +170,13 @@ async function runPlainInstall(target, values, templateDir) {
   const dryRun = !!values['dry-run'];
   if (values.force) {
     if (!process.stdin.isTTY) {
-      io.error('--force requires an interactive TTY for the confirmation prompt');
+      await usageError('--force requires an interactive TTY for the confirmation prompt');
       return 2;
     }
     if (!dryRun) {
       const answer = await io.ask("type 'overwrite' to proceed: ");
       if (answer.toLowerCase() !== 'overwrite') {
-        io.error('confirmation declined');
+        await usageError('confirmation declined');
         return 1;
       }
     }
@@ -157,7 +191,7 @@ async function runPlainInstall(target, values, templateDir) {
       else await freshInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
     }
   } catch (err) {
-    io.error(`install failed: ${err.message}`);
+    await usageError(`install failed: ${err.message}`);
     return 1;
   }
 
@@ -181,7 +215,7 @@ async function fetchPlantumlPlain(target, values) {
     return 0;
   }
   if (result.outcome === FETCH_OUTCOMES.ERRORED_REQUIRE_PLANTUML) {
-    io.error(`--require-plantuml: ${result.reason}`);
+    await usageError(`--require-plantuml: ${result.reason}`);
     return 4;
   }
   return 0;
@@ -190,7 +224,7 @@ async function fetchPlantumlPlain(target, values) {
 async function dispatchUpgrade(target, values, templateDir) {
   const manifestPath = join(target, '.claude/.baseline-manifest.json');
   if (!existsSync(manifestPath)) {
-    io.error(`No baseline manifest at ${manifestPath}. Run a fresh install first.`);
+    await usageError(`No baseline manifest at ${manifestPath}. Run a fresh install first.`);
     return 2;
   }
   if (process.stdout.isTTY) {
@@ -245,10 +279,10 @@ async function main(argv) {
     });
   } catch (err) {
     if (/--merge/.test(err.message)) {
-      io.error('--merge has been removed; use `create-baseline upgrade <target>` instead.');
+      await usageError('--merge has been removed; use `create-baseline upgrade <target>` instead.');
       return 2;
     }
-    io.error(err.message);
+    await usageError(friendlyParseArgsMessage(err.message));
     return 2;
   }
 
@@ -285,23 +319,34 @@ async function main(argv) {
     try {
       templateDir = getTemplateDir();
     } catch (err) {
-      io.error(err.message);
+      await usageError(err.message);
       return 2;
     }
     return await dispatchUpgrade(target, values, templateDir);
   }
 
   if (values['no-plantuml'] && values['require-plantuml']) {
-    io.error('--no-plantuml and --require-plantuml are mutually exclusive');
+    await usageError('--no-plantuml and --require-plantuml are mutually exclusive');
     return 2;
   }
   if (positionals.length === 0) {
-    io.error('missing required <target> argument');
-    io.error(HELP_TEXT);
+    // TTY landing: render the branded splash (skills.sh-style marquee) so the
+    // empty invocation reads as "here's what this tool does" instead of an
+    // angry error. Non-TTY keeps the strict error+help+exit-2 contract so
+    // scripts and CI still detect the missing argument.
+    if (process.stdout.isTTY) {
+      const splash = await import('../src/cli/tui/splash.js');
+      process.stdout.write(splash.renderSplash({
+        tryLine: 'npx @friedbotstudio/create-baseline ./my-project',
+        discoverUrl: 'https://baseline.friedbotstudio.com/',
+      }));
+      return 0;
+    }
+    await usageError('missing required <target> argument');
     return 2;
   }
   if (positionals.length > 1) {
-    io.error(`unexpected positional arguments: ${positionals.slice(1).join(', ')}`);
+    await usageError(`unexpected positional arguments: ${positionals.slice(1).join(', ')}`);
     return 2;
   }
 
@@ -310,15 +355,17 @@ async function main(argv) {
   try {
     templateDir = getTemplateDir();
   } catch (err) {
-    io.error(err.message);
+    await usageError(err.message);
     return 2;
   }
 
   const sentinels = await scanSentinels(target);
   const hasConflict = sentinels.length > 0;
   if (hasConflict && !values.force) {
-    io.error(`existing baseline detected at ${target}: ${sentinels.join(', ')}`);
-    io.error('pass --force to overwrite or use `create-baseline upgrade <target>` to three-way merge');
+    await usageError(
+      `existing baseline detected at ${target}: ${sentinels.join(', ')}. ` +
+        'Pass --force to overwrite or use `create-baseline upgrade <target>` to three-way merge.'
+    );
     return 1;
   }
 

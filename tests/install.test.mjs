@@ -128,49 +128,52 @@ describe('forceInstall', () => {
   });
 });
 
-// `obj/template/manifest.json` exists at the root of the shipped template tree
-// (it's a sha256 table consumed by `--merge` to detect drift). The recursive cp
-// in fresh/forceInstall previously copied it to `target/manifest.json`, leaving
-// a stray reference manifest at the consumer's project root. The materialized
-// manifest the CLI itself writes lives at `target/.claude/.baseline-manifest.json`
-// — that one is the only manifest the CLI runtime reads. The shipped manifest
-// stays in the published tarball for ship-time provenance inspection but must
-// not land in target.
-describe('install — manifest.json must not land at target root', () => {
+// The shipped manifest lives inside the .claude/ subtree at
+// `obj/template/.claude/manifest.json` so the recursive install copy delivers
+// it directly to `<target>/.claude/manifest.json` with no special-case.
+// The runtime hash-table the CLI writes post-install lives next to it at
+// `<target>/.claude/.baseline-manifest.json` — the two files coexist by
+// design: shipped manifest is frozen at release time (carries owners.skills);
+// runtime manifest is generated at install time (hash-only). Neither lands
+// at the target root; a stray `<target>/manifest.json` is a regression.
+describe('install — manifest.json lands inside .claude/, never at target root', () => {
   async function fixtureWithManifest() {
     const tpl = await makeTemplateFixture();
+    // Mirror the new shipped layout: manifest under .claude/ in the template.
     await writeFile(
-      join(tpl, 'manifest.json'),
-      JSON.stringify({ manifest_version: 1, files: {} }, null, 2) + '\n'
+      join(tpl, '.claude/manifest.json'),
+      JSON.stringify({ manifest_version: 2, files: {}, owners: { skills: {} } }, null, 2) + '\n'
     );
     return tpl;
   }
 
-  it('test_when_fresh_install_completes_then_target_manifest_json_does_not_exist', async () => {
+  it('test_when_fresh_install_completes_then_target_manifest_lands_under_dot_claude', async () => {
     const tpl = await fixtureWithManifest();
     const target = await mkdtemp(join(tmpdir(), 'install-mfst-target-'));
 
     await install.freshInstall(tpl, target);
 
+    await access(join(target, '.claude/manifest.json'));
     await assert.rejects(
       access(join(target, 'manifest.json')),
       { code: 'ENOENT' },
-      'target/manifest.json must NOT exist after freshInstall (the shipped reference manifest is for inspection, not for materialization)'
+      'target/manifest.json must NOT exist at root after freshInstall (the manifest belongs under .claude/)'
     );
     await access(join(target, '.claude/.baseline-manifest.json'));
   });
 
-  it('test_when_force_install_completes_then_target_manifest_json_does_not_exist', async () => {
+  it('test_when_force_install_completes_then_target_manifest_lands_under_dot_claude', async () => {
     const tpl = await fixtureWithManifest();
     const target = await mkdtemp(join(tmpdir(), 'install-mfst-target-'));
     await writeFile(join(target, 'CLAUDE.md'), 'STALE\n');
 
     await install.forceInstall(tpl, target);
 
+    await access(join(target, '.claude/manifest.json'));
     await assert.rejects(
       access(join(target, 'manifest.json')),
       { code: 'ENOENT' },
-      'target/manifest.json must NOT exist after forceInstall (same exclusion as fresh path)'
+      'target/manifest.json must NOT exist at root after forceInstall (same layout as fresh path)'
     );
   });
 });

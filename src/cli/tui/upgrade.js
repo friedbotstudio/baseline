@@ -7,10 +7,12 @@
 
 import * as clackModule from '@clack/prompts';
 import { existsSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { threeWayMerge, ACTION_KINDS } from '../merge.js';
 import { loadManifest, buildManifestFromDir } from '../manifest.js';
+import { COPY_EXCLUDE } from '../install.js';
+import { renderBrandStrip } from './splash.js';
 
 const SUCCESS = 0;
 const ERR_ABORT = 1;
@@ -37,6 +39,8 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
     return ERR_NO_MANIFEST;
   }
 
+  const version = await readPackageVersion();
+  process.stdout.write(renderBrandStrip({ version, subtitle: 'upgrade' }));
   prompts.intro('create-baseline upgrade');
 
   const { oldManifest, newManifest } = await loadManifests(opts.templateDir, manifestPath);
@@ -90,11 +94,26 @@ async function loadManifests(templateDir, manifestPath) {
   return { oldManifest, newManifest };
 }
 
+async function readPackageVersion() {
+  try {
+    const url = new URL('../../../package.json', import.meta.url);
+    const pkg = JSON.parse(await readFile(url, 'utf8'));
+    return pkg.version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
 async function listShippedFiles(root, base = root, acc = []) {
   for (const entry of await readdir(root, { withFileTypes: true })) {
     const full = join(root, entry.name);
     if (entry.isDirectory()) await listShippedFiles(full, base, acc);
     else if (entry.isFile()) acc.push(relative(base, full).split(sep).join('/'));
   }
-  return acc;
+  // COPY_EXCLUDE (single source of truth in install.js) now lists no paths —
+  // the shipped manifest moved into `.claude/manifest.json` so the recursive
+  // walk picks it up at the same path the consumer expects. The filter stays
+  // for forward-compat; if a future path needs to be kept out of the merge,
+  // add it to install.js → COPY_EXCLUDE in one place.
+  return acc.filter((p) => !COPY_EXCLUDE.includes(p));
 }

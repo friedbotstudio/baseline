@@ -114,6 +114,8 @@ button:focus-visible,
 
 ::selection { background: var(--accent-soft); color: var(--ink); }
 
+.pt-0 { padding-top: 0 !important; }
+
 /* ----- skip link -------------------------------------------------------- */
 
 .skip {
@@ -1527,6 +1529,34 @@ a.concept:focus-visible::after {
   font-size: 13px;
   line-height: 1.7;
   overflow-x: auto;
+}
+.install-snippet img {
+  /* The CLI TUI screenshots embed inside the same terminal chrome the
+     surrounding doc snippets use. The black background of the PNG already
+     reads as "in the terminal"; clipping to the chrome's rounded corners
+     and centering keeps the figure visually anchored even when the source
+     is wider than the column. */
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* CLI preview figure on cli.njk — sits above § I as a visual hero for the
+   page. Caption inherits the project-wide plate-caption styling (mono 11.5
+   muted with a hairline rule above). */
+.cli-preview {
+  margin: 0 0 40px;
+}
+.cli-preview figcaption {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
 }
 
 /* =========================================================================

@@ -121,6 +121,95 @@ describe('cli — doctor --json', () => {
   });
 });
 
+describe('cli — usage errors always print help text (regression trap)', () => {
+  it('test_when_unknown_option_then_stderr_has_help_text_and_branded_message', () => {
+    const result = runCli(['--upgrade', '/tmp/scratch']);
+    assert.equal(result.status, 2, `expected exit 2; got ${result.status}; stderr=${result.stderr}`);
+    assert.ok(
+      /upgrade.*subcommand/i.test(result.stderr),
+      `stderr must hint at the subcommand shape; got: ${result.stderr}`
+    );
+    assert.ok(
+      /Usage:/.test(result.stderr) && /create-baseline upgrade/.test(result.stderr),
+      `stderr must include the canonical HELP_TEXT; got: ${result.stderr}`
+    );
+    assert.ok(
+      !/place it at the end of the command after/.test(result.stderr),
+      `stderr must NOT leak Node parseArgs implementation noise; got: ${result.stderr}`
+    );
+  });
+
+  it('test_when_random_unknown_flag_then_stderr_has_help_text', () => {
+    const result = runCli(['--bogus-flag', '/tmp/scratch']);
+    assert.equal(result.status, 2);
+    assert.ok(/Usage:/.test(result.stderr), `expected HELP_TEXT in stderr; got: ${result.stderr}`);
+  });
+
+  it('test_when_missing_target_then_stderr_has_help_text', () => {
+    const result = runCli([]);
+    assert.equal(result.status, 2);
+    assert.ok(/Usage:/.test(result.stderr), `expected HELP_TEXT in stderr; got: ${result.stderr}`);
+    assert.ok(/missing required <target>/.test(result.stderr));
+  });
+
+  it('test_when_mutually_exclusive_plantuml_flags_then_stderr_has_help_text', () => {
+    const result = runCli(['--no-plantuml', '--require-plantuml', '/tmp/scratch']);
+    assert.equal(result.status, 2);
+    assert.ok(/Usage:/.test(result.stderr));
+    assert.ok(/mutually exclusive/.test(result.stderr));
+  });
+
+  it('test_when_conflict_without_force_then_stderr_has_help_text', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await freshTarget();
+    await writeFile(join(target, 'CLAUDE.md'), 'existing');
+    const result = runCli([target, '--no-plantuml'], { env: { CREATE_BASELINE_TEMPLATE_DIR: tpl } });
+    assert.equal(result.status, 1);
+    assert.ok(/Usage:/.test(result.stderr), `expected HELP_TEXT in stderr; got: ${result.stderr}`);
+    assert.ok(/existing baseline detected/.test(result.stderr));
+  });
+});
+
+describe('cli — manifest.json must never land in target (bug regression)', () => {
+  it('test_when_upgrade_runs_then_target_root_does_not_get_manifest_json', async () => {
+    const { target } = await installedTarget();
+    const env = { CREATE_BASELINE_TEMPLATE_DIR: (await makeTemplateFixture('# baseline v2\n')) };
+    const result = runCli(['upgrade', target], { env });
+    // Upgrade may exit 0 (clean) or 3 (skipped customizations). Both acceptable.
+    assert.ok(result.status === 0 || result.status === 3, `unexpected exit ${result.status}; stderr=${result.stderr}`);
+    assert.equal(
+      existsSync(join(target, 'manifest.json')), false,
+      'target/manifest.json must not exist at root after upgrade (manifest lives under .claude/)'
+    );
+  });
+
+  it('test_when_legacy_manifest_json_present_then_upgrade_prunes_it', async () => {
+    // Simulate the legacy-buggy state where a prior upgrade (before manifest
+    // relocation) copied manifest.json to the target ROOT and recorded it in
+    // .baseline-manifest.json. The next upgrade must PRUNE the stray file
+    // — newFiles lacks the top-level path, oldFiles has it, so threeWayMerge
+    // takes the PRUNE branch when target hash matches oldManifest entry.
+    const { target } = await installedTarget();
+    const tplDir = await makeTemplateFixture('# baseline v2\n');
+
+    // Pollute: drop a manifest.json copy at target root and seed the old
+    // baseline-manifest so threeWayMerge sees it as a tracked file.
+    await writeFile(join(target, 'manifest.json'), '{"polluted":true}\n');
+    const oldManifest = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    const crypto = await import('node:crypto');
+    oldManifest.files['manifest.json'] = crypto.createHash('sha256')
+      .update(await readFile(join(target, 'manifest.json'))).digest('hex');
+    await writeFile(join(target, '.claude/.baseline-manifest.json'), JSON.stringify(oldManifest, null, 2) + '\n');
+
+    const result = runCli(['upgrade', target], { env: { CREATE_BASELINE_TEMPLATE_DIR: tplDir } });
+    assert.ok(result.status === 0 || result.status === 3, `unexpected exit ${result.status}; stderr=${result.stderr}`);
+    assert.equal(
+      existsSync(join(target, 'manifest.json')), false,
+      'upgrade must PRUNE the legacy target/manifest.json'
+    );
+  });
+});
+
 describe('cli — non-TTY install plain output (regression trap)', () => {
   it('test_when_install_in_non_tty_then_emits_plain_output_byte_identical_to_today', async () => {
     // NOTE: this is a regression trap. Pre-impl this test PASSES (non-TTY plain path
