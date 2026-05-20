@@ -1,6 +1,6 @@
 {
   "name": "@friedbotstudio/create-baseline",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Node CLI scaffolder that materializes the Claude Code baseline (hooks, skills, commands, MCP servers, governance docs) into a target project, with branded interactive install / upgrade / doctor flows. Run via `npx @friedbotstudio/create-baseline <target>`.",
   "type": "module",
   "bin": {
