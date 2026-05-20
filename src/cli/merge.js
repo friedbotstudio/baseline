@@ -4,6 +4,7 @@ import { hashFile, saveManifest } from './manifest.js';
 import { deepMergeMcpServers } from './mcp.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
+import { dispatchByTier, NoBaseError } from './upgrade-tiers.js';
 
 export const ACTION_KINDS = Object.freeze({
   ADD: 'ADD',
@@ -15,6 +16,9 @@ export const ACTION_KINDS = Object.freeze({
   NEVER_TOUCH_PRESERVE: 'NEVER_TOUCH_PRESERVE',
   NEVER_TOUCH_ADD: 'NEVER_TOUCH_ADD',
   SPECIAL_MERGE: 'SPECIAL_MERGE',
+  MECHANICAL_MERGE_CLEAN: 'MECHANICAL_MERGE_CLEAN',
+  MECHANICAL_MERGE_CONFLICTED: 'MECHANICAL_MERGE_CONFLICTED',
+  SEMANTIC_MERGE_STAGED: 'SEMANTIC_MERGE_STAGED',
 });
 
 async function copyFile(src, dst) {
@@ -22,12 +26,39 @@ async function copyFile(src, dst) {
   await cp(src, dst, { force: true });
 }
 
+function readShaFromEntry(entry) {
+  if (typeof entry === 'string') return entry;
+  if (entry && typeof entry === 'object' && typeof entry.sha256 === 'string') return entry.sha256;
+  return null;
+}
+
+function readTierFromEntry(entry) {
+  if (entry && typeof entry === 'object' && typeof entry.tier === 'string') return entry.tier;
+  // Bare-sha entries (legacy shipped manifest_version: 2 OR installed-manifest
+  // round-trips without tier overlay) fall back to BINARY_PROMPT — the safe
+  // default that preserves today's two-way prompt behavior. New shipped
+  // manifests (v3+) carry `{sha256, tier}` per file and exercise the full
+  // three-tier flow.
+  return 'BINARY_PROMPT';
+}
+
 export async function threeWayMerge(templateDir, target, oldManifest, newManifest, opts = {}) {
-  const { dryRun = false, onSkipCustomized = null } = opts;
+  const { dryRun = false, onSkipCustomized = null, pack = null } = opts;
   const actions = [];
   const oldFiles = oldManifest?.files ?? {};
   const newFiles = newManifest?.files ?? {};
+  const baseline_version = oldManifest?.baseline_version;
   const allPaths = new Set([...Object.keys(oldFiles), ...Object.keys(newFiles)]);
+
+  const tierCtx = {
+    target,
+    templateDir,
+    oldManifest,
+    newManifest,
+    baseline_version,
+    pack,
+    stageRunTs: null,
+  };
 
   for (const rel of allPaths) {
     const tplPath = join(templateDir, rel);
@@ -51,8 +82,10 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
       continue;
     }
 
-    const newHash = newFiles[rel];
-    const oldHash = oldFiles[rel];
+    const newEntry = newFiles[rel];
+    const oldEntry = oldFiles[rel];
+    const newHash = readShaFromEntry(newEntry);
+    const oldHash = readShaFromEntry(oldEntry);
     const targetExists = await pathExists(tgtPath);
     const tgtHash = targetExists ? await hashFile(tgtPath) : null;
 
@@ -74,13 +107,10 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     }
 
     if (newHash && tgtHash && tgtHash !== oldHash) {
-      const choice = onSkipCustomized ? await onSkipCustomized(rel) : 'keep-mine';
-      if (choice === 'take-theirs') {
-        if (!dryRun) await copyFile(tplPath, tgtPath);
-        actions.push({ kind: ACTION_KINDS.OVERWRITE, path: rel, reason: 'customized file; user chose take-theirs' });
-      } else {
-        actions.push({ kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: 'target customized since last install' });
-      }
+      const action = await dispatchCustomized({
+        rel, newEntry, tierCtx, dryRun, onSkipCustomized, tplPath, tgtPath,
+      });
+      actions.push(action);
       continue;
     }
 
@@ -106,7 +136,44 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     await saveManifest(join(target, '.claude/.baseline-manifest.json'), newManifest);
   }
 
-  const skipKinds = [ACTION_KINDS.SKIP_CUSTOMIZED, ACTION_KINDS.PRUNE_SKIPPED_CUSTOMIZED];
-  const exitCode = actions.some((a) => skipKinds.includes(a.kind)) ? 3 : 0;
-  return { actions, exitCode };
+  return { actions, exitCode: computeExitCode(actions) };
+}
+
+async function dispatchCustomized({ rel, newEntry, tierCtx, dryRun, onSkipCustomized, tplPath, tgtPath }) {
+  const tier = readTierFromEntry(newEntry);
+  if (tier === 'MECHANICAL' || tier === 'SEMANTIC') {
+    if (dryRun) {
+      return { kind: tier === 'MECHANICAL' ? ACTION_KINDS.MECHANICAL_MERGE_CLEAN : ACTION_KINDS.SEMANTIC_MERGE_STAGED, path: rel, reason: 'dry-run: tier dispatch deferred' };
+    }
+    try {
+      return await dispatchByTier(rel, tier, tierCtx);
+    } catch (err) {
+      if (err instanceof NoBaseError) {
+        return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, err });
+      }
+      throw err;
+    }
+  }
+  return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath });
+}
+
+async function fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, err = null }) {
+  const choice = onSkipCustomized ? await onSkipCustomized(rel) : 'keep-mine';
+  if (choice === 'take-theirs') {
+    if (!dryRun) await copyFile(tplPath, tgtPath);
+    return { kind: ACTION_KINDS.OVERWRITE, path: rel, reason: err ? `BASE recovery failed (${err.kind}); user chose take-theirs` : 'customized file; user chose take-theirs' };
+  }
+  return { kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: err ? `BASE recovery failed (${err.kind}); preserved` : 'target customized since last install' };
+}
+
+function computeExitCode(actions) {
+  let code = 0;
+  for (const a of actions) {
+    if (a.kind === ACTION_KINDS.SEMANTIC_MERGE_STAGED) code = Math.max(code, 5);
+    else if (a.kind === ACTION_KINDS.MECHANICAL_MERGE_CONFLICTED) code = Math.max(code, 4);
+    else if (a.kind === ACTION_KINDS.SKIP_CUSTOMIZED || a.kind === ACTION_KINDS.PRUNE_SKIPPED_CUSTOMIZED) {
+      code = Math.max(code, 3);
+    }
+  }
+  return code;
 }

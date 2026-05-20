@@ -261,13 +261,16 @@ def check_skill_ownership():
         if not skill_dir.is_dir():
             add(f"skill ownership: {slug}", "FAIL", "baseline skill missing")
             continue
-        for path, expected_hash in files_map.items():
+        for path, entry in files_map.items():
             if not path.startswith(f".claude/skills/{slug}/"):
                 continue
             disk_file = root / path
             if not disk_file.exists():
                 add(f"skill ownership: {slug}", "FAIL", f"baseline skill missing: {path}")
                 continue
+            # Manifest v3+ wraps each entry as {sha256, tier}; v2 ships bare
+            # sha strings. Both shapes are accepted at read time.
+            expected_hash = entry if isinstance(entry, str) else (entry or {}).get("sha256")
             actual = hashlib.sha256(disk_file.read_bytes()).hexdigest()
             if actual != expected_hash:
                 add(f"skill ownership: {slug}", "FAIL", f"hash mismatch at {path}")

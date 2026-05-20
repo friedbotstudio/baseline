@@ -41,7 +41,7 @@ describe('freshInstall', () => {
 
     const manifestText = await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8');
     const m = JSON.parse(manifestText);
-    assert.equal(m.manifest_version, 1);
+    assert.equal(m.manifest_version, 2);
     assert.ok(typeof m.generated_at === 'string');
     assert.ok(m.files && typeof m.files === 'object');
     assert.ok(Object.keys(m.files).length > 0);
@@ -223,5 +223,46 @@ describe('install — .npmrc opt-in via opts.withNpmrc', () => {
       SENTINEL,
       'existing target/.npmrc must be preserved verbatim when --with-npmrc is set (the materialize step has a "do not clobber" guard)'
     );
+  });
+});
+
+describe('freshInstall — baseline_version + .baseline-prior cache (upgrade-flow-rework AC-010)', () => {
+  it('test_when_freshInstall_then_baseline_version_written_in_installed_manifest', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-bv-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    assert.ok(typeof m.baseline_version === 'string' && m.baseline_version.length > 0,
+      `installed manifest must record baseline_version (the CLI's own package.json version); got: ${JSON.stringify(m.baseline_version)}`);
+    assert.ok(/^\d+\.\d+\.\d+/.test(m.baseline_version),
+      `baseline_version must look like semver (read from CLI's own package.json); got: ${m.baseline_version}`);
+  });
+
+  it('test_when_freshInstall_then_baseline_prior_dir_mirrors_template', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-bp-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    const claudeMirror = await readFile(join(target, '.claude/.baseline-prior/CLAUDE.md'), 'utf8');
+    const claudeTpl = await readFile(join(tpl, 'CLAUDE.md'), 'utf8');
+    assert.equal(claudeMirror, claudeTpl,
+      '.claude/.baseline-prior/<rel> must byte-equal the template content for the BASE-content cache to be useful');
+
+    await access(join(target, '.claude/.baseline-prior/docs/init/seed.md'));
+    await access(join(target, '.claude/.baseline-prior/.mcp.json'));
+  });
+
+  it('test_when_freshInstall_then_baseline_prior_gitignore_starwild', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-gi-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    const gi = await readFile(join(target, '.claude/.baseline-prior/.gitignore'), 'utf8');
+    assert.equal(gi, '*\n',
+      'freshInstall must write ".claude/.baseline-prior/.gitignore" with exactly "*\\n" so the cache is git-invisible per-project (no root .gitignore touch)');
   });
 });

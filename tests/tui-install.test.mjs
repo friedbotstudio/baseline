@@ -80,7 +80,7 @@ describe('tui/install', () => {
     await access(join(target, 'CLAUDE.md'));
     await access(join(target, '.claude/.baseline-manifest.json'));
     const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
-    assert.equal(m.manifest_version, 1, 'manifest must be written byte-equivalent to plain install');
+    assert.equal(m.manifest_version, 2, 'manifest must be written byte-equivalent to plain install');
     assert.ok(Object.keys(m.files).length > 0, 'manifest must contain shipped files');
   });
 

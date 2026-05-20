@@ -20,10 +20,37 @@ All notable changes to this project will be documented in this file.
 
 The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.0/). The `## [Unreleased]` section is curated locally by the Phase 11.5 `changelog` skill before each `/commit`; versioned sections are inserted by `@semantic-release/changelog` at release time.
 
+### Added
+
+- BASELINE wordmark splash + manifest relocation + branded error paths
 
 ## [Unreleased]
 
 ### Added
+
+- Three-tier upgrade flow for `create-baseline upgrade`: tier 1 binary prompt (with new "Keep your version / Use new baseline / Show diff" labels and a Show-diff re-prompt loop capped at two consecutive picks), tier 2 mechanical merge via `git merge-file --diff3` (auto-merges textually non-overlapping local + upstream changes), tier 3 semantic staging that writes BASE + INCOMING + a per-run manifest under `.claude/state/upgrade/<ts>/` for the new `/upgrade-project` Claude Code skill to reconcile.
+- New `/upgrade-project` maintenance skill at `.claude/skills/upgrade-project/SKILL.md` (owner: baseline; 38 total skills, +1 maintenance category). Reads the staged BASE / INCOMING / LOCAL trio per pending file, reasons through three-way deltas in main context, writes reconciled bytes to LOCAL, deletes the stage on all-RECONCILED. Supports `args=dry-run` (emit unified diff, no writes). Fallback: `NEEDS_USER_INPUT` status with a targeted question when the LLM cannot disambiguate. Declares the **zero-drift renumbering rule** for structural conflicts (e.g. both sides add Article XI → user content shifts to next available slot, never folds — so the next upgrade produces zero new staging entries).
+- `src/cli/upgrade-tiers.js` — new Domain module: `dispatchByTier`, `resolveBase` (hybrid local-cache + npm-fallback BASE recovery), `writeStage`, `findPendingStage`, `NoBaseError` with structured `kind` enum.
+- `src/cli/diff-render.js` — new Foundation: LCS-based unified-diff renderer with optional ANSI colorize. Pure function, composable from any caller.
+- `.claude/.baseline-prior/` cache directory written by `freshInstall` — mirrors the template tree so subsequent upgrades have BASE content for 3-way merge without a network round-trip. Per-directory `.gitignore` with `*` keeps the cache git-invisible.
+- `baseline_version` field on the installed `.baseline-manifest.json` (read from CLI's own package.json at install time) so future upgrades can recover BASE via npm fallback when the cache is absent.
+- Per-file tier classification in the shipped manifest (`obj/template/.claude/manifest.json`). Every entry is now `{sha256, tier}` instead of bare sha. SEMANTIC_EXPLICIT list (exhaustive): `docs/init/seed.md`, `CLAUDE.md`, `src/seed.template.md`, `src/CLAUDE.template.md`. Defaults: `.sh`/`.mjs`/`.js`/`.py`/`.ts`/`.md` → MECHANICAL; everything else → BINARY_PROMPT. Frontmatter `tier:` field overrides for the rare special case. README.md explicitly defaults to MECHANICAL (NOT SEMANTIC) per project-owner direction.
+- New CLI exit codes: `4` = mechanical-merge conflicted (LOCAL on disk has `<<<<<<<` / `=======` / `>>>>>>>` markers); `5` = semantic-merge staging pending (`/upgrade-project` invocation expected).
+- New `ACTION_KINDS` in `src/cli/merge.js`: `MECHANICAL_MERGE_CLEAN`, `MECHANICAL_MERGE_CONFLICTED`, `SEMANTIC_MERGE_STAGED`.
+
+### Changed
+
+- TUI customization prompt verbiage replaced. The old labels `Keep mine` / `Take theirs` (git-rebase terminology that flips meaning depending on perspective) become `Keep your version` / `Use new baseline` / `Show diff` (installer-correct framing with diff preview).
+- `bin/cli.js` help text updated from "three-way merge" to a three-tier description naming the new exit codes and the `/upgrade-project` reconciliation skill.
+- `MANIFEST_VERSION` bumped from `1` to `2` on the installed manifest (`buildManifestFromDir` emits the new version; `baseline_version` field optional via opts arg). Shipped manifest bumped from `2` to `3` to carry the new per-file `{sha256, tier}` object shape. Consumer reads tolerate both shapes (bare sha → fall back to BINARY_PROMPT tier).
+- `dispatchUpgrade` in `bin/cli.js` and `tui/upgrade.js → run()` short-circuit when `findPendingStage` returns non-null — re-invoking `upgrade` with a pending stage prints the same "run /upgrade-project" pointer without re-staging or re-prompting (idempotency AC-007).
+- `audit-baseline.sh` handles both v2 (bare sha string) and v3 (`{sha256, tier}` object) manifest file entries — `expected_hash = entry if isinstance(entry, str) else entry.get('sha256')`.
+
+### Security
+
+- `extractFromTarball` in `src/cli/upgrade-tiers.js` adds a defensive `resolve(candidate).startsWith(tmpRoot + sep)` check after `tar -xz` extraction. Both `bsdtar` (macOS default) and GNU tar reject absolute paths and `..` components by default, but the explicit check makes the safety contract platform-agnostic and survives future tar-binary behavior changes. On escape, throws `NoBaseError{kind: 'tarball_path_traversal'}` which routes the file to the tier-1 binary-prompt fallback (never uses LOCAL as BASE).
+- `/upgrade-project` skill body declares a path-validation constraint: before writing reconciled bytes to LOCAL, the skill must verify `path.resolve(target, rel)` is a descendant of target. Stage manifest `rel` values that escape route to `NEEDS_USER_INPUT` with reason `path-traversal-rejected` — defense in depth against a local attacker who has prior write access to `.claude/state/upgrade/`.
+- npm registry trust boundary unchanged: tarballs fetched via `libnpmpack.pack('@friedbotstudio/create-baseline@<v>')` are sha256-verified against the consumer's installed manifest before being used as BASE. Mismatches throw `NoBaseError{kind: 'npm_sha_mismatch'}`. Legacy `manifest_version: 1` installs (no `baseline_version`) cannot recover BASE → tier-2/3 files route to tier-1 binary prompt with a one-time notice.
 
 - BASELINE pixel-art wordmark splash for the CLI. New `src/cli/tui/splash.js` renders the wordmark in three bands of FBS orange (bevel: shadow / mid / highlight / mid / shadow) plus a thin `▔` outline trace. Surfaces: `--help` (splash + canonical HELP_TEXT), `--version` (wordmark + version line marquee), no-arg TTY landing (splash, exit 0), and slim brand strip on the install / upgrade intros (`▲ BASELINE v<ver> / <action>`). Non-TTY paths and narrow terminals (< 60 cols) degrade gracefully to the plain HELP_TEXT body. The docs-site CLI page (`site-src/cli.njk`) embeds a frozen PNG of the splash inside the existing `.install-snippet` terminal chrome; PNG background uses `#080b12` (sRGB of `oklch(15% 0.015 260)`) so it merges seamlessly with the site's `--code-bg`.
 - New `paintRGB` + `PALETTE` exports on `src/cli/tui/tokens.js` plus a third `accentShadow` orange triple (`#7a2907` ≈ `oklch(35% 0.15 41.5)`) so the wordmark can paint each row in its bevel-band color.

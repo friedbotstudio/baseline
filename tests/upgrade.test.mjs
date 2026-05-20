@@ -58,7 +58,7 @@ function makePromptsStub(selectAnswers) {
       },
       spinner: () => ({ start() {}, message() {}, stop() {}, error() {} }),
       select: async (opts) => {
-        calls.push({ kind: 'select', message: opts?.message });
+        calls.push({ kind: 'select', message: opts?.message, options: opts?.options });
         const v = selectAnswers[answerIdx++];
         return v;
       },
@@ -125,5 +125,228 @@ describe('tui/upgrade', () => {
       calls.some((c) => c.kind === 'cancel'),
       'expected prompts.cancel after isCancel-positive answer'
     );
+  });
+});
+
+// New verbiage + Show-diff loop + tier-2/3 dispatch + exit codes 4/5
+// + AC-007 idempotency + AC-010 legacy fallback.
+// All RED until src/cli/tui/upgrade.js, src/cli/upgrade-tiers.js,
+// src/cli/diff-render.js, and bin/cli.js are updated.
+
+describe('tui/upgrade — verbiage (AC-001)', () => {
+  it('test_when_upgrade_tier1_customized_then_new_three_choice_labels', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const { calls, stub } = makePromptsStub(['keep-mine']);
+
+    await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selectCall = calls.find((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.ok(selectCall, 'expected one select for the customized CLAUDE.md');
+    const labels = (selectCall.options || []).map((o) => o.label);
+    assert.ok(labels.includes('Keep your version'),
+      `options must include "Keep your version"; got: ${JSON.stringify(labels)}`);
+    assert.ok(labels.includes('Use new baseline'),
+      `options must include "Use new baseline"; got: ${JSON.stringify(labels)}`);
+    assert.ok(labels.includes('Show diff'),
+      `options must include "Show diff"; got: ${JSON.stringify(labels)}`);
+    assert.ok(!labels.includes('Keep mine'),
+      `legacy "Keep mine" label must be removed; got: ${JSON.stringify(labels)}`);
+    assert.ok(!labels.includes('Take theirs'),
+      `legacy "Take theirs" label must be removed; got: ${JSON.stringify(labels)}`);
+  });
+});
+
+describe('tui/upgrade — Show-diff loop (AC-001)', () => {
+  it('test_when_upgrade_user_picks_show_diff_then_diff_emitted_and_reprompt_fires', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const { calls, stub } = makePromptsStub(['show-diff', 'keep-mine']);
+
+    await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.equal(selectsForFile.length, 2,
+      'show-diff pick must trigger a SECOND select for the same path');
+    const diffEmitted = calls.some((c) => /log\.(info|step)/.test(c.kind) && /[-+]/.test(JSON.stringify(c).slice(0, 4000)));
+    assert.ok(diffEmitted,
+      'expected a unified diff to be emitted to the TUI between the two select calls');
+  });
+
+  it('test_when_upgrade_user_picks_show_diff_twice_consecutively_then_falls_through_without_third_prompt', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const { calls, stub } = makePromptsStub(['show-diff', 'show-diff']);
+
+    await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.equal(selectsForFile.length, 2,
+      'after 2 consecutive show-diff picks, no third select for the same path (cap-at-2 rule)');
+  });
+});
+
+async function tierClassifiedFixture({ rel, tier, localBytes, baseBytes, incomingBytes }) {
+  // Build a fresh template + target where `rel` is classified into the given tier
+  // via a shipped manifest written into the new template's `.claude/manifest.json`.
+  // freshInstall mirrors `baseBytes` to .baseline-prior so BASE resolution short-circuits.
+  const tpl = await makeTemplateFixture(baseBytes);
+  const target = await mkdtemp(join(tmpdir(), 'tui-upgrade-tier-target-'));
+  await freshInstall(tpl, target);
+  await writeFile(join(target, rel), localBytes);
+
+  const newTpl = await makeTemplateFixture(incomingBytes);
+  // Write a shipped manifest in newTpl that classifies <rel> as the requested tier.
+  const { createHash } = await import('node:crypto');
+  const incomingSha = createHash('sha256').update(incomingBytes).digest('hex');
+  await mkdir(join(newTpl, '.claude'), { recursive: true });
+  const shipped = {
+    manifest_version: 3,
+    generated_at: new Date().toISOString(),
+    files: { [rel]: { sha256: incomingSha, tier } },
+    owners: { skills: {} },
+  };
+  await writeFile(join(newTpl, '.claude/manifest.json'), JSON.stringify(shipped, null, 2) + '\n');
+  return { newTpl, target };
+}
+
+describe('tui/upgrade — tier-3 staging (AC-004)', () => {
+  it('test_when_upgrade_tier3_customized_then_stage_written_and_exit_5_and_terminal_pointer', async () => {
+    const { newTpl, target } = await tierClassifiedFixture({
+      rel: 'CLAUDE.md',
+      tier: 'SEMANTIC',
+      baseBytes: '# baseline v1\n',
+      localBytes: '# customized by user\n## Article XI (user)\nuser added this\n',
+      incomingBytes: '# baseline v2\n## Article XI (baseline)\nbaseline added this\n',
+    });
+    const { calls, stub } = makePromptsStub([]);
+
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const { existsSync: fsExists } = await import('node:fs');
+    const stageRoot = join(target, '.claude/state/upgrade');
+    assert.ok(fsExists(stageRoot),
+      'tier-3 SEMANTIC customized file must create .claude/state/upgrade/<ts>/');
+    assert.equal(exit, 5,
+      'tier-3 SEMANTIC staging must surface as CLI exit code 5');
+    const pointerLine = calls.some((c) => /\/upgrade-project/i.test(JSON.stringify(c)));
+    assert.ok(pointerLine,
+      'terminal output must contain a pointer to /upgrade-project');
+  });
+});
+
+describe('tui/upgrade — tier-2 mechanical (AC-002, AC-003)', () => {
+  it('test_when_upgrade_tier2_clean_then_no_prompt_and_action_visible', async () => {
+    // Tier-2 mechanical with non-overlapping edits must silently auto-merge.
+    const base = '# line A\n# line B\n# line C\n';
+    const local = '# line A\n# line B\n# line C\n# local addition\n';
+    const incoming = '# line A HEADER\n# line B\n# line C\n';
+    const { newTpl, target } = await tierClassifiedFixture({
+      rel: 'CLAUDE.md',
+      tier: 'MECHANICAL',
+      baseBytes: base,
+      localBytes: local,
+      incomingBytes: incoming,
+    });
+    const { calls, stub } = makePromptsStub([]);
+
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.equal(selectsForFile.length, 0,
+      'tier-2 MECHANICAL with non-overlapping hunks must NOT trigger any select prompt');
+    const actionLine = calls.some((c) => /MECHANICAL_MERGE_CLEAN/i.test(JSON.stringify(c)));
+    assert.ok(actionLine,
+      'final terminal report must include the MECHANICAL_MERGE_CLEAN action line');
+    assert.equal(exit, 0, 'clean mechanical merge exits 0');
+  });
+
+  it('test_when_upgrade_tier2_conflicted_then_terminal_message_and_exit_4', async () => {
+    const base = '# line A\n# line B\n# line C\n';
+    const local = '# line A LOCAL EDIT\n# line B\n# line C\n';
+    const incoming = '# line A INCOMING EDIT\n# line B\n# line C\n';
+    const { newTpl, target } = await tierClassifiedFixture({
+      rel: 'CLAUDE.md',
+      tier: 'MECHANICAL',
+      baseBytes: base,
+      localBytes: local,
+      incomingBytes: incoming,
+    });
+    const { calls, stub } = makePromptsStub([]);
+
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const conflictLine = calls.some((c) => /Merged with conflicts/i.test(JSON.stringify(c)));
+    assert.ok(conflictLine,
+      'terminal output must contain "Merged with conflicts" message');
+    assert.equal(exit, 4,
+      'mechanical conflict on disk must surface as CLI exit code 4');
+  });
+});
+
+describe('tui/upgrade — idempotency (AC-007)', () => {
+  it('test_when_dispatchUpgrade_detects_pending_stage_then_short_circuit_no_merge', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    // Pre-seed a pending stage.
+    const stageDir = join(target, '.claude/state/upgrade/2026-05-20T15-00-00Z');
+    await mkdir(stageDir, { recursive: true });
+    await writeFile(join(stageDir, 'manifest.json'), JSON.stringify({
+      stage_version: 1, slug: 'upgrade-flow-rework', created_at: 'x',
+      baseline_version_from: '0.4.0', baseline_version_to: '0.5.0',
+      files: [{ rel: 'docs/init/seed.md', base_sha256: 'a'.repeat(64), incoming_sha256: 'b'.repeat(64), local_sha256: 'c'.repeat(64), status: 'PENDING' }],
+    }, null, 2));
+    const { calls, stub } = makePromptsStub([]);
+
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selects = calls.filter((c) => c.kind === 'select');
+    assert.equal(selects.length, 0,
+      'pending stage must short-circuit before any select prompt');
+    assert.equal(exit, 5,
+      're-invocation with pending stage exits 5 (no work done)');
+    const pointer = calls.some((c) => /\/upgrade-project/.test(JSON.stringify(c)));
+    assert.ok(pointer, 'terminal output must re-print the /upgrade-project pointer');
+  });
+
+  it('test_when_upgrade_invoked_twice_consecutively_with_pending_stage_then_both_runs_identical_no_extra_writes', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const stageDir = join(target, '.claude/state/upgrade/2026-05-20T15-30-00Z');
+    await mkdir(stageDir, { recursive: true });
+    const stageManifestPath = join(stageDir, 'manifest.json');
+    await writeFile(stageManifestPath, JSON.stringify({
+      stage_version: 1, slug: 'upgrade-flow-rework', created_at: 'x',
+      baseline_version_from: '0.4.0', baseline_version_to: '0.5.0',
+      files: [{ rel: 'docs/init/seed.md', base_sha256: 'a'.repeat(64), incoming_sha256: 'b'.repeat(64), local_sha256: 'c'.repeat(64), status: 'PENDING' }],
+    }, null, 2));
+    const { stat } = await import('node:fs/promises');
+    const beforeMtime = (await stat(stageManifestPath)).mtimeMs;
+
+    const exit1 = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: makePromptsStub([]).stub });
+    const exit2 = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: makePromptsStub([]).stub });
+
+    assert.equal(exit1, exit2, 'two consecutive runs must produce the same exit code');
+    const afterMtime = (await stat(stageManifestPath)).mtimeMs;
+    assert.equal(afterMtime, beforeMtime,
+      'stage manifest mtime must be unchanged across two read-only re-invocations');
+  });
+});
+
+describe('tui/upgrade — legacy fallback (AC-010)', () => {
+  it('test_when_legacy_manifest_v1_then_tier2_3_files_fall_back_to_binary_prompt_with_notice', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    // Downgrade installed manifest to v1 shape.
+    const manifestPath = join(target, '.claude/.baseline-manifest.json');
+    const m = JSON.parse(await readFile(manifestPath, 'utf8'));
+    m.manifest_version = 1;
+    delete m.baseline_version;
+    await writeFile(manifestPath, JSON.stringify(m, null, 2) + '\n');
+
+    const { calls, stub } = makePromptsStub(['keep-mine']);
+
+    await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const noticeLine = calls.some((c) => /legacy manifest/i.test(JSON.stringify(c)));
+    assert.ok(noticeLine,
+      'legacy manifest_version: 1 must surface a one-time terminal notice');
+    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.ok(selectsForFile.length >= 1,
+      'legacy fallback must route the file through the tier-1 binary prompt');
   });
 });

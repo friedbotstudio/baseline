@@ -32,12 +32,41 @@ async function listFiles(root, base = root, acc = []) {
   return acc;
 }
 
+async function readPackageVersion() {
+  try {
+    const pkgPath = join(PACKAGE_ROOT, 'package.json');
+    const pkg = JSON.parse(await readFile(pkgPath, 'utf8'));
+    return typeof pkg.version === 'string' && pkg.version.length > 0 ? pkg.version : '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
 async function writeBaselineManifest(target) {
   const files = await listFiles(target);
-  const filtered = files.filter((p) => p !== '.claude/.baseline-manifest.json');
-  const m = await buildManifestFromDir(target, filtered);
+  const filtered = files.filter((p) =>
+    p !== '.claude/.baseline-manifest.json' && !p.startsWith('.claude/.baseline-prior/')
+  );
+  const baseline_version = await readPackageVersion();
+  const m = await buildManifestFromDir(target, filtered, { baseline_version });
   await mkdir(join(target, '.claude'), { recursive: true });
   await saveManifest(join(target, '.claude/.baseline-manifest.json'), m);
+}
+
+async function writeBaselinePriorMirror(templateDir, target) {
+  const priorRoot = join(target, '.claude/.baseline-prior');
+  await mkdir(priorRoot, { recursive: true });
+  await cp(templateDir, priorRoot, {
+    recursive: true,
+    force: true,
+    filter: (src) => {
+      const rel = relative(templateDir, src).split(sep).join('/');
+      if (rel === '') return true;
+      if (COPY_EXCLUDE.includes(rel)) return false;
+      return true;
+    },
+  });
+  await writeFile(join(priorRoot, '.gitignore'), '*\n');
 }
 
 function makeFilter(opts) {
@@ -89,6 +118,7 @@ export async function freshInstall(templateDir, target, opts = {}) {
   await cp(templateDir, target, { recursive: true, force: false, filter });
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
+  await writeBaselinePriorMirror(templateDir, target);
   await writeBaselineManifest(target);
 }
 
@@ -97,5 +127,6 @@ export async function forceInstall(templateDir, target, opts = {}) {
   await cp(templateDir, target, { recursive: true, force: true, filter });
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
+  await writeBaselinePriorMirror(templateDir, target);
   await writeBaselineManifest(target);
 }

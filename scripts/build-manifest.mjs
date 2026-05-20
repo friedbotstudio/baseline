@@ -1,5 +1,5 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { extname, join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
@@ -9,6 +9,20 @@ import { readFileSync } from 'node:fs';
 // by the consumer-side audit (.claude/skills/audit-baseline/audit.sh) for
 // hash-drift detection — the file follows the baseline into every project.
 const MANIFEST_REL = '.claude/manifest.json';
+
+// Tier classification rules (CLAUDE.md upgrade-flow-rework spec AC-013).
+// Order matters: NEVER_TOUCH > SPECIAL_MERGE > SEMANTIC_EXPLICIT >
+// extension default > BINARY_PROMPT. Frontmatter `tier:` overrides all.
+const NEVER_TOUCH_PATHS = new Set(['.claude/project.json']);
+const SPECIAL_MERGE_PATHS = new Set(['.mcp.json']);
+const SEMANTIC_EXPLICIT = new Set([
+  'docs/init/seed.md',
+  'CLAUDE.md',
+  'src/seed.template.md',
+  'src/CLAUDE.template.md',
+]);
+const MECHANICAL_EXTENSIONS = new Set(['.sh', '.mjs', '.js', '.py', '.ts', '.md']);
+const VALID_TIERS = new Set(['NEVER_TOUCH', 'SPECIAL_MERGE', 'SEMANTIC', 'MECHANICAL', 'BINARY_PROMPT']);
 
 const templateDir = process.argv[2];
 if (!templateDir) {
@@ -36,12 +50,48 @@ function hashFile(filePath) {
   return createHash('sha256').update(buf).digest('hex');
 }
 
-function readOwnerFrontmatter(filePath) {
-  const text = readFileSync(filePath, 'utf8');
+function readFrontmatter(filePath) {
+  let text;
+  try {
+    text = readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
   const fmMatch = text.match(/^---\n([\s\S]*?)\n---\n/);
   if (!fmMatch) return null;
-  const ownerMatch = fmMatch[1].match(/^owner:\s*(\S+)\s*$/m);
-  return ownerMatch ? ownerMatch[1] : null;
+  const body = fmMatch[1];
+  const fm = {};
+  for (const line of body.split('\n')) {
+    const kv = line.match(/^(\w+):\s*(.+?)\s*$/);
+    if (kv) fm[kv[1]] = kv[2];
+  }
+  return fm;
+}
+
+function readOwnerFrontmatter(filePath) {
+  const fm = readFrontmatter(filePath);
+  return fm?.owner ?? null;
+}
+
+function readTierOverride(filePath) {
+  const fm = readFrontmatter(filePath);
+  if (!fm || typeof fm.tier !== 'string') return null;
+  const override = fm.tier.trim();
+  if (!VALID_TIERS.has(override)) {
+    process.stderr.write(`${filePath}: invalid tier override "${override}" — must be one of ${[...VALID_TIERS].join(', ')}\n`);
+    process.exit(1);
+  }
+  return override;
+}
+
+function classifyTier(rel, absPath) {
+  if (NEVER_TOUCH_PATHS.has(rel)) return 'NEVER_TOUCH';
+  if (SPECIAL_MERGE_PATHS.has(rel)) return 'SPECIAL_MERGE';
+  const override = readTierOverride(absPath);
+  if (override) return override;
+  if (SEMANTIC_EXPLICIT.has(rel)) return 'SEMANTIC';
+  if (MECHANICAL_EXTENSIONS.has(extname(rel))) return 'MECHANICAL';
+  return 'BINARY_PROMPT';
 }
 
 function collectOwnersFromTemplate(allFiles) {
@@ -78,13 +128,17 @@ const files = {};
 for (const rel of allFiles) {
   // Self-skip: the manifest hashes every file EXCEPT itself.
   if (rel === MANIFEST_REL) continue;
-  files[rel] = hashFile(join(templateDir, rel));
+  const absPath = join(templateDir, rel);
+  files[rel] = {
+    sha256: hashFile(absPath),
+    tier: classifyTier(rel, absPath),
+  };
 }
 
 const ownersSkills = collectOwnersFromTemplate(allFiles);
 
 const manifest = {
-  manifest_version: 2,
+  manifest_version: 3,
   generated_at: new Date().toISOString(),
   files,
   owners: {

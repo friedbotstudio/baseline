@@ -1,0 +1,10 @@
+{
+  "request": "Rework the `npx @friedbotstudio/create-baseline upgrade` flow into a three-tier merge strategy: (1) fix verbiage from 'Keep mine/theirs' to 'Keep your version / Use new baseline / Show diff', (2) deterministic 3-way merge via `git merge-file --diff3` for mechanically-mergeable files, (3) new `/upgrade-project` skill for LLM-assisted semantic merge of files like seed.md and CLAUDE.md where structural conflicts (e.g., both sides adding Article XI) can't be resolved by diff3. CLI stages incoming/base files alongside the local one and prints a pointer to run `/upgrade-project` in Claude Code.",
+  "slug": "upgrade-flow-rework",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "changelog"],
+  "source_backlog_keys": [],
+  "created_at": 1779269358,
+  "updated_at": 1779270765
+}

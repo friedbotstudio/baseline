@@ -18,7 +18,7 @@ const PKG_ROOT = resolve(__dirname, '..');
 
 const HELP_TEXT = `Usage:
   create-baseline <target> [options]      install the baseline
-  create-baseline upgrade [target]        three-way merge against an installed baseline
+  create-baseline upgrade [target]        three-tier merge (mechanical / semantic / binary-prompt)
   create-baseline doctor [target]         report drift in an installed target
 
 Materializes the Claude Code baseline (.claude/, CLAUDE.md, .mcp.json,
@@ -31,10 +31,15 @@ Install modes:
 
 Upgrade:
   Replaces the prior --merge flag. Reads <target>/.claude/.baseline-manifest.json
-  and runs a three-way merge against the shipped template. Prunes baseline files
-  removed upstream that the user hadn't touched; customized-stale files are
-  preserved (exit 3) — or interactively resolved when stdout is a TTY (keep
-  mine / take theirs / abort).
+  and runs a three-tier merge against the shipped template:
+    - tier 1 (binary prompt): customized files prompt "Keep your version / Use
+      new baseline / Show diff" in TTY mode (exit 3 on any skipped).
+    - tier 2 (mechanical): files routed through git merge-file --diff3 with
+      BASE recovered from .claude/.baseline-prior/ cache or npm fallback;
+      clean merges land silently, conflicts surface with markers (exit 4).
+    - tier 3 (semantic): staged at .claude/state/upgrade/<ts>/ for the
+      /upgrade-project Claude Code skill to reconcile (exit 5).
+  Prunes baseline files removed upstream that the user hadn't touched.
   --dry-run        Print intended actions without writing.
 
 Doctor:
@@ -227,6 +232,13 @@ async function dispatchUpgrade(target, values, templateDir) {
     await usageError(`No baseline manifest at ${manifestPath}. Run a fresh install first.`);
     return 2;
   }
+  const { findPendingStage } = await import('../src/cli/upgrade-tiers.js');
+  const pending = await findPendingStage(target);
+  if (pending) {
+    const fileLines = pending.files.map((f) => `  - ${f}`).join('\n');
+    io.log(`Pending semantic-merge stage at ${pending.stage_ts}.\n${pending.files.length} file(s) awaiting reconciliation:\n${fileLines}\nOpen Claude Code and run /upgrade-project to reconcile.`);
+    return 5;
+  }
   if (process.stdout.isTTY) {
     const tui = await import('../src/cli/tui/upgrade.js');
     return tui.run({
@@ -241,15 +253,30 @@ async function runPlainUpgrade(target, values, templateDir, manifestPath) {
   const oldManifest = await loadManifest(manifestPath);
   const tplFiles = await listShippedFiles(templateDir);
   const newManifest = await buildManifestFromDir(templateDir, tplFiles);
+  await overlayShippedTiers(templateDir, newManifest);
   if (values['dry-run']) {
     io.log(`Would upgrade ${tplFiles.length} files into ${target}`);
     return 0;
   }
   const report = await threeWayMerge(templateDir, target, oldManifest, newManifest);
   for (const action of report.actions) {
-    io.log(`${action.kind.padEnd(24)} ${action.path}`);
+    io.log(`${action.kind.padEnd(28)} ${action.path}`);
   }
   return report.exitCode;
+}
+
+async function overlayShippedTiers(templateDir, newManifest) {
+  const shippedPath = join(templateDir, '.claude/manifest.json');
+  if (!existsSync(shippedPath)) return;
+  const { readFile: rf } = await import('node:fs/promises');
+  const shipped = JSON.parse(await rf(shippedPath, 'utf8'));
+  if (!shipped?.files) return;
+  for (const rel of Object.keys(newManifest.files)) {
+    const shippedEntry = shipped.files[rel];
+    if (shippedEntry && typeof shippedEntry === 'object' && typeof shippedEntry.tier === 'string') {
+      newManifest.files[rel] = { sha256: newManifest.files[rel], tier: shippedEntry.tier };
+    }
+  }
 }
 
 async function dispatchDoctor(positionals, values) {
