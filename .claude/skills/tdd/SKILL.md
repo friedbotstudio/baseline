@@ -13,7 +13,7 @@ Main-context decisions live here. Worker execution happens in harness ticks.
 
 # Prereq
 
-Either an approved spec exists (`.claude/state/spec_approvals/<slug>.approval`) OR `entry_phase` in `workflow.json` is `tdd` (quickfix/bugfix direct-to-TDD).
+Either an approved spec exists (`.claude/state/spec_approvals/<slug>.approval`) OR `track_id` in `workflow.json` is `tdd-quickfix` (post-§18; legacy `entry_phase == "tdd"` accepted on pre-§18 workflow.json files the harness preflight migrator hasn't run on yet — quickfix/bugfix direct-to-TDD route).
 
 If neither, stop and direct the user to `/triage` first.
 
@@ -21,7 +21,7 @@ If neither, stop and direct the user to `/triage` first.
 
 ## 1. Verify prereq
 
-Read `.claude/state/workflow.json`. Confirm `tdd` is the current phase to run (entry_phase is `tdd` for quickfix, OR `spec` is in `completed` AND the spec approval token exists for spec-track).
+Read `.claude/state/workflow.json`. Confirm `tdd` is the current phase to run: `track_id == "tdd-quickfix"` for quickfix (post-§18; legacy `entry_phase == "tdd"` also accepted), OR `spec` is in `completed` AND the spec approval token exists for spec-entry / intake-full tracks.
 
 ## 2. Decide the scenario recipe (in main context)
 

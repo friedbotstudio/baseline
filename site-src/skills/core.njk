@@ -48,7 +48,7 @@ toc:
     <p>Auto-invocable. The orchestrator chains them in order, yielding at consent gates.</p>
   </div>
   <ul>
-    <li><code>triage</code>. Picks the workflow entry phase and writes <code>workflow.json</code>.</li>
+    <li><code>triage</code>. Reads <code>workflows.jsonl</code>, classifies the request by reading each track's <code>selector_hints</code>, and presents the picked track plus alternates via <code>AskUserQuestion</code>. On confirmation, materialises the chosen track's DAG into the TaskList and writes <code>workflow.json</code>.</li>
     <li><code>scout</code>. Phase 2. Maps the relevant slice of the codebase.</li>
     <li><code>research</code>. Phase 3. Surfaces 2 to 4 candidate solution approaches with concrete tradeoffs.</li>
     <li><code>tdd</code>. Phase 6 (solo). Decides scenario recipe and implementation contract; runs scenario then implement then verify then drift-check. Drift-check compares numbered ACs and Design calls rows in the approved spec against the implementation diff and yields the workflow if any item is unresolved (no auto-loop).</li>
@@ -104,8 +104,8 @@ toc:
     <p>Drive the workflow end-to-end, plan the swarm path, and dispatch the worker waves.</p>
   </div>
   <ul>
-    <li><code>harness</code>. User-only. Drives the workflow end-to-end, yielding at consent gates.</li>
-    <li><code>swarm-plan</code>. Decomposes an approved spec into a dependency-ordered swarm plan.</li>
+    <li><code>harness</code>. Graph executor. Loads the chosen track, walks the DAG, resolves selector nodes by evaluating preconditions in declaration order, expands sub-tracks inline, dispatches <code>can_parallel</code> clusters concurrently, and yields at consent gates. Runs the one-shot pre-§18 <code>workflow.json</code> migrator at preflight.</li>
+    <li><code>swarm-plan</code>. Decomposes an approved spec into a dependency-ordered runtime sub-track that the harness reloads as an overlay on the canonical <code>workflows.jsonl</code>. Output lives at <code>.claude/state/swarm/&lt;slug&gt;.jsonl</code>.</li>
     <li><code>swarm-dispatch</code>. Executes a swarm plan wave by wave with worktree isolation.</li>
   </ul>
 </section>

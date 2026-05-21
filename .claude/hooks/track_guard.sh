@@ -54,7 +54,17 @@ except Exception:
 phases = pj.get("workflow", {}).get("phases") or []
 artifacts = pj.get("workflow", {}).get("artifacts") or {}
 exceptions = set(ws.get("exceptions") or [])
-entry = ws.get("entry_phase")
+# Post-§18: workflow.json carries `track_id`; legacy pre-§18 files carry
+# `entry_phase`. Accept both. The canonical map below mirrors
+# `src/cli/workflow-migrator.js → ENTRY_PHASE_TO_TRACK_ID` in reverse so
+# track_guard's phase-ordering enforcement keeps working on both shapes.
+_TRACK_ID_TO_ENTRY_PHASE = {
+    "intake-full": "intake",
+    "spec-entry": "spec",
+    "tdd-quickfix": "tdd",
+    "chore": "chore",
+}
+entry = ws.get("entry_phase") or _TRACK_ID_TO_ENTRY_PHASE.get(ws.get("track_id"))
 
 # Find which phase this file belongs to.
 file_phase = None

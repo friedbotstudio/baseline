@@ -89,8 +89,34 @@ rsync -a \
   --exclude='memory/_resume.md' \
   --exclude='skill-memory/' \
   --exclude='agent-memory/' \
+  --exclude='workflows.jsonl' \
   --exclude='.DS_Store' \
   "$PKG_ROOT/.claude/" "$TEMPLATE_DIR/.claude/"
+
+# Stage 1.5 — prune dev-only skills.
+#
+# CLAUDE.md Article XI declares "absence of `owner:` is the deliberate default"
+# for user/third-party skills. The audit (.claude/skills/audit-baseline/audit.sh)
+# and the shipped manifest (build-manifest.mjs:collectOwnersFromTemplate) both
+# already use `owner: baseline` as the canonical signal for baseline ownership.
+# This stage closes the loop on the build side so dev-only skills — anything
+# maintained in `.claude/skills/` of the baseline repo for the maintainer's own
+# workflow (e.g., `cli-copy-review`) — stay out of the shipped tree without
+# per-skill rsync-exclude maintenance.
+#
+# Policy: a skill ships iff its SKILL.md's frontmatter contains `owner: baseline`.
+# Anything else (no `owner:` at all, `owner: user`, malformed frontmatter) is
+# pruned from the shipped template. The awk pipeline below extracts the
+# frontmatter block (everything between the first two `---` lines) and greps
+# for the exact `owner: baseline` line, mirroring build-manifest.mjs's parser.
+for skill_md in "$TEMPLATE_DIR"/.claude/skills/*/SKILL.md; do
+  [ -f "$skill_md" ] || continue
+  if ! awk '/^---$/{c++; if (c==2) exit} c==1' "$skill_md" | grep -qE '^owner:[[:space:]]+baseline[[:space:]]*$'; then
+    skill_dir="$(dirname "$skill_md")"
+    echo "build: pruning dev-only skill $(basename "$skill_dir") (no owner: baseline)" >&2
+    rm -rf "$skill_dir"
+  fi
+done
 
 # Stage 2 — overlay pristine templates from src/.
 cp "$PKG_ROOT/src/CLAUDE.template.md"      "$TEMPLATE_DIR/CLAUDE.md"
@@ -98,6 +124,7 @@ cp "$PKG_ROOT/src/seed.template.md"        "$TEMPLATE_DIR/docs/init/seed.md"
 cp "$PKG_ROOT/src/.mcp.template.json"      "$TEMPLATE_DIR/.mcp.json"
 cp "$PKG_ROOT/src/project.template.json"   "$TEMPLATE_DIR/.claude/project.json"
 cp "$PKG_ROOT/src/settings.template.json"  "$TEMPLATE_DIR/.claude/settings.json"
+cp "$PKG_ROOT/src/.claude/workflows.template.jsonl" "$TEMPLATE_DIR/.claude/workflows.jsonl"
 # NOTE: src/.npmrc.template intentionally NOT overlaid into obj/template/.
 # npm pack drops any file named `.npmrc` from the published tarball as a
 # defense against shipping registry credentials. We ship the canonical bytes

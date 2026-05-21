@@ -10,7 +10,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = resolve(__dirname, '../..');
 const NPMRC_TEMPLATE_PATH = join(PACKAGE_ROOT, 'src/.npmrc.template');
 
-export const NEVER_TOUCH = Object.freeze(['.claude/project.json']);
+export const NEVER_TOUCH = Object.freeze([
+  '.claude/project.json',
+  '.claude/workflows.jsonl',
+  '.claude/schemas/workflow-track.v1.json',
+]);
 export const SPECIAL_MERGE = Object.freeze(['.mcp.json']);
 // The shipped manifest now lives at `.claude/manifest.json` (inside the
 // template's .claude/ subtree), so the recursive cp drops it at the correct

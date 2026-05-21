@@ -40,8 +40,8 @@ Each entry's stable key is auto-numbered `Q-NNN`.
   - (c) Proper tokenizer: parse the Bash command (e.g., via `bashlex` in Python or a small in-repo tokenizer) into argv, then inspect each `git ...` invocation's argv list. Eliminates the entire false-positive class. Larger change; needs a Python dep or a hand-rolled tokenizer.
 - Scope on adoption: applies to every Bash-matcher hook (`git_commit_guard`, `destructive_cmd_guard`, possibly `process_lifecycle_guard`). The decision is shared infrastructure.
 - Companion landmine pending: if (a) is chosen, write a `landmines.md` entry capturing the `-F /tmp/msg.txt` workaround for commit messages that mention forbidden git ops.
-- Verified-at: 1feee24
-- Last-touched: 2026-05-14
+- Verified-at: b327071
+- Last-touched: 2026-05-21
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "track_id": "intake-full",
+  "description": "Expected materialized TaskList for this repo's intake-full track. Selector expands to tdd-worker-chain (the unconditional default alternate). cli-copy-review is inserted between memory-flush and grant-commit per the dogfood retrofit.",
+  "tasks": [
+    {"ord": 1, "subject": "Run /intake for <slug>", "activeForm": "Running intake", "metadata": {"phase": "intake"}, "needs_user": false, "blockedBy": []},
+    {"ord": 2, "subject": "Run /scout for <slug>", "activeForm": "Running scout", "metadata": {"phase": "scout"}, "needs_user": false, "blockedBy": [1]},
+    {"ord": 3, "subject": "Run /research for <slug>", "activeForm": "Running research", "metadata": {"phase": "research"}, "needs_user": false, "blockedBy": [2]},
+    {"ord": 4, "subject": "Run /spec for <slug>", "activeForm": "Running spec", "metadata": {"phase": "spec"}, "needs_user": false, "blockedBy": [3]},
+    {"ord": 5, "subject": "Wait for /approve-spec <path>", "activeForm": "Awaiting spec approval", "metadata": {"phase": "approve-spec", "needs_user": true}, "needs_user": true, "blockedBy": [4]},
+    {"ord": 6, "subject": "Run /tdd for <slug>", "activeForm": "Running TDD", "metadata": {"phase": "tdd"}, "needs_user": false, "blockedBy": [5]},
+    {"ord": 7, "subject": "Run /simplify for <slug>", "activeForm": "Running simplify", "metadata": {"phase": "simplify"}, "needs_user": false, "blockedBy": [6]},
+    {"ord": 8, "subject": "Run /security for <slug>", "activeForm": "Running security", "metadata": {"phase": "security"}, "needs_user": false, "blockedBy": [7]},
+    {"ord": 9, "subject": "Run /integrate for <slug>", "activeForm": "Running integrate", "metadata": {"phase": "integrate"}, "needs_user": false, "blockedBy": [8]},
+    {"ord": 10, "subject": "Run /document for <slug>", "activeForm": "Running document", "metadata": {"phase": "document"}, "needs_user": false, "blockedBy": [9]},
+    {"ord": 11, "subject": "Run /archive for <slug>", "activeForm": "Running archive", "metadata": {"phase": "archive"}, "needs_user": false, "blockedBy": [10]},
+    {"ord": 12, "subject": "Run /memory-flush for <slug>", "activeForm": "Running memory-flush", "metadata": {"phase": "memory-flush"}, "needs_user": false, "blockedBy": [11]},
+    {"ord": 13, "subject": "Run /cli-copy-review for <slug>", "activeForm": "Reviewing CLI copy", "metadata": {"phase": "cli-copy-review"}, "needs_user": false, "blockedBy": [12]},
+    {"ord": 14, "subject": "Wait for /grant-commit", "activeForm": "Awaiting commit consent", "metadata": {"phase": "grant-commit", "needs_user": true}, "needs_user": true, "blockedBy": [13]},
+    {"ord": 15, "subject": "Run /changelog for <slug>", "activeForm": "Running changelog", "metadata": {"phase": "changelog"}, "needs_user": false, "blockedBy": [14]},
+    {"ord": 16, "subject": "Run /commit for <slug>", "activeForm": "Running commit", "metadata": {"phase": "commit"}, "needs_user": false, "blockedBy": [15]}
+  ]
+}

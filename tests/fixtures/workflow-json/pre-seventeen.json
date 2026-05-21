@@ -1,0 +1,10 @@
+{
+  "request": "Pre-§17 workflow.json shape — uses entry_phase, no track_id.",
+  "slug": "sample-workflow",
+  "entry_phase": "intake",
+  "exceptions": [],
+  "completed": ["intake", "scout"],
+  "source_backlog_keys": [],
+  "created_at": 1779285000,
+  "updated_at": 1779286000
+}

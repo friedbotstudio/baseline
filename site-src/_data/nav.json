@@ -1,11 +1,12 @@
 {
   "primary": [
-    { "href": "/",                       "label": "Overview", "key": "overview" },
-    { "href": "/hooks/",                 "label": "Hooks",    "key": "hooks" },
-    { "href": "/memory/",                "label": "Memory",   "key": "memory" },
-    { "href": "/swarm/",                 "label": "Swarm",    "key": "swarm" },
-    { "href": "/skills/",                "label": "Skills",   "key": "skills" },
-    { "href": "/cli/",                   "label": "CLI",      "key": "cli" }
+    { "href": "/",                       "label": "Overview",  "key": "overview" },
+    { "href": "/hooks/",                 "label": "Hooks",     "key": "hooks" },
+    { "href": "/memory/",                "label": "Memory",    "key": "memory" },
+    { "href": "/workflows/",             "label": "Workflows", "key": "workflows" },
+    { "href": "/swarm/",                 "label": "Swarm",     "key": "swarm" },
+    { "href": "/skills/",                "label": "Skills",    "key": "skills" },
+    { "href": "/cli/",                   "label": "CLI",       "key": "cli" }
   ],
   "sidebar": [
     {
@@ -18,10 +19,11 @@
     {
       "label": "Reference",
       "items": [
-        { "href": "/hooks/",  "label": "Hooks",       "key": "hooks" },
-        { "href": "/memory/", "label": "Memory",      "key": "memory" },
-        { "href": "/swarm/",  "label": "Swarm mode",  "key": "swarm" },
-        { "href": "/cli/",    "label": "CLI",         "key": "cli" }
+        { "href": "/hooks/",     "label": "Hooks",           "key": "hooks" },
+        { "href": "/memory/",    "label": "Memory",          "key": "memory" },
+        { "href": "/workflows/", "label": "Workflow tracks", "key": "workflows" },
+        { "href": "/swarm/",     "label": "Swarm mode",      "key": "swarm" },
+        { "href": "/cli/",       "label": "CLI",             "key": "cli" }
       ]
     },
     {

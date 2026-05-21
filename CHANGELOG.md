@@ -32,9 +32,6 @@ All notable changes to this project will be documented in this file.
 
 The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.0/). The `## [Unreleased]` section is curated locally by the Phase 11.5 `changelog` skill before each `/commit`; versioned sections are inserted by `@semantic-release/changelog` at release time.
 
-### Added
-
-- BASELINE wordmark splash + manifest relocation + branded error paths
 
 ## [Unreleased]
 

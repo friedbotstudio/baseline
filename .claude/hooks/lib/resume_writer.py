@@ -191,7 +191,20 @@ def compose_snapshot(transcript: Path, project_dir: Path, trigger: str) -> str:
     workflow = _read_workflow(project_dir)
 
     slug = workflow.get("slug") or "(none)"
-    entry_phase = workflow.get("entry_phase") or "(unknown)"
+    # Post-§18: workflow.json carries `track_id`; legacy pre-§18 files carry
+    # `entry_phase`. Accept both. Map reverses
+    # `src/cli/workflow-migrator.js → ENTRY_PHASE_TO_TRACK_ID`.
+    _TRACK_ID_TO_ENTRY_PHASE = {
+        "intake-full": "intake",
+        "spec-entry": "spec",
+        "tdd-quickfix": "tdd",
+        "chore": "chore",
+    }
+    entry_phase = (
+        workflow.get("entry_phase")
+        or _TRACK_ID_TO_ENTRY_PHASE.get(workflow.get("track_id"))
+        or "(unknown)"
+    )
     completed = workflow.get("completed") or []
     exceptions = workflow.get("exceptions") or []
     phases = workflow.get("phases") or []

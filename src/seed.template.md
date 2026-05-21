@@ -247,7 +247,7 @@ Each vendored shared global ships with its own `LICENSE` + `NOTICE` alongside th
 
 - `chore` — for tasks with no failing-test-driven code change (documentation, governance counts, vendored-skill content updates, configuration, formatting, typo fixes, dependency bumps, skill consolidations). Skips `/scenario` and `/implement` — there is nothing to drive with a failing test. Runs the edits directly, then conditionally invokes `simplify` / `integrate` / `document` based on what the diff touches (each has explicit triggers in the chore skill body). `verify`, `archive`, and `/grant-commit` + `/commit` always run. Chore is a stripped-down pipeline, **not** a bypass — silent skips of triggered conditional phases are forbidden; the end-of-chore summary documents every skip rationale. Tasks that need a real failing test route to `/tdd` or higher instead.
 
-### §4.4 Commands (4) — structurally user-only
+### §4.4 Commands (6) — structurally user-only
 
 Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly one way: **Claude cannot invoke them via the Skill tool.** A command is a button only a human can press.
 
@@ -258,8 +258,9 @@ Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly on
 | `grant-commit` | Opens a 5-minute consent window for `git commit` on a protected branch. Writes `.claude/state/commit_consent`. Enforced by `git_commit_guard`. |
 | `grant-push` | Opens a 5-minute consent window for `git push` on a protected branch. Writes `.claude/state/push_consent`. Enforced by `git_commit_guard`. Not a workflow-phase gate — a runtime consent for the branch-aware policy (§11). |
 | `init-project` | One-time bootstrap. Detects stack, proposes `.claude/project.json` (test cmd, lint cmd, TDD globs, destructive patterns, artifact required sections, swarm config). Flips `configured: true`. |
+| `init-project-doctor` | Detects baseline drift — missing/invalid `.claude/workflows.jsonl`, schema/invariant violations, four-way Article IV / §18 mirror drift, and (advisory) shipped-tooling files placed outside `.claude/`. Interactive: presents each violation via `AskUserQuestion` and applies the named fix on confirmation. |
 
-**Adding a sixth command requires answering yes to both:** "does a human need to press this?" and "is 'user-only via frontmatter flag' too weak a guarantee?" Otherwise make it a skill.
+**Adding a seventh command requires answering yes to both:** "does a human need to press this?" and "is 'user-only via frontmatter flag' too weak a guarantee?" Otherwise make it a skill.
 
 ### §4.5 MCP servers (3)
 
@@ -338,7 +339,7 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 
 ## §6 — Consent model
 
-**Four consent gates + one bootstrap gate.** All are slash commands, not skills. Commands live in `.claude/commands/`; Claude cannot invoke them via the Skill tool. The guarantee is structural (file location), not flag-based. Three of the four gates are workflow-phase gates (A: `/approve-spec`, B: `/approve-swarm`, C: `/grant-commit`); the fourth (`/grant-push`) is a Bash-time consent for the branch-aware push policy in §11.
+**Four consent gates + one bootstrap + one doctor.** All are slash commands, not skills. Commands live in `.claude/commands/`; Claude cannot invoke them via the Skill tool. The guarantee is structural (file location), not flag-based. Three of the four gates are workflow-phase gates (A: `/approve-spec`, B: `/approve-swarm`, C: `/grant-commit`); the fourth (`/grant-push`) is a Bash-time consent for the branch-aware push policy in §11. The bootstrap is `/init-project`; the doctor is `/init-project doctor` (drift detector + repairer for `.claude/workflows.jsonl` + the §18 / Article IV four-way mirror; see §18.7).
 
 | Gate | When it fires | Unlocks |
 |---|---|---|
@@ -598,3 +599,147 @@ The audit at `.claude/skills/audit-baseline/audit.sh` consumes `manifest.owners.
 The audit also verifies constitutional citation: CLAUDE.md SHALL contain the literal string "Article XI" and a reference to the manifest, and `docs/init/seed.md` SHALL contain "§17" and a manifest reference. Missing citations trigger FAIL with `CLAUDE.md missing Article XI citation` or `seed.md missing §17 citation`.
 
 This provenance system is intentionally minimal: the manifest tracks shipped-file hashes; the frontmatter declares per-skill ownership; the audit reconciles the two against on-disk reality. Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals; the per-file `manifest.files` map already covers every file in every skill directory. A future `npx @friedbotstudio/create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to safely re-overlay baseline-owned files while leaving user-added skills and locally-customized baseline skills untouched — that subcommand is out of scope here.
+
+---
+
+## §18 — Workflow definitions and Article IV invariants
+
+### 18.1 Source of truth
+
+`.claude/workflows.jsonl` is the canonical source for every workflow this baseline can execute. The file holds one Track record per line (JSONL). It is project-owned and `NEVER_TOUCH` (declared in `src/cli/install.js:NEVER_TOUCH` and `scripts/build-manifest.mjs:NEVER_TOUCH_PATHS`); baseline upgrades preserve user customizations verbatim via `NEVER_TOUCH_PRESERVE`. The shipped baseline overlays the pristine 6-track set from `src/.claude/workflows.template.jsonl` onto fresh installs via `scripts/build-template.sh` Stage 2; existing installs are not touched. The JSON Schema document at `.claude/schemas/workflow-track.v1.json` is referenced by `Track.$schema` and is itself `NEVER_TOUCH`.
+
+`workflows.jsonl` supersedes the hardcoded triage templates (intake-full / spec-entry / tdd-quickfix / chore). Triage reads `workflows.jsonl` at seed time, validates each Track, classifies the user's request, and materializes the chosen Track's DAG into the TaskList. The canonical four tracks shipped in the pristine template are byte-equivalent to the pre-§18 hardcoded templates per spec AC-016 (`tests/byte-equivalent-migration.test.mjs`).
+
+### 18.2 Track schema
+
+A **Track** record has this shape (full definition in `.claude/schemas/workflow-track.v1.json`):
+
+```jsonc
+{
+  "$schema": "./schemas/workflow-track.v1.json",
+  "track_id": "<unique-across-file>",
+  "name": "<short label>",
+  "description": "<paragraph; read by the LLM classifier>",
+  "selectable": true,            // false = sub-track only (referenced via sub_track)
+  "selector_hints": ["<descriptive phrase>", ...],
+  "preconditions": [{"name": "<predicate>", "argument": "<opt>"}, ...],
+  "invariants": ["commits", "requires_spec", ...],
+  "nodes": [Node, ...]
+}
+```
+
+A **Node** is either a `task` (skill invocation or sub-track expansion) or a `selector` (picks one of multiple alternates at runtime):
+
+```jsonc
+{
+  "id": "<unique-within-track>",
+  "type": "task" | "selector",
+  // type=task → exactly one of:
+  "skill": "<skill-or-command-name>",
+  "sub_track": "<another-track_id>",
+  // type=selector → required:
+  "alternates": [Alternate, ...],
+  // shared:
+  "input": "<opt; passed to the skill at invocation>",
+  "invocation_prompt": "<opt; declared-now/used-later — v2 Handlebars+LLM>",
+  "output": "<opt; informational artifact path>",
+  "output_formatter_prompt": "<opt; declared-now/used-later>",
+  "depends_on": ["<predecessor node id>", ...],
+  "blocks": ["<successor node id>", ...],
+  "can_parallel": false,         // true: peers at same dep level dispatch concurrently
+  "needs_user": false,           // true: consent gate; harness yields
+  "activeForm": "<TaskList spinner text>",
+  "metadata": {"phase": "<...>"}
+}
+```
+
+An **Alternate** (inside a selector node):
+
+```jsonc
+{
+  "skill": "<skill-name>",       // XOR with sub_track
+  "sub_track": "<track_id>",     // XOR with skill
+  "preconditions": [Predicate, ...],
+  "description": "<rationale>"
+}
+```
+
+A **Predicate** (track-level and alternate-level):
+
+```jsonc
+{
+  "name": "<v1-vocabulary>",
+  "argument": "<opt; e.g., '3' for min_components>"
+}
+```
+
+### 18.3 Article IV invariants (I1..I11)
+
+Every Track in `workflows.jsonl` SHALL satisfy these invariants. Validation runs at three points: install/upgrade time (audit-baseline), triage time (LLM-driven selector), and harness time (per-node before dispatch).
+
+- **I1.** Unique `track_id` across the file.
+- **I2.** Unique `node.id` within a track.
+- **I3.** `type=task` nodes carry exactly one of `{skill, sub_track}`. `type=selector` nodes carry non-empty `alternates[]`.
+- **I4.** Every `depends_on` and `blocks` reference resolves to a `node.id` in the same track.
+- **I5.** The dependency DAG is acyclic.
+- **I6.** Tracks declaring the `commits` invariant SHALL include a `needs_user: true` `grant-commit` node ordered before the node with `skill: "commit"`.
+- **I7.** Every `sub_track` reference resolves to a Track with `selectable: false`.
+- **I8.** Every `skill:` reference resolves to a known invokable — skill in `EXPECTED_SKILLS ∪ project.json additions.skills`, OR consent-gate command in `.claude/commands/` (e.g., `approve-spec`, `grant-commit`, `approve-swarm`).
+- **I9.** `needs_user: true` nodes appear in dependency order before any node that depends on their consent.
+- **I10.** A selector node's alternates SHALL share the same shape (all skill, or all sub_track) — they're interchangeable in the DAG.
+- **I11.** Every `Predicate.name` resolves to a known v1 predicate (see §18.4).
+
+### 18.4 Predicate vocabulary (v1)
+
+The closed set of declarative predicates that may appear in Track or Alternate `preconditions[]`:
+
+| Predicate | Argument | Evaluates true when |
+|---|---|---|
+| `requires_git` | — | `git rev-parse --is-inside-work-tree` exits 0 at the project root. |
+| `requires_user_override` | `<value>` | The user explicitly named this alternate in conversation (e.g., "use solo"). |
+| `requires_min_components` | `<int>` | The approved spec has at least N C4 Components. |
+| `requires_phase_completed` | `<phase>` | The named phase appears in `workflow.json → completed`. |
+| `requires_skill_present` | `<skill_id>` | The named skill exists in `EXPECTED_SKILLS ∪ additions.skills`. |
+
+Adding a new predicate is a constitutional change: update this section, update `src/cli/workflows-validator-predicates.js`, and update the corresponding seed.template.md mirror.
+
+### 18.5 `invocation_prompt` / `output_formatter_prompt` — declared, deferred
+
+Both fields are part of the v1 Node schema and validated at parse time. They are **not actuated in v1** — the harness ignores them. They are declared now to lock the schema shape so future Track records can carry them without a schema bump. The v2 actuation plan: Handlebars-style templates with LLM interpolation, allowing per-track UX customization of the invocation phrasing and the post-skill output formatting. Until v2 ships, populating these fields is allowed but inert.
+
+### 18.6 Migration from pre-§18 workflow.json
+
+An in-flight `.claude/state/workflow.json` written by a pre-§18 baseline (carries `entry_phase` field, no `track_id`) is one-shot-migrated by the harness preflight before the workflow loads. The canonical map:
+
+| `entry_phase` (pre-§18) | `track_id` (post-§18) |
+|---|---|
+| `intake` | `intake-full` |
+| `spec` | `spec-entry` |
+| `tdd` | `tdd-quickfix` |
+| `chore` | `chore` |
+
+`completed[]` is remapped from phase names to node ids; the canonical tracks are designed so most phase names equal the corresponding node id (identity remap), with the exception of selector wrappers (e.g., `implementation` in intake-full wraps the swarm-vs-tdd selection). The migrator initializes `skipped_alternates: []` and refreshes `updated_at`. Idempotent: re-running on an already-migrated workflow.json is a no-op. Unmapped `entry_phase` halts with a named error; the user restarts via `/triage`.
+
+Migrator implementation: `src/cli/workflow-migrator.js` exports `migrateWorkflowJsonInPlace(filePath)`.
+
+### 18.7 Lifecycle: install, upgrade, doctor
+
+- **Fresh install.** `scripts/build-template.sh` overlays `src/.claude/workflows.template.jsonl` → `obj/template/.claude/workflows.jsonl` at Stage 2, and the pristine schemas/ directory bulk-rsyncs at Stage 1. The CLI install copies both into the consumer target. Result: every fresh install has `<target>/.claude/workflows.jsonl` with the canonical 4 selectable + 2 sub-track set.
+
+- **Upgrade.** Both `.claude/workflows.jsonl` and `.claude/schemas/workflow-track.v1.json` are `NEVER_TOUCH`. The merge flow returns `NEVER_TOUCH_PRESERVE` for them on every upgrade; user customizations (added tracks, modified nodes, per-project additions like `cli-copy-review`) survive verbatim.
+
+- **Doctor.** `/init-project doctor` (new sub-command) detects drift: missing `workflows.jsonl`, schema/invariant violations, four-way mirror drift between seed.md §18 / src/seed.template.md §18 / CLAUDE.md Article IV / src/CLAUDE.template.md Article IV, and (advisory) shipped-tooling files placed outside `.claude/` per the convention codified at §3.
+
+### 18.8 Cross-references
+
+- `CLAUDE.md Article IV` — phase-ordering rules; binding on every commit-producing track.
+- `CLAUDE.md Article VII` — git rules; relevant to the `requires_git` precondition.
+- `seed.md §3` — directory structure convention (tooling lives under `.claude/`).
+- `seed.md §17` — skill provenance (separate concern; workflows.jsonl is project-owned, not baseline-owned).
+- `.claude/workflows.jsonl` — this project's live tracks.
+- `.claude/schemas/workflow-track.v1.json` — JSON Schema referenced by `Track.$schema`.
+- `src/cli/workflows-validator.js` — validator orchestration.
+- `src/cli/workflows-validator-invariants.js` — invariant checks I1–I11.
+- `src/cli/workflows-validator-predicates.js` — predicate vocabulary.
+- `src/cli/workflow-migrator.js` — pre-§18 → post-§18 migrator.
+- `src/cli/track-tasklist-materializer.js` — Track → TaskList shape.

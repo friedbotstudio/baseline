@@ -1,0 +1,141 @@
+---
+layout: docs.njk
+permalink: /workflows/index.html
+pageTitle: "Workflow tracks · baseline"
+title: Workflow tracks
+titlePrimary: Workflow tracks
+titleAccent: "."
+description: "Workflows live in .claude/workflows.jsonl. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Four selectable tracks ship in the pristine template."
+eyebrow: Reference
+lead: "Workflows live in <code>.claude/workflows.jsonl</code>. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Four selectable tracks ship in the pristine template."
+active: workflows
+sidebarActive: workflows
+heroSymbol: workflows
+toc:
+  - { id: tracks,     label: "What a track is" }
+  - { id: canonical,  label: "The canonical set",     lvl: 3 }
+  - { id: subtracks,  label: "Sub-tracks",            lvl: 3 }
+  - { id: invariants, label: "Article IV invariants" }
+  - { id: predicates, label: "Predicate vocabulary" }
+  - { id: declare,    label: "Declaring a project-local track" }
+  - { id: example,    label: "Example",               lvl: 3 }
+  - { id: doctor,     label: "/init-project doctor" }
+  - { id: drift,      label: "Drift detection",       lvl: 3 }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="tracks">What a track is</h2>
+    </div>
+    <p>A track is a DAG of skill nodes declared in <code>.claude/workflows.jsonl</code>. One record per line. Each node names a skill, lists its predecessors and successors, and optionally flags itself as a consent gate or as part of a parallel cluster.</p>
+  </div>
+
+  <h3 id="canonical">The canonical set</h3>
+  <p>Four selectable tracks ship in the pristine template:</p>
+  <ul>
+    <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, changelog, commit.</li>
+    <li><code>spec-entry</code>. Starts at <code>/spec</code>. For a bugfix where the failing case is contract-level. Skips intake, scout, research.</li>
+    <li><code>tdd-quickfix</code>. Starts at <code>/tdd</code>. For a localised bug with a known failing case. Skips spec entirely.</li>
+    <li><code>chore</code>. Stripped-down. For documentation, configuration tweaks, dependency bumps. Skips scenario and implement.</li>
+  </ul>
+
+  <h3 id="subtracks">Sub-tracks</h3>
+  <p>Two sub-tracks ship in the canonical set, referenced only by selector nodes inside the four selectable tracks: <code>swarm-implementation</code> (parallel dispatch via <code>swarm-plan</code> and <code>swarm-dispatch</code>) and <code>tdd-worker-chain</code> (solo fallback). Sub-tracks carry <code>selectable: false</code>; triage cannot pick them directly.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="invariants">Article IV invariants</h2>
+    </div>
+    <p>Every track in <code>workflows.jsonl</code> satisfies eleven invariants. The validator runs at install time (audit-baseline), at triage time (the LLM-driven selector), and at harness time (per node before dispatch).</p>
+  </div>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Invariant</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="phase">I1</td><td>Unique <code>track_id</code> across the file.</td></tr>
+      <tr><td class="phase">I2</td><td>Unique <code>node.id</code> within a track.</td></tr>
+      <tr><td class="phase">I3</td><td><code>type=task</code> nodes carry exactly one of <code>{skill, sub_track}</code>. <code>type=selector</code> nodes carry non-empty <code>alternates</code>.</td></tr>
+      <tr><td class="phase">I4</td><td>Every <code>depends_on</code> and <code>blocks</code> reference resolves to a <code>node.id</code> in the same track.</td></tr>
+      <tr><td class="phase">I5</td><td>The dependency DAG is acyclic.</td></tr>
+      <tr><td class="phase">I6</td><td>Tracks declaring the <code>commits</code> invariant include a <code>needs_user</code> <code>/grant-commit</code> node ordered before the node with <code>skill: "commit"</code>.</td></tr>
+      <tr><td class="phase">I7</td><td>Every <code>sub_track</code> reference resolves to a track with <code>selectable: false</code>.</td></tr>
+      <tr><td class="phase">I8</td><td>Every <code>skill</code> reference resolves to a known invokable: a skill in <code>EXPECTED_SKILLS</code> plus <code>project.json additions.skills</code>, or a consent-gate command.</td></tr>
+      <tr><td class="phase">I9</td><td><code>needs_user</code> nodes appear in dependency order before any node that depends on their consent.</td></tr>
+      <tr><td class="phase">I10</td><td>A selector node's alternates share the same shape (all <code>skill</code>, or all <code>sub_track</code>).</td></tr>
+      <tr><td class="phase">I11</td><td>Every <code>Predicate.name</code> resolves to a known v1 predicate (see §III).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="predicates">Predicate vocabulary (v1)</h2>
+    </div>
+    <p>The closed set of declarative predicates that may appear in Track or Alternate <code>preconditions</code>. Unknown predicates fail Article IV invariant I11 at validate time.</p>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Predicate</th><th>Argument</th><th>Evaluates true when</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="phase">requires_git</td><td><span class="muted">(none)</span></td><td><code>git rev-parse --is-inside-work-tree</code> exits 0 at the project root.</td></tr>
+      <tr><td class="phase">requires_user_override</td><td><code>&lt;value&gt;</code></td><td>The user explicitly named this alternate in conversation (e.g., "use solo").</td></tr>
+      <tr><td class="phase">requires_min_components</td><td><code>&lt;int&gt;</code></td><td>The approved spec has at least N C4 Components.</td></tr>
+      <tr><td class="phase">requires_phase_completed</td><td><code>&lt;phase&gt;</code></td><td>The named phase appears in <code>workflow.json -&gt; completed</code>.</td></tr>
+      <tr><td class="phase">requires_skill_present</td><td><code>&lt;skill_id&gt;</code></td><td>The named skill exists in <code>EXPECTED_SKILLS</code> plus <code>additions.skills</code>.</td></tr>
+    </tbody>
+  </table>
+  <p>Adding a new predicate is a constitutional change. Update <code>seed.md §18.4</code>, the predicate validator (<code>src/cli/workflows-validator-predicates.js</code>), and the corresponding <code>seed.template.md</code> mirror.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="declare">Declaring a project-local track</h2>
+    </div>
+    <p>Tracks are project-owned. The file <code>.claude/workflows.jsonl</code> is tier-classified <code>NEVER_TOUCH</code>; baseline upgrades preserve your additions verbatim.</p>
+  </div>
+  <p>Add a Track record to <code>.claude/workflows.jsonl</code>, one record per line. The schema lives at <code>.claude/schemas/workflow-track.v1.json</code> and is documented in <code>seed.md §18.2</code>.</p>
+  <p>Validate with <code>/init-project doctor</code> before the next <code>/triage</code> invocation. The doctor checks JSON Schema conformance and Article IV invariants; named errors point at offending lines with a remediation path.</p>
+  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector + AskUserQuestion flow as the canonical four.</p>
+
+  <h3 id="example">Example</h3>
+  <p>A minimal pre-commit-lint track that runs a linter after <code>memory-flush</code> and before <code>/grant-commit</code>:</p>
+<pre><code><span class="tok-com">{</span><span class="tok-str">"$schema"</span>:<span class="tok-str">"./schemas/workflow-track.v1.json"</span>,<span class="tok-str">"track_id"</span>:<span class="tok-str">"pre-commit-lint"</span>,<span class="tok-str">"name"</span>:<span class="tok-str">"Pre-commit lint"</span>,<span class="tok-str">"description"</span>:<span class="tok-str">"Run linter before commit."</span>,<span class="tok-str">"selectable"</span>:<span class="tok-kw">true</span>,<span class="tok-str">"selector_hints"</span>:[<span class="tok-str">"lint pass"</span>,<span class="tok-str">"formatting"</span>],<span class="tok-str">"preconditions"</span>:[],<span class="tok-str">"invariants"</span>:[<span class="tok-str">"commits"</span>],<span class="tok-str">"nodes"</span>:[
+  {<span class="tok-str">"id"</span>:<span class="tok-str">"lint"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"prose"</span>,<span class="tok-str">"depends_on"</span>:[],<span class="tok-str">"blocks"</span>:[<span class="tok-str">"grant-commit"</span>]},
+  {<span class="tok-str">"id"</span>:<span class="tok-str">"grant-commit"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"grant-commit"</span>,<span class="tok-str">"depends_on"</span>:[<span class="tok-str">"lint"</span>],<span class="tok-str">"blocks"</span>:[<span class="tok-str">"commit"</span>],<span class="tok-str">"needs_user"</span>:<span class="tok-kw">true</span>},
+  {<span class="tok-str">"id"</span>:<span class="tok-str">"commit"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"commit"</span>,<span class="tok-str">"depends_on"</span>:[<span class="tok-str">"grant-commit"</span>],<span class="tok-str">"blocks"</span>:[]}
+<span class="tok-com">]}</span></code></pre>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="doctor"><code>/init-project doctor</code></h2>
+    </div>
+    <p>Run <code>/init-project doctor</code> to validate <code>.claude/workflows.jsonl</code> against the shipped JSON Schema and Article IV's eleven invariants. The doctor surfaces every violation with a remediation path and applies the named fix on user confirmation.</p>
+  </div>
+
+  <h3 id="drift">Drift detection</h3>
+  <p>The doctor checks four dimensions on every run.</p>
+  <ol>
+    <li><strong>Schema conformance.</strong> Each Track record validates against <code>.claude/schemas/workflow-track.v1.json</code>.</li>
+    <li><strong>Article IV invariants.</strong> I1..I11 evaluated per Track.</li>
+    <li><strong>Skill resolution.</strong> Every <code>skill</code> reference resolves to <code>EXPECTED_SKILLS</code> plus <code>project.json additions.skills</code>, or to a consent-gate command in <code>.claude/commands/</code>.</li>
+    <li><strong>Predicate vocabulary.</strong> Every <code>Predicate.name</code> is in the v1 closed set above.</li>
+  </ol>
+
+  <p>The four-way Article IV mirror is enforced separately. The <code>seed.md §18</code> text, <code>CLAUDE.md Article IV</code>, <code>src/seed.template.md</code>, and <code>src/CLAUDE.template.md</code> are bound together by <code>audit-baseline</code>. The doctor extends that check to <code>workflows.jsonl</code> against the shipped pristine template at <code>obj/template/.claude/workflows.template.jsonl</code>. Any track in your <code>workflows.jsonl</code> that has the same <code>track_id</code> as a pristine track but differs structurally is flagged.</p>
+
+  <p>Schema-version handling closes the upgrade-safety loop. Each Track carries a <code>$schema</code> field referencing the JSON Schema document version. Unknown <code>$schema</code> values are rejected with a named error citing the supported versions. This prevents silent schema-version skew across baseline upgrades; bumping the schema is a constitutional change that updates the mirror at the same time.</p>
+</section>

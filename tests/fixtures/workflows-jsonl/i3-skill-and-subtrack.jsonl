@@ -1,0 +1,1 @@
+{"$schema":"./schemas/workflow-track.v1.json","track_id":"i3-violator","name":"I3 violator","description":"Node has both skill and sub_track","selectable":true,"selector_hints":["x"],"preconditions":[],"invariants":[],"nodes":[{"id":"bad-node","type":"task","skill":"intake","sub_track":"some-sub-track","depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false}]}

@@ -13,7 +13,11 @@ const MANIFEST_REL = '.claude/manifest.json';
 // Tier classification rules (CLAUDE.md upgrade-flow-rework spec AC-013).
 // Order matters: NEVER_TOUCH > SPECIAL_MERGE > SEMANTIC_EXPLICIT >
 // extension default > BINARY_PROMPT. Frontmatter `tier:` overrides all.
-const NEVER_TOUCH_PATHS = new Set(['.claude/project.json']);
+const NEVER_TOUCH_PATHS = new Set([
+  '.claude/project.json',
+  '.claude/workflows.jsonl',
+  '.claude/schemas/workflow-track.v1.json',
+]);
 const SPECIAL_MERGE_PATHS = new Set(['.mcp.json']);
 const SEMANTIC_EXPLICIT = new Set([
   'docs/init/seed.md',

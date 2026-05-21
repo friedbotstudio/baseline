@@ -80,7 +80,7 @@ def read_skill_owner(slug):
     m = re.search(r'^owner:\s*(\S+)\s*$', fm.group(1), re.MULTILINE)
     return m.group(1) if m else None
 
-EXPECTED_COMMANDS = {"approve-spec", "approve-swarm", "grant-commit", "grant-push", "init-project"}
+EXPECTED_COMMANDS = {"approve-spec", "approve-swarm", "grant-commit", "grant-push", "init-project", "init-project-doctor"}
 
 EXPECTED_MEMORY_FILES = {
     # Canonical files (seven)
@@ -186,7 +186,7 @@ skills_claimed  = find_count(
     r"\b(\d+|twenty-(?:four|five|six|seven|eight|nine)|"
     r"thirty|thirty-(?:one|two|three|four|five|six|seven|eight|nine)|forty)\s+skills?\b")
 gates_claimed   = find_count(r"\b(\d+|three)\s+consent\s+gates?\b")
-cmds_claimed    = 5 if re.search(r"four\s+consent\s+gates?\s*\+\s*one\s+bootstrap", seed, re.IGNORECASE) else None
+cmds_claimed    = 6 if re.search(r"four\s+consent\s+gates?\s*\+\s*one\s+bootstrap\s*\+\s*one\s+doctor", seed, re.IGNORECASE) else (5 if re.search(r"four\s+consent\s+gates?\s*\+\s*one\s+bootstrap", seed, re.IGNORECASE) else None)
 
 def check_count(label, claimed, actual):
     if claimed is None:

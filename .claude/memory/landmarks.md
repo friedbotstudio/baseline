@@ -455,3 +455,53 @@ Each entry's stable key is `path:line`.
 - Verified-at: 0d4f8c8
 - Last-touched: 2026-05-20
 - Caveat: the wordmark width is 60 cols. Narrow terminals (< 60 cols) fall through to the plain HELP_TEXT body via `wordmarkFits()`. If you change the WORDMARK array, update WORDMARK_WIDTH (auto-derived) and re-render `site-src/assets/cli-splash.png` with `freeze --background "#080b12"` so the docs preview stays in sync. The version is intentionally absent from `renderSplash` — restoring it would regress the docs-PNG-staleness fix; version belongs to `renderVersionMarquee` and `renderBrandStrip` only.
+
+## src/cli/workflows-validator.js:1
+
+- Role: Orchestration — top-level workflows.jsonl validator. Loads `.claude/workflows.jsonl`, parses each line, runs Article IV invariants I1..I11 via `workflows-validator-invariants.js`. Returns `{ ok, tracks | errors }`. Consumed by `triage/seed-tasklist.mjs` (validate + materialize modes), `audit-baseline/audit.sh` (post-§18 hook), `commands/init-project-doctor.md`.
+- Companion: `src/cli/workflows-validator-invariants.js:1`, `src/cli/workflows-validator-predicates.js:1`, `.claude/schemas/workflow-track.v1.json`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+
+## src/cli/workflows-validator-invariants.js:1
+
+- Role: Domain — Article IV invariants I1..I11. Each `check*` returns `[{invariant, track_id, node_id, message}, ...]`; empty = holds. I1 unique track_ids; I2 selectable→entry node; I3 skill XOR sub_track (selector exempt with non-empty alternates); I4 depends_on/blocks resolve; I5 DAG; I6 commit tracks include `/grant-commit` before commit; I7 needs_user→consent command; I8 every skill/sub_track/command resolves on disk; I9 can_parallel siblings share blockedBy; I10 selector alternates share downstream contract; I11 predicates use v1 vocabulary.
+- Companion: `src/cli/workflows-validator.js:1`, `src/cli/workflows-validator-predicates.js:1`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+
+## src/cli/workflows-validator-predicates.js:1
+
+- Role: Foundation — closed v1 predicate vocabulary for Track/selector preconditions. Five predicates: `requires_git` (work-tree), `requires_user_override` (force-flag), `requires_min_components` (spec count ≥ N), `requires_phase_completed`, `requires_skill_present`. Each `evaluate<Name>(arg, ctx)` returns boolean; caller passes `ctx = {workflow, project, slug}`. Adding a predicate: implement here, add to `KNOWN_PREDICATES`, update I11, note in seed.md §18.4.
+- Companion: `src/cli/workflows-validator-invariants.js:1`, `src/cli/track-tasklist-materializer.js:1`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+
+## src/cli/workflow-migrator.js:1
+
+- Role: Foundation — one-shot in-place migrator for pre-§18 `workflow.json` (`entry_phase`, no `track_id`) → post-§18 shape. Derives `track_id` via `ENTRY_PHASE_TO_TRACK_ID` (intake→intake-full, spec→spec-entry, tdd→tdd-quickfix, chore→chore), remaps `completed[]` to node-ids, inits `skipped_alternates: []`, removes `entry_phase`. Idempotent. Unmapped `entry_phase` throws. Invoked by `harness/SKILL.md` preflight Step 3a. Reverse-map mirrored in `track_guard.sh` + `lib/resume_writer.py` for both-shape runtime acceptance.
+- Companion: `.claude/skills/harness/SKILL.md`, `.claude/hooks/track_guard.sh:1`, `.claude/hooks/lib/resume_writer.py:1`, `tests/workflow-migrator.test.mjs`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+- Caveat: non-atomic write — backlog `workflow-migrator-write-not-atomic-power-loss-corruption-3e91`.
+
+## src/cli/track-tasklist-materializer.js:1
+
+- Role: Foundation — Track → canonical TaskList JSON (subjects, activeForms, metadata.phase, needs_user, blockedBy ordinals). Selector nodes via `evaluateAlternates(node, ctx)` (filter by `preconditions[]`; first qualifying alternate wins). Sub-tracks via `expandSubTrack` (inline nodes; propagate parent `depends_on` to entry nodes so the chain links cleanly). Used by `triage/seed-tasklist.mjs` and `tests/track-tasklist-materializer.test.mjs` against golden fixtures (byte-equivalent migration coverage).
+- Companion: `.claude/skills/triage/seed-tasklist.mjs`, `tests/fixtures/golden-tasklists/*.golden.json`, `src/cli/workflows-validator-predicates.js:1`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+
+## src/.claude/workflows.template.jsonl:1
+
+- Role: Pristine `.claude/workflows.jsonl` shipped by the baseline. Six lines: four selectable tracks (`intake-full`, `spec-entry`, `tdd-quickfix`, `chore`) + two sub-tracks (`swarm-implementation`, `tdd-worker-chain`). Each line conforms to `.claude/schemas/workflow-track.v1.json`. Byte-equivalent to pre-§18 hardcoded triage templates per spec AC-016 (`tests/byte-equivalent-migration.test.mjs`). Copied to `<target>/.claude/workflows.jsonl` by `build-template.sh` Stage 2 and CLI install. NEVER_TOUCH at upgrade time.
+- Companion: `.claude/workflows.jsonl`, `src/cli/install.js:79`, `scripts/build-manifest.mjs`, `.claude/schemas/workflow-track.v1.json`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21
+
+## .claude/skills/triage/seed-tasklist.mjs:1
+
+- Role: Foundation helper for `triage` (post-§18). Node ESM CLI; two modes — `--validate-only` (validate via `workflows-validator.js`; non-zero on first invariant violation) and `<track_id> <slug>` (materialize via `track-tasklist-materializer.js`; print TaskList JSON for triage's `TaskCreate` loop). Slug regex `^[a-z0-9][a-z0-9-]{0,63}$` (backlog `triage-helper-slug-interpolation-into-bash-subprocess-a720`).
+- Companion: `.claude/skills/triage/SKILL.md:1`, `src/cli/workflows-validator.js:1`, `src/cli/track-tasklist-materializer.js:1`.
+- Verified-at: b327071
+- Last-touched: 2026-05-21

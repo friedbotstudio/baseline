@@ -41,7 +41,7 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 
 ## What this is
 
-The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **38 skills** organised into ten categories, **1 subagent** for parallel work in isolated worktrees, an **11-phase workflow** from intake to commit, and **3 user-typed consent gates** that Claude cannot forge.
+The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **38 skills** organised into ten categories, **1 subagent** for parallel work in isolated worktrees, **4 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
 
 Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 
@@ -62,9 +62,9 @@ A team that installs the baseline stops typing *"don't push, don't `--amend`, do
 | What | Count | Where it lives |
 |---|---:|---|
 | **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit | 22 | `.claude/hooks/` |
-| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, audit, alternate tracks, and shared globals | 36 | `.claude/skills/` |
+| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, audit, alternate tracks, shared globals, and maintenance | 38 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
-| **Workflow phases** — intake → scout → research → spec → tdd → simplify → security → integrate → document → archive → memory-flush → commit | 11 | enforced by `track_guard` |
+| **Workflow tracks** declared in `.claude/workflows.jsonl`. Canonical set: `intake-full` (11 nodes), `spec-entry`, `tdd-quickfix`, `chore`. Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set. | 4 selectable + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude | 3 | `consent_gate_grant` UserPromptSubmit hook |
 | **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke) | 3 | `.mcp.json` |
 
@@ -158,7 +158,7 @@ The three workflow-phase consent gates pause the workflow until you type the cor
 
 - **`/approve-spec <slug>`** — after the spec phase, before any code is written
 - **`/approve-swarm <slug>`** — after `/swarm-plan`, before parallel dispatch
-- **`/grant-commit`** — after `/archive`, before the commit lands
+- **`/grant-commit`** — after `/archive` and `/memory-flush`, before the commit lands
 
 A fourth consent gate sits outside the phase pipeline:
 
@@ -172,7 +172,7 @@ The 22 hooks declared in `.claude/settings.json` fire at every Claude tool bound
 
 The architectural rule is simple: **decisions live in main context; subagents only execute pre-decided recipes**. The baseline ships exactly one subagent — `swarm-worker` — and its only sanctioned use is parallel dispatch of fully-specified recipes inside isolated git worktrees during `/swarm-dispatch`. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) lives instead as a **skill** that runs in main context with full conversation visibility.
 
-The 11-phase workflow is enforced at the write boundary by `track_guard`. Phase ordering is binding; the only mechanism to bypass a phase is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage` at workflow creation time. The chore track is a stripped-down ordering of the same gates, with the test-first phases removed because there is nothing to test-first.
+Tracks declared in `.claude/workflows.jsonl` are enforced at the write boundary by `track_guard`. Node ordering inside each track is binding; the only mechanism to bypass a node is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage` at workflow creation time. The `chore` track is a stripped-down ordering of the same gates, with the test-first nodes removed because nothing needs testing first. Projects declare their own tracks (or add nodes to the canonical ones) by editing their `.claude/workflows.jsonl`. Article IV's invariants (I1..I11) bind every track regardless of who wrote it; a track that omits `/grant-commit` before a `commit` node, or whose dependency graph contains a cycle, is rejected at triage time with a named error.
 
 The constitution at `CLAUDE.md` is the source of truth for in-session behaviour; `docs/init/seed.md` is the source of truth for the baseline's shape. When the constitution and the implementation conflict, the constitution governs and the implementation gets corrected. When `seed.md` and the constitution conflict, `seed.md` governs and you stop and surface the drift before acting.
 

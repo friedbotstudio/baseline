@@ -121,7 +121,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <strong>Restart Claude Code.</strong> The session re-reads <code>project.json</code>; the runner hooks switch from guide mode to enforcement.
     </li>
     <li>
-      <strong>Run your first <code>/triage "&lt;request&gt;"</code>.</strong> Or <code>/harness</code> to drive the full intake-to-commit pipeline.
+      <strong>Run your first <code>/triage "&lt;request&gt;"</code>.</strong> <code>/triage</code> classifies the request and presents the picked track plus alternates via <code>AskUserQuestion</code>. You confirm or pick an alternate. <code>/harness</code> then walks the chosen track end to end, yielding at consent gates so you can review.
     </li>
   </ol>
   <p>Until <code>/init-project</code> runs, you can still use every phase. You just won't have stack-specific tailoring. Project-agnostic mode is a sanctioned operating state, not a partial install.</p>

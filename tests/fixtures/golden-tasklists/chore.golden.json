@@ -1,0 +1,11 @@
+{
+  "track_id": "chore",
+  "description": "Canonical TaskList for the pre-§17 hardcoded chore track. Single phase + memory-flush + commit gate.",
+  "tasks": [
+    {"ord": 1, "subject": "Run /chore for <slug>", "activeForm": "Running chore", "metadata": {"phase": "chore"}, "needs_user": false, "blockedBy": []},
+    {"ord": 2, "subject": "Run /memory-flush for <slug>", "activeForm": "Running memory-flush", "metadata": {"phase": "memory-flush"}, "needs_user": false, "blockedBy": [1]},
+    {"ord": 3, "subject": "Wait for /grant-commit", "activeForm": "Awaiting commit consent", "metadata": {"phase": "grant-commit", "needs_user": true}, "needs_user": true, "blockedBy": [2]},
+    {"ord": 4, "subject": "Run /changelog for <slug>", "activeForm": "Running changelog", "metadata": {"phase": "changelog"}, "needs_user": false, "blockedBy": [3]},
+    {"ord": 5, "subject": "Run /commit for <slug>", "activeForm": "Running commit", "metadata": {"phase": "commit"}, "needs_user": false, "blockedBy": [4]}
+  ]
+}

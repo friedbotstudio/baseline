@@ -71,10 +71,10 @@ toc:
       <p class="section-num">§ IV</p>
       <h2 id="threshold">When to swarm vs solo</h2>
     </div>
-    <p>The threshold is three or more independent components in the spec, where the dependency graph has at least two nodes with no cross-edge. Below that threshold, run <code>/tdd</code> solo.</p>
+    <p>The decision is declarative, not a runtime heuristic. The <code>intake-full</code> track in <code>.claude/workflows.jsonl</code> declares a selector node at phase 6 with two alternates: the <code>swarm-implementation</code> sub-track (<code>swarm-plan</code> + <code>approve-swarm</code> + <code>swarm-dispatch</code>) and the <code>tdd-worker-chain</code> sub-track (solo <code>/tdd</code>). The harness evaluates each alternate's preconditions in declaration order and picks the first match.</p>
   </div>
-  <p>The coordination overhead of <code>/swarm-plan</code> &rarr; <code>/approve-swarm</code> &rarr; <code>/swarm-dispatch</code> exceeds the parallelism benefit for small changes.</p>
-  <p>The threshold is configurable per project via <code>project.json &rarr; swarm.min_tasks_worth_swarming</code>. Default is 3.</p>
+  <p>The swarm alternate carries two preconditions: <code>requires_git</code> (the project root is a git work tree) and <code>requires_min_components</code> with argument <code>3</code> (the approved spec declares at least three C4 Components). When both pass, the harness expands the swarm sub-track inline. When either fails, the solo TDD alternate (no preconditions) wins by fallthrough.</p>
+  <p>The threshold value is configurable per project via <code>project.json &rarr; swarm.min_tasks_worth_swarming</code>. Default is 3. Editing the file <code>.claude/workflows.jsonl</code> lets a project add new preconditions or replace either alternate with a custom sub-track. The decision lives next to the data; nothing about the harness body needs to change.</p>
 </section>
 
 <section class="section">

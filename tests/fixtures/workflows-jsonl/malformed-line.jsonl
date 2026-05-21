@@ -1,0 +1,3 @@
+{"$schema":"./schemas/workflow-track.v1.json","track_id":"ok","name":"OK","description":"Valid","selectable":true,"selector_hints":["sample"],"preconditions":[],"invariants":[],"nodes":[{"id":"a","type":"task","skill":"intake","depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false}]}
+{"$schema":"./schemas/workflow-track.v1.json","track_id":"broken","name":"Broken","description":"missing closing brace,
+{"$schema":"./schemas/workflow-track.v1.json","track_id":"recovered","name":"Recovered","description":"Subsequent valid line","selectable":true,"selector_hints":["x"],"preconditions":[],"invariants":[],"nodes":[{"id":"b","type":"task","skill":"intake","depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false}]}

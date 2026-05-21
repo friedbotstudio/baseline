@@ -10,7 +10,7 @@ You are drafting an **intake document** — the earliest structured artifact in 
 
 ## Prerequisite
 
-`.claude/state/workflow.json` exists (written by `/triage`) with `entry_phase` either `intake` or a later phase that lists `intake` in `exceptions`. If neither is true, stop and instruct the user to run `/triage` first.
+`.claude/state/workflow.json` exists (written by `/triage`) with EITHER `track_id == "intake-full"` (post-§18 canonical) OR `entry_phase == "intake"` (legacy pre-§18 — accepted for in-flight workflows the harness preflight migrator hasn't run on yet) — OR a later phase that lists `intake` in `exceptions`. If neither is true, stop and instruct the user to run `/triage` first.
 
 ## Inputs
 

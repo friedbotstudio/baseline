@@ -35,7 +35,7 @@ The classification rule is: *if there is no failing test that should exist for t
 
 ## Prereq
 
-`.claude/state/workflow.json` exists with `entry_phase: "chore"` (written by `/triage`). If the prereq is not met, refuse and surface the mismatch.
+`.claude/state/workflow.json` exists with `track_id == "chore"` (post-§18; legacy `entry_phase == "chore"` accepted for pre-§18 in-flight workflows). If the prereq is not met, refuse and surface the mismatch.
 
 ## Phase shape
 
@@ -74,7 +74,7 @@ If a conditional phase is required, run it **before** `/grant-commit`. If you sk
 
 ## Steps
 
-1. Read `.claude/state/workflow.json`. Confirm `entry_phase == "chore"`. If not, stop and surface the mismatch — the user reached this skill without the correct triage classification.
+1. Read `.claude/state/workflow.json`. Confirm `track_id == "chore"` (post-§18) OR `entry_phase == "chore"` (legacy pre-§18). If neither, stop and surface the mismatch — the user reached this skill without the correct triage classification.
 2. Restate the intended edits inline: file paths, brief description per file, estimated total diff size. Confirm with the user if anything is ambiguous.
 3. Apply the edits via `Edit` / `MultiEdit` / `Write`. Honour the engineering rules from CLAUDE.md Article VI (no stubs, no commented-out code, no `TODO` / `FIXME` / `HACK` / `XXX`).
 4. **Run the binding test command and stamp the verdict (inlined verify).** Per `.claude/skills/verify/SKILL.md` (the contract doc): read `.claude/project.json → test.cmd`; run via Bash from project root (capture stdout, stderr, exit code; no retry); apply verdict rules (`PASS` iff exit 0 AND at least one test executed AND no failed/errored test; otherwise `FAIL`); atomically write `.claude/state/last_test_result` with the canonical four-line format. The `verify_pass_guard` hook reads line 1 as the binding verdict. If the verdict is `FAIL`, stop — the user investigates; chore does not loop. Write `.claude/state/harness_state` with `state: "yielded"` and `reason: "chore verify FAIL"` so the Stop hook stays silent.

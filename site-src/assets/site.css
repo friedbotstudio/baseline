@@ -616,13 +616,14 @@ footer.site {
 @media (prefers-reduced-motion: reduce) {
   .hero .hero-readmore a:hover { transform: none; }
 }
+/* 5→6 cols + max-width 660→792 keeps per-tile width 132px constant; tile geometry preserved. */
 .hero .meta-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   margin-top: 56px;
   padding: 26px 0;
   border-block: 1px solid var(--rule);
-  max-width: 660px;
+  max-width: 792px;
 }
 .hero .meta-strip .stat {
   display: flex;
@@ -850,7 +851,14 @@ figcaption.strata-key strong {
   align-self: start;
   margin: 0 auto;
 }
-.concepts.is-row { grid-template-columns: none; grid-template-rows: repeat(3, 1fr); }
+/* 2+1: concepts 01 + 02 share row 1; concept 03 hero-spans row 2 as a full-width panel. */
+.concepts.is-row {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+}
+.concepts.is-row .concept:nth-child(3) {
+  grid-column: 1 / -1;
+}
 .concepts.is-2col { grid-template-columns: 1fr 1fr; }
 .concept {
   background: var(--paper);
@@ -913,6 +921,59 @@ a.concept:focus-visible::after {
   color: var(--muted);
   margin: 0;
   max-width: none;
+}
+
+/* Concept hero-panel read-more link — byte-faithful mirror of .hero .hero-readmore
+   except for margin (top: 16px to integrate within a card; hero version uses
+   bottom: 56px to space from the meta-strip below). */
+.concept-readmore {
+  margin: 16px 0 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: -.005em;
+}
+.concept-readmore a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .15s ease, transform .15s cubic-bezier(.25, 1, .5, 1);
+}
+.concept-readmore a:hover {
+  color: var(--ink);
+  transform: translateX(3px);
+}
+.concept-readmore .arr {
+  color: var(--accent);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .concept-readmore a:hover { transform: none; }
+}
+
+/* Concept-03 track chips — HTML transcription of the bento .arch-bento .chain-chip + .chain-label pair.
+   Every value mirrors an existing rule: background var(--cream), border 1px var(--rule), radius 4
+   (= bento rect rx="4"), mono 11.5/500, color var(--ink), letter-spacing -0.005em. Zero novel tokens. */
+.track-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.track-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
 }
 
 /* =========================================================================
@@ -1058,7 +1119,7 @@ a.concept:focus-visible::after {
 /* Architecture bento — the §III workflow diagram.
    Single inline SVG with two <g> subtrees (.bento-desktop, .bento-mobile).
    Desktop renders a 1000x540 bento composition; mobile (<=768px) collapses
-   to a 360x1200 vertical stack of the same eleven phases plus three gates.
+   to a 360x1200 vertical stack of the same intake-full track nodes plus three gates.
    viewBox is fixed at 0 0 1000 1200; preserveAspectRatio="xMinYMin slice"
    clips the unused regime. CSS aspect-ratio swaps the SVG container shape;
    display:none toggles which subtree is visible. */
@@ -2219,6 +2280,58 @@ main.article {
   fill: var(--accent);
 }
 
+/* Workflows hero symbol — track DAG with a selector node and two alternates.
+   Property-by-property transcription of .fanmerge-svg .fm-* per the brief audit. */
+.trackdag-svg .wf-anchor     { fill: var(--ink); }
+.trackdag-svg .wf-node {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.trackdag-svg .wf-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  fill: var(--ink);
+}
+.trackdag-svg .wf-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  fill: var(--muted);
+}
+.trackdag-svg .wf-conn {
+  stroke: var(--ink);
+  stroke-width: 1.25;
+  fill: none;
+  stroke-linecap: round;
+}
+.trackdag-svg .wf-arrow      { fill: var(--ink); }
+.trackdag-svg .wf-selector {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.trackdag-svg .wf-selector-glyph {
+  stroke: var(--paper);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.trackdag-svg .wf-result     { fill: var(--ink); }
+.trackdag-svg .wf-caption {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  fill: var(--accent);
+}
+
 /* Hooks hero symbol — the boundary. */
 .boundary-svg .bnd-claude { fill: var(--ink); }
 .boundary-svg .bnd-tool {
@@ -2694,7 +2807,8 @@ aside.toc {
   .section .lede { grid-template-columns: 1fr; gap: 24px; }
   .install { grid-template-columns: 1fr; }
   .concepts,
-  .concepts.is-2col { grid-template-columns: 1fr; }
+  .concepts.is-2col,
+  .concepts.is-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
   header.top { padding: 0 20px; }

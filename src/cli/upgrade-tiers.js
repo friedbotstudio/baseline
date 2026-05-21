@@ -41,6 +41,28 @@ export async function resolveBase(rel, baseline_version, target, opts = {}) {
   return fetched;
 }
 
+// Returns true when resolveBase would succeed for this file without throwing
+// NoBaseError. Used by merge.js:dispatchCustomized in dry-run mode so the TUI
+// surfaces files whose BASE is unrecoverable as conflicts (and prompts the
+// user) instead of optimistically classifying them as tier-2/3 merge candidates
+// that will silently fall back to keep-mine at real-run time.
+export function canRecoverBase(rel, baseline_version, target) {
+  const cachePath = join(target, '.claude/.baseline-prior', rel);
+  if (existsSync(cachePath)) return true;
+  return Boolean(baseline_version);
+}
+
+// Render a stage_ts (the `stageTimestamp` format: ISO 8601 with every `:` and
+// `.` replaced by `-`, e.g. "2026-05-20T14-49-00-000Z") as a human-readable
+// "YYYY-MM-DD HH:MM UTC". Returns the input unchanged when the pattern doesn't
+// match so we never silently corrupt an unexpected value.
+export function formatStageTimestamp(ts) {
+  if (typeof ts !== 'string') return String(ts);
+  const m = ts.match(/^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-\d{2}-\d{3}Z$/);
+  if (!m) return ts;
+  return `${m[1]} ${m[2]}:${m[3]} UTC`;
+}
+
 export async function findPendingStage(target) {
   const stageRoot = join(target, '.claude/state/upgrade');
   if (!existsSync(stageRoot)) return null;

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./workflow-track.v1.json",
+  "title": "Workflow Track v1",
+  "description": "One Track record per line in .claude/workflows.jsonl. The Article IV invariants I1..I11 are enforced at runtime by src/cli/workflows-validator.js, NOT by JSON Schema alone — schema validation is structural; invariant validation is semantic. See docs/init/seed.md §17 for the full semantic contract.",
+  "type": "object",
+  "required": ["$schema", "track_id", "name", "description", "selectable", "selector_hints", "preconditions", "invariants", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "track_id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "selectable": { "type": "boolean" },
+    "selector_hints": { "type": "array", "items": { "type": "string" } },
+    "preconditions": { "type": "array", "items": { "$ref": "#/$defs/Predicate" } },
+    "invariants": { "type": "array", "items": { "enum": ["commits", "requires_spec", "requires_swarm", "chore", "git_only"] } },
+    "nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Node" } }
+  },
+  "$defs": {
+    "Predicate": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "enum": ["requires_git", "requires_user_override", "requires_min_components", "requires_phase_completed", "requires_skill_present"] },
+        "argument": { "type": "string" }
+      }
+    },
+    "Node": {
+      "type": "object",
+      "required": ["id", "type", "depends_on", "blocks", "can_parallel", "needs_user"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["task", "selector"] },
+        "skill": { "type": "string" },
+        "sub_track": { "type": "string" },
+        "alternates": { "type": "array", "items": { "$ref": "#/$defs/Alternate" } },
+        "input": { "type": "string" },
+        "invocation_prompt": { "type": "string" },
+        "output": { "type": "string" },
+        "output_formatter_prompt": { "type": "string" },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "blocks": { "type": "array", "items": { "type": "string" } },
+        "can_parallel": { "type": "boolean" },
+        "needs_user": { "type": "boolean" },
+        "activeForm": { "type": "string" },
+        "metadata": { "type": "object" }
+      }
+    },
+    "Alternate": {
+      "type": "object",
+      "required": ["preconditions"],
+      "additionalProperties": false,
+      "properties": {
+        "skill": { "type": "string" },
+        "sub_track": { "type": "string" },
+        "preconditions": { "type": "array", "items": { "$ref": "#/$defs/Predicate" } },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

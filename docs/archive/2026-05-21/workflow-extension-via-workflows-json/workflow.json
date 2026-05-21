@@ -1,0 +1,25 @@
+{
+  "request": "Replace the hardcoded triage track templates and the harness's sequential phase walker with a `.claude/workflows.jsonl`-driven track-graph executor. Tracks are DAGs of skill-invocation nodes with depends_on/blocks/can_parallel/sub_track/alternates/preconditions semantics. Selector nodes pick among alternates based on declarative preconditions. Triage becomes an LLM-driven track selector that presents picked + alternate tracks via AskUserQuestion. Harness becomes a graph executor with sub-track expansion and parallel-cluster dispatch. swarm-plan emits a runtime sub-track to .claude/state/swarm/<slug>.jsonl which the harness reloads as a runtime overlay. Article IV is amended to be the meta-rule governing what workflows.jsonl can declare (invariants every track must satisfy). A one-shot migrator transforms pre-\u00a717 workflow.json files. A new /init-project doctor sub-command detects + fixes baseline drift. Dogfood retrofit: the current four hardcoded templates + the cli-copy-review insertion + the swarm-vs-tdd alternates all land as records in the initial workflows.jsonl. Convention codified: user-shipped tooling lives under .claude/ except CLAUDE.md and .mcp.json.",
+  "slug": "workflow-extension-via-workflows-json",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779285696,
+  "updated_at": 1779343036
+}

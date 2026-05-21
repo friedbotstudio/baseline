@@ -56,6 +56,7 @@ THEN write `harness_state`. The marker is the session-scoped "in the loop" signa
 3. **Fresh start or resume?**
    - `.claude/state/workflow.json` exists → **resume**.
    - Absent → **fresh start**. The argument (or surrounding conversation) is the request; proceed to Pillar 1.
+3a. **Pre-§18 workflow.json migrator (post-§18 baseline).** If `workflow.json` carries the pre-§18 shape (has `entry_phase`, no `track_id`), run a one-shot migrator before continuing: `node -e "import('./src/cli/workflow-migrator.js').then(m => m.migrateWorkflowJsonInPlace('.claude/state/workflow.json'))"`. The migrator derives `track_id` from `entry_phase` via the canonical map (intake → intake-full, spec → spec-entry, tdd → tdd-quickfix, chore → chore), remaps `completed[]` phase-names to node-ids, initializes `skipped_alternates: []`, refreshes `updated_at`, and removes `entry_phase`. Idempotent: already-post-§18 input is a no-op. Unmapped `entry_phase` throws; halt with the migrator's error message and tell the user to re-run `/triage` to restart this workflow.
 4. **Ground the user before acting.** When `_resume.md` is present, open with one sentence summarizing where things stood. Grounding only — do not invent state not in `workflow.json`.
 5. **Detect divergence.** If `_resume.md`'s recent prompts contradict `workflow.json` (e.g., the user said "actually skip security" mid-session and `exceptions` doesn't reflect it), do **not** auto-proceed. Surface as a clarifying question. Memory accelerates triage; it never authorizes a skip.
 6. **Arm the safety net.** Marker FIRST: `echo "<slug>" > .claude/state/.harness_active`. Then write `harness_state` with `{state: "continue", slug, reason: "loop armed; preflight passed"}`. This pair stays in place for the entire loop; mid-loop crashes are now covered by the Stop hook.
@@ -66,8 +67,8 @@ Log every transition to `.claude/state/harness/<slug>.log` with timestamp + `ent
 
 Inside each iteration:
 
-1. **TaskList.** If empty (first invocation in a fresh session, or session-bound state was reset), **re-seed**: read `workflow.json → completed + exceptions + entry_phase` and recreate tasks for every remaining phase using the canonical templates from `triage`'s SKILL.md. Skip phases already in `completed`. Wire `addBlockedBy` so the dependency chain is preserved.
-2. **Pick the next action.** Find the lowest-id `pending` task whose `blockedBy` list is empty.
+1. **TaskList.** If empty (first invocation in a fresh session, or session-bound state was reset), **re-seed** from `workflow.json → track_id` (post-§18) via the materializer: run `node .claude/skills/triage/seed-tasklist.mjs <track_id> <slug>` to emit the canonical TaskList JSON for the track. Skip nodes whose `metadata.phase` is in `workflow.json → completed` or in `exceptions`. Wire `addBlockedBy` from each emitted entry's `blockedBy` ordinals (translated to session task_ids of predecessors). Pre-§18 workflow.json files (`entry_phase` set, no `track_id`) SHALL have been migrated by preflight Step 3a before re-seed runs; if `track_id` is still absent here, fall back to the canonical templates documented in `triage/SKILL.md` Step 5's "Reference: canonical track shapes" subsection.
+2. **Pick the next action.** Find the lowest-id `pending` task whose `blockedBy` list is empty. Then check for a **parallel cluster** (SP-002 / Article IV invariant supporting `can_parallel: true`): if the picked task carries `can_parallel: true` in its metadata AND one or more SIBLING pending tasks share both (a) identical `blockedBy` lists AND (b) `can_parallel: true`, group the picked task + every such sibling into a single cluster for this iteration. If no siblings share both conditions, proceed with the single task as today.
 3. **If no pending task remains** (workflow complete), **EXIT LOOP with DONE**:
    - Marker FIRST: `rm -f .claude/state/.harness_active`.
    - Write `harness_state` with `{state: "done", slug, reason: "workflow complete"}`.
@@ -76,10 +77,18 @@ Inside each iteration:
    - Marker FIRST: `rm -f .claude/state/.harness_active`.
    - Write `harness_state` with `{state: "yielded", slug, reason: "yielded at /<gate>"}` — exactly three fields.
    - Break out of the loop; the terminal message names the consent command for the user to run.
-5. **Otherwise INVOKE the phase skill:**
-   - `TaskUpdate` to `in_progress` (set `activeForm` to the imperative-progressive form, e.g. "Running scout").
-   - Log `entered <phase>` to `.claude/state/harness/<slug>.log`.
-   - Invoke the matching phase skill via the **`Skill` tool — one invocation per loop iteration**.
+5. **Otherwise INVOKE the phase skill(s):**
+   - **Single-task path** (no parallel cluster detected at step 2):
+     - `TaskUpdate` to `in_progress` (set `activeForm` to the imperative-progressive form, e.g. "Running scout").
+     - Log `entered <phase>` to `.claude/state/harness/<slug>.log`.
+     - Invoke the matching phase skill via the **`Skill` tool — one invocation per loop iteration**.
+   - **Parallel-cluster path** (cluster of ≥2 tasks all with `can_parallel: true` + identical blockedBy detected at step 2):
+     - `TaskUpdate` every cluster task to `in_progress`.
+     - Log `entered cluster: <ids>` to the harness log.
+     - Dispatch the cluster via the `Task` tool, one `Task` invocation per cluster member — typically `swarm-worker` with a recipe per node, but the `skill:` field on each Node decides the worker target. All `Task` invocations go in a SINGLE assistant message so the runtime dispatches them concurrently.
+     - Wait for all cluster members to return.
+     - On all-success: mark each cluster task `completed`; refresh the marker + state once (NOT per-cluster-member); continue loop.
+     - On any cluster member's failure: EXIT LOOP with YIELD; `reason: "cluster <ids>: <failed-id> failed: <summary>"`. Leave succeeded members `completed` and the failed member `in_progress` for inspection.
    - On phase-skill success:
      - `TaskUpdate` to `completed`.
      - Append the phase name to `workflow.json → completed`; update `updated_at`.

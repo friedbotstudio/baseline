@@ -1,0 +1,70 @@
+{# Workflows hero symbol — track DAG.
+   A filled "track" anchor flows through three chain nodes
+   (intake / spec / approve) into a selector node that
+   splits into two alternates (swarm 2-fan, solo tdd) which
+   reconverge into a commit anchor.
+   Vocabulary: filled = anchor, stroke = node, accent = selector. #}
+<svg class="hero-symbol-svg trackdag-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="trackdag-title">
+  <title id="trackdag-title">A track flows through three chain nodes into a selector that branches into two alternates and reconverges into commit.</title>
+  <defs>
+    <marker id="wf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="wf-arrow"/>
+    </marker>
+  </defs>
+
+  {# Top: filled ink "track" anchor. #}
+  <rect class="wf-anchor" x="166" y="22" width="28" height="28"/>
+  <text class="wf-tag" x="180" y="14" text-anchor="middle">track</text>
+
+  {# Connector down to chain. #}
+  <line class="wf-conn" x1="180" y1="50" x2="180" y2="80"/>
+
+  {# Chain: 3 stroke nodes — intake / spec / approve. #}
+  <rect class="wf-node" x="20"  y="80" width="80" height="44" rx="4"/>
+  <rect class="wf-node" x="140" y="80" width="80" height="44" rx="4"/>
+  <rect class="wf-node" x="260" y="80" width="80" height="44" rx="4"/>
+  <text class="wf-tag" x="60"  y="108" text-anchor="middle">intake</text>
+  <text class="wf-tag" x="180" y="108" text-anchor="middle">spec</text>
+  <text class="wf-tag" x="300" y="108" text-anchor="middle">approve</text>
+
+  {# Chain connectors. #}
+  <line class="wf-conn" x1="100" y1="102" x2="140" y2="102"/>
+  <line class="wf-conn" x1="220" y1="102" x2="260" y2="102"/>
+
+  {# Connector down to selector. #}
+  <line class="wf-conn" x1="180" y1="124" x2="180" y2="150"/>
+
+  {# Selector: accent rotated diamond. #}
+  <g transform="rotate(45 180 170)">
+    <rect class="wf-selector" x="160" y="150" width="40" height="40" rx="3"/>
+  </g>
+  {# Branch glyph: Y-fork in paper stroke inside the selector. #}
+  <path class="wf-selector-glyph" d="M 180,160 L 180,168 M 180,168 L 172,178 M 180,168 L 188,178" fill="none"/>
+
+  {# Fanout: two splay lines from selector to alternate roots. #}
+  <line class="wf-conn" x1="180" y1="190" x2="50"  y2="216"/>
+  <line class="wf-conn" x1="180" y1="190" x2="270" y2="216"/>
+
+  {# Left alternate (swarm): eyebrow + 2 worker rects. #}
+  <text class="wf-eyebrow" x="78"  y="212" text-anchor="middle">swarm</text>
+  <rect class="wf-node" x="18"  y="220" width="56" height="40" rx="4"/>
+  <rect class="wf-node" x="82"  y="220" width="56" height="40" rx="4"/>
+  <text class="wf-tag" x="46"  y="244" text-anchor="middle">T-A</text>
+  <text class="wf-tag" x="110" y="244" text-anchor="middle">T-B</text>
+
+  {# Right alternate (solo tdd): eyebrow + 1 node. #}
+  <text class="wf-eyebrow" x="280" y="212" text-anchor="middle">solo</text>
+  <rect class="wf-node" x="242" y="220" width="76" height="40" rx="4"/>
+  <text class="wf-tag" x="280" y="244" text-anchor="middle">tdd</text>
+
+  {# Convergence: three lines meeting at commit anchor. #}
+  <line class="wf-conn" x1="46"  y1="260" x2="180" y2="300"/>
+  <line class="wf-conn" x1="110" y1="260" x2="180" y2="300"/>
+  <line class="wf-conn" x1="280" y1="260" x2="180" y2="300"/>
+
+  {# Commit anchor: filled ink circle. #}
+  <circle class="wf-result" cx="180" cy="312" r="9"/>
+
+  {# Caption. #}
+  <text class="wf-caption" x="180" y="346" text-anchor="middle">selectors and sub-tracks</text>
+</svg>

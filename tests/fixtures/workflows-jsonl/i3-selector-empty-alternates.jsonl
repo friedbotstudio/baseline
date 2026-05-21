@@ -1,0 +1,1 @@
+{"$schema":"./schemas/workflow-track.v1.json","track_id":"i3-selector-empty","name":"I3 selector empty","description":"Selector node with empty alternates","selectable":true,"selector_hints":["x"],"preconditions":[],"invariants":[],"nodes":[{"id":"bad-selector","type":"selector","alternates":[],"depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false}]}

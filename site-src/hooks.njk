@@ -71,7 +71,7 @@ toc:
     <tr><td class="phase">spec_approval_guard</td><td>IV (gate A)</td><td>Validate fresh marker before allowing approval-token writes; block self-approval inside spec markdown.</td></tr>
     <tr><td class="phase">swarm_approval_guard</td><td>IV (gate B)</td><td>Validate fresh marker before allowing swarm-approval writes.</td></tr>
     <tr><td class="phase">verify_pass_guard</td><td>V, VI</td><td>Block writing PASS to verify artifacts when truth source says FAIL.</td></tr>
-    <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce {{ baseline.phases }}-phase ordering for workflow artifacts.</td></tr>
+    <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce per-track DAG ordering for workflow artifacts.</td></tr>
     <tr><td class="phase">artifact_template_guard</td><td>IV</td><td>Block artifact writes missing required sections.</td></tr>
     <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Validate PlantUML fences in <code>docs/specs/*.md</code>.</td></tr>
     <tr><td class="phase">spec_diagram_presence_guard</td><td>IV (phase 4)</td><td>Block specs missing required diagram kinds.</td></tr>
