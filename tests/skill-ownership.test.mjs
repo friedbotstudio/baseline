@@ -49,7 +49,7 @@ function runAudit(tmp) {
 }
 
 async function readManifest(tmp) {
-  const raw = await fs.readFile(path.join(tmp, 'obj/template/manifest.json'), 'utf8');
+  const raw = await fs.readFile(path.join(tmp, 'obj/template/.claude/manifest.json'), 'utf8');
   return JSON.parse(raw);
 }
 
@@ -107,9 +107,9 @@ describe('skill ownership — build manifest v2 (AC-002, AC-008)', () => {
     if (tmp) await fs.rm(tmp, { recursive: true, force: true });
   });
 
-  it('test_when_clean_build_then_manifest_v2_with_owners_skills', async () => {
+  it('test_when_clean_build_then_manifest_v3_with_owners_skills', async () => {
     const m = await readManifest(tmp);
-    assert.equal(m.manifest_version, 2, 'manifest_version must be 2');
+    assert.equal(m.manifest_version, 3, 'manifest_version must be 3 (post tier-classified rework)');
     assert.ok(m.owners && typeof m.owners === 'object', 'manifest must carry owners block');
     assert.ok(
       m.owners.skills && typeof m.owners.skills === 'object',
@@ -127,10 +127,10 @@ describe('skill ownership — build manifest v2 (AC-002, AC-008)', () => {
   });
 
   it('test_when_two_consecutive_builds_then_manifests_byte_identical', async () => {
-    const first = await fs.readFile(path.join(tmp, 'obj/template/manifest.json'), 'utf8');
+    const first = await fs.readFile(path.join(tmp, 'obj/template/.claude/manifest.json'), 'utf8');
     const result = runBuild(tmp);
     assert.equal(result.status, 0, `rebuild failed: ${result.stderr || result.stdout}`);
-    const second = await fs.readFile(path.join(tmp, 'obj/template/manifest.json'), 'utf8');
+    const second = await fs.readFile(path.join(tmp, 'obj/template/.claude/manifest.json'), 'utf8');
     // generated_at WILL differ; strip it before comparing.
     const stripGen = (s) => s.replace(/"generated_at":\s*"[^"]*"/, '"generated_at":"<stripped>"');
     assert.equal(stripGen(first), stripGen(second), 'manifest bytes must be deterministic (modulo generated_at)');

@@ -29,7 +29,7 @@ toc:
         <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
         <span class="file">~ · zsh</span>
       </div>
-      <img src="/assets/cli-splash.png" alt="create-baseline TTY splash: BASELINE wordmark in three bands of FBS orange, tagline, command table, and discover URL" loading="lazy" decoding="async" />
+      <img src="{{ '/assets/cli-splash.png' | rel }}" alt="create-baseline TTY splash: BASELINE wordmark in three bands of FBS orange, tagline, command table, and discover URL" loading="lazy" decoding="async" />
     </div>
     <figcaption>The TTY landing for <code>npx @friedbotstudio/create-baseline</code>. The same wordmark appears on <code>--help</code> and <code>--version</code>; the slim brand strip frames <code>upgrade</code> and the usage errors.</figcaption>
   </figure>
@@ -54,7 +54,7 @@ npx @friedbotstudio/create-baseline doctor [target] [--strict] [--json]
 <span class="tok-com"># misc</span>
 npx @friedbotstudio/create-baseline --help
 npx @friedbotstudio/create-baseline --version</code></pre>
-  <p><code>--no-plantuml</code> and <code>--require-plantuml</code> are mutually exclusive. Argv errors exit 2.</p>
+  <p><code>--no-plantuml</code> and <code>--require-plantuml</code> conflict; pick one or omit both. Command-line parse errors exit 2.</p>
 </section>
 
 <section class="section">
@@ -80,8 +80,8 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       </tr>
       <tr>
         <td class="phase">upgrade</td>
-        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>. The per-file decision (see the action kinds below) refreshes untouched files, preserves customizations, and prunes files removed upstream that the user had not touched. In a TTY, each <code>SKIP_CUSTOMIZED</code> path becomes a keep-mine / take-theirs / abort prompt. In CI the prior <code>--merge</code> semantics apply unchanged: every action is reported, and exit 3 fires when any customisation cannot be reconciled.</td>
-        <td>None in CI. In a TTY, an interactive prompt per conflict; abort or Ctrl+C exits 1 with the tree unchanged.</td>
+        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>, dispatched by the per-file <em>tier</em> shipped in the new manifest. Tier <code>BINARY_PROMPT</code> surfaces each customized file as a keep-mine / take-theirs / abort prompt in a TTY. Tier <code>MECHANICAL</code> runs <code>git merge-file --diff3</code> against a recovered BASE; clean merges land silently, conflicts surface with conflict markers (exit 4). Tier <code>SEMANTIC</code> stages the file at <code>.claude/state/upgrade/&lt;ts&gt;/</code> for the <code>/upgrade-project</code> Claude Code skill to reconcile (exit 5). In CI every per-file action is reported with a user-facing label (<em>add</em>, <em>update</em>, <em>kept yours</em>, <em>merged cleanly</em>, …); exit 3 fires when any customisation cannot be auto-reconciled.</td>
+        <td>None in CI. In a TTY, an interactive prompt per binary-prompt conflict; abort or Ctrl+C exits 1 with the tree unchanged.</td>
       </tr>
       <tr>
         <td class="phase">--dry-run</td>
@@ -91,19 +91,22 @@ npx @friedbotstudio/create-baseline --version</code></pre>
     </tbody>
   </table>
 
-  <p>Under <code>upgrade</code> the per-file action is one of eight kinds:</p>
+  <p>Under <code>upgrade</code> the per-file action is one of twelve kinds. The internal <em>kind</em> is the enum surfaced in the JSON shape; the <em>label</em> is the user-facing string rendered in CLI output:</p>
   <table>
-    <thead><tr><th>Action</th><th>Trigger</th></tr></thead>
+    <thead><tr><th>Kind</th><th>Label</th><th>Trigger</th></tr></thead>
     <tbody>
-      <tr><td class="phase">ADD</td><td>New in the template; absent in the target.</td></tr>
-      <tr><td class="phase">OVERWRITE</td><td>Target hash matches the old manifest (untouched since last install). Refreshed.</td></tr>
-      <tr><td class="phase">NOOP</td><td>Target hash matches the new manifest. Already current.</td></tr>
-      <tr><td class="phase">SKIP_CUSTOMIZED</td><td>Target hash differs from both old and new. User customized it. Preserved. Contributes to exit 3.</td></tr>
-      <tr><td class="phase">PRUNE</td><td>Removed from the new template; target hash matches the old manifest. Untouched stale file. <strong>Deleted.</strong></td></tr>
-      <tr><td class="phase">PRUNE_SKIPPED_CUSTOMIZED</td><td>Removed from the new template; target hash differs from the old manifest. Customized stale file. Preserved. Contributes to exit 3.</td></tr>
-      <tr><td class="phase">NEVER_TOUCH_PRESERVE</td><td>Path is in <code>NEVER_TOUCH</code> (currently <code>.claude/project.json</code> only) and the target has it. Always preserved.</td></tr>
-      <tr><td class="phase">NEVER_TOUCH_ADD</td><td>Path is in <code>NEVER_TOUCH</code> and the target lacks it. Written from the template.</td></tr>
-      <tr><td class="phase">SPECIAL_MERGE</td><td>Path is in <code>SPECIAL_MERGE</code> (currently <code>.mcp.json</code> only). The additive merge runs (see <a href="#mcp-merge">below</a>).</td></tr>
+      <tr><td class="phase">ADD</td><td>add</td><td>New in the template; absent in the target.</td></tr>
+      <tr><td class="phase">OVERWRITE</td><td>update</td><td>Target hash matches the old manifest (untouched since last install). Refreshed.</td></tr>
+      <tr><td class="phase">NOOP</td><td>unchanged</td><td>Target hash matches the new manifest. Already current.</td></tr>
+      <tr><td class="phase">SKIP_CUSTOMIZED</td><td>kept yours</td><td>Target hash differs from both old and new. User customized it. Preserved. Contributes to exit 3.</td></tr>
+      <tr><td class="phase">PRUNE</td><td>removed (upstream)</td><td>Removed from the new template; target hash matches the old manifest. Untouched stale file. <strong>Deleted.</strong></td></tr>
+      <tr><td class="phase">PRUNE_SKIPPED_CUSTOMIZED</td><td>kept yours (upstream removed)</td><td>Removed from the new template; target hash differs from the old manifest. Customized stale file. Preserved. Contributes to exit 3.</td></tr>
+      <tr><td class="phase">NEVER_TOUCH_PRESERVE</td><td>kept yours (never-touch)</td><td>Path is in <code>NEVER_TOUCH</code> and the target has it. Always preserved. Covers <code>.claude/project.json</code>, <code>.claude/workflows.jsonl</code>, and <code>.claude/schemas/workflow-track.v1.json</code>.</td></tr>
+      <tr><td class="phase">NEVER_TOUCH_ADD</td><td>add (never-touch)</td><td>Path is in <code>NEVER_TOUCH</code> and the target lacks it. Written from the template.</td></tr>
+      <tr><td class="phase">SPECIAL_MERGE</td><td>merged (.mcp.json deep-merge)</td><td>Path is in <code>SPECIAL_MERGE</code> (currently <code>.mcp.json</code> only). The additive merge runs (see <a href="#mcp-merge">below</a>).</td></tr>
+      <tr><td class="phase">MECHANICAL_MERGE_CLEAN</td><td>merged cleanly</td><td>Tier-2 customized file. <code>git merge-file --diff3</code> ran against the recovered BASE and produced no conflict hunks. The merged contents are now on disk.</td></tr>
+      <tr><td class="phase">MECHANICAL_MERGE_CONFLICTED</td><td>merged with conflicts — resolve manually</td><td>Tier-2 customized file. <code>git merge-file</code> wrote conflict markers into the target. Exit 4.</td></tr>
+      <tr><td class="phase">SEMANTIC_MERGE_STAGED</td><td>staged for /upgrade-project</td><td>Tier-3 customized file. The base/incoming/local triple is written to <code>.claude/state/upgrade/&lt;ts&gt;/</code> for the <code>/upgrade-project</code> Claude Code skill to reconcile in main context. Exit 5.</td></tr>
     </tbody>
   </table>
 </section>
@@ -135,16 +138,17 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <p class="section-num">§ IV</p>
       <h2 id="exit">Exit codes</h2>
     </div>
-    <p>Five exit codes. Designed for CI scripts to branch on the structural cases.</p>
+    <p>Six exit codes. Designed for CI scripts to branch on the structural cases.</p>
   </div>
   <table>
     <thead><tr><th>Code</th><th>Reason</th></tr></thead>
     <tbody>
       <tr><td class="phase">0</td><td>Success. Or a clean <code>doctor</code> report.</td></tr>
       <tr><td class="phase">1</td><td>User abort (install confirmation declined, or interactive <code>upgrade</code> aborted), sentinel conflict without <code>--force</code> or the <code>upgrade</code> subcommand, or <code>doctor</code> reports missing baseline files.</td></tr>
-      <tr><td class="phase">2</td><td>Argv error (including the retired <code>--merge</code> flag), mutually-exclusive flag combination, non-TTY where TTY is required, <code>doctor</code> finds no manifest at the target, or <code>upgrade</code> runs against a target without a baseline manifest.</td></tr>
-      <tr><td class="phase">3</td><td><code>upgrade</code> produced a <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The reconcile succeeded; you have customizations the upgrade could not auto-resolve.</td></tr>
-      <tr><td class="phase">4</td><td><code>--require-plantuml</code> and the jar fetch failed.</td></tr>
+      <tr><td class="phase">2</td><td>Bad command line (including the retired <code>--merge</code> flag and conflicting flag combinations), prompted input needed but no terminal attached, <code>doctor</code> finds no manifest at the target, or <code>upgrade</code> runs against a target without a baseline manifest.</td></tr>
+      <tr><td class="phase">3</td><td><code>upgrade</code> kept your customized files: at least one <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The reconcile succeeded; you have customizations the upgrade could not auto-resolve.</td></tr>
+      <tr><td class="phase">4</td><td><code>--require-plantuml</code> and the jar fetch failed, <strong>or</strong> a tier-2 mechanical merge produced conflict markers (<code>MECHANICAL_MERGE_CONFLICTED</code>) you must resolve manually.</td></tr>
+      <tr><td class="phase">5</td><td><code>upgrade</code> staged at least one tier-3 file for semantic merge (<code>SEMANTIC_MERGE_STAGED</code>). Open Claude Code and run <code>/upgrade-project</code> to reconcile.</td></tr>
     </tbody>
   </table>
 </section>

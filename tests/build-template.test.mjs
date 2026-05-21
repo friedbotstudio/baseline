@@ -30,11 +30,19 @@ async function makeFixture() {
   // src/*.template.* overlays (these are the canonical source for template/).
   await mkdir(join(root, 'src', 'agents'), { recursive: true });
   await mkdir(join(root, 'src', 'memory'), { recursive: true });
+  await mkdir(join(root, 'src', '.claude'), { recursive: true });
   await writeFile(join(root, 'src', 'CLAUDE.template.md'), 'TEMPLATE CLAUDE CONTENT');
   await writeFile(join(root, 'src', 'seed.template.md'), 'TEMPLATE SEED CONTENT');
   await writeFile(join(root, 'src', 'project.template.json'), '{"configured":false,"template":true}');
   await writeFile(join(root, 'src', '.mcp.template.json'), '{"template":true}');
   await writeFile(join(root, 'src', 'settings.template.json'), '{"settings":true}');
+  // workflows.template.jsonl is overlaid by build-template.sh Stage 2 (§18).
+  // Test fixture uses a minimal one-track stub so the cp succeeds and the
+  // manifest emitter sees the file; content is opaque to the build step.
+  await writeFile(
+    join(root, 'src', '.claude', 'workflows.template.jsonl'),
+    '{"$schema":"./schemas/workflow-track.v1.json","track_id":"stub","name":"stub","description":"fixture","selectable":true,"selector_hints":[],"preconditions":[],"invariants":["commits"],"nodes":[{"id":"chore","type":"task","skill":"chore","depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false,"activeForm":"Stub","metadata":{"phase":"chore"}}]}\n'
+  );
   // Template must carry all four substitution tokens — scripts/render-swarm-worker.mjs
   // exits non-zero if any are missing (audit-baseline enforces the same on the real template).
   await writeFile(
@@ -81,7 +89,7 @@ describe('build-template.sh', () => {
     assert.ok(existsSync(join(root, 'obj', 'template', 'docs', 'init', 'seed.md')), 'template/docs/init/seed.md missing');
     assert.ok(existsSync(join(root, 'obj', 'template', '.claude', 'project.json')), 'template/.claude/project.json missing');
     assert.ok(existsSync(join(root, 'obj', 'template', '.claude', 'settings.json')), 'template/.claude/settings.json missing');
-    assert.ok(existsSync(join(root, 'obj', 'template', 'manifest.json')), 'template/manifest.json missing');
+    assert.ok(existsSync(join(root, 'obj', 'template', '.claude', 'manifest.json')), 'template/.claude/manifest.json missing');
   });
 
   it('build excludes documented paths', async () => {
@@ -122,31 +130,37 @@ describe('build-template.sh', () => {
     const root = await makeFixture();
     runBuild(root);
 
-    const manifestRaw = await readFile(join(root, 'obj', 'template', 'manifest.json'), 'utf8');
+    const manifestRaw = await readFile(join(root, 'obj', 'template', '.claude', 'manifest.json'), 'utf8');
     const manifest = JSON.parse(manifestRaw);
 
-    assert.equal(manifest.manifest_version, 2, 'manifest_version must be 2 (post-skill-ownership)');
+    assert.equal(manifest.manifest_version, 3, 'manifest_version must be 3 (post tier-classified upgrade rework)');
     assert.ok(typeof manifest.files === 'object' && manifest.files !== null, 'manifest.files must be an object');
     assert.ok(Object.prototype.hasOwnProperty.call(manifest.files, 'CLAUDE.md'),
       "manifest.files must contain 'CLAUDE.md'");
 
     // The sha256 entry must match the actual file on disk (post-overlay).
+    // Manifest v3 stores entries as `{sha256, tier}` objects per file; v2
+    // stored bare sha256 strings. Read whichever shape is present.
+    const readSha = (entry) =>
+      (entry && typeof entry === 'object' && typeof entry.sha256 === 'string')
+        ? entry.sha256
+        : entry;
     const actualHash = await sha256File(join(root, 'obj', 'template', 'CLAUDE.md'));
-    assert.equal(manifest.files['CLAUDE.md'], actualHash,
-      "manifest.files['CLAUDE.md'] must equal sha256 of template/CLAUDE.md");
+    assert.equal(readSha(manifest.files['CLAUDE.md']), actualHash,
+      "manifest.files['CLAUDE.md'].sha256 must equal sha256 of template/CLAUDE.md");
 
     // That file was overlaid from src/CLAUDE.template.md, so hashes must agree.
     const srcHash = await sha256File(join(root, 'src', 'CLAUDE.template.md'));
-    assert.equal(manifest.files['CLAUDE.md'], srcHash,
-      "manifest.files['CLAUDE.md'] must equal sha256 of src/CLAUDE.template.md (overlay source)");
+    assert.equal(readSha(manifest.files['CLAUDE.md']), srcHash,
+      "manifest.files['CLAUDE.md'].sha256 must equal sha256 of src/CLAUDE.template.md (overlay source)");
   });
 
   it('build is idempotent — two runs produce identical hashes', async () => {
     const root = await makeFixture();
     runBuild(root);
 
-    // Collect sha256 of every file under template/ after first run (excluding manifest.json
-    // which contains generated_at and is expected to differ).
+    // Collect sha256 of every file under template/ after first run (excluding
+    // .claude/manifest.json which contains generated_at and is expected to differ).
     async function collectHashes(templateDir) {
       const hashes = {};
       async function walk(dir) {
@@ -158,7 +172,7 @@ describe('build-template.sh', () => {
             await walk(full);
           } else if (entry.isFile()) {
             const rel = full.slice(templateDir.length + 1);
-            if (rel === 'manifest.json') continue;
+            if (rel === '.claude/manifest.json') continue;
             hashes[rel] = await sha256File(full);
           }
         }

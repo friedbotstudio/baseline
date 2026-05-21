@@ -22,5 +22,6 @@ module.exports = {
   year: '2026',
   version: `v${pkg.version}`,
   versionMinor: `v${major}.${minor}`,
+  pkgVersion: pkg.version,
   lastUpdated: '2026-04-29',
 };

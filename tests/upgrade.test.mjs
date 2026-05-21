@@ -252,9 +252,10 @@ describe('tui/upgrade — tier-2 mechanical (AC-002, AC-003)', () => {
     const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
     assert.equal(selectsForFile.length, 0,
       'tier-2 MECHANICAL with non-overlapping hunks must NOT trigger any select prompt');
-    const actionLine = calls.some((c) => /MECHANICAL_MERGE_CLEAN/i.test(JSON.stringify(c)));
+    // ACTION_LABELS maps MECHANICAL_MERGE_CLEAN → "merged cleanly" in the per-file report.
+    const actionLine = calls.some((c) => /merged cleanly/i.test(JSON.stringify(c)));
     assert.ok(actionLine,
-      'final terminal report must include the MECHANICAL_MERGE_CLEAN action line');
+      'final terminal report must include the "merged cleanly" action line for the mechanical-clean case');
     assert.equal(exit, 0, 'clean mechanical merge exits 0');
   });
 
@@ -342,9 +343,11 @@ describe('tui/upgrade — legacy fallback (AC-010)', () => {
 
     await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
 
-    const noticeLine = calls.some((c) => /legacy manifest/i.test(JSON.stringify(c)));
+    // Notice copy was de-jargoned on 2026-05-21; the user-facing string now
+    // leads with "Your previous install predates version-tracked manifests".
+    const noticeLine = calls.some((c) => /predates version-tracked manifests/i.test(JSON.stringify(c)));
     assert.ok(noticeLine,
-      'legacy manifest_version: 1 must surface a one-time terminal notice');
+      'legacy manifest install must surface a one-time terminal notice');
     const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
     assert.ok(selectsForFile.length >= 1,
       'legacy fallback must route the file through the tier-1 binary prompt');

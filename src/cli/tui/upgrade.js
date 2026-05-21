@@ -12,10 +12,10 @@ import * as clackModule from '@clack/prompts';
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
-import { threeWayMerge, ACTION_KINDS } from '../merge.js';
+import { threeWayMerge, ACTION_KINDS, ACTION_LABELS, ACTION_LABEL_WIDTH } from '../merge.js';
 import { loadManifest, buildManifestFromDir } from '../manifest.js';
 import { COPY_EXCLUDE } from '../install.js';
-import { findPendingStage } from '../upgrade-tiers.js';
+import { findPendingStage, formatStageTimestamp } from '../upgrade-tiers.js';
 import { renderUnifiedDiff } from '../diff-render.js';
 import { renderBrandStrip } from './splash.js';
 
@@ -58,7 +58,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   const { oldManifest, newManifest } = await loadManifests(opts.templateDir, manifestPath);
   if (isLegacyManifest(oldManifest)) {
-    prompts.log.warn('legacy manifest_version: 1 detected; BASE-content recovery unavailable. Tier-2 / tier-3 files will fall back to the binary prompt.');
+    prompts.log.warn("Your previous install predates version-tracked manifests, so this upgrade can't perform automatic three-way merges on customized files. You'll be prompted to keep your version or take the new baseline for each customized file. To enable three-way merges next time, re-install with the latest baseline.");
   }
 
   const dryReport = await threeWayMerge(opts.templateDir, target, oldManifest, newManifest, { dryRun: true });
@@ -73,7 +73,8 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   if (opts.dryRun) {
     for (const action of dryReport.actions) {
-      prompts.log.info(`${action.kind.padEnd(28)} ${action.path}`);
+      const label = ACTION_LABELS[action.kind] ?? action.kind;
+      prompts.log.info(`${label.padEnd(ACTION_LABEL_WIDTH)}  ${action.path}`);
     }
     prompts.outro('Dry run complete; no changes written.');
     return SUCCESS;
@@ -84,7 +85,8 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   for (const action of finalReport.actions) {
     if (isReportableAction(action.kind)) {
-      prompts.log.info(`${action.kind.padEnd(28)} ${action.path}`);
+      const label = ACTION_LABELS[action.kind] ?? action.kind;
+      prompts.log.info(`${label.padEnd(ACTION_LABEL_WIDTH)}  ${action.path}`);
     }
     if (action.kind === ACTION_KINDS.MECHANICAL_MERGE_CONFLICTED) {
       prompts.log.warn(`Merged with conflicts — resolve in ${action.path}`);
@@ -98,14 +100,18 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   const applied = finalReport.actions.filter((a) => isApplied(a.kind)).length;
   const skipped = finalReport.actions.filter((a) => a.kind === ACTION_KINDS.SKIP_CUSTOMIZED).length;
-  prompts.outro(`Applied ${applied}; ${skipped} skipped.`);
+  prompts.outro(
+    skipped === 0
+      ? `Applied ${applied} update(s).`
+      : `Applied ${applied} update(s); kept your version on ${skipped} customized file(s). Re-run \`create-baseline upgrade\` if you want to revisit those choices.`,
+  );
   return mapExitCode(finalReport.exitCode);
 }
 
 function reportPendingStage(prompts, pending) {
   const fileLines = pending.files.map((f) => `  - ${f}`).join('\n');
-  prompts.log.warn(`Pending semantic-merge stage at ${pending.stage_ts}.\n${pending.files.length} file(s) awaiting reconciliation:\n${fileLines}\nOpen Claude Code and run /upgrade-project to reconcile.`);
-  prompts.outro('No new work; existing stage pending.');
+  prompts.log.warn(`A previous upgrade staged ${pending.files.length} file(s) for Claude Code review (staged ${formatStageTimestamp(pending.stage_ts)}):\n${fileLines}\nOpen Claude Code and run /upgrade-project to reconcile.`);
+  prompts.outro('No new work; previous staged files still need reconciliation.');
   return ERR_SEMANTIC_STAGED;
 }
 

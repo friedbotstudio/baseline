@@ -1,0 +1,21 @@
+{
+  "request": "CLI copy polish + dispatchCustomized dry-run bug fix + doc/CLI alignment + 12 pre-existing test repairs",
+  "slug": "cli-copy-polish",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "completed": ["changelog"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779372104,
+  "updated_at": 1779380718
+}

@@ -33,7 +33,12 @@ describe('tui/meta', () => {
       const helpText = 'Usage:\n';
       const out = captureStdout(() => meta.renderHelp(helpText, '0.3.0'));
       assert.ok(/baseline/i.test(out), 'brand banner must include the product name in TTY mode');
-      assert.ok(out.includes('0.3.0'), 'version must appear in the TTY banner');
+      assert.ok(out.includes('Usage:'), 'help body must follow the brand banner');
+      // The version is intentionally NOT rendered by renderHelp — see the
+      // splash.js docstring on renderSplash: "The version is intentionally NOT
+      // rendered here — `--version` already surfaces it via renderVersionMarquee,
+      // and embedding it in the splash would force docs-site screenshots to
+      // re-render every release." renderVersion covers the version-in-banner case.
     } finally {
       process.stdout.isTTY = origTty;
     }

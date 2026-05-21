@@ -4,7 +4,7 @@ import { hashFile, saveManifest } from './manifest.js';
 import { deepMergeMcpServers } from './mcp.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
-import { dispatchByTier, NoBaseError } from './upgrade-tiers.js';
+import { dispatchByTier, NoBaseError, canRecoverBase } from './upgrade-tiers.js';
 
 export const ACTION_KINDS = Object.freeze({
   ADD: 'ADD',
@@ -20,6 +20,26 @@ export const ACTION_KINDS = Object.freeze({
   MECHANICAL_MERGE_CONFLICTED: 'MECHANICAL_MERGE_CONFLICTED',
   SEMANTIC_MERGE_STAGED: 'SEMANTIC_MERGE_STAGED',
 });
+
+// User-facing labels for each ACTION_KIND. Surfaced in the per-file upgrade
+// report (TTY via `tui/upgrade.js`, non-TTY via `bin/cli.js dispatchUpgrade`).
+// Kept centralized so both paths render identically.
+export const ACTION_LABELS = Object.freeze({
+  ADD: 'add',
+  OVERWRITE: 'update',
+  NOOP: 'unchanged',
+  SKIP_CUSTOMIZED: 'kept yours',
+  PRUNE: 'removed (upstream)',
+  PRUNE_SKIPPED_CUSTOMIZED: 'kept yours (upstream removed)',
+  NEVER_TOUCH_PRESERVE: 'kept yours (never-touch)',
+  NEVER_TOUCH_ADD: 'add (never-touch)',
+  SPECIAL_MERGE: 'merged (.mcp.json deep-merge)',
+  MECHANICAL_MERGE_CLEAN: 'merged cleanly',
+  MECHANICAL_MERGE_CONFLICTED: 'merged with conflicts — resolve manually',
+  SEMANTIC_MERGE_STAGED: 'staged for /upgrade-project',
+});
+
+export const ACTION_LABEL_WIDTH = Math.max(...Object.values(ACTION_LABELS).map((s) => s.length));
 
 async function copyFile(src, dst) {
   await mkdir(dirname(dst), { recursive: true });
@@ -143,6 +163,13 @@ async function dispatchCustomized({ rel, newEntry, tierCtx, dryRun, onSkipCustom
   const tier = readTierFromEntry(newEntry);
   if (tier === 'MECHANICAL' || tier === 'SEMANTIC') {
     if (dryRun) {
+      // When BASE recovery would fail (legacy manifest with no cache hit, no
+      // npm fallback), the real run will fall through to the binary prompt.
+      // Surface this file as SKIP_CUSTOMIZED at dry-run time so the TUI
+      // collects a user choice up front instead of silently keep-mine'ing it.
+      if (!canRecoverBase(rel, tierCtx.baseline_version, tierCtx.target)) {
+        return { kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: 'BASE unrecoverable; will prompt user' };
+      }
       return { kind: tier === 'MECHANICAL' ? ACTION_KINDS.MECHANICAL_MERGE_CLEAN : ACTION_KINDS.SEMANTIC_MERGE_STAGED, path: rel, reason: 'dry-run: tier dispatch deferred' };
     }
     try {

@@ -8,8 +8,8 @@ import { existsSync } from 'node:fs';
 import * as io from '../src/cli/io.js';
 import { scanSentinels } from '../src/cli/conflict.js';
 import { freshInstall, forceInstall, COPY_EXCLUDE } from '../src/cli/install.js';
-import { threeWayMerge } from '../src/cli/merge.js';
-import { loadManifest, buildManifestFromDir } from '../src/cli/manifest.js';
+import { threeWayMerge, ACTION_LABELS, ACTION_LABEL_WIDTH } from '../src/cli/merge.js';
+import { loadManifest, buildManifestFromDir, MANIFEST_VERSION } from '../src/cli/manifest.js';
 import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../src/cli/plantuml.js';
 import { runDoctor, formatReport } from '../src/cli/doctor.js';
 
@@ -66,11 +66,13 @@ Misc:
   --version        Print version.
 
 Exit codes:
-  0  success / clean doctor
+  0  success (or clean doctor)
   1  user abort, conflict-without-force, doctor reports missing files, or upgrade aborted
-  2  argv error, non-TTY where TTY required, doctor finds no manifest, or --merge passed
-  3  upgrade had skipped customizations (or stale-customized prunes)
-  4  --require-plantuml fetch failure
+  2  bad command line, prompted input needed but no terminal, doctor finds no manifest,
+     or deprecated --merge passed
+  3  upgrade kept your customized files (or preserved files removed upstream)
+  4  --require-plantuml jar fetch failed, OR mechanical merge produced conflicts to resolve
+  5  semantic merge staged for /upgrade-project to reconcile in Claude Code
 `;
 
 const OPTIONS = {
@@ -203,8 +205,9 @@ async function runPlainInstall(target, values, templateDir) {
   if (!dryRun) {
     const plantumlExit = await fetchPlantumlPlain(target, values);
     if (plantumlExit !== 0) return plantumlExit;
-    io.log(`Installed manifest version 1 to ${target}.`);
-    io.log(`Pin via "@friedbotstudio/create-baseline@<exact-version>" in your bootstrap docs.`);
+    const version = await readPackageVersion();
+    io.log(`Baseline installed at ${target} (manifest v${MANIFEST_VERSION}).`);
+    io.log(`For reproducible installs, pin the exact version: @friedbotstudio/create-baseline@${version}`);
   }
   return 0;
 }
@@ -232,11 +235,11 @@ async function dispatchUpgrade(target, values, templateDir) {
     await usageError(`No baseline manifest at ${manifestPath}. Run a fresh install first.`);
     return 2;
   }
-  const { findPendingStage } = await import('../src/cli/upgrade-tiers.js');
+  const { findPendingStage, formatStageTimestamp } = await import('../src/cli/upgrade-tiers.js');
   const pending = await findPendingStage(target);
   if (pending) {
     const fileLines = pending.files.map((f) => `  - ${f}`).join('\n');
-    io.log(`Pending semantic-merge stage at ${pending.stage_ts}.\n${pending.files.length} file(s) awaiting reconciliation:\n${fileLines}\nOpen Claude Code and run /upgrade-project to reconcile.`);
+    io.log(`A previous upgrade staged ${pending.files.length} file(s) for Claude Code review (staged ${formatStageTimestamp(pending.stage_ts)}):\n${fileLines}\nOpen Claude Code and run /upgrade-project to reconcile.`);
     return 5;
   }
   if (process.stdout.isTTY) {
@@ -260,7 +263,8 @@ async function runPlainUpgrade(target, values, templateDir, manifestPath) {
   }
   const report = await threeWayMerge(templateDir, target, oldManifest, newManifest);
   for (const action of report.actions) {
-    io.log(`${action.kind.padEnd(28)} ${action.path}`);
+    const label = ACTION_LABELS[action.kind] ?? action.kind;
+    io.log(`${label.padEnd(ACTION_LABEL_WIDTH)}  ${action.path}`);
   }
   return report.exitCode;
 }
@@ -353,7 +357,7 @@ async function main(argv) {
   }
 
   if (values['no-plantuml'] && values['require-plantuml']) {
-    await usageError('--no-plantuml and --require-plantuml are mutually exclusive');
+    await usageError('--no-plantuml and --require-plantuml conflict; pick one or omit both.');
     return 2;
   }
   if (positionals.length === 0) {

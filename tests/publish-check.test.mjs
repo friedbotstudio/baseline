@@ -222,7 +222,9 @@ describe('smoke-tarball (AC-006, AC-003)', () => {
       const extractDir = path.join(workDir, 'extracted');
       await fs.mkdir(extractDir);
       execFileSync('tar', ['-xzf', tarball, '-C', extractDir], { timeout: 30_000 });
-      await fs.rm(path.join(extractDir, 'package/obj/template/manifest.json'), { force: true });
+      // The shipped manifest moved into .claude/ per CLAUDE.md Article XI;
+      // remove the current path to trigger the missing-file branch.
+      await fs.rm(path.join(extractDir, 'package/obj/template/.claude/manifest.json'), { force: true });
       const brokenTarball = path.join(workDir, 'broken.tgz');
       execFileSync('tar', ['-czf', brokenTarball, '-C', extractDir, 'package'], { timeout: 30_000 });
 
@@ -235,13 +237,13 @@ describe('smoke-tarball (AC-006, AC-003)', () => {
       assert.notEqual(
         result.status,
         0,
-        `smoke must exit non-zero against a tarball missing obj/template/manifest.json; got status=${result.status}\nstdout: ${(result.stdout || '').slice(-500)}\nstderr: ${(result.stderr || '').slice(-500)}`
+        `smoke must exit non-zero against a tarball missing obj/template/.claude/manifest.json; got status=${result.status}\nstdout: ${(result.stdout || '').slice(-500)}\nstderr: ${(result.stderr || '').slice(-500)}`
       );
       const combined = (result.stdout || '') + (result.stderr || '');
       assert.match(
         combined,
-        /obj\/template\/manifest\.json/,
-        `smoke error must name the missing file (obj/template/manifest.json); got: ${combined.slice(-500)}`
+        /obj\/template\/\.claude\/manifest\.json/,
+        `smoke error must name the missing file (obj/template/.claude/manifest.json); got: ${combined.slice(-500)}`
       );
     } finally {
       await fs.rm(workDir, { recursive: true, force: true });

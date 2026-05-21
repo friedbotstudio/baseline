@@ -378,11 +378,11 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/tui/upgrade.js:1
 
-- Role: Domain — interactive upgrade flow that replaces the retired `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts, (2) `prompts.select` per conflict (keep-mine / take-theirs / abort), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. Writes `renderBrandStrip({version, subtitle: 'upgrade'})` from `src/cli/tui/splash.js:1` above the clack intro. `listShippedFiles` filters `COPY_EXCLUDE` (imported from `src/cli/install.js`) so `manifest.json` is never sent into `threeWayMerge` as an ADD candidate — single source of truth shared with fresh-install. Cancel sentinel: `Symbol.for('clack:cancel')`.
-- Companion: `src/cli/install.js` (`COPY_EXCLUDE` source-of-truth), `src/cli/tui/splash.js:1` (brand strip), `src/cli/merge.js → threeWayMerge` (data layer with `{dryRun, onSkipCustomized}` opts), `bin/cli.js → dispatchUpgrade` (router), `tests/upgrade.test.mjs`.
-- Verified-at: 0d4f8c8
-- Last-touched: 2026-05-20
-- Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback. Both branches use the COPY_EXCLUDE-filtered `listShippedFiles`. If you change the apply logic or the exclude set in one branch, mirror the change in the other or the two paths diverge.
+- Role: Domain — interactive upgrade flow that replaces the retired `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts (including tier-2/3 customized files when `canRecoverBase` reports BASE unrecoverable — see [[src/cli/merge.js:1]]), (2) `prompts.select` per conflict (keep-mine / take-theirs / abort), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. Per-file action lines render `ACTION_LABELS[action.kind]` padded to `ACTION_LABEL_WIDTH` (single source of truth from `src/cli/merge.js`). Pending-stage timestamp is rendered via `formatStageTimestamp` (from `src/cli/upgrade-tiers.js:59`) so users see `2026-05-21 11:45 UTC` instead of the raw `2026-05-21T11-45-00-000Z`. Writes `renderBrandStrip({version, subtitle: 'upgrade'})` from `src/cli/tui/splash.js:1` above the clack intro. `listShippedFiles` filters `COPY_EXCLUDE` (imported from `src/cli/install.js`) so `manifest.json` is never sent into `threeWayMerge` as an ADD candidate. Cancel sentinel: `Symbol.for('clack:cancel')`.
+- Companion: `src/cli/install.js` (`COPY_EXCLUDE` source-of-truth), `src/cli/tui/splash.js:1` (brand strip), `src/cli/merge.js → threeWayMerge` + `ACTION_LABELS` (data layer with `{dryRun, onSkipCustomized}` opts), `src/cli/upgrade-tiers.js → formatStageTimestamp` + `findPendingStage`, `bin/cli.js → dispatchUpgrade` (router), `tests/upgrade.test.mjs`.
+- Verified-at: cb1d511
+- Last-touched: 2026-05-21
+- Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback. Both branches use the same `ACTION_LABELS` render and the COPY_EXCLUDE-filtered `listShippedFiles`. If you change the apply logic or the exclude set in one branch, mirror the change in the other or the two paths diverge.
 
 ## src/cli/tui/doctor.js:1
 
@@ -411,10 +411,10 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/merge.js:1
 
-- Role: Domain — three-way merge engine used by the `upgrade` subcommand. Exports `threeWayMerge(templateDir, target, oldManifest, newManifest, opts)` and the `ACTION_KINDS` enum (ADD / OVERWRITE / NOOP / SKIP_CUSTOMIZED / PRUNE / PRUNE_SKIPPED_CUSTOMIZED / NEVER_TOUCH_PRESERVE / NEVER_TOUCH_ADD / SPECIAL_MERGE). Supports `{dryRun, onSkipCustomized}` opts: dry-run returns a planned-actions list without writing; `onSkipCustomized` is the per-conflict callback the TUI uses to ask the user keep-mine / take-theirs / abort.
-- Companion: `src/cli/install.js` defines `NEVER_TOUCH` + `SPECIAL_MERGE` path sets that this module imports; `src/cli/manifest.js` supplies `hashFile` + `saveManifest`; `src/cli/mcp.js` supplies `deepMergeMcpServers` for the .mcp.json special-merge case; `src/cli/tui/upgrade.js` is the interactive consumer; `bin/cli.js → dispatchUpgrade` is the non-TTY consumer (`runPlainUpgrade`).
-- Verified-at: 2c1527a
-- Last-touched: 2026-05-18
+- Role: Domain — three-way merge engine used by the `upgrade` subcommand. Exports `threeWayMerge(templateDir, target, oldManifest, newManifest, opts)`, the `ACTION_KINDS` enum (ADD / OVERWRITE / NOOP / SKIP_CUSTOMIZED / PRUNE / PRUNE_SKIPPED_CUSTOMIZED / NEVER_TOUCH_PRESERVE / NEVER_TOUCH_ADD / SPECIAL_MERGE / MECHANICAL_MERGE_CLEAN / MECHANICAL_MERGE_CONFLICTED / SEMANTIC_MERGE_STAGED), and the `ACTION_LABELS` + `ACTION_LABEL_WIDTH` user-facing render map consumed by both CLI paths (see [[action-labels-centralized-in-merge-js]]). Supports `{dryRun, onSkipCustomized, pack}` opts: dry-run returns a planned-actions list without writing; `onSkipCustomized` is the per-conflict callback the TUI uses to ask the user keep-mine / take-theirs / abort. `dispatchCustomized` dry-run branch calls `canRecoverBase` (from `src/cli/upgrade-tiers.js:49`) and downgrades tier MECHANICAL/SEMANTIC to SKIP_CUSTOMIZED when BASE is unrecoverable, so the TUI prompts the user up front instead of silently keep-mine'ing at real-run time.
+- Companion: `src/cli/install.js` defines `NEVER_TOUCH` + `SPECIAL_MERGE` path sets that this module imports; `src/cli/manifest.js` supplies `hashFile` + `saveManifest`; `src/cli/mcp.js` supplies `deepMergeMcpServers` for the .mcp.json special-merge case; `src/cli/upgrade-tiers.js` supplies `dispatchByTier` + `NoBaseError` + `canRecoverBase`; `src/cli/tui/upgrade.js` is the interactive consumer; `bin/cli.js → dispatchUpgrade` is the non-TTY consumer (`runPlainUpgrade`).
+- Verified-at: cb1d511
+- Last-touched: 2026-05-21
 
 ## site-src/_includes/install-pill.njk:1
 

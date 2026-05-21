@@ -281,6 +281,83 @@ describe('threeWayMerge', () => {
     assert.equal(after, userContent, 'user-added file must be byte-identical after merge run');
   });
 
+  it('dry-run surfaces tier-2/3 customized file as SKIP_CUSTOMIZED when BASE is unrecoverable (legacy manifest)', async () => {
+    // Regression: before the dispatchCustomized dry-run patch, a customized
+    // tier-MECHANICAL/SEMANTIC file on a legacy install (no baseline_version
+    // on the old manifest, no .baseline-prior cache hit) optimistically
+    // reported MECHANICAL_MERGE_CLEAN / SEMANTIC_MERGE_STAGED at dry-run,
+    // which made the TUI skip user prompting; at real-run time
+    // resolveBase threw NoBaseError and fallbackToBinaryPrompt silently
+    // kept-mine. With the fix, the dry-run report flags such files as
+    // SKIP_CUSTOMIZED so the TUI prompts the user up front.
+    const tpl = await makeTemplateFixture('# baseline v2 legacy\n');
+    const target = await mkdtemp(join(tmpdir(), 'merge-legacy-mech-'));
+    await writeFile(join(target, 'CLAUDE.md'), '# user customized\n');
+    // No .claude/.baseline-prior cache, and no baseline_version on oldM →
+    // canRecoverBase returns false.
+
+    const oldFakeDir = await mkdtemp(join(tmpdir(), 'old-snap-legacy-'));
+    await writeFile(join(oldFakeDir, 'CLAUDE.md'), '# baseline v1\n');
+    const oldM = {
+      manifest_version: 1, // legacy
+      generated_at: '',
+      files: { 'CLAUDE.md': await hashFile(join(oldFakeDir, 'CLAUDE.md')) },
+      // intentionally no baseline_version
+    };
+    const newM = {
+      manifest_version: 3,
+      generated_at: '',
+      files: { 'CLAUDE.md': { sha256: await hashFile(join(tpl, 'CLAUDE.md')), tier: 'MECHANICAL' } },
+    };
+
+    const dryReport = await merge.threeWayMerge(tpl, target, oldM, newM, { dryRun: true });
+    const action = dryReport.actions.find((a) => a.path === 'CLAUDE.md');
+    assert.equal(action.kind, 'SKIP_CUSTOMIZED',
+      'tier MECHANICAL customized file with unrecoverable BASE must surface as SKIP_CUSTOMIZED at dry-run so the TUI prompts the user');
+
+    // Sibling: tier SEMANTIC on the same fixture shape behaves the same.
+    const newMSem = {
+      manifest_version: 3,
+      generated_at: '',
+      files: { 'CLAUDE.md': { sha256: await hashFile(join(tpl, 'CLAUDE.md')), tier: 'SEMANTIC' } },
+    };
+    const dryReportSem = await merge.threeWayMerge(tpl, target, oldM, newMSem, { dryRun: true });
+    const actionSem = dryReportSem.actions.find((a) => a.path === 'CLAUDE.md');
+    assert.equal(actionSem.kind, 'SKIP_CUSTOMIZED',
+      'tier SEMANTIC customized file with unrecoverable BASE must also surface as SKIP_CUSTOMIZED at dry-run');
+  });
+
+  it('dry-run keeps optimistic MECHANICAL_MERGE_CLEAN when BASE is recoverable via cache', async () => {
+    // Counter-test: when .baseline-prior holds BASE, dry-run continues to
+    // optimistically report MECHANICAL_MERGE_CLEAN (the real run will do the
+    // actual merge). Confirms the new check only kicks in for unrecoverable
+    // BASE — well-formed installs are unaffected.
+    const tpl = await makeTemplateFixture('# baseline v2 cached\n');
+    const target = await mkdtemp(join(tmpdir(), 'merge-cached-mech-'));
+    await writeFile(join(target, 'CLAUDE.md'), '# user customized\n');
+    await mkdir(join(target, '.claude/.baseline-prior'), { recursive: true });
+    await writeFile(join(target, '.claude/.baseline-prior/CLAUDE.md'), '# baseline v1\n');
+
+    const oldFakeDir = await mkdtemp(join(tmpdir(), 'old-snap-cached-'));
+    await writeFile(join(oldFakeDir, 'CLAUDE.md'), '# baseline v1\n');
+    const oldM = {
+      manifest_version: 2,
+      baseline_version: '0.4.0',
+      generated_at: '',
+      files: { 'CLAUDE.md': await hashFile(join(oldFakeDir, 'CLAUDE.md')) },
+    };
+    const newM = {
+      manifest_version: 3,
+      generated_at: '',
+      files: { 'CLAUDE.md': { sha256: await hashFile(join(tpl, 'CLAUDE.md')), tier: 'MECHANICAL' } },
+    };
+
+    const dryReport = await merge.threeWayMerge(tpl, target, oldM, newM, { dryRun: true });
+    const action = dryReport.actions.find((a) => a.path === 'CLAUDE.md');
+    assert.equal(action.kind, 'MECHANICAL_MERGE_CLEAN',
+      'recoverable-BASE dry-run must remain optimistic (kind unchanged from pre-fix behavior)');
+  });
+
   it('test_when_threeWayMerge_existing_action_kinds_unchanged_regression', async () => {
     // Re-asserts that pre-rework action kinds still fire on the same fixtures.
     const tpl = await makeTemplateFixture();

@@ -92,15 +92,19 @@ npx @friedbotstudio/create-baseline ./your-project
 npx @friedbotstudio/create-baseline ./your-project
 
 # Force-overwrite an existing install (interactive — type 'overwrite')
-npx @friedbotstudio/create-baseline ./your-project --overwrite
+npx @friedbotstudio/create-baseline ./your-project --force
 
 # Upgrade an existing install against a newer baseline version.
-# In a TTY, each customised file becomes a keep-mine / take-theirs / abort
-# prompt. In CI / piped stdout, reproduces the prior --merge behaviour:
+# In a TTY, each tier-1 customised file becomes a keep-mine / take-theirs / abort
+# prompt; tier-2 files auto-merge via `git merge-file --diff3`; tier-3 files
+# stage for the /upgrade-project Claude Code skill to reconcile. In CI / piped
+# stdout, every per-file action is reported with a user-facing label:
 #   - adds new baseline files
 #   - refreshes baseline files the user has not touched
-#   - preserves user-customised files (exit 3 if any)
-#   - removes baseline files the upstream removed (only if untouched locally)
+#   - keeps customised files (exit 3 if any preserved)
+#   - removes baseline files removed upstream that the user had not touched
+#   - exit 4 if a mechanical merge produced conflict markers
+#   - exit 5 if any tier-3 file was staged for /upgrade-project
 npx @friedbotstudio/create-baseline upgrade ./your-project
 
 # Preview without writing anything

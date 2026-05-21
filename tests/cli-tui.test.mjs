@@ -156,7 +156,7 @@ describe('cli — usage errors always print help text (regression trap)', () => 
     const result = runCli(['--no-plantuml', '--require-plantuml', '/tmp/scratch']);
     assert.equal(result.status, 2);
     assert.ok(/Usage:/.test(result.stderr));
-    assert.ok(/mutually exclusive/.test(result.stderr));
+    assert.ok(/conflict; pick one or omit both/.test(result.stderr));
   });
 
   it('test_when_conflict_without_force_then_stderr_has_help_text', async () => {
@@ -211,9 +211,12 @@ describe('cli — manifest.json must never land in target (bug regression)', () 
 });
 
 describe('cli — non-TTY install plain output (regression trap)', () => {
-  it('test_when_install_in_non_tty_then_emits_plain_output_byte_identical_to_today', async () => {
-    // NOTE: this is a regression trap. Pre-impl this test PASSES (non-TTY plain path
-    // is today's behavior). Post-impl it must keep passing. Flag: REGRESSION_TRAP_PRE_PASSING.
+  it('test_when_install_in_non_tty_then_emits_install_success_and_pin_lines', async () => {
+    // Regression trap: the non-TTY install path must continue to emit two
+    // bookend stdout lines — the success confirmation (with manifest version)
+    // and the version-pin hint — so CI consumers parsing stdout don't break.
+    // The exact phrasing changed on 2026-05-21 (dropped misleading "version 1"
+    // literal, swapped opaque "bootstrap docs" phrasing).
     const tpl = await makeTemplateFixture();
     const target = await freshTarget();
     const env = { CREATE_BASELINE_TEMPLATE_DIR: tpl };
@@ -221,12 +224,12 @@ describe('cli — non-TTY install plain output (regression trap)', () => {
 
     assert.equal(result.status, 0, `non-TTY install must exit 0; got ${result.status}; stderr=${result.stderr}`);
     assert.ok(
-      /Installed manifest version 1 to/.test(result.stdout),
-      `stdout must contain the today-shape 'Installed manifest version 1 to' line; got: ${result.stdout}`
+      /Baseline installed at .* \(manifest v\d+\)\./.test(result.stdout),
+      `stdout must contain the install-success line with manifest version; got: ${result.stdout}`
     );
     assert.ok(
-      /Pin via "@friedbotstudio\/create-baseline@/.test(result.stdout),
-      `stdout must contain the today-shape Pin line; got: ${result.stdout}`
+      /For reproducible installs, pin the exact version: @friedbotstudio\/create-baseline@/.test(result.stdout),
+      `stdout must contain the version-pin hint line; got: ${result.stdout}`
     );
   });
 });

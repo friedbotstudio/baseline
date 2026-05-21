@@ -38,6 +38,7 @@ async function makeFixture() {
 
   await mkdir(join(root, 'src', 'agents'), { recursive: true });
   await mkdir(join(root, 'src', 'memory'), { recursive: true });
+  await mkdir(join(root, 'src', '.claude'), { recursive: true });
   await writeFile(join(root, 'src', 'CLAUDE.template.md'), 'TEMPLATE CLAUDE CONTENT');
   await writeFile(join(root, 'src', 'seed.template.md'), 'TEMPLATE SEED CONTENT');
   await writeFile(join(root, 'src', 'project.template.json'), '{"configured":false,"template":true}');
@@ -46,6 +47,11 @@ async function makeFixture() {
   await writeFile(
     join(root, 'src', 'agents', 'swarm-worker.template.md'),
     '---\nname: {{NAME}}\ndescription: {{DESCRIPTION}}\nskills:\n{{SKILLS}}\n---\n\n{{ROLE_LINE}}\n'
+  );
+  // build-template.sh Stage 2 (§18) overlays workflows.template.jsonl; stub it.
+  await writeFile(
+    join(root, 'src', '.claude', 'workflows.template.jsonl'),
+    '{"$schema":"./schemas/workflow-track.v1.json","track_id":"stub","name":"stub","description":"fixture","selectable":true,"selector_hints":[],"preconditions":[],"invariants":["commits"],"nodes":[{"id":"chore","type":"task","skill":"chore","depends_on":[],"blocks":[],"can_parallel":false,"needs_user":false,"activeForm":"Stub","metadata":{"phase":"chore"}}]}\n'
   );
   for (const name of ['conventions', 'decisions', 'landmarks', 'landmines', 'libraries', 'pending-questions']) {
     await writeFile(join(root, 'src', 'memory', `${name}.template.md`), `# ${name}`);
