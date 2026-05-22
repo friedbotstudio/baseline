@@ -1,0 +1,22 @@
+{
+  "request": "Stop emitting README.md count claims WARN when README.md is absent (consumer install case). One-line fix in .claude/skills/audit-baseline/audit.sh \u2014 silently continue instead of WARN.",
+  "slug": "audit-readme-optional",
+  "track_id": "chore",
+  "exceptions": [
+    "simplify",
+    "security",
+    "document"
+  ],
+  "completed": [
+    "integrate",
+    "archive",
+    "memory-flush",
+    "chore",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779464163,
+  "updated_at": 1779466190
+}

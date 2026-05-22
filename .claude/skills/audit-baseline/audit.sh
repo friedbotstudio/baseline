@@ -781,7 +781,13 @@ docs_to_check = [
 for doc in docs_to_check:
     text = read_text(doc)
     if not text:
-        add(f"{doc} count claims", "WARN", "file not present")
+        # README.md is not shipped to consumer projects by the create-baseline
+        # CLI (only CLAUDE.md + docs/init/seed.md land at the consumer root).
+        # Its absence is the consumer-install case, not drift — silently skip.
+        # CLAUDE.md and seed.md are required baseline shipfiles; missing means
+        # real drift, so keep the WARN.
+        if doc != "README.md":
+            add(f"{doc} count claims", "WARN", "file not present")
         continue
 
     headline_drift = []   # confirmed stale headline claims
