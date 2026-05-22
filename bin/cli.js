@@ -33,7 +33,9 @@ Upgrade:
   Replaces the prior --merge flag. Reads <target>/.claude/.baseline-manifest.json
   and runs a three-tier merge against the shipped template:
     - tier 1 (binary prompt): customized files prompt "Keep your version / Use
-      new baseline / Show diff" in TTY mode (exit 3 on any skipped).
+      new baseline / Merge / Abort" in TTY mode. "Merge" stages incoming bytes
+      under .claude/state/upgrade/<ts>/ for /upgrade-project to reconcile in
+      Claude Code (exit 5); "Keep your version" exits 3 on any skipped.
     - tier 2 (mechanical): files routed through git merge-file --diff3 with
       BASE recovered from .claude/.baseline-prior/ cache or npm fallback;
       clean merges land silently, conflicts surface with markers (exit 4).

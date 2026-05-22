@@ -1,10 +1,10 @@
-import { cp, mkdir, unlink } from 'node:fs/promises';
+import { cp, mkdir, readFile, unlink } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { hashFile, saveManifest } from './manifest.js';
 import { deepMergeMcpServers } from './mcp.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
-import { dispatchByTier, NoBaseError, canRecoverBase } from './upgrade-tiers.js';
+import { dispatchByTier, NoBaseError, canRecoverBase, writeStageBaseless } from './upgrade-tiers.js';
 
 export const ACTION_KINDS = Object.freeze({
   ADD: 'ADD',
@@ -176,21 +176,31 @@ async function dispatchCustomized({ rel, newEntry, tierCtx, dryRun, onSkipCustom
       return await dispatchByTier(rel, tier, tierCtx);
     } catch (err) {
       if (err instanceof NoBaseError) {
-        return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, err });
+        return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, tierCtx, err });
       }
       throw err;
     }
   }
-  return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath });
+  return fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, tierCtx });
 }
 
-async function fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, err = null }) {
+async function fallbackToBinaryPrompt({ rel, onSkipCustomized, dryRun, tplPath, tgtPath, tierCtx, err = null }) {
   const choice = onSkipCustomized ? await onSkipCustomized(rel) : 'keep-mine';
   if (choice === 'take-theirs') {
     if (!dryRun) await copyFile(tplPath, tgtPath);
     return { kind: ACTION_KINDS.OVERWRITE, path: rel, reason: err ? `BASE recovery failed (${err.kind}); user chose take-theirs` : 'customized file; user chose take-theirs' };
   }
+  if (choice === 'merge') {
+    if (!dryRun) await stageBaselessMerge({ rel, tplPath, tgtPath, tierCtx });
+    return { kind: ACTION_KINDS.SEMANTIC_MERGE_STAGED, path: rel, reason: err ? `BASE recovery failed (${err.kind}); staged for two-way merge` : 'tier-1 customized; staged for two-way merge' };
+  }
   return { kind: ACTION_KINDS.SKIP_CUSTOMIZED, path: rel, reason: err ? `BASE recovery failed (${err.kind}); preserved` : 'target customized since last install' };
+}
+
+async function stageBaselessMerge({ rel, tplPath, tgtPath, tierCtx }) {
+  const incomingBuf = await readFile(tplPath);
+  const localBuf = await readFile(tgtPath);
+  await writeStageBaseless(tierCtx, rel, incomingBuf, localBuf);
 }
 
 function computeExitCode(actions) {

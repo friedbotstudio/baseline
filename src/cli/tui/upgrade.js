@@ -2,7 +2,9 @@
 // Plan/apply split:
 //   1. detect pending semantic-merge stage (idempotency short-circuit, AC-007)
 //   2. dry-run threeWayMerge → enumerate SKIP_CUSTOMIZED conflicts (tier-1 only)
-//   3. prompt the user once per tier-1 conflict (with Show-diff loop, cap-at-2)
+//   3. prompt the user once per tier-1 conflict: Keep your version / Use new
+//      baseline / Merge / Abort. The Merge pick stages incoming bytes for
+//      /upgrade-project to reconcile (tier1-merge-option spec).
 //   4. on cancel/abort: bail before any write
 //   5. on resolve: real threeWayMerge with onSkipCustomized backed by the Map.
 // Tier-2 MECHANICAL and tier-3 SEMANTIC files are NOT prompted — they're
@@ -16,7 +18,6 @@ import { threeWayMerge, ACTION_KINDS, ACTION_LABELS, ACTION_LABEL_WIDTH } from '
 import { loadManifest, buildManifestFromDir } from '../manifest.js';
 import { COPY_EXCLUDE } from '../install.js';
 import { findPendingStage, formatStageTimestamp } from '../upgrade-tiers.js';
-import { renderUnifiedDiff } from '../diff-render.js';
 import { renderBrandStrip } from './splash.js';
 
 const SUCCESS = 0;
@@ -29,11 +30,9 @@ const ERR_SEMANTIC_STAGED = 5;
 const CHOICE_OPTIONS = [
   { value: 'keep-mine', label: 'Keep your version', hint: 'preserve target file as-is' },
   { value: 'take-theirs', label: 'Use new baseline', hint: 'overwrite with new template' },
-  { value: 'show-diff', label: 'Show diff', hint: 'render local vs incoming and re-prompt' },
+  { value: 'merge', label: 'Merge', hint: 'stage incoming bytes for /upgrade-project to reconcile' },
   { value: 'abort', label: 'Abort', hint: 'exit without changes' },
 ];
-
-const SHOW_DIFF_CONSECUTIVE_CAP = 2;
 
 export async function run({ target, opts = {}, prompts = clackModule } = {}) {
   if (!target || typeof target !== 'string') {
@@ -65,7 +64,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
   const conflicts = dryReport.actions.filter((a) => a.kind === ACTION_KINDS.SKIP_CUSTOMIZED);
 
   const choices = new Map();
-  const aborted = await collectUserChoices(prompts, conflicts, opts.templateDir, target, choices);
+  const aborted = await collectUserChoices(prompts, conflicts, choices);
   if (aborted) {
     prompts.cancel('Upgrade aborted; tree unchanged.');
     return ERR_ABORT;
@@ -95,7 +94,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   const stagedCount = finalReport.actions.filter((a) => a.kind === ACTION_KINDS.SEMANTIC_MERGE_STAGED).length;
   if (stagedCount > 0) {
-    prompts.log.info(`${stagedCount} file(s) need semantic merge. Open Claude Code and run /upgrade-project to reconcile.`);
+    prompts.log.info(`${stagedCount} file(s) staged. Open Claude Code and run /upgrade-project to reconcile.`);
   }
 
   const applied = finalReport.actions.filter((a) => isApplied(a.kind)).length;
@@ -121,38 +120,22 @@ function isLegacyManifest(m) {
   return typeof m.baseline_version !== 'string';
 }
 
-async function collectUserChoices(prompts, conflicts, templateDir, target, choices) {
+async function collectUserChoices(prompts, conflicts, choices) {
   for (const conflict of conflicts) {
-    const choice = await pickForFile(prompts, conflict.path, templateDir, target);
+    const choice = await pickForFile(prompts, conflict.path);
     if (choice === 'abort') return true;
-    if (choice !== null) choices.set(conflict.path, choice);
+    choices.set(conflict.path, choice);
   }
   return false;
 }
 
-async function pickForFile(prompts, rel, templateDir, target) {
-  let consecutiveShowDiff = 0;
-  while (true) {
-    const choice = await prompts.select({
-      message: `${rel} has been customized — choose:`,
-      options: CHOICE_OPTIONS,
-    });
-    if (prompts.isCancel(choice)) return 'abort';
-    if (choice !== 'show-diff') return choice;
-    await renderConflictDiff(prompts, rel, templateDir, target);
-    consecutiveShowDiff++;
-    if (consecutiveShowDiff >= SHOW_DIFF_CONSECUTIVE_CAP) {
-      prompts.log.info(`Show-diff picked ${SHOW_DIFF_CONSECUTIVE_CAP} times for ${rel}; falling through (keeping your version). Re-run if you want to choose differently.`);
-      return null;
-    }
-  }
-}
-
-async function renderConflictDiff(prompts, rel, templateDir, target) {
-  const localBytes = await readFile(join(target, rel), 'utf8');
-  const incomingBytes = await readFile(join(templateDir, rel), 'utf8');
-  const diff = renderUnifiedDiff(localBytes, incomingBytes, { colorize: process.stdout.isTTY === true });
-  prompts.log.info(`Diff for ${rel} (local → incoming):\n${diff}`);
+async function pickForFile(prompts, rel) {
+  const choice = await prompts.select({
+    message: `${rel} has been customized — choose:`,
+    options: CHOICE_OPTIONS,
+  });
+  if (prompts.isCancel(choice)) return 'abort';
+  return choice;
 }
 
 function isReportableAction(kind) {

@@ -128,13 +128,13 @@ describe('tui/upgrade', () => {
   });
 });
 
-// New verbiage + Show-diff loop + tier-2/3 dispatch + exit codes 4/5
-// + AC-007 idempotency + AC-010 legacy fallback.
-// All RED until src/cli/tui/upgrade.js, src/cli/upgrade-tiers.js,
-// src/cli/diff-render.js, and bin/cli.js are updated.
+// AC-001 verbiage updated: tier-1 prompt offers four options
+// {keep-mine, take-theirs, merge, abort} — "Show diff" is REMOVED in this
+// workflow (docs/specs/tier1-merge-option.md). Tier-2/3 dispatch tests below
+// (AC-002, AC-003, AC-007 idempotency, AC-010 legacy fallback) are unchanged.
 
 describe('tui/upgrade — verbiage (AC-001)', () => {
-  it('test_when_upgrade_tier1_customized_then_new_three_choice_labels', async () => {
+  it('test_when_upgrade_tier1_customized_then_new_four_choice_labels_include_merge_not_show_diff', async () => {
     const { newTpl, target } = await installedTargetWithCustomization();
     const { calls, stub } = makePromptsStub(['keep-mine']);
 
@@ -147,8 +147,12 @@ describe('tui/upgrade — verbiage (AC-001)', () => {
       `options must include "Keep your version"; got: ${JSON.stringify(labels)}`);
     assert.ok(labels.includes('Use new baseline'),
       `options must include "Use new baseline"; got: ${JSON.stringify(labels)}`);
-    assert.ok(labels.includes('Show diff'),
-      `options must include "Show diff"; got: ${JSON.stringify(labels)}`);
+    assert.ok(labels.includes('Merge'),
+      `options must include "Merge" (replaces "Show diff"); got: ${JSON.stringify(labels)}`);
+    assert.ok(labels.includes('Abort'),
+      `options must include "Abort"; got: ${JSON.stringify(labels)}`);
+    assert.ok(!labels.includes('Show diff'),
+      `legacy "Show diff" label must be removed in this workflow; got: ${JSON.stringify(labels)}`);
     assert.ok(!labels.includes('Keep mine'),
       `legacy "Keep mine" label must be removed; got: ${JSON.stringify(labels)}`);
     assert.ok(!labels.includes('Take theirs'),
@@ -156,30 +160,145 @@ describe('tui/upgrade — verbiage (AC-001)', () => {
   });
 });
 
-describe('tui/upgrade — Show-diff loop (AC-001)', () => {
-  it('test_when_upgrade_user_picks_show_diff_then_diff_emitted_and_reprompt_fires', async () => {
+describe('tui/upgrade — tier-1 prompt option count and order (AC-001)', () => {
+  it('test_when_tier1_prompt_renders_then_four_options_exactly_keep_take_merge_abort_no_show_diff', async () => {
     const { newTpl, target } = await installedTargetWithCustomization();
-    const { calls, stub } = makePromptsStub(['show-diff', 'keep-mine']);
+    const { calls, stub } = makePromptsStub(['keep-mine']);
 
     await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
 
-    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
-    assert.equal(selectsForFile.length, 2,
-      'show-diff pick must trigger a SECOND select for the same path');
-    const diffEmitted = calls.some((c) => /log\.(info|step)/.test(c.kind) && /[-+]/.test(JSON.stringify(c).slice(0, 4000)));
-    assert.ok(diffEmitted,
-      'expected a unified diff to be emitted to the TUI between the two select calls');
+    const selectCall = calls.find((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
+    assert.ok(selectCall, 'expected one select for the customized CLAUDE.md');
+    const values = (selectCall.options || []).map((o) => o.value);
+    assert.deepEqual(values, ['keep-mine', 'take-theirs', 'merge', 'abort'],
+      `option values must be exactly [keep-mine, take-theirs, merge, abort] in that order; got: ${JSON.stringify(values)}`);
+    const serialized = JSON.stringify(selectCall.options || []);
+    assert.ok(!/show-diff/i.test(serialized),
+      `no option may contain the token "show-diff"; got: ${serialized}`);
   });
+});
 
-  it('test_when_upgrade_user_picks_show_diff_twice_consecutively_then_falls_through_without_third_prompt', async () => {
+describe('tui/upgrade — Merge pick stages BASE-less (AC-002)', () => {
+  it('test_when_user_picks_merge_then_stage_entry_base_sha256_null_incoming_written_local_untouched_exit_5', async () => {
     const { newTpl, target } = await installedTargetWithCustomization();
-    const { calls, stub } = makePromptsStub(['show-diff', 'show-diff']);
+    const localBefore = await readFile(join(target, 'CLAUDE.md'), 'utf8');
+    const incomingBytes = await readFile(join(newTpl, 'CLAUDE.md'), 'utf8');
+    const { calls, stub } = makePromptsStub(['merge']);
 
-    await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
 
-    const selectsForFile = calls.filter((c) => c.kind === 'select' && /CLAUDE\.md/i.test(c.message || ''));
-    assert.equal(selectsForFile.length, 2,
-      'after 2 consecutive show-diff picks, no third select for the same path (cap-at-2 rule)');
+    assert.equal(exit, 5,
+      'Merge pick on a tier-1 conflict must surface as CLI exit code 5 (semantic-stage exit)');
+
+    const localAfter = await readFile(join(target, 'CLAUDE.md'), 'utf8');
+    assert.equal(localAfter, localBefore,
+      'LOCAL file must be UNCHANGED after Merge pick — reconciliation happens later in /upgrade-project');
+
+    const { readdir } = await import('node:fs/promises');
+    const stageRoot = join(target, '.claude/state/upgrade');
+    const stages = await readdir(stageRoot);
+    assert.equal(stages.length, 1, 'exactly one stage_ts dir per CLI run');
+    const stageDir = join(stageRoot, stages[0]);
+
+    const { existsSync: fsExists } = await import('node:fs');
+    assert.ok(fsExists(join(stageDir, 'CLAUDE.md.baseline-incoming')),
+      '<rel>.baseline-incoming artifact must be written under the stage dir');
+    assert.ok(!fsExists(join(stageDir, 'CLAUDE.md.baseline-base')),
+      '<rel>.baseline-base artifact must NOT be written for tier-1 Merge (BASE is unrecoverable)');
+
+    const incomingArtifact = await readFile(join(stageDir, 'CLAUDE.md.baseline-incoming'), 'utf8');
+    assert.equal(incomingArtifact, incomingBytes,
+      'baseline-incoming artifact bytes must equal the incoming template bytes');
+
+    const manifest = JSON.parse(await readFile(join(stageDir, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.files.length, 1, 'stage manifest must contain exactly one entry');
+    const entry = manifest.files[0];
+    assert.equal(entry.rel, 'CLAUDE.md');
+    assert.equal(entry.base_sha256, null,
+      'BASE-less entry: base_sha256 must be the JSON value null (design pick 1A); got: ' + JSON.stringify(entry.base_sha256));
+    assert.match(entry.incoming_sha256, /^[0-9a-f]{64}$/, 'incoming_sha256 must be 64-hex');
+    assert.match(entry.local_sha256, /^[0-9a-f]{64}$/, 'local_sha256 must be 64-hex');
+    assert.equal(entry.status, 'PENDING', 'new entry must start PENDING');
+
+    const pointerEmitted = calls.some((c) => /\/upgrade-project/.test(JSON.stringify(c)));
+    assert.ok(pointerEmitted,
+      'terminal output must include a pointer to /upgrade-project after Merge pick');
+  });
+});
+
+describe('tui/upgrade — non-TTY contract: Merge unreachable (AC-006)', () => {
+  it('test_when_threeWayMerge_no_onSkipCustomized_callback_then_skip_customized_action_exit_3_local_untouched_no_stage', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const localBefore = await readFile(join(target, 'CLAUDE.md'), 'utf8');
+
+    const { threeWayMerge, ACTION_KINDS } = await import('../src/cli/merge.js');
+    const { loadManifest, buildManifestFromDir } = await import('../src/cli/manifest.js');
+    const oldManifest = await loadManifest(join(target, '.claude/.baseline-manifest.json'));
+    const { readdir } = await import('node:fs/promises');
+    const tplFiles = (await readdir(newTpl, { recursive: true, withFileTypes: true }))
+      .filter((d) => d.isFile())
+      .map((d) => join(d.parentPath ?? d.path, d.name).slice(newTpl.length + 1).split(/\\|\//).join('/'));
+    const newManifest = await buildManifestFromDir(newTpl, tplFiles);
+
+    const report = await threeWayMerge(newTpl, target, oldManifest, newManifest);
+
+    const skipAction = report.actions.find((a) => a.path === 'CLAUDE.md');
+    assert.ok(skipAction, 'CLAUDE.md must appear in actions[]');
+    assert.equal(skipAction.kind, ACTION_KINDS.SKIP_CUSTOMIZED,
+      'no onSkipCustomized callback → default keep-mine → SKIP_CUSTOMIZED');
+    assert.equal(report.exitCode, 3,
+      'exitCode for skipped customized files must be 3 (today\'s non-TTY contract)');
+
+    const localAfter = await readFile(join(target, 'CLAUDE.md'), 'utf8');
+    assert.equal(localAfter, localBefore, 'LOCAL must be unchanged on the non-TTY path');
+
+    const { existsSync: fsExists } = await import('node:fs');
+    assert.ok(!fsExists(join(target, '.claude/state/upgrade')),
+      'no stage dir may be created on the non-TTY path — Merge is unreachable without a prompt');
+  });
+});
+
+describe('tui/upgrade — BASE-less stage short-circuits subsequent runs (AC-005, AC-007)', () => {
+  it('test_when_pending_baseless_stage_exists_then_subsequent_tui_upgrade_short_circuits_without_remerge_prompt', async () => {
+    const { newTpl, target } = await installedTargetWithCustomization();
+    const stageDir = join(target, '.claude/state/upgrade/2026-05-22T15-00-00Z');
+    await mkdir(stageDir, { recursive: true });
+    await writeFile(join(stageDir, 'manifest.json'), JSON.stringify({
+      stage_version: 1, slug: 'tier1-merge-option', created_at: 'x',
+      baseline_version_from: '0.7.0', baseline_version_to: '0.8.0',
+      files: [{ rel: 'CLAUDE.md', base_sha256: null, incoming_sha256: 'b'.repeat(64), local_sha256: 'c'.repeat(64), status: 'PENDING' }],
+    }, null, 2));
+
+    const { calls, stub } = makePromptsStub([]);
+    const exit = await tuiUpgrade.run({ target, opts: { templateDir: newTpl }, prompts: stub });
+
+    const selects = calls.filter((c) => c.kind === 'select');
+    assert.equal(selects.length, 0,
+      'BASE-less pending stage must short-circuit before any select prompt fires (re-Merge is structurally unreachable while stage exists)');
+    assert.equal(exit, 5,
+      're-invocation with BASE-less pending stage exits 5 (matches tier-3 AC-007 contract)');
+    const pointer = calls.some((c) => /\/upgrade-project/.test(JSON.stringify(c)));
+    assert.ok(pointer, 'terminal output must re-print the /upgrade-project pointer');
+  });
+});
+
+describe('tui/upgrade — diff-render module removal (AC-007 Removed)', () => {
+  it('test_when_diff_render_module_and_test_file_removed_then_no_orphan_references', async () => {
+    const { existsSync: fsExists } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname: dn, join: jn } = await import('node:path');
+    const repoRoot = jn(dn(fileURLToPath(import.meta.url)), '..');
+
+    assert.ok(!fsExists(jn(repoRoot, 'src/cli/diff-render.js')),
+      'src/cli/diff-render.js must be deleted (only callers were the Show-diff loop and its test)');
+    assert.ok(!fsExists(jn(repoRoot, 'tests/diff-render.test.mjs')),
+      'tests/diff-render.test.mjs must be deleted (the module it tests is gone)');
+
+    const tuiSrc = await readFile(jn(repoRoot, 'src/cli/tui/upgrade.js'), 'utf8');
+    for (const forbidden of ['diff-render', 'renderUnifiedDiff', 'renderConflictDiff', 'consecutiveShowDiff', 'SHOW_DIFF_CONSECUTIVE_CAP']) {
+      assert.ok(!tuiSrc.includes(forbidden),
+        `src/cli/tui/upgrade.js must NOT reference "${forbidden}" after Merge replaces Show diff`);
+    }
   });
 });
 

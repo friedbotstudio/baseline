@@ -31,7 +31,7 @@ For each stage directory under `.claude/state/upgrade/`:
     "files": [
       {
         "rel": "docs/init/seed.md",
-        "base_sha256": "<hex>",
+        "base_sha256": "<hex>" | null,
         "incoming_sha256": "<hex>",
         "local_sha256": "<hex>",
         "status": "PENDING"
@@ -39,24 +39,35 @@ For each stage directory under `.claude/state/upgrade/`:
     ]
   }
   ```
-- For each entry in `files`, three artifacts are present:
-  - `<rel>.baseline-base` — the **BASE** content (the file as it was when the user last installed the baseline).
-  - `<rel>.baseline-incoming` — the **INCOMING** content (the file as it ships in the new baseline; INCOMING and REMOTE are the same thing).
+  `base_sha256` is the **per-entry classification discriminator**: a 64-hex string means the CLI staged a recoverable BASE (three-way reconciliation); the JSON value `null` means BASE was unrecoverable when the user picked Merge on the tier-1 prompt (two-way reconciliation). See [tier1-merge-option spec](../../../docs/specs/tier1-merge-option.md) §Design pick 1A.
+- For each entry, the staged artifacts are:
+  - `<rel>.baseline-incoming` — the **INCOMING** content. Always present.
+  - `<rel>.baseline-base` — the **BASE** content. Present iff `base_sha256` is a string; **absent** for BASE-less entries.
   - The LOCAL file remains at its real path inside the target tree (untouched by the CLI).
 
 ## Procedure
 
 1. **Discover the stage.** Read `.claude/state/upgrade/` and pick the most-recent stage directory whose manifest has at least one file with `status: PENDING` or `status: NEEDS_USER_INPUT`. If no such stage exists, tell the user "No pending stage to reconcile" and exit.
-2. **Per file**, in the order they appear in the stage manifest:
+2. **Per-entry classification** (binding). For each entry in the stage manifest, in declared order:
+   - If `entry.base_sha256` is a 64-hex string → **three-way reconciliation** (existing path; BASE was recoverable).
+   - If `entry.base_sha256` is `null` → **two-way reconciliation** (new path; BASE was unrecoverable when the user picked Merge on tier-1; the zero-drift renumbering rule does not apply because there is no BASE anchor to shift against).
+   - Any other value → apply the `NEEDS_USER_INPUT` fallback with reason `malformed-base-sha256`.
+3. **Three-way reconciliation** (BASE recoverable):
    - Read BASE, INCOMING, and LOCAL.
    - Reason about the three-way delta. Identify what changed between BASE → INCOMING (the upstream edit), what changed between BASE → LOCAL (the user edit), and where they conflict.
    - If both edits are textually non-overlapping, the CLI would have routed the file to tier 2 (mechanical merge). The fact that the file is in tier 3 means structural reconciliation is needed — most commonly: both sides inserted content at the same structural anchor (a new section, a new numbered article, a new TOC entry).
    - Apply the **zero-drift renumbering rule** below.
    - Write the reconciled bytes to the LOCAL path.
    - Update the stage manifest entry's `status` to `RECONCILED`.
-3. **Finalize the stage.** When every entry's status is `RECONCILED`, delete the stage directory (`rm -rf .claude/state/upgrade/<ts>/`). Report per-file status to the user.
+4. **Two-way reconciliation** (BASE-less; tier-1 Merge):
+   - Read INCOMING and LOCAL. Do NOT attempt to read `<rel>.baseline-base` — it is absent by construction.
+   - Reason about the two-way diff: which lines/sections in INCOMING are new bytes that should land in LOCAL, and which lines/sections in LOCAL are user-authored content that should be preserved.
+   - The **zero-drift renumbering rule does NOT apply** to two-way reconciliation — there is no BASE anchor to shift against, so "shift, never fold" cannot be evaluated. When LOCAL and INCOMING both add structural entries at the same anchor and you cannot determine which is user content vs baseline content without the BASE, apply the `NEEDS_USER_INPUT` fallback.
+   - Write the reconciled bytes to the LOCAL path.
+   - Update the stage manifest entry's `status` to `RECONCILED`.
+5. **Finalize the stage.** When every entry's status is `RECONCILED`, delete the stage directory (`rm -rf .claude/state/upgrade/<ts>/`). Report per-file status to the user.
 
-## The zero-drift renumbering rule (binding)
+## The zero-drift renumbering rule (binding for three-way only)
 
 When BASE → INCOMING adds a new structural entry (a new Article, a new section, a new numbered item) at position N, and BASE → LOCAL added the user's own entry at the same position N, you SHALL renumber the user's entry to the **next available** slot (N+1) — you SHALL **never fold** the user's entry into an existing baseline section.
 

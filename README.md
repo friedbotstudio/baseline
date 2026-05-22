@@ -95,7 +95,7 @@ npx @friedbotstudio/create-baseline ./your-project
 npx @friedbotstudio/create-baseline ./your-project --force
 
 # Upgrade an existing install against a newer baseline version.
-# In a TTY, each tier-1 customised file becomes a keep-mine / take-theirs / abort
+# In a TTY, each tier-1 customised file prompts: keep-mine / take-theirs / merge / abort
 # prompt; tier-2 files auto-merge via `git merge-file --diff3`; tier-3 files
 # stage for the /upgrade-project Claude Code skill to reconcile. In CI / piped
 # stdout, every per-file action is reported with a user-facing label:

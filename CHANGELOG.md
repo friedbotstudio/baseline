@@ -48,6 +48,10 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 - declarative track DAGs via workflows.jsonl (§18 + Article IV)
 
+### Fixed
+
+- surface tier-2/3 unrecoverable-BASE files in upgrade dry-run
+
 ## [Unreleased]
 
 ### Added

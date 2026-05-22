@@ -1,0 +1,26 @@
+{
+  "request": "replace tier-1 Show diff with Merge \u2014 stage via .claude/state/upgrade/, SessionStart nag",
+  "slug": "tier1-merge-option",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779387888,
+  "updated_at": 1779454680
+}

@@ -86,12 +86,28 @@ export async function dispatchByTier(rel, tier, ctx) {
 }
 
 export async function writeStage(ctx, rel, baseBuf, incomingBuf, localBuf) {
-  if (!ctx.stageRunTs) ctx.stageRunTs = stageTimestamp();
-  const stageDir = join(ctx.target, '.claude/state/upgrade', ctx.stageRunTs);
-  await mkdir(stageDir, { recursive: true });
+  const stageDir = await ensureStageDir(ctx);
   await writeStageArtifact(stageDir, `${rel}.baseline-base`, baseBuf);
   await writeStageArtifact(stageDir, `${rel}.baseline-incoming`, incomingBuf);
   await appendToStageManifest(stageDir, ctx, rel, baseBuf, incomingBuf, localBuf);
+}
+
+// BASE-less stage writer used by the tier-1 Merge pick (see
+// docs/specs/tier1-merge-option.md §Behavior #2 + design pick 1A). Unlike
+// writeStage, no BASE artifact is written and the manifest entry carries
+// base_sha256: null — the discriminator /upgrade-project reads to route to
+// two-way reconciliation.
+export async function writeStageBaseless(ctx, rel, incomingBuf, localBuf) {
+  const stageDir = await ensureStageDir(ctx);
+  await writeStageArtifact(stageDir, `${rel}.baseline-incoming`, incomingBuf);
+  await appendToStageManifest(stageDir, ctx, rel, null, incomingBuf, localBuf);
+}
+
+async function ensureStageDir(ctx) {
+  if (!ctx.stageRunTs) ctx.stageRunTs = stageTimestamp();
+  const stageDir = join(ctx.target, '.claude/state/upgrade', ctx.stageRunTs);
+  await mkdir(stageDir, { recursive: true });
+  return stageDir;
 }
 
 // --- foundation helpers ---
@@ -232,7 +248,7 @@ async function appendToStageManifest(stageDir, ctx, rel, baseBuf, incomingBuf, l
     : newStageManifest(ctx);
   manifest.files.push({
     rel,
-    base_sha256: sha256(baseBuf),
+    base_sha256: baseBuf === null ? null : sha256(baseBuf),
     incoming_sha256: sha256(incomingBuf),
     local_sha256: sha256(localBuf),
     status: 'PENDING',

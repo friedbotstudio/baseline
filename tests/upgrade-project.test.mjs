@@ -60,6 +60,11 @@ describe('/upgrade-project skill — shape', () => {
       'NEEDS_USER_INPUT',
       'PENDING',
       'RECONCILED',
+      // tier1-merge-option additions (spec docs/specs/tier1-merge-option.md):
+      'three-way', // existing reconciliation path stays documented
+      'two-way',   // new BASE-less reconciliation path (AC-003)
+      'classification', // classification preamble per design pick 4C
+      'BASE-less', // explicit naming so the contract surface is searchable (AC-009)
     ];
     for (const phrase of required) {
       if (phrase === 'INCOMING') {
@@ -67,9 +72,26 @@ describe('/upgrade-project skill — shape', () => {
           `skill body must reference INCOMING (or REMOTE) — the third leg of the 3-way merge`);
       } else {
         assert.ok(body.includes(phrase),
-          `skill body must reference "${phrase}" — required contract per spec §Behavior #4/#8/#9`);
+          `skill body must reference "${phrase}" — required contract per spec §Behavior #4/#8/#9 or tier1-merge-option`);
       }
     }
+  });
+
+  it('test_when_upgrade_project_skill_md_then_two_way_sub_procedure_disclaims_renumbering_rule', async () => {
+    const text = await readFile(SKILL_PATH, 'utf8');
+    const body = text.replace(/^---\n[\s\S]*?\n---\n/, '');
+
+    // Per spec D4 (design pick 4C): the two-way sub-procedure must explicitly
+    // state that the zero-drift renumbering rule does NOT apply. Without BASE,
+    // there is no anchor to shift against. The contract surface must be visible
+    // in the SKILL body so LLM readers don't carry the rule across procedures.
+    const twoWayBlock = body.match(/two-way[\s\S]{0,2000}/i);
+    assert.ok(twoWayBlock,
+      'skill body must contain a two-way reconciliation block');
+    assert.ok(
+      /(does not apply|do not apply|not apply|N\/A|no anchor)/i.test(twoWayBlock[0]),
+      'two-way sub-procedure must disclaim the zero-drift renumbering rule (key phrases: "does not apply" / "no anchor")',
+    );
   });
 
   it('test_when_upgrade_project_skill_md_then_audit_baseline_recognizes_it', async () => {

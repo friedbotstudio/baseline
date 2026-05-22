@@ -189,6 +189,30 @@ if pending_count > 0 and not active_workflow:
         'run `/memory-flush` to clear before starting new work.'
     )
 
+# Pending upgrade stages (tier1-merge-option AC-004 + AC-008). Scans
+# .claude/state/upgrade/*/manifest.json for entries with status: PENDING.
+# Fires regardless of active_workflow (design pick 2C): stages are stable
+# infrastructure debt, distinct from memory-candidate debt above.
+upgrade_pending = 0
+upgrade_root = root / '.claude/state/upgrade'
+if upgrade_root.is_dir():
+    for stage_manifest in upgrade_root.glob('*/manifest.json'):
+        try:
+            with open(stage_manifest) as f:
+                stage = json.load(f)
+        except Exception:
+            continue
+        for entry in stage.get('files', []):
+            if entry.get('status') == 'PENDING':
+                upgrade_pending += 1
+
+if upgrade_pending > 0:
+    noun = 'file' if upgrade_pending == 1 else 'files'
+    lines.append(
+        f'**{upgrade_pending} {noun} staged for /upgrade-project to reconcile** — '
+        'run `/upgrade-project` when ready.'
+    )
+
 lines.append('')
 lines.append(
     'Files are read on demand by the relevant skill (scout reads landmarks, research reads libraries, etc.). '

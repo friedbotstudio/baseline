@@ -608,7 +608,7 @@ eleventyComputed:
 
       <details class="faq-item" name="baseline-faq">
         <summary class="faq-q">Will my existing <code>.claude/</code> customizations survive an upgrade?</summary>
-        <div class="faq-a">Run <code>npx @friedbotstudio/create-baseline upgrade ./project</code>. The CLI does a three-way reconcile against <code>.claude/.baseline-manifest.json</code>: untouched files refresh from the new template, customized tier-1 files prompt keep-mine / take-theirs in a TTY, tier-2 files auto-merge via <code>git merge-file --diff3</code>, tier-3 files stage for the <code>/upgrade-project</code> Claude Code skill to reconcile, and baseline files removed upstream that you had not touched are pruned automatically. Per-file actions are reported in CI with exit 3 for any preserved customisation.</div>
+        <div class="faq-a">Run <code>npx @friedbotstudio/create-baseline upgrade ./project</code>. The CLI does a three-way reconcile against <code>.claude/.baseline-manifest.json</code>: untouched files refresh from the new template, customized tier-1 files (BASE unrecoverable) prompt keep-your-version / use-new-baseline / merge / abort in a TTY (merge stages incoming bytes for <code>/upgrade-project</code> to reconcile, exit 5), tier-2 files auto-merge via <code>git merge-file --diff3</code>, tier-3 files stage for the <code>/upgrade-project</code> Claude Code skill to reconcile, and baseline files removed upstream that you had not touched are pruned automatically. Per-file actions are reported in CI with exit 3 for any preserved customisation.</div>
       </details>
 
       <details class="faq-item" name="baseline-faq">

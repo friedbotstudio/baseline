@@ -210,6 +210,62 @@ describe('upgrade-tiers — dispatchByTier', () => {
   });
 });
 
+describe('upgrade-tiers — writeStageBaseless (two-way staging, AC-002)', () => {
+  it('test_when_writeStageBaseless_then_manifest_entry_base_sha256_null_only_incoming_artifact_written', async () => {
+    const target = await mkdtemp(join(tmpdir(), 'tiers-baseless-'));
+    const rel = 'docs/init/seed.md';
+    const incomingBuf = Buffer.from('# baseline v2 incoming\n## Article XI (baseline)\n');
+    const localBuf = Buffer.from('# baseline v1 local\n## Article XI (user)\n');
+    const ctx = makeCtx();
+    ctx.target = target;
+
+    await tiers.writeStageBaseless(ctx, rel, incomingBuf, localBuf);
+
+    assert.ok(ctx.stageRunTs, 'writeStageBaseless must initialize ctx.stageRunTs lazily');
+    const stageDir = join(target, '.claude/state/upgrade', ctx.stageRunTs);
+
+    const incomingArtifact = await readFile(join(stageDir, `${rel}.baseline-incoming`));
+    assert.equal(incomingArtifact.toString('utf8'), incomingBuf.toString('utf8'),
+      'baseline-incoming artifact must contain the incoming bytes');
+
+    assert.ok(!existsSync(join(stageDir, `${rel}.baseline-base`)),
+      'BASE-less staging must NOT write a baseline-base artifact');
+
+    const manifest = JSON.parse(await readFile(join(stageDir, 'manifest.json'), 'utf8'));
+    assert.equal(manifest.files.length, 1, 'first call writes one entry');
+    const entry = manifest.files[0];
+    assert.equal(entry.rel, rel);
+    assert.equal(entry.base_sha256, null,
+      'design pick 1A: BASE-less entry carries base_sha256: null (JSON null literal)');
+    assert.equal(entry.incoming_sha256, sha256(incomingBuf));
+    assert.equal(entry.local_sha256, sha256(localBuf));
+    assert.equal(entry.status, 'PENDING');
+  });
+
+  it('test_when_writeStageBaseless_called_twice_for_different_files_then_appends_to_same_stage_dir', async () => {
+    const target = await mkdtemp(join(tmpdir(), 'tiers-baseless-append-'));
+    const ctx = makeCtx();
+    ctx.target = target;
+    const rel1 = 'docs/init/seed.md';
+    const rel2 = 'CLAUDE.md';
+    const buf1 = Buffer.from('a');
+    const buf2 = Buffer.from('b');
+
+    await tiers.writeStageBaseless(ctx, rel1, buf1, buf1);
+    const firstTs = ctx.stageRunTs;
+    await tiers.writeStageBaseless(ctx, rel2, buf2, buf2);
+
+    assert.equal(ctx.stageRunTs, firstTs,
+      'second call must reuse ctx.stageRunTs so both entries land in the same stage_ts dir');
+    const stages = await readdir(join(target, '.claude/state/upgrade'));
+    assert.equal(stages.length, 1, 'exactly one stage_ts dir after two appends');
+    const manifest = JSON.parse(await readFile(join(target, '.claude/state/upgrade', stages[0], 'manifest.json'), 'utf8'));
+    assert.equal(manifest.files.length, 2, 'manifest must contain both entries');
+    assert.ok(manifest.files.every((e) => e.base_sha256 === null),
+      'every BASE-less entry must carry base_sha256: null');
+  });
+});
+
 // --- helpers (Foundation) ---
 
 function makeCtx({ baseline_version = '0.4.0' } = {}) {
