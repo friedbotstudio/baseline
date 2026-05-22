@@ -5,11 +5,13 @@ import { deepMergeMcpServers } from './mcp.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
 import { dispatchByTier, NoBaseError, canRecoverBase, writeStageBaseless } from './upgrade-tiers.js';
+import { readMarker, matchesReconciledHash } from './reconciliation-marker.js';
 
 export const ACTION_KINDS = Object.freeze({
   ADD: 'ADD',
   OVERWRITE: 'OVERWRITE',
   NOOP: 'NOOP',
+  MARKER_MATCHED: 'MARKER_MATCHED',
   SKIP_CUSTOMIZED: 'SKIP_CUSTOMIZED',
   PRUNE: 'PRUNE',
   PRUNE_SKIPPED_CUSTOMIZED: 'PRUNE_SKIPPED_CUSTOMIZED',
@@ -28,6 +30,7 @@ export const ACTION_LABELS = Object.freeze({
   ADD: 'add',
   OVERWRITE: 'update',
   NOOP: 'unchanged',
+  MARKER_MATCHED: 'already reconciled',
   SKIP_CUSTOMIZED: 'kept yours',
   PRUNE: 'removed (upstream)',
   PRUNE_SKIPPED_CUSTOMIZED: 'kept yours (upstream removed)',
@@ -69,6 +72,7 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
   const newFiles = newManifest?.files ?? {};
   const baseline_version = oldManifest?.baseline_version;
   const allPaths = new Set([...Object.keys(oldFiles), ...Object.keys(newFiles)]);
+  const marker = await readMarker(target);
 
   const tierCtx = {
     target,
@@ -127,6 +131,14 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
     }
 
     if (newHash && tgtHash && tgtHash !== oldHash) {
+      if (matchesReconciledHash(marker, rel, newHash)) {
+        actions.push({
+          kind: ACTION_KINDS.MARKER_MATCHED,
+          path: rel,
+          reason: 'marker records reconciliation against this template hash; no re-stage',
+        });
+        continue;
+      }
       const action = await dispatchCustomized({
         rel, newEntry, tierCtx, dryRun, onSkipCustomized, tplPath, tgtPath,
       });

@@ -57,7 +57,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 
   const { oldManifest, newManifest } = await loadManifests(opts.templateDir, manifestPath);
   if (isLegacyManifest(oldManifest)) {
-    prompts.log.warn("Your previous install predates version-tracked manifests, so this upgrade can't perform automatic three-way merges on customized files. You'll be prompted to keep your version or take the new baseline for each customized file. To enable three-way merges next time, re-install with the latest baseline.");
+    prompts.log.warn("Your previous install predates version-tracked manifests, so this upgrade can't perform automatic three-way merges on customized files. You'll be prompted to keep your version or take the new baseline for each customized file. After you finish, run `/upgrade-project` in Claude Code on any staged files — the reconciliations are recorded so future upgrades silently skip files you've already reviewed against the current baseline.");
   }
 
   const dryReport = await threeWayMerge(opts.templateDir, target, oldManifest, newManifest, { dryRun: true });

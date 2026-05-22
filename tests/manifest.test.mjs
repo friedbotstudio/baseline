@@ -166,3 +166,48 @@ describe('manifest v2 shape (skill-ownership)', () => {
     for (const s of slugs) assert.equal(m.owners.skills[s], 'baseline');
   });
 });
+
+// Spec AC-007 — docs/specs/upgrade-no-replay-prompts.md §Behavior #1
+// After `npm run build` (or a direct invocation of scripts/build-manifest.mjs
+// against obj/template/), the shipped manifest must declare runtime-state
+// files as tier=NEVER_TOUCH. Their bodies are gitignored and rewritten every
+// turn by memory hooks; merge-time tier dispatch on them is structurally wrong.
+describe('shipped manifest — runtime-state file tier classification', () => {
+  it('test_when_build_manifest_runs_then_pending_and_resume_tier_is_NEVER_TOUCH', async () => {
+    const { readFile: readFileFs } = await import('node:fs/promises');
+    const { dirname, resolve } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const here = dirname(fileURLToPath(import.meta.url));
+    const repoRoot = resolve(here, '..');
+    const manifestPath = resolve(repoRoot, 'obj/template/.claude/manifest.json');
+
+    let text;
+    try {
+      text = await readFileFs(manifestPath, 'utf8');
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        assert.fail(
+          `obj/template/.claude/manifest.json not present — run \`npm run build\` first. (${err.message})`,
+        );
+      }
+      throw err;
+    }
+    const m = JSON.parse(text);
+
+    const pendingEntry = m.files['.claude/memory/_pending.md'];
+    assert.ok(pendingEntry, '.claude/memory/_pending.md must be present in manifest');
+    assert.equal(
+      pendingEntry.tier,
+      'NEVER_TOUCH',
+      `_pending.md tier must be NEVER_TOUCH (runtime-state file); got ${pendingEntry.tier}`,
+    );
+
+    const resumeEntry = m.files['.claude/memory/_resume.md'];
+    assert.ok(resumeEntry, '.claude/memory/_resume.md must be present in manifest');
+    assert.equal(
+      resumeEntry.tier,
+      'NEVER_TOUCH',
+      `_resume.md tier must be NEVER_TOUCH (runtime-state file); got ${resumeEntry.tier}`,
+    );
+  });
+});

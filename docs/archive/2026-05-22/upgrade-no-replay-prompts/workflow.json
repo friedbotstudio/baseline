@@ -1,0 +1,27 @@
+{
+  "request": "Fix create-baseline upgrade's re-prompting on structurally-divergent files. (a) Runtime-state files _pending.md and _resume.md mis-tiered MECHANICAL in manifest \u2014 should be NEVER_TOUCH. (b) Post-reconciliation files (e.g. seed.md after /upgrade-project) re-trigger staging every upgrade because no marker records 'user already reviewed against template hash X'. Outcome: clean upgrade against unchanged baseline produces zero prompts; real upstream change still stages.",
+  "slug": "upgrade-no-replay-prompts",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779472451,
+  "updated_at": 1779480585
+}

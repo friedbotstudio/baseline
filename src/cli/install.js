@@ -14,6 +14,13 @@ export const NEVER_TOUCH = Object.freeze([
   '.claude/project.json',
   '.claude/workflows.jsonl',
   '.claude/schemas/workflow-track.v1.json',
+  // Runtime-state files: bodies are gitignored and overwritten every
+  // conversation turn by memory_stop.sh / memory_pre_compact.sh / /memory-flush.
+  // Their on-disk hash will essentially never match the shipped template hash,
+  // so any merge-time prompt is a structural false positive. Preserve silently.
+  // See docs/specs/upgrade-no-replay-prompts.md §Behavior #1.
+  '.claude/memory/_pending.md',
+  '.claude/memory/_resume.md',
 ]);
 export const SPECIAL_MERGE = Object.freeze(['.mcp.json']);
 // The shipped manifest now lives at `.claude/manifest.json` (inside the

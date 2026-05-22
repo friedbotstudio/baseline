@@ -265,3 +265,49 @@ describe('doctor', () => {
     }
   });
 });
+
+// Spec AC-006 — docs/specs/upgrade-no-replay-prompts.md §Behavior #6
+// The reconciliation-marker file at .claude/.baseline-reconciliations.json is
+// per-target user state, NOT a baseline-shipped file. Doctor's added scan
+// (doctor.js:88-93) must exclude it, parallel to the existing exclusion of
+// .baseline-manifest.json itself at line 92.
+describe('doctor — reconciliation-marker exclusion from added scan', () => {
+  it('test_when_doctor_runs_with_marker_file_present_then_marker_not_in_added', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'doctor-marker-'));
+    try {
+      await mkdir(join(root, '.claude'), { recursive: true });
+      await writeFile(
+        join(root, '.claude/.baseline-manifest.json'),
+        JSON.stringify({
+          manifest_version: 2,
+          generated_at: '2026-05-22T00:00:00Z',
+          files: { 'CLAUDE.md': 'deadbeef'.repeat(8) },
+        }, null, 2) + '\n',
+      );
+      await writeFile(join(root, 'CLAUDE.md'), '# baseline\n');
+      // The marker file the spec introduces.
+      await writeFile(
+        join(root, '.claude/.baseline-reconciliations.json'),
+        JSON.stringify({
+          schema_version: 1,
+          reconciliations: {
+            'docs/init/seed.md': {
+              baseline_version: '0.8.1',
+              reconciled_against_template_sha: 'a'.repeat(64),
+              reconciled_at: '2026-05-22T15:00:00Z',
+            },
+          },
+        }, null, 2) + '\n',
+      );
+
+      const report = await doctor.runDoctor(root);
+      assert.ok(Array.isArray(report.added), 'report.added must be an array');
+      assert.ok(
+        !report.added.includes('.claude/.baseline-reconciliations.json'),
+        `marker file must NOT appear in added; got: ${report.added.join(', ')}`,
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});

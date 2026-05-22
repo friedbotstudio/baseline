@@ -135,3 +135,64 @@ describe('/upgrade-project skill — shape', () => {
       'skill body must state that folding into existing sections is forbidden (key phrase: "never fold")');
   });
 });
+
+// Spec AC-009 — docs/specs/upgrade-no-replay-prompts.md §Behavior #4
+// /upgrade-project must write a reconciliation marker after every RECONCILED
+// file (non-NEEDS_USER_INPUT, non-dry-run). The SKILL.md amendment narrowly
+// permits writes to .claude/.baseline-reconciliations.json — the existing
+// SHALL NOT rule for .baseline-prior/ and .baseline-manifest.json stays.
+describe('/upgrade-project skill — reconciliation marker contract', () => {
+  it('test_when_upgrade_project_SKILL_md_describes_dryrun_then_marker_write_is_conditional', async () => {
+    const body = await readFile(SKILL_PATH, 'utf8');
+
+    // (a) recordReconciliation is named in the procedure body.
+    assert.ok(
+      /recordReconciliation/.test(body),
+      'SKILL.md must reference recordReconciliation in the Procedure section',
+    );
+
+    // (b) The dry-run conditional excludes marker write.
+    // Match prose like: "if --dry-run is in effect, do NOT call recordReconciliation"
+    // or "skip marker write when dry-run". Tolerate phrasing variation.
+    const hasDryRunConditional =
+      /dry[- ]run[\s\S]{0,200}(no(?:t)? write|skip|do not call|exclude).{0,80}(marker|recordReconciliation)/i.test(body)
+      || /(no(?:t)? write|skip|do not call|exclude).{0,80}(marker|recordReconciliation)[\s\S]{0,200}dry[- ]run/i.test(body);
+    assert.ok(
+      hasDryRunConditional,
+      'SKILL.md must state that --dry-run does NOT write the marker (search for "dry-run" near "marker" / "recordReconciliation")',
+    );
+
+    // (c) The amended SHALL NOT line narrowly permits writes to the new marker.
+    // The original constraint at SKILL.md:114 forbids writes outside stage+LOCAL.
+    // After amendment it must explicitly allow .claude/.baseline-reconciliations.json.
+    const hasAmendedShallNot =
+      /\.baseline-reconciliations\.json/.test(body)
+      && /SHALL NOT|shall not/.test(body);
+    assert.ok(
+      hasAmendedShallNot,
+      'SKILL.md must name .claude/.baseline-reconciliations.json AND keep the SHALL NOT discipline (narrow exception only)',
+    );
+
+    // (d) The original constraint surface is preserved (no destructive change):
+    // .baseline-prior/ and .baseline-manifest.json must still be forbidden writes.
+    assert.ok(
+      /\.baseline-prior\//.test(body) && /\.baseline-manifest\.json/.test(body),
+      'SKILL.md must still forbid writes to .baseline-prior/ and .baseline-manifest.json',
+    );
+  });
+
+  it('test_when_upgrade_project_SKILL_md_describes_procedure_then_recordReconciliation_is_step', async () => {
+    const body = await readFile(SKILL_PATH, 'utf8');
+
+    // The recordReconciliation call must appear inside the Procedure section,
+    // not just in a constraints / contracts table. Locate `## Procedure` and
+    // check the body up to the next `## ` heading.
+    const procMatch = body.match(/## Procedure\b([\s\S]*?)(?=\n## |\Z)/);
+    assert.ok(procMatch, 'SKILL.md must have a `## Procedure` section');
+    const procBody = procMatch[1];
+    assert.ok(
+      /recordReconciliation/.test(procBody),
+      'recordReconciliation call must be documented in the Procedure section (as a step), not just in constraints',
+    );
+  });
+});

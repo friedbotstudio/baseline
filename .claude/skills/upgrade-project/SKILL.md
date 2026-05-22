@@ -65,7 +65,20 @@ For each stage directory under `.claude/state/upgrade/`:
    - The **zero-drift renumbering rule does NOT apply** to two-way reconciliation — there is no BASE anchor to shift against, so "shift, never fold" cannot be evaluated. When LOCAL and INCOMING both add structural entries at the same anchor and you cannot determine which is user content vs baseline content without the BASE, apply the `NEEDS_USER_INPUT` fallback.
    - Write the reconciled bytes to the LOCAL path.
    - Update the stage manifest entry's `status` to `RECONCILED`.
-5. **Finalize the stage.** When every entry's status is `RECONCILED`, delete the stage directory (`rm -rf .claude/state/upgrade/<ts>/`). Report per-file status to the user.
+5. **Record the reconciliation marker.** For every entry whose status just transitioned to `RECONCILED` (NOT `NEEDS_USER_INPUT`, NOT skipped under `--dry-run`), invoke the marker writer so the next `create-baseline upgrade` knows the user has already reviewed this file against the current template hash. From the skill terminal:
+
+   ```
+   node -e "import('./src/cli/reconciliation-marker.js').then(m => m.recordReconciliation('<target>', '<rel>', '<baseline_version_to>', '<incoming_sha256>'))"
+   ```
+
+   - `<target>` is the project root the skill is operating in (usually `.`).
+   - `<rel>` is the entry's `rel` field from the stage manifest.
+   - `<baseline_version_to>` is the stage manifest's top-level field of the same name.
+   - `<incoming_sha256>` is the entry's `incoming_sha256` field (the template hash this reconciliation was reviewed against).
+
+   The writer creates / updates `<target>/.claude/.baseline-reconciliations.json` atomically (write-then-rename). On filesystem error it throws `MarkerWriteError` — surface the error to the user but do NOT roll back the reconciled LOCAL bytes (LOCAL is already on disk and is the user-visible outcome). Marker is best-effort: the user can re-run `/upgrade-project` to re-record if the write was lost. See `docs/specs/upgrade-no-replay-prompts.md §Behavior #4` for the contract.
+
+6. **Finalize the stage.** When every entry's status is `RECONCILED`, delete the stage directory (`rm -rf .claude/state/upgrade/<ts>/`). Report per-file status to the user.
 
 ## The zero-drift renumbering rule (binding for three-way only)
 
@@ -93,6 +106,7 @@ When invoked with `args=dry-run` (e.g., `/upgrade-project dry-run`):
 - DO NOT modify any LOCAL file.
 - DO NOT update the stage manifest (statuses stay PENDING / NEEDS_USER_INPUT).
 - DO NOT delete the stage directory.
+- DO NOT call `recordReconciliation` — the marker would record a reconciliation the user never actually applied, causing the next upgrade to silently skip a file that still has unreviewed upstream changes. Dry-run is for preview only; the marker write happens exclusively on the real apply path.
 - Tell the user: "Dry-run complete. Re-run without `dry-run` to apply."
 
 Dry-run mode is for building trust in early use. After the first few successful reconciliations, the user typically stops dry-running.
@@ -111,7 +125,7 @@ Use this fallback sparingly. The rework's whole point is that LLM judgment excee
 ## Constraints
 
 - **Validate `rel` before writing.** Before writing reconciled bytes to LOCAL, you SHALL verify that the resolved absolute path of `<target>/<rel>` is a descendant of `target`. A `rel` value that escapes the target tree (`../`, absolute path, symlink-resolved escape) SHALL be rejected as a `NEEDS_USER_INPUT` fallback with the reason `path-traversal-rejected`. The CLI's stage writer never produces escaping `rel` values, so this catches only tampered stage manifests from a local attacker with `.claude/state/` write access — defense in depth.
-- **No write outside the stage directory and the LOCAL path.** You SHALL NOT touch `.claude/.baseline-prior/`, the installed `.baseline-manifest.json`, or any other CLI state.
+- **No write outside the stage directory, the LOCAL path, and the reconciliation marker.** You SHALL NOT touch `.claude/.baseline-prior/`, the installed `.baseline-manifest.json`, or any other CLI state. The single narrow exception is `.claude/.baseline-reconciliations.json`, written via the `recordReconciliation` foundation module per Procedure step 5 (post-RECONCILED, not in `--dry-run`). The marker write goes through that module's atomic write-then-rename so partial writes cannot corrupt the file.
 - **No partial writes per file.** The reconciled LOCAL must be the complete final content. If you cannot produce a complete reconciliation, use the NEEDS_USER_INPUT fallback and leave LOCAL unmodified.
 - **Honor Article XI of CLAUDE.md.** This skill only touches files explicitly staged by the CLI — which, by construction, are baseline-owned. User-added files at colliding paths are never staged.
 - **No commits.** Reconciled files land on the working tree; the user inspects via `git diff` and commits when satisfied.

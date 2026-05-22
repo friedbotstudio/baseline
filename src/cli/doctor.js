@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { hashFile, loadManifest } from './manifest.js';
+import { MARKER_PATH_REL } from './reconciliation-marker.js';
 import { pathExists } from './util.js';
 
 const MANIFEST_REL = '.claude/.baseline-manifest.json';
@@ -84,12 +85,15 @@ export async function runDoctor(target, options = {}) {
   }
 
   // ADDED — files under .claude/ that aren't in the manifest. Excludes the
-  // manifest itself (it's written by the CLI post-install and is not self-referential).
+  // manifest itself (it's written by the CLI post-install and is not self-referential)
+  // and the reconciliation marker (per-target user state written by
+  // /upgrade-project; see docs/specs/upgrade-no-replay-prompts.md §Behavior #6).
   const added = [];
   const onDisk = await listFilesUnder(join(target, ADDED_SCAN_PREFIX));
   for (const rel of onDisk) {
     const full = `${ADDED_SCAN_PREFIX}/${rel}`;
     if (full === MANIFEST_REL) continue;
+    if (full === MARKER_PATH_REL) continue;
     if (!(full in manifest.files)) added.push(full);
   }
 
