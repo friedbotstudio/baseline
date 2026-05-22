@@ -51,13 +51,6 @@ All notable changes to this project will be documented in this file.
 
 The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.0/). The `## [Unreleased]` section is curated locally by the Phase 11.5 `changelog` skill before each `/commit`; versioned sections are inserted by `@semantic-release/changelog` at release time.
 
-### Added
-
-- declarative track DAGs via workflows.jsonl (§18 + Article IV)
-
-### Fixed
-
-- surface tier-2/3 unrecoverable-BASE files in upgrade dry-run
 
 ## [Unreleased]
 

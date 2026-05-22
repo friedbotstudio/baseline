@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fixture-based integration test for AC-010: when commit_consent token is
-# stale (older than consent.commit_ttl_seconds, default 300s), the changelog
+# stale (older than consent.commit_ttl_seconds, default 900s), the changelog
 # skill exits non-zero with "consent expired" stderr, does NOT modify
 # CHANGELOG.md, and does NOT write the state file.
 #
@@ -16,7 +16,7 @@ PASS=0; FAIL=0; FAILED=()
 
 fail() { echo "  FAIL: $*"; return 1; }
 
-# Seed a tempdir with a stale commit_consent (epoch = now - 310s).
+# Seed a tempdir with a stale commit_consent (epoch = now - 910s).
 seed_stale_consent_project() {
   local proj="$1" slug="$2"
   mkdir -p "$proj/.claude/state"
@@ -29,8 +29,8 @@ seed_stale_consent_project() {
   echo "stale test" > thing.txt
   git add thing.txt
   git commit -q -m "feat: stale consent path"
-  # Stale token: epoch in the past, beyond 300s default TTL.
-  local stale_epoch; stale_epoch=$(( $(date +%s) - 310 ))
+  # Stale token: epoch in the past, beyond 900s default TTL.
+  local stale_epoch; stale_epoch=$(( $(date +%s) - 910 ))
   echo "$stale_epoch" > "$proj/.claude/state/commit_consent"
   echo "stale" >> "$proj/.claude/state/commit_consent"
   cat > "$proj/.claude/state/workflow.json" <<EOF

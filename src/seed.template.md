@@ -531,7 +531,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 - `artifacts.required_sections.{intake,brd,spec,rca}` — the canonical section lists.
 - `artifacts.required_diagrams.spec` — the six kinds (§4.7).
 - `swarm.max_parallel`, `swarm.isolation: "auto"`, `swarm.min_tasks_worth_swarming: 3`, `swarm.refuse_dirty_tree: true`, `swarm.exempt_path_prefixes`, `swarm.enforced_path_prefixes`.
-- `consent.commit_ttl_seconds: 300`.
+- `consent.commit_ttl_seconds: 900`.
 - `additions.{agents,skills,hooks,mcp_servers,swarm_worker_skills}` — names of every project-adopted addition the recommender emitted (just identifiers, no `command`/`why`/`tokens` payload). `additions.agents` stays empty in this baseline — the recommender does not propose new subagent types. `additions.swarm_worker_skills` lists stack-specific skills the `swarm-worker` template should preload via the `{{SKILLS}}` token at re-render time. `audit.sh` reads this manifest and unions each set with the baseline `EXPECTED_*` sets when checking names; counts are reframed as `"<total> = <baseline> + <project>"` so legitimate additions don't fail drift detection. Default state is five empty arrays.
 - Flip `configured: true`.
 

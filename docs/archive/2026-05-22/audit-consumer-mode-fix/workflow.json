@@ -1,0 +1,11 @@
+{
+  "request": "Fix two audit-script bugs in .claude/skills/audit-baseline/audit.sh that cause FAIL on every consumer install: (1) drop add_skills from the §4.3 skills names check so additions don't false-FAIL against the baseline-only disk set; (2) detect consumer mode (manifest present + src/ absent) and skip the src/ template block in that mode.",
+  "slug": "audit-consumer-mode-fix",
+  "track_id": "chore",
+  "exceptions": ["simplify", "integrate", "document"],
+  "completed": ["chore", "archive", "memory-flush", "grant-commit", "changelog"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1747929600,
+  "updated_at": 1747940400
+}

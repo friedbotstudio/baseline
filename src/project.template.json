@@ -184,7 +184,7 @@
     }
   },
   "consent": {
-    "commit_ttl_seconds": 300,
+    "commit_ttl_seconds": 900,
     "gate_marker_ttl_seconds": 120,
     "push_ttl_seconds": 300
   },

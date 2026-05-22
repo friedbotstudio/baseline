@@ -20,7 +20,7 @@ import { previewProjectedVersion } from './version-preview.mjs';
 import { writeState } from './state-writer.mjs';
 import { appendUnderUnreleased } from './unreleased-writer.mjs';
 
-const TTL_SECONDS = 300;
+const TTL_SECONDS = 900;
 
 function parseCli() {
   const { values } = parseArgs({

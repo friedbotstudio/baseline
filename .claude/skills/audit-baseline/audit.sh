@@ -224,13 +224,17 @@ check_names("agents names match seed §4.2",   EXPECTED_AGENTS,   add_agents,   
 # Skills canonical set comes from manifest.owners.skills (built by
 # scripts/build-manifest.mjs at release time). Falls back to disk_baseline_skills
 # when the manifest is missing (e.g., first audit before initial build).
+# Unlike hooks/agents/commands, the skills `disk_*` is `disk_baseline_skills`
+# (filtered to `owner: baseline`), so `add_skills` (project additions, which are
+# user/third-party by design) cannot be passed in here — they'd false-FAIL.
+# Per CLAUDE.md Article XI #5.
 _manifest_for_skills = load_manifest()
 if _manifest_for_skills is None:
     _canonical_skills = disk_baseline_skills
 else:
     _canonical_skills = set((_manifest_for_skills.get("owners") or {}).get("skills", {}).keys()) \
                         or disk_baseline_skills
-check_names("skills names match seed §4.3",   _canonical_skills, add_skills,   disk_baseline_skills)
+check_names("skills names match seed §4.3",   _canonical_skills, set(),        disk_baseline_skills)
 check_names("commands names match seed §4.4", EXPECTED_COMMANDS, set(),        disk_commands)
 
 # ---------- skill ownership (per-file hash drift + frontmatter validation) ----------
@@ -349,11 +353,23 @@ else:
 # The src/ tree mirrors the canonical paths with a `.template` suffix so
 # `npx @friedbotstudio/create-baseline` can discover and overlay deterministically.
 src_dir = root / "src"
+# Consumer-mode detection: the CLI overlay ships .claude/manifest.json into
+# every consumer project; src/ exists only in the baseline-dev repo as the
+# overlay source. Manifest present + src/ absent ⇒ legitimate consumer install
+# ⇒ skip the src/ checks instead of false-FAIL'ing. Per CLAUDE.md Appendix A.
+consumer_manifest = (root / ".claude" / "manifest.json").is_file()
 if not src_dir.is_dir():
-    add("src templates: directory", "FAIL", "missing src/")
+    if consumer_manifest:
+        add("src templates: directory", "PASS",
+            "consumer install (manifest present, src/ absent) — src/ checks skipped")
+    else:
+        add("src templates: directory", "FAIL", "missing src/")
+    _SKIP_SRC = True
 else:
     add("src templates: directory", "PASS", "")
+    _SKIP_SRC = False
 
+if not _SKIP_SRC:
     # CLAUDE.template.md — must exist and read as constitution-voice (or, in
     # the pre-Stage-2 transitional shape, at least the user-voice lede). The
     # test below tolerates either: dogfood-leak fails hard; constitutional
@@ -630,12 +646,13 @@ else:
     add("CLAUDE.md: Article X.2 present", "FAIL",
         "missing `### X.2 Design-task routing` heading — Article X.2 is the structural seam between design-ui and impeccable")
 
-template_claude = read_text("src/CLAUDE.template.md")
-if "### X.2 Design-task routing" in template_claude:
-    add("src/CLAUDE.template.md: Article X.2 mirrors", "PASS", "")
-else:
-    add("src/CLAUDE.template.md: Article X.2 mirrors", "FAIL",
-        "src template does not contain Article X.2 — template-drift will fail")
+if not _SKIP_SRC:
+    template_claude = read_text("src/CLAUDE.template.md")
+    if "### X.2 Design-task routing" in template_claude:
+        add("src/CLAUDE.template.md: Article X.2 mirrors", "PASS", "")
+    else:
+        add("src/CLAUDE.template.md: Article X.2 mirrors", "FAIL",
+            "src template does not contain Article X.2 — template-drift will fail")
 
 design_ui_skill = read_text(".claude/skills/design-ui/SKILL.md")
 if re.search(r'^description:.*orchestrat', design_ui_skill, re.MULTILINE | re.IGNORECASE):

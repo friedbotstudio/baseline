@@ -10,7 +10,7 @@
 //          --abbrev-ref HEAD`. Detached HEAD ("HEAD") → DENY explicitly.
 //        - On a branch matched by project.json → git.protected_branches
 //          (or when that key is null/absent → every branch protected),
-//          commits require fresh commit_consent (300s) and pushes require
+//          commits require fresh commit_consent (900s) and pushes require
 //          fresh push_consent (300s).
 //        - When git.branch_pattern is set and the current branch does NOT
 //          match the regex, commits are denied with the pattern surfaced.
@@ -179,7 +179,7 @@ function handleBash(cmd) {
 
   // Protected — require the matching consent token.
   if (isCommit) {
-    validateConsentToken(`${STATE_DIR}/commit_consent`, '.consent.commit_ttl_seconds', 300, 'Git Commit Guard', '/grant-commit');
+    validateConsentToken(`${STATE_DIR}/commit_consent`, '.consent.commit_ttl_seconds', 900, 'Git Commit Guard', '/grant-commit');
   } else {
     validateConsentToken(`${STATE_DIR}/push_consent`, '.consent.push_ttl_seconds', 300, 'Git Commit Guard', '/grant-push');
   }
