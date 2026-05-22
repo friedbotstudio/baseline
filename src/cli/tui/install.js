@@ -6,7 +6,7 @@ import * as clackModule from '@clack/prompts';
 import { readFile } from 'node:fs/promises';
 import { freshInstall, forceInstall } from '../install.js';
 import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../plantuml.js';
-import { renderBrandStrip } from './splash.js';
+import { renderHeader } from './splash.js';
 
 const SUCCESS = 0;
 const ERR_INSTALL_FAILED = 1;
@@ -21,7 +21,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
   }
 
   const version = await readPackageVersion();
-  process.stdout.write(renderBrandStrip({ version, subtitle: 'install' }));
+  process.stdout.write(renderHeader({ version, subtitle: 'install' }));
   prompts.intro('create-baseline');
 
   const spinner = prompts.spinner();

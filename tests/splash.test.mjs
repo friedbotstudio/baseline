@@ -10,6 +10,7 @@ import {
   renderVersionMarquee,
   wordmarkFits,
   SPLASH_COMMANDS,
+  renderHeader,
 } from '../src/cli/tui/splash.js';
 
 // Strip ANSI escape sequences so structural assertions stay independent of
@@ -86,6 +87,33 @@ describe('splash — full splash composition', () => {
     const out = stripAnsi(renderSplash({}));
     assert.ok(!/^try:/m.test(out), 'try line must not appear without input');
     assert.ok(!/Discover more/.test(out), 'discover line must not appear without input');
+  });
+});
+
+// Per docs/specs/upgrade-no-replay-prompts.md sibling workflow (cli-wordmark-on-all-commands):
+// renderHeader is the new wordmark+tagline composition used by install / upgrade / doctor
+// TUI entries. It returns the same upper portion of renderSplash (prompt-line + wordmark +
+// tagline + optional subtitle) without the SPLASH_COMMANDS list, and falls back to
+// renderBrandStrip when the terminal is narrower than the wordmark.
+describe('splash — renderHeader (wordmark header for install/upgrade/doctor)', () => {
+  it('test_when_renderHeader_called_then_emits_wordmark_and_tagline', () => {
+    const out = stripAnsi(renderHeader({ subtitle: 'install' }));
+    assert.ok(/██████/.test(out), 'header must include the BASELINE block-letter wordmark');
+    assert.ok(/baseline/i.test(out), 'header must include the default tagline mentioning the baseline');
+    assert.ok(/install/.test(out), 'subtitle must appear when provided');
+  });
+
+  it('test_when_renderHeader_called_without_options_then_emits_wordmark_and_default_tagline', () => {
+    const out = stripAnsi(renderHeader());
+    assert.ok(/██████/.test(out), 'wordmark must render with no args');
+    assert.ok(/baseline/i.test(out), 'default tagline must appear');
+    assert.ok(!/install|upgrade|doctor/.test(out), 'no subtitle should appear without input');
+  });
+
+  it('test_when_renderHeader_called_with_narrow_columns_then_falls_back_to_brand_strip', () => {
+    const narrow = stripAnsi(renderHeader({ subtitle: 'install', columns: 40 }));
+    assert.ok(!/██████/.test(narrow), 'narrow terminal must NOT render the wide wordmark');
+    assert.ok(/▲ BASELINE/.test(narrow), 'narrow terminal must fall back to the slim brand strip');
   });
 });
 

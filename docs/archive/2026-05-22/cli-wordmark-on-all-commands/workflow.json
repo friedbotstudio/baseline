@@ -1,0 +1,22 @@
+{
+  "request": "Render the full BASELINE ASCII wordmark + tagline at the top of install, upgrade, and doctor TTY output (currently they show slim renderBrandStrip / brandHeader). Preserve graceful degradation on narrow terminals via wordmarkFits. Add renderHeader() to splash.js; update install/upgrade/doctor TUI callsites; update TUI tests to assert wordmark presence + narrow-terminal fallback.",
+  "slug": "cli-wordmark-on-all-commands",
+  "track_id": "tdd-quickfix",
+  "exceptions": [],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779481028,
+  "updated_at": 1779483502
+}

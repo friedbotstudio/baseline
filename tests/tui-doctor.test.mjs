@@ -39,6 +39,13 @@ function syntheticReport(overrides = {}) {
 }
 
 describe('tui/doctor', () => {
+  it('test_when_doctor_render_called_then_stdout_contains_wordmark', () => {
+    const report = syntheticReport();
+    const out = captureStdout(() => tuiDoctor.render(report));
+    assert.ok(/██████/.test(out),
+      `doctor TTY output must include the BASELINE wordmark; got first 200 chars: ${out.slice(0, 200)}`);
+  });
+
   it('test_when_doctor_in_tty_without_json_then_emits_branded_sectioned_report', () => {
     const report = syntheticReport({ matched: ['CLAUDE.md', '.mcp.json'], customized: ['notes.md'] });
     const out = captureStdout(() => tuiDoctor.render(report));

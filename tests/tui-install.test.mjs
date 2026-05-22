@@ -52,7 +52,34 @@ function makePromptsStub() {
   };
 }
 
+function captureStdout(fn) {
+  const captured = [];
+  const original = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (chunk) => { captured.push(String(chunk)); return true; };
+  return Promise.resolve(fn()).finally(() => {
+    process.stdout.write = original;
+  }).then((result) => ({ result, captured: captured.join('') }));
+}
+
 describe('tui/install', () => {
+  it('test_when_install_in_tty_then_stdout_contains_wordmark', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'tui-install-wordmark-'));
+    const { stub } = makePromptsStub();
+
+    const { result, captured } = await captureStdout(() =>
+      tuiInstall.run({
+        target,
+        opts: { templateDir: tpl, noPlantuml: true },
+        prompts: stub,
+      })
+    );
+
+    assert.equal(result, 0, 'install should exit 0 on a clean install');
+    assert.ok(/██████/.test(captured),
+      `install TTY output must include the BASELINE wordmark; got first 200 chars: ${captured.slice(0, 200)}`);
+  });
+
   it('test_when_install_in_tty_then_emits_branded_intro_and_outro', async () => {
     const tpl = await makeTemplateFixture();
     const target = await mkdtemp(join(tmpdir(), 'tui-install-target-'));

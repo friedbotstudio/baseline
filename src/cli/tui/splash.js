@@ -1,12 +1,16 @@
 // Domain — branded splash surfaces for the CLI. Renders a chunky pixel-art
 // "BASELINE" wordmark in three bands of FBS orange (bevel: shadow / mid /
-// highlight / mid / shadow) so the marquee surfaces (--help, --version,
-// no-arg landing) share a single visual identity. Slimmer brand strip is
-// reused by install / upgrade intros and inside the usage-error renderer.
+// highlight / mid / shadow) so every command (--help, --version, no-arg
+// landing, install, upgrade, doctor) shares a single visual identity.
+// Install / upgrade / doctor use `renderHeader` (wordmark + tagline);
+// --version uses `renderVersionMarquee`; --help and the no-arg landing use
+// the full `renderSplash`; `renderBrandStrip` is the slim header reserved
+// for the usage-error renderer and as `renderHeader`'s narrow-terminal
+// fallback.
 //
 // All renderers degrade cleanly when stdout is not a TTY or NO_COLOR is set
 // (paintRGB short-circuits to plain text). When the terminal is narrower
-// than the wordmark, callers should fall through to the plain banner via
+// than the wordmark, callers fall through to the slim brand strip via
 // `wordmarkFits(width)` instead of letting the glyphs wrap.
 
 import { paintRGB, PALETTE, accent, muted } from './tokens.js';
@@ -95,8 +99,32 @@ export function renderSplash({ tagline, tryLine, discoverUrl } = {}) {
   return lines.join('\n');
 }
 
-// Slim two-line brand strip. Used by install / upgrade intros, --version,
-// and the top of the usage-error renderer. Cheap and width-safe (~32 cols).
+// Wordmark + tagline header. Used by install / upgrade / doctor command
+// intros so every command shares the same branded surface as the no-arg
+// landing. Width-gated: when the terminal is narrower than the wordmark,
+// falls back to the slim brand strip so the header never wraps into
+// unreadable glyphs.
+export function renderHeader({ subtitle, version, columns } = {}) {
+  if (!wordmarkFits(columns)) return renderBrandStrip({ version, subtitle });
+  const lines = [
+    '',
+    `${muted('▲')} ${muted('~/')} ${muted('npx @friedbotstudio/create-baseline@latest')}`,
+    '',
+    renderWordmark(),
+    '',
+    muted('The Claude Code baseline — hooks, skills, MCP, governance.'),
+  ];
+  if (subtitle) {
+    lines.push('');
+    lines.push(muted(subtitle));
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+// Slim two-line brand strip. Used by --version and the top of the
+// usage-error renderer (and as renderHeader's narrow-terminal fallback).
+// Cheap and width-safe (~32 cols).
 export function renderBrandStrip({ version, subtitle } = {}) {
   const left = `${accent('▲ BASELINE')}`;
   const right = version ? `  ${muted(`v${version}`)}` : '';

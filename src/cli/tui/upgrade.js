@@ -18,7 +18,7 @@ import { threeWayMerge, ACTION_KINDS, ACTION_LABELS, ACTION_LABEL_WIDTH } from '
 import { loadManifest, buildManifestFromDir } from '../manifest.js';
 import { COPY_EXCLUDE } from '../install.js';
 import { findPendingStage, formatStageTimestamp } from '../upgrade-tiers.js';
-import { renderBrandStrip } from './splash.js';
+import { renderHeader } from './splash.js';
 
 const SUCCESS = 0;
 const ERR_ABORT = 1;
@@ -49,7 +49,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
   }
 
   const version = await readPackageVersion();
-  process.stdout.write(renderBrandStrip({ version, subtitle: 'upgrade' }));
+  process.stdout.write(renderHeader({ version, subtitle: 'upgrade' }));
   prompts.intro('create-baseline upgrade');
 
   const pending = await findPendingStage(target);

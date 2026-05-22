@@ -60,6 +60,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 ### Fixed
 
+- stop replay prompts on runtime-state files + post-reconciliation files
 - silently skip README.md count claims when file absent
 
 ## [Unreleased]

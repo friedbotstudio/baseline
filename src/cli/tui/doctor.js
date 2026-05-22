@@ -4,8 +4,9 @@
 // formatReport — this renderer is only invoked when stdout is a TTY.
 
 import { accent, muted, success, warn, error, accentLight } from './tokens.js';
+import { renderHeader } from './splash.js';
 
-function brandHeader(target, manifestInfo) {
+function targetAndManifestLines(target, manifestInfo) {
   const lines = [accent('Baseline doctor')];
   if (target) lines.push(muted(`target:   ${target}`));
   if (manifestInfo) lines.push(muted(`manifest: ${manifestInfo}`));
@@ -13,13 +14,14 @@ function brandHeader(target, manifestInfo) {
 }
 
 export function render(report) {
+  process.stdout.write(renderHeader({ subtitle: 'doctor' }));
   if (report.error) {
-    const headerLines = brandHeader(report.target);
+    const headerLines = targetAndManifestLines(report.target);
     process.stdout.write(headerLines.join('\n') + '\n\n');
     process.stdout.write(`${error('doctor:')} ${report.error}\n`);
     return;
   }
-  const lines = brandHeader(report.target, `version ${report.manifestVersion}, installed ${report.generatedAt}`);
+  const lines = targetAndManifestLines(report.target, `version ${report.manifestVersion}, installed ${report.generatedAt}`);
   lines.push('');
   lines.push(`  ${success('matched')}:    ${report.matched.length}`);
   lines.push(`  ${accentLight('customized')}: ${report.customized.length}`);
