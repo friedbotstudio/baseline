@@ -1,0 +1,9 @@
+{
+  "verdict": "BLOCKED",
+  "expected_finding_count": 3,
+  "expected_checks": [
+    {"check": "DEV_TREE_RUNTIME_REF", "severity": "BLOCKER", "evidence_contains": "src/cli/reconciliation-marker.js"},
+    {"check": "DEV_TREE_RUNTIME_REF", "severity": "BLOCKER", "evidence_contains": "src/cli/foo.js"},
+    {"check": "DEV_TREE_RUNTIME_REF", "severity": "BLOCKER", "evidence_contains": "scripts/build-manifest.mjs"}
+  ]
+}

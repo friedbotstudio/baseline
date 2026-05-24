@@ -726,7 +726,7 @@ Migrator implementation: `src/cli/workflow-migrator.js` exports `migrateWorkflow
 
 - **Fresh install.** `scripts/build-template.sh` overlays `src/.claude/workflows.template.jsonl` → `obj/template/.claude/workflows.jsonl` at Stage 2, and the pristine schemas/ directory bulk-rsyncs at Stage 1. The CLI install copies both into the consumer target. Result: every fresh install has `<target>/.claude/workflows.jsonl` with the canonical 4 selectable + 2 sub-track set.
 
-- **Upgrade.** Both `.claude/workflows.jsonl` and `.claude/schemas/workflow-track.v1.json` are `NEVER_TOUCH`. The merge flow returns `NEVER_TOUCH_PRESERVE` for them on every upgrade; user customizations (added tracks, modified nodes, per-project additions like `cli-copy-review`) survive verbatim.
+- **Upgrade.** Both `.claude/workflows.jsonl` and `.claude/schemas/workflow-track.v1.json` are `NEVER_TOUCH`. The merge flow returns `NEVER_TOUCH_PRESERVE` for them on every upgrade; user customizations (added tracks, modified nodes, per-project additions like `cli-copy-review` and `spec-shippability-review`) survive verbatim.
 
 - **Doctor.** `/init-project doctor` (new sub-command) detects drift: missing `workflows.jsonl`, schema/invariant violations, four-way mirror drift between seed.md §18 / src/seed.template.md §18 / CLAUDE.md Article IV / src/CLAUDE.template.md Article IV, and (advisory) shipped-tooling files placed outside `.claude/` per the convention codified at §3.
 

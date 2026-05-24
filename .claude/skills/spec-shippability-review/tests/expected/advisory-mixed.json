@@ -1,0 +1,7 @@
+{
+  "verdict": "NEEDS_REVIEW",
+  "expected_finding_count": 1,
+  "expected_checks": [
+    {"check": "DEV_HELPER_EXTENSION", "severity": "ADVISORY", "evidence_contains": ".claude/skills/memory-flush/sweep.py"}
+  ]
+}

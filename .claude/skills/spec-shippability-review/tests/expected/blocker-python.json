@@ -1,0 +1,7 @@
+{
+  "verdict": "BLOCKED",
+  "expected_finding_count": 1,
+  "expected_checks": [
+    {"check": "DEV_HELPER_EXTENSION", "severity": "BLOCKER", "evidence_contains": ".claude/skills/new-skill/helper.py"}
+  ]
+}

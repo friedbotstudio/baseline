@@ -39,6 +39,43 @@ case "$rel" in
     # and current `<slug>.approval` to the same bare slug as the marker.
     expected_slug="$(canonical_slug "$(basename "$rel" .approval)")"
     validate_consent_marker "$CONSENT_MARKER_SPEC" "Spec Approval Guard" "/approve-spec <slug|path>" "$expected_slug"
+    # Shippability gate: if /spec-shippability-review ran and stamped BLOCKED,
+    # refuse the approval token write with the punch-list summary embedded in
+    # the error. CLEAN/NEEDS_REVIEW or missing report → permit (the missing
+    # case is handled by track-ordering enforcement upstream).
+    shippability_report=".claude/state/spec-shippability/${expected_slug}.json"
+    if [ -f "$shippability_report" ]; then
+      verdict="$(python3 -c "
+import json, sys
+try:
+    with open('$shippability_report') as f:
+        r = json.load(f)
+    print(r.get('verdict', 'UNKNOWN'))
+except Exception:
+    print('UNKNOWN')
+")"
+      if [ "$verdict" = "BLOCKED" ]; then
+        summary="$(python3 -c "
+import json
+try:
+    with open('$shippability_report') as f:
+        r = json.load(f)
+    blockers = [f for f in r.get('findings', []) if f.get('severity') == 'BLOCKER']
+    lines = [f'  - [{f[\"check\"]}] {f.get(\"message\", \"\")}' for f in blockers[:3]]
+    extra = '' if len(blockers) <= 3 else f'  ...and {len(blockers) - 3} more BLOCKER finding(s)'
+    print('\n'.join(lines + ([extra] if extra else [])))
+except Exception as e:
+    print(f'  (could not read findings: {e})')
+")"
+        log_line spec_approval_guard "BLOCKED approval for '$expected_slug': shippability verdict=BLOCKED"
+        emit_block "Spec Approval Guard: /spec-shippability-review reports verdict=BLOCKED for slug '$expected_slug'. The spec would ship dev-tree references to consumer installs. Fix the BLOCKER findings and re-run /spec-shippability-review until CLEAN before re-running /approve-spec.
+
+BLOCKER findings:
+$summary
+
+Full report: $shippability_report"
+      fi
+    fi
     emit_allow
     ;;
 esac
