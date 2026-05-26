@@ -95,18 +95,27 @@ describe('forceInstall', () => {
     assert.equal(after, '# baseline\n');
   });
 
-  it('preserves an existing .claude/project.json (NEVER_TOUCH)', async () => {
+  it('preserves user keys in existing .claude/project.json on forceInstall (NEVER_TOUCH + narrow baseline_version refresh)', async () => {
+    // Contract: NEVER_TOUCH keeps every user-authored key intact; the spec's
+    // AC-007 adds a narrow exception — install stamps the top-level
+    // baseline_version field via refreshBaselineVersion (docs/specs/upgrade-
+    // version-aware-noop.md §Behavior #1). Every other key SHALL round-trip.
     const tpl = await makeTemplateFixture();
     const target = await mkdtemp(join(tmpdir(), 'install-target-'));
 
     await mkdir(join(target, '.claude'));
-    const userProject = JSON.stringify({ configured: true, marker: 'user-state' }, null, 2) + '\n';
-    await writeFile(join(target, '.claude/project.json'), userProject);
+    const userKeys = { configured: true, marker: 'user-state' };
+    await writeFile(join(target, '.claude/project.json'), JSON.stringify(userKeys, null, 2) + '\n');
 
     await install.forceInstall(tpl, target);
 
-    const after = await readFile(join(target, '.claude/project.json'), 'utf8');
-    assert.equal(after, userProject);
+    const after = JSON.parse(await readFile(join(target, '.claude/project.json'), 'utf8'));
+    for (const key of Object.keys(userKeys)) {
+      assert.deepEqual(after[key], userKeys[key],
+        `existing user key "${key}" must be preserved through forceInstall (NEVER_TOUCH semantics)`);
+    }
+    assert.ok(typeof after.baseline_version === 'string' && after.baseline_version.length > 0,
+      'forceInstall must stamp baseline_version into project.json via refreshBaselineVersion (AC-001)');
   });
 
   it('additive-merges .mcp.json (SPECIAL_MERGE) preserving user keys', async () => {

@@ -1,11 +1,12 @@
 import { cp, mkdir, readFile, unlink } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { hashFile, saveManifest } from './manifest.js';
-import { deepMergeMcpServers } from './mcp.js';
+import { deepMergeMcpServers, computeMergedMcpServers } from './mcp.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
 import { dispatchByTier, NoBaseError, canRecoverBase, writeStageBaseless } from './upgrade-tiers.js';
 import { readMarker, matchesReconciledHash } from './reconciliation-marker.js';
+import { refreshBaselineVersion } from './project-json.js';
 
 export const ACTION_KINDS = Object.freeze({
   ADD: 'ADD',
@@ -100,8 +101,8 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
 
     if (SPECIAL_MERGE.includes(rel)) {
       if (rel in newFiles && await pathExists(tplPath)) {
-        if (!dryRun) await deepMergeMcpServers(tplPath, tgtPath);
-        actions.push({ kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'additive deep-merge applied' });
+        const action = await applySpecialMerge({ rel, tplPath, tgtPath, dryRun });
+        actions.push(action);
       }
       continue;
     }
@@ -166,9 +167,63 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
   if (newManifest && !dryRun) {
     await mkdir(join(target, '.claude'), { recursive: true });
     await saveManifest(join(target, '.claude/.baseline-manifest.json'), newManifest);
+    if (typeof newManifest.baseline_version === 'string' && newManifest.baseline_version.length > 0) {
+      await refreshBaselineVersion(target, newManifest.baseline_version);
+    }
   }
 
   return { actions, exitCode: computeExitCode(actions) };
+}
+
+async function applySpecialMerge({ rel, tplPath, tgtPath, dryRun }) {
+  if (dryRun) {
+    const { merged, existing } = await computeMergedMcpServers(tplPath, tgtPath);
+    if (merged === existing) {
+      return { kind: ACTION_KINDS.NOOP, path: rel, reason: '.mcp.json deep-merge would be byte-identical to existing target' };
+    }
+    return { kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'additive deep-merge would apply' };
+  }
+  const { wrote } = await deepMergeMcpServers(tplPath, tgtPath);
+  if (!wrote) {
+    return { kind: ACTION_KINDS.NOOP, path: rel, reason: '.mcp.json deep-merge produced byte-identical bytes; no write' };
+  }
+  return { kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'additive deep-merge applied' };
+}
+
+// Version-aware no-op detection. Returns { hit: true, version } when:
+//   - oldManifest carries a non-empty `baseline_version` equal to the running
+//     CLI's package version (compared as strings), AND
+//   - a dry-run three-way merge against the same template would emit only
+//     benign actions (NOOP / MARKER_MATCHED / NEVER_TOUCH_PRESERVE).
+// Used by `tui/upgrade.js → run()` and `bin/cli.js → runPlainUpgrade` to
+// short-circuit before invoking the full merge engine on a no-template-delta
+// re-run. Spec: docs/specs/upgrade-version-aware-noop.md §Behavior #3.
+export async function isVersionAwareNoop({ target, templateDir, oldManifest, newManifest, currentVersion }) {
+  if (typeof currentVersion !== 'string' || currentVersion.length === 0) {
+    return { hit: false, reason: 'no current CLI version' };
+  }
+  const oldVersion = oldManifest?.baseline_version;
+  if (typeof oldVersion !== 'string' || oldVersion.length === 0) {
+    return { hit: false, reason: 'old manifest lacks baseline_version' };
+  }
+  if (oldVersion !== currentVersion) {
+    return { hit: false, reason: `version mismatch: old=${oldVersion} current=${currentVersion}` };
+  }
+  const dryReport = await threeWayMerge(templateDir, target, oldManifest, newManifest, { dryRun: true });
+  for (const action of dryReport.actions) {
+    if (!isBenignDryAction(action.kind)) {
+      return { hit: false, reason: `would change ${action.path} (${action.kind})` };
+    }
+  }
+  return { hit: true, version: currentVersion };
+}
+
+function isBenignDryAction(kind) {
+  return (
+    kind === ACTION_KINDS.NOOP ||
+    kind === ACTION_KINDS.MARKER_MATCHED ||
+    kind === ACTION_KINDS.NEVER_TOUCH_PRESERVE
+  );
 }
 
 async function dispatchCustomized({ rel, newEntry, tierCtx, dryRun, onSkipCustomized, tplPath, tgtPath }) {

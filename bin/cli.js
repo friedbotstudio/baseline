@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 import * as io from '../src/cli/io.js';
 import { scanSentinels } from '../src/cli/conflict.js';
 import { freshInstall, forceInstall, COPY_EXCLUDE } from '../src/cli/install.js';
-import { threeWayMerge, ACTION_LABELS, ACTION_LABEL_WIDTH } from '../src/cli/merge.js';
+import { threeWayMerge, ACTION_LABELS, ACTION_LABEL_WIDTH, isVersionAwareNoop } from '../src/cli/merge.js';
 import { loadManifest, buildManifestFromDir, MANIFEST_VERSION } from '../src/cli/manifest.js';
 import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../src/cli/plantuml.js';
 import { runDoctor, formatReport } from '../src/cli/doctor.js';
@@ -41,6 +41,10 @@ Upgrade:
       clean merges land silently, conflicts surface with markers (exit 4).
     - tier 3 (semantic): staged at .claude/state/upgrade/<ts>/ for the
       /upgrade-project Claude Code skill to reconcile (exit 5).
+    - fast-path: when the target's manifest baseline_version matches this
+      CLI's package.json and no pending stage exists, the upgrade prints
+      \`already on baseline X.Y.Z; nothing to do\` and exits 0 with zero
+      writes.
   Prunes baseline files removed upstream that the user hadn't touched.
   --dry-run        Print intended actions without writing.
 
@@ -257,8 +261,22 @@ async function dispatchUpgrade(target, values, templateDir) {
 async function runPlainUpgrade(target, values, templateDir, manifestPath) {
   const oldManifest = await loadManifest(manifestPath);
   const tplFiles = await listShippedFiles(templateDir);
-  const newManifest = await buildManifestFromDir(templateDir, tplFiles);
+  const currentVersion = await readPackageVersion();
+  const newManifest = await buildManifestFromDir(templateDir, tplFiles, { baseline_version: currentVersion });
   await overlayShippedTiers(templateDir, newManifest);
+
+  const fastPath = await isVersionAwareNoop({
+    target,
+    templateDir,
+    oldManifest,
+    newManifest,
+    currentVersion,
+  });
+  if (fastPath.hit) {
+    io.log(`already on baseline ${fastPath.version}; nothing to do`);
+    return 0;
+  }
+
   if (values['dry-run']) {
     io.log(`Would upgrade ${tplFiles.length} files into ${target}`);
     return 0;

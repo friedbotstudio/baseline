@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildManifestFromDir, saveManifest } from './manifest.js';
 import { deepMergeMcpServers } from './mcp.js';
+import { refreshBaselineVersion } from './project-json.js';
 import { pathExists } from './util.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -53,12 +54,11 @@ async function readPackageVersion() {
   }
 }
 
-async function writeBaselineManifest(target) {
+async function writeBaselineManifest(target, baseline_version) {
   const files = await listFiles(target);
   const filtered = files.filter((p) =>
     p !== '.claude/.baseline-manifest.json' && !p.startsWith('.claude/.baseline-prior/')
   );
-  const baseline_version = await readPackageVersion();
   const m = await buildManifestFromDir(target, filtered, { baseline_version });
   await mkdir(join(target, '.claude'), { recursive: true });
   await saveManifest(join(target, '.claude/.baseline-manifest.json'), m);
@@ -130,7 +130,9 @@ export async function freshInstall(templateDir, target, opts = {}) {
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
   await writeBaselinePriorMirror(templateDir, target);
-  await writeBaselineManifest(target);
+  const baseline_version = await readPackageVersion();
+  await writeBaselineManifest(target, baseline_version);
+  await refreshBaselineVersion(target, baseline_version);
 }
 
 export async function forceInstall(templateDir, target, opts = {}) {
@@ -139,5 +141,7 @@ export async function forceInstall(templateDir, target, opts = {}) {
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
   await writeBaselinePriorMirror(templateDir, target);
-  await writeBaselineManifest(target);
+  const baseline_version = await readPackageVersion();
+  await writeBaselineManifest(target, baseline_version);
+  await refreshBaselineVersion(target, baseline_version);
 }

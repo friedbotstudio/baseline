@@ -14,7 +14,7 @@ import * as clackModule from '@clack/prompts';
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
-import { threeWayMerge, ACTION_KINDS, ACTION_LABELS, ACTION_LABEL_WIDTH } from '../merge.js';
+import { threeWayMerge, ACTION_KINDS, ACTION_LABELS, ACTION_LABEL_WIDTH, isVersionAwareNoop } from '../merge.js';
 import { loadManifest, buildManifestFromDir } from '../manifest.js';
 import { COPY_EXCLUDE } from '../install.js';
 import { findPendingStage, formatStageTimestamp } from '../upgrade-tiers.js';
@@ -55,7 +55,20 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
   const pending = await findPendingStage(target);
   if (pending) return reportPendingStage(prompts, pending);
 
-  const { oldManifest, newManifest } = await loadManifests(opts.templateDir, manifestPath);
+  const { oldManifest, newManifest, currentVersion } = await loadManifests(opts.templateDir, manifestPath);
+
+  const fastPath = await isVersionAwareNoop({
+    target,
+    templateDir: opts.templateDir,
+    oldManifest,
+    newManifest,
+    currentVersion,
+  });
+  if (fastPath.hit) {
+    prompts.outro(`already on baseline ${fastPath.version}; nothing to do`);
+    return SUCCESS;
+  }
+
   if (isLegacyManifest(oldManifest)) {
     prompts.log.warn("Your previous install predates version-tracked manifests, so this upgrade can't perform automatic three-way merges on customized files. You'll be prompted to keep your version or take the new baseline for each customized file. After you finish, run `/upgrade-project` in Claude Code on any staged files — the reconciliations are recorded so future upgrades silently skip files you've already reviewed against the current baseline.");
   }
@@ -167,9 +180,10 @@ function mapExitCode(mergeExit) {
 async function loadManifests(templateDir, manifestPath) {
   const oldManifest = await loadManifest(manifestPath);
   const tplFiles = await listShippedFiles(templateDir);
-  const newManifest = await buildManifestFromDir(templateDir, tplFiles);
+  const currentVersion = await readPackageVersion();
+  const newManifest = await buildManifestFromDir(templateDir, tplFiles, { baseline_version: currentVersion });
   await overlayShippedTiers(templateDir, newManifest);
-  return { oldManifest, newManifest };
+  return { oldManifest, newManifest, currentVersion };
 }
 
 async function overlayShippedTiers(templateDir, newManifest) {

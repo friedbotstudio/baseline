@@ -1,0 +1,24 @@
+{
+  "request": "create-baseline upgrade misreports state on no-op re-runs against an upgraded project. Fix two bugs (missing baseline_version in saved manifest causes perpetual legacy warning; unconditional .mcp.json SPECIAL_MERGE inflates Applied N count) and add a version-aware no-op fast-path by recording baseline_version in <target>/.claude/.baseline-manifest.json and surfacing it in <target>/.claude/project.json.",
+  "slug": "upgrade-version-aware-noop",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1748332800,
+  "updated_at": 1779832431
+}
