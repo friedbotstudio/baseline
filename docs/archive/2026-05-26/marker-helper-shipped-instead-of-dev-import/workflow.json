@@ -1,0 +1,11 @@
+{
+  "request": "/upgrade-project marker invocation references unshipped src/cli/reconciliation-marker.js; fix by shipping a self-contained marker helper under .claude/skills/upgrade-project/, update SKILL.md to invoke it, and re-validate all SKILL.md prose with spec-shippability-review so the same class of bug can't ship again",
+  "slug": "marker-helper-shipped-instead-of-dev-import",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit", "changelog"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779840000,
+  "updated_at": 1779926400
+}

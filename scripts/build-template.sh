@@ -118,6 +118,32 @@ for skill_md in "$TEMPLATE_DIR"/.claude/skills/*/SKILL.md; do
   fi
 done
 
+# Stage 1.6 — scan shipped SKILL.md prose for dev-tree refs + unshipped imports.
+#
+# Closes the v0.8.1-class failure mode: a baseline-owned SKILL.md that contains
+# `node -e "import('./src/foo.js')..."` in a shell fence will succeed during
+# spec-draft review (spec-shippability-review catches NEW occurrences in spec
+# drafts) but slip through if it was already on disk before the check existed.
+# This stage re-validates the actual shipped SKILL.md content at every build,
+# using --shipped-tree to derive the shipped-files set from $TEMPLATE_DIR
+# directly (manifest.json isn't stamped until Stage 3).
+#
+# Scanner exit codes: 0 CLEAN, 1 NEEDS_REVIEW (no-op for build — advisory),
+# 2 BLOCKED (build aborts). Exit 3 = missing root (also abort).
+SCANNER="$PKG_ROOT/.claude/skills/spec-shippability-review/scan-shipped-skills.mjs"
+if [ -f "$SCANNER" ]; then
+  if ! node "$SCANNER" \
+      --root "$TEMPLATE_DIR/.claude/skills" \
+      --shipped-tree "$TEMPLATE_DIR/.claude" \
+      --report-root "$PKG_ROOT" >&2; then
+    scan_exit=$?
+    if [ "$scan_exit" = "2" ] || [ "$scan_exit" = "3" ]; then
+      echo "build aborted: spec-shippability-review reported BLOCKER findings in shipped SKILL.md" >&2
+      exit 1
+    fi
+  fi
+fi
+
 # Stage 2 — overlay pristine templates from src/.
 cp "$PKG_ROOT/src/CLAUDE.template.md"      "$TEMPLATE_DIR/CLAUDE.md"
 cp "$PKG_ROOT/src/seed.template.md"        "$TEMPLATE_DIR/docs/init/seed.md"

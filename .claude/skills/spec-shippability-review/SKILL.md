@@ -19,6 +19,7 @@ This skill is **dev-only** — it lives in the baseline dev tree and is pruned f
 
 - The harness runs this as a workflow phase between `/spec` and `/approve-spec` (the node is wired into `intake-full` and `spec-entry` tracks in `.claude/workflows.jsonl`; `tdd-quickfix` and `chore` skip it because they have no spec phase).
 - Ad-hoc: `/spec-shippability-review <slug>` when iterating on a spec draft.
+- `scripts/build-template.sh` invokes the aggregate `scan-shipped-skills.mjs` entry point at Stage 1.6 (after Stage 1.5 prunes dev-only skills, before Stage 3 stamps the manifest). This re-validates the actual shipped `SKILL.md` content at every build so a baseline-owned skill that references dev-tree paths or unshipped modules cannot reach npm — even if it slipped past the per-spec check earlier.
 
 ## Prereq
 

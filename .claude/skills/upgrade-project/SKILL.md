@@ -65,10 +65,10 @@ For each stage directory under `.claude/state/upgrade/`:
    - The **zero-drift renumbering rule does NOT apply** to two-way reconciliation — there is no BASE anchor to shift against, so "shift, never fold" cannot be evaluated. When LOCAL and INCOMING both add structural entries at the same anchor and you cannot determine which is user content vs baseline content without the BASE, apply the `NEEDS_USER_INPUT` fallback.
    - Write the reconciled bytes to the LOCAL path.
    - Update the stage manifest entry's `status` to `RECONCILED`.
-5. **Record the reconciliation marker.** For every entry whose status just transitioned to `RECONCILED` (NOT `NEEDS_USER_INPUT`, NOT skipped under `--dry-run`), invoke the marker writer so the next `create-baseline upgrade` knows the user has already reviewed this file against the current template hash. From the skill terminal:
+5. **Record the reconciliation marker.** For every entry whose status just transitioned to `RECONCILED` (NOT `NEEDS_USER_INPUT`, NOT skipped under `--dry-run`), invoke the shipped marker helper so the next `create-baseline upgrade` knows the user has already reviewed this file against the current template hash. The helper lives at `.claude/skills/upgrade-project/marker.mjs` and ships with every install:
 
-   ```
-   node -e "import('./src/cli/reconciliation-marker.js').then(m => m.recordReconciliation('<target>', '<rel>', '<baseline_version_to>', '<incoming_sha256>'))"
+   ```bash
+   node .claude/skills/upgrade-project/marker.mjs record <target> <rel> <baseline_version_to> <incoming_sha256>
    ```
 
    - `<target>` is the project root the skill is operating in (usually `.`).
@@ -76,7 +76,7 @@ For each stage directory under `.claude/state/upgrade/`:
    - `<baseline_version_to>` is the stage manifest's top-level field of the same name.
    - `<incoming_sha256>` is the entry's `incoming_sha256` field (the template hash this reconciliation was reviewed against).
 
-   The writer creates / updates `<target>/.claude/.baseline-reconciliations.json` atomically (write-then-rename). On filesystem error it throws `MarkerWriteError` — surface the error to the user but do NOT roll back the reconciled LOCAL bytes (LOCAL is already on disk and is the user-visible outcome). Marker is best-effort: the user can re-run `/upgrade-project` to re-record if the write was lost. See `docs/specs/upgrade-no-replay-prompts.md §Behavior #4` for the contract.
+   The helper creates / updates `<target>/.claude/.baseline-reconciliations.json` atomically (write-then-rename). It exits 0 on success, 1 on filesystem error (printing `cannot write .claude/.baseline-reconciliations.json: <reason>` to stderr), 2 on bad args. On exit 1, surface the error to the user but do NOT roll back the reconciled LOCAL bytes (LOCAL is already on disk and is the user-visible outcome). Marker is best-effort: the user can re-run `/upgrade-project` to re-record if the write was lost. See `docs/specs/upgrade-no-replay-prompts.md §Behavior #4` for the contract.
 
 6. **Finalize the stage.** When every entry's status is `RECONCILED`, delete the stage directory (`rm -rf .claude/state/upgrade/<ts>/`). Report per-file status to the user.
 

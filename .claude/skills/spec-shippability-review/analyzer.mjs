@@ -1,0 +1,120 @@
+// Domain — shippability checks shared between check.mjs (per-spec drafts) and
+// scan-shipped-skills.mjs (aggregate shipped-SKILL.md scan).
+//
+// C1 (DEV_TREE_RUNTIME_REF) and C3 (UNSHIPPED_MODULE_IMPORT) both inspect
+// shell fences for runtime invocations that would fail in a consumer install.
+// They share the same fence-extraction + pattern-matching machinery; the
+// difference is what they compare each match against:
+//
+//   C1 — the matched path's leading prefix (src/, tests/, scripts/, obj/, docs/
+//        except docs/init/seed.md). Dev-only prefixes are BLOCKER.
+//   C3 — for .claude/-prefixed matches: whether the path appears in the
+//        shipped manifest's `files` map. Absent paths are BLOCKER.
+//
+// C2 (DEV_HELPER_EXTENSION) is spec-specific (scans write_set rather than
+// fences) and lives in check.mjs.
+//
+// Spec: docs/specs/marker-helper-shipped-instead-of-dev-import.md
+
+const DEV_ONLY_PREFIXES = ['src/', 'tests/', 'scripts/', 'obj/'];
+
+const RUNTIME_INVOCATION_PATTERNS = [
+  { re: /(?:import|require)\s*\(\s*['"`](?:\.\/)?([.\w][\w./-]*)['"`]\s*\)/g, group: 1 },
+  { re: /\b(?:node|python3?|bash|sh)\s+(?:\.\/)?([.\w][\w./-]*\.\w+)\b/g, group: 1 },
+  { re: /(?<![\w/])(\.\/(?:src|tests|scripts|obj|docs)\/[\w./-]+)(?:\s|$)/g, group: 1 },
+];
+
+export function isDevOnlyPath(path) {
+  if (DEV_ONLY_PREFIXES.some((p) => path.startsWith(p))) return true;
+  if (path.startsWith('docs/') && path !== 'docs/init/seed.md') return true;
+  return false;
+}
+
+export function collectShellFences(text) {
+  const out = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^(\s*)```(bash|sh|shell)\s*$/);
+    if (!m) continue;
+    const indent = m[1];
+    const closeRe = new RegExp(`^${indent}\\\`\\\`\\\`\\s*$`);
+    const body = [];
+    let j = i + 1;
+    while (j < lines.length && !closeRe.test(lines[j])) {
+      body.push(lines[j]);
+      j++;
+    }
+    out.push({ startLine: i + 2, body: body.join('\n') });
+    i = j;
+  }
+  return out;
+}
+
+export function runDevTreeAndUnshippedChecks(fences, manifest, sourcePath) {
+  const shippedFiles = new Set(Object.keys(manifest?.files ?? {}));
+  const findings = [];
+  const seenC1 = new Set();
+  const seenC3 = new Set();
+  for (const fence of fences) {
+    for (const { re, group } of RUNTIME_INVOCATION_PATTERNS) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(fence.body)) !== null) {
+        const refPath = stripLeadingDotSlash(m[group]);
+        const line = fence.startLine + countNewlines(fence.body.slice(0, m.index));
+        appendDevTreeRefFinding({ refPath, line, evidence: m[0], sourcePath, findings, seen: seenC1 });
+        appendUnshippedImportFinding({ refPath, line, evidence: m[0], sourcePath, findings, seen: seenC3, shippedFiles });
+      }
+    }
+  }
+  return findings;
+}
+
+function appendDevTreeRefFinding({ refPath, line, evidence, sourcePath, findings, seen }) {
+  if (!isDevOnlyPath(refPath)) return;
+  const key = `${line}:${refPath}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  findings.push({
+    severity: 'BLOCKER',
+    check: 'DEV_TREE_RUNTIME_REF',
+    file: sourcePath,
+    line,
+    evidence: trimEvidence(evidence),
+    message: `Runtime invocation references \`${refPath}\` — \`${devPrefix(refPath)}\` is dev-only; consumer installs do not receive this directory.`,
+    suggested_fix: `Move the logic into a shipped helper under \`.claude/skills/<slug>/<helper>.mjs\`, OR inline the implementation into the \`node -e "..."\` command body.`,
+  });
+}
+
+function appendUnshippedImportFinding({ refPath, line, evidence, sourcePath, findings, seen, shippedFiles }) {
+  if (!refPath.startsWith('.claude/')) return;
+  if (shippedFiles.has(refPath)) return;
+  if (seen.has(refPath)) return;
+  seen.add(refPath);
+  findings.push({
+    severity: 'BLOCKER',
+    check: 'UNSHIPPED_MODULE_IMPORT',
+    file: sourcePath,
+    line,
+    evidence: trimEvidence(evidence),
+    message: `Runtime invocation references \`${refPath}\`, which is NOT in \`obj/template/.claude/manifest.json\`. Consumer installs won't have this file.`,
+    suggested_fix: `Add the file to a baseline-owned skill directory (so \`scripts/build-template.sh\` picks it up via the recursive cp and \`scripts/build-manifest.mjs\` adds it to the manifest), OR change the invocation to reference a file that IS in the shipped manifest.`,
+  });
+}
+
+function stripLeadingDotSlash(p) {
+  return p.startsWith('./') ? p.slice(2) : p;
+}
+
+function devPrefix(path) {
+  for (const p of DEV_ONLY_PREFIXES) if (path.startsWith(p)) return p.slice(0, -1);
+  if (path.startsWith('docs/')) return 'docs';
+  return path.split('/')[0];
+}
+
+function countNewlines(s) { return (s.match(/\n/g) || []).length; }
+
+function trimEvidence(s) {
+  const collapsed = s.replace(/\s+/g, ' ').trim();
+  return collapsed.length > 120 ? collapsed.slice(0, 117) + '...' : collapsed;
+}

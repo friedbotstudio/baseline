@@ -184,15 +184,18 @@ describe('/upgrade-project skill — reconciliation marker contract', () => {
   it('test_when_upgrade_project_SKILL_md_describes_procedure_then_recordReconciliation_is_step', async () => {
     const body = await readFile(SKILL_PATH, 'utf8');
 
-    // The recordReconciliation call must appear inside the Procedure section,
+    // The marker-record operation must appear inside the Procedure section,
     // not just in a constraints / contracts table. Locate `## Procedure` and
-    // check the body up to the next `## ` heading.
+    // check the body up to the next `## ` heading. Accepts either the legacy
+    // in-process lib token (`recordReconciliation`) or the post-0.8.2 shipped
+    // CLI form (`marker.mjs record`) — both satisfy the contract that the
+    // marker-record step lives in Procedure.
     const procMatch = body.match(/## Procedure\b([\s\S]*?)(?=\n## |\Z)/);
     assert.ok(procMatch, 'SKILL.md must have a `## Procedure` section');
     const procBody = procMatch[1];
     assert.ok(
-      /recordReconciliation/.test(procBody),
-      'recordReconciliation call must be documented in the Procedure section (as a step), not just in constraints',
+      /recordReconciliation|marker\.mjs\s+record/.test(procBody),
+      'marker-record step must be documented in the Procedure section (as a step), not just in constraints',
     );
   });
 });
