@@ -1,3 +1,11 @@
+# [0.9.0](https://github.com/friedbotstudio/baseline/compare/v0.8.2...v0.9.0) (2026-05-26)
+
+
+### Features
+
+* ship /upgrade-project marker helper + build-time SKILL.md scan gate ([b5d40eb](https://github.com/friedbotstudio/baseline/commit/b5d40eb4a0eda25f088f9f9aa848c1dc3ed32e1d))
+* **spec-shippability:** catch dev-tree refs in shipped SKILL.md prose ([67da6dc](https://github.com/friedbotstudio/baseline/commit/67da6dce8259bfb6f43da544bffd1dfb83753068))
+
 ## [0.8.2](https://github.com/friedbotstudio/baseline/compare/v0.8.1...v0.8.2) (2026-05-22)
 
 
