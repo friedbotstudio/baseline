@@ -127,6 +127,19 @@ toc:
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ VII</p>
+      <h2 id="navigation">Navigation ({{ baseline.skills.byCategory.navigation }})</h2>
+    </div>
+    <p>The default mechanism for code-navigation questions. The baseline prefers it over global grep when a question is structural (where data comes from, what renders a panel, what wraps a component).</p>
+  </div>
+  <ul>
+    <li><code>code-browser</code>. Walks the import graph from a page or entry file to the network boundary and emits flat indexes (<code>byHook</code>, <code>byService</code>, <code>byApiCall</code>, <code>byComponent</code>). <code>discover.mjs</code> writes a per-repo <code>conventions.json</code>; <code>walk.mjs</code> runs deterministically in milliseconds and caches per-entry trees. Read-only.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VIII</p>
       <h2 id="globals">Shared globals ({{ baseline.skills.byCategory.sharedGlobals }})</h2>
     </div>
     <p>Vendored or globally available. Available to any phase that needs them.</p>
@@ -145,7 +158,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ VIII</p>
+      <p class="section-num">§ IX</p>
       <h2 id="audit">Audit ({{ baseline.skills.byCategory.audit }})</h2>
     </div>
     <p>One drift defender keeps the implementation honest against seed.md and the constitution.</p>
@@ -158,7 +171,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ IX</p>
+      <p class="section-num">§ X</p>
       <h2 id="alt">Alternate tracks ({{ baseline.skills.byCategory.altTracks }})</h2>
     </div>
     <p>A stripped-down pipeline for tasks that need no failing-test-driven code change.</p>

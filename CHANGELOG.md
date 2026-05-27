@@ -78,11 +78,10 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 ### Added
 
 - version-aware no-op fast-path + baseline_version stamping
-- ship /upgrade-project marker helper + build-time SKILL.md scan gate
-- catch dev-tree refs in shipped SKILL.md prose
 
 ### Fixed
 
+- always-download jar + java -jar runtime; pin now enforced
 - vendor src/cli modules into shipped tree + harden scanner
 
 ## [Unreleased]

@@ -3,8 +3,8 @@
     "total": 22
   },
   "skills": {
-    "total": 38,
-    "categoriesWord": "ten",
+    "total": 39,
+    "categoriesWord": "eleven",
     "sharedGlobalsWord": "seven",
     "byCategory": {
       "artifact": 4,
@@ -13,6 +13,7 @@
       "specHelpers": 4,
       "orchestration": 3,
       "memory": 1,
+      "navigation": 1,
       "sharedGlobals": 7,
       "audit": 1,
       "altTracks": 1,

@@ -24,10 +24,12 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
 # Method
 
 1. **Identify the nouns and verbs in the task.** Each is a search anchor.
-2. **For each anchor:**
-   - `rg` (or `grep -r`) for the exact term, filtered to source directories.
-   - Read the top 3–5 hits with surrounding context.
-   - Follow imports/callers one hop out. Do not recurse further.
+2. **For each anchor, pick the right tool:**
+   - **Structural / navigation questions** ("where does the data on page X come from?", "what component renders Y?", "what wraps Z?", "find the API for this icon/button"): invoke `Skill(code-browser)`. It walks the import graph from the page down to the network boundary and returns flat indexes (`byHook` / `byService` / `byApiCall` / `byComponent`) — far more reliable than keyword grep, which routinely picks up unrelated flows that share a domain word.
+   - **Direct concept-to-file lookups** (a named feature plus a file kind: `reducer`, `types`, `hook`, `context`, `service`): consult `code-browser`'s `conventions.md` if present, or `Glob` against the convention path — no walker needed.
+   - **Term sweeps** ("every file that references flag F", "all callers of util U", config / migration / deploy-manifest searches): `rg` (or `grep -r`) for the exact term, filtered to source directories. Read the top 3–5 hits with surrounding context. Follow imports/callers one hop out — do not recurse further.
+
+   If a navigation question lands you in `rg` first, stop and switch to `code-browser` — that is the failure mode the skill exists to prevent.
 3. **Identify entry points** — HTTP routes, CLI commands, cron jobs, queue consumers — that would trigger the code path being modified.
 4. **Identify existing tests** for the affected code. Note flaky/skipped ones.
 5. **Note constraints** — config files, feature flags, migrations, deploy manifests that need lockstep changes.

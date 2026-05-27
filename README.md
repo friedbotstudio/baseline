@@ -41,7 +41,7 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 
 ## What this is
 
-The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **38 skills** organised into ten categories, **1 subagent** for parallel work in isolated worktrees, **4 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
+The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **39 skills** organised into eleven categories, **1 subagent** for parallel work in isolated worktrees, **4 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
 
 Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 
@@ -62,7 +62,7 @@ A team that installs the baseline stops typing *"don't push, don't `--amend`, do
 | What | Count | Where it lives |
 |---|---:|---|
 | **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit | 22 | `.claude/hooks/` |
-| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, audit, alternate tracks, shared globals, and maintenance | 38 | `.claude/skills/` |
+| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, audit, alternate tracks, shared globals, and maintenance | 39 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
 | **Workflow tracks** declared in `.claude/workflows.jsonl`. Canonical set: `intake-full` (11 nodes), `spec-entry`, `tdd-quickfix`, `chore`. Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set. | 4 selectable + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude | 3 | `consent_gate_grant` UserPromptSubmit hook |
