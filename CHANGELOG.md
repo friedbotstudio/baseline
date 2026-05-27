@@ -1,3 +1,22 @@
+# [0.10.0](https://github.com/friedbotstudio/baseline/compare/v0.9.0...v0.10.0) (2026-05-27)
+
+
+### Bug Fixes
+
+* **plantuml:** always-download jar + java -jar runtime; pin now enforced ([d058472](https://github.com/friedbotstudio/baseline/commit/d058472749f62c73cba14ea0c2f078bb5e48d11e))
+* **shippability:** vendor src/cli modules into shipped tree + harden scanner ([3e1bf19](https://github.com/friedbotstudio/baseline/commit/3e1bf194374f489e72f8e28c760c9a76d549aba5))
+
+
+### Features
+
+* add code-browser skill as default code-navigation mechanism ([7901e65](https://github.com/friedbotstudio/baseline/commit/7901e650f9bec72d4feefa73a099a408f0d3cce1))
+* **upgrade:** version-aware no-op fast-path + baseline_version stamping ([64b79c8](https://github.com/friedbotstudio/baseline/commit/64b79c85791b868d0f3bc957d45a93ce89155b29))
+
+
+### Performance Improvements
+
+* **hooks:** port 22 hooks to Node ESM + audit fast-path + tier hardening ([9b54561](https://github.com/friedbotstudio/baseline/commit/9b5456168cd60ea38418a62655773cea4402c2ce))
+
 # [0.9.0](https://github.com/friedbotstudio/baseline/compare/v0.8.2...v0.9.0) (2026-05-26)
 
 
