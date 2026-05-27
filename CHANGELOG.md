@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/friedbotstudio/baseline/compare/v0.10.0...v0.11.0) (2026-05-27)
+
+
+### Features
+
+* remove python3 runtime dependency; port skill helpers to Node ESM ([756dd42](https://github.com/friedbotstudio/baseline/commit/756dd420f239a9480e50c2d5446ea597985524d5))
+
 # [0.10.0](https://github.com/friedbotstudio/baseline/compare/v0.9.0...v0.10.0) (2026-05-27)
 
 
