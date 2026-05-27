@@ -20,13 +20,15 @@ const DEV_ONLY_PREFIXES = ['src/', 'tests/', 'scripts/', 'obj/'];
 
 const RUNTIME_INVOCATION_PATTERNS = [
   { re: /(?:import|require)\s*\(\s*['"`](?:\.\/)?([.\w][\w./-]*)['"`]\s*\)/g, group: 1 },
+  { re: /(?:^|\n)\s*import\s+(?:[\s\S]*?\sfrom\s+)?['"`]([^'"`\n]+)['"`]/g, group: 1 },
   { re: /\b(?:node|python3?|bash|sh)\s+(?:\.\/)?([.\w][\w./-]*\.\w+)\b/g, group: 1 },
   { re: /(?<![\w/])(\.\/(?:src|tests|scripts|obj|docs)\/[\w./-]+)(?:\s|$)/g, group: 1 },
 ];
 
 export function isDevOnlyPath(path) {
-  if (DEV_ONLY_PREFIXES.some((p) => path.startsWith(p))) return true;
-  if (path.startsWith('docs/') && path !== 'docs/init/seed.md') return true;
+  const normalized = path.replace(/^(?:\.\.\/)+/, '');
+  if (DEV_ONLY_PREFIXES.some((p) => normalized.startsWith(p))) return true;
+  if (normalized.startsWith('docs/') && normalized !== 'docs/init/seed.md') return true;
   return false;
 }
 
@@ -48,6 +50,89 @@ export function collectShellFences(text) {
     i = j;
   }
   return out;
+}
+
+const INLINE_BACKTICK_RE = /(?<!`)`([^`\n]+)`(?!`)/g;
+
+// Companion to `collectShellFences`. Single-backtick inline code spans inside
+// *.md prose carry the same dev-tree-reference risk as fenced blocks (e.g., the
+// harness SKILL.md line 59 leak that ran inline, not fenced). Negative
+// look-around prevents matching the inner ticks of a triple-fence.
+export function collectInlineBackticks(text) {
+  const out = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    INLINE_BACKTICK_RE.lastIndex = 0;
+    let m;
+    while ((m = INLINE_BACKTICK_RE.exec(lines[i])) !== null) {
+      out.push({ startLine: i + 1, body: m[1] });
+    }
+  }
+  return out;
+}
+
+// Wraps a helper file's body as a single fence-shaped chunk so the existing
+// `runDevTreeAndUnshippedChecks` pipeline applies uniformly. JS comments are
+// stripped first — historical-reference comments (e.g., upgrade-project/
+// marker.mjs explaining the v0.8.1 bug it replaced) would otherwise trip the
+// runtime-invocation regex even though they are inert prose.
+export function collectHelperFileContent(text) {
+  if (text === '') return [];
+  return [{ startLine: 1, body: stripJsComments(text) }];
+}
+
+function stripJsComments(text) {
+  const lines = text.split('\n');
+  const out = [];
+  let inBlock = false;
+  for (const line of lines) {
+    if (inBlock) {
+      const end = line.indexOf('*/');
+      if (end === -1) { out.push(''); continue; }
+      out.push(' '.repeat(end + 2) + maskInlineComments(line.slice(end + 2)));
+      inBlock = false;
+      continue;
+    }
+    const blockStart = line.indexOf('/*');
+    if (blockStart !== -1) {
+      const blockEnd = line.indexOf('*/', blockStart + 2);
+      if (blockEnd === -1) {
+        out.push(maskInlineComments(line.slice(0, blockStart)) + ' '.repeat(line.length - blockStart));
+        inBlock = true;
+      } else {
+        out.push(
+          maskInlineComments(line.slice(0, blockStart))
+            + ' '.repeat(blockEnd - blockStart + 2)
+            + maskInlineComments(line.slice(blockEnd + 2)),
+        );
+      }
+      continue;
+    }
+    out.push(maskInlineComments(line));
+  }
+  return out.join('\n');
+}
+
+function maskInlineComments(line) {
+  let inSingle = false, inDouble = false, inTemplate = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    const prev = line[i - 1];
+    if (!inDouble && !inTemplate && ch === "'" && prev !== '\\') inSingle = !inSingle;
+    else if (!inSingle && !inTemplate && ch === '"' && prev !== '\\') inDouble = !inDouble;
+    else if (!inSingle && !inDouble && ch === '`' && prev !== '\\') inTemplate = !inTemplate;
+    else if (!inSingle && !inDouble && !inTemplate && ch === '/' && line[i + 1] === '/') {
+      return line.slice(0, i);
+    }
+    else if (!inSingle && !inDouble && !inTemplate && ch === '#') {
+      return line.slice(0, i);
+    }
+  }
+  return line;
+}
+
+export function collectMarkdownCode(text) {
+  return [...collectShellFences(text), ...collectInlineBackticks(text)];
 }
 
 export function runDevTreeAndUnshippedChecks(fences, manifest, sourcePath) {
@@ -107,9 +192,10 @@ function stripLeadingDotSlash(p) {
 }
 
 function devPrefix(path) {
-  for (const p of DEV_ONLY_PREFIXES) if (path.startsWith(p)) return p.slice(0, -1);
-  if (path.startsWith('docs/')) return 'docs';
-  return path.split('/')[0];
+  const normalized = path.replace(/^(?:\.\.\/)+/, '');
+  for (const p of DEV_ONLY_PREFIXES) if (normalized.startsWith(p)) return p.slice(0, -1);
+  if (normalized.startsWith('docs/')) return 'docs';
+  return normalized.split('/')[0];
 }
 
 function countNewlines(s) { return (s.match(/\n/g) || []).length; }

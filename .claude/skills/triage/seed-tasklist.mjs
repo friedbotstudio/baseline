@@ -19,8 +19,8 @@
 
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateWorkflowsJsonl } from '../../../src/cli/workflows-validator.js';
-import { materializeTaskList } from '../../../src/cli/track-tasklist-materializer.js';
+import { validateWorkflowsJsonl } from './workflows-validator.js';
+import { materializeTaskList } from './track-tasklist-materializer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = resolve(dirname(__filename), '../../..');

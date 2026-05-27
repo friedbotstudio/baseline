@@ -16,10 +16,14 @@
 //
 // Spec: docs/specs/marker-helper-shipped-instead-of-dev-import.md
 
-import { readFile, writeFile, mkdir, readdir, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { dirname, join, resolve, relative } from 'node:path';
-import { collectShellFences, runDevTreeAndUnshippedChecks } from './analyzer.mjs';
+import { dirname, extname, join, resolve, relative } from 'node:path';
+import {
+  collectMarkdownCode,
+  collectHelperFileContent,
+  runDevTreeAndUnshippedChecks,
+} from './analyzer.mjs';
 
 const DEFAULT_ROOT_REL = 'obj/template/.claude/skills';
 const DEFAULT_MANIFEST_REL = 'obj/template/.claude/manifest.json';
@@ -103,30 +107,74 @@ async function* walkFiles(absRoot, relPrefix) {
   }
 }
 
+const HELPER_FILE_EXTS = new Set(['.mjs', '.js', '.sh', '.py']);
+
 async function scanRoot(root, manifest, reportRoot) {
-  const skillMds = await findSkillMds(root);
+  const scannableFiles = await findScannableFiles(root);
   const findings = [];
-  for (const absPath of skillMds) {
+  for (const absPath of scannableFiles) {
     const sourcePath = relative(reportRoot, absPath) || absPath;
     const text = await readFile(absPath, 'utf8');
-    const fences = collectShellFences(text);
-    findings.push(...runDevTreeAndUnshippedChecks(fences, manifest, sourcePath));
+    const chunks = collectChunksForFile(absPath, text);
+    findings.push(...runDevTreeAndUnshippedChecks(chunks, manifest, sourcePath));
   }
   return findings;
 }
 
-async function findSkillMds(root) {
+function collectChunksForFile(absPath, text) {
+  const ext = extname(absPath);
+  if (ext === '.md') return collectMarkdownCode(text);
+  if (HELPER_FILE_EXTS.has(ext)) return collectHelperFileContent(text);
+  return [];
+}
+
+async function findScannableFiles(root) {
   const entries = await readdir(root, { withFileTypes: true });
   const out = [];
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    const candidate = join(root, entry.name, 'SKILL.md');
-    if (existsSync(candidate)) {
-      const s = await stat(candidate);
-      if (s.isFile()) out.push(candidate);
+    const skillDir = join(root, entry.name);
+    if (!(await isBaselineOwnedSkill(skillDir))) continue;
+    for (const file of await topLevelScannableFiles(skillDir)) {
+      out.push(file);
     }
   }
   return out.sort();
+}
+
+async function isBaselineOwnedSkill(skillDir) {
+  const skillMd = join(skillDir, 'SKILL.md');
+  if (!existsSync(skillMd)) return false;
+  let text;
+  try {
+    text = await readFile(skillMd, 'utf8');
+  } catch {
+    return false;
+  }
+  const fmMatch = text.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!fmMatch) return false;
+  return /^owner:\s+baseline\s*$/m.test(fmMatch[1]);
+}
+
+async function topLevelScannableFiles(dir) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const out = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    if (!isScannableFile(entry.name)) continue;
+    out.push(join(dir, entry.name));
+  }
+  return out;
+}
+
+function isScannableFile(name) {
+  const ext = extname(name);
+  return ext === '.md' || HELPER_FILE_EXTS.has(ext);
 }
 
 function buildReport(root, findings) {

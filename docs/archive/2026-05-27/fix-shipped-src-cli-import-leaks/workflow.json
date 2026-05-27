@@ -1,0 +1,21 @@
+{
+  "request": "Fix two shipped runtime leaks that break consumer installs (.claude/skills/triage/seed-tasklist.mjs imports + .claude/skills/harness/SKILL.md inline node -e referencing src/cli/). Vendor the consumed modules into shipped skill directories, with scripts/build-template.sh copying them from src/cli/ at build time. Harden spec-shippability-review/scan-shipped-skills.mjs to walk shipped helper files for src|tests|scripts|obj refs and to inspect inline backticks inside *.md, so this class can't recur. Update prose in triage/SKILL.md, harness/SKILL.md, and commands/init-project-doctor.md.",
+  "slug": "fix-shipped-src-cli-import-leaks",
+  "track_id": "tdd-quickfix",
+  "exceptions": [],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779862323,
+  "updated_at": 1779868650
+}

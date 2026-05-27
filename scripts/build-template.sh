@@ -59,6 +59,34 @@ done
 
 AUDIT_SCRIPT="$PKG_ROOT/.claude/skills/audit-baseline/audit.sh"
 
+# Stage 0b — sync vendored mirrors from src/cli/ into the dev tree.
+#
+# The five workflows.jsonl-driven modules canonically live under `src/cli/`
+# (where tests, bin/cli.js, and the maintainer's mental model expect them).
+# They ALSO ship to consumers under `.claude/skills/{triage,harness}/` so
+# `seed-tasklist.mjs` and the harness migrator invocation can resolve their
+# imports against the consumer's installed tree. Without this stage the
+# mirrors drift the moment a maintainer edits a canonical source — and
+# `tests/vendored-mirror-bytes.test.mjs` fails CI.
+#
+# Paths are unrolled (not loop-generated) so `grep src/cli/<mod>.js` from a
+# maintainer's terminal finds the exact wiring line in this script.
+# Run BEFORE Stage 1 so the recursive copy picks up freshly-synced mirrors.
+# Each cp is conditional on the canonical source existing — fixture-based
+# test projects (tests/build-template.test.mjs) override PKG_ROOT and don't
+# carry the dev tree's src/cli/ directory; skip silently there.
+sync_vendored_mirror() {
+  local src="$1" dst="$2"
+  if [ -f "$src" ]; then
+    cp "$src" "$dst"
+  fi
+}
+sync_vendored_mirror "$PKG_ROOT/src/cli/workflows-validator.js"            "$PKG_ROOT/.claude/skills/triage/workflows-validator.js"
+sync_vendored_mirror "$PKG_ROOT/src/cli/workflows-validator-invariants.js" "$PKG_ROOT/.claude/skills/triage/workflows-validator-invariants.js"
+sync_vendored_mirror "$PKG_ROOT/src/cli/workflows-validator-predicates.js" "$PKG_ROOT/.claude/skills/triage/workflows-validator-predicates.js"
+sync_vendored_mirror "$PKG_ROOT/src/cli/track-tasklist-materializer.js"    "$PKG_ROOT/.claude/skills/triage/track-tasklist-materializer.js"
+sync_vendored_mirror "$PKG_ROOT/src/cli/workflow-migrator.js"              "$PKG_ROOT/.claude/skills/harness/workflow-migrator.js"
+
 rm -rf "$TEMPLATE_DIR"
 mkdir -p "$TEMPLATE_DIR/.claude" "$TEMPLATE_DIR/docs/init"
 

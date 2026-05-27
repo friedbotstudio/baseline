@@ -69,6 +69,6 @@ Per seed.md §3 + `conventions.md → user-shipped-tooling-lives-in-claude-direc
 
 - **Read-only by default; writes only on user confirmation.** Every Edit/Write happens after an AskUserQuestion `Apply` response. No silent fixes.
 - **No commits.** The doctor's fixes land on the working tree. The user commits via the normal `/grant-commit` + `/commit` flow.
-- **No new dependencies.** Validation reuses `src/cli/workflows-validator.js` via the triage helper.
+- **No new dependencies.** Validation reuses the shipped `.claude/skills/triage/workflows-validator.js` mirror (synced from `src/cli/workflows-validator.js` at build time) via the triage helper.
 - **Schema/invariant violations require manual fixes.** Auto-fixing structurally violates the user's intent (the violation might be intentional during development). Doctor surfaces; user fixes.
 - **Mirror drift CAN be auto-fixed** (one-direction overwrite on confirmation). The reverse direction (which file is canonical?) is the user's call.
