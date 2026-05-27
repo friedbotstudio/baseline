@@ -9,6 +9,29 @@ set -u
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
+# --file=<rel> scoping (P4 of the perf pass).
+# When a single file is named, audit only runs if that path could affect a
+# baseline-tracked check. Out-of-scope files short-circuit with PASS so the
+# PostToolUse test_runner doesn't pay 1.85s per src-tree edit.
+SCOPE_FILE=""
+for arg in "$@"; do
+  case "$arg" in
+    --file=*) SCOPE_FILE="${arg#--file=}" ;;
+  esac
+done
+
+if [ -n "$SCOPE_FILE" ]; then
+  case "$SCOPE_FILE" in
+    .claude/*|CLAUDE.md|README.md|docs/init/seed.md|src/CLAUDE.template.md|src/seed.template.md|src/settings.template.json|src/project.template.json|src/agents/*|src/memory/*|src/.mcp.template.json|obj/template/*|scripts/build-manifest.mjs|scripts/build-template.sh)
+      : # in scope — fall through to full audit
+      ;;
+    *)
+      printf 'audit-baseline: %s is out of baseline scope (no checks affected)\n' "$SCOPE_FILE"
+      exit 0
+      ;;
+  esac
+fi
+
 ROOT="$ROOT" python3 <<'PY'
 import json, os, re, sys
 from pathlib import Path
@@ -663,11 +686,17 @@ else:
         "frontmatter description must mention 'orchestrat' — the v1 code-writing role is retired")
 
 # spec_design_calls_guard — present, executable, and wired in settings.
-hook_path = root / ".claude/hooks/spec_design_calls_guard.sh"
-hook_wired = "spec_design_calls_guard.sh" in (settings_text or "")
+# Accept either .sh or .mjs implementation (JS-port migration is per-hook).
+hook_sh  = root / ".claude/hooks/spec_design_calls_guard.sh"
+hook_mjs = root / ".claude/hooks/spec_design_calls_guard.mjs"
+hook_path = hook_mjs if hook_mjs.is_file() else hook_sh
+hook_wired = (
+    "spec_design_calls_guard.sh"  in (settings_text or "")
+    or "spec_design_calls_guard.mjs" in (settings_text or "")
+)
 if hook_path.is_file() and os.access(hook_path, os.X_OK) and hook_wired:
-    add("spec_design_calls_guard.sh: present + wired", "PASS",
-        "file executable and wired in PreToolUse Write|Edit|MultiEdit chain")
+    add("spec_design_calls_guard: present + wired", "PASS",
+        f"{hook_path.name} executable and wired in PreToolUse Write|Edit|MultiEdit chain")
 else:
     detail = []
     if not hook_path.is_file():
@@ -676,7 +705,7 @@ else:
         detail.append("hook not executable")
     if not hook_wired:
         detail.append("not wired in .claude/settings.json")
-    add("spec_design_calls_guard.sh: present + wired", "FAIL", "; ".join(detail))
+    add("spec_design_calls_guard: present + wired", "FAIL", "; ".join(detail))
 
 # ---------- cross-doc count claims ----------
 #

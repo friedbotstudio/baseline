@@ -19,7 +19,7 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
-const SESSION_START_HOOK = path.join(REPO_ROOT, '.claude/hooks/memory_session_start.sh');
+const SESSION_START_HOOK = path.join(REPO_ROOT, '.claude/hooks/memory_session_start.mjs');
 const AUDIT_SCRIPT = path.join(REPO_ROOT, '.claude/skills/audit-baseline/audit.sh');
 
 // ---------- Foundation: file readers + fixture builders ----------
@@ -86,7 +86,7 @@ async function removeWorkflowJson(tmp) {
 }
 
 function invokeSessionStart(tmp, payload = { source: 'startup' }) {
-  return spawnSync('bash', [SESSION_START_HOOK], {
+  return spawnSync('node', [SESSION_START_HOOK], {
     env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
     input: JSON.stringify(payload),
     encoding: 'utf8',

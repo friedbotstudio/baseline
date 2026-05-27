@@ -119,6 +119,8 @@ rsync -a \
   --exclude='agent-memory/' \
   --exclude='workflows.jsonl' \
   --exclude='.DS_Store' \
+  --exclude='__pycache__/' \
+  --exclude='*.pyc' \
   "$PKG_ROOT/.claude/" "$TEMPLATE_DIR/.claude/"
 
 # Stage 1.5 — prune dev-only skills.

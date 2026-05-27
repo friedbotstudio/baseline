@@ -172,7 +172,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 
 ## How the enforcement works
 
-The 22 hooks declared in `.claude/settings.json` fire at every Claude tool boundary — PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. They run as bash and python3 in a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
+The 22 hooks declared in `.claude/settings.json` fire at every Claude tool boundary — PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. Each hook is a Node ESM script (`.mjs`) invoked as a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
 
 The architectural rule is simple: **decisions live in main context; subagents only execute pre-decided recipes**. The baseline ships exactly one subagent — `swarm-worker` — and its only sanctioned use is parallel dispatch of fully-specified recipes inside isolated git worktrees during `/swarm-dispatch`. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) lives instead as a **skill** that runs in main context with full conversation visibility.
 

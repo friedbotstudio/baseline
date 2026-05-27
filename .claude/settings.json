@@ -6,32 +6,32 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/destructive_cmd_guard.sh" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/destructive_cmd_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/process_lifecycle_guard.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/process_lifecycle_guard.mjs" }
         ]
       },
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/setup_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/env_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/spec_approval_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/swarm_approval_guard.sh" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/setup_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/env_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_approval_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/swarm_approval_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/verify_pass_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/track_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/artifact_template_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/plantuml_syntax_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/spec_diagram_presence_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/swarm_boundary_guard.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/spec_design_calls_guard.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/verify_pass_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/track_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/artifact_template_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/plantuml_syntax_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_diagram_presence_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/swarm_boundary_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_design_calls_guard.mjs" }
         ]
       },
       {
         "matcher": "Write",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/tdd_order_guard.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/tdd_order_guard.mjs" }
         ]
       }
     ],
@@ -46,23 +46,23 @@
       {
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/lint_runner.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/test_runner.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lint_runner.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test_runner.mjs" }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/memory_session_start.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/memory_session_start.mjs" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/memory_stop.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/harness_continuation.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/memory_stop.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/harness_continuation.mjs" }
         ]
       }
     ],
@@ -70,7 +70,7 @@
       {
         "matcher": "manual|auto",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/memory_pre_compact.sh" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/memory_pre_compact.mjs" }
         ]
       }
     ]

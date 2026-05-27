@@ -17,18 +17,23 @@ const MANIFEST_REL = '.claude/manifest.json';
 // by tests/never-touch-sync.test.mjs. See docs/specs/upgrade-no-replay-prompts.md
 // §Behavior #7.
 const NEVER_TOUCH_PATHS = new Set([
-  '.claude/project.json',
   '.claude/workflows.jsonl',
   '.claude/schemas/workflow-track.v1.json',
   '.claude/memory/_pending.md',
   '.claude/memory/_resume.md',
 ]);
-const SPECIAL_MERGE_PATHS = new Set(['.mcp.json']);
+const SPECIAL_MERGE_PATHS = new Set(['.mcp.json', '.claude/project.json']);
 const SEMANTIC_EXPLICIT = new Set([
   'docs/init/seed.md',
   'CLAUDE.md',
   'src/seed.template.md',
   'src/CLAUDE.template.md',
+  // settings.json is SEMANTIC because hook-path changes (e.g. the bash→mjs
+  // port) interact destructively with user customizations under BINARY_PROMPT:
+  // a non-TTY upgrade that keeps a customized settings.json would silently
+  // strand stale .sh references after the prune. Staging for /upgrade-project
+  // lets the LLM reconcile user permissions + new hook wiring together.
+  '.claude/settings.json',
 ]);
 const MECHANICAL_EXTENSIONS = new Set(['.sh', '.mjs', '.js', '.py', '.ts', '.md']);
 const VALID_TIERS = new Set(['NEVER_TOUCH', 'SPECIAL_MERGE', 'SEMANTIC', 'MECHANICAL', 'BINARY_PROMPT']);

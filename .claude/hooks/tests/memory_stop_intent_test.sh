@@ -20,7 +20,8 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../.." && pwd)"
-HOOK="$REPO_ROOT/.claude/hooks/memory_stop.sh"
+HOOK="$REPO_ROOT/.claude/hooks/memory_stop.mjs"
+HOOK_RUNNER="node"
 FIXTURES="$HERE/fixtures"
 LANDMARK_BASELINE="$FIXTURES/memory_stop_landmark_baseline.txt"
 
@@ -113,7 +114,7 @@ EOF
 run_hook() {
   local root="$1" transcript="$2"
   printf '%s' "{\"transcript_path\":\"$transcript\"}" \
-    | CLAUDE_PROJECT_DIR="$root" bash "$HOOK" >/dev/null 2>&1 || true
+    | CLAUDE_PROJECT_DIR="$root" $HOOK_RUNNER "$HOOK" >/dev/null 2>&1 || true
 }
 
 # Helper: read the pending file path for a given project root.

@@ -2,6 +2,8 @@ import { cp, mkdir, readFile, unlink } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { hashFile, saveManifest } from './manifest.js';
 import { deepMergeMcpServers, computeMergedMcpServers } from './mcp.js';
+import { mergeProjectJsonFile, computeMergedProjectJson } from './project-json-merge.js';
+import { resolveBase } from './upgrade-tiers.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
 import { dispatchByTier, NoBaseError, canRecoverBase, writeStageBaseless } from './upgrade-tiers.js';
@@ -37,7 +39,7 @@ export const ACTION_LABELS = Object.freeze({
   PRUNE_SKIPPED_CUSTOMIZED: 'kept yours (upstream removed)',
   NEVER_TOUCH_PRESERVE: 'kept yours (never-touch)',
   NEVER_TOUCH_ADD: 'add (never-touch)',
-  SPECIAL_MERGE: 'merged (.mcp.json deep-merge)',
+  SPECIAL_MERGE: 'merged (structural)',
   MECHANICAL_MERGE_CLEAN: 'merged cleanly',
   MECHANICAL_MERGE_CONFLICTED: 'merged with conflicts — resolve manually',
   SEMANTIC_MERGE_STAGED: 'staged for /upgrade-project',
@@ -101,7 +103,9 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
 
     if (SPECIAL_MERGE.includes(rel)) {
       if (rel in newFiles && await pathExists(tplPath)) {
-        const action = await applySpecialMerge({ rel, tplPath, tgtPath, dryRun });
+        const action = await applySpecialMerge({
+          rel, tplPath, tgtPath, dryRun, target, oldManifest, pack,
+        });
         actions.push(action);
       }
       continue;
@@ -175,7 +179,22 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
   return { actions, exitCode: computeExitCode(actions) };
 }
 
-async function applySpecialMerge({ rel, tplPath, tgtPath, dryRun }) {
+async function applySpecialMerge({ rel, tplPath, tgtPath, dryRun, target, oldManifest, pack }) {
+  if (rel === '.mcp.json') {
+    return await applyMcpMerge({ rel, tplPath, tgtPath, dryRun });
+  }
+  if (rel === '.claude/project.json') {
+    return await applyProjectJsonMerge({ rel, tplPath, tgtPath, dryRun, target, oldManifest, pack });
+  }
+  // Unknown SPECIAL_MERGE entry — fail loud rather than silently skip.
+  return {
+    kind: ACTION_KINDS.NOOP,
+    path: rel,
+    reason: `SPECIAL_MERGE registry has no handler for '${rel}' — treating as no-op`,
+  };
+}
+
+async function applyMcpMerge({ rel, tplPath, tgtPath, dryRun }) {
   if (dryRun) {
     const { merged, existing } = await computeMergedMcpServers(tplPath, tgtPath);
     if (merged === existing) {
@@ -188,6 +207,44 @@ async function applySpecialMerge({ rel, tplPath, tgtPath, dryRun }) {
     return { kind: ACTION_KINDS.NOOP, path: rel, reason: '.mcp.json deep-merge produced byte-identical bytes; no write' };
   }
   return { kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'additive deep-merge applied' };
+}
+
+async function applyProjectJsonMerge({ rel, tplPath, tgtPath, dryRun, target, oldManifest, pack }) {
+  // Recover BASE (prior baseline shipped) via the shared resolver. resolveBase
+  // returns a Buffer; convert to string. On failure (legacy manifest, sha
+  // mismatch, missing cache + no npm), fall back to LOCAL preservation.
+  let baseText = null;
+  try {
+    const baseline_version = oldManifest?.baseline_version;
+    const buf = await resolveBase(rel, baseline_version, target, { oldManifest, pack });
+    baseText = buf == null ? null : buf.toString('utf8');
+  } catch {
+    baseText = null;
+  }
+
+  if (dryRun) {
+    const { merged, existing, baseUnavailable } = await computeMergedProjectJson({
+      baseText, incomingPath: tplPath, localPath: tgtPath,
+    });
+    if (merged === existing) {
+      const reason = baseUnavailable
+        ? 'BASE unavailable; local preserved as-is (no merge attempted)'
+        : 'structural merge would be byte-identical to existing target';
+      return { kind: ACTION_KINDS.NOOP, path: rel, reason };
+    }
+    return { kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'structural 3-way merge would apply' };
+  }
+
+  const { wrote, baseUnavailable } = await mergeProjectJsonFile({
+    baseText, incomingPath: tplPath, localPath: tgtPath,
+  });
+  if (!wrote) {
+    const reason = baseUnavailable
+      ? 'BASE unavailable; local preserved as-is'
+      : 'structural merge produced byte-identical bytes; no write';
+    return { kind: ACTION_KINDS.NOOP, path: rel, reason };
+  }
+  return { kind: ACTION_KINDS.SPECIAL_MERGE, path: rel, reason: 'structural 3-way merge applied' };
 }
 
 // Version-aware no-op detection. Returns { hit: true, version } when:

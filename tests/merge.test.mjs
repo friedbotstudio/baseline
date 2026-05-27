@@ -374,24 +374,60 @@ describe('threeWayMerge', () => {
       'target byte-equal to new template → NOOP, unchanged by rework');
   });
 
-  it('NEVER_TOUCH preserves project.json regardless of state', async () => {
+  it('SPECIAL_MERGE structurally merges project.json on upgrade', async () => {
+    // project.json is now SPECIAL_MERGE — structural 3-way merge against the
+    // prior baseline. Without a BASE cache, the merger falls back to LOCAL
+    // preservation (NEVER_TOUCH semantics in safe-mode). We exercise both
+    // branches: (1) no BASE → local preserved; (2) BASE cached → unmodified
+    // baseline fields update, customized fields preserve, user-added fields
+    // outside BASE preserve.
     const tpl = await makeTemplateFixture();
-    await writeFile(join(tpl, '.claude/project.json'), JSON.stringify({ configured: false }) + '\n').catch(async () => {
-      await mkdir(join(tpl, '.claude'));
-      await writeFile(join(tpl, '.claude/project.json'), JSON.stringify({ configured: false }) + '\n');
-    });
+    await mkdir(join(tpl, '.claude')).catch(() => {});
+    const incomingPj = JSON.stringify({
+      configured: true,
+      test: { cmd: 'audit.sh --file={file}' },
+      lint: { cmd: null },
+    }) + '\n';
+    await writeFile(join(tpl, '.claude/project.json'), incomingPj);
 
     const target = await mkdtemp(join(tmpdir(), 'merge-target-'));
     await mkdir(join(target, '.claude'));
-    const userPj = JSON.stringify({ configured: true, marker: 'user' }) + '\n';
-    await writeFile(join(target, '.claude/project.json'), userPj);
 
     const oldM = { manifest_version: 1, generated_at: '', files: {} };
     const newM = await manifestOf(tpl, ['CLAUDE.md', '.claude/project.json']);
 
+    // Case 1 — BASE unavailable: local preserved verbatim (NEVER_TOUCH semantics).
+    const localText = JSON.stringify({
+      configured: true,
+      test: { cmd: 'audit.sh' },
+      lint: { cmd: 'eslint .' },
+      user_marker: 'kept',
+    }) + '\n';
+    await writeFile(join(target, '.claude/project.json'), localText);
+
+    await merge.threeWayMerge(tpl, target, oldM, newM);
+    const afterNoBase = await readFile(join(target, '.claude/project.json'), 'utf8');
+    assert.equal(afterNoBase, localText, 'BASE unavailable → local preserved as-is');
+
+    // Case 2 — seed a BASE cache so the merger can run its 3-way logic.
+    // Layout matches resolveBase: target/.claude/.baseline-prior/<rel>.
+    const priorDir = join(target, '.claude/.baseline-prior/.claude');
+    await mkdir(priorDir, { recursive: true });
+    const basePj = JSON.stringify({
+      configured: true,
+      test: { cmd: 'audit.sh' },         // local matches base → take incoming
+      lint: { cmd: null },               // local differs (user set 'eslint .') → keep local
+    }) + '\n';
+    await writeFile(join(priorDir, 'project.json'), basePj);
+
     await merge.threeWayMerge(tpl, target, oldM, newM);
 
-    const after = await readFile(join(target, '.claude/project.json'), 'utf8');
-    assert.equal(after, userPj);
+    const merged = JSON.parse(await readFile(join(target, '.claude/project.json'), 'utf8'));
+    assert.equal(merged.test.cmd, 'audit.sh --file={file}',
+      'unmodified field (local==base) → take incoming default');
+    assert.equal(merged.lint.cmd, 'eslint .',
+      'user-customized field → preserve local');
+    assert.equal(merged.user_marker, 'kept',
+      'user-added field (not in base or incoming) → preserve local');
   });
 });

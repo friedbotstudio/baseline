@@ -57,7 +57,8 @@ const DISALLOWED_CLAUDE_PATTERNS = [
 ];
 
 // Required-component sanity checks: each pattern must match at least one path.
-// Mirrors audit-baseline's "20 hooks / 36 skills / 4 commands / 1 agent" claim.
+// Mirrors audit-baseline's hook / skill / command / agent counts. Hook count
+// is now sourced from `.mjs` files post-JS-port (twenty-two total).
 const REQUIRED_PATTERNS = [
   { name: 'CLAUDE.md',            match: (p) => p === 'CLAUDE.md' },
   { name: '.mcp.json',            match: (p) => p === '.mcp.json' },
@@ -68,7 +69,7 @@ const REQUIRED_PATTERNS = [
   { name: 'plantuml LICENSE',     match: (p) => p === '.claude/bin/LICENSE' },
   { name: 'plantuml NOTICE',      match: (p) => p === '.claude/bin/NOTICE' },
   // Counts mirror seed §4 / audit-baseline.
-  { name: '20 hooks',             match: (p) => /^\.claude\/hooks\/[^/]+\.sh$/.test(p), minCount: 20 },
+  { name: '22 hooks (.mjs)',      match: (p) => /^\.claude\/hooks\/[^/]+\.mjs$/.test(p), minCount: 22 },
   { name: '4 commands',           match: (p) => /^\.claude\/commands\/[^/]+\.md$/.test(p), minCount: 4 },
   { name: '36 skills (SKILL.md)', match: (p) => /^\.claude\/skills\/[^/]+\/SKILL\.md$/.test(p), minCount: 36 },
   { name: '6 memory schemas',     match: (p) => /^\.claude\/memory\/(conventions|decisions|landmarks|landmines|libraries|pending-questions)\.md$/.test(p), minCount: 6 },

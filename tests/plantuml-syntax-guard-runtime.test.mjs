@@ -5,7 +5,7 @@
 //   2. Jar absent → guide-mode info naming the jar path + remedy; allow.
 //   3. Java absent → guide-mode info naming JDK + install hint; allow.
 //
-// We test by copying the hook + lib/common.sh into a tmp sandbox, optionally
+// We test by copying the hook + lib/common.mjs into a tmp sandbox, optionally
 // staging a real plantuml.jar from the dev repo's .claude/bin/, and optionally
 // stripping java from PATH. Hook is invoked with a synthetic PreToolUse
 // payload on stdin (pattern mirrors tests/branch-aware-git-policy.test.mjs).
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '..');
-const HOOK_SRC = join(REPO_ROOT, '.claude/hooks/plantuml_syntax_guard.sh');
+const HOOK_SRC = join(REPO_ROOT, '.claude/hooks/plantuml_syntax_guard.mjs');
 const LIB_DIR_SRC = join(REPO_ROOT, '.claude/hooks/lib');
 const REAL_JAR = join(REPO_ROOT, '.claude/bin/plantuml.jar');
 
@@ -32,7 +32,7 @@ function buildSandbox({ withJar }) {
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   mkdirSync(join(root, 'docs/specs'), { recursive: true });
-  cpSync(HOOK_SRC, join(root, '.claude/hooks/plantuml_syntax_guard.sh'));
+  cpSync(HOOK_SRC, join(root, '.claude/hooks/plantuml_syntax_guard.mjs'));
   cpSync(LIB_DIR_SRC, join(root, '.claude/hooks/lib'), { recursive: true });
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify({ configured: true }, null, 2));
   if (withJar && existsSync(REAL_JAR)) {
@@ -52,7 +52,7 @@ function buildSandbox({ withJar }) {
 // version-resolution machinery (which needs pyenv's own bin dirs on PATH).
 function pathWithoutJava() {
   const farm = mkdtempSync(join(tmpdir(), 'pu-no-java-'));
-  const NEEDED = ['python3', 'awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'tail', 'head'];
+  const NEEDED = ['node', 'python3', 'awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'tail', 'head'];
   for (const name of NEEDED) {
     const src = which(name);
     if (src) symlinkSync(realpathSync(src), join(farm, name));
@@ -78,7 +78,7 @@ function which(name) {
 }
 
 function runGuard(root, payload, env = {}) {
-  const res = spawnSync('bash', [join(root, '.claude/hooks/plantuml_syntax_guard.sh')], {
+  const res = spawnSync('node', [join(root, '.claude/hooks/plantuml_syntax_guard.mjs')], {
     input: JSON.stringify(payload),
     encoding: 'utf8',
     env: { ...process.env, ...env, CLAUDE_PROJECT_DIR: root, CLAUDE_PROJECT_ROOT: root },

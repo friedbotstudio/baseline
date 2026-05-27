@@ -224,11 +224,11 @@ describe('build-manifest.mjs — shipped manifest tier classification (AC-013)',
       '.sh files default to MECHANICAL');
   });
 
-  it('test_when_project_json_in_template_then_tier_is_NEVER_TOUCH', async () => {
+  it('test_when_project_json_in_template_then_tier_is_SPECIAL_MERGE', async () => {
     const tpl = await makeTierTemplateDir();
     runBuildManifest(tpl);
     const m = await readTierManifest(tpl);
-    assert.equal(m.files['.claude/project.json']?.tier, 'NEVER_TOUCH',
-      '.claude/project.json is in the NEVER_TOUCH allowlist — tier must be NEVER_TOUCH');
+    assert.equal(m.files['.claude/project.json']?.tier, 'SPECIAL_MERGE',
+      '.claude/project.json is in the SPECIAL_MERGE allowlist (structural 3-way merge) — tier must be SPECIAL_MERGE');
   });
 });

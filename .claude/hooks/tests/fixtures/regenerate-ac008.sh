@@ -14,7 +14,8 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
-HOOK="$REPO_ROOT/.claude/hooks/memory_session_start.sh"
+HOOK="$REPO_ROOT/.claude/hooks/memory_session_start.mjs"
+HOOK_RUNNER="node"
 FIXTURE="$HERE/ac008_byte_equal_reference.txt"
 
 if [ ! -f "$HOOK" ]; then
@@ -22,7 +23,7 @@ if [ ! -f "$HOOK" ]; then
   exit 1
 fi
 
-block="$(CLAUDE_PROJECT_DIR="$REPO_ROOT" bash "$HOOK" <<< '{}' | python3 -c '
+block="$(CLAUDE_PROJECT_DIR="$REPO_ROOT" $HOOK_RUNNER "$HOOK" <<< '{}' | python3 -c '
 import json, re, sys
 HEAD_RE = re.compile(r"^(HEAD:\s*`)[^`]+(`)")
 data = sys.stdin.read().strip()

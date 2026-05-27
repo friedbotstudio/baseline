@@ -237,6 +237,50 @@ export function validateConsentMarker(markerPath, gateLabel, cmdHint, expectedSl
   try { unlinkSync(markerPath); } catch {}
 }
 
+// Reconstruct the post-write content of a file for content-aware guards.
+// For Write: tool_input.content. For Edit: apply old_string→new_string to the
+// current on-disk file. For MultiEdit: same, applied sequentially.
+// Returns the empty string for unrecognized tools or read failures.
+export function computeProposedContent(tool, payload, filePath) {
+  const ti = payloadGet(payload, '.tool_input') || {};
+  const current = () => {
+    try { return readFileSync(filePath, 'utf8'); } catch { return ''; }
+  };
+  if (tool === 'Write') return ti.content || '';
+  if (tool === 'Edit') {
+    const base = current();
+    const oldStr = ti.old_string || '';
+    const newStr = ti.new_string || '';
+    if (ti.replace_all) return base.split(oldStr).join(newStr);
+    return base.includes(oldStr) ? base.replace(oldStr, newStr) : base + newStr;
+  }
+  if (tool === 'MultiEdit') {
+    let content = current();
+    for (const edit of (ti.edits || [])) {
+      const oldStr = edit.old_string || '';
+      const newStr = edit.new_string || '';
+      if (edit.replace_all) content = content.split(oldStr).join(newStr);
+      else content = content.includes(oldStr) ? content.replace(oldStr, newStr) : content + newStr;
+    }
+    return content;
+  }
+  return '';
+}
+
+// True if `cmd` matches any pattern in `patterns` (a JS array of regex strings).
+// Used by destructive_cmd_guard for project.json destructive patterns.
+// Returns false if patterns is null/undefined/empty or all patterns are invalid.
+export function cmdMatchesAny(cmd, patterns) {
+  if (!Array.isArray(patterns) || patterns.length === 0) return false;
+  for (const p of patterns) {
+    if (typeof p !== 'string' || p === '') continue;
+    let re;
+    try { re = new RegExp(p); } catch { continue; }
+    if (re.test(cmd)) return true;
+  }
+  return false;
+}
+
 // Hand-rolled shell-glob → RegExp matcher. Used for git.protected_branches.
 // `*` matches anything except `/`; `**` matches anything including `/`;
 // `?` matches a single non-`/` char; `[...]` is a character class.

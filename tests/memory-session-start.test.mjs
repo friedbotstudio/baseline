@@ -1,5 +1,5 @@
 // Tests for the pending-upgrade-stage nag block added to
-// .claude/hooks/memory_session_start.sh per docs/specs/tier1-merge-option.md
+// .claude/hooks/memory_session_start.mjs per docs/specs/tier1-merge-option.md
 // §Behavior #4 (AC-004) + §Behavior #8 (AC-008).
 //
 // Pattern: spawnSync the hook with CLAUDE_PROJECT_DIR pointing at a tmp tree
@@ -18,7 +18,7 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = join(dirname(__filename), '..');
-const HOOK_PATH = join(REPO_ROOT, '.claude/hooks/memory_session_start.sh');
+const HOOK_PATH = join(REPO_ROOT, '.claude/hooks/memory_session_start.mjs');
 
 // ---------- Foundation ----------
 
@@ -29,7 +29,7 @@ function additionalContextOf(result) {
 }
 
 function invokeHook(projectDir, payload = { source: 'startup' }) {
-  return spawnSync('bash', [HOOK_PATH], {
+  return spawnSync('node', [HOOK_PATH], {
     env: {
       ...process.env,
       CLAUDE_PROJECT_DIR: projectDir,

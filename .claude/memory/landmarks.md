@@ -14,14 +14,6 @@ Each entry's stable key is `path:line`.
 
 ---
 
-## .claude/hooks/lib/common.sh:1
-
-- Role: shared bash helpers for every guard hook (payload parsing, decision emitters, common path constants, plus consent-gate marker helpers and `canonical_rel`)
-- Companion: `.claude/hooks/lib/common.mjs` (JS-port pilot, see landmark below). The two parallel libraries coexist while the bash → mjs port is incremental; bash hooks source `common.sh`, the two JS-ported hooks (`git_commit_guard.mjs`, `consent_gate_grant.mjs`) import from `common.mjs`.
-- Verified-at: HEAD
-- Last-touched: 2026-04-29
-- Caveat: every hook script sources this; breaking changes here cascade. Edit with the entire hook fleet in mind.
-
 ## bin/cli.js:1
 
 - Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `upgrade` subcommand / `doctor` subcommand / `--dry-run`), exit codes 0/1/2/3/4.
@@ -45,13 +37,6 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-04-29
 - Caveat: the rsync exclude list is the authoritative ship-vs-don't-ship surface — extend when new dev-only paths land at root
-
-## .claude/hooks/spec_design_calls_guard.sh:1
-
-- Role: the 21st write-boundary hook. Blocks writes to `docs/specs/*.md` whose `write_set` intersects `project.json → tdd.ui_globs` unless the spec body declares a populated `## Design calls` section. Structural enforcement of CLAUDE.md Article X.2 (design-task routing through `design-ui`). Conditional firing: skips when `tdd.ui_globs` is empty or when the spec's write_set has no UI files.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: inlines its own copy of `_expand_brace_globs` / `_glob_to_regex` / `_matches_any_glob` in a Python heredoc; the same helpers live byte-identical in `.claude/skills/spec-lint/lint.sh`. Consolidation (a shared `.claude/hooks/lib/glob.py` plus a heredoc-pattern shift) is tracked as a follow-up.
 
 ## .claude/skills/design-ui/SKILL.md:1
 
@@ -81,20 +66,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-15
 - Caveat: this hook is what makes Article IV consent gates structurally un-forge-able. Runs OUTSIDE Claude's tool boundary — Claude cannot reach the UserPromptSubmit code path, so it cannot mint the marker. The matching write-time `.<gate>_grant` Write/Edit/MultiEdit block lives in each PreToolUse approval guard, not here. JS-port pilot (one of the first two hooks ported from bash to Node ESM); the remaining 20 hooks are still `.sh`.
 
-## .claude/hooks/spec_approval_guard.sh:1
-
-- Role: PreToolUse hook on Edit/Write/MultiEdit enforcing Article IV gate A. Validates that a fresh `.spec_approval_grant` marker exists before allowing approval-token writes to `.claude/state/spec_approvals/<slug>.approval`; blocks self-approval inside spec markdown bodies; blocks direct writes to the marker file itself.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: pair this with `swarm_approval_guard.sh` and `git_commit_guard.mjs` (JS-port pilot) — the three approval guards share the same marker-validation pattern. `lib/common.sh → canonical_slug` and `lib/common.mjs → canonicalSlug` are the parallel slug-derivation entry points; both implement the same "strip directory + trailing .md" canonicalization.
-
-## .claude/hooks/swarm_approval_guard.sh:1
-
-- Role: PreToolUse hook on Edit/Write/MultiEdit enforcing Article IV gate B. Validates that a fresh `.swarm_approval_grant` marker exists before allowing approval-token writes to `.claude/state/swarm_approvals/<slug>.approval`; blocks direct writes to the marker file itself.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
-- Caveat: parallels `spec_approval_guard.sh` exactly; consolidation into one shared guard library is a known follow-up but blocked on the same `lib/common.sh` glob/marker refactor as `spec_design_calls_guard.sh`.
-
 ## src/seed.template.md:1
 
 - Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx @friedbotstudio/create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `obj/template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.
@@ -115,20 +86,6 @@ Each entry's stable key is `path:line`.
 - Verified-at: HEAD
 - Last-touched: 2026-05-12
 - Caveat: the canonical task templates that the harness re-seeds from on every tick live inside this SKILL.md. Article V's "task discipline" rule depends on those templates being authoritative; if you change a phase's task shape, update the template here so harness re-seeding stays reconciled with `workflow.json → completed`.
-
-## .claude/hooks/harness_continuation.sh:1
-
-- Role: Stop hook that auto-resumes the harness across both mid-loop phase boundaries (Path A) and consent-gate yields (Path B). All paths gated by rung 1 (`stop_hook_active` absent on payload). Path A — mid-loop continuation: (2) `.claude/state/.harness_active` marker exists, (3) `harness_state.state == "continue"`. Path B (rung 4) — gate-resume after a consent slash command: (4a) `harness_state.state == "yielded"`, (4b) `workflow.json` exists and parses, (4c) at least one consent token under `commit_consent` / `push_consent` / `spec_approvals/<slug>.approval` / `swarm_approvals/<slug>.approval` has mtime newer than `harness_state`'s mtime. Emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` when Path A or Path B passes; silent otherwise.
-- Verified-at: 1333cb7
-- Last-touched: 2026-05-17
-- Caveat: Path B was added by `1333cb7` (feat(harness): auto-resume across consent gates via Stop-hook rung 4) so the user doesn't need to type `/harness` to resume after `/approve-spec` / `/approve-swarm` / `/grant-commit` / `/grant-push`. The marker presence check moved INSIDE the Python heredoc because Path B fires with the marker absent (the harness skill deletes it on `yielded`). Sanity rail logs WARN to `.claude/state/harness/harness_continuation.log` on marker-slug vs `workflow.json` slug mismatch but does NOT change the decision — intentional, so a stale marker doesn't strand the user. Never writes consent markers; structurally cannot reach `consent_gate_grant`'s code path.
-
-## .claude/hooks/memory_session_start.sh:1
-
-- Role: SessionStart hook that injects the memory index + per-file table + Stale-entries block (top-5 by oldest last-touched, alphabetical-by-`<file>:<key>` tiebreak, `… and N more` overflow) + resume snapshot into the next-turn additional context, reports K candidates pending in `_pending.md`, excludes entries carrying `resolved-at:` or `superseded-at:` from the stale count (closure short-circuits decay), and unconditionally cleans `.claude/state/.harness_active` so cross-session ghost resumption is structurally impossible. Post tier1-merge-option (2026-05-22): also scans `.claude/state/upgrade/*/manifest.json` for entries with `status: PENDING`, emits a one-line nag `**N file(s) staged for /upgrade-project to reconcile**` when count > 0. The pending-stage nag fires regardless of `active_workflow` (design pick 2C) — stages are stable infrastructure debt, not workflow debt.
-- Verified-at: 92e0d10
-- Last-touched: 2026-05-22
-- Caveat: the harness-active-marker cleanup is what makes the harness's three-rung gate session-bounded — pair this with `harness_continuation.sh:1` and the harness skill's per-tick marker-FIRST discipline. The stale predicate is 30 commits behind HEAD (git) OR 30 days since `last-touched:` (non-git fallback); the non-git threshold matches `.claude/skills/memory-flush/sweep.py:1` so /memory-flush Step 0c re-derives the same set. The pending-stage scan silently skips malformed manifests via try/except — UX correctness over noise, since the hook is not a security boundary; the CLI and `/upgrade-project` independently validate manifests at reconciliation time.
 
 ## src/cli/doctor.js:46
 
@@ -188,11 +145,11 @@ Each entry's stable key is `path:line`.
 
 ## .claude/hooks/lib/common.mjs:1
 
-- Role: Node ESM counterpart to `lib/common.sh` (the bash version). Exports `readPayload`, `payloadGet`, `projectGet`, `emitBlock` / `emitAllow` / `emitAsk` / `emitInfo`, `logLine`, `canonicalRel`, `canonicalSlug`, `writeMarkerAtomic`, `validateConsentMarker`, `blockMarkerSelfWrite`, and the consent-marker path constants (`CONSENT_MARKER_{SPEC,SWARM,COMMIT,PUSH}` plus `_REL` siblings). Plus `matchAnyGlob(name, globs)` — a hand-rolled shell-glob matcher used by `git_commit_guard.mjs` for branch-policy evaluation (no third-party deps).
-- Imported by: `.claude/hooks/git_commit_guard.mjs`, `.claude/hooks/consent_gate_grant.mjs`. JS-port pilot for two hooks; the remaining 20 bash hooks still source `common.sh`.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
-- Caveat: behavior parity with the bash version is intentional. When extending one, mirror to the other (or document why they diverge in the relevant hook header). The `matchAnyGlob` glob semantics (`*` doesn't cross `/`, `**` does) are the only addition; the bash version has no equivalent because the bash hooks don't need branch matching yet.
+- Role: shared Node ESM helpers imported by EVERY hook (all 22 are .mjs after the 2026-05-27 perf-pass port). Exports `readPayload`, `payloadGet`, `projectGet`, `emitBlock` / `emitAllow` / `emitAsk` / `emitInfo`, `logLine`, `canonicalRel`, `canonicalSlug`, `writeMarkerAtomic`, `validateConsentMarker`, `blockMarkerSelfWrite`, the consent-marker path constants (`CONSENT_MARKER_{SPEC,SWARM,COMMIT,PUSH}` plus `_REL` siblings), `matchAnyGlob(name, globs)` (shell-glob matcher for branch policy), `cmdMatchesAny(cmd, patterns)` (regex set for destructive-cmd guard), and `computeProposedContent(tool, payload, filePath)` (post-write content reconstruction for content-aware guards like artifact_template_guard / spec_diagram_presence_guard / spec_design_calls_guard / plantuml_syntax_guard).
+- Imported by: all 22 `.claude/hooks/*.mjs` hooks. No bash hooks remain.
+- Verified-at: HEAD
+- Last-touched: 2026-05-27
+- Caveat: every hook imports from this; breaking changes cascade. The earlier `common.sh` peer was deleted with the port — no parity obligation remains. Per-call cost is ~5× faster than the legacy bash + python3 chain because there's no subprocess fork per JSON-field access.
 
 ## .claude/hooks/git_commit_guard.mjs:1
 
@@ -233,13 +190,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-17
 - Caveat: the empty-pending fast-path skips Steps 1–5 but NOT Step 0 — auto-close on `pending-questions.md` entries carrying `resolved-at:` runs regardless of pending body state. This is how Q-001's resolution propagated in the meta-bootstrap workflow that introduced Phase 10.6. The session-start nag in `memory_session_start.sh` fires only on K>0 AND `workflow.json` absent (debt-mode); during an active workflow the nag stays silent because this skill's Phase 10.6 invocation handles flushing.
 
-## .claude/hooks/memory_stop.sh:1
-
-- Role: Stop-event Bash hook with embedded `python3` heredoc that extracts three candidate kinds from the per-turn transcript JSONL: (1) Edit/Write/MultiEdit `tool_use` blocks → `landmark` candidates (path-touch + suggested-role bullet); (2) `context7` MCP `tool_use` blocks → `library` candidates; (3) anchored line-start intent phrasings in user/assistant `text` blocks → `backlog` candidates with role-tagged provenance (`source: user-instruction` vs `source: assistant-deferral`) + verbatim + slug+4char-sha256 stable key + active-workflow context. Pure passive collector — only ever appends `## CANDIDATE:` blocks to `_pending.md`; never writes to canonical memory files. Best-effort: every extraction path is wrapped so a malformed transcript event cannot crash the hook.
-- Companion: `.claude/hooks/lib/resume_writer.py:1` (the text-block-walk helper this hook's intent extraction mirrors), `.claude/memory/backlog.md:1` (the canonical destination after `/memory-flush` promotion), `.claude/skills/memory-flush/SKILL.md:1` (the curator that drains `_pending.md`).
-- Verified-at: HEAD
-- Last-touched: 2026-05-17
-- Caveat: intent patterns are anchored line-start regexes (`^(?:\s*[-*]\s*)?<trigger>\b` for user-role; `^<trigger>\b` for assistant-role) tuned for precision over recall per CLAUDE.md X.1 — mid-sentence trigger occurrences MUST NOT emit candidates. Six triggers ship: `TODO[:\s]`, `next we (should|need to|must)`, `let's also`, `we should also`, `backlog this`, `after this (lands)?`. Adding a trigger means re-running the byte-parity fixture at `.claude/hooks/tests/fixtures/memory_stop_landmark_baseline.txt` AND extending the regression-trap tests in `.claude/hooks/tests/memory_stop_intent_test.sh`. Noise filters (`<system-reminder>`, `<command-name>`, `<local-command-`) come from the same lineage as `lib/resume_writer.py:110-114` — keep them in lockstep.
 
 ## .claude/hooks/tests/memory_stop_intent_test.sh:1
 
@@ -529,3 +479,35 @@ Each entry's stable key is `path:line`.
 - Verified-at: 67da6dc
 - Last-touched: 2026-05-27
 - Caveat: The aggregate report at `.claude/state/spec-shippability/shipped-skills.json` uses `slug: "shipped-skills"` as a sentinel key, distinct from per-spec reports at `.claude/state/spec-shippability/<slug>.json`. `spec_approval_guard.sh` reads per-slug paths only and is unaffected (AC-007). Symlink behavior: `readdir(..., { withFileTypes: true })` reports symlinks via `isSymbolicLink()` and `isDirectory()`/`isFile()` reflect the symlink itself (not target), so symlinked dirs are skipped by recursion and symlinked files are skipped by the `isFile()` check in `findSkillMds`. Don't change to follow-links without an explicit `lstat` guard.
+
+## .claude/hooks/lib/memory_stop.mjs:1
+
+- Role: Stop-event transcript walker — invoked by `.claude/hooks/memory_stop.mjs` (the hook). Walks the per-turn JSONL transcript, extracts three candidate kinds (Edit/Write/MultiEdit → `landmark` candidates with path-touch + suggested-role bullet; `context7` MCP queries → `library` candidates; user/assistant text-block intent phrasings → `backlog` candidates with role-tagged provenance + verbatim + slug+4char-sha256 stable key + active-workflow context), and appends `## CANDIDATE:` blocks to `.claude/memory/_pending.md`. Exports `runMemoryStop({ transcript, pending, projectRoot })`. Pure passive collector — never writes to canonical memory files.
+- Companion: `.claude/hooks/lib/resume_writer.mjs:1` (text-block walker the intent extraction mirrors), `.claude/memory/backlog.md:1` (canonical destination after `/memory-flush` promotion), `.claude/skills/memory-flush/SKILL.md:1` (curator that drains `_pending.md`).
+- Verified-at: 7901e65
+- Last-touched: 2026-05-27
+- Caveat: ported byte-for-byte from `lib/memory_stop.py` (2026-05-27 perf pass). Intent patterns are line-start-anchored regexes tuned for precision (CLAUDE.md X.1); mid-sentence triggers MUST NOT emit. Six triggers ship: TODO, "next we should/need/must", "let's also", "we should also", "backlog this", "after this (lands)". Adding one requires re-running the byte-parity fixture + regression tests. Noise filters must mirror `resume_writer.mjs`.
+
+## .claude/hooks/lib/memory_session_start.mjs:1
+
+- Role: SessionStart memory-index builder — invoked by `.claude/hooks/memory_session_start.mjs` (the hook). Reads the seven canonical memory files, counts entries + stale entries (verified-at ≥ 30 commits behind HEAD in git, last-touched ≥ 30 days in non-git), counts pending candidates in `_pending.md`, scans `.claude/state/upgrade/*/manifest.json` for entries with `status: PENDING`, composes the additionalContext JSON envelope including index table, top-5 stale-entries block, pending-flush nag (debt-mode only when no active workflow), pending-stage nag, and resume-snapshot injection from `_resume.md` when fresh. Exports `buildIndex({ memDir, projectRoot, sessionSource })`.
+- Companion: `.claude/hooks/memory_session_start.mjs` (the hook that invokes this), `.claude/skills/memory-flush/sweep.py:1` (Step 0c stale-sweep re-derives the same predicate), `.claude/hooks/lib/resume_writer.mjs:1` (writes the `_resume.md` this builder injects).
+- Verified-at: 7901e65
+- Last-touched: 2026-05-27
+- Caveat: ported byte-for-byte from `lib/memory_session_start.py` (2026-05-27 perf pass). Stale predicate duplicated with `sweep.py` Step 0c — keep in lockstep. Total context capped at ~10KB.
+
+## .claude/hooks/lib/resume_writer.mjs:1
+
+- Role: Continuity-snapshot writer — composes `.claude/memory/_resume.md` from the per-turn transcript JSONL + `.claude/state/workflow.json` + harness logs. Walks the transcript for last-K user prompts, last-K file writes, last-K Skill invocations, last-K Bash commands; merges with workflow state (slug, entry phase, last completed, next phase due); writes a markdown snapshot consumed by the next SessionStart's memory-index injection. Shared by `memory_pre_compact.mjs` (PreCompact event) and `memory_stop.mjs` (Stop event). Exports `composeSnapshot(...)` (pure) and `writeSnapshot(...)` (file I/O).
+- Companion: `.claude/hooks/lib/memory_session_start.mjs:1` (consumes the snapshot at session start), `.claude/hooks/lib/memory_stop.mjs:1` (its intent-extractor mirrors the same text-block walk + noise filters).
+- Verified-at: 7901e65
+- Last-touched: 2026-05-27
+- Caveat: ported byte-for-byte from `lib/resume_writer.py` (2026-05-27 perf pass). Best-effort: every failure path returns null silently.
+
+## src/cli/project-json-merge.js:1
+
+- Role: structural 3-way JSON merge for `.claude/project.json` on upgrade — promoted from NEVER_TOUCH to SPECIAL_MERGE tier during the 2026-05-27 perf pass. For each leaf field K, if local equals base (user never customized) → take incoming; else keep local. Nested objects recurse; arrays treated atomically. New fields in incoming added; user-removed fields stay removed; user-added fields preserved. Exports pure `structuralMerge3Way(base, incoming, local)` plus file I/O wrappers `computeMergedProjectJson({...})` and `mergeProjectJsonFile({...})`. BASE recovery via `src/cli/upgrade-tiers.js → resolveBase`; falls back to LOCAL preservation (NEVER_TOUCH semantics) when BASE unavailable.
+- Companion: `src/cli/merge.js` → `applyProjectJsonMerge` (the SPECIAL_MERGE registry handler that calls this module), `src/cli/mcp.js` (sibling registry handler for `.mcp.json`), `src/cli/install.js → SPECIAL_MERGE` + `scripts/build-manifest.mjs → SPECIAL_MERGE_PATHS` (kept in sync via `tests/never-touch-sync.test.mjs`).
+- Verified-at: 7901e65
+- Last-touched: 2026-05-27
+- Caveat: arrays are atomic. Future refinement: set-union for known list-shaped fields. Unit-tested in `tests/project-json-merge.test.mjs` (15 scenarios).

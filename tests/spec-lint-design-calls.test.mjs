@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT    = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const LINT_SH = join(ROOT, '.claude/skills/spec-lint/lint.sh');
-const HOOK_SH = join(ROOT, '.claude/hooks/spec_design_calls_guard.sh');
+const HOOK_MJS = join(ROOT, '.claude/hooks/spec_design_calls_guard.mjs');
 
 const UI_GLOBS         = ['app/**/*.{tsx,jsx}', '**/*.css'];
 const UI_GLOBS_TARGET  = 'app/settings/page.tsx';
@@ -114,7 +114,7 @@ function runLint(root, slug) {
 }
 
 function runHook(root, payload) {
-  return spawnSync('bash', [HOOK_SH], {
+  return spawnSync('node', [HOOK_MJS], {
     cwd: root,
     env: {
       ...process.env,

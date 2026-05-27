@@ -9,8 +9,8 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
-const HOOK_PATH = path.join(REPO_ROOT, '.claude/hooks/harness_continuation.sh');
-const SESSION_START_HOOK_PATH = path.join(REPO_ROOT, '.claude/hooks/memory_session_start.sh');
+const HOOK_PATH = path.join(REPO_ROOT, '.claude/hooks/harness_continuation.mjs');
+const SESSION_START_HOOK_PATH = path.join(REPO_ROOT, '.claude/hooks/memory_session_start.mjs');
 
 const SLUG = 'test-harness-continuation';
 const PROJECT_JSON = JSON.stringify(
@@ -49,7 +49,7 @@ async function writeWorkflowJson(tmp, slug) {
 }
 
 function invokeHook(tmp, payload) {
-  return spawnSync('bash', [HOOK_PATH], {
+  return spawnSync('node', [HOOK_PATH], {
     env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
     input: JSON.stringify(payload),
     encoding: 'utf8',
@@ -57,7 +57,7 @@ function invokeHook(tmp, payload) {
 }
 
 function invokeSessionStart(tmp, payload) {
-  return spawnSync('bash', [SESSION_START_HOOK_PATH], {
+  return spawnSync('node', [SESSION_START_HOOK_PATH], {
     env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
     input: JSON.stringify(payload),
     encoding: 'utf8',

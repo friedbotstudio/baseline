@@ -89,3 +89,11 @@ docs/specs/*.rendered/
 # source on import). Never staged.
 __pycache__/
 *.pyc
+
+# code-browser skill: per-repo cache + conventions files written by the
+# helpers. The .gitignore that used to live alongside the skill files was
+# dropped by npm pack (npm's default behavior on nested .gitignore), so
+# the patterns live here at the repo root instead.
+.claude/skills/code-browser/cache/
+.claude/skills/code-browser/conventions.json
+.claude/skills/code-browser/conventions.md

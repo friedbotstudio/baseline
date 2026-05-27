@@ -77,6 +77,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 ### Added
 
+- add code-browser skill as default code-navigation mechanism
 - version-aware no-op fast-path + baseline_version stamping
 
 ### Fixed

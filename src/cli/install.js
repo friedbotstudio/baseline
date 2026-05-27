@@ -12,18 +12,24 @@ const PACKAGE_ROOT = resolve(__dirname, '../..');
 const NPMRC_TEMPLATE_PATH = join(PACKAGE_ROOT, 'src/.npmrc.template');
 
 export const NEVER_TOUCH = Object.freeze([
-  '.claude/project.json',
   '.claude/workflows.jsonl',
   '.claude/schemas/workflow-track.v1.json',
   // Runtime-state files: bodies are gitignored and overwritten every
-  // conversation turn by memory_stop.sh / memory_pre_compact.sh / /memory-flush.
-  // Their on-disk hash will essentially never match the shipped template hash,
-  // so any merge-time prompt is a structural false positive. Preserve silently.
-  // See docs/specs/upgrade-no-replay-prompts.md §Behavior #1.
+  // conversation turn by the memory_stop / memory_pre_compact hooks and the
+  // /memory-flush skill. Their on-disk hash will essentially never match the
+  // shipped template hash, so any merge-time prompt is a structural false
+  // positive. Preserve silently. See docs/specs/upgrade-no-replay-prompts.md
+  // §Behavior #1.
   '.claude/memory/_pending.md',
   '.claude/memory/_resume.md',
 ]);
-export const SPECIAL_MERGE = Object.freeze(['.mcp.json']);
+// SPECIAL_MERGE files run through a file-specific merger (registry in
+// src/cli/merge.js → applySpecialMerge). `.mcp.json` uses additive deep-merge
+// (template-wins on baseline-named servers; preserves user-added servers).
+// `.claude/project.json` uses structural 3-way merge so baseline defaults
+// flow to users who never customized those fields, while preserving every
+// field the user did customize via /init-project.
+export const SPECIAL_MERGE = Object.freeze(['.mcp.json', '.claude/project.json']);
 // The shipped manifest now lives at `.claude/manifest.json` (inside the
 // template's .claude/ subtree), so the recursive cp drops it at the correct
 // consumer path without any special-case filtering. The consumer-side audit

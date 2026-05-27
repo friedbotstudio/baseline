@@ -10,7 +10,8 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../.." && pwd)"
-HOOK="$REPO_ROOT/.claude/hooks/memory_session_start.sh"
+HOOK="$REPO_ROOT/.claude/hooks/memory_session_start.mjs"
+HOOK_RUNNER="node"
 FIXTURES="$HERE/fixtures"
 
 PASS=0; FAIL=0; FAILED=()
@@ -40,7 +41,7 @@ assert_not_contains() {
 run_hook() {
   local proj="$1"
   CLAUDE_PROJECT_DIR="$proj" \
-    bash "$HOOK" <<< '{}' 2>/dev/null | python3 -c '
+    $HOOK_RUNNER "$HOOK" <<< '{}' 2>/dev/null | python3 -c '
 import json, sys
 data = sys.stdin.read().strip()
 if not data:
