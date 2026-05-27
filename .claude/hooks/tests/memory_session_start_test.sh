@@ -41,14 +41,7 @@ assert_not_contains() {
 run_hook() {
   local proj="$1"
   CLAUDE_PROJECT_DIR="$proj" \
-    $HOOK_RUNNER "$HOOK" <<< '{}' 2>/dev/null | python3 -c '
-import json, sys
-data = sys.stdin.read().strip()
-if not data:
-    sys.exit(2)
-j = json.loads(data)
-print(j["hookSpecificOutput"]["additionalContext"])
-'
+    $HOOK_RUNNER "$HOOK" <<< '{}' 2>/dev/null | node .claude/skills/lib/probe.mjs additional-context
 }
 
 # Build a minimal synthetic memory tree. $1 = root.
@@ -218,7 +211,7 @@ test_when_closure_field_and_stale_sha_then_not_counted_stale() {
 }
 
 test_when_audit_runs_against_changed_repo_then_exit_0() {
-  ( cd "$REPO_ROOT" && bash .claude/skills/audit-baseline/audit.sh >/dev/null 2>&1 ) \
+  ( cd "$REPO_ROOT" && node .claude/skills/audit-baseline/audit.mjs >/dev/null 2>&1 ) \
     || { fail "AC-007 audit exited non-zero"; return 1; }
 }
 
@@ -230,21 +223,19 @@ test_when_hook_runs_unchanged_tree_then_header_and_table_byte_equal() {
   # so the test is byte-stable across commits.
   local out; out="$(run_hook "$REPO_ROOT")"
   local actual_block
-  actual_block="$(printf '%s\n' "$out" | python3 -c '
-import re, sys
-HEAD_RE = re.compile(r"^(HEAD:\s*`)[^`]+(`)")
-lines = sys.stdin.read().split("\n")
-started = False
-out = []
-for ln in lines:
-    if ln.startswith("## Project memory"):
-        started = True
-    if not started:
-        continue
-    out.append(HEAD_RE.sub(r"\1n/a\2", ln))
-    if ln.startswith("| `pending-questions.md`"):
-        break
-sys.stdout.write("\n".join(out) + "\n")
+  actual_block="$(printf '%s\n' "$out" | node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const HEAD_RE = /^(HEAD:\s*`)[^`]+(`)/;
+const lines = readFileSync(0, "utf8").split("\n");
+let started = false;
+const out = [];
+for (const ln of lines) {
+  if (ln.startsWith("## Project memory")) started = true;
+  if (!started) continue;
+  out.push(ln.replace(HEAD_RE, "$1n/a$2"));
+  if (ln.startsWith("| `pending-questions.md`")) break;
+}
+process.stdout.write(out.join("\n") + "\n");
 ')"
   local expected; expected="$(cat "$FIXTURES/ac008_byte_equal_reference.txt")"
   if [ "$actual_block" = "$expected" ]; then return 0; fi

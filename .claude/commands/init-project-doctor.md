@@ -13,7 +13,7 @@ User-only command. Run after a `create-baseline upgrade` cycle, after manually e
 
 - Print: "`/init-project doctor` — checking baseline integrity. Each detected violation is presented separately; you confirm each fix via AskUserQuestion."
 - Verify the project is configured: `.claude/project.json → configured == true`. If false, halt with: "Run `/init-project` first; the project is in agnostic mode."
-- Verify `python3` and `node` available; halt with one-line missing-dep message if not.
+- Verify `node` ≥ 18.17 available; halt with one-line missing-dep message if not.
 
 ## Step 2 — Check `.claude/workflows.jsonl` presence
 

@@ -99,6 +99,10 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - add code-browser skill as default code-navigation mechanism
 - version-aware no-op fast-path + baseline_version stamping
 
+### Changed
+
+- port 22 hooks to Node ESM + audit fast-path + tier hardening
+
 ### Fixed
 
 - always-download jar + java -jar runtime; pin now enforced
@@ -106,7 +110,25 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 ## [Unreleased]
 
+### Removed
+
+- `python3` as a runtime dependency. The baseline now requires only `node >= 18.17` (plus `bash`, `git`, and optionally `java` for `/spec-render`'s PlantUML pass). Removed `.claude/skills/memory-flush/sweep.py` (replaced by `sweep.mjs`), `.claude/skills/tdd/drift_check.py` (replaced by `drift_check.mjs`), and 5 in-shell `python3` heredoc wrappers (`audit.sh`, `validate.sh`, `render.sh`, `swarm_merge.sh`, `lint.sh`) — each collapsed into its Node ESM equivalent. Empirically verified by running the full audit on a `PATH` that masks `python3`: exit 0, fails=0, warns=0. Closes backlog item `migrate-bash-python-heredocs-to-javascript-d454`.
+
+### Changed
+
+- `src/project.template.json → test.cmd` from `bash .claude/skills/audit-baseline/audit.sh --file={file}` to `node .claude/skills/audit-baseline/audit.mjs --file={file}`. The pristine template ships to every new install via `npx @friedbotstudio/create-baseline`; without this rewrite, fresh installs would have pointed at the deleted `.sh` file.
+- `scripts/build-template.sh` `AUDIT_SCRIPT` path and invocation (`bash` → `node`) so the build's drift self-check exercises the ported audit at every release.
+- Five skill SOPs (`memory-flush`, `commit`, `harness`, `tdd`, `audit-baseline`) and three command docs (`init-project`, `init-project-doctor`) updated to reference `.mjs` helpers instead of the removed `.py` / `.sh` paths.
+- `.claude/memory/conventions.md → hook-script-shape` entry rewritten for the Node ESM convention (`import lib/common.mjs`, `readPayload`, `emitAllow`/`emitBlock`/`emitAsk`/`emitInfo`); the prior `python3 heredoc, no jq` description is retired.
+- 17 `landmarks.md` entries pointing at the removed `.py` / `.sh` paths refreshed to the new `.mjs` paths (per `/memory-flush` Phase 10.6 sweep, spec Q-SP-03 resolution).
+- Article XI Appendix A row in `CLAUDE.md` (and its `src/CLAUDE.template.md` mirror) — hook scripts are now Node ESM (`.mjs`), not "Bash + python3, no jq". Mirror byte-equality preserved.
+- `docs/init/seed.md` runtime requirements (§1 Baseline truth) — removed the "`python3` on PATH (skill-only)" bullet entirely. `node ≥ 18.17` is now the only scripting-runtime requirement. Mirror in `src/seed.template.md` updated identically.
+- Two site-src copy renames: `site-src/memory.njk` figcaption and `site-src/skills/core.njk` bullet now name `sweep.mjs stamp-closure` (was `sweep.py stamp-closure`) for the backlog auto-close narrative.
+
 ### Added
+
+- `.claude/skills/lib/probe.mjs` — shared JSON-extraction helper for test fixtures. Three verbs: `field <key>` (extract a top-level scalar), `block <name>` (extract `hookSpecificOutput.<name>`), `additional-context` (alias). Reads JSON from stdin; replaces the `python3 -c '...'` idiom in 6 test fixtures across `.claude/hooks/tests/` and `.claude/skills/changelog/tests/`.
+- Three structural regression tests guarding the new invariants: `tests/no-python3-in-shipped-tree.test.mjs` (scans `.claude/skills/` + `scripts/` for any `python3` invocation outside the analyzer-regex exemption list), `tests/governance-no-python3-runtime.test.mjs` (enumerates four governance files and forbids `python3` mentions outside the documented historical-narrative lines), and `tests/appendix-a-mirror.test.mjs` (asserts byte-equality on the `.claude/hooks/` Appendix A row between `CLAUDE.md` and `src/CLAUDE.template.md`).
 
 - Version-aware no-op fast-path in `create-baseline upgrade`. When `<target>/.claude/.baseline-manifest.json → baseline_version` equals the running CLI's `package.json → version` AND no pending stage exists AND every dry-run action is benign (`NOOP` / `MARKER_MATCHED` / `NEVER_TOUCH_PRESERVE`), the CLI prints `already on baseline X.Y.Z; nothing to do` and exits 0 with zero filesystem writes. New `isVersionAwareNoop` export in `src/cli/merge.js`; called from `src/cli/tui/upgrade.js → run()` (TTY) and `bin/cli.js → runPlainUpgrade` (non-TTY) after the pending-stage check, before the full three-tier engine.
 - `baseline_version` field stamped into `<target>/.claude/project.json` on every install + upgrade write path. New foundation module `src/cli/project-json.js → refreshBaselineVersion(target, version)` performs a narrow read-modify-write (atomic tmp+rename via `randomUUID`) that preserves every other top-level user-defined key byte-for-byte. Mirrors the atomic-write convention from `src/cli/reconciliation-marker.js`.

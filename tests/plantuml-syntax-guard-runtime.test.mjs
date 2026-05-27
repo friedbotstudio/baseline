@@ -47,12 +47,11 @@ function buildSandbox({ withJar }) {
 // symlink farm in a tmp dir, link only the utilities the hook depends on,
 // and explicitly omit java.
 //
-// realpathSync resolves pyenv-style shim wrappers (~/.pyenv/shims/python3) to
-// the actual interpreter so the farm-only PATH doesn't trap the shim's
-// version-resolution machinery (which needs pyenv's own bin dirs on PATH).
+// realpathSync resolves symlink shims so the farm-only PATH doesn't trap the
+// shim's version-resolution machinery (which may need its own bin dirs).
 function pathWithoutJava() {
   const farm = mkdtempSync(join(tmpdir(), 'pu-no-java-'));
-  const NEEDED = ['node', 'python3', 'awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'tail', 'head'];
+  const NEEDED = ['node', 'awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'tail', 'head'];
   for (const name of NEEDED) {
     const src = which(name);
     if (src) symlinkSync(realpathSync(src), join(farm, name));

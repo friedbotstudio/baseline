@@ -61,25 +61,23 @@ assert_grep_count() {
 
 append_text_event() {
   local path="$1" role="$2" text="$3"
-  python3 - "$path" "$role" "$text" <<'PY'
-import json, sys
-path, role, text = sys.argv[1], sys.argv[2], sys.argv[3]
-event = {"message": {"role": role, "content": [{"type": "text", "text": text}]}}
-with open(path, "a", encoding="utf-8") as f:
-    f.write(json.dumps(event) + "\n")
-PY
+  EVENT_PATH="$path" EVENT_ROLE="$role" EVENT_TEXT="$text" node --input-type=module -e '
+import { appendFileSync } from "node:fs";
+const event = { message: { role: process.env.EVENT_ROLE,
+  content: [{ type: "text", text: process.env.EVENT_TEXT }] } };
+appendFileSync(process.env.EVENT_PATH, JSON.stringify(event) + "\n", "utf8");
+'
 }
 
 append_tool_use_event() {
   local path="$1" tool="$2" file_path="$3"
-  python3 - "$path" "$tool" "$file_path" <<'PY'
-import json, sys
-path, tool, fp = sys.argv[1], sys.argv[2], sys.argv[3]
-event = {"message": {"role": "assistant",
-  "content": [{"type": "tool_use", "name": tool, "input": {"file_path": fp}}]}}
-with open(path, "a", encoding="utf-8") as f:
-    f.write(json.dumps(event) + "\n")
-PY
+  EVENT_PATH="$path" EVENT_TOOL="$tool" EVENT_FILE="$file_path" node --input-type=module -e '
+import { appendFileSync } from "node:fs";
+const event = { message: { role: "assistant",
+  content: [{ type: "tool_use", name: process.env.EVENT_TOOL,
+              input: { file_path: process.env.EVENT_FILE } }] } };
+appendFileSync(process.env.EVENT_PATH, JSON.stringify(event) + "\n", "utf8");
+'
 }
 
 # --- project root setup (Foundation) -----------------------------------------

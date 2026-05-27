@@ -197,7 +197,7 @@ Specifically: the **hook count, skill count, subagent count, command count, and 
 1. An amendment to `docs/init/seed.md` §4 first (the genesis prompt)
 2. A matching update in `CLAUDE.md` (the constitution)
 3. The implementation change
-4. A passing `bash .claude/skills/audit-baseline/audit.sh` (which checks all four for drift)
+4. A passing `node .claude/skills/audit-baseline/audit.mjs` (which checks all four for drift)
 
 The `/triage` skill picks the right track for your contribution. Most one-file fixes are chore-track; anything adding new behaviour goes through intake → spec.
 

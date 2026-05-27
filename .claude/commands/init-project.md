@@ -28,8 +28,7 @@ Verify the baseline's hard requirements + advisory ones:
 | Required | Check command | If missing |
 |---|---|---|
 | `bash` ≥ 4 | `bash --version` | Hard fail. The baseline cannot run. |
-| `python3` | `which python3` | Hard fail. Hooks won't parse JSON. |
-| `node` + `npx` | `which npx` | Hard fail. Both MCP servers need npx. |
+| `node` + `npx` ≥ 18.17 | `which npx` | Hard fail. Hooks and skill helpers are Node ESM; MCP servers need npx. |
 | `git` repo | `git rev-parse --is-inside-work-tree` | Soft warn. Swarm worktree mode falls back to shared. |
 | `plantuml` CLI | `which plantuml` | Soft warn. `plantuml_syntax_guard` runs in guide mode and `/spec-render` refuses without it. |
 
@@ -129,7 +128,7 @@ Do each sub-step in order; if any fails, stop and surface the error before conti
    - Write the rendered output to `.claude/agents/swarm-worker.md` (overwriting the baseline version with the stack-augmented one).
 
    Recommender output **must not** propose new subagent types — only stack-skill additions for the existing `swarm-worker`. If you see a `subagents` field in the recommender JSON, ignore it and surface a warning that the schema is stale.
-5. **Add new hooks** (if any) → write `.claude/hooks/<name>.sh`, `chmod +x`, wire into `.claude/settings.json`. Must use bash + python3, no jq, follow §4.1 conventions.
+5. **Add new hooks** (if any) → write `.claude/hooks/<name>.mjs`, `chmod +x`, wire into `.claude/settings.json`. Use Node ESM with `import` from `lib/common.mjs`, no jq, follow §4.1 conventions.
 6. **Write `project.json`** with the agreed values, `configured: true`, **and a populated `additions` block**:
    ```jsonc
    "additions": {
@@ -180,7 +179,7 @@ If §16 already exists, find its bounds (heading to next `## §` or EOF) and rep
 
 ## Step 8 — Drift self-check
 
-Invoke the `audit-baseline` skill via the Skill tool. It runs `audit.sh` and prints a pass/fail table of 60+ checks.
+Invoke the `audit-baseline` skill via the Skill tool. It runs `audit.mjs` and prints a pass/fail table of 60+ checks.
 
 - **PASS** → log it and proceed.
 - **FAIL** → STOP. Surface the failures. The most likely cause: Step 6 added a component that doesn't match seed §4 conventions (missing wiring in `settings.json`, or a new skill absent from the canonical name set). Tell the user what failed and offer to roll back Step 6.

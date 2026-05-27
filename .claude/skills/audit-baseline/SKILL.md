@@ -14,7 +14,7 @@ Mechanical check that the baseline implementation matches its specification. Det
 |---|---|
 | **Counts** | Hooks, agents, skills, commands on disk match the count claimed in `seed.md` |
 | **Names** | Each component's name matches the canonical list in `seed.md` §4 |
-| **Helper scripts** | `validate.sh`, `swarm_merge.sh`, `render.sh`, `lint.sh`, `archive.sh` present + executable |
+| **Helper scripts** | `validate.mjs`, `swarm_merge.mjs`, `render.mjs`, `lint.mjs`, `archive.sh` present + executable |
 | **settings.json** | Every baseline hook is wired in the correct event/matcher block |
 | **project.json** | Every key listed in `seed.md` §13 Step 8 exists (values may be null pre-init) |
 | **.mcp.json** | `context7` and `plantuml` servers declared |
@@ -25,7 +25,7 @@ Mechanical check that the baseline implementation matches its specification. Det
 
 `/audit-baseline` — model-invocable and user-invocable.
 
-Calls `audit.sh`. Output is a compact pass/fail table with a final verdict. Exits `0` on a clean audit, `1` on any failure. WARN-level findings (advisory; e.g., a doc with no relevant claims) don't fail the audit.
+Calls `audit.mjs`. Output is a compact pass/fail table with a final verdict. Exits `0` on a clean audit, `1` on any failure. WARN-level findings (advisory; e.g., a doc with no relevant claims) don't fail the audit.
 
 ## When to run
 
@@ -37,7 +37,7 @@ Calls `audit.sh`. Output is a compact pass/fail table with a final verdict. Exit
 ## When the audit reports drift
 
 - **Counts mismatch** → add the missing component or update `seed.md` to match the new count. Don't update one without the other.
-- **Name mismatch** → a component was renamed, added, or removed. Update the canonical lists in `seed.md` §4 and the expected sets in `audit.sh`.
+- **Name mismatch** → a component was renamed, added, or removed. Update the canonical lists in `seed.md` §4 and the expected sets in `audit.mjs`.
 - **Helper missing or non-executable** → `chmod +x` or restore from history.
 - **Hook unwired** → add the entry to `.claude/settings.json`.
 - **project.json key missing** → re-run `/init-project`, or add the key manually.
@@ -46,7 +46,7 @@ Calls `audit.sh`. Output is a compact pass/fail table with a final verdict. Exit
 
 ## Maintenance
 
-Expected name sets live in `audit.sh` (see the `expected_*` blocks). Adding a new hook, agent, skill, or command means updating both `audit.sh` and `seed.md`. The audit catches the drift; fix the implementation, not the audit.
+Expected name sets live in `audit.mjs` (see the `EXPECTED_*` constants). Adding a new hook, agent, skill, or command means updating both `audit.mjs` and `seed.md`. The audit catches the drift; fix the implementation, not the audit.
 
 ## Output format
 
@@ -61,7 +61,7 @@ hooks names match seed §4.1                PASS
 agents names match seed §4.2               PASS
 skills names match seed §4.3               PASS
 commands names match seed §4.4             PASS
-helper swarm-plan/validate.sh              PASS
+helper swarm-plan/validate.mjs             PASS
 …
 hook wired: setup_guard                    PASS
 …

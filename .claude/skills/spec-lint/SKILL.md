@@ -27,7 +27,7 @@ Three checks, same logic as the hooks, but advisory (no writes are blocked):
 1. Validate the slug: `docs/specs/<slug>.md` must exist.
 2. Run:
    ```
-   .claude/skills/spec-lint/lint.sh <slug>
+   node .claude/skills/spec-lint/lint.mjs <slug>
    ```
 3. Print the script's output verbatim to the user. It is a table with one row per check and a final summary line.
 

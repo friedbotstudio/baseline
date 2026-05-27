@@ -3,19 +3,19 @@
 # Covers AC-001, AC-002, AC-004, AC-006 from docs/specs/memory-lifecycle-closure.md
 #
 # The SKILL.md SOP is markdown; the executable contract lives in
-# `.claude/skills/memory-flush/sweep.py`, a deterministic helper the SOP
+# `.claude/skills/memory-flush/sweep.mjs`, a deterministic helper the SOP
 # invokes for the sweep-and-classify portion of Step 0. Each test builds a
-# stubbed memory tree, invokes sweep.py with a stubbed reply stream, and
+# stubbed memory tree, invokes sweep.mjs with a stubbed reply stream, and
 # asserts on the resulting file state + JSON action report.
 #
-# Until sweep.py exists, every flush test fails RED (correct TDD state).
+# Until sweep.mjs exists, every flush test fails RED (correct TDD state).
 # AC-006 regression-traps stay green from day one and must stay green.
 
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
-SWEEP="$REPO_ROOT/.claude/skills/memory-flush/sweep.py"
+SWEEP="$REPO_ROOT/.claude/skills/memory-flush/sweep.mjs"
 
 PASS=0; FAIL=0; FAILED=()
 
@@ -45,18 +45,18 @@ assert_contains() {
   esac
 }
 
-# Invoke sweep.py against a fixture memory dir.
+# Invoke sweep.mjs against a fixture memory dir.
 #   $1 = mode (auto-close | prose-scan | stale-sweep)
 #   $2 = memory dir
 #   $3 = reply stream (newline-separated; piped to stdin)
-# Stdout = JSON report from sweep.py; exit 0 success, non-zero error.
+# Stdout = JSON report from sweep.mjs; exit 0 success, non-zero error.
 sweep() {
   local mode="$1" mem="$2" replies="${3:-}"
-  if [ ! -x "$SWEEP" ] && [ ! -f "$SWEEP" ]; then
-    echo "{\"error\":\"sweep.py missing\"}"
+  if [ ! -f "$SWEEP" ]; then
+    echo "{\"error\":\"sweep.mjs missing\"}"
     return 127
   fi
-  printf '%s' "$replies" | python3 "$SWEEP" --mode "$mode" --memory-dir "$mem"
+  printf '%s' "$replies" | node "$SWEEP" --mode "$mode" --memory-dir "$mem"
 }
 
 seed_skel() {
@@ -305,7 +305,7 @@ test_when_pre_spec_entry_no_source_no_verbatim_then_grandfathered() {
 }
 
 # --- Phase 10.6 (memory-flush-phase) regression traps -------------------------
-# Confirms sweep.py stays scoped to canonical files and does not touch _pending.md
+# Confirms sweep.mjs stays scoped to canonical files and does not touch _pending.md
 # regardless of whether _pending.md body is empty (the fast-path case).
 
 PENDING_SKELETON='---
@@ -337,7 +337,7 @@ test_when_pending_empty_then_sweep_does_not_touch_pending() {
   sweep stale-sweep "$mem" "" >/dev/null || { fail "sweep crashed on empty pending"; return 1; }
   local after; after="$(cat "$mem/_pending.md")"
   if [ "$before" = "$after" ]; then return 0; fi
-  fail "_pending.md mutated by sweep.py — sweep must stay scoped to canonical files"
+  fail "_pending.md mutated by sweep.mjs — sweep must stay scoped to canonical files"
   diff <(printf '%s' "$before") <(printf '%s' "$after") || true
   return 1
 }
@@ -359,7 +359,7 @@ test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept() {
 
 # --- backlog-memory-bucket: routing + bootstrap + stale-exempt + verbatim ----
 # Covers AC-005, AC-006, AC-007, AC-009, AC-011 from
-# docs/specs/backlog-memory-bucket.md. All start RED until sweep.py adds
+# docs/specs/backlog-memory-bucket.md. All start RED until sweep.mjs adds
 # 'backlog' to CANONICAL_FILES + STALE_EXEMPT_FILES, and README.md documents
 # the new register.
 
@@ -451,7 +451,7 @@ test_when_readme_documents_backlog_and_assistant_deferral_then_present() {
 
 # --- workflow-loop-closing-hygiene: stamp-closure mode (Goal 3) --------------
 # Covers AC-005, AC-006, AC-007, AC-008 from
-# docs/specs/workflow-loop-closing-hygiene.md. All start RED until sweep.py
+# docs/specs/workflow-loop-closing-hygiene.md. All start RED until sweep.mjs
 # adds `mode_stamp_closure` + `--backlog-keys` arg + a 4th MODE_DISPATCH entry.
 
 # Reuse the existing `sweep` helper for stamp-closure: pass a 4th positional
@@ -461,10 +461,10 @@ test_when_readme_documents_backlog_and_assistant_deferral_then_present() {
 sweep_stamp_closure() {
   local mem="$1" keys="${2:-}"
   if [ ! -f "$SWEEP" ]; then
-    echo "{\"error\":\"sweep.py missing\"}"
+    echo "{\"error\":\"sweep.mjs missing\"}"
     return 127
   fi
-  python3 "$SWEEP" --mode stamp-closure --memory-dir "$mem" --backlog-keys "$keys"
+  node "$SWEEP" --mode stamp-closure --memory-dir "$mem" --backlog-keys "$keys"
 }
 
 # Add a backlog entry shaped like the canonical write from /memory-flush.
@@ -494,27 +494,26 @@ test_when_stamp_closure_runs_then_status_and_superseded_at_set() {
   assert_contains "$report" '"stamped": 2' "AC-005 expected stamped:2 (got: $report)" || return 1
   # k1 and k2 must now carry status: picked-up + superseded-at: today.
   # k3 must remain status: open (no superseded-at:).
-  python3 - "$mem/backlog.md" "$(today)" <<'PY' || return 1
-import re, sys
-path, today = sys.argv[1], sys.argv[2]
-text = open(path).read()
-def find(key):
-    m = re.search(rf'^## {re.escape(key)}$(.*?)(?=^## |\Z)', text, re.M | re.DOTALL)
-    return m.group(1) if m else ''
-for key in ("k1", "k2"):
-    block = find(key)
-    if not block:
-        sys.exit(f"missing block for {key}")
-    if 'status: picked-up' not in block:
-        sys.exit(f"{key}: expected status: picked-up; got: {block!r}")
-    if f'superseded-at: {today}' not in block:
-        sys.exit(f"{key}: expected superseded-at: {today}; got: {block!r}")
-k3 = find("k3")
-if 'status: open' not in k3:
-    sys.exit(f"k3: expected status: open (untouched); got: {k3!r}")
-if 'superseded-at:' in k3:
-    sys.exit(f"k3: expected NO superseded-at: (untouched); got: {k3!r}")
-PY
+  BACKLOG_PATH="$mem/backlog.md" TODAY_ISO="$(today)" node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const path = process.env.BACKLOG_PATH;
+const today = process.env.TODAY_ISO;
+const text = readFileSync(path, "utf8");
+const find = (key) => {
+  const re = new RegExp(`^## ${key.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}$([\\s\\S]*?)(?=^## |$(?![\\s\\S]))`, "m");
+  const m = text.match(re);
+  return m ? m[1] : "";
+};
+for (const key of ["k1", "k2"]) {
+  const block = find(key);
+  if (!block) { console.error(`missing block for ${key}`); process.exit(1); }
+  if (!block.includes("status: picked-up")) { console.error(`${key}: expected status: picked-up; got: ${JSON.stringify(block)}`); process.exit(1); }
+  if (!block.includes(`superseded-at: ${today}`)) { console.error(`${key}: expected superseded-at: ${today}; got: ${JSON.stringify(block)}`); process.exit(1); }
+}
+const k3 = find("k3");
+if (!k3.includes("status: open")) { console.error(`k3: expected status: open (untouched); got: ${JSON.stringify(k3)}`); process.exit(1); }
+if (k3.includes("superseded-at:")) { console.error(`k3: expected NO superseded-at: (untouched); got: ${JSON.stringify(k3)}`); process.exit(1); }
+' || return 1
 }
 
 test_when_stamp_closure_then_auto_close_deletes() {
@@ -576,10 +575,10 @@ test_when_stamp_closure_called_twice_then_idempotent() {
 
 test_when_stamp_closure_missing_keys_arg_then_argparse_error() {
   if [ ! -f "$SWEEP" ]; then
-    fail "AC-005 sweep.py missing"
+    fail "AC-005 sweep.mjs missing"
     return 1
   fi
-  python3 "$SWEEP" --mode stamp-closure --memory-dir "$REPO_ROOT/.claude/memory" >/dev/null 2>&1
+  node "$SWEEP" --mode stamp-closure --memory-dir "$REPO_ROOT/.claude/memory" >/dev/null 2>&1
   local ec=$?
   if [ "$ec" -ne 2 ]; then
     fail "AC-005 expected argparse exit 2 when --backlog-keys missing, got $ec"

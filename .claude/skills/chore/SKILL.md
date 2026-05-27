@@ -82,7 +82,7 @@ If a conditional phase is required, run it **before** `/grant-commit`. If you sk
    - **Required** → invoke the phase skill and append it to `workflow.json → completed`.
    - **Skipped** → record the rationale in your end-of-chore summary; do not append to `completed`.
 6. Invoke `Skill(archive)` — mandatory.
-6.5. Invoke `Skill(memory-flush)` — mandatory (Phase 10.6). Runs Step 0 canonical sweeps and, if `_pending.md` is non-empty, full triage. On empty pending the fast-path returns success in ≤ 3 sweep.py invocations.
+6.5. Invoke `Skill(memory-flush)` — mandatory (Phase 10.6). Runs Step 0 canonical sweeps and, if `_pending.md` is non-empty, full triage. On empty pending the fast-path returns success in ≤ 3 sweep.mjs invocations.
 7. Append `"chore"`, `"archive"`, `"memory-flush"`, and any conditional phases that ran to `workflow.json → completed`. Update `updated_at` to the current epoch.
 8. **Marker op FIRST, then write `harness_state`, then emit end-of-chore summary.** On `state: "continue"` (more phases follow, e.g. archive is still pending): `echo "<slug>" > .claude/state/.harness_active` to refresh the active marker, then write `.claude/state/harness_state` with `{state: "continue", slug, reason}`. On `state: "done"` (archive just appended and no further phases remain): `rm -f .claude/state/.harness_active`, then write `harness_state` with `{state: "done", slug, reason}`. The state file carries exactly three keys; no `written_at`, no `tick_count`. Then tell the user:
    - "Chore green."

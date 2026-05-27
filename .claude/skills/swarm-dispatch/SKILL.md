@@ -71,7 +71,7 @@ Write `.claude/state/swarm/active_wave.json`:
 }
 ```
 
-In worktree mode this file is consumed by `swarm_merge.sh` (which reads `baseline_ref`). `swarm_boundary_guard` is dormant — writes happen inside worktrees that don't contain `active_wave.json`.
+In worktree mode this file is consumed by `swarm_merge.mjs` (which reads `baseline_ref`). `swarm_boundary_guard` is dormant — writes happen inside worktrees that don't contain `active_wave.json`.
 
 ### 3. Update plan status
 
@@ -154,7 +154,7 @@ Do not respond to the user until every task in the wave has completed. Each `Age
 For each completed task:
 
 ```
-.claude/skills/swarm-dispatch/swarm_merge.sh \
+.claude/skills/swarm-dispatch/swarm_merge.mjs \
   .claude/state/swarm/<slug>.json \
   <task-id> \
   <worktree-path>
@@ -208,5 +208,5 @@ Use shared mode deliberately — it trades real safety (physical isolation) for 
 - **`isolation: "worktree"` is mandatory** in worktree mode. Without it, the merge-audit guarantee collapses.
 - **One message, N parallel `Agent` calls.** Sequential issuance defeats parallelism.
 - **`subagent_type` is always `swarm-worker`.** No per-stack variants — stack-specific skill loading is handled by the worker template's `{{SKILLS}}` token at `/init-project` time, not by spawning different agents.
-- **Never touch source files from this skill.** This orchestrator only reads and updates `.claude/state/`. File edits happen inside workers; merges happen via `swarm_merge.sh`.
+- **Never touch source files from this skill.** This orchestrator only reads and updates `.claude/state/`. File edits happen inside workers; merges happen via `swarm_merge.mjs`.
 - **`active_wave.json` lingering** after abnormal termination is recoverable: delete it, inspect per-task status, re-dispatch the first incomplete wave.

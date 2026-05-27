@@ -95,7 +95,7 @@ A match without a corresponding structured closure field causes `/memory-flush` 
 
 **Closure short-circuits decay (AC-005).** `memory_session_start.sh` excludes any entry carrying a closure field from the stale count. `stale` ≠ `closed`: a stale entry is *unverified*; closure is a separate, deliberate signal that the entry is no longer load-bearing.
 
-**Automated closure-stamp on backlog pickup.** When `/triage` records a workflow that picks up a backlog entry (the `workflow.json → source_backlog_keys` array carries the entry's stable key), `/commit` Step 6 invokes `python3 .claude/skills/memory-flush/sweep.py --mode stamp-closure --memory-dir .claude/memory --backlog-keys <csv>` after `git commit` succeeds. The mode writes `status: picked-up` + `superseded-at: <today>` to each named entry; the next `/memory-flush` Step 0a auto-deletes them. `/commit` is the only caller of this mode; `sweep.py` is the only writer to `backlog.md` during closure-stamping — the curator-not-writer pattern is preserved through the actuator boundary.
+**Automated closure-stamp on backlog pickup.** When `/triage` records a workflow that picks up a backlog entry (the `workflow.json → source_backlog_keys` array carries the entry's stable key), `/commit` Step 6 invokes `node .claude/skills/memory-flush/sweep.mjs --mode stamp-closure --memory-dir .claude/memory --backlog-keys <csv>` after `git commit` succeeds. The mode writes `status: picked-up` + `superseded-at: <today>` to each named entry; the next `/memory-flush` Step 0a auto-deletes them. `/commit` is the only caller of this mode; `sweep.mjs` is the only writer to `backlog.md` during closure-stamping — the curator-not-writer pattern is preserved through the actuator boundary.
 
 ## How memory gets updated
 

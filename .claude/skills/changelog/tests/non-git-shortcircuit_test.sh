@@ -64,20 +64,21 @@ test_when_triage_task_templates_include_changelog_row_between_grant_commit_and_c
   # ordering must hold.
   # Strategy: extract the prose between "Wait for /grant-commit" and "Run /commit"
   # blocks and require "changelog" to appear within that slice.
-  if ! python3 - "$TRIAGE_SKILL" <<'PY'
-import re, sys
-path = sys.argv[1]
-text = open(path).read()
-# Find every occurrence of "Wait for /grant-commit" followed by content up to "Run /commit"
-matches = list(re.finditer(
-    r'Wait for /grant-commit[\s\S]*?Run /commit', text))
-if not matches:
-    sys.exit('no "Wait for /grant-commit" → "Run /commit" sequence found in triage SKILL.md')
-# Every such slice must mention "changelog".
-missing = [i for i, m in enumerate(matches) if 'changelog' not in m.group(0).lower()]
-if missing:
-    sys.exit(f'{len(missing)} task-seeding slice(s) missing changelog: indices {missing}')
-PY
+  if ! TRIAGE_SKILL_PATH="$TRIAGE_SKILL" node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const text = readFileSync(process.env.TRIAGE_SKILL_PATH, "utf8");
+const re = /Wait for \/grant-commit[\s\S]*?Run \/commit/g;
+const matches = [...text.matchAll(re)];
+if (matches.length === 0) {
+  process.stderr.write("no \"Wait for /grant-commit\" → \"Run /commit\" sequence found in triage SKILL.md\n");
+  process.exit(1);
+}
+const missing = matches.map((m, i) => [i, m[0]]).filter(([, s]) => !s.toLowerCase().includes("changelog")).map(([i]) => i);
+if (missing.length) {
+  process.stderr.write(`${missing.length} task-seeding slice(s) missing changelog: indices ${JSON.stringify(missing)}\n`);
+  process.exit(1);
+}
+'
   then
     fail "AC-003 triage SKILL.md task-seeding templates must include changelog between grant-commit and commit"
     return 1

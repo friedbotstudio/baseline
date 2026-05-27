@@ -23,7 +23,7 @@ User-invokable only. This skill has side effects (writes SVGs and an index). Cla
 1. Validate the slug: `docs/specs/<slug>.md` must exist.
 2. Run the render script:
    ```
-   .claude/skills/spec-render/render.sh <slug>
+   node .claude/skills/spec-render/render.mjs <slug>
    ```
    The script:
    - Reads `docs/specs/<slug>.md`.

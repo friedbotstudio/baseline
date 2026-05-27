@@ -50,12 +50,12 @@ The acceptance criteria from `docs/specs/changelog-skill-and-responsive-svgs.md`
 - **AC-001** (harness invokes changelog between gate C and commit; Unreleased section grows) — `changelog.mjs` `runActiveMode` + `unreleased-writer.mjs` `appendUnderUnreleased`.
 - **AC-002** (CHANGELOG.md included in commit stage list) — `commit/SKILL.md` Step 3 named-path enumeration grows `CHANGELOG.md` via the actuator's write; verified in `golden-path_test.sh`.
 - **AC-003** (non-git short-circuit) — `triage/SKILL.md` step 2 non-git auto-except list grew to include `"changelog"` alongside `"commit"`; verified in `non-git-shortcircuit_test.sh`.
-- **AC-004** (audit-baseline byte-mirror invariants after Article IV amendment) — handled in `CLAUDE.md` ↔ `src/CLAUDE.template.md` mirror + `docs/init/seed.md` ↔ `src/seed.template.md` mirror; verified by `audit.sh` PASS.
+- **AC-004** (audit-baseline byte-mirror invariants after Article IV amendment) — handled in `CLAUDE.md` ↔ `src/CLAUDE.template.md` mirror + `docs/init/seed.md` ↔ `src/seed.template.md` mirror; verified by `audit.mjs` PASS.
 - **AC-005** (site-src narrative names new phase; Article X.1 em-dash discipline) — handled in `/document` Phase 10 per design-ui row 1 misroute terminal at `.claude/state/design/changelog-skill-and-responsive-svgs-row1.json`.
 - **AC-006** (SVG legible at 320 px) — handled in `site-src/assets/site.css` bento `@media (max-width: 768px)` block per design-ui row 0 audit at `docs/design/changelog-skill-and-responsive-svgs.audit.md`.
 - **AC-007** (bento composition at 1920 px) — same design-ui row 0 deliverable; audit verdict 20/20 PASS.
 - **AC-008** (workflow.json completed sequence ends with `[..., "changelog", "commit"]`) — `harness/SKILL.md` phase-ordering fence + `commit/SKILL.md` prereq line.
-- **AC-009** (source_backlog_keys stamp-closure on commit) — `commit/SKILL.md` Step 6 invokes `sweep.py --mode stamp-closure`; no change to that flow needed in this workflow.
+- **AC-009** (source_backlog_keys stamp-closure on commit) — `commit/SKILL.md` Step 6 invokes `sweep.mjs --mode stamp-closure`; no change to that flow needed in this workflow.
 - **AC-010** (consent-expired denial) — `changelog.mjs` `checkConsent` reads epoch from line 1 of `commit_consent`; exits 1 on stale; verified in `consent-expired_test.sh`.
 - **AC-011** (TaskList re-seed across session boundary) — `triage/SKILL.md` four task-seeding templates updated to insert `Run /changelog` between `Wait for /grant-commit` and `Run /commit`; `harness/SKILL.md` state-machine table grew a row for the new gap.
 - **AC-012** (ad-hoc `--preview-only` mode) — `changelog.mjs` `runPreviewMode` calls semantic-release JS API with `dryRun:true`; no consent required; verified in `preview-only_test.sh`.

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 // The shipped manifest lives at `<template>/.claude/manifest.json` (NOT the
 // template root) so the recursive install copies it straight to
 // `<target>/.claude/manifest.json` without special-casing. Same path is used
-// by the consumer-side audit (.claude/skills/audit-baseline/audit.sh) for
+// by the consumer-side audit (.claude/skills/audit-baseline/audit.mjs) for
 // hash-drift detection — the file follows the baseline into every project.
 const MANIFEST_REL = '.claude/manifest.json';
 

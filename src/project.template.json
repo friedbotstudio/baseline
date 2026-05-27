@@ -2,7 +2,7 @@
   "$schema_version": 1,
   "configured": false,
   "test": {
-    "cmd": "bash .claude/skills/audit-baseline/audit.sh --file={file}",
+    "cmd": "node .claude/skills/audit-baseline/audit.mjs --file={file}",
     "affected_resolver": null,
     "file_globs": [
       "**/*"

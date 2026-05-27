@@ -57,7 +57,7 @@ for runtime_file in _pending _resume; do
   fi
 done
 
-AUDIT_SCRIPT="$PKG_ROOT/.claude/skills/audit-baseline/audit.sh"
+AUDIT_SCRIPT="$PKG_ROOT/.claude/skills/audit-baseline/audit.mjs"
 
 # Stage 0b — sync vendored mirrors from src/cli/ into the dev tree.
 #
@@ -126,7 +126,7 @@ rsync -a \
 # Stage 1.5 — prune dev-only skills.
 #
 # CLAUDE.md Article XI declares "absence of `owner:` is the deliberate default"
-# for user/third-party skills. The audit (.claude/skills/audit-baseline/audit.sh)
+# for user/third-party skills. The audit (.claude/skills/audit-baseline/audit.mjs)
 # and the shipped manifest (build-manifest.mjs:collectOwnersFromTemplate) both
 # already use `owner: baseline` as the canonical signal for baseline ownership.
 # This stage closes the loop on the build side so dev-only skills — anything
@@ -213,7 +213,7 @@ node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
 # by this reorder; only the manifest it reads is now fresh. Skipped if the
 # audit script is absent (e.g., in build-template fixture tests).
 if [ -f "$AUDIT_SCRIPT" ]; then
-  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" bash "$AUDIT_SCRIPT" >&2; then
+  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" node "$AUDIT_SCRIPT" >&2; then
     echo "build aborted: audit-baseline reported failures (see above)" >&2
     exit 1
   fi

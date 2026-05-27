@@ -267,7 +267,7 @@ The vendored `impeccable` skill stays untouched (Article IX). `design-ui` is the
 
 ## Article XI — Skill provenance and the baseline manifest
 
-A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill on disk — those without an `owner:` field, or those declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project with pre-existing skills can install the baseline without annotating any of its own files. The build script `scripts/build-manifest.mjs` reads each `owner:` value and emits the canonical baseline-skill set into the shipped manifest at `obj/template/.claude/manifest.json` under `owners.skills` (a JSON object mapping slug → `"baseline"`). The recursive install copies the manifest straight to `<target>/.claude/manifest.json` (same path inside the `.claude/` subtree, no special-case). The CLI separately writes `<target>/.claude/.baseline-manifest.json` post-install as a runtime sha256 table of the target's actual on-disk contents (used by `doctor` and `upgrade`). The audit at `.claude/skills/audit-baseline/audit.sh` consumes `manifest.owners.skills` from the shipped `.claude/manifest.json` as the canonical baseline-skill enumeration — the previous hard-coded `EXPECTED_SKILLS` set is removed.
+A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill on disk — those without an `owner:` field, or those declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project with pre-existing skills can install the baseline without annotating any of its own files. The build script `scripts/build-manifest.mjs` reads each `owner:` value and emits the canonical baseline-skill set into the shipped manifest at `obj/template/.claude/manifest.json` under `owners.skills` (a JSON object mapping slug → `"baseline"`). The recursive install copies the manifest straight to `<target>/.claude/manifest.json` (same path inside the `.claude/` subtree, no special-case). The CLI separately writes `<target>/.claude/.baseline-manifest.json` post-install as a runtime sha256 table of the target's actual on-disk contents (used by `doctor` and `upgrade`). The audit at `.claude/skills/audit-baseline/audit.mjs` consumes `manifest.owners.skills` from the shipped `.claude/manifest.json` as the canonical baseline-skill enumeration — the previous hard-coded `EXPECTED_SKILLS` set is removed.
 
 You SHALL:
 
@@ -285,7 +285,7 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 
 | Path | Role |
 |---|---|
-| `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Bash + python3, no jq. |
+| `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 39 skills: artifact (4) + phases (11) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
 | `.claude/commands/` | 5 consent/bootstrap gates: `approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`, `init-project` |

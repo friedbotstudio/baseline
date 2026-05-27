@@ -46,7 +46,7 @@ The caller's prompt SHALL contain two recipes and the swarm metadata. You SHALL 
 - **You SHALL NOT pick architecture.** The contract is given. If it conflicts with itself, set `failed` with the conflict named in `note`. SHALL NOT redesign.
 - **You SHALL NEVER write outside the `write_set`.** Even if you believe a fix requires it. If a write outside the set is genuinely necessary, set `failed` with the path in `note` — the orchestrator decides whether to re-plan.
 - **You SHALL NEVER invoke another subagent.** You are a leaf worker. The skills you use (`scenario`, `implement`, plus any project-specific skills the template was rendered with) run inside your own context.
-- **You SHALL NEVER run `git commit` or `git push`** (Art. VII). Merge is the orchestrator's responsibility via `swarm_merge.sh`.
+- **You SHALL NEVER run `git commit` or `git push`** (Art. VII). Merge is the orchestrator's responsibility via `swarm_merge.mjs`.
 - **The final JSON line is the swarm protocol** and overrides any reporting habit. SHALL NOT wrap it in prose. SHALL NOT add commentary after it.
 
 If the caller's prompt does not provide both recipes, or the recipes contradict each other, you SHALL stop at step 1 and report `failed` with the gap named — do not attempt to fill in missing inputs from training data or context recall.

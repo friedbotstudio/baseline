@@ -23,25 +23,25 @@ if [ ! -f "$HOOK" ]; then
   exit 1
 fi
 
-block="$(CLAUDE_PROJECT_DIR="$REPO_ROOT" $HOOK_RUNNER "$HOOK" <<< '{}' | python3 -c '
-import json, re, sys
-HEAD_RE = re.compile(r"^(HEAD:\s*`)[^`]+(`)")
-data = sys.stdin.read().strip()
-if not data:
-    sys.exit("regenerate-ac008.sh: memory_session_start.sh emitted no output")
-j = json.loads(data)
-ctx = j["hookSpecificOutput"]["additionalContext"]
-out = []
-started = False
-for ln in ctx.split("\n"):
-    if ln.startswith("## Project memory"):
-        started = True
-    if not started:
-        continue
-    out.append(HEAD_RE.sub(r"\1n/a\2", ln))
-    if ln.startswith("| `pending-questions.md`"):
-        break
-sys.stdout.write("\n".join(out) + "\n")
+block="$(CLAUDE_PROJECT_DIR="$REPO_ROOT" $HOOK_RUNNER "$HOOK" <<< '{}' | node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const HEAD_RE = /^(HEAD:\s*`)[^`]+(`)/;
+const data = readFileSync(0, "utf8").trim();
+if (!data) {
+  process.stderr.write("regenerate-ac008.sh: memory_session_start hook emitted no output\n");
+  process.exit(1);
+}
+const j = JSON.parse(data);
+const ctx = j.hookSpecificOutput.additionalContext;
+const out = [];
+let started = false;
+for (const ln of ctx.split("\n")) {
+  if (ln.startsWith("## Project memory")) started = true;
+  if (!started) continue;
+  out.push(ln.replace(HEAD_RE, "$1n/a$2"));
+  if (ln.startsWith("| `pending-questions.md`")) break;
+}
+process.stdout.write(out.join("\n") + "\n");
 ')"
 
 printf '%s\n' "$block" > "$FIXTURE"

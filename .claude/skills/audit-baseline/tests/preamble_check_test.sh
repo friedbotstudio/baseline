@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Fixture-based integration tests for the audit-baseline preamble validator.
-# Covers the strict-preamble tightening in .claude/skills/audit-baseline/audit.sh.
+# Covers the strict-preamble tightening in .claude/skills/audit-baseline/audit.mjs.
 #
 # Each test builds a synthetic .claude/memory/ tree under a tempdir (with all
 # 9 expected canonical filenames), substitutes one file with a fixture, then
-# runs audit.sh with CLAUDE_PROJECT_DIR pointed at the tempdir and greps the
+# runs audit.mjs with CLAUDE_PROJECT_DIR pointed at the tempdir and greps the
 # captured output for the "memory shape: <name>.md" line.
 #
 # The audit will exit non-zero in the stub tree because hook/skill/agent
@@ -18,7 +18,7 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
-AUDIT="$REPO_ROOT/.claude/skills/audit-baseline/audit.sh"
+AUDIT="$REPO_ROOT/.claude/skills/audit-baseline/audit.mjs"
 FIXTURES="$HERE/fixtures"
 
 PASS=0; FAIL=0; FAILED=()
@@ -33,7 +33,7 @@ fail() { echo "  FAIL: $*"; return 1; }
 seed_stub_tree() {
   local root="$1" under_test="$2" fixture_path="$3"
   mkdir -p "$root/.claude/memory"
-  # README is checked separately by audit.sh; copy the real one so that check
+  # README is checked separately by audit.mjs; copy the real one so that check
   # passes and doesn't tangle our grep.
   cp "$REPO_ROOT/.claude/memory/README.md" "$root/.claude/memory/README.md"
   local mem_name
@@ -54,11 +54,11 @@ EOF
   done
 }
 
-# Run audit.sh against the stub tree at $1 and print the line matching
+# Run audit.mjs against the stub tree at $1 and print the line matching
 # "memory shape: $2.md" to stdout. Returns 1 if no such line found.
 audit_memory_shape_line() {
   local root="$1" name="$2"
-  CLAUDE_PROJECT_DIR="$root" bash "$AUDIT" 2>&1 \
+  CLAUDE_PROJECT_DIR="$root" node "$AUDIT" 2>&1 \
     | grep -E "^memory shape: ${name}\.md[[:space:]]" \
     | head -1
 }

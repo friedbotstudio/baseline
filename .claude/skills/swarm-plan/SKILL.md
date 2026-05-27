@@ -43,7 +43,7 @@ If any prereq is missing, stop and surface what's needed.
 }
 ```
 
-You produce `tasks[]`. The validator (`validate.sh`) computes `waves[]` deterministically via Kahn-with-disjointness.
+You produce `tasks[]`. The validator (`validate.mjs`) computes `waves[]` deterministically via Kahn-with-disjointness.
 
 ## Steps
 
@@ -66,7 +66,7 @@ You produce `tasks[]`. The validator (`validate.sh`) computes `waves[]` determin
    - If two tasks share any file AND have no `depends_on` relationship, either introduce a `depends_on` edge (making them sequential across waves) or merge them into one task. Merging is preferred when they're on the same component.
 6. **Validate the plan**:
    ```
-   .claude/skills/swarm-plan/validate.sh docs/specs/<slug>.md .claude/state/swarm/<slug>.json
+   node .claude/skills/swarm-plan/validate.mjs docs/specs/<slug>.md .claude/state/swarm/<slug>.json
    ```
    The validator checks: required fields, depends_on references resolve, DAG is acyclic, and assigns `waves[]`. If validation fails, it prints a precise error — fix the plan and re-run.
 7. **Surface the plan** to the user as a table:
@@ -87,6 +87,6 @@ You produce `tasks[]`. The validator (`validate.sh`) computes `waves[]` determin
 
 - **Never dispatch from this skill.** Planning and execution are separated by a human consent gate (`/approve-swarm`).
 - **Every file in a `write_set` must be a concrete path**, not a glob. The boundary guard does string-level membership checks.
-- **The `validate.sh` script is the source of truth for wave assignment.** Do not hand-write `waves[]`.
+- **The `validate.mjs` script is the source of truth for wave assignment.** Do not hand-write `waves[]`.
 - **Greenfield files are allowed** in `write_set` even if they don't exist yet — the guard checks declared ownership, not disk presence.
 - **If validation keeps failing**, the problem is usually that two tasks share a file with no dependency. Either merge or introduce a dependency edge.

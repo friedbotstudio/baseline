@@ -117,19 +117,15 @@ test_when_grant_commit_token_fresh_then_changelog_writes_unreleased_section() {
   [ -f "$proj/.claude/state/changelog/golden-path.json" ] \
     || { fail "AC-001 .claude/state/changelog/golden-path.json not written"; return 1; }
   # State file is valid JSON with expected shape.
-  python3 -c "
-import json, sys
-with open('$proj/.claude/state/changelog/golden-path.json') as f:
-    data = json.load(f)
-required = {'slug', 'source_commit_sha', 'entries', 'generated_at'}
-missing = required - set(data.keys())
-if missing:
-    sys.exit(f'state file missing keys: {missing}')
-if data['slug'] != 'golden-path':
-    sys.exit(f'slug mismatch: {data[\"slug\"]}')
-if not isinstance(data['entries'], list):
-    sys.exit('entries must be a list')
-" || { fail "AC-001 state file shape invalid"; return 1; }
+  STATE_PATH="$proj/.claude/state/changelog/golden-path.json" node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const data = JSON.parse(readFileSync(process.env.STATE_PATH, "utf8"));
+const required = new Set(["slug", "source_commit_sha", "entries", "generated_at"]);
+const missing = [...required].filter(k => !(k in data));
+if (missing.length) { process.stderr.write(`state file missing keys: ${JSON.stringify(missing)}\n`); process.exit(1); }
+if (data.slug !== "golden-path") { process.stderr.write(`slug mismatch: ${data.slug}\n`); process.exit(1); }
+if (!Array.isArray(data.entries)) { process.stderr.write("entries must be a list\n"); process.exit(1); }
+' || { fail "AC-001 state file shape invalid"; return 1; }
 }
 
 # --- AC-002 -------------------------------------------------------------------

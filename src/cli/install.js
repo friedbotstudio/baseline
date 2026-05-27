@@ -33,7 +33,7 @@ export const SPECIAL_MERGE = Object.freeze(['.mcp.json', '.claude/project.json']
 // The shipped manifest now lives at `.claude/manifest.json` (inside the
 // template's .claude/ subtree), so the recursive cp drops it at the correct
 // consumer path without any special-case filtering. The consumer-side audit
-// (`.claude/skills/audit-baseline/audit.sh`) reads it from there for
+// (`.claude/skills/audit-baseline/audit.mjs`) reads it from there for
 // hash-drift detection. COPY_EXCLUDE stays as a list (currently empty) so
 // future never-copy artifacts can be added without API churn at the callers.
 export const COPY_EXCLUDE = Object.freeze([]);

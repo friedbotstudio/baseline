@@ -6,7 +6,7 @@ description: Review the auto-extracted candidates in `.claude/memory/_pending.md
 
 # When invoked as Phase 10.6
 
-This skill runs as **Phase 10.6** of every workflow track (intake / spec / tdd / chore), between `/archive` (Phase 10.5) and `/grant-commit` (Phase 11). The harness loop reads `.claude/memory/_pending.md` body, runs Step 0 canonical sweeps unconditionally, and on **empty pending** (zero `## CANDIDATE:` blocks) short-circuits the **fast-path**: Steps 1–5 are skipped, Step 6 emits a one-line "no pending candidates" report, and the skill returns success. This keeps the no-op cost bounded at ≤ 3 sweep.py invocations per Phase 10.6 invocation.
+This skill runs as **Phase 10.6** of every workflow track (intake / spec / tdd / chore), between `/archive` (Phase 10.5) and `/grant-commit` (Phase 11). The harness loop reads `.claude/memory/_pending.md` body, runs Step 0 canonical sweeps unconditionally, and on **empty pending** (zero `## CANDIDATE:` blocks) short-circuits the **fast-path**: Steps 1–5 are skipped, Step 6 emits a one-line "no pending candidates" report, and the skill returns success. This keeps the no-op cost bounded at ≤ 3 sweep.mjs invocations per Phase 10.6 invocation.
 
 The skill is also user-invokable outside the workflow (ad-hoc curation). When invoked ad-hoc and `_pending.md` is non-empty, the full Steps 1–5 flow runs identically. The fast-path activates per-invocation based on `_pending.md` body state, not on workflow context.
 
@@ -34,14 +34,14 @@ The hook is a passive collector. **You are the curator.** Discard noise, promote
 
 ## Step 0 — Canonical sweep (closure semantics)
 
-Before reviewing `_pending.md`, sweep the seven canonical files for closed entries and stale entries. The `sweep.py` helper at `.claude/skills/memory-flush/sweep.py` is the deterministic actuator; this SOP composes the three modes.
+Before reviewing `_pending.md`, sweep the seven canonical files for closed entries and stale entries. The `sweep.mjs` helper at `.claude/skills/memory-flush/sweep.mjs` is the deterministic actuator; this SOP composes the three modes.
 
 ### Step 0a — Auto-close structured closure fields
 
 Invoke:
 
 ```
-python3 .claude/skills/memory-flush/sweep.py --mode auto-close --memory-dir .claude/memory
+node .claude/skills/memory-flush/sweep.mjs --mode auto-close --memory-dir .claude/memory
 ```
 
 Behavior:
@@ -58,7 +58,7 @@ Report shape: `{"closed": N, "malformed": [...], "invariant_violation": [...]}`.
 Invoke (one reply per surfaced entry, piped from stdin):
 
 ```
-python3 .claude/skills/memory-flush/sweep.py --mode prose-scan --memory-dir .claude/memory
+node .claude/skills/memory-flush/sweep.mjs --mode prose-scan --memory-dir .claude/memory
 ```
 
 For each entry without a structured closure field, the helper scans the body against three anchored, case-insensitive regexes (R1 `Resolution path taken|by|date`, R2 `Superseded by|at|on`, R3 `Resolved by|on|at`). On a match the helper reads one line from stdin and applies the reply: `y` deletes the block, `n` keeps and does-not-resurface-this-run, `skip` keeps and defers for next-run reconsideration.
@@ -67,14 +67,14 @@ You drive this step interactively: ask the user `Close <key> from <file>? (y / n
 
 ### Step 0a-bis — Stamp-closure mode (invoked from /commit, not from /memory-flush)
 
-`sweep.py` also exposes a `--mode stamp-closure --backlog-keys <csv>` mode that writes `status: picked-up` + `superseded-at: <today>` to each named `backlog.md` entry. This mode is NOT invoked by `/memory-flush` Step 0; it is invoked by `/commit` Step 6 when `workflow.json → source_backlog_keys` is non-empty. The mode is idempotent (re-running on stamped entries rewrites `superseded-at:` to today; reports them under `already_closed`). The next `/memory-flush` Step 0a auto-close sweep then deletes the stamped entries per the existing `superseded-at:` closure trigger — so `/memory-flush`'s contract is unchanged; it just sees more closures in its `auto-close` step. Report shape: `{"stamped": N, "missing": [keys], "already_closed": [keys]}`.
+`sweep.mjs` also exposes a `--mode stamp-closure --backlog-keys <csv>` mode that writes `status: picked-up` + `superseded-at: <today>` to each named `backlog.md` entry. This mode is NOT invoked by `/memory-flush` Step 0; it is invoked by `/commit` Step 6 when `workflow.json → source_backlog_keys` is non-empty. The mode is idempotent (re-running on stamped entries rewrites `superseded-at:` to today; reports them under `already_closed`). The next `/memory-flush` Step 0a auto-close sweep then deletes the stamped entries per the existing `superseded-at:` closure trigger — so `/memory-flush`'s contract is unchanged; it just sees more closures in its `auto-close` step. Report shape: `{"stamped": N, "missing": [keys], "already_closed": [keys]}`.
 
 ### Step 0c — Stale sweep
 
 Only run when `memory_session_start.sh` reported stale > 0 this session, or the user asks. Invoke:
 
 ```
-python3 .claude/skills/memory-flush/sweep.py --mode stale-sweep --memory-dir .claude/memory
+node .claude/skills/memory-flush/sweep.mjs --mode stale-sweep --memory-dir .claude/memory
 ```
 
 The helper re-derives the stale set using the same predicate as the hook (verified-at ≥ 30 commits behind HEAD in git, or last-touched ≥ 30 days in non-git). For each stale entry, prompt the user `Stale: <key> in <file>. re-verify / delete / mark-closed / skip?` and feed the reply. `re-verify` restamps `verified-at:` + `last-touched:` to today; `delete` removes the block; `mark-closed` inserts the register-correct closure field (`resolved-at:` on pending-questions, `superseded-at:` elsewhere) and leaves the block in place so Step 0a auto-closes it next run; `skip` keeps it and resurfaces next session.

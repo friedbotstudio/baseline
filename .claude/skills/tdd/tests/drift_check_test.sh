@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Fixture-based integration tests for the drift_check.py helper.
+# Fixture-based integration tests for the drift_check.mjs helper.
 # Covers AC-002, AC-003, AC-004, AC-011 (and OQ-4) from
 # docs/specs/workflow-loop-closing-hygiene.md.
 #
-# Contract under test (drift_check.py):
-#   python3 .claude/skills/tdd/drift_check.py --slug <slug> \
+# Contract under test (drift_check.mjs):
+#   node .claude/skills/tdd/drift_check.mjs --slug <slug> \
 #           [--project-root <path>] [--diff <path>]
 # Reads docs/specs/<slug>.md, scores every numbered AC + ## Design calls row
 # against either git diff or the --diff override, writes a markdown report at
@@ -19,7 +19,7 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
-DRIFT="$REPO_ROOT/.claude/skills/tdd/drift_check.py"
+DRIFT="$REPO_ROOT/.claude/skills/tdd/drift_check.mjs"
 
 PASS=0; FAIL=0; FAILED=()
 
@@ -39,19 +39,19 @@ assert_contains() {
   esac
 }
 
-# Run drift_check.py against a synthetic project-root, setting $OUT (combined
+# Run drift_check.mjs against a synthetic project-root, setting $OUT (combined
 # stdout+stderr) and $EXIT in the caller's scope. Called without command
 # substitution so the assignments survive into the test function.
 run_drift() {
   local root="$1" slug="$2" diff_path="${3:-}"
   if [ ! -f "$DRIFT" ]; then
-    OUT='{"error":"drift_check.py missing"}'
+    OUT='{"error":"drift_check.mjs missing"}'
     EXIT=127
     return
   fi
   local args=( --slug "$slug" --project-root "$root" )
   [ -n "$diff_path" ] && args+=( --diff "$diff_path" )
-  OUT="$(python3 "$DRIFT" "${args[@]}" 2>&1)"
+  OUT="$(node "$DRIFT" "${args[@]}" 2>&1)"
   EXIT=$?
 }
 

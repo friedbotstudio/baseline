@@ -97,15 +97,17 @@ test_when_invoked_twice_then_no_duplicate_unreleased_entries() {
     return 1
   fi
   # State file: contents excluding generated_at and unreleased_inserted_at MUST be byte-equal.
-  python3 - "$proj/.claude/state/changelog/idem-test.json" "$state1" <<'PY' || { fail "state file content drifted on re-entry"; return 1; }
-import json, sys
-new = json.load(open(sys.argv[1]))
-old = json.loads(sys.argv[2])
-for k in ('generated_at', 'unreleased_inserted_at'):
-    new.pop(k, None); old.pop(k, None)
-if json.dumps(new, sort_keys=True) != json.dumps(old, sort_keys=True):
-    sys.exit(f'state diverged: new={new!r} old={old!r}')
-PY
+  NEW_STATE_PATH="$proj/.claude/state/changelog/idem-test.json" OLD_STATE_JSON="$state1" node --input-type=module -e '
+import { readFileSync } from "node:fs";
+const newObj = JSON.parse(readFileSync(process.env.NEW_STATE_PATH, "utf8"));
+const oldObj = JSON.parse(process.env.OLD_STATE_JSON);
+for (const k of ["generated_at", "unreleased_inserted_at"]) { delete newObj[k]; delete oldObj[k]; }
+const sortStringify = (o) => JSON.stringify(o, Object.keys(o).sort());
+if (sortStringify(newObj) !== sortStringify(oldObj)) {
+  process.stderr.write(`state diverged: new=${JSON.stringify(newObj)} old=${JSON.stringify(oldObj)}\n`);
+  process.exit(1);
+}
+' || { fail "state file content drifted on re-entry"; return 1; }
 }
 
 # --- runner -------------------------------------------------------------------

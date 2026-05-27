@@ -48,7 +48,7 @@ function buildSandbox({ withJar }) {
 // utilities the script depends on, and explicitly omit java.
 function pathWithoutJava() {
   const farm = mkdtempSync(join(tmpdir(), 'render-no-java-'));
-  const NEEDED = ['python3', 'awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'ls'];
+  const NEEDED = ['awk', 'sed', 'bash', 'sh', 'grep', 'find', 'date', 'cat', 'mkdir', 'rm', 'tr', 'ls'];
   for (const name of NEEDED) {
     const src = which(name);
     if (src) symlinkSync(realpathSync(src), join(farm, name));

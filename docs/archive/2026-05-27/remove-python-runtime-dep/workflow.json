@@ -1,0 +1,29 @@
+{
+  "request": "Remove Python as a runtime dependency from the baseline. Port sweep.py and drift_check.py to .mjs; rewrite the 5 python3 heredocs in skill .sh scripts as Node ESM (collapse trivial .sh wrappers); port 3 hook test fixtures; update governance pointers (CLAUDE.md, src/CLAUDE.template.md, docs/init/seed.md, src/seed.template.md, .claude/memory/conventions.md hook-script-shape) while preserving mirror byte-equivalence. Closes backlog item migrate-bash-python-heredocs-to-javascript-d454.",
+  "slug": "remove-python-runtime-dep",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "migrate-bash-python-heredocs-to-javascript-d454"
+  ],
+  "created_at": 1779906542,
+  "updated_at": 1779913206
+}

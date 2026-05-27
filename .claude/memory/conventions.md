@@ -37,10 +37,10 @@ Each entry's stable key is a short slug.
 
 ## hook-script-shape
 
-- Convention: every `.claude/hooks/*.sh` script sources `lib/common.sh` and calls `read_payload` first. Decision emitters: `emit_allow`, `emit_block`, `emit_ask`, `emit_info`. JSON parsing exclusively via `python3` heredoc — no `jq`.
-- Why: portability (jq isn't always present), uniform error handling.
+- Convention: every `.claude/hooks/*.mjs` script imports `lib/common.mjs` and calls `readPayload()` first. Decision emitters: `emitAllow`, `emitBlock`, `emitAsk`, `emitInfo`. JSON parsing native (no `jq`, no python heredoc); skill helpers follow the same Node ESM pattern.
+- Why: ~5x faster startup than the legacy bash + python3 chain; one runtime to install; uniform error handling.
 - Verified-at: HEAD
-- Last-touched: 2026-04-27
+- Last-touched: 2026-05-28
 
 ## skill-ownership-frontmatter
 
