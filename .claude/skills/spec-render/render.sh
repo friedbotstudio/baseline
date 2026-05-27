@@ -21,8 +21,15 @@ if [ ! -f "$SPEC" ]; then
   exit 2
 fi
 
-if ! command -v plantuml >/dev/null 2>&1; then
-  echo "spec-render: \`plantuml\` CLI not on PATH. Install: brew install plantuml (macOS) / apt-get install plantuml (Debian/Ubuntu)." >&2
+PLANTUML_JAR="$ROOT/.claude/bin/plantuml.jar"
+
+if [ ! -f "$PLANTUML_JAR" ]; then
+  echo "spec-render: plantuml.jar not found at $PLANTUML_JAR. Re-run \`npx @friedbotstudio/create-baseline install\` to fetch it." >&2
+  exit 2
+fi
+
+if ! command -v java >/dev/null 2>&1; then
+  echo "spec-render: java not on PATH. Install JDK 8+ (e.g. \`brew install openjdk\` on macOS, \`apt install default-jre\` on Debian/Ubuntu) and re-run." >&2
   exit 2
 fi
 
@@ -91,7 +98,7 @@ PY
 fail=0
 for puml in "$OUT"/*.puml; do
   [ -f "$puml" ] || continue
-  if ! plantuml -tsvg -o "$OUT" "$puml" 2>"$OUT/.render.err"; then
+  if ! java -jar "$PLANTUML_JAR" -tsvg -o "$OUT" "$puml" 2>"$OUT/.render.err"; then
     echo "spec-render: FAILED to render ${puml##*/}" >&2
     sed -n '1,10p' "$OUT/.render.err" >&2
     fail=1

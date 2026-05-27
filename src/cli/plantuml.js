@@ -1,8 +1,8 @@
 import { mkdir, writeFile, readFile, rename, unlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, delimiter } from 'node:path';
+import { join } from 'node:path';
 import { get as httpsGet } from 'node:https';
-import { existsSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { pathExists } from './util.js';
 
 export const UPSTREAM_URL = 'https://github.com/plantuml/plantuml/releases/download/v1.2026.2/plantuml-asl-1.2026.2.jar';
@@ -11,7 +11,6 @@ export const PINNED_SIZE = 19395808;
 
 export const FETCH_OUTCOMES = Object.freeze({
   WROTE: 'WROTE',
-  SKIPPED_SYSTEM_PLANTUML: 'SKIPPED_SYSTEM_PLANTUML',
   SKIPPED_ALREADY_PRESENT: 'SKIPPED_ALREADY_PRESENT',
   SKIPPED_NO_PLANTUML_FLAG: 'SKIPPED_NO_PLANTUML_FLAG',
   SKIPPED_DRY_RUN: 'SKIPPED_DRY_RUN',
@@ -20,16 +19,23 @@ export const FETCH_OUTCOMES = Object.freeze({
   ERRORED_REQUIRE_PLANTUML: 'ERRORED_REQUIRE_PLANTUML',
 });
 
-export function detectSystemPlantuml() {
-  const pathEnv = process.env.PATH || '';
-  for (const dir of pathEnv.split(delimiter)) {
-    if (!dir) continue;
-    const candidate = join(dir, 'plantuml');
-    try {
-      if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-    } catch {}
+// Runtime + install-time Java probe. Returns {present, reason}.
+//
+// Tests inject deterministic outcomes via CREATE_BASELINE_JAVA_PROBE_OVERRIDE
+// = "present" | "missing" — same pattern as CREATE_BASELINE_TEMPLATE_DIR.
+// Production runs spawn `java -version` and treat exit 0 as the bar
+// (PlantUML 1.2026.2 needs Java 8+; we don't add value by parsing further).
+export function runJavaPreflight() {
+  const override = process.env.CREATE_BASELINE_JAVA_PROBE_OVERRIDE;
+  if (override === 'present') return { present: true, reason: 'override=present' };
+  if (override === 'missing') return { present: false, reason: 'override=missing' };
+  try {
+    const r = spawnSync('java', ['-version'], { stdio: 'ignore' });
+    if (r.error || r.status !== 0) return { present: false, reason: r.error?.message || `exit ${r.status}` };
+    return { present: true, reason: 'java -version exit 0' };
+  } catch (err) {
+    return { present: false, reason: err.message };
   }
-  return null;
 }
 
 function sha256Hex(buf) {
@@ -76,13 +82,7 @@ async function writeJarAtomic(target, buffer) {
 
 export async function fetchPlantumlIfMissing(target, opts = {}) {
   const fetcher = opts.fetch ?? defaultHttpsFetch;
-  const systemPath = opts.systemPlantumlPath !== undefined
-    ? opts.systemPlantumlPath
-    : detectSystemPlantuml();
 
-  if (systemPath) {
-    return { outcome: FETCH_OUTCOMES.SKIPPED_SYSTEM_PLANTUML, bytesWritten: 0, reason: `system plantuml at ${systemPath}` };
-  }
   if (opts.noPlantuml) {
     return { outcome: FETCH_OUTCOMES.SKIPPED_NO_PLANTUML_FLAG, bytesWritten: 0, reason: '--no-plantuml flag set' };
   }

@@ -22,15 +22,6 @@ async function realJarBytes() {
 }
 
 describe('fetchPlantumlIfMissing', () => {
-  it('skips when system plantuml is on PATH', async () => {
-    const target = await mkdtemp(join(tmpdir(), 'pu-target-'));
-    const result = await plantuml.fetchPlantumlIfMissing(target, {
-      systemPlantumlPath: '/usr/local/bin/plantuml',
-      fetch: fakeFetchNetworkFail(),
-    });
-    assert.equal(result.outcome, 'SKIPPED_SYSTEM_PLANTUML');
-  });
-
   it('skips when --no-plantuml is set', async () => {
     const target = await mkdtemp(join(tmpdir(), 'pu-target-'));
     const result = await plantuml.fetchPlantumlIfMissing(target, {

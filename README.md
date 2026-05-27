@@ -76,7 +76,7 @@ Every count is asserted by `audit-baseline` against `docs/init/seed.md` on every
 
 - Node 18.17 or newer (the CLI runs as a Node script)
 - `git` — required for the commit phase, swarm worktrees, and the post-archive consent gate. Workflows on non-git projects auto-except `commit` and end at `/archive`.
-- `java` — optional. Required only for `/spec-render` (PlantUML to SVG). The install fetches a SHA-pinned `plantuml.jar` (~19 MB); you supply the JVM.
+- `java` (JDK 8+) — needed by both the `plantuml_syntax_guard` hook (write-boundary syntax check) and `/spec-render` (PlantUML to SVG). Install fetches the SHA-pinned `plantuml.jar` (~19 MB); you supply the JVM. Skip with `--no-plantuml` to bypass entirely, or pass `--require-plantuml` to make a missing Java a fatal install error.
 
 ### One-line install
 

@@ -8,16 +8,27 @@
 #
 # How it validates:
 #   1. Extract every ```plantuml ...``` fenced block from the proposed content.
-#   2. For each block, pipe to `plantuml -checkonly -pipe` and capture exit code.
+#   2. For each block, pipe to `java -jar .claude/bin/plantuml.jar -checkonly -pipe`
+#      and capture exit code.
 #   3. Any non-zero exit → block the write with a reason naming the offending
 #      block (1-indexed) and its first line.
 #
 # Guide mode (advisory):
-#   - If `plantuml` is not on PATH, emit a one-line info message and allow.
+#   - If the pinned plantuml.jar is absent, emit a one-line info message + allow.
+#   - If Java is not on PATH, emit a one-line info message + allow.
 #   - If a spec has zero plantuml blocks, allow — spec_diagram_presence_guard
 #     is the hook that enforces presence.
 #
 # Template files (_TEMPLATE_*) are exempt.
+
+# Capture caller-PATH java availability BEFORE common.sh restores the defensive
+# PATH (which would re-inject /usr/bin and mask deliberately-stripped PATHs in
+# tests for the "java absent" branch).
+if command -v java >/dev/null 2>&1; then
+  HAS_JAVA=1
+else
+  HAS_JAVA=0
+fi
 
 # shellcheck source=./lib/common.sh
 . "${BASH_SOURCE[0]%/*}/lib/common.sh"
@@ -45,10 +56,25 @@ case "$base" in
   _TEMPLATE_*|*TEMPLATE*.md) emit_allow ;;
 esac
 
-# Guide mode when plantuml is not installed. Emit once, then allow.
-if ! command -v plantuml >/dev/null 2>&1; then
-  emit_info "PlantUML Syntax Guard: \`plantuml\` CLI not found on PATH — running in guide mode. Install with 'brew install plantuml' (macOS) or 'apt-get install plantuml' (Debian/Ubuntu) to enable strict validation. Skipping syntax check for '$rel'."
-  log_line plantuml_syntax_guard "GUIDE (no plantuml) $rel"
+# Resolve the pinned jar location. The jar is fetched at install time by
+# src/cli/plantuml.js → fetchPlantumlIfMissing; runtime invocations target
+# the exact pinned sha256 so the version a consumer install validates against
+# matches the version this baseline was tested against.
+PLANTUML_JAR="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/bin/plantuml.jar"
+
+# Guide mode when the jar is absent (e.g. consumer used --no-plantuml or the
+# fetch failed). The hook MUST NOT block writes in that state.
+if [ ! -f "$PLANTUML_JAR" ]; then
+  emit_info "PlantUML validation in guide mode — \`java -jar .claude/bin/plantuml.jar\` is required for strict syntax check. The jar is absent at $PLANTUML_JAR (re-run \`npx @friedbotstudio/create-baseline install\` to fetch). Skipping syntax check for '$rel'."
+  log_line plantuml_syntax_guard "GUIDE (no plantuml.jar) $rel"
+  emit_allow
+fi
+
+# Guide mode when Java is not on PATH. Same posture — info + allow. The
+# availability was captured BEFORE common.sh ran the defensive PATH expansion.
+if [ "$HAS_JAVA" = "0" ]; then
+  emit_info "PlantUML validation in guide mode — Java is missing from PATH. Install JDK 8+ (e.g. \`brew install openjdk\` on macOS, \`apt install default-jre\` on Debian/Ubuntu) to enable strict validation. Skipping syntax check for '$rel'."
+  log_line plantuml_syntax_guard "GUIDE (no java) $rel"
   emit_allow
 fi
 
@@ -97,7 +123,7 @@ trap 'rm -f "$CONTENT_FILE"' EXIT
 
 # Extract plantuml blocks and validate each. Python does the heavy lifting so
 # we don't have to reason about multiline regex in bash.
-HOOK_REL="$rel" HOOK_CONTENT_FILE="$CONTENT_FILE" python3 <<'PY'
+HOOK_REL="$rel" HOOK_CONTENT_FILE="$CONTENT_FILE" HOOK_PLANTUML_JAR="$PLANTUML_JAR" python3 <<'PY'
 import json, os, re, subprocess, sys
 
 rel   = os.environ["HOOK_REL"]
@@ -126,7 +152,7 @@ for idx, body in enumerate(blocks, start=1):
     first_line = next((ln for ln in src.splitlines() if ln.strip() and not ln.strip().startswith("@start")), "").strip()[:80]
     try:
         r = subprocess.run(
-            ["plantuml", "-checkonly", "-pipe"],
+            ["java", "-jar", os.environ["HOOK_PLANTUML_JAR"], "-checkonly", "-pipe"],
             input=src.encode("utf-8"),
             capture_output=True,
             timeout=15,

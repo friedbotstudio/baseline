@@ -34,9 +34,9 @@ Each entry's stable key is `path:line`.
 
 ## src/cli/plantuml.js:1
 
-- Role: deferred-fetch logic for the upstream PlantUML jar — sha256-pinned, redirect-handling, mock-friendly via `opts.fetch`
-- Verified-at: HEAD
-- Last-touched: 2026-04-29
+- Role: always-fetch logic for the upstream PlantUML jar (sha256-pinned, redirect-handling, mock-friendly via `opts.fetch`) PLUS `runJavaPreflight()` — a Foundation primitive that spawnSync-probes `java -version` for the install-time preflight in bin/cli.js + src/cli/tui/install.js. Honors `CREATE_BASELINE_JAVA_PROBE_OVERRIDE` env override (values `present` / `missing`) for deterministic testing, same pattern as `CREATE_BASELINE_TEMPLATE_DIR`. Detection of system plantuml on PATH was removed 2026-05-27 (workflow plantuml-jar-always-download) — the pinned jar is now the sole runtime target, invoked via `java -jar` by .claude/hooks/plantuml_syntax_guard.sh and .claude/skills/spec-render/render.sh.
+- Verified-at: 8b55472
+- Last-touched: 2026-05-27
 - Caveat: pinned constants (`PINNED_SHA256`, `UPSTREAM_URL`, `PINNED_SIZE`) must update in lockstep with `.claude/bin/NOTICE` when the upstream PlantUML version bumps
 
 ## scripts/build-template.sh:1

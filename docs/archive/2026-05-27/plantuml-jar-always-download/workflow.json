@@ -1,0 +1,21 @@
+{
+  "request": "Plantuml always-download + java -jar runtime rewire. Drop detectSystemPlantuml short-circuit in src/cli/plantuml.js \u2192 fetchPlantumlIfMissing so the jar always lands at .claude/bin/plantuml.jar. Add Java-on-PATH preflight in install (Java becomes the new hard dep). Rewire .claude/hooks/plantuml_syntax_guard.sh and .claude/skills/spec-render/render.sh to invoke 'java -jar <baseline>/.claude/bin/plantuml.jar' instead of the system plantuml CLI. Update guide-mode messages (brew/apt advice becomes 'install JDK 17+'). Drop SKIPPED_SYSTEM_PLANTUML test cases; add Java-preflight + jar-missing-at-runtime test cases. Update bin/NOTICE deferred-fetch wording, bin/cli.js --no-plantuml/--require-plantuml flag-help text, README, seed.md mentions. Goal: make PINNED_SHA256 actually enforce a version instead of being decorative.",
+  "slug": "plantuml-jar-always-download",
+  "track_id": "tdd-quickfix",
+  "exceptions": [],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779869063,
+  "updated_at": 1779878889
+}

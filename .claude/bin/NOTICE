@@ -25,11 +25,19 @@ Upstream license:     Apache License, Version 2.0 (the `plantuml-asl-*.jar`
                       Apache 2.0 redistribution requirements; see the LICENSE
                       file in this directory for the full Apache 2.0 text).
 
-The fetcher (src/cli/plantuml.js) auto-detects an existing system `plantuml`
-binary on PATH and skips the download in that case. The flags `--no-plantuml`
-and `--require-plantuml` modify behavior: the former disables the fetch
-entirely, the latter promotes any fetch failure (network error or sha256
-mismatch) to exit code 4.
+The jar is always fetched at install time (per the always-download policy
+introduced 2026-05-27). PlantUML invocations at runtime — the
+`plantuml_syntax_guard` hook and the `/spec-render` skill — require Java 8+
+on PATH to invoke `java -jar .claude/bin/plantuml.jar`. The pinned sha256
+ensures the version a consumer install validates against matches the version
+this baseline was tested against, rather than whatever `plantuml` happens to
+be on the user's PATH (which can drift).
+
+The flags `--no-plantuml` and `--require-plantuml` modify behavior:
+`--no-plantuml` skips both the jar fetch and the Java preflight (runtime
+falls back to guide mode); `--require-plantuml` promotes any jar-fetch
+failure (network error or sha256 mismatch) AND a missing Java preflight to
+exit code 4 at install time.
 
 ================================================================================
 Why this NOTICE preserves the deferred-fetch framing

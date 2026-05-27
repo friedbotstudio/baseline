@@ -5,7 +5,7 @@
 import * as clackModule from '@clack/prompts';
 import { readFile } from 'node:fs/promises';
 import { freshInstall, forceInstall } from '../install.js';
-import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../plantuml.js';
+import { fetchPlantumlIfMissing, FETCH_OUTCOMES, runJavaPreflight } from '../plantuml.js';
 import { renderHeader } from './splash.js';
 
 const SUCCESS = 0;
@@ -35,6 +35,8 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
     return ERR_INSTALL_FAILED;
   }
 
+  const javaExit = reportJavaPreflightBranded(opts, prompts);
+  if (javaExit !== SUCCESS) return javaExit;
   const plantumlExit = await fetchPlantumlBranded(target, opts, prompts, spinner);
   if (plantumlExit !== SUCCESS) return plantumlExit;
 
@@ -47,6 +49,18 @@ async function copyTemplate(target, opts) {
   const installOpts = { withNpmrc: !!opts.withNpmrc };
   if (opts.force) await forceInstall(opts.templateDir, target, installOpts);
   else await freshInstall(opts.templateDir, target, installOpts);
+}
+
+function reportJavaPreflightBranded(opts, prompts) {
+  if (opts.noPlantuml) return SUCCESS;
+  const probe = runJavaPreflight();
+  if (probe.present) return SUCCESS;
+  if (opts.requirePlantuml) {
+    prompts.outro(`--require-plantuml: Java not found on PATH (${probe.reason}). Install JDK 8+ and re-run.`);
+    return ERR_PLANTUML_REQUIRED;
+  }
+  prompts.log.warn(`Java not found on PATH (${probe.reason}). PlantUML diagram validation will be skipped until Java is installed.`);
+  return SUCCESS;
 }
 
 async function fetchPlantumlBranded(target, opts, prompts, spinner) {

@@ -10,7 +10,7 @@ import { scanSentinels } from '../src/cli/conflict.js';
 import { freshInstall, forceInstall, COPY_EXCLUDE } from '../src/cli/install.js';
 import { threeWayMerge, ACTION_LABELS, ACTION_LABEL_WIDTH, isVersionAwareNoop } from '../src/cli/merge.js';
 import { loadManifest, buildManifestFromDir, MANIFEST_VERSION } from '../src/cli/manifest.js';
-import { fetchPlantumlIfMissing, FETCH_OUTCOMES } from '../src/cli/plantuml.js';
+import { fetchPlantumlIfMissing, FETCH_OUTCOMES, runJavaPreflight } from '../src/cli/plantuml.js';
 import { runDoctor, formatReport } from '../src/cli/doctor.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,9 +58,11 @@ Doctor:
   --json            Emit the structured report as JSON to stdout instead of
                     the text renderer. Honours --strict; same exit codes.
 
-PlantUML jar (~19 MB, fetched at install time from upstream):
-  --no-plantuml       Skip the jar download entirely.
-  --require-plantuml  Treat jar fetch failure (network/sha256) as fatal (exit 4).
+PlantUML jar (~19 MB, fetched at install time from upstream; runtime invokes
+it via \`java -jar .claude/bin/plantuml.jar\` — JDK 8+ on PATH required):
+  --no-plantuml       Skip both the jar download and the Java preflight.
+  --require-plantuml  Treat jar fetch failure (network/sha256) OR a missing
+                      Java install as fatal (exit 4).
 
 npm posture (off by default):
   --with-npmrc        Materialize a security-hardened target/.npmrc
@@ -77,7 +79,7 @@ Exit codes:
   2  bad command line, prompted input needed but no terminal, doctor finds no manifest,
      or deprecated --merge passed
   3  upgrade kept your customized files (or preserved files removed upstream)
-  4  --require-plantuml jar fetch failed, OR mechanical merge produced conflicts to resolve
+  4  --require-plantuml: jar fetch or Java preflight failed, OR mechanical merge produced conflicts to resolve
   5  semantic merge staged for /upgrade-project to reconcile in Claude Code
 `;
 
@@ -209,12 +211,28 @@ async function runPlainInstall(target, values, templateDir) {
   }
 
   if (!dryRun) {
+    const javaExit = await reportJavaPreflightPlain(values);
+    if (javaExit !== 0) return javaExit;
     const plantumlExit = await fetchPlantumlPlain(target, values);
     if (plantumlExit !== 0) return plantumlExit;
     const version = await readPackageVersion();
     io.log(`Baseline installed at ${target} (manifest v${MANIFEST_VERSION}).`);
     io.log(`For reproducible installs, pin the exact version: @friedbotstudio/create-baseline@${version}`);
   }
+  return 0;
+}
+
+async function reportJavaPreflightPlain(values) {
+  if (values['no-plantuml']) return 0;
+  const probe = runJavaPreflight();
+  if (probe.present) return 0;
+  if (values['require-plantuml']) {
+    await usageError(
+      `--require-plantuml: Java not found on PATH (${probe.reason}). Install JDK 8+ (e.g., \`brew install openjdk\` on macOS, \`apt install default-jre\` on Debian/Ubuntu) and re-run.`,
+    );
+    return 4;
+  }
+  io.warn(`Java not found on PATH (${probe.reason}). PlantUML diagram validation will be skipped (no syntax check on commit, no /spec-render). Install JDK 8+ (e.g., \`brew install openjdk\` on macOS, \`apt install default-jre\` on Debian/Ubuntu) to enable validation.`);
   return 0;
 }
 
@@ -225,7 +243,7 @@ async function fetchPlantumlPlain(target, values) {
   });
   if (result.outcome === FETCH_OUTCOMES.WARNED_NETWORK_FAILURE
       || result.outcome === FETCH_OUTCOMES.WARNED_HASH_MISMATCH) {
-    io.warn(`PlantUML jar fetch failed (${result.reason}); install continued. Retry with --require-plantuml or set system plantuml on PATH.`);
+    io.warn(`PlantUML jar fetch failed (${result.reason}); install continued. Diagram validation will be skipped until the jar is available. Pass --require-plantuml next time to make this fatal, or re-run the install when network is available.`);
     return 0;
   }
   if (result.outcome === FETCH_OUTCOMES.ERRORED_REQUIRE_PLANTUML) {

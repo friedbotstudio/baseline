@@ -15,7 +15,7 @@ User-invokable only. This skill has side effects (writes SVGs and an index). Cla
 
 ## Prerequisites
 
-- `plantuml` CLI on PATH (`brew install plantuml` / `apt-get install plantuml`).
+- `java` on PATH (JDK 8+) + the pinned `plantuml.jar` at `.claude/bin/plantuml.jar` (fetched at install time; SHA-verified). The render script invokes `java -jar .claude/bin/plantuml.jar -tsvg ...` and exits 2 with a named remedy if either dep is missing.
 - The spec at `docs/specs/<slug>.md` exists and passes `spec_diagram_presence_guard` + `plantuml_syntax_guard` — otherwise rendering will surface the same errors.
 
 ## Steps
@@ -42,4 +42,4 @@ User-invokable only. This skill has side effects (writes SVGs and an index). Cla
 ## Notes
 
 - The render directory is a build output. Add `docs/specs/_rendered/` to `.gitignore` if you don't want the SVGs in the repo; the PlantUML sources in the spec are the source of truth.
-- For offline review without installing PlantUML, use the `plantuml` MCP server from `.mcp.json` — it talks to a PlantUML renderer over HTTP. This skill prefers the local CLI because it's faster and keeps renders self-contained.
+- For offline review without Java + the pinned jar, use the `plantuml` MCP server from `.mcp.json` — it talks to a PlantUML renderer over HTTP. This skill prefers the local `java -jar` path because it's faster, keeps renders self-contained, and uses the SHA-pinned jar (so the version a consumer renders against matches what this baseline was tested with).

@@ -81,6 +81,10 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - ship /upgrade-project marker helper + build-time SKILL.md scan gate
 - catch dev-tree refs in shipped SKILL.md prose
 
+### Fixed
+
+- vendor src/cli modules into shipped tree + harden scanner
+
 ## [Unreleased]
 
 ### Added
