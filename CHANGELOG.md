@@ -105,6 +105,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 - add code-browser skill as default code-navigation mechanism
 - version-aware no-op fast-path + baseline_version stamping
+- `freeform` workflow track as the 5th canonical selectable Track in `.claude/workflows.jsonl` (and `src/.claude/workflows.template.jsonl` mirror). DAG: `memory-flush` → `/grant-commit` → `/changelog` → `/commit`; invariants `["commits"]`. All 22 hooks remain active; phase ordering relaxed by blanket exceptions across every pre-commit phase. For ad-hoc batches of heterogeneous edits, optimization passes across multiple landmines, and small drive-by fixes where a per-fix workflow would be more ceremony than the work needs. CLAUDE.md Article IV / `docs/init/seed.md` §18.1 / `.claude/skills/triage/SKILL.md` / `README.md` / `site-src/workflows.njk` / `site-src/index.njk` updated in lockstep; materializer test fixture added at `tests/track-tasklist-materializer.test.mjs`; canonical track count now 5 selectable + 2 sub-tracks.
 
 ### Changed
 
@@ -114,6 +115,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 - always-download jar + java -jar runtime; pin now enforced
 - vendor src/cli modules into shipped tree + harden scanner
+- pre-existing stale `audit.sh` → `audit.mjs` reference in `tests/memory-flush-phase.test.mjs` (line 23 + 277; `bash` runtime → `node`) that the `.sh` → `.mjs` port commit `756dd42` left behind; recovers 1 of the 14 npm-test failures. The remaining 13 across `tests/audit-baseline.test.mjs` + `tests/spec-lint.test.mjs` + `tests/spec-render.test.mjs` are captured for batch cleanup as backlog `stale-sh-refs-in-tests-after-mjs-port-7c8e`.
 
 ## [Unreleased]
 

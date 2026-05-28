@@ -20,7 +20,7 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
 const SESSION_START_HOOK = path.join(REPO_ROOT, '.claude/hooks/memory_session_start.mjs');
-const AUDIT_SCRIPT = path.join(REPO_ROOT, '.claude/skills/audit-baseline/audit.sh');
+const AUDIT_SCRIPT = path.join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs');
 
 // ---------- Foundation: file readers + fixture builders ----------
 
@@ -274,7 +274,7 @@ describe('AC-010 — phase-ordering enumerations consistently name memory-flush 
 
 describe('AC-012 — audit-baseline exits 0 (regression guard; must stay green after the change)', () => {
   it('test_when_audit_runs_then_zero_FAILs', () => {
-    const result = spawnSync('bash', [AUDIT_SCRIPT], {
+    const result = spawnSync('node', [AUDIT_SCRIPT], {
       env: { ...process.env, CLAUDE_PROJECT_DIR: REPO_ROOT },
       encoding: 'utf8',
     });

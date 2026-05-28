@@ -13,6 +13,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
 - **Bugfix**: entry = `spec` (Phase 4) OR `tdd` (Phase 6), depending on whether the bug needs a written spec. Ask if unclear; default to `spec` when the bug affects contract/behaviour and `tdd` when it's a localized misbehaviour with a known failing case.
 - **Quickfix** (typo across multiple files, multi-file config tweak, small bundled patch): entry = `tdd`. May also mark phases `intake`, `scout`, `research`, `spec`, `review` as exceptions.
 - **Chore** (no TDD-driven code change needed): entry = `chore`. Choose chore when the request has no failing-test-driven code change — documentation edits, governance count refreshes, vendored-skill content updates, configuration tweaks, formatting / typo fixes, dependency bumps where no project code changes, skill consolidation moves, file renames with no behaviour change. The classification rule is *"if there's no failing test that should exist for this work, it's a chore"*. Mark `intake` / `brd` / `scout` / `research` / `spec` / `review` / `tdd` as exceptions in `workflow.json`; **leave `simplify`, `security`, `integrate`, `document`, `archive` and `commit` in the phase list** — the chore skill itself decides which of those phases to actually run based on its conditional triggers (it does not silently skip them). If the request needs a failing test to drive correctness, route to `tdd` or higher instead.
+- **Freeform** (ad-hoc batch of heterogeneous edits): entry = `freeform`. Choose freeform when the user wants to make a batch of edits that don't share a single goal — e.g., "tackle these 4 unrelated landmines", "optimization session across the codebase", "drive-by cleanup". Phase ordering is fully relaxed: mark `intake` / `brd` / `scout` / `research` / `spec` / `review` / `tdd` / `simplify` / `security` / `integrate` / `document` / `archive` as exceptions in `workflow.json`. The DAG carries only `memory-flush` → `grant-commit` → `changelog` → `commit`. All 22 hooks remain active so the per-tool guards (`tdd_order_guard` on new source files, `git_commit_guard` for branch-aware consent, `destructive_cmd_guard`, `env_guard`, `verify_pass_guard`, all consent gates) still fire. Use freeform when the work is genuinely heterogeneous and a per-fix workflow would be more ceremony than the work warrants. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
 
 # Steps
 
@@ -24,7 +25,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    {
      "request": "<the request>",
      "slug": "<workflow slug>",
-     "track_id": "<intake-full|spec-entry|tdd-quickfix|chore>",
+     "track_id": "<intake-full|spec-entry|tdd-quickfix|chore|freeform>",
      "exceptions": ["<phase>", ...],
      "completed": [],
      "skipped_alternates": [],
@@ -34,12 +35,12 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    }
    ```
 
-   The `track_id` value is the `track_id` field of the Track you picked in step 5c above (one of `intake-full`, `spec-entry`, `tdd-quickfix`, `chore`, OR a project-declared selectable Track from `.claude/workflows.jsonl`). The legacy pre-§18 field `entry_phase` is NOT written — downstream skills (intake / tdd / chore / harness) read `track_id` directly. Pre-§18 workflow.json files (those that still carry `entry_phase`) are auto-migrated by harness preflight Step 3a via the shipped `.claude/skills/harness/workflow-migrator.js` mirror (synced from `src/cli/workflow-migrator.js` at build time by `scripts/build-template.sh` Stage 0b).
+   The `track_id` value is the `track_id` field of the Track you picked in step 5c above (one of `intake-full`, `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, OR a project-declared selectable Track from `.claude/workflows.jsonl`). The legacy pre-§18 field `entry_phase` is NOT written — downstream skills (intake / tdd / chore / harness) read `track_id` directly. Pre-§18 workflow.json files (those that still carry `entry_phase`) are auto-migrated by harness preflight Step 3a via the shipped `.claude/skills/harness/workflow-migrator.js` mirror (synced from `src/cli/workflow-migrator.js` at build time by `scripts/build-template.sh` Stage 0b).
 
    The `source_backlog_keys` field is optional. When the user's request explicitly names one or more backlog entries this workflow picks up (the common framing is a `Source:` line listing backlog keys), populate the array with those keys. `/commit` (Phase 11) reads this field and invokes `sweep.mjs --mode stamp-closure` after the commit lands, stamping each named entry with `status: picked-up` + `superseded-at: <today>` so the next `/memory-flush` Step 0a auto-closes them. Absent / empty array → `/commit` skips the stamp step entirely (backward-compatible for any workflow that pre-dates the field). `/triage` does NOT auto-detect backlog keys from free-form prose — the user populates the field (or names them in the triage prompt and you populate it during step 4).
 5. **Seed the workflow tasklist** — workflows.jsonl-driven (post-§18; per CLAUDE.md Article IV amendment + seed.md §18).
 
-   **Source of truth.** `.claude/workflows.jsonl` declares every Track this project can execute, one Track per JSONL line. The four canonical tracks (intake-full, spec-entry, tdd-quickfix, chore) plus any per-project additions live there. Sub-tracks (selectable=false; e.g., swarm-implementation, tdd-worker-chain) are referenced by `sub_track:` in selector-node alternates.
+   **Source of truth.** `.claude/workflows.jsonl` declares every Track this project can execute, one Track per JSONL line. The five canonical selectable tracks (intake-full, spec-entry, tdd-quickfix, chore, freeform) plus any per-project additions live there. Sub-tracks (selectable=false; e.g., swarm-implementation, tdd-worker-chain) are referenced by `sub_track:` in selector-node alternates.
 
    **Procedure:**
 
@@ -57,7 +58,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
 
    **Non-git projects.** Tracks declaring `git_only` invariant (e.g., `swarm-implementation`) are excluded from the candidate set on non-git projects. The `commit`-bearing tracks (intake-full, spec-entry, tdd-quickfix, chore) auto-except their `grant-commit`, `changelog`, `commit` nodes — the materializer's runtime context (passed by triage) carries an `excluded_node_ids` set; the helper skips those nodes during TaskCreate emission.
 
-   **Reference: canonical track shapes (mirrored in workflows.jsonl).** The four selectable tracks shipped in the pristine template are byte-equivalent to these pre-§18 ordering descriptions:
+   **Reference: canonical track shapes (mirrored in workflows.jsonl).** The four pre-§18 selectable tracks shipped in the pristine template are byte-equivalent to these ordering descriptions; the fifth (`freeform`) is a §18-native addition with no pre-§18 counterpart:
 
    **For `chore` track** (single phase + memory-flush + commit gate):
    - `Run /chore for <slug>` — activeForm: "Running chore", metadata: `{"phase": "chore"}`
@@ -72,6 +73,13 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    **For `spec`-entry track** (skip upstream): `Run /spec`, `Wait for /approve-spec <path>` (`needs_user`), `Run /tdd`, `Run /simplify`, `Run /security` (unless excepted), `Run /integrate`, `Run /document`, `Run /archive`, `Run /memory-flush`, `Wait for /grant-commit` (`needs_user`), `Run /changelog`, `Run /commit` — each with `addBlockedBy` set to the previous task's id.
 
    **For `intake`-entry full track**: `Run /intake`, `Run /brd` (only if stakeholder-heavy), `Run /scout`, `Run /research`, `Run /spec`, `Wait for /approve-spec <path>` (`needs_user`), `Run /tdd` OR (`Run /swarm-plan`, `Wait for /approve-swarm <slug>` (`needs_user`), `Run /swarm-dispatch`), `Run /simplify`, `Run /security` (unless excepted), `Run /integrate`, `Run /document`, `Run /archive`, `Run /memory-flush`, `Wait for /grant-commit` (`needs_user`), `Run /changelog`, `Run /commit`. **On non-git projects the swarm branch SHALL NOT be seeded** — only `Run /tdd` goes in the list. Swarm-vs-solo is a Phase-6 main-context decision (per CLAUDE.md Article V) only on git projects; non-git workflows resolve to solo at triage time because `swarm-plan`, `approve-swarm`, and `swarm-dispatch` are already in `exceptions`. On non-git projects `changelog` is also auto-excepted alongside `commit`.
+
+   **For `freeform` track** (closing sequence only — work happens between `/triage` and the harness loop's first task):
+   - `Run /memory-flush for <slug>` — activeForm: "Running memory-flush", metadata: `{"phase": "memory-flush"}`
+   - `Wait for /grant-commit` — metadata: `{"phase": "grant-commit", "needs_user": true}`, addBlockedBy previous
+   - `Run /changelog for <slug>` — activeForm: "Running changelog", metadata: `{"phase": "changelog"}`, addBlockedBy previous
+   - `Run /commit for <slug>` — activeForm: "Running commit", metadata: `{"phase": "commit"}`, addBlockedBy previous
+   No archive node — freeform produces no slug bundle. Triage SHALL populate `exceptions` with the full pre-commit phase set: `["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "security", "integrate", "document", "archive"]`. The harness re-seeds this 4-task DAG when the user invokes `/harness`; freeform's "work" is the user's free-form editing that happens before the harness loop runs.
 
    For every task: `subject` is imperative ("Run /scout for <slug>" / "Wait for /approve-spec <path>"); `description` names the phase + the slug; `metadata.phase` carries the phase name; consent-gate tasks set `metadata.needs_user: true`. Wire `addBlockedBy` so each task blocks until its predecessor completes — this surfaces the workflow's true dependency graph and prevents `/harness` from racing past a gate.
 

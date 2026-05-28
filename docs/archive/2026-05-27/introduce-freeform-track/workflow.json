@@ -1,0 +1,29 @@
+{
+  "request": "Introduce a 5th workflow track called freeform with DAG memory-flush → grant-commit → changelog → commit, plus matching governance edits across CLAUDE.md / seed.md (byte-mirrors), triage SKILL.md, and a materializer test fixture.",
+  "slug": "introduce-freeform-track",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd",
+    "security"
+  ],
+  "completed": [
+    "chore",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1779917775,
+  "updated_at": 1779920536
+}

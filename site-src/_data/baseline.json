@@ -30,7 +30,7 @@
   "phaseGates": 3,
   "runtimeGates": 1,
   "tracks": {
-    "canonical": 4,
+    "canonical": 5,
     "subTracks": 2
   },
   "mcpServersWord": "three",

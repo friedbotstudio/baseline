@@ -13,20 +13,6 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 
 ---
 
-## migrate-bash-python-heredocs-to-javascript-d454
-
-> verbatim (user, 2026-05-17):
-> this is a good point to remember that we want to move away from python and instead move to javascript for all these tasks.
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: backlog-memory-bucket
-- estimated-effort: large
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: 18 bash-with-python-heredoc hooks plus standalone Python helpers (`sweep.py`, `resume_writer.py`, the `audit.sh` heredoc) need porting. The two JS-port pilots already landed (`git_commit_guard.mjs`, `consent_gate_grant.mjs`) provide the pattern — Node ESM helpers in `.claude/hooks/lib/common.mjs`, settings.json wiring on `.mjs` filenames. The `conventions.md → hook-script-shape` entry pins the current "python3 heredoc, no jq" contract; that convention flips with this migration. The user explicitly chose option B during the backlog-memory-bucket workflow: ship the backlog feature as-spec'd in Python, then queue the migration as a separate follow-on workflow with its own intake + scout + research + spec.
-
 ## improved-backlog-item-detection-046c
 
 > verbatim (user, 2026-05-17):
@@ -152,6 +138,34 @@ Future-work intent captured automatically by `memory_stop.sh`. Curated into this
 - verified-at: HEAD
 - last-touched: 2026-05-20
 - caveat: When the harness yields at `/approve-spec`, the reviewer often has to manually open three artifacts (intake, research, spec) to find every open question — and across them, the same question can recur under different framings while the spec's own §Open questions list omits items the upstream artifacts already declared. The user surfaced this gap at the workflow-extension-via-workflows-json approve-gate. Proposed automation: a small helper invoked at gate-A yield that (i) reads the slug's intake/research/spec/BRD if present, (ii) extracts every `## Open questions` entry (and equivalents like research's "Open questions for /spec to resolve"), (iii) dedupes by semantic intent, (iv) classifies each as `must-decide-before-approval` (touches load-bearing design choice surfaced in the recommendation pivot or in the spec's §Open questions) vs `settled-in-spec` (spec already picked a default but flagged as decidable) vs `defer-to-tdd` (resolvable at impl time), and (v) emits a tight summary + bucketed question list to the harness yield message. Probably belongs in the harness skill body (an extra step before emitting the yield terminal message when `reason: "yielded at /approve-spec"`) or as a new `spec-summary` skill the harness invokes inline. Tradeoff: more harness-body logic vs cleaner separation in a dedicated skill. Test corpus: any past workflow's approve-gate transcript; verify the extracted question set matches what a human reviewer would surface.
+
+## canonical-track-count-duplicated-across-10-surfaces-9a2b
+
+> verbatim (user, 2026-05-28):
+> we missed updating on homepage. proof that our data is still duplicated across different pages
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-05-28
+- raised-in-context: introduce-freeform-track chore — homepage meta-strip stat rendered the old "4 Tracks" because `site-src/_data/baseline.json → tracks.canonical` wasn't bumped alongside the prose mentions
+- estimated-effort: medium
+- verified-at: HEAD
+- last-touched: 2026-05-28
+- caveat: The canonical track count lives in 10 places that must stay in sync: `.claude/workflows.jsonl` (live data; the actual track records), `site-src/_data/baseline.json → tracks.canonical` (homepage meta-strip), and 8 hardcoded prose mentions across `README.md` (×2: line 44 + table row), `CLAUDE.md` (Article IV via prose-mention indirectly — no explicit count line today), `src/CLAUDE.template.md` (mirror), `docs/init/seed.md` §18.1 (×2: 7-track set + canonical-four wording), `src/seed.template.md` (mirror), `.claude/skills/triage/SKILL.md` (canonical-track-shape reference paragraph), `site-src/workflows.njk` (frontmatter description + lead + body listing + sub-track count line + "as the canonical N" FAQ), and `site-src/index.njk` (`<h3>`, body, `<title>` SVG label, figcaption "N other tracks", FAQ "N canonical tracks"). Every change adds churn across all 10. The fix: derive the count from `.claude/workflows.jsonl` at build time and surface as a template variable. `site-src/_data/baseline.json` is already eleventy-data; an adjacent `tracks.js` (or extending `baseline.js`) could count selectable Tracks in workflows.jsonl and expose `baseline.tracks.canonical` to the site. Prose mentions that say "five canonical tracks" remain hardcoded — those need a different remedy (templated-prose injection, or an audit check that grep-counts vs the JSON source). At minimum, `baseline.json → tracks.canonical` should be the single template-source, and an audit check should fail when the JSON value disagrees with the actual selectable-track count in workflows.jsonl.
+
+## stale-sh-refs-in-tests-after-mjs-port-7c8e
+
+> assistant-deferral (claude, 2026-05-28):
+> 14 npm-test failures persisted across the introduce-freeform-track chore. Root cause: commit 756dd42 ported skill helpers from bash to Node ESM (audit.sh → audit.mjs, render.sh → render.mjs, lint.sh → lint.mjs) but left test files still spawning `bash <skill>/<helper>.sh`. The .mjs files exist; the .sh files don't. The audit-baseline skill's own test PASSES (it runs the audit binary directly via project.json → test.cmd) so the regression was invisible until `npm test` ran the full Node suite.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-28
+- raised-in-context: introduce-freeform-track chore — integrate phase surfaced the failures as advisory findings (not verdict-flipping)
+- estimated-effort: small
+- verified-at: 756dd42
+- last-touched: 2026-05-28
+- caveat: Affected tests and their failing assertion pattern: `tests/audit-baseline.test.mjs` (test_when_audit_baseline_runs_post_amendment_then_exits_zero, test_when_audit_runs_after_clean_build_then_exits_zero, test_when_baseline_SKILL_md_body_tampered_then_audit_reports_hash_mismatch, test_when_owner_field_removed_from_baseline_skill_then_audit_fails, test_when_baseline_skill_directory_removed_then_audit_reports_baseline_skill_missing, test_when_user_skill_added_then_audit_ignores_it, test_when_section_17_missing_from_seed_then_audit_reports_missing_citation, test_when_owner_field_present_then_value_is_baseline_or_user) — all spawn `bash .../audit-baseline/audit.sh`. `tests/spec-lint.test.mjs` (test_when_spec_lint_runs_on_*) — spawn `bash .../spec-lint/lint.sh`. `tests/spec-render.test.mjs` (test_when_spec_render_runs_with_*) — spawn `bash .../spec-render/render.sh`. One was already fixed inline during this chore (tests/memory-flush-phase.test.mjs:23 + 277, audit.sh → audit.mjs, bash → node). Remediation pattern proven: change AUDIT_SCRIPT path to `.mjs`, change spawnSync('bash', ...) to spawnSync('node', ...). Ideal vehicle: a freeform-track workflow that batches these 14 + checks for any other `*\.sh` references in tests against the actual skill-helper inventory. The freeform-track introduction (this same chore) was designed for exactly this kind of batched residual-debt work.
 
 ## changelog-actuator-reads-head-not-staged-4dc0
 

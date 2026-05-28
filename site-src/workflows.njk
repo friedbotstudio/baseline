@@ -5,9 +5,9 @@ pageTitle: "Workflow tracks · baseline"
 title: Workflow tracks
 titlePrimary: Workflow tracks
 titleAccent: "."
-description: "Workflows live in .claude/workflows.jsonl. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Four selectable tracks ship in the pristine template."
+description: "Workflows live in .claude/workflows.jsonl. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Five selectable tracks ship in the pristine template."
 eyebrow: Reference
-lead: "Workflows live in <code>.claude/workflows.jsonl</code>. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Four selectable tracks ship in the pristine template."
+lead: "Workflows live in <code>.claude/workflows.jsonl</code>. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. Five selectable tracks ship in the pristine template."
 active: workflows
 sidebarActive: workflows
 heroSymbol: workflows
@@ -33,16 +33,17 @@ toc:
   </div>
 
   <h3 id="canonical">The canonical set</h3>
-  <p>Four selectable tracks ship in the pristine template:</p>
+  <p>Five selectable tracks ship in the pristine template:</p>
   <ul>
     <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, changelog, commit.</li>
     <li><code>spec-entry</code>. Starts at <code>/spec</code>. For a bugfix where the failing case is contract-level. Skips intake, scout, research.</li>
     <li><code>tdd-quickfix</code>. Starts at <code>/tdd</code>. For a localised bug with a known failing case. Skips spec entirely.</li>
     <li><code>chore</code>. Stripped-down. For documentation, configuration tweaks, dependency bumps. Skips scenario and implement.</li>
+    <li><code>freeform</code>. Ad-hoc batch of edits with relaxed phase ordering. The DAG carries only the closing sequence: <code>memory-flush</code>, <code>/grant-commit</code>, <code>changelog</code>, <code>commit</code>. All 22 hooks remain active, so per-tool guards still fire. For batches of unrelated edits that share no single goal.</li>
   </ul>
 
   <h3 id="subtracks">Sub-tracks</h3>
-  <p>Two sub-tracks ship in the canonical set, referenced only by selector nodes inside the four selectable tracks: <code>swarm-implementation</code> (parallel dispatch via <code>swarm-plan</code> and <code>swarm-dispatch</code>) and <code>tdd-worker-chain</code> (solo fallback). Sub-tracks carry <code>selectable: false</code>; triage cannot pick them directly.</p>
+  <p>Two sub-tracks ship in the canonical set, referenced only by selector nodes inside the five selectable tracks: <code>swarm-implementation</code> (parallel dispatch via <code>swarm-plan</code> and <code>swarm-dispatch</code>) and <code>tdd-worker-chain</code> (solo fallback). Sub-tracks carry <code>selectable: false</code>; triage cannot pick them directly.</p>
 </section>
 
 <section class="section">
@@ -106,7 +107,7 @@ toc:
   </div>
   <p>Add a Track record to <code>.claude/workflows.jsonl</code>, one record per line. The schema lives at <code>.claude/schemas/workflow-track.v1.json</code> and is documented in <code>seed.md §18.2</code>.</p>
   <p>Validate with <code>/init-project doctor</code> before the next <code>/triage</code> invocation. The doctor checks JSON Schema conformance and Article IV invariants; named errors point at offending lines with a remediation path.</p>
-  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector + AskUserQuestion flow as the canonical four.</p>
+  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector + AskUserQuestion flow as the canonical five.</p>
 
   <h3 id="example">Example</h3>
   <p>A minimal pre-commit-lint track that runs a linter after <code>memory-flush</code> and before <code>/grant-commit</code>:</p>
