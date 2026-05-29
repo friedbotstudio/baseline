@@ -1,0 +1,21 @@
+@startuml
+title Behavior #1 — Brainstorm gate at entry-skill Step 0.5
+actor Engineer
+participant EntrySkill as "/intake | /spec | /tdd"
+participant WF as "workflow.json"
+participant Brainstorm as "brainstorm skill"
+participant Brief as "docs/brief/<slug>.md"
+
+Engineer -> EntrySkill : invoke
+EntrySkill -> WF : read skip_brainstorm
+== AC-002: skip path ==
+WF --> EntrySkill : skip_brainstorm = true
+EntrySkill -> EntrySkill : proceed to template-fill (no Skill(brainstorm))
+== AC-001: fire path ==
+WF --> EntrySkill : skip_brainstorm = false (or absent)
+EntrySkill -> Brainstorm : Skill(brainstorm, request, slug, calling_phase)
+Brainstorm -> Brainstorm : Stages 0-3
+Brainstorm -> Brief : write docs/brief/<slug>.md
+Brainstorm --> EntrySkill : {final_state: "complete"}
+EntrySkill -> EntrySkill : proceed to template-fill with brief as input
+@enduml

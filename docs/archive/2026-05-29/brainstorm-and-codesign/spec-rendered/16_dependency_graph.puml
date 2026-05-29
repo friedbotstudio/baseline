@@ -1,0 +1,22 @@
+@startuml
+' @kind dependency-graph
+title Dependencies — paired collaborative-drafting modes
+left to right direction
+[triage] --> [workflow.json]
+[intake] --> [brainstorm]
+[spec] --> [brainstorm]
+[tdd] --> [brainstorm]
+[brainstorm] --> [workflow.json]
+[brainstorm] --> [.claude/state/brainstorm/]
+[brainstorm] --> [docs/brief/]
+[spec] --> [.claude/state/codesign/]
+[spec] --> [docs/specs/]
+[research] --> [docs/research/]
+[harness] --> [.claude/state/codesign/]
+[harness] --> [spec]
+[archive] --> [archive.sh]
+[archive.sh] --> [docs/brief/]
+[audit-baseline] --> [manifest.json]
+[build-manifest.mjs] --> [brainstorm]
+[build-manifest.mjs] --> [manifest.json]
+@enduml

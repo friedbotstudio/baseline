@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Container>
+title Container — paired collaborative-drafting modes
+System_Boundary(harness, "Baseline harness") {
+  Container(triage, "triage skill", "Skill", "parses flags; sets workflow.json fields")
+  Container(brainstorm, "brainstorm skill (NEW)", "Skill", "4-stage PM-mode dialogue; writes docs/brief")
+  Container(intake, "intake skill", "Skill", "Step 0.5 brainstorm gate; template-fill")
+  Container(spec, "spec skill", "Skill", "Step 1.5 codesign mode; diagram-driven drafting")
+  Container(tdd, "tdd skill", "Skill", "Step 0.5 brainstorm gate; recipe + contract")
+  Container(research, "research skill", "Skill", "advisory codesign recommendation in memo")
+  Container(harnessOrch, "harness skill", "Skill", "integrate-failure decision tree; codesign re-entry")
+  Container(archive, "archive skill", "Skill", "bundles docs/brief into archive")
+  ContainerDb(state, "state store", "JSON files", "workflow.json, brainstorm/<slug>.json, codesign/<slug>.json")
+  ContainerDb(artifacts, "artifact store", "Markdown files", "docs/brief/, docs/specs/, docs/intake/, docs/scout/, docs/research/")
+}
+Rel(triage, state, "writes workflow.json with new fields")
+Rel(intake, brainstorm, "Skill(brainstorm) at Step 0.5")
+Rel(spec, brainstorm, "Skill(brainstorm) at Step 0.5")
+Rel(tdd, brainstorm, "Skill(brainstorm) at Step 0.5")
+Rel(brainstorm, state, "reads/writes brainstorm/<slug>.json")
+Rel(brainstorm, artifacts, "writes docs/brief/<slug>.md")
+Rel(spec, state, "reads codesign_mode; writes codesign/<slug>.json")
+Rel(spec, artifacts, "writes docs/specs/<slug>.md with ## Decisions")
+Rel(harnessOrch, state, "writes revisit_context on integrate-fail-needs-spec-change")
+Rel(harnessOrch, spec, "re-invokes /spec on codesign re-entry")
+Rel(research, artifacts, "advisory codesign recommendation in memo")
+Rel(archive, artifacts, "bundles docs/brief into archive")
+@enduml

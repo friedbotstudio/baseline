@@ -1,0 +1,15 @@
+@startuml
+title Behavior #3 — Stage 3 synthesize, confirm, persist
+actor Engineer
+participant S3 as "Stage 3: confirm-and-persist"
+participant Q as "AskUserQuestion"
+participant Brief as "docs/brief/<slug>.md"
+
+S3 -> S3 : synthesize draft brief in memory
+S3 -> Q : AskUserQuestion(Yes/Edit/Restart)
+Q -> Engineer : show synthesized brief
+Engineer --> Q : Yes, capture it
+Q --> S3 : confirm=Yes
+S3 -> Brief : write actor, trigger, current, desired, non_goals, leakage
+S3 --> S3 : return {final_state: "complete", brief_path}
+@enduml

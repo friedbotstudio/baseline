@@ -1,0 +1,23 @@
+@startuml
+title Behavior #2 — Stage 2 dialogue discipline
+actor Engineer
+participant S2 as "Stage 2: probe-loop"
+participant Disc as "discipline-assertor"
+participant Q as "AskUserQuestion"
+
+loop per missing gap
+  S2 -> S2 : draft probe text
+  S2 -> Disc : assert(text)
+  alt no solution tokens
+    Disc --> S2 : OK
+    S2 -> Q : AskUserQuestion(probe)
+    Q -> Engineer : prompt
+    Engineer --> Q : answer
+    Q --> S2 : answer captured
+  else solution-shaped token detected
+    Disc --> S2 : VIOLATION
+    S2 -> S2 : rewrite probe (test fails if reached in production)
+  end
+end
+S2 -> S2 : advance to Stage 3 after gaps closed or cap=5
+@enduml

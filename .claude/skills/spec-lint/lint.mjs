@@ -176,6 +176,21 @@ function checkDesignCalls(spec, pj) {
   return ['PASS', `${uiHits.length} UI path(s) match design_calls rows`];
 }
 
+function checkCodesignDecisions(spec, root) {
+  // Check #4 — codesign mode requires ## Decisions section presence.
+  // Fires only when workflow.json -> codesign_mode is true.
+  const wfPath = join(root, '.claude', 'state', 'workflow.json');
+  if (!existsSync(wfPath)) return ['SKIP', 'no workflow.json'];
+  let wf;
+  try { wf = JSON.parse(readFileSync(wfPath, 'utf8')); } catch { return ['SKIP', 'workflow.json malformed']; }
+  if (wf.codesign_mode !== true) return ['SKIP', 'codesign_mode not active'];
+
+  if (!/^## Decisions\s*$/m.test(spec)) {
+    return ['FAIL', 'codesign-decisions-presence: codesign_mode=true but ## Decisions section absent'];
+  }
+  return ['PASS', '## Decisions section present'];
+}
+
 function main(argv) {
   const slug = argv[0];
   if (!slug) {
@@ -203,6 +218,15 @@ function main(argv) {
     ['ac_traceability', ...checkTraceability(spec, blocks)],
     ['design_calls', ...checkDesignCalls(spec, pj)],
   ];
+
+  // Check #4 — codesign_decisions — only included in the report when
+  // workflow.json -> codesign_mode is true. Suppressed entirely otherwise so
+  // the row does not appear in output (parallel to design_calls which only
+  // fires when tdd.ui_globs intersects the spec write_set).
+  const codesignResult = checkCodesignDecisions(spec, root);
+  if (codesignResult[0] !== 'SKIP') {
+    results.push(['codesign_decisions', ...codesignResult]);
+  }
 
   const nameW = Math.max(...results.map(r => r[0].length));
   process.stdout.write('check'.padEnd(nameW) + '  ' + 'status'.padEnd(6) + '  detail\n');

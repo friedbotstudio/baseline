@@ -1,0 +1,19 @@
+@startuml
+title Behavior #6 — Default-on-missing field semantics
+actor Engineer
+participant Skill as "entry skill"
+participant WF as "workflow.json"
+
+Engineer -> Skill : invoke (legacy workflow.json present)
+Skill -> WF : read skip_brainstorm
+WF --> Skill : undefined (field absent)
+Skill -> Skill : default skip_brainstorm = false
+Skill -> WF : read codesign_mode
+WF --> Skill : undefined (field absent)
+Skill -> Skill : default codesign_mode = false
+note right of Skill
+  No write to workflow.json.
+  Field-absent semantics: brainstorm fires; codesign off.
+end note
+Skill -> Skill : proceed with defaults
+@enduml

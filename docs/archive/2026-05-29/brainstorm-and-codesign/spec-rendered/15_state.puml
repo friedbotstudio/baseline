@@ -1,0 +1,16 @@
+@startuml
+title State — brainstorm dialogue
+[*] --> Stage0
+Stage0 --> Skipped : skip_brainstorm=true
+Skipped --> [*]
+Stage0 --> Stage1 : skip_brainstorm=false
+Stage1 --> Stage2 : gaps identified
+Stage2 --> Stage2 : probe iteration (cap=5)
+Stage2 --> Stage3 : gaps closed OR cap reached
+Stage3 --> Confirmed : Yes
+Stage3 --> Stage2 : Edit specific section
+Stage3 --> Stage1 : Restart
+Stage3 --> NeedsHuman : 5 confirm-cycles divergent
+Confirmed --> [*]
+NeedsHuman --> [*]
+@enduml

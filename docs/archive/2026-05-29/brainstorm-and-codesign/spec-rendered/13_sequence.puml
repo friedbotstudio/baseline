@@ -1,0 +1,32 @@
+@startuml
+title Behavior #8 — /triage flag parsing + heuristic detection
+actor Engineer
+participant Triage as "/triage"
+participant WF as "workflow.json"
+
+Engineer -> Triage : /triage "<request> [--no-brainstorm] [--codesign]"
+Triage -> Triage : regex match flags from request string
+alt --no-brainstorm present
+  Triage -> Triage : skip_brainstorm = true (no AskUserQuestion)
+else --no-brainstorm absent
+  Triage -> Triage : heuristic: actor+trigger+desired in one sentence?
+  alt heuristic triggered
+    Triage -> Engineer : AskUserQuestion(skip brainstorm?)
+    Engineer --> Triage : choice
+  else
+    Triage -> Triage : skip_brainstorm = false (default)
+  end
+end
+alt --codesign present
+  Triage -> Triage : codesign_mode = true
+else --codesign absent
+  Triage -> Triage : keyword match in request (CV / model / numerical / crypto / consensus / realtime / kernel / distributed)
+  alt keyword matched
+    Triage -> Engineer : AskUserQuestion(enable codesign?)
+    Engineer --> Triage : choice
+  else
+    Triage -> Triage : codesign_mode = false (default)
+  end
+end
+Triage -> WF : write workflow.json with both fields
+@enduml

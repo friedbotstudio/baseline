@@ -53,6 +53,7 @@ failed=0
 
 declare -a PAIRS=(
     "docs/intake/$SLUG.md                            intake.md"
+    "docs/brief/$SLUG.md                             brief.md"
     "docs/brd/$SLUG.md                               brd.md"
     "docs/scout/$SLUG.md                             scout.md"
     "docs/research/$SLUG.md                          research.md"

@@ -17,7 +17,7 @@ The job to be done: *make it structurally impossible for an AI agent to violate 
 
 ## Product Purpose
 
-The Claude Code Baseline is a repository overlay. It ships twenty-two write-boundary and lifecycle hooks, thirty-six skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed consent gates, and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx @friedbotstudio/create-baseline ./my-target`.
+The Claude Code Baseline is a repository overlay. It ships twenty-two write-boundary and lifecycle hooks, forty skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed consent gates, and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx @friedbotstudio/create-baseline ./my-target`.
 
 Soft engineering rules — no force-push, no `--amend` of published commits, no mocks of internal modules, no self-approved specs, no skipped phases — become structural guarantees because the hooks run *outside* Claude's tool boundary. Claude cannot forge a consent marker, cannot bypass a guard with a flag, cannot reorder the workflow without an explicit exception written by `/triage`.
 
@@ -37,7 +37,7 @@ The site is product copy, not editorial prose, not SaaS pitch. It earns trust th
 
 This site SHALL NOT look or sound like:
 
-- **AI slop.** Gradient text, glassy cards, generic dashboard chrome, "magical AI assistant" framing. The category-reflex palette of "purple gradient on dark = AI tool" is banned. The **vanity hero-metric template** (big number + small label decorating an unfalsifiable claim — "10x faster", "99.9% uptime", "1M+ users") is also banned. A meta-strip of **structural counts naming load-bearing components** is permitted and encouraged when each cell is verifiable from the codebase (`22 hooks`, `36 skills`, `1 subagent`, `11 phases`, `3 gates`) — those are the spec, not the brag.
+- **AI slop.** Gradient text, glassy cards, generic dashboard chrome, "magical AI assistant" framing. The category-reflex palette of "purple gradient on dark = AI tool" is banned. The **vanity hero-metric template** (big number + small label decorating an unfalsifiable claim — "10x faster", "99.9% uptime", "1M+ users") is also banned. A meta-strip of **structural counts naming load-bearing components** is permitted and encouraged when each cell is verifiable from the codebase (`22 hooks`, `40 skills`, `1 subagent`, `11 phases`, `4 gates`) — those are the spec, not the brag.
 - **"AI-powered" marketing.** The product *powers* Claude Code; it is not powered by AI as a feature. Strike "AI-powered", "10x your productivity", "supercharge your workflow", "agentic" as a noun, and any vague intelligence claim from copy.
 - **Hyperbole.** No "revolutionary", "next-generation", "game-changing". The product is a baseline, not a revolution.
 - **Cute mascots, illustrated robots, or anthropomorphic AI.** The agent is a tool under a discipline layer, not a character.

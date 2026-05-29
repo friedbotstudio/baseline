@@ -18,6 +18,7 @@ toc:
   - { id: spec,          label: "Spec helpers" }
   - { id: orchestration, label: "Orchestration" }
   - { id: memory,        label: "Memory" }
+  - { id: phasehelpers,  label: "Phase helpers" }
   - { id: globals,       label: "Shared globals" }
   - { id: audit,         label: "Audit" }
   - { id: alt,           label: "Alternate tracks" }
@@ -140,6 +141,19 @@ toc:
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ VIII</p>
+      <h2 id="phasehelpers">Phase helpers ({{ baseline.skills.byCategory.phaseHelpers }})</h2>
+    </div>
+    <p>Invoked by entry phases as a Step 0.5 gate. Never on user-direct invocation; the gate decides whether the helper fires based on <code>workflow.json</code>.</p>
+  </div>
+  <ul>
+    <li><code>brainstorm</code>. PM-mode requirement capture via Socratic dialogue. Fired at Step 0.5 of <code>/intake</code>, <code>/spec</code>, and <code>/tdd</code> when <code>workflow.json &rarr; skip_brainstorm</code> is <code>false</code>. Walks four stages: skip-check, gap-analysis, probe-loop (cap 5 iterations), confirm-and-persist. Writes the brief to <code>docs/brief/&lt;slug&gt;.md</code> with six structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). The Stage 2 discipline-assertor at <code>discipline.mjs</code> structurally forbids solution-shaped tokens in probes &mdash; the SKILL.md prose is the documentation; the regex bank is the enforcement. Opt out via <code>/triage --no-brainstorm</code>. See Article X.3.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IX</p>
       <h2 id="globals">Shared globals ({{ baseline.skills.byCategory.sharedGlobals }})</h2>
     </div>
     <p>Vendored or globally available. Available to any phase that needs them.</p>
@@ -158,7 +172,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ IX</p>
+      <p class="section-num">§ X</p>
       <h2 id="audit">Audit ({{ baseline.skills.byCategory.audit }})</h2>
     </div>
     <p>One drift defender keeps the implementation honest against seed.md and the constitution.</p>
@@ -171,7 +185,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ X</p>
+      <p class="section-num">§ XI</p>
       <h2 id="alt">Alternate tracks ({{ baseline.skills.byCategory.altTracks }})</h2>
     </div>
     <p>A stripped-down pipeline for tasks that need no failing-test-driven code change.</p>

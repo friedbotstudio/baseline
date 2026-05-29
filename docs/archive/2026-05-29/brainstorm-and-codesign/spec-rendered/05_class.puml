@@ -1,0 +1,56 @@
+@startuml
+title Data model — state and artifacts
+class WorkflowJson {
+  +request: string
+  +slug: string
+  +track_id: string
+  +exceptions: string[]
+  +completed: string[]
+  +skipped_alternates: string[]
+  +source_backlog_keys: string[]
+  +skip_brainstorm: bool <<new>>
+  +codesign_mode: bool <<new>>
+  +created_at: int
+  +updated_at: int
+}
+class BrainstormState {
+  +slug: string <<pk>>
+  +started_at: int
+  +request: string
+  +calling_phase: string
+  +stage: int
+  +gaps: string[]
+  +dialogue_turns: object[]
+  +discipline_violations: object[]
+  +final_state: string
+}
+class BriefDoc {
+  +path: string <<pk>>
+  +actor: string
+  +trigger: string
+  +current_state: string
+  +desired_state: string
+  +non_goals: string[]
+  +solution_leakage: object[]
+  +open_questions: string[]
+}
+class CodesignState {
+  +slug: string <<pk>>
+  +created_at: int
+  +decisions: object[]
+  +revisit_context: object <<optional>>
+  +revisit_count: int
+}
+class SpecDocDecision {
+  +id: string <<pk>>
+  +name: string
+  +options_considered: string[]
+  +chosen: string
+  +engineer_verbatim: string <<blockquote>>
+  +dismissed_alternatives: object[]
+}
+WorkflowJson "1" -- "0..1" BrainstormState : slug
+WorkflowJson "1" -- "0..1" CodesignState : slug
+BrainstormState "1" -- "1" BriefDoc : produces
+CodesignState "1" *-- "many" SpecDocDecision : decisions[]
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+title Behavior #9 — /archive includes docs/brief in bundle
+actor Engineer
+participant Archive as "/archive"
+participant Script as "archive.sh"
+participant Brief as "docs/brief/<slug>.md"
+participant Bundle as "docs/archive/<date>/<slug>/"
+
+Engineer -> Archive : invoke (post /document)
+Archive -> Script : archive.sh <slug>
+Script -> Brief : check exists
+alt brief exists
+  Script -> Bundle : git mv docs/brief/<slug>.md -> brief.md
+  Script --> Archive : moved
+else no brief
+  Script --> Archive : skipped (no-op)
+end
+Script -> Bundle : continue with intake, spec, etc.
+@enduml

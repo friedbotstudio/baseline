@@ -26,6 +26,7 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
    | Source | Target in bundle |
    |---|---|
    | `docs/intake/<slug>.md` | `intake.md` |
+   | `docs/brief/<slug>.md` | `brief.md` |
    | `docs/brd/<slug>.md` | `brd.md` |
    | `docs/scout/<slug>.md` | `scout.md` |
    | `docs/research/<slug>.md` | `research.md` |

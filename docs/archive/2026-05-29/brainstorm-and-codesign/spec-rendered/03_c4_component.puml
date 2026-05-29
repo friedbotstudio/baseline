@@ -1,0 +1,15 @@
+@startuml
+!include <C4/C4_Component>
+title Component — brainstorm skill (new)
+Container_Boundary(brainstorm, "brainstorm skill") {
+  Component(s0, "Stage 0: skip-check", "Skill body", "reads workflow.json -> skip_brainstorm; early-return if true")
+  Component(s1, "Stage 1: gap-analyzer", "Skill body", "scans request for actor/trigger/desired/non-goals/leakage")
+  Component(s2, "Stage 2: probe-loop", "Skill body + AskUserQuestion", "Socratic dialogue per missing field; iteration cap 5")
+  Component(s3, "Stage 3: confirm-and-persist", "Skill body + AskUserQuestion", "synthesize brief; confirm; write docs/brief; return terminal state")
+  Component(disc, "discipline-assertor", "Skill self-check", "scans Stage 2 model turns for solution-shaped tokens")
+}
+Rel(s0, s1, "skip_brainstorm=false")
+Rel(s1, s2, "gap list")
+Rel(s2, disc, "every turn checked")
+Rel(s2, s3, "after confirm or iteration cap")
+@enduml

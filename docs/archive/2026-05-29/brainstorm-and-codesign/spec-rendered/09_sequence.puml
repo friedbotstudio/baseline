@@ -1,0 +1,32 @@
+@startuml
+title Behavior #4 — /spec codesign mode Step 1.5
+actor Engineer
+participant Spec as "/spec"
+participant Finder as "decision-point-finder"
+participant Q as "AskUserQuestion"
+participant CS as "codesign/<slug>.json"
+participant SpecDoc as "docs/specs/<slug>.md"
+
+Spec -> Spec : read codesign_mode = true
+Spec -> Finder : identify N decision points from research+scout
+Finder --> Spec : decision list (1..N)
+== AC-005: identify >= 1 decision point ==
+loop per decision point
+  Spec -> Spec : draft proposal + rationale
+  Spec -> Q : AskUserQuestion(Approve / Suggest alt / Discuss)
+  Q -> Engineer : show proposal
+  alt Approve
+    Engineer --> Q : Approve
+    Spec -> CS : record chosen = Claude rec, no verbatim
+  else Suggest alternative
+    Engineer --> Q : Suggest alternative
+    Q --> Spec : free-form turn
+    Spec -> Engineer : "what rationale?"
+    Engineer --> Spec : verbatim rationale text
+    Spec -> CS : record chosen = engineer pick, verbatim = blockquote
+  end
+end
+== AC-006: write ## Decisions section ==
+Spec -> SpecDoc : write ## Decisions with N entries (verbatim where applicable)
+Spec -> Spec : proceed to Steps 2-5 (draft diagrams)
+@enduml

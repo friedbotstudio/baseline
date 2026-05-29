@@ -1,0 +1,27 @@
+@startuml
+title Behavior #5 — Re-entry on /integrate needs-spec-change
+actor Engineer
+participant Integrate as "/integrate"
+participant Harness as "harness skill"
+participant CS as "codesign/<slug>.json"
+participant Spec as "/spec"
+participant SpecDoc as "docs/specs/<slug>.md"
+
+Integrate --> Harness : failure: needs spec change
+Harness -> CS : append revisit_context (which AC, which behavior)
+Harness -> Harness : write harness_state: yielded
+Harness --> Engineer : surface "needs spec change; run /harness to resume"
+Engineer -> Harness : /harness
+Harness -> CS : read codesign_mode + revisit_context
+Harness -> Spec : invoke with revisit flag
+Spec -> Spec : open relevant ## Decisions entry; revisit_count++
+alt revisit_count <= 3
+  Spec -> Engineer : "decision X failed because Y; revisit?"
+  Engineer --> Spec : new choice + verbatim
+  Spec -> SpecDoc : update ## Decisions entry
+  Spec -> CS : revisit_count persisted
+else revisit_count == 4
+  Spec -> CS : final_state = needs_human
+  Spec --> Engineer : "3-revisit cap reached; manual intervention required"
+end
+@enduml

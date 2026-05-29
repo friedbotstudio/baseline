@@ -1,0 +1,16 @@
+@startuml
+!include <C4/C4_Component>
+title Component — spec skill (codesign mode added)
+Container_Boundary(spec, "spec skill") {
+  Component(step1, "Step 1: read inputs", "Skill body", "intake + brief + scout + research")
+  Component(step15, "Step 1.5: codesign mode (NEW)", "Skill body + AskUserQuestion", "identify decisions; propose; capture verbatim")
+  Component(step25, "Steps 2-5: diagram drafting", "Skill body", "C4, sequence, class, dependency; lint")
+  Component(step7, "Step 7: write spec", "Skill body", "docs/specs/<slug>.md with ## Decisions when codesign-mode")
+  Component(dec, "decision-point-finder", "Skill body", "scans research candidates + scout for load-bearing forks")
+}
+Rel(step1, step15, "codesign_mode=true")
+Rel(step1, step25, "codesign_mode=false")
+Rel(step15, dec, "uses")
+Rel(step15, step25, "decisions resolved")
+Rel(step25, step7, "diagrams ready")
+@enduml

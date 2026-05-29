@@ -1,0 +1,26 @@
+{
+  "request": "add brainstorm helper (PM mode) and /spec codesign mode (Engineer mode) as paired collaborative-drafting modes",
+  "slug": "brainstorm-and-codesign",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780061591,
+  "updated_at": 1780070945
+}

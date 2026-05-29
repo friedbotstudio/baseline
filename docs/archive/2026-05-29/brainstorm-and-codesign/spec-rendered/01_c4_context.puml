@@ -1,0 +1,10 @@
+@startuml
+!include <C4/C4_Context>
+title System Context — paired collaborative-drafting modes
+Person(eng, "Engineer", "types requests; answers brainstorm and codesign dialogues; approves spec")
+System(ccx, "Claude Code + baseline harness", "runs skills; writes artifacts; advances workflow")
+System_Ext(fs, "Local filesystem", "workflow.json, docs/brief, docs/specs, .claude/state")
+Rel(eng, ccx, "request, AskUserQuestion answers")
+Rel(ccx, fs, "reads/writes workflow.json, briefs, specs, state files")
+Rel(ccx, eng, "AskUserQuestion prompts; spec for /approve-spec")
+@enduml

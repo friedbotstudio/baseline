@@ -1,0 +1,18 @@
+@startuml
+title Behavior #7 — audit-baseline reads manifest.owners.skills
+actor Maintainer
+participant Build as "scripts/build-manifest.mjs"
+participant Manifest as "obj/template/.claude/manifest.json"
+participant SkillMd as ".claude/skills/brainstorm/SKILL.md"
+participant Audit as "audit-baseline"
+
+Maintainer -> Build : run after adding brainstorm SKILL.md
+Build -> SkillMd : read owner: baseline frontmatter
+SkillMd --> Build : owner = baseline
+Build -> Manifest : write owners.skills.brainstorm = "baseline"
+Maintainer -> Audit : run
+Audit -> Manifest : read owners.skills
+Manifest --> Audit : { ..., brainstorm: "baseline" }
+Audit -> Audit : enumerate baseline skills (count = 40)
+Audit --> Maintainer : PASS (skill count + hashes match)
+@enduml

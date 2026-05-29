@@ -20,6 +20,7 @@ You are drafting an **intake document** — the earliest structured artifact in 
 ## Steps
 
 1. Verify the prerequisite above.
+1.5. **Brainstorm gate (Step 0.5 per CLAUDE.md Article X.3).** Read `.claude/state/workflow.json` and apply read-time defaults via `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults`. If `skip_brainstorm` is `false` (or absent — defaults to `false`), invoke `Skill(brainstorm, {request, slug, calling_phase: "intake"})` before opening `template.md`. The brainstorm skill writes `docs/brief/<slug>.md` (or short-circuits if a brief already exists for this slug); read that brief as the primary input for the template-fill so the dialogue's structured fields (actor, trigger, current_state, desired_state, non_goals, solution_leakage) flow into the corresponding intake sections. If `skip_brainstorm` is `true`, skip this gate and proceed directly to template-fill — the skip path is byte-equivalent to the pre-feature baseline so opting out restores prior behavior exactly.
 2. Read `template.md` in this skill directory. Use it as the skeleton of the output — every heading must survive into the final document.
 3. **Never write a section with placeholder text, "TBD", or fabricate content the user didn't state.** Either:
    - Ask the user a targeted question per section before writing it, OR
