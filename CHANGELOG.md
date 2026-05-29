@@ -1,3 +1,15 @@
+# [0.12.0](https://github.com/friedbotstudio/baseline/compare/v0.11.0...v0.12.0) (2026-05-29)
+
+
+### Bug Fixes
+
+* **memory:** hardening batch closes 14 review findings ([33560f2](https://github.com/friedbotstudio/baseline/commit/33560f272eafd66eabd8d8c92dd5fc3180b0b812))
+
+
+### Features
+
+* add freeform workflow track for ad-hoc edit batches ([751e892](https://github.com/friedbotstudio/baseline/commit/751e892bf5b4ec84b328ace0f4802dc40977bde0))
+
 # [0.11.0](https://github.com/friedbotstudio/baseline/compare/v0.10.0...v0.11.0) (2026-05-27)
 
 
