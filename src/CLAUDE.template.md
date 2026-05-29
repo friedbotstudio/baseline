@@ -15,6 +15,7 @@ This file is the **in-session constitution** for this repository. It binds Claud
 3. **Implementation** — the hooks, skills, commands, subagent, MCP servers, and config files are the actuators and enforcement mechanisms of (1) and (2).
 4. **Order of precedence** — `seed.md` > `CLAUDE.md` > implementation. Lower binds higher only via amendment in seed.md, which then propagates to this file, then to disk.
 5. **Project amendments** — Article X reserves space for project-owner amendments. Amendments bind alongside Articles I–IX but **SHALL NOT** contradict them.
+6. **Size cap (this file)** — `CLAUDE.md` SHALL NOT exceed **40,000 characters**. It carries binding rules only. Amendment history, enforcement-mechanism narration, and the reference appendices live in `.claude/CONSTITUTION.md` (the annex), read on demand. `audit-baseline` enforces the cap (FAIL when `CLAUDE.md` exceeds 40,000 chars), and the same cap binds the byte-equal mirror `src/CLAUDE.template.md`.
 
 ## Article II — Architectural principle
 
@@ -77,9 +78,9 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - You SHALL NOT skip phases.
 - You SHALL NOT reorder phases.
 - The only mechanism to bypass a phase is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage`.
-- **Phase 6c and Phase 11 are git-conditional.** On a project where `git rev-parse --is-inside-work-tree` exits non-zero (no `.git/`, not inside a work tree), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`. Phase 6 routes to solo `/tdd` unconditionally; the workflow ends after `/archive`. Worktree isolation (the swarm contract's physical safety mechanism) requires git; `swarm.isolation: "shared"` is a sanctioned configuration knob for git projects that opt out of worktrees but does NOT restore the cross-task write isolation the swarm-worker assumes — it is unsafe as a non-git fallback, especially when `swarm.exempt_path_prefixes` covers baseline-internal paths (e.g. `.claude/`). Persistence outside git is the user's responsibility. See Article VII for the matching rule on git operations.
+- **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, not as a non-git fallback (it does not restore the cross-task write isolation the swarm-worker assumes). See Article VII.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
-- **How the gates are structurally enforced.** Each consent command (`/approve-spec`, `/approve-swarm`, `/grant-commit`, `/grant-push`) is a slash command typed by the user. The `consent_gate_grant` UserPromptSubmit hook (Art. VIII) parses the user's prompt **before Claude is invoked** and writes a short-lived consent marker at `.claude/state/.<gate>_grant`. The corresponding PreToolUse approval guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) then allows Claude's slash-command-body write of the approval token only when the marker is present, fresh (≤ `consent.gate_marker_ttl_seconds`, default 120), and slug-matched; the marker is single-use and deleted on the allowed write. `/grant-push` is **not** a workflow-phase gate — it is a Bash-time consent for push to a protected branch (see Article VII). Slug derivation is centralized in `lib/common.mjs → canonicalSlug` (strip directory prefix + trailing `.md`) so the marker and the expected slug always agree, whether the user typed a bare slug, a filename, or a full path. The same guards block Claude from writing the marker file itself via Write/Edit/MultiEdit. Claude cannot reach the UserPromptSubmit code path, so it cannot forge consent.
+- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched consent marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) then allows Claude's approval-token write only while that marker is fresh. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent, and the same guards block Claude from writing the marker itself. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
 **Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`):
@@ -90,9 +91,9 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). The chore skill skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `simplify` / `integrate` / `document` based on what the diff touches. `verify`, `archive`, and `/grant-commit` + `/commit` remain mandatory. Anything that actually needs a failing test routes to `tdd` or higher.
 - Freeform → `/triage` selects the `freeform` track for ad-hoc batches of edits that don't fit any other track — optimization sessions across multiple unrelated landmines, exploratory cleanup, small drive-by fixes. Phase ordering is relaxed by blanket exceptions on every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`); the DAG carries only the closing sequence `memory-flush` → `/grant-commit` → `/changelog` → `/commit`. All 22 hooks remain active — `destructive_cmd_guard`, `env_guard`, `git_commit_guard`, `tdd_order_guard` (still blocks new source files without paired tests), `verify_pass_guard`, and the consent gates fire normally. Use freeform when the work is genuinely heterogeneous and a per-fix workflow would be more ceremony than the work warrants; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
 
-**Swarm vs solo at Phase 6.** When the approved spec has fewer than `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components **OR** the project is not a git repository, run `/tdd` solo. Otherwise route through `/swarm-plan` → `/approve-swarm` → `/swarm-dispatch`. In non-git projects the swarm phases are excepted at triage time (see the "Phase 6c and Phase 11 are git-conditional" bullet above), so this decision always resolves to solo — the rule's first clause never fires on a non-git tree, and a user "use swarm" override SHALL be refused with the reason `swarm requires git`.
+**Swarm vs solo at Phase 6.** When the approved spec has fewer than `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components **OR** the project is not a git repository, run `/tdd` solo. Otherwise route through `/swarm-plan` → `/approve-swarm` → `/swarm-dispatch`. On a non-git tree the swarm phases are excepted at triage time, so this always resolves to solo, and a user "use swarm" override SHALL be refused with the reason `swarm requires git`.
 
-**Post-§18 amendment (2026-05-21).** Workflow track definitions live in `.claude/workflows.jsonl` per `docs/init/seed.md §18`. The phase-ordering rules and entry-point classifications above remain binding; every Track declared in `workflows.jsonl` SHALL satisfy them plus the additional invariants in seed.md §18.3 (I1..I11). `/triage` reads `workflows.jsonl`, validates each Track against §18, classifies the user's request via LLM reasoning over `name + description + selector_hints`, confirms via `AskUserQuestion`, and materializes the chosen Track's DAG into the TaskList (via `src/cli/track-tasklist-materializer.js`). The 4 canonical tracks shipped in the pristine template are byte-equivalent to this Article's hardcoded templates per spec AC-016. The harness migrates pre-§18 `workflow.json` files (carrying `entry_phase` + no `track_id`) one-shot at preflight via `src/cli/workflow-migrator.js`. `/init-project doctor` (sub-command) detects schema / invariant / mirror drift and offers interactive fixes.
+**Tracks (seed.md §18).** Workflow track definitions live in `.claude/workflows.jsonl`. `/triage` validates each Track against seed.md §18.3 (invariants I1..I11), classifies the request, confirms via `AskUserQuestion`, and materializes the chosen Track's DAG into the TaskList. The phase-ordering rules and entry-point classifications above remain binding on every Track. Migration of pre-§18 `workflow.json` and `/init-project doctor` drift-detection: see `.claude/CONSTITUTION.md` (annex).
 
 ## Article V — Harness orchestration (MANDATORY SOP)
 
@@ -176,32 +177,32 @@ On a **protected branch**, commits require a fresh `commit_consent` token (writt
 
 ## Article VIII — Hooks (the enforcement layer)
 
-The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a corresponding amendment in `seed.md` §4.1.
+The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a corresponding amendment in `seed.md` §4.1. The table below names each hook, its event, and the Article it enforces; fuller per-hook behavior (`git_commit_guard` branch policy, `harness_continuation`'s three-rung gate, advisory memory surfacing, the approval-guard marker flow) lives in `.claude/CONSTITUTION.md` (annex).
 
-| Hook | Event | Article enforced | Behavior |
+| Hook | Event | Article enforced | Behavior (terse) |
 |---|---|---|---|
-| `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited 10 min). Does **not** block. |
-| `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask risky |
-| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Bash: enforce branch-aware policy — `git commit` on a protected branch requires fresh `commit_consent`; `git push` on a protected branch requires fresh `push_consent`; both proceed without consent on non-protected branches; off-`branch_pattern` branches deny commits; detached HEAD denies both. Hard-block remaining forbidden flags (--amend, --no-verify, reset --hard, etc.). Write: gate writes to `.claude/state/{commit,push}_consent` and the matching `.{commit,push}_consent_grant` markers. |
+| `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited). Never blocks. |
+| `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask on risky |
+| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware commit/push consent; hard-block forbidden flags; gate consent-token writes. (annex) |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
-| `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Validate fresh `.spec_approval_grant` marker before allowing approval-token writes; block self-approval inside spec markdown; block direct writes to the marker |
-| `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Validate fresh `.swarm_approval_grant` marker before allowing swarm-approval writes; block direct writes to the marker |
+| `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow spec-approval token write only on fresh marker; block self-approval + marker writes |
+| `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Allow swarm-approval write only on fresh marker; block marker writes |
 | `verify_pass_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. V, VI | Block writing PASS to verify artifacts when truth source says FAIL |
 | `track_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Enforce 11-phase ordering for workflow artifacts |
 | `artifact_template_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Block artifact writes missing required `##` sections |
 | `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Validate PlantUML fences in `docs/specs/*.md` |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
-| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block specs whose `write_set` intersects `tdd.ui_globs` from omitting a populated `## Design calls` section |
+| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block UI-touching specs that omit a populated `## Design calls` section |
 | `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |
 | `tdd_order_guard` | PreToolUse / Write | Art. VI.4 | Require test before new source file |
-| `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces `landmines.md → lsof-port-kill-takes-firefox-with-it` and `conventions.md → dev-server-ownership` (verbatim + interpretation) before any kill/lsof/serve Bash. Never blocks |
+| `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
 | `lint_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `lint.cmd` on code changes (guide mode until configured) |
 | `test_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `test.cmd` on code changes (guide mode until configured) |
 | `memory_session_start` | SessionStart | Art. III, IX | Inject memory index + resume snapshot at session start |
 | `memory_stop` | Stop | Art. IX | Auto-extract memory candidates each turn-end |
-| `harness_continuation` | Stop | Art. V | Three-rung gate: (1) `stop_hook_active` absent on payload; (2) `.claude/state/.harness_active` exists (session-scoped marker created by the harness skill on `continue`, deleted on `yielded`/`done`, cleaned by `memory_session_start.mjs` on session boundary); (3) `harness_state.state == "continue"`. When all three pass, emits `{"decision":"block","reason":"…invoke Skill(harness)…"}`. Sanity rail: marker-slug-vs-`workflow.json`-slug mismatch logs WARN to `harness_continuation.log` without changing the decision. Silent on any rung fail. Never writes consent markers. |
+| `harness_continuation` | Stop | Art. V | Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex) |
 | `memory_pre_compact` | PreCompact | Art. IX | Capture resume snapshot before context compaction |
-| `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C, Art. VII | Detect `/approve-spec`/`/approve-swarm`/`/grant-commit`/`/grant-push` in user input and write the gate-specific consent marker — runs OUTSIDE Claude's tool boundary so Claude cannot forge it |
+| `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C, Art. VII | Detect consent commands in user input and write the gate marker, OUTSIDE Claude's tool boundary |
 
 ## Article IX — Project memory
 
@@ -245,7 +246,7 @@ The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Aud
 
 This override does **not** delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI.
 
-Future "impeccable says X, but we ship Y on purpose" decisions get a row in the same table without re-amending the constitution. Examples already in flight: the meta-strip on the landing (qualified in PRODUCT.md anti-references as "structural counts naming load-bearing components"), and this em-dash scoping. New rows SHALL cite the impeccable rule being scoped, the scope decision, and a one-line rationale.
+Future "impeccable says X, but we ship Y on purpose" decisions get a row in the same table without re-amending the constitution; each new row SHALL cite the impeccable rule scoped, the scope decision, and a one-line rationale. In-flight examples: `.claude/CONSTITUTION.md` (annex).
 
 ---
 
@@ -278,9 +279,7 @@ Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brai
 | `/intake` re-invocation on a slug whose `docs/brief/<slug>.md` already exists SHALL short-circuit and read the existing brief; no re-dialogue. | `brainstorm/skip-check.mjs → shouldSkipForExistingBrief`. |
 | `chore` and `freeform` tracks do NOT have an entry-skill seam where brainstorm can fire; the helper is silent on those tracks by construction. | Article IV phase ordering. |
 
-The opt-out flag is set at `/triage` time by the user passing `--no-brainstorm` in the request string, or detected heuristically when the request already contains a complete actor + trigger + desired-state framing. Memory: `flag-parser.mjs` does the literal flag match; the heuristic is a judgement call surfaced via `AskUserQuestion`. AC-010 governs the parsing.
-
-`Skill(brainstorm)` runs in main context per Article II — no subagent delegation. Decisions about which gap to probe next, how to phrase a probe, and when the requirement is captured all live in main context with full conversation visibility. The Stage 2 discipline assertor is the only programmatic gate.
+The opt-out flag is set at `/triage` time by `--no-brainstorm`, or detected heuristically when the request already carries a complete actor + trigger + desired-state framing (surfaced via `AskUserQuestion`; AC-010 governs parsing). `Skill(brainstorm)` runs in main context per Article II — no subagent delegation; the Stage 2 discipline assertor is the only programmatic gate.
 
 ---
 
@@ -298,13 +297,13 @@ The opt-out flag is set at `/triage` time by the user passing `--no-brainstorm` 
 | On `/integrate` failure classified as "needs spec change" with `codesign_mode: true`, `harness/codesign-reentry.mjs → writeRevisitContext` appends a revisit_context to `.claude/state/codesign/<slug>.json`. Next `/harness` re-invocation reads the context and re-enters codesign on the named decision. | AC-007; Article V integrate-failure decision tree. |
 | Codesign decision revisit cap is 3 per decision point. The 4th revisit attempt terminates with `final_state: "needs_human"`. Hardcoded in `codesign-state.mjs → REVISIT_CAP`, parallel to design-ui's 3-iteration audit-polish cap. | AC-007 boundary. |
 
-Codesign mode is opt-in because most workflows do not need it. The fixed keyword list for `/triage`'s heuristic suggestion includes `computer vision`, `model architecture`, `numerical`, `cryptographic`, `consensus`, `realtime`, `kernel`, `distributed`, `algorithm design` — triggers a confirmation `AskUserQuestion`, never auto-sets. Memory: `/research` writes a memo-only codesign recommendation when no candidate dominates on tradeoffs; user opts in via subsequent `/triage --codesign` or manual `workflow.json` edit. Article II precludes `/research` from auto-flipping flow state.
+Codesign mode is opt-in (most workflows do not need it). `/triage`'s heuristic suggestion fires on a fixed keyword list (`computer vision`, `model architecture`, `numerical`, `cryptographic`, `consensus`, `realtime`, `kernel`, `distributed`, `algorithm design`) — it triggers a confirmation `AskUserQuestion`, never auto-sets. `/research` may write a memo-only codesign recommendation when no candidate dominates on tradeoffs; per Article II it cannot auto-flip flow state — the user opts in via `/triage --codesign` or a manual `workflow.json` edit.
 
 ---
 
 ## Article XI — Skill provenance and the baseline manifest
 
-A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill on disk — those without an `owner:` field, or those declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project with pre-existing skills can install the baseline without annotating any of its own files. The build script `scripts/build-manifest.mjs` reads each `owner:` value and emits the canonical baseline-skill set into the shipped manifest at `obj/template/.claude/manifest.json` under `owners.skills` (a JSON object mapping slug → `"baseline"`). The recursive install copies the manifest straight to `<target>/.claude/manifest.json` (same path inside the `.claude/` subtree, no special-case). The CLI separately writes `<target>/.claude/.baseline-manifest.json` post-install as a runtime sha256 table of the target's actual on-disk contents (used by `doctor` and `upgrade`). The audit at `.claude/skills/audit-baseline/audit.mjs` consumes `manifest.owners.skills` from the shipped `.claude/manifest.json` as the canonical baseline-skill enumeration — the previous hard-coded `EXPECTED_SKILLS` set is removed.
+A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill on disk — those without an `owner:` field, or declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project with pre-existing skills can install the baseline without annotating its own files. The shipped manifest at `obj/template/.claude/manifest.json` records baseline ownership (`owners.skills`) and per-file sha256 hashes; `audit-baseline` reconciles it against on-disk reality. Build + audit mechanics: see `.claude/CONSTITUTION.md` (annex).
 
 You SHALL:
 
@@ -318,59 +317,11 @@ Cryptographic supply-chain attestation, signed lock files, and per-skill aggrega
 
 ---
 
-## Appendix A — Where things live (reference)
+## Appendix — Reference (in the annex)
 
-| Path | Role |
-|---|---|
-| `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
-| `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 40 skills: artifact (4) + phases (11) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
-| `.claude/commands/` | 5 consent/bootstrap gates: `approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`, `init-project` |
-| `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `README.md` |
-| `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
-| `.claude/settings.json` | hook wiring + permissions |
-| `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
-| `.mcp.json` | three baseline MCP servers: `context7`, `plantuml`, `playwright` |
-| `src/` | pristine ship-time templates for every file `/init-project` modifies (overlay source for `npx @friedbotstudio/create-baseline`) |
-| `docs/init/seed.md` | genesis prompt — governing specification of the baseline |
+Two reference tables that used to live here now sit in **`.claude/CONSTITUTION.md`** (read on demand):
 
-## Appendix B — Skill index (reference)
+- **Appendix A — Where things live**: every `.claude/` path and its role, plus `src/` and `docs/init/seed.md`.
+- **Appendix B — Skill index**: all 40 skills by category (artifact, phases, workers, spec helpers, orchestration, memory, navigation, phase helpers, shared globals, audit, alt tracks).
 
-**Artifact drafting (4)** — each ships a `template.md`:
-- `intake` (Phase 1), `brd` (cross-functional pre-spec), `spec` (Phase 4, diagram-driven), `rca` (out-of-band postmortem)
-
-**Workflow phases (11)** — auto-invocable; orchestrator chains them:
-- `triage`, `scout`, `research`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`, `changelog` (Phase 11.5), `commit`
-
-**Phase workers (5)** — execute pre-decided recipes; mandatorily invoke a sub-skill:
-- `scenario`, `implement`, `verify`, `prose`, `design-ui`
-
-**Spec helpers (4)**:
-- `spec-lint`, `spec-render` (user-only), `spec-diagram-review`, `spec-traceability-review`
-
-**Orchestration (3)**:
-- `harness` (user + model invokable; Stop-hook auto-continued), `swarm-plan`, `swarm-dispatch`
-
-**Memory (1)**:
-- `memory-flush`
-
-**Phase helpers (1)** — invoked by entry phases as a Step 0.5 / Step 1.5 gate; never on user-direct invocation:
-- `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article X.3.
-
-**Navigation (1)** — the default tool for code-navigation questions; prefer it over global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F":
-- `code-browser` — walks the import graph from a page or entry file to the network boundary, returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. `discover.mjs` writes a per-repo `conventions.json` once; `walk.mjs` then runs deterministically in milliseconds. Read-only.
-
-**Shared globals (7)** — one written for this baseline, six vendored from external sources with their upstream licenses preserved in `LICENSE` + `NOTICE` alongside each skill:
-- `claude-automation-recommender` — vendored from Anthropic's `claude-code-setup` plugin, Apache 2.0.
-- `code-structure` — written for this baseline (Friedbot Studio). Mandatory on every code-generation step.
-- `humanizer` — vendored from [`blader/humanizer`](https://github.com/blader/humanizer), MIT.
-- `documentation` — vendored from Anthropic's `claude-code-setup` plugin, Apache 2.0.
-- `technical-tutorials` — vendored from [`jonathimer/devmarketing-skills`](https://github.com/jonathimer/devmarketing-skills), MIT.
-- `copywriting` — vendored from [`coreyhaines31/marketingskills`](https://github.com/coreyhaines31/marketingskills), MIT.
-- `impeccable` — vendored from [`pbakaus/impeccable`](https://github.com/pbakaus/impeccable), Apache 2.0.
-
-**Audit (1)**:
-- `audit-baseline` — drift check between this constitution + seed.md and the implementation
-
-**Alternate tracks (1)** — stripped-down workflows routed via `/triage`:
-- `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `simplify` / `integrate` / `document` only when their triggers apply. `verify`, `archive`, `/grant-commit`, `/commit` mandatory. Not a bypass — silent skips of triggered conditional phases are forbidden.
+Quick orientation: `.claude/hooks/` (22 hooks), `.claude/agents/` (1 subagent `swarm-worker`), `.claude/skills/` (40 skills), `.claude/commands/` (6 commands), `.claude/memory/` (7 canonical files), `.mcp.json` (3 MCP servers), `docs/init/seed.md` (genesis).

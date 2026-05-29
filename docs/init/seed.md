@@ -552,6 +552,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 ## §14 — Change control
 
 - This file is the source of truth. Implementation drift means the implementation is wrong.
+- **`CLAUDE.md` size cap.** `CLAUDE.md` SHALL NOT exceed **40,000 characters**. It carries binding rules only; amendment history, enforcement-mechanism narration, and the reference appendices live in `.claude/CONSTITUTION.md` (read on demand). `audit-baseline` enforces the cap (FAIL when `CLAUDE.md` exceeds 40,000 chars), and the same cap binds the byte-equal mirror `src/CLAUDE.template.md`.
 - Drift audits run periodically: count hooks on disk vs. counts claimed in docs, same for agents/skills/commands; list phase names referenced in any skill vs. the canonical list in §5.
 - Adding a component updates both the implementation AND this file in the same workflow. Archive the old seed as `docs/init/seed.<yyyy-mm-dd>.md` before replacing.
 - The baseline's own site (`docs/site/index.html`) is generated from this seed. If the site drifts from here, the site is wrong.

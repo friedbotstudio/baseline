@@ -277,6 +277,28 @@ function checkConstitutionalCitations() {
 }
 checkConstitutionalCitations();
 
+// ---------- CLAUDE.md size cap (Article I.6 / seed §14) ----------
+// CLAUDE.md carries binding rules only; history/narration/appendices live in
+// .claude/CONSTITUTION.md. The cap is stated in characters, so measure string
+// length (code points), matching how the harness reports the file size.
+const CLAUDE_CHAR_CAP = 40000;
+function checkClaudeSizeCap() {
+  const targets = [['CLAUDE.md', readText('CLAUDE.md')]];
+  const srcTemplate = readText('src/CLAUDE.template.md');
+  if (srcTemplate) targets.push(['src/CLAUDE.template.md', srcTemplate]);
+  for (const [rel, text] of targets) {
+    if (!text) { add(`size cap: ${rel}`, 'FAIL', 'missing or empty'); continue; }
+    const chars = text.length;
+    if (chars > CLAUDE_CHAR_CAP) {
+      add(`size cap: ${rel}`, 'FAIL',
+        `${chars} chars > ${CLAUDE_CHAR_CAP} — move history/narration/appendices to .claude/CONSTITUTION.md`);
+    } else {
+      add(`size cap: ${rel}`, 'PASS', `${chars}/${CLAUDE_CHAR_CAP} chars`);
+    }
+  }
+}
+checkClaudeSizeCap();
+
 // ---------- memory directory ----------
 const memDir = join(ROOT, '.claude', 'memory');
 if (!existsSync(memDir) || !statSync(memDir).isDirectory()) {

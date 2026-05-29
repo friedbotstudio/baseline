@@ -1,3 +1,14 @@
+## [Unreleased]
+
+### Added
+
+- 40,000-character cap on `CLAUDE.md`, enforced by `audit-baseline` (FAIL when the file or its `src/CLAUDE.template.md` mirror exceeds the cap). The binding rule is recorded in `CLAUDE.md` Article I.6 and `docs/init/seed.md` §14.
+- `.claude/CONSTITUTION.md` — a read-on-demand annex holding amendment history, enforcement-mechanism narration, and the reference appendices (Where things live, Skill index).
+
+### Changed
+
+- Trimmed `CLAUDE.md` from ~46k to ~39k characters by relocating non-binding content (history, mechanism narration, Appendices A/B) to the annex. All binding rules retained; only explanatory material moved.
+
 # [0.12.0](https://github.com/friedbotstudio/baseline/compare/v0.11.0...v0.12.0) (2026-05-29)
 
 
