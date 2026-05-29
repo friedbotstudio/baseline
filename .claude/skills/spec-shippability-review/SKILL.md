@@ -66,7 +66,7 @@ Suggested fix in the punch list: "Move the logic into a shipped helper under `.c
 Scan the spec's write_set for paths under `.claude/skills/<slug>/`. For each path with a `.py` extension:
 
 - If the path does NOT exist on disk yet → **BLOCKER** (new Python helper in shipped skill). Suggested fix: rewrite as `.mjs` (Node ESM, stdlib only, no third-party deps for parity with the existing JS-side baseline).
-- If the path DOES exist on disk → **ADVISORY** (modification to grandfathered Python helper). Existing `.claude/skills/memory-flush/sweep.py` and `.claude/skills/tdd/drift_check.py` are grandfathered; the spec can modify them, but the advisory suggests opening a follow-up to port them to JS.
+- If the path DOES exist on disk → **ADVISORY** (modification to grandfathered Python helper). The grandfathering carve-out exists for legacy `.py` helpers; the previous grandfathered set (`sweep.py` and `drift_check.py`) has been ported to `.mjs` and no grandfathered files remain on disk today. The branch still fires only if a previously-shipped `.py` is re-introduced — recommend porting to JS in the same workflow.
 
 ### C3 — UNSHIPPED_MODULE_IMPORT (BLOCKER)
 

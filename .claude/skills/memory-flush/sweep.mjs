@@ -32,13 +32,32 @@ const PENDING_FILE = 'pending-questions';
 const STALE_EXEMPT_FILES = new Set(['backlog']);
 const STALE_COMMITS = 30;
 const STALE_DAYS = 30;
+const BACKLOG_DECAY_DAYS_DEFAULT = 90;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const PROSE_PATTERNS = [
   /^(\s*-\s*)?\*\*?Resolution\s+(path\s+taken|by|date)\b/im,
   /^Superseded\s+(by|at|on)\b/im,
   /^Resolved\s+(by|on|at)\b/im,
+  // R4: `- Resolution: ...` bullet form — the shape actually used by
+  // pending-questions Q-NNN entries closed via "## Q-NNN — CLOSED <date>"
+  // heading + body resolution text. Documented R1 expects "Resolution
+  // path taken|by|date" only, which never matched the live entries.
+  // Allows 0-2 leading asterisks so both `- Resolution:` and `**Resolution:**`
+  // styles surface.
+  /^(\s*-\s*)?\*{0,2}Resolution\s*:/im,
 ];
+
+// Heading-suffix closure: "## <key> — CLOSED YYYY-MM-DD". Detected as a
+// structured-equivalent closure signal so modeAutoClose can delete the
+// entry without requiring a body `resolved-at:` / `superseded-at:` field.
+// Tolerates em-dash (U+2014) OR ASCII double-hyphen.
+const HEADING_CLOSURE_RE = /^##\s+\S.*?\s+(?:—|--)\s+CLOSED\s+(\d{4}-\d{2}-\d{2})\s*$/m;
+
+function readHeadingClosureDate(block) {
+  const m = block.match(HEADING_CLOSURE_RE);
+  return m ? m[1] : null;
+}
 
 // --- Foundation: filesystem + entry parsing ---------------------------------
 
@@ -57,10 +76,19 @@ function writeFile(memdir, name, text) {
 }
 
 function splitEntries(text) {
+  // #13: strip frontmatter via line-anchored `^---$` lookup so a body
+  // horizontal rule before the actual close doesn't silently truncate
+  // content. Mirrors the safer stripFrontmatter in memory_session_start.
   let body = text;
   if (text.startsWith('---')) {
-    const parts = text.split('---');
-    body = parts.length >= 3 ? parts.slice(2).join('---') : text;
+    const lines = text.split(/\r?\n/);
+    if (lines[0].trim() === '---') {
+      let closeIdx = -1;
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim() === '---') { closeIdx = i; break; }
+      }
+      if (closeIdx >= 0) body = lines.slice(closeIdx + 1).join('\n');
+    }
   }
   const splits = body.split(/(^##\s+\S.*)$/m);
   const entries = [];
@@ -173,12 +201,13 @@ function isStale(block, name, head, root) {
     const dist = commitDistance(root, stamp);
     return dist === null || dist >= STALE_COMMITS;
   }
-  if (!head) {
-    const touched = readFieldValue(block, 'last-touched');
-    const days = touched ? daysSince(touched) : null;
-    return days !== null && days >= STALE_DAYS;
-  }
-  return false;
+  // Fallback: date-based decay on `last-touched`. Used for non-git projects
+  // AND for git projects where `verified-at: HEAD` means the writer didn't
+  // have an actual SHA at stamp time. Closes the prior decay-evasion hatch
+  // where `verified-at: HEAD` on a git repo was treated as permanently fresh.
+  const touched = readFieldValue(block, 'last-touched');
+  const days = touched ? daysSince(touched) : null;
+  return days !== null && days >= STALE_DAYS;
 }
 
 // --- Domain: per-mode sweepers ----------------------------------------------
@@ -196,7 +225,12 @@ function modeAutoClose(memdir) {
         report.invariant_violation.push({ file: `${name}.md`, key, field: wrong });
         continue;
       }
-      const value = readFieldValue(block, valid);
+      // Structured field first; heading-suffix `— CLOSED <date>` second.
+      // Both produce the same closure semantics; heading-suffix exists so
+      // legacy entries that pre-date the structured-field convention still
+      // close automatically.
+      let value = readFieldValue(block, valid);
+      if (value === null) value = readHeadingClosureDate(block);
       if (value === null) continue;
       if (validIso(value)) {
         newText = deleteBlock(newText, block);
@@ -308,6 +342,46 @@ function applyStaleAction(text, block, name, reply, head, today, report) {
   return text;
 }
 
+function modeBacklogDecay(memdir, thresholdDays) {
+  // Backlog is stale-exempt under the default predicate (intent doesn't
+  // verify-against code), but unbounded growth still erodes the file. This
+  // mode applies an age-based decay to backlog entries by `raised-on:` (or
+  // `last-touched:` fallback) and lets the curator decide per entry.
+  const report = { surfaced: 0, kept: 0, dropped: 0, picked_up: 0, deferred: 0 };
+  const text = readFile(memdir, 'backlog');
+  if (!text) return report;
+  const today = todayIso();
+  const cutoff = Number.isFinite(thresholdDays) ? thresholdDays : BACKLOG_DECAY_DAYS_DEFAULT;
+  let newText = text;
+  for (const [, block] of splitEntries(text)) {
+    if (isClosed(block, 'backlog')) continue;
+    const raised = readFieldValue(block, 'raised-on') || readFieldValue(block, 'last-touched');
+    const days = raised ? daysSince(raised) : null;
+    if (days === null || days < cutoff) continue;
+    report.surfaced += 1;
+    const reply = stdinReplies();
+    if (reply === 'keep') {
+      const updated = updateField(block, 'last-touched', today);
+      newText = newText.replace(block, updated);
+      report.kept += 1;
+    } else if (reply === 'drop') {
+      let updated = updateField(block, 'status', 'dropped');
+      updated = updateField(updated, 'superseded-at', today);
+      newText = newText.replace(block, updated);
+      report.dropped += 1;
+    } else if (reply === 'picked-up') {
+      let updated = updateField(block, 'status', 'picked-up');
+      updated = updateField(updated, 'superseded-at', today);
+      newText = newText.replace(block, updated);
+      report.picked_up += 1;
+    } else {
+      report.deferred += 1;
+    }
+  }
+  if (newText !== text) writeFile(memdir, 'backlog', newText);
+  return report;
+}
+
 function modeStaleSweep(memdir) {
   const report = { reverified: 0, deleted: 0, mark_closed: 0, kept: 0 };
   const root = dirname(dirname(memdir));
@@ -350,6 +424,7 @@ const MODE_DISPATCH = {
   'prose-scan': modeProseScan,
   'stale-sweep': modeStaleSweep,
   'stamp-closure': modeStampClosure,
+  'backlog-decay': modeBacklogDecay,
 };
 
 function main(argv) {
@@ -361,6 +436,7 @@ function main(argv) {
         mode: { type: 'string' },
         'memory-dir': { type: 'string' },
         'backlog-keys': { type: 'string' },
+        'threshold-days': { type: 'string' },
       },
       strict: true,
       allowPositionals: false,
@@ -387,6 +463,18 @@ function main(argv) {
   let report;
   if (values.mode === 'stamp-closure') {
     report = modeStampClosure(memdir, values['backlog-keys'] || '');
+  } else if (values.mode === 'backlog-decay') {
+    const raw = values['threshold-days'];
+    let n = BACKLOG_DECAY_DAYS_DEFAULT;
+    if (raw !== undefined) {
+      const parsed = parseInt(raw, 10);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        process.stderr.write(`sweep: --threshold-days must be a non-negative integer; got "${raw}"\n`);
+        return 2;
+      }
+      n = parsed;
+    }
+    report = modeBacklogDecay(memdir, n);
   } else {
     report = MODE_DISPATCH[values.mode](memdir);
   }

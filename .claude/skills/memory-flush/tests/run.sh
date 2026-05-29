@@ -586,6 +586,173 @@ test_when_stamp_closure_missing_keys_arg_then_argparse_error() {
   fi
 }
 
+# --- heading-suffix closure: "## <key> — CLOSED YYYY-MM-DD" -----------------
+# Pending-questions entries in this repo close via heading suffix instead of
+# the structured `resolved-at:` field. The auto-close + prose patterns
+# documented in README catch the structured form only; these tests pin the
+# extended detection that handles the suffix form too.
+
+test_when_pending_q_has_closed_heading_em_dash_then_auto_close_removes_block() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add "$mem" "pending-questions" "## Q-500 — CLOSED 2026-05-01
+
+- Resolution: decided in spec
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep auto-close "$mem")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/pending-questions.md" "## Q-500" "Q-500 em-dash CLOSED heading must auto-close" || return 1
+  assert_contains "$report" '"closed": 1' "expected closed:1 (got: $report)" || return 1
+}
+
+test_when_pending_q_has_closed_heading_ascii_dash_then_auto_close_removes_block() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add "$mem" "pending-questions" "## Q-501 -- CLOSED 2026-05-02
+
+- Resolution: settled via review
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep auto-close "$mem")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/pending-questions.md" "## Q-501" "Q-501 ASCII-dash CLOSED heading must auto-close" || return 1
+  assert_contains "$report" '"closed": 1' "expected closed:1 (got: $report)" || return 1
+}
+
+test_when_landmarks_has_closed_heading_then_auto_close_removes_block() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add "$mem" "landmarks" "## src/legacy.js:1 — CLOSED 2026-05-10
+
+- role: legacy entrypoint
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep auto-close "$mem")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/landmarks.md" "## src/legacy.js:1" "landmark CLOSED heading must auto-close (superseded-at semantics)" || return 1
+  assert_contains "$report" '"closed": 1' "expected closed:1 (got: $report)" || return 1
+}
+
+test_when_closed_heading_date_malformed_then_block_kept() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  # 2026-13-99 is malformed (month 13, day 99). validIso must reject.
+  add "$mem" "pending-questions" "## Q-502 — CLOSED 2026-13-99
+
+- Resolution: bad date should not delete
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep auto-close "$mem")" || { fail "sweep crashed on malformed heading date"; return 1; }
+  assert_file_contains "$mem/pending-questions.md" "## Q-502" "malformed heading date must NOT delete entry" || return 1
+  assert_contains "$report" '"malformed":' "expected malformed flag in report (got: $report)" || return 1
+}
+
+test_when_resolution_bullet_prose_then_surfaced_for_confirm() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  # No heading-suffix closure; only the body bullet pattern. R4 should match.
+  add "$mem" "pending-questions" "## Q-503
+
+- Question: stub
+- Resolution: settled in spec — kept for historical reference
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep prose-scan "$mem" "y")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/pending-questions.md" "## Q-503" "R4 '- Resolution:' bullet must surface and delete on 'y'" || return 1
+  assert_contains "$report" '"closed_by_confirm": 1' "expected closed_by_confirm:1 (got: $report)" || return 1
+}
+
+# --- Step 0d backlog-decay --------------------------------------------------
+# Backlog is stale-exempt under the default predicate but unbounded growth
+# still erodes the file. The `backlog-decay` mode applies an age-based decay
+# on `raised-on:` (or `last-touched:` fallback) and prompts the curator per
+# entry.
+
+sweep_backlog_decay() {
+  local mem="$1" replies="${2:-}" days="${3:-}"
+  if [ ! -f "$SWEEP" ]; then
+    echo "{\"error\":\"sweep.mjs missing\"}"
+    return 127
+  fi
+  if [ -n "$days" ]; then
+    printf '%s' "$replies" | node "$SWEEP" --mode backlog-decay --memory-dir "$mem" --threshold-days "$days"
+  else
+    printf '%s' "$replies" | node "$SWEEP" --mode backlog-decay --memory-dir "$mem"
+  fi
+}
+
+add_aged_backlog_entry() {
+  local mem="$1" key="$2" age="$3"
+  add "$mem" "backlog" "## $key
+
+> verbatim (user, $(days_ago "$age")):
+> stub aged intent
+
+- source: user-instruction
+- status: open
+- raised-on: $(days_ago "$age")
+- raised-in-context: test
+- verified-at: HEAD
+- last-touched: $(days_ago "$age")"
+}
+
+test_when_backlog_entry_older_than_default_threshold_then_surfaces_and_drop_marks_superseded() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_aged_backlog_entry "$mem" "old-intent-a" 120
+  add_aged_backlog_entry "$mem" "recent-intent-b" 30
+  local report; report="$(sweep_backlog_decay "$mem" "drop")" || { fail "sweep crashed"; return 1; }
+  assert_contains "$report" '"surfaced": 1' "expected surfaced:1 (only old entry crosses 90-day default; got: $report)" || return 1
+  assert_contains "$report" '"dropped": 1' "expected dropped:1 (got: $report)" || return 1
+  assert_file_contains "$mem/backlog.md" "status: dropped" "drop reply must write status: dropped" || return 1
+  assert_file_contains "$mem/backlog.md" "superseded-at: $(today)" "drop reply must stamp superseded-at" || return 1
+  # The recent entry must remain untouched.
+  assert_file_contains "$mem/backlog.md" "## recent-intent-b" "30-day-old entry must NOT surface under default 90-day threshold" || return 1
+}
+
+test_when_backlog_decay_reply_keep_then_refreshes_last_touched() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_aged_backlog_entry "$mem" "old-intent-c" 120
+  sweep_backlog_decay "$mem" "keep" >/dev/null || { fail "sweep crashed"; return 1; }
+  assert_file_contains "$mem/backlog.md" "## old-intent-c" "keep reply must leave the entry in place" || return 1
+  assert_file_contains "$mem/backlog.md" "last-touched: $(today)" "keep reply must refresh last-touched to today" || return 1
+  assert_file_not_contains "$mem/backlog.md" "superseded-at:" "keep reply must NOT stamp superseded-at" || return 1
+}
+
+test_when_backlog_decay_reply_picked_up_then_stamps_status_and_superseded() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_aged_backlog_entry "$mem" "old-intent-d" 120
+  sweep_backlog_decay "$mem" "picked-up" >/dev/null || { fail "sweep crashed"; return 1; }
+  assert_file_contains "$mem/backlog.md" "status: picked-up" "picked-up reply must write status: picked-up" || return 1
+  assert_file_contains "$mem/backlog.md" "superseded-at: $(today)" "picked-up reply must stamp superseded-at" || return 1
+}
+
+test_when_backlog_decay_threshold_lowered_then_more_entries_surface() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  add_aged_backlog_entry "$mem" "intent-50d" 50
+  add_aged_backlog_entry "$mem" "intent-15d" 15
+  local report; report="$(sweep_backlog_decay "$mem" "skip" 30)" || { fail "sweep crashed"; return 1; }
+  assert_contains "$report" '"surfaced": 1' "with --threshold-days 30, only the 50-day entry should surface (got: $report)" || return 1
+}
+
+test_when_backlog_decay_entry_already_closed_then_not_surfaced() {
+  local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
+  seed_skel "$mem"
+  # Entry already carries superseded-at — Step 0a auto-close territory; this
+  # mode must skip it.
+  add "$mem" "backlog" "## already-closed
+
+- source: user-instruction
+- status: dropped
+- raised-on: $(days_ago 120)
+- verified-at: HEAD
+- last-touched: $(days_ago 120)
+- superseded-at: $(today)"
+  local report; report="$(sweep_backlog_decay "$mem" "")" || { fail "sweep crashed"; return 1; }
+  assert_contains "$report" '"surfaced": 0' "closed entries must NOT surface in backlog-decay (got: $report)" || return 1
+}
+
 # --- runner -------------------------------------------------------------------
 
 run test_when_resolved_at_present_on_pending_then_flush_removes_block
@@ -615,6 +782,97 @@ run test_when_stamp_closure_with_empty_keys_then_zero_stamped
 run test_when_stamp_closure_with_nonexistent_key_then_missing_list
 run test_when_stamp_closure_called_twice_then_idempotent
 run test_when_stamp_closure_missing_keys_arg_then_argparse_error
+
+# --- `verified-at: HEAD` no longer evades decay on git repos -----------------
+# Pre-fix: stale predicate short-circuited to "fresh" when stamp === 'HEAD' on
+# git repos (because the `head !== ''` branch fell through to `return false`).
+# That let entries written without an actual SHA persist forever. Post-fix:
+# HEAD falls through to the date-based check regardless of git-ness, so old
+# `last-touched` correctly marks the entry stale on both git AND non-git.
+
+# sweep.mjs derives the project root as dirname(dirname(memdir)). To exercise
+# the git path we need .claude/memory/ to sit two directories deep inside a
+# real git working tree. This helper builds that layout.
+seed_skel_git() {
+  local root; root="$(mktemp -d)"
+  local mem="$root/.claude/memory"
+  mkdir -p "$mem"
+  git -C "$root" init -q -b main 2>/dev/null
+  git -C "$root" -c user.email=t@t -c user.name=t commit --allow-empty -q -m "seed" 2>/dev/null
+  for f in landmarks libraries decisions landmines conventions pending-questions backlog; do
+    cat > "$mem/$f.md" <<EOF
+---
+owners: [test]
+size-cap: 500
+key: test
+---
+
+# Fixture
+EOF
+  done
+  printf '%s' "$root"
+}
+
+test_when_git_repo_verified_at_HEAD_with_old_last_touched_then_stale() {
+  local root; root="$(seed_skel_git)"; trap "rm -rf $root" RETURN
+  local mem="$root/.claude/memory"
+  add "$mem" "conventions" "## old-convention-HEAD-stamp
+
+- pattern: legacy convention not refreshed in a long time
+- verified-at: HEAD
+- last-touched: $(days_ago 120)"
+  local report; report="$(sweep stale-sweep "$mem" "delete")" || { fail "sweep crashed"; return 1; }
+  assert_file_not_contains "$mem/conventions.md" "## old-convention-HEAD-stamp" "git+HEAD-stamp+old last-touched must surface and be deletable (regression on HEAD escape hatch)" || return 1
+  assert_contains "$report" '"deleted": 1' "expected deleted:1 (got: $report)" || return 1
+}
+
+test_when_git_repo_verified_at_HEAD_with_fresh_last_touched_then_not_stale() {
+  local root; root="$(seed_skel_git)"; trap "rm -rf $root" RETURN
+  local mem="$root/.claude/memory"
+  add "$mem" "conventions" "## fresh-convention-HEAD-stamp
+
+- pattern: just refreshed
+- verified-at: HEAD
+- last-touched: $(today)"
+  local report; report="$(sweep stale-sweep "$mem" "")" || { fail "sweep crashed"; return 1; }
+  assert_file_contains "$mem/conventions.md" "## fresh-convention-HEAD-stamp" "fresh HEAD-stamped entry must NOT surface" || return 1
+  assert_contains "$report" '"deleted": 0' "expected deleted:0 for fresh entry (got: $report)" || return 1
+}
+
+test_when_git_repo_verified_at_real_sha_within_threshold_then_not_stale() {
+  # Sanity trap: a fresh stamp (current short SHA) on a git repo must NOT
+  # surface, so my fix doesn't accidentally over-stale entries with real SHAs.
+  local root; root="$(seed_skel_git)"; trap "rm -rf $root" RETURN
+  local mem="$root/.claude/memory"
+  local sha; sha="$(git -C "$root" rev-parse --short HEAD)"
+  add "$mem" "conventions" "## fresh-sha-stamp
+
+- pattern: verified against current HEAD
+- verified-at: $sha
+- last-touched: $(today)"
+  local report; report="$(sweep stale-sweep "$mem" "")" || { fail "sweep crashed"; return 1; }
+  assert_file_contains "$mem/conventions.md" "## fresh-sha-stamp" "current-HEAD SHA stamp must NOT surface" || return 1
+  assert_contains "$report" '"deleted": 0' "expected deleted:0 for current-SHA entry (got: $report)" || return 1
+}
+
+# heading-suffix closure + R4 prose pattern (Phase 0a/0b extensions)
+run test_when_pending_q_has_closed_heading_em_dash_then_auto_close_removes_block
+run test_when_pending_q_has_closed_heading_ascii_dash_then_auto_close_removes_block
+run test_when_landmarks_has_closed_heading_then_auto_close_removes_block
+run test_when_closed_heading_date_malformed_then_block_kept
+run test_when_resolution_bullet_prose_then_surfaced_for_confirm
+
+# HEAD escape-hatch closed
+run test_when_git_repo_verified_at_HEAD_with_old_last_touched_then_stale
+run test_when_git_repo_verified_at_HEAD_with_fresh_last_touched_then_not_stale
+run test_when_git_repo_verified_at_real_sha_within_threshold_then_not_stale
+
+# Step 0d backlog-decay
+run test_when_backlog_entry_older_than_default_threshold_then_surfaces_and_drop_marks_superseded
+run test_when_backlog_decay_reply_keep_then_refreshes_last_touched
+run test_when_backlog_decay_reply_picked_up_then_stamps_status_and_superseded
+run test_when_backlog_decay_threshold_lowered_then_more_entries_surface
+run test_when_backlog_decay_entry_already_closed_then_not_surfaced
 
 echo "----"
 echo "Passed: $PASS  Failed: $FAIL"

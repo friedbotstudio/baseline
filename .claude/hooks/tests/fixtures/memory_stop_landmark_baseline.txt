@@ -9,13 +9,17 @@ verifies-against: none
 ---
 
 
-<!-- session 2026-05-17T09:35Z -->
-## CANDIDATE: src/foo.py → landmarks.md
-- Touched in this session: 2 times
-- Suggested role: <fill in from session context>
-- Source: file written/edited at 2026-05-17T09:35Z
-
+<!-- session 2026-05-29T08:02Z -->
 ## CANDIDATE: src/bar.py → landmarks.md
-- Touched in this session: 1 time
+- Touched in this session: 3 times
+- Trigger: edited 3 times this session
 - Suggested role: <fill in from session context>
-- Source: file written/edited at 2026-05-17T09:35Z
+- source: inferred-from-code
+- Source: file written/edited at 2026-05-29T08:02Z
+
+## CANDIDATE: src/foo.py → landmarks.md
+- Touched in this session: 3 times
+- Trigger: edited 3 times this session
+- Suggested role: <fill in from session context>
+- source: inferred-from-code
+- Source: file written/edited at 2026-05-29T08:02Z

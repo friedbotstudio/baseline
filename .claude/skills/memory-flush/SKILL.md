@@ -16,7 +16,7 @@ The skill is also user-invokable outside the workflow (ad-hoc curation). When in
 
 # memory-flush — curate auto-extracted memory candidates
 
-The `memory_stop.sh` hook appends candidates to `.claude/memory/_pending.md` after every turn. This skill reviews them in main context (where conversation richness is preserved), commits the keepers to the right canonical file with proper metadata, and resets the pending body.
+The `memory_stop.mjs` hook appends candidates to `.claude/memory/_pending.md` after every turn. This skill reviews them in main context (where conversation richness is preserved), commits the keepers to the right canonical file with proper metadata, and resets the pending body.
 
 The hook is a passive collector. **You are the curator.** Discard noise, promote signal, deduplicate against existing canonical entries.
 
@@ -61,7 +61,7 @@ Invoke (one reply per surfaced entry, piped from stdin):
 node .claude/skills/memory-flush/sweep.mjs --mode prose-scan --memory-dir .claude/memory
 ```
 
-For each entry without a structured closure field, the helper scans the body against three anchored, case-insensitive regexes (R1 `Resolution path taken|by|date`, R2 `Superseded by|at|on`, R3 `Resolved by|on|at`). On a match the helper reads one line from stdin and applies the reply: `y` deletes the block, `n` keeps and does-not-resurface-this-run, `skip` keeps and defers for next-run reconsideration.
+For each entry without a structured closure field, the helper scans the body against four anchored, case-insensitive regexes (R1 `Resolution path taken|by|date`, R2 `Superseded by|at|on`, R3 `Resolved by|on|at`, R4 `- Resolution:` bullet form — the shape paired with `## Q-NNN — CLOSED <date>` headings; see `.claude/memory/README.md → Closure fields → Body-prose signals`). On a match the helper reads one line from stdin and applies the reply: `y` deletes the block, `n` keeps and does-not-resurface-this-run, `skip` keeps and defers for next-run reconsideration.
 
 You drive this step interactively: ask the user `Close <key> from <file>? (y / n / skip)` for each entry the helper surfaces, then feed the answers to the helper one per line.
 
@@ -71,13 +71,32 @@ You drive this step interactively: ask the user `Close <key> from <file>? (y / n
 
 ### Step 0c — Stale sweep
 
-Only run when `memory_session_start.sh` reported stale > 0 this session, or the user asks. Invoke:
+Only run when `memory_session_start.mjs` reported stale > 0 this session, or the user asks. Invoke:
 
 ```
 node .claude/skills/memory-flush/sweep.mjs --mode stale-sweep --memory-dir .claude/memory
 ```
 
 The helper re-derives the stale set using the same predicate as the hook (verified-at ≥ 30 commits behind HEAD in git, or last-touched ≥ 30 days in non-git). For each stale entry, prompt the user `Stale: <key> in <file>. re-verify / delete / mark-closed / skip?` and feed the reply. `re-verify` restamps `verified-at:` + `last-touched:` to today; `delete` removes the block; `mark-closed` inserts the register-correct closure field (`resolved-at:` on pending-questions, `superseded-at:` elsewhere) and leaves the block in place so Step 0a auto-closes it next run; `skip` keeps it and resurfaces next session.
+
+### Step 0d — Backlog decay (on demand)
+
+Backlog is stale-exempt under the default decay predicate (intent doesn't verify-against code), but old open entries still accumulate. Run this mode when the user asks or when `backlog.md` has grown noticeably (e.g., > 20 open entries, or > 90 days of accumulated drift). Invoke:
+
+```
+node .claude/skills/memory-flush/sweep.mjs --mode backlog-decay --memory-dir .claude/memory --threshold-days 90
+```
+
+`--threshold-days` defaults to 90. For each backlog entry whose `raised-on:` (or `last-touched:` fallback) is older than the threshold, the helper reads one reply from stdin and applies it:
+
+- `keep` — refresh `last-touched:` to today; entry stays open.
+- `drop` — stamp `status: dropped` + `superseded-at: today`; Step 0a auto-closes it next run.
+- `picked-up` — stamp `status: picked-up` + `superseded-at: today`; Step 0a auto-closes it next run.
+- `skip` (or empty) — leave the entry untouched and resurface it next time.
+
+You drive this step interactively: prompt the user `Backlog: <key> raised <days> days ago. keep / drop / picked-up / skip?` for each surfaced entry, then feed the replies one per line. Closed entries (those already carrying `superseded-at:`) are skipped — they're handled by Step 0a.
+
+Report shape: `{"surfaced": N, "kept": N, "dropped": N, "picked_up": N, "deferred": N}`.
 
 After Step 0 completes, proceed to Step 1.
 
@@ -91,7 +110,7 @@ For each `## CANDIDATE:` block, decide one of:
 
 - **Promote.** The candidate is signal. Build the canonical entry shape (see `.claude/memory/README.md`) and append to the right file. If the candidate's stable key already exists in the canonical file → **replace** that entry; do not duplicate.
 - **Discard.** The candidate is noise (touched-once file with no clear role; a context7 query that resolved nothing useful; a path under generated/vendored code; an intent line that was a passing chat phrase rather than real future work). No canonical write.
-- **Defer.** Useful but you don't have enough context to write a clean entry. Move the candidate verbatim to `pending-questions.md` as a `Q-NNN` entry phrased as "Should X be a landmark?" so the next session can decide. The pending body still gets reset at the end.
+- **Defer.** Useful but you don't have enough context to write a clean entry. Move the candidate verbatim to `pending-questions.md` as a `Q-NNN` entry phrased as "Should X be a landmark?" so the next session can decide. The pending body still gets reset at the end. Allocate the next Q-NNN via `node .claude/skills/memory-flush/next-q-id.mjs` (returns max+1; safe under concurrent writes within the same session).
 
 **Backlog candidates** (`## CANDIDATE: backlog → <slug>-<4hash>`) route to `backlog.md` with the canonical entry shape plus these fields: `status: open` (the initial state; transitions to `picked-up` or `dropped` are later edits), `raised-on: <ISO>`, `raised-in-context: <slug-or-(no active workflow)>`, the verbatim blockquote of the user/assistant intent line. Provenance is `source: user-instruction` for `role: user` candidates or `source: assistant-deferral` for `role: assistant` candidates. The verbatim is REQUIRED for both — `/memory-flush` SHALL reject promotion without it (per `.claude/memory/README.md → Source provenance`).
 
@@ -103,7 +122,7 @@ Per the project memory contract: every entry on the canonical files must have a 
 - **Library candidate** → confirm the version against the project's lockfile (or its stack equivalent). If lockfile absent or version mismatched, mark `verified-at: unverified` and add a caveat instead of a SHA.
 - **Decision / landmine / convention candidate** → confirm the cited file/line still exists; if not, surface and discard.
 
-Stamp `verified-at: <short HEAD SHA>` on every promoted entry. If the project isn't a git repo or HEAD isn't reachable, use `verified-at: HEAD` (the SessionStart hook treats `HEAD` as fresh).
+Stamp `verified-at: <short HEAD SHA>` on every promoted entry. If the project isn't a git repo or HEAD isn't reachable, use `verified-at: HEAD` — the staleness predicate then falls back to `last-touched`-days on both git and non-git repos (so a fresh `last-touched: <today>` keeps the entry non-stale, and an old one correctly ages out). The prior "HEAD is permanently fresh on git" semantics was a decay-evasion hatch and was removed.
 
 ## Step 4 — Write canonical entries
 
@@ -132,14 +151,14 @@ After all promotion/discard/defer decisions are written, **rewrite `_pending.md`
 
 ```markdown
 ---
-owners: [memory_stop.sh writes; /memory-flush clears]
+owners: [memory_stop.mjs writes; /memory-flush clears]
 category: auto-extracted candidates awaiting curation
 verifies-against: none
 ---
 
 # Pending memory candidates
 
-Auto-extracted by `memory_stop.sh` at end of each turn. Run `/memory-flush` to review and commit keepers to the canonical files.
+Auto-extracted by `memory_stop.mjs` at end of each turn. Run `/memory-flush` to review and commit keepers to the canonical files.
 
 **Content of this file is gitignored.** The file itself (with this header) is committed; everything below the `---` separator below is per-session and not staged.
 

@@ -258,15 +258,22 @@ test_when_same_intent_repeated_in_turn_then_within_session_dedup_holds() {
 }
 
 # --- AC-004 byte-parity: file-touch path unchanged ---------------------------
+# Post-#6: landmark candidates emit only when (Write fires on the path) OR
+# (edit count >= LANDMARK_EDIT_MIN). The original input (2 edits foo + 1
+# edit bar) no longer qualifies. Bumped to 3 edits per file so both meet
+# the threshold and the byte-equality assertion still exercises the
+# emission path. See test_when_two_edits_only_then_no_landmark_candidate
+# below for the explicit below-threshold regression trap.
 
 test_when_turn_edits_files_no_intent_then_landmark_candidates_byte_identical() {
   local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
   local tx="$root/transcript.jsonl"
-  # Three file-touch events, zero intent text. The shape that produces the
-  # captured baseline fixture.
   append_tool_use_event "$tx" "Edit" "src/foo.py"
   append_tool_use_event "$tx" "Edit" "src/bar.py"
   append_tool_use_event "$tx" "Edit" "src/foo.py"
+  append_tool_use_event "$tx" "Edit" "src/bar.py"
+  append_tool_use_event "$tx" "Edit" "src/foo.py"
+  append_tool_use_event "$tx" "Edit" "src/bar.py"
   run_hook "$root" "$tx"
   local pf; pf="$(pending_path "$root")"
 
@@ -286,6 +293,119 @@ test_when_turn_edits_files_no_intent_then_landmark_candidates_byte_identical() {
   fail "AC-004 landmark output diverged from baseline (canonicalized diff below)"
   diff <(printf '%s' "$expected_canon") <(printf '%s' "$actual_canon") | head -30
   return 1
+}
+
+# --- #7 widened intent triggers (corpus regression trap) ---------------------
+# Each new pattern below is a representative true-positive from this repo's
+# backlog verbatims / archive bundles that the original 6-pattern set missed.
+# Together they form the precision-favoring corpus: each line MUST fire when
+# anchored at start-of-line; mid-sentence forms MUST NOT fire (see the
+# negative cases at the bottom).
+
+test_when_widened_we_need_to_then_backlog_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  append_text_event "$tx" "assistant" "we need to migrate the auth layer to the new session store"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 1 "#7 'we need to' should emit (got: $(grep -c 'CANDIDATE: backlog' "$pf"))" || return 1
+  assert_file_contains "$pf" "migrate the auth layer" "#7 'we need to' verbatim should carry the action" || return 1
+}
+
+test_when_widened_cure_label_then_backlog_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  append_text_event "$tx" "assistant" "Cure: write-to-temp-then-rename pattern for atomic workflow.json writes"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 1 "#7 'Cure:' should emit" || return 1
+  assert_file_contains "$pf" "write-to-temp-then-rename" "#7 'Cure:' verbatim should carry the solution" || return 1
+}
+
+test_when_widened_follow_up_label_then_backlog_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  append_text_event "$tx" "user" "follow-up: harden stripFrontmatter against body horizontal rules"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 1 "#7 'follow-up' should emit" || return 1
+}
+
+test_when_widened_future_work_label_then_backlog_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  append_text_event "$tx" "assistant" "Future work: add backlog-decay sweep to the memory-flush SOP"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 1 "#7 'Future work' should emit" || return 1
+}
+
+test_when_widened_numbered_action_then_backlog_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  # Numbered action lists are common in spec / RCA prose. Each item starts
+  # with `N. <verb>` and describes future work.
+  append_text_event "$tx" "user" $'Plan:\n1. Refactor the workflow migrator to use atomic writes\n2. Add the regression test'
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  # Both items match (different verbs); allow >= 1.
+  local got; got="$(grep -c '^## CANDIDATE: backlog → ' "$pf" 2>/dev/null || echo 0)"
+  if [ "$got" -lt 1 ]; then
+    fail "#7 numbered-action 'N. Refactor X' should emit; got $got"
+    return 1
+  fi
+}
+
+# --- #7 precision: mid-sentence widened triggers MUST NOT fire ---------------
+
+test_when_widened_we_need_to_mid_sentence_then_no_candidate() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  # `we need to` appears mid-sentence; anchor must reject.
+  append_text_event "$tx" "user" "we discussed why we need to ship this — it's about velocity"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 0 "#7 mid-sentence 'we need to' MUST NOT emit" || return 1
+}
+
+test_when_widened_cure_mid_sentence_then_no_candidate() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  append_text_event "$tx" "assistant" "the cure should also touch upstream caching, but that's separate"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+  assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 0 "#7 mid-sentence 'cure' MUST NOT emit" || return 1
+}
+
+# --- Edit-only threshold: below-threshold Edits suppress candidate -----------
+
+test_when_two_edits_only_then_no_landmark_candidate() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  # 2 edits to the same file: edit count below LANDMARK_EDIT_MIN (3), no Write.
+  # Pre-#6 behavior would emit a candidate; post-#6 must suppress.
+  append_tool_use_event "$tx" "Edit" "src/borderline.py"
+  append_tool_use_event "$tx" "Edit" "src/borderline.py"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+
+  assert_grep_count "$pf" '^## CANDIDATE: src/borderline.py' 0 "below-threshold (2 edits, no Write) MUST NOT emit landmark candidate" || return 1
+}
+
+# --- Write-event bypass: Write always emits regardless of edit count ---------
+
+test_when_single_write_then_landmark_candidate_emitted() {
+  local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
+  local tx="$root/transcript.jsonl"
+  # Single Write event: bypasses edit-threshold (brand-new file is interesting
+  # regardless of edit count).
+  append_tool_use_event "$tx" "Write" "src/brandnew.py"
+  run_hook "$root" "$tx"
+  local pf; pf="$(pending_path "$root")"
+
+  assert_grep_count "$pf" '^## CANDIDATE: src/brandnew.py → landmarks.md' 1 "single Write MUST emit landmark candidate" || return 1
+  assert_file_contains "$pf" "newly written this session" "Write candidate should carry the 'newly written' Trigger label" || return 1
+  assert_file_contains "$pf" "- source: inferred-from-code" "landmark candidate should carry source: inferred-from-code (#8)" || return 1
 }
 
 # --- AC-012 regression trap: no-intent leaves backlog section unchanged ------
@@ -317,6 +437,15 @@ run test_when_intent_text_empty_after_trigger_strip_then_no_candidate
 run test_when_two_intents_same_8word_prefix_then_distinct_keys
 run test_when_same_intent_repeated_in_turn_then_within_session_dedup_holds
 run test_when_turn_edits_files_no_intent_then_landmark_candidates_byte_identical
+run test_when_two_edits_only_then_no_landmark_candidate
+run test_when_single_write_then_landmark_candidate_emitted
+run test_when_widened_we_need_to_then_backlog_candidate_emitted
+run test_when_widened_cure_label_then_backlog_candidate_emitted
+run test_when_widened_follow_up_label_then_backlog_candidate_emitted
+run test_when_widened_future_work_label_then_backlog_candidate_emitted
+run test_when_widened_numbered_action_then_backlog_candidate_emitted
+run test_when_widened_we_need_to_mid_sentence_then_no_candidate
+run test_when_widened_cure_mid_sentence_then_no_candidate
 run test_when_no_intent_text_in_turn_then_backlog_section_byte_identical_to_pre_change
 
 echo "----"

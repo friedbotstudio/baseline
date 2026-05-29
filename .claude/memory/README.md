@@ -1,6 +1,6 @@
 # Project memory
 
-Persistent project knowledge that travels with the repo. Loaded into Claude's context at session start (via the `memory_session_start.sh` hook) and updated as a byproduct of phase skills doing their normal work, plus auto-extracted candidates from the `memory_stop.sh` hook (curated via `/memory-flush`).
+Persistent project knowledge that travels with the repo. Loaded into Claude's context at session start (via the `memory_session_start.mjs` hook) and updated as a byproduct of phase skills doing their normal work, plus auto-extracted candidates from the `memory_stop.mjs` hook (curated via `/memory-flush`).
 
 ## Files
 
@@ -12,9 +12,9 @@ Persistent project knowledge that travels with the repo. Loaded into Claude's co
 | `landmines.md` | `security`, `integrate`, `scout` | Gotchas: "do not edit X without also editing Y" |
 | `conventions.md` | `scenario`, `implement` | Repo-specific test/code idioms (fixture patterns, naming, layout) |
 | `pending-questions.md` | any phase | Open questions the current session couldn't resolve |
-| `backlog.md` | `/memory-flush` | Future-work intent captured automatically by `memory_stop.sh` (intent-line extraction from user prompts and assistant text). Stale-exempt. |
-| `_pending.md` | `memory_stop.sh` (writes), `/memory-flush` (clears) | Auto-extracted candidates awaiting curation. **Content gitignored**; the file structure is committed. |
-| `_resume.md` | `memory_pre_compact.sh` + `memory_stop.sh` (write), `memory_session_start.sh` (reads), `harness` (reads) | **Continuity** snapshot — last completed phase, next phase due, in-flight files, recent user prompts. Refreshed every turn-end and again before compaction. Re-injected at every session start (compact / clear / resume / startup). **Gitignored** — pure session state, not project knowledge. |
+| `backlog.md` | `/memory-flush` | Future-work intent captured automatically by `memory_stop.mjs` (intent-line extraction from user prompts and assistant text). Stale-exempt. |
+| `_pending.md` | `memory_stop.mjs` (writes), `/memory-flush` (clears) | Auto-extracted candidates awaiting curation. **Content gitignored**; the file structure is committed. |
+| `_resume.md` | `memory_pre_compact.mjs` + `memory_stop.mjs` (write), `memory_session_start.mjs` (reads), `harness` (reads) | **Continuity** snapshot — last completed phase, next phase due, in-flight files, recent user prompts. Refreshed every turn-end and again before compaction. Re-injected at every session start (compact / clear / resume / startup). **Gitignored** — pure session state, not project knowledge. |
 
 ## Source provenance (mandatory for feedback-derived entries)
 
@@ -24,7 +24,7 @@ Every entry MUST carry a `source:` field declaring how the rule was learned. All
 |---|---|---|
 | `user-instruction` | The user stated a rule or directive in conversation | **Required** |
 | `user-feedback` | The user corrected behavior or affirmed a non-obvious approach | **Required** |
-| `assistant-deferral` | Claude verbalized a deferred follow-up during conversation (captured by `memory_stop.sh` intent extraction into `backlog.md`) | **Required** (Claude's own sentence as verbatim) |
+| `assistant-deferral` | Claude verbalized a deferred follow-up during conversation (captured by `memory_stop.mjs` intent extraction into `backlog.md`) | **Required** (Claude's own sentence as verbatim) |
 | `incident` | Recovered from an actual failure or near-miss in this session | Recommended (incident-report quote) |
 | `inferred-from-code` | Derived by reading the codebase | Not applicable |
 | `library-pinned` | Came from a `context7` lookup | Not applicable (cited URL/version is the source) |
@@ -63,7 +63,7 @@ Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or
 | `landmines.md` | `path:line` or short description slug |
 | `conventions.md` | short slug |
 | `pending-questions.md` | auto-numbered `Q-NNN` |
-| `backlog.md` | `<8-word-kebab-slug>-<4-char-sha256>` (derived by `memory_stop.sh` from the intent verbatim) |
+| `backlog.md` | `<8-word-kebab-slug>-<4-char-sha256>` (derived by `memory_stop.mjs` from the intent verbatim) |
 
 ## Self-healing rules
 
@@ -76,24 +76,39 @@ Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or
 
 ## Closure fields
 
-Two optional, register-specific closure fields cause `/memory-flush` Step 0 to delete the entry block on its next run:
+Two equivalent closure forms cause `/memory-flush` Step 0a to delete the entry block on its next run. **Both are first-class** — `/memory-flush sweep --mode auto-close` accepts either.
+
+### Form A — structured field (machine-friendly, programmatically writable)
 
 | File | Field | Semantics |
 |---|---|---|
 | `pending-questions.md` | `resolved-at: <ISO date>` | The question has been answered; entry is closed. |
 | `landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `backlog.md` | `superseded-at: <ISO date>` | The fact (or, for `backlog.md`, the open intent) is no longer current; entry is closed. On `backlog.md` the body `status:` field (`picked-up` / `dropped`) disambiguates which transition triggered the close. |
 
+### Form B — heading suffix (human-friendly, scannable on render)
+
+Append `— CLOSED <ISO date>` to the entry's `##` heading. The em-dash `—` (U+2014) is canonical; ASCII `--` is also accepted. Example:
+
+```
+## Q-005 — CLOSED 2026-05-16
+
+- Resolution: decided in spec; kept for historical reference
+```
+
+Form B is preferred for `pending-questions.md` — the close status is visible at-a-glance when reading the rendered file. Form A is preferred for automated writes (e.g., `/commit`'s `stamp-closure` mode on backlog entries). Both close the entry equivalently.
+
 **Per-file invariant**: on `pending-questions.md`, `superseded-at:` MUST NOT appear; on the other five canonical files, `resolved-at:` MUST NOT appear. Mutually exclusive at the file level. Not enforced by audit — documented invariant only. The `/memory-flush` Step 0a sweep flags violations in its report rather than deleting.
 
-**Body-prose signals.** Three regexes, case-insensitive, line-anchored:
+**Body-prose signals.** Four regexes, case-insensitive, line-anchored:
 
 - R1: `^(\s*-\s*)?\*\*?Resolution\s+(path\s+taken|by|date)\b`
 - R2: `^Superseded\s+(by|at|on)\b`
 - R3: `^Resolved\s+(by|on|at)\b`
+- R4: `^(\s*-\s*)?\*{0,2}Resolution\s*:` — bullet-list `- Resolution:` form commonly paired with Form B headings.
 
-A match without a corresponding structured closure field causes `/memory-flush` Step 0b to surface a once-per-entry `Close <key> from <file>? (y / n / skip)` prompt.
+A match without a corresponding structured closure field or heading suffix causes `/memory-flush` Step 0b to surface a once-per-entry `Close <key> from <file>? (y / n / skip)` prompt.
 
-**Closure short-circuits decay (AC-005).** `memory_session_start.sh` excludes any entry carrying a closure field from the stale count. `stale` ≠ `closed`: a stale entry is *unverified*; closure is a separate, deliberate signal that the entry is no longer load-bearing.
+**Closure short-circuits decay (AC-005).** `memory_session_start.mjs` excludes any entry carrying a closure field from the stale count. `stale` ≠ `closed`: a stale entry is *unverified*; closure is a separate, deliberate signal that the entry is no longer load-bearing.
 
 **Automated closure-stamp on backlog pickup.** When `/triage` records a workflow that picks up a backlog entry (the `workflow.json → source_backlog_keys` array carries the entry's stable key), `/commit` Step 6 invokes `node .claude/skills/memory-flush/sweep.mjs --mode stamp-closure --memory-dir .claude/memory --backlog-keys <csv>` after `git commit` succeeds. The mode writes `status: picked-up` + `superseded-at: <today>` to each named entry; the next `/memory-flush` Step 0a auto-deletes them. `/commit` is the only caller of this mode; `sweep.mjs` is the only writer to `backlog.md` during closure-stamping — the curator-not-writer pattern is preserved through the actuator boundary.
 
@@ -102,11 +117,11 @@ A match without a corresponding structured closure field causes `/memory-flush` 
 Two paths:
 
 1. **Phase skills, as a byproduct.** Each skill that produces a workflow artifact also writes any new entries for its owned file. No separate "update memory" task — the same tool call as the artifact write.
-2. **Stop hook auto-extraction.** `memory_stop.sh` reads the just-completed turn's transcript, extracts touched paths / cited library APIs / verbalized decisions, and appends candidates to `_pending.md`. Claude reviews via `/memory-flush` and commits keepers to canonical files.
+2. **Stop hook auto-extraction.** `memory_stop.mjs` reads the just-completed turn's transcript, extracts touched paths / cited library APIs / verbalized decisions, and appends candidates to `_pending.md`. Claude reviews via `/memory-flush` and commits keepers to canonical files.
 
 ## Read order on session start
 
-`memory_session_start.sh` hook prints a compact index (number of entries per file, count of stale entries, count of pending candidates), then appends the body of `_resume.md` if a recent snapshot exists, with a framing line that depends on the session source (`compact` / `clear` / `resume` / `startup`). Canonical files load on first relevant skill invocation.
+`memory_session_start.mjs` hook prints a compact index (number of entries per file, count of stale entries, count of pending candidates), then appends the body of `_resume.md` if a recent snapshot exists, with a framing line that depends on the session source (`compact` / `clear` / `resume` / `startup`). Canonical files load on first relevant skill invocation.
 
 ## Continuity vs knowledge
 

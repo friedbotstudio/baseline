@@ -32,12 +32,22 @@ function isSource(path) {
 const USER_BULLET = String.raw`^(?:\s*[-*]\s*)?`;
 const ASSISTANT_BULLET = String.raw`^`;
 const INTENT_TRIGGERS = [
+  // Original precision-tuned set.
   String.raw`TODO[:\s]`,
   String.raw`next\s+we\s+(?:should|need\s+to|must)\b`,
   String.raw`let'?s\s+also\b`,
   String.raw`we\s+should\s+also\b`,
   String.raw`backlog\s+this\b`,
   String.raw`after\s+this(?:\s+lands)?\b`,
+  // #7 widened set. Mined from this repo's backlog verbatims + archive
+  // bundles; all anchored at line start (with optional bullet) — mid-
+  // sentence matches MUST NOT fire. Each pattern targets a phrasing shape
+  // the original set missed that recurred ≥ 2 times in the corpus.
+  String.raw`we\s+(?:need\s+to|should|must|ought\s+to|have\s+to)\b`,
+  String.raw`(?:cure|mitigation|remediation|remedy)[\s:]+`,
+  String.raw`follow[- ]?up\b[\s:]+`,
+  String.raw`future\s+(?:work|improvement|fix|task)[\s:]+`,
+  String.raw`\d+\.\s+(?:add|fix|update|cleanup|clean\s+up|refactor|remove|delete|migrate|port|extract|harden|tighten|investigate)\b`,
 ];
 
 const USER_INTENT_PATTERNS = INTENT_TRIGGERS.map((t) => new RegExp(USER_BULLET + t, 'i'));
@@ -52,12 +62,23 @@ const TRIGGER_STRIP = new RegExp(
   String.raw`|let'?s\s+also\s+` +
   String.raw`|we\s+should\s+also\s+` +
   String.raw`|backlog\s+this[:\s]*` +
-  String.raw`|after\s+this(?:\s+lands)?[\s,]*)`,
+  String.raw`|after\s+this(?:\s+lands)?[\s,]*` +
+  // #7 widened set — must match the INTENT_TRIGGERS additions above.
+  String.raw`|we\s+(?:need\s+to|should|must|ought\s+to|have\s+to)\s+` +
+  String.raw`|(?:cure|mitigation|remediation|remedy)[\s:]+` +
+  String.raw`|follow[- ]?up[\s:]+` +
+  String.raw`|future\s+(?:work|improvement|fix|task)[\s:]+` +
+  String.raw`|\d+\.\s+(?:add|fix|update|cleanup|clean\s+up|refactor|remove|delete|migrate|port|extract|harden|tighten|investigate)\s+)`,
   'i',
 );
 
 const NOISE_PREFIXES = ['<system-reminder>', '<command-name>', '<local-command-'];
 const MAX_INTENT_TEXT_LEN = 240;
+// Minimum edit-only touch count to emit a landmark candidate. Write events
+// bypass the threshold (new files are always interesting). 3 is the smallest
+// value that meaningfully filters incidental edits without losing sustained
+// editing sessions.
+const LANDMARK_EDIT_MIN = 3;
 
 function extractTextBlocks(content) {
   const out = [];
@@ -113,12 +134,17 @@ function deriveKey(line) {
 }
 
 export function runMemoryStop({ transcript, pending, projectRoot }) {
-  // Load existing pending body to avoid re-emitting duplicates within the session.
+  // Load existing pending body to avoid re-emitting duplicates within the session
+  // OR across sessions. The capture group MUST match the full key — keys take the
+  // shape `<path> → <target>.md` or `backlog → <slug>-<hash>`, all of which
+  // contain whitespace and the `→` separator. A `(\S+)` capture stops at the
+  // first space and produces a partial key that never matches the full
+  // lookup key constructed below, defeating dedup entirely.
   let existing;
   try { existing = readFileSync(pending, 'utf8'); } catch { existing = ''; }
   const existingKeys = new Set();
   {
-    const re = /^##\s+CANDIDATE:\s*(\S+)/gm;
+    const re = /^##\s+CANDIDATE:\s*(.+?)\s*$/gm;
     let m;
     while ((m = re.exec(existing)) !== null) existingKeys.add(m[1]);
   }
@@ -126,6 +152,11 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   const candidates = []; // [key, category, bodyLines]
 
   const pathTouches = new Map();
+  // `pathSawWrite.has(fp)` ⇔ at least one Write event landed on `fp` this turn.
+  // Landmark candidates emit on (Write seen) OR (touch count >= LANDMARK_EDIT_MIN);
+  // a single Edit on a never-Written file is chaff that almost always gets
+  // discarded at /memory-flush time. Raising the bar prunes the noise.
+  const pathSawWrite = new Set();
   const libQueries = []; // {library, topic}
   const intentCandidates = []; // {key, verbatim, role, source}
   const seenIntentKeys = new Set();
@@ -154,7 +185,10 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
       const inp = (block.input && typeof block.input === 'object') ? block.input : {};
       if (name === 'Edit' || name === 'Write' || name === 'MultiEdit') {
         const fp = inp.file_path || '';
-        if (fp) pathTouches.set(fp, (pathTouches.get(fp) || 0) + 1);
+        if (fp) {
+          pathTouches.set(fp, (pathTouches.get(fp) || 0) + 1);
+          if (name === 'Write') pathSawWrite.add(fp);
+        }
       } else if (name.includes('context7')) {
         const lib = inp.libraryName || inp.library_name || inp.libraryID;
         const topic = inp.topic || inp.query || '';
@@ -192,19 +226,31 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   // strftime('%Y-%m-%dT%H:%MZ'), no seconds.
   const ts = new Date().toISOString().replace(/:\d{2}\.\d+Z$/, 'Z');
 
-  // Landmark candidates from touched source files.
+  // Landmark candidates from touched source files. Edge-trim: emit ONLY when
+  // (Write fired on the path) OR (edit-count >= LANDMARK_EDIT_MIN). A single
+  // Edit on a never-Written file is overwhelmingly noise — landmark
+  // promotions almost always wait for either a brand-new file or a sustained
+  // editing session. Brand-new files (Write) deserve a candidate so the
+  // curator can name the role at creation time.
   const sortedTouches = [...pathTouches.entries()].sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]));
   for (const [fp, n] of sortedTouches) {
     const cwd = projectRoot || process.cwd();
     let rel = fp;
     if (fp.startsWith(cwd + '/')) rel = fp.slice(cwd.length + 1);
     if (!isSource(rel)) continue;
+    const sawWrite = pathSawWrite.has(fp);
+    if (!sawWrite && n < LANDMARK_EDIT_MIN) continue;
     const key = `${rel} → landmarks.md`;
     if (existingKeys.has(key)) continue;
+    const trigger = sawWrite
+      ? 'newly written this session'
+      : `edited ${n} time${n !== 1 ? 's' : ''} this session`;
     const body = [
       `## CANDIDATE: ${key}`,
       `- Touched in this session: ${n} time${n !== 1 ? 's' : ''}`,
+      `- Trigger: ${trigger}`,
       `- Suggested role: <fill in from session context>`,
+      `- source: inferred-from-code`,
       `- Source: file written/edited at ${ts}`,
       '',
     ];
@@ -222,6 +268,7 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
       `## CANDIDATE: ${key}`,
       `- Library: ${q.library}`,
       `- Topics queried this session: ${q.topic || '(no topic field)'}`,
+      `- source: library-pinned`,
       `- Source: context7 MCP query at ${ts}`,
       `- Reminder: pin a version before promoting to canonical (lib@version is the stable key).`,
       '',

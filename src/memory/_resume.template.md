@@ -9,4 +9,4 @@ trigger: stop
 
 ## No prior session
 
-This file is overwritten by `memory_stop.sh` at end of each turn and by `memory_pre_compact.sh` before context compaction. The SessionStart hook reads it on the next session start.
+This file is overwritten by `memory_stop.mjs` at end of each turn and by `memory_pre_compact.mjs` before context compaction. The SessionStart hook reads it on the next session start.

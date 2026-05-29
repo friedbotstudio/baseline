@@ -15,6 +15,23 @@ const PENDING_FILE = 'pending-questions';
 const STALE_EXEMPT_FILES = new Set(['backlog']);
 const STALE_COMMITS = 30;
 const STALE_DAYS = 30;
+const DEFAULT_SIZE_CAP = 500;
+
+function readSizeCap(text) {
+  if (!text.startsWith('---')) return DEFAULT_SIZE_CAP;
+  const end = text.indexOf('---', 3);
+  if (end < 0) return DEFAULT_SIZE_CAP;
+  const fm = text.slice(3, end);
+  const m = fm.match(/^\s*size-cap:\s*(\d+)\s*$/m);
+  return m ? parseInt(m[1], 10) : DEFAULT_SIZE_CAP;
+}
+
+function countLines(text) {
+  if (!text) return 0;
+  return text.endsWith('\n')
+    ? text.split('\n').length - 1
+    : text.split('\n').length;
+}
 
 const FRAMINGS = {
   compact: '↻ Resuming after compaction. Last captured state below — pick up from here.',
@@ -95,24 +112,29 @@ function isStale(block, name, head, root) {
     const dist = commitDistance(root, stamp);
     return dist === null || dist >= STALE_COMMITS;
   }
-  if (!head) {
-    const days = daysSince(getField(block, 'last-touched') || '');
-    return days !== null && days >= STALE_DAYS;
-  }
-  return false;
+  // Fallback: date-based decay on `last-touched`. Used for non-git projects
+  // AND for git projects where `verified-at: HEAD` means the writer didn't
+  // have an actual SHA at stamp time. Closes the prior decay-evasion hatch
+  // where `verified-at: HEAD` on a git repo was treated as permanently fresh.
+  const days = daysSince(getField(block, 'last-touched') || '');
+  return days !== null && days >= STALE_DAYS;
 }
 
 function stripFrontmatter(text) {
+  // #13: parse line-anchored `^---$` delimiters instead of substring
+  // `indexOf('---')`. The previous substring search matched a `---`
+  // appearing anywhere — including a body horizontal rule that occurs
+  // before the actual frontmatter close — and silently lost content.
+  // Strict YAML frontmatter delimiters are bare `---` on their own line.
   if (!text.startsWith('---')) return text;
-  // Skip the first '---' line, then find the next standalone '---' line.
   const lines = text.split(/\r?\n/);
-  // Python's text.split('---', 2)[-1] takes everything after the SECOND
-  // occurrence of '---'. Find the second occurrence by character index.
-  const first = text.indexOf('---');
-  if (first < 0) return text;
-  const second = text.indexOf('---', first + 3);
-  if (second < 0) return text;
-  return text.slice(second + 3);
+  if (lines[0].trim() !== '---') return text;
+  let closeIdx = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') { closeIdx = i; break; }
+  }
+  if (closeIdx < 0) return text;
+  return lines.slice(closeIdx + 1).join('\n');
 }
 
 export function buildIndex({ memDir, projectRoot, sessionSource }) {
@@ -122,6 +144,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   let totalEntries = 0;
   let totalStale = 0;
   const staleRecords = []; // [name, key, lastTouched]
+  const overCapRecords = []; // [name, lines, cap]
 
   for (const name of CANONICAL) {
     const p = join(memDir, `${name}.md`);
@@ -145,7 +168,19 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       staleRecords.push([name, key, getField(blk, 'last-touched') || '']);
     }
     totalStale += stale;
-    rows.push([name, n, stale, 'ok']);
+    // Size-cap is a per-file discipline boundary. The README documents that
+    // skills SHOULD prune oldest unverified entries when a write exceeds the
+    // cap, but no actuator enforces it on write. Surfacing here gives the
+    // next skill that touches the file a visible warning to prune in the
+    // same write.
+    const cap = readSizeCap(text);
+    const lineCount = countLines(text);
+    let status = 'ok';
+    if (lineCount > cap) {
+      status = 'over-cap';
+      overCapRecords.push([name, lineCount, cap]);
+    }
+    rows.push([name, n, stale, status]);
   }
 
   const pendingPath = join(memDir, '_pending.md');
@@ -188,17 +223,41 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
     if (overflow > 0) lines.push(`… and ${overflow} more`);
   }
 
+  if (overCapRecords.length) {
+    overCapRecords.sort((a, b) => (b[1] - b[2]) - (a[1] - a[2])); // worst-overage first
+    lines.push('');
+    lines.push('## Files over size-cap');
+    lines.push('');
+    for (const [fname, lc, cap] of overCapRecords) {
+      lines.push(`- \`${fname}.md\` — ${lc} lines (cap ${cap}; +${lc - cap})`);
+    }
+    lines.push('');
+    lines.push('Next write to any over-cap file SHOULD prune oldest unverified entries in the same write (per `.claude/memory/README.md → Bounding rules`).');
+  }
+
   lines.push('');
 
   const workflowJson = join(projectRoot, '.claude/state/workflow.json');
   const activeWorkflow = existsSync(workflowJson);
 
-  if (pendingCount > 0 && !activeWorkflow) {
+  // #9: pending nag fires regardless of active-workflow state. The harness
+  // is harness-local and never blocks the commit path; this is an advisory.
+  // Framing differs per case so the right action is obvious:
+  //   - No workflow: candidates carried over from a prior abandoned workflow.
+  //   - Active workflow: candidates accumulated in the current session.
+  if (pendingCount > 0) {
     const plural = pendingCount === 1 ? '' : 's';
-    lines.push(
-      `**${pendingCount} pending memory candidate${plural} carried over from a prior workflow** — ` +
-      'run `/memory-flush` to clear before starting new work.'
-    );
+    if (activeWorkflow) {
+      lines.push(
+        `**${pendingCount} pending memory candidate${plural} accumulated this session** — ` +
+        'Phase 10.6 (`/memory-flush`) will flush before commit; curate early with `/memory-flush` if you want.'
+      );
+    } else {
+      lines.push(
+        `**${pendingCount} pending memory candidate${plural} carried over from a prior workflow** — ` +
+        'run `/memory-flush` to clear before starting new work.'
+      );
+    }
   }
 
   // Pending upgrade stages
@@ -242,6 +301,12 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   const src = sessionSource || 'startup';
   const framing = FRAMINGS[src] || FRAMINGS.startup;
 
+  // #11: snapshot surfaces regardless of age. The 7-day freshness gate was
+  // defensive (stale state misleads more than it helps) but cost more than
+  // it saved — projects resumed after 8+ days got zero continuity even
+  // though the snapshot was on disk. The age framing carries the warning;
+  // the user can choose to abandon (via `/triage` to start fresh) or
+  // continue (via `/harness` to resume).
   const resumePath = join(memDir, '_resume.md');
   if (existsSync(resumePath)) {
     try {
@@ -254,8 +319,26 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       }
       const mtime = statSync(resumePath).mtimeMs;
       const ageDays = Math.floor((Date.now() - mtime) / 86400000);
-      if (ageDays <= 7 && body.trim()) {
-        const budget = 9500 - out.length - framing.length - 80;
+      if (body.trim()) {
+        // Detect "abandoned mid-flight workflow": workflow.json on disk
+        // (active flag from earlier) AND its completed[] doesn't include
+        // "commit". /commit archives workflow.json on success, so its
+        // continued presence implies the workflow never closed.
+        let midFlightHint = '';
+        if (activeWorkflow) {
+          try {
+            const wf = JSON.parse(readFileSync(workflowJson, 'utf8'));
+            const slug = wf.slug || '(unknown)';
+            const completed = Array.isArray(wf.completed) ? wf.completed : [];
+            if (!completed.includes('commit')) {
+              midFlightHint =
+                `\n\n**Workflow \`${slug}\` is mid-flight** (last touched ${ageDays}d ago). ` +
+                'Run `/harness` to resume, or `/triage "<new request>"` to abandon and start fresh.';
+            }
+          } catch {}
+        }
+        const ageWarn = ageDays > 7 ? ' — verify before relying' : '';
+        const budget = 9500 - out.length - framing.length - midFlightHint.length - 80;
         if (budget > 500) {
           if (body.length > budget) {
             body = body.slice(0, budget).replace(/\s+$/, '') + '\n\n…(snapshot truncated)';
@@ -264,8 +347,9 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
             out +
             '\n\n---\n\n' +
             framing +
-            ` (snapshot age: ${ageDays}d)\n\n` +
-            body
+            ` (snapshot age: ${ageDays}d${ageWarn})\n\n` +
+            body +
+            midFlightHint
           );
         }
       }

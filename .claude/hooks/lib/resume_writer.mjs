@@ -16,11 +16,15 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 
-const MAX_USER_PROMPTS = 3;
-const MAX_FILES = 12;
-const MAX_SKILLS = 5;
-const MAX_BASH = 5;
-const USER_PROMPT_CHARS = 400;
+// #10: caps doubled from the original (3/12/5/5/400) so dense sessions
+// retain useful context. The composeSnapshot truncator still budget-checks
+// against the SessionStart 10KB envelope at read time, so the upper bound
+// is enforced even if a single session blows past these targets.
+const MAX_USER_PROMPTS = 6;
+const MAX_FILES = 24;
+const MAX_SKILLS = 10;
+const MAX_BASH = 10;
+const USER_PROMPT_CHARS = 800;
 
 function utcNowIso() {
   return new Date().toISOString().replace(/\.\d+Z$/, 'Z');

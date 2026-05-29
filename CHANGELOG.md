@@ -101,23 +101,35 @@ All notable changes to this project will be documented in this file.
 
 The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.0/). The `## [Unreleased]` section is curated locally by the Phase 11.5 `changelog` skill before each `/commit`; versioned sections are inserted by `@semantic-release/changelog` at release time.
 
-### Added
-
-- add code-browser skill as default code-navigation mechanism
-- version-aware no-op fast-path + baseline_version stamping
-- `freeform` workflow track as the 5th canonical selectable Track in `.claude/workflows.jsonl` (and `src/.claude/workflows.template.jsonl` mirror). DAG: `memory-flush` → `/grant-commit` → `/changelog` → `/commit`; invariants `["commits"]`. All 22 hooks remain active; phase ordering relaxed by blanket exceptions across every pre-commit phase. For ad-hoc batches of heterogeneous edits, optimization passes across multiple landmines, and small drive-by fixes where a per-fix workflow would be more ceremony than the work needs. CLAUDE.md Article IV / `docs/init/seed.md` §18.1 / `.claude/skills/triage/SKILL.md` / `README.md` / `site-src/workflows.njk` / `site-src/index.njk` updated in lockstep; materializer test fixture added at `tests/track-tasklist-materializer.test.mjs`; canonical track count now 5 selectable + 2 sub-tracks.
-
-### Changed
-
-- port 22 hooks to Node ESM + audit fast-path + tier hardening
+## [Unreleased]
 
 ### Fixed
 
-- always-download jar + java -jar runtime; pin now enforced
-- vendor src/cli modules into shipped tree + harden scanner
-- pre-existing stale `audit.sh` → `audit.mjs` reference in `tests/memory-flush-phase.test.mjs` (line 23 + 277; `bash` runtime → `node`) that the `.sh` → `.mjs` port commit `756dd42` left behind; recovers 1 of the 14 npm-test failures. The remaining 13 across `tests/audit-baseline.test.mjs` + `tests/spec-lint.test.mjs` + `tests/spec-render.test.mjs` are captured for batch cleanup as backlog `stale-sh-refs-in-tests-after-mjs-port-7c8e`.
+- **Memory subsystem hardening batch (14 findings from review).** Closes two active bugs and seven decay/discipline holes uncovered in a session-start audit of `.claude/memory/`, the three memory hooks, and the `memory-flush` skill. Highlights:
+  - **Cross-invocation dedup bug** in `memory_stop.mjs` — the `existingKeys` regex captured only the path token before ` → target.md`, so the lookup key never matched. Every session re-emitted the same candidates; `_pending.md` accumulated 6× duplicates of the same 4 files. Widened the capture to `(.+?)\s*$` so the full key matches. Regression tests at `tests/memory-stop-dedup.test.mjs`.
+  - **Closure detection misaligned with actual entry style.** `pending-questions.md` Q-NNN entries close via `## Q-005 — CLOSED 2026-05-16` heading suffix + `- Resolution:` body. The sweep recognized neither. Extended `sweep.mjs modeAutoClose` to detect the heading suffix (em-dash or ASCII `--`) and added prose pattern R4 (`^(\s*-\s*)?\*{0,2}Resolution\s*:`).
+  - **`verified-at: HEAD` decay-evasion hatch closed.** `memory_session_start.mjs` and `sweep.mjs` short-circuited staleness when `stamp === 'HEAD'` on git repos. HEAD now falls through to date-based check on `last-touched`. 5 entries that were silently fresh-forever surfaced as stale.
+  - **`stripFrontmatter` hardened against body horizontal rules.** Replaced `indexOf('---')` substring search with line-anchored `^---$` lookup. A `---` substring inside a frontmatter field no longer silently truncates content.
 
-## [Unreleased]
+### Added
+
+- **`backlog-decay` sweep mode** (`/memory-flush` Step 0d) — `node .claude/skills/memory-flush/sweep.mjs --mode backlog-decay --memory-dir .claude/memory --threshold-days 90` lets the curator prune long-open backlog entries via `keep / drop / picked-up / skip` replies. `drop` and `picked-up` stamp `status:` + `superseded-at:` so Step 0a auto-closes them next run.
+- **Q-NNN allocator** at `.claude/skills/memory-flush/next-q-id.mjs` — returns `Q-NNN` for the next pending-questions ID (max+1 zero-padded). Counts CLOSED entries against the max so a closed Q-007 still increments to Q-008.
+- **Size-cap visibility** in the SessionStart index. Per-file Status column flips to `over-cap` when the file exceeds its declared `size-cap`, plus a `## Files over size-cap` block worst-overage first. `landmarks.md` now visibly flagged at 513/500.
+- **Mid-flight workflow callout** in the SessionStart additionalContext. When `workflow.json` exists and `completed[]` doesn't include `commit`, surfaces `Workflow <slug> is mid-flight — /harness to resume, /triage to abandon`.
+- **Pending-memory advisory** in the `/grant-commit` SOP — non-blocking surface that names the candidate count before writing the consent token.
+- **`source:` provenance stamps** on auto-emitted candidates: `inferred-from-code` on landmarks, `library-pinned` on libraries. Aligns the auto-extractor with the README schema.
+- **Widened intent triggers** in `memory_stop.mjs` — 5 anchored patterns mined from this repo's backlog corpus: `we (need to|should|must|ought to|have to)`, `(cure|mitigation|remediation|remedy):`, `follow-up:`, `future work:`, numbered-action lists. Precision regression traps verify mid-sentence forms still don't fire.
+- **Form B closure documentation** in `.claude/memory/README.md`. Both `## <key> — CLOSED <date>` heading suffix (Form B) and structured `resolved-at:` / `superseded-at:` (Form A) are now documented as first-class closure signals. R4 prose pattern documented alongside R1–R3.
+
+### Changed
+
+- **Landmark candidate emission threshold** in `memory_stop.mjs`. Auto-extractor emits only on (Write event) OR (Edit count >= 3). Brand-new files surface immediately; single drive-by edits no longer pollute pending. Added a `Trigger:` field to the candidate body that names the cause (`newly written this session` vs `edited N times this session`).
+- **Pending-candidates nag fires in both workflow states.** Previously gated on `workflow.json` absence; now fires whenever pending > 0 with framing per case (`carried over from a prior workflow` vs `accumulated this session — Phase 10.6 will flush before commit`).
+- **Resume snapshot caps doubled** in `.claude/hooks/lib/resume_writer.mjs`: `MAX_USER_PROMPTS` 3 → 6, `MAX_FILES` 12 → 24, `MAX_SKILLS` 5 → 10, `MAX_BASH` 5 → 10, `USER_PROMPT_CHARS` 400 → 800. The SessionStart 10KB envelope still enforces the upper bound.
+- **Resume freshness gate removed.** Snapshots surface regardless of age. The 7-day cutoff was defensive but cost more than it saved; replaced with prominent `(snapshot age: <N>d — verify before relying)` framing when age > 7d.
+- **Memory README + memory-flush SOP** corrected for `.sh` → `.mjs` rename completed in commit 756dd42, plus other live-file drift caught in this session's drift analysis (landmarks.md ×15, decisions.md ×1, backlog.md ×3, src/memory/_pending.template.md ×2, src/memory/_resume.template.md ×2, spec-shippability-review SKILL.md ×1).
+- **Memory-flush SKILL.md Step 3 HEAD wording** updated to describe the new fall-through-to-date semantics; the prior claim that `HEAD` is permanently fresh on git was removed.
 
 ### Removed
 
