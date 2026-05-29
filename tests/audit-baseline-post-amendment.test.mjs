@@ -58,8 +58,8 @@ describe('audit-baseline post-amendment (SP-007 + SP-010)', () => {
 
   it('test_when_audit_baseline_runs_post_amendment_then_exits_zero', async () => {
     const auditResult = spawnSync(
-      'bash',
-      [path.join(tmp, '.claude/skills/audit-baseline/audit.sh')],
+      'node',
+      [path.join(tmp, '.claude/skills/audit-baseline/audit.mjs')],
       { env: { ...process.env, CLAUDE_PROJECT_DIR: tmp }, encoding: 'utf8' }
     );
     assert.equal(

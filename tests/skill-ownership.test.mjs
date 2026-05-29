@@ -42,7 +42,7 @@ function runBuild(tmp) {
 }
 
 function runAudit(tmp) {
-  return spawnSync('bash', [path.join(tmp, '.claude/skills/audit-baseline/audit.sh')], {
+  return spawnSync('node', [path.join(tmp, '.claude/skills/audit-baseline/audit.mjs')], {
     env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
     encoding: 'utf8',
   });
@@ -80,6 +80,10 @@ describe('skill ownership — frontmatter (AC-001)', () => {
     const offenders = [];
     for (const slug of slugs) {
       const skillPath = path.join(skillsDir, slug, 'SKILL.md');
+      // A dir under skills/ without a SKILL.md is a shared-helper dir (e.g.
+      // `lib/`), not a skill — Article XI's absence-default policy puts it
+      // out of scope of baseline ownership checks. Skip it.
+      if (!existsSync(skillPath)) continue;
       const content = await fs.readFile(skillPath, 'utf8');
       const owner = readOwnerFromFrontmatter(content);
       if (owner !== null && owner !== 'baseline' && owner !== 'user') {

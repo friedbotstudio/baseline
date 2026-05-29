@@ -1,12 +1,12 @@
-// spec-render/render.sh runtime contract after the java -jar rewire (B4).
+// spec-render/render.mjs runtime contract for the java -jar rendering path (B4).
+// (Ported from the pre-.mjs render.sh; render.mjs is the live helper and already
+// implements this contract.)
 //
 // Three behaviors:
-//   1. Both Java + jar present → renders fixture spec to one SVG under
+//   1. Both Java + jar present → renders fixture spec to SVG under
 //      docs/specs/_rendered/<slug>/.
 //   2. Java absent → exits 2 with stderr naming Java + JDK install hint.
 //   3. Jar absent → exits 2 with stderr naming the jar path + "install" remedy.
-//
-// Tests are RED until /implement rewires render.sh.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '..');
-const RENDER_SRC = join(REPO_ROOT, '.claude/skills/spec-render/render.sh');
+const RENDER_SRC = join(REPO_ROOT, '.claude/skills/spec-render/render.mjs');
 const REAL_JAR = join(REPO_ROOT, '.claude/bin/plantuml.jar');
 
 const FIXTURE_SPEC = `# Sample spec
@@ -34,7 +34,7 @@ function buildSandbox({ withJar }) {
   const root = mkdtempSync(join(tmpdir(), 'spec-render-'));
   mkdirSync(join(root, '.claude/skills/spec-render'), { recursive: true });
   mkdirSync(join(root, 'docs/specs'), { recursive: true });
-  cpSync(RENDER_SRC, join(root, '.claude/skills/spec-render/render.sh'));
+  cpSync(RENDER_SRC, join(root, '.claude/skills/spec-render/render.mjs'));
   writeFileSync(join(root, 'docs/specs/sample.md'), FIXTURE_SPEC);
   if (withJar && existsSync(REAL_JAR)) {
     mkdirSync(join(root, '.claude/bin'), { recursive: true });
@@ -72,8 +72,8 @@ function which(name) {
 
 function runRender(root, env = {}) {
   return spawnSync(
-    'bash',
-    [join(root, '.claude/skills/spec-render/render.sh'), 'sample'],
+    process.execPath,
+    [join(root, '.claude/skills/spec-render/render.mjs'), 'sample'],
     {
       encoding: 'utf8',
       env: { ...process.env, ...env, CLAUDE_PROJECT_DIR: root },
@@ -81,7 +81,7 @@ function runRender(root, env = {}) {
   );
 }
 
-describe('spec-render/render.sh — java -jar rewire (B4)', () => {
+describe('spec-render/render.mjs — java -jar rendering (B4)', () => {
   it('test_when_spec_render_runs_with_jar_and_java_then_writes_svg_outputs', () => {
     const root = buildSandbox({ withJar: true });
     const r = runRender(root);

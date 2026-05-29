@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT    = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const LINT_SH = join(ROOT, '.claude/skills/spec-lint/lint.sh');
+const LINT_SH = join(ROOT, '.claude/skills/spec-lint/lint.mjs');
 const HOOK_MJS = join(ROOT, '.claude/hooks/spec_design_calls_guard.mjs');
 
 const UI_GLOBS         = ['app/**/*.{tsx,jsx}', '**/*.css'];
@@ -106,7 +106,7 @@ ${designCallsSection}
 }
 
 function runLint(root, slug) {
-  return spawnSync('bash', [LINT_SH, slug], {
+  return spawnSync('node', [LINT_SH, slug], {
     cwd: root,
     env: { ...process.env, CLAUDE_PROJECT_DIR: root },
     encoding: 'utf8',
