@@ -1,0 +1,158 @@
+// Foundation — durable local conversation-trail store (conversation-thread-shelving).
+//
+// Owns all I/O for the LOCAL, gitignored single rolling trail and its sidecar
+// state: the `_thread.md` trail file, the thread cursor, and the staged
+// switch-candidate. Pure filesystem + JSON; no model, no network. Best-effort
+// readers return null on absence/parse failure so callers (hooks) never throw.
+//
+// The trail survives `/memory-flush` by construction: `_thread.md` is NOT a
+// member of sweep.mjs CANONICAL_FILES and is not the _pending reset target.
+
+import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+
+export const THREAD_FILENAME = '_thread.md';
+const CURSOR_FILENAME = 'thread_cursor.json';
+const CANDIDATE_FILENAME = 'shelve_candidate.json';
+
+const TRAIL_HEADER = '# Conversation thread trail (local, gitignored)\n\n' +
+  'Durable per-developer continuity narrative. Mechanically appended at shelve, ' +
+  'transformed at resume. Survives /memory-flush. Never committed.\n';
+
+// Each shelved section embeds its entry object as JSON inside an HTML comment
+// so verbatim cues round-trip byte-identical (AC-7), with readable markdown
+// beneath for humans and SessionStart injection.
+const DATA_OPEN = '<!-- thread-entry';
+const DATA_CLOSE = '-->';
+
+// ---- low-level transcript reader (shared by shelve_detect + shelve_capture) ----
+
+export function readEvents(transcriptPath) {
+  let raw;
+  try { raw = readFileSync(transcriptPath, 'utf8'); }
+  catch { return []; }
+  const out = [];
+  for (const line of raw.split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t) continue;
+    let ev;
+    try { ev = JSON.parse(t); } catch { continue; }
+    const msg = (ev && typeof ev === 'object' && ev.message && typeof ev.message === 'object') ? ev.message : ev;
+    const uuid = (ev && ev.uuid) || null;
+    out.push({ uuid, role: msg && msg.role, content: msg && msg.content });
+  }
+  return out;
+}
+
+export function eventText(content) {
+  if (typeof content === 'string') return content.trim();
+  if (!Array.isArray(content)) return '';
+  const parts = [];
+  for (const b of content) {
+    if (b && typeof b === 'object' && b.type === 'text' && typeof b.text === 'string') parts.push(b.text.trim());
+  }
+  return parts.join('\n').trim();
+}
+
+// ---- section render / parse ----
+
+function renderSection(entry) {
+  // The entry JSON is base64-encoded inside the HTML comment so no payload byte
+  // can collide with the `-->` close delimiter (CWE-116): base64's alphabet is
+  // [A-Za-z0-9+/=], which contains no `-`. This guarantees verbatim cues round
+  // -trip byte-identical even when a cue itself contains `-->` (AC-007).
+  const data = `${DATA_OPEN}\n${Buffer.from(JSON.stringify(entry), 'utf8').toString('base64')}\n${DATA_CLOSE}`;
+  const cues = entry.verbatim_cues.length
+    ? entry.verbatim_cues.map((c) => `> ${c}`).join('\n')
+    : '> (none captured)';
+  const oq = entry.open_question_candidates.length
+    ? entry.open_question_candidates.map((q) => `- ${q}`).join('\n')
+    : '- (none)';
+  const files = entry.in_flight_files.length
+    ? entry.in_flight_files.map((f) => `- \`${f}\``).join('\n')
+    : '- (none)';
+  return [
+    `## SHELVED ${entry.shelved_at} · trigger:${entry.trigger} · span:${entry.span_start_uuid || 'start'}..${entry.span_end_uuid || 'now'}`,
+    '',
+    data,
+    '',
+    '### Verbatim cues',
+    cues,
+    '',
+    '### Open questions',
+    oq,
+    '',
+    '### In-flight files',
+    files,
+    '',
+    '### Next step',
+    entry.next_step || '(none)',
+    '',
+  ].join('\n');
+}
+
+function parseSections(text) {
+  const out = [];
+  let idx = 0;
+  while (true) {
+    const open = text.indexOf(DATA_OPEN, idx);
+    if (open < 0) break;
+    const close = text.indexOf(DATA_CLOSE, open + DATA_OPEN.length);
+    if (close < 0) break;
+    const b64 = text.slice(open + DATA_OPEN.length, close).trim();
+    try { out.push(JSON.parse(Buffer.from(b64, 'base64').toString('utf8'))); } catch {}
+    idx = close + DATA_CLOSE.length;
+  }
+  return out;
+}
+
+// ---- trail file ----
+
+export function appendEntry({ memDir, entry }) {
+  const path = join(memDir, THREAD_FILENAME);
+  try { mkdirSync(memDir, { recursive: true }); } catch {}
+  if (!existsSync(path)) writeFileSync(path, TRAIL_HEADER);
+  appendFileSync(path, '\n' + renderSection(entry));
+  return entry;
+}
+
+export function listSections({ memDir }) {
+  const path = join(memDir, THREAD_FILENAME);
+  if (!existsSync(path)) return [];
+  try { return parseSections(readFileSync(path, 'utf8')); }
+  catch { return []; }
+}
+
+export function readMostRecent({ memDir }) {
+  const all = listSections({ memDir });
+  return all.length ? all[all.length - 1] : null;
+}
+
+// Return the raw markdown of the most-recent section (for SessionStart
+// injection) — only the newest, so older sections are never injected.
+export function readMostRecentMarkdown({ memDir }) {
+  const path = join(memDir, THREAD_FILENAME);
+  if (!existsSync(path)) return '';
+  let text;
+  try { text = readFileSync(path, 'utf8'); } catch { return ''; }
+  const heads = [...text.matchAll(/^## SHELVED .*$/gm)];
+  if (!heads.length) return '';
+  const last = heads[heads.length - 1];
+  return text.slice(last.index).trim();
+}
+
+// ---- cursor + candidate (JSON sidecars under stateDir) ----
+
+function readJson(path) {
+  if (!existsSync(path)) return null;
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+function writeJson(path, obj) {
+  try { mkdirSync(join(path, '..'), { recursive: true }); } catch {}
+  writeFileSync(path, JSON.stringify(obj, null, 2));
+}
+
+export function readCursor({ stateDir }) { return readJson(join(stateDir, CURSOR_FILENAME)); }
+export function writeCursor({ stateDir, cursor }) { writeJson(join(stateDir, CURSOR_FILENAME), cursor); }
+export function readCandidate({ stateDir }) { return readJson(join(stateDir, CANDIDATE_FILENAME)); }
+export function stageCandidate({ stateDir, candidate }) { writeJson(join(stateDir, CANDIDATE_FILENAME), candidate); }

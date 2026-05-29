@@ -189,6 +189,9 @@
     "gate_marker_ttl_seconds": 120,
     "push_ttl_seconds": 300
   },
+  "memory": {
+    "thread_transform_ttl_seconds": 86400
+  },
   "git": {
     "protected_branches": null,
     "branch_pattern": null

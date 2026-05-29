@@ -5,9 +5,9 @@ pageTitle: "Memory · baseline"
 title: Memory
 titlePrimary: Memory
 titleAccent: "."
-description: "The memory system at .claude/memory/ accumulates project facts across sessions. Seven canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+description: "The memory system at .claude/memory/ accumulates project facts across sessions. Seven canonical files hold long-term knowledge; three underscore files handle staging, continuity, and a durable local thread trail."
 eyebrow: Reference
-lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Seven canonical files hold long-term knowledge; two underscore files handle staging and continuity."
+lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Seven canonical files hold long-term knowledge; three underscore files handle staging, continuity, and a durable local thread trail."
 active: memory
 sidebarActive: memory
 heroSymbol: memory
@@ -26,7 +26,7 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="shape">The shape</h2>
     </div>
-    <p>Memory lives at <code>.claude/memory/</code>. Seven canonical files hold long-term project knowledge. Two underscore files serve transient roles: a staging inbox and a session-continuity snapshot. The underscore files are gitignored.</p>
+    <p>Memory lives at <code>.claude/memory/</code>. Seven canonical files hold long-term project knowledge. Three underscore files sit alongside them, all gitignored. Two are transient: a staging inbox (<code>_pending.md</code>) and a per-turn continuity snapshot (<code>_resume.md</code>). The third, <code>_thread.md</code>, is durable: a local conversation-thread trail that survives <code>/memory-flush</code> and <code>/clear</code>.</p>
   </div>
   <table>
   <thead><tr><th>File</th><th>Purpose</th></tr></thead>
@@ -40,6 +40,7 @@ toc:
     <tr><td class="phase">backlog.md</td><td>Future-work intent captured automatically from user prompts and assistant text. Stale-exempt; closed via <code>superseded-at:</code> when an item is picked up or dropped.</td></tr>
     <tr><td class="phase">_pending.md</td><td>Auto-extraction inbox. The <code>memory_stop</code> hook appends candidates each turn-end. Curate via <code>/memory-flush</code>.</td></tr>
     <tr><td class="phase">_resume.md</td><td>Session-continuity snapshot. Refreshed every turn-end and before context compaction.</td></tr>
+    <tr><td class="phase">_thread.md</td><td>Durable local conversation-thread trail. Claude Code, never the human, shelves the active thread on a topic switch and transforms it back at resume. Survives <code>/memory-flush</code> and <code>/clear</code>. Gitignored and model-internal.</td></tr>
   </tbody>
 </table>
 </section>

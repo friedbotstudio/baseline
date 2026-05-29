@@ -1,0 +1,32 @@
+{
+  "request": "Implement durable local conversation-trail + context-switch shelving for the memory system: a new local-but-durable (gitignored, never committed) thread class surviving /memory-flush; a Stop-hook detector that spawns a background worker to shelve the prior thread on a topic switch; /shelve + /resume commands. Companion: LLM-assisted capture-time extraction/routing.",
+  "slug": "conversation-thread-shelving",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "shelve-conversation-on-context-switch-with-verbatim-cues-b7e2",
+    "llm-assisted-memory-capture-routing-cf4a"
+  ],
+  "created_at": 1780081874,
+  "updated_at": 1780098798,
+  "codesign_mode": true
+}

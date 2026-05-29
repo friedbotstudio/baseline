@@ -82,7 +82,7 @@ const EXPECTED_COMMANDS = new Set([
 ]);
 const EXPECTED_MEMORY_FILES = new Set([
   'landmarks', 'libraries', 'decisions', 'landmines', 'conventions',
-  'pending-questions', 'backlog', '_pending', '_resume',
+  'pending-questions', 'backlog', '_pending', '_resume', '_thread',
 ]);
 
 function loadManifest() {
@@ -324,9 +324,11 @@ if (!existsSync(memDir) || !statSync(memDir).isDirectory()) {
     const p = join(memDir, `${name}.md`);
     if (!existsSync(p)) continue;
     const text = readFileSync(p, 'utf8');
+    // _pending and _thread are freeform runtime trails (no YAML preamble);
+    // their structure is the skeleton, not a frontmatter'd entry file.
+    if (name === '_pending' || name === '_thread') { add(`memory shape: ${name}.md`, 'PASS', ''); continue; }
     const [ok, reason] = isValidPreamble(text);
     if (!ok) { add(`memory shape: ${name}.md`, 'FAIL', reason); continue; }
-    if (name === '_pending') { add(`memory shape: ${name}.md`, 'PASS', ''); continue; }
     const splitOnce = text.split('---');
     const body = splitOnce.length >= 3 ? splitOnce.slice(2).join('---') : text;
     const bodyNoFence = body.replace(/^```[\s\S]*?^```\s*$/gm, '');
@@ -460,7 +462,7 @@ if (!SKIP_SRC) {
   }
 
   const srcMemDir = join(srcDir, 'memory');
-  const canonicalMemory = [...EXPECTED_MEMORY_FILES].filter(n => n !== '_pending' && n !== '_resume');
+  const canonicalMemory = [...EXPECTED_MEMORY_FILES].filter(n => n !== '_pending' && n !== '_resume' && n !== '_thread');
   if (!existsSync(srcMemDir) || !statSync(srcMemDir).isDirectory()) {
     add('src templates: memory/', 'FAIL', 'missing src/memory/');
   } else {

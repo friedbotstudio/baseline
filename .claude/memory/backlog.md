@@ -180,3 +180,80 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: db291ed
 - last-touched: 2026-05-18
 - caveat: Two distinct bugs surfaced on the same run. (1) Source-of-truth: `.claude/skills/changelog/changelog.mjs` reads `git log` since the last release tag and classifies each commit; but Phase 11.5 runs BEFORE `/commit`, so the upcoming commit's content is in the working tree / staged index, not in `git log`. The actuator should read `git diff --staged` (or `git diff HEAD` plus `git ls-files --others --exclude-standard` for new files) and classify based on the diff + conventional-type the impending commit will use, OR read the prepared commit message from a known location (e.g., the `/commit` skill could write its drafted message to `.claude/state/commit_draft/<slug>.message` before invoking the changelog actuator). (2) Placement: even when the actuator picks the right content, it appended `### Added` ABOVE `## [Unreleased]` rather than under it — likely a regex bug in `unreleased-writer.mjs → appendUnderUnreleased`. The branded-cli-tui workflow worked around both manually by editing CHANGELOG.md after the actuator wrote. Test corpus needed: (a) a workflow that adds a feat commit AND the previous HEAD is already released-pending (the common case), (b) a workflow where the previous commit's content is already described under `[Unreleased]` (don't duplicate). The `golden-path_test.sh` test passes because it simulates a clean state where HEAD == base, which doesn't reproduce either bug.
+
+## llm-assisted-memory-capture-routing-cf4a
+
+> verbatim (user, 2026-05-30):
+> actually this means we need to fix our memory feature; what's happening right now is, our _pending and _resume collects notes every turn (or every n turns) but a /memory-flush call cleans everything because it is pure logic and not LLM assisted feature.. in ideal case, with LLM assistance, the system can recognize what piece of memory is important and can be kept or moved to (say open question or backlog) automatically.. so, let us work on this feature in next session (add to backlog)
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-05-30
+- raised-in-context: (no active workflow) — surfaced right after the CLAUDE.md 40k-cap split; the user observed that prior-session work (brainstorm/codesign) was only recoverable via the ephemeral `_resume.md` snapshot, not durable curated memory
+- estimated-effort: large
+- verified-at: HEAD
+- last-touched: 2026-05-30
+- caveat: Verbatim is canonical (per `.claude/memory/README.md → Source provenance`); this interpretation refines, not overrides. Factual nuance to carry into design: `/memory-flush` is ALREADY LLM-assisted — it runs in main context with the model as curator (Step 2 promote/discard/defer). The genuinely PURE-LOGIC pieces the user is reacting to are (a) `.claude/hooks/lib/memory_stop.mjs` intent/landmark extraction — anchored, line-start regex (`INTENT_TRIGGERS`) that is precision-tuned to NOT fire mid-sentence, and (b) `.claude/skills/memory-flush/sweep.mjs` closure/stale mechanics. Live evidence captured this session: this very instruction would have been DROPPED by the auto-extractor — "...we need to fix..." is mid-sentence (line starts "actually this means") and "let us work on... (add to backlog)" matches none of the triggers (`let's also`, `backlog this`), so `memory_stop` emitted no candidate and the item only survived because it was hand-promoted here. Improvement scope to explore next session: (1) LLM-assisted EXTRACTION at capture time (replace/augment the anchored regex with a model pass that recognizes salient intent regardless of sentence position) and routing to the right canonical bucket (landmark / decision / open-question / backlog) automatically; (2) make `_resume.md` (or a sibling) carry a durable, curated "what we were working on + why" thread rather than a per-turn-overwritten snapshot, so cross-session continuity survives a `/clear`; (3) keep the human-in-the-loop curation guarantee (Article IX.3: promotion to canonical only via `/memory-flush`) — any auto-routing should still stage to `_pending` for review, not write canonical directly. Cross-refs: the auto-extraction regex misses are a recurring theme (see also `stale-sh-refs-in-tests-after-mjs-port` for a different residual-debt pattern). Companion entry: `shelve-conversation-on-context-switch-with-verbatim-cues-b7e2` extends point (2) into a mid-session *transition* event (shelving on topic-switch) and hardens "durable" into "committed + survives `/memory-flush`".
+
+## shelve-conversation-on-context-switch-with-verbatim-cues-b7e2
+
+> verbatim (user, 2026-05-30):
+> beautiful; now, this is exactly the kind of trail I want preserved across the session irrespective of if we have run /memory-flush or not... also, most of the time, when discussing one feature, we may decide to switch to a different high priority issue, ideally these conversation switch should allow for shelving the previous conversation (even if not the whole conversation but a summary with important cues verbatim).. this will save us ton of work and will keep subsequent sessions feel continuous.
+
+> verbatim (user, 2026-05-30, clarifying A and B):
+> For A, I'd still not want it committed; my reasoning, each conversation is local to the developer working on the codebase and committing it means we introduce noise. It will remain local, but in-file to ensure we can loop back to the thread as and when needed
+> For B, We can use Stop hook to trigger a detect prompt that, if detects switch, can run a background worker to shelve the conversation
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-05-30
+- raised-in-context: (no active workflow) — follow-up to `llm-assisted-memory-capture-routing-cf4a`, after Claude reconstructed "what were we working on" purely from the ephemeral `_resume.md` snapshot. The user generalized: that reconstruction is exactly the trail he wants to be durable, and he wants an explicit way to shelve the current thread when pivoting to a higher-priority issue mid-session.
+- estimated-effort: large
+- verified-at: HEAD
+- last-touched: 2026-05-30
+- caveat: Verbatim is canonical; this interpretation refines, not overrides. Direct-write to `backlog.md` (same precedent + irony as `improved-backlog-item-detection-046c` and `llm-assisted-memory-capture-routing-cf4a`): `memory_stop.mjs` would not have captured this — the turn opens "beautiful; now..." and never hits an `INTENT_TRIGGERS` line-start, so it only survives because it was hand-promoted. TWO distinct requirements, both absent from today's design.
+  (A) DURABLE TRAIL surviving `/memory-flush`, LOCAL not committed [REFINED by 2nd verbatim]: the user explicitly does NOT want this committed — each conversation is local to the developer working the codebase; committing introduces noise. The thread trail stays GITIGNORED-CONTENT (like `_resume.md` / `_pending.md` content today) but must be PERSISTENT IN-FILE so it survives `/memory-flush` and `/clear` and can be looped back to on demand. This resolves the earlier-flagged tension cleanly: it is NOT a new committed/canonical memory class — it is a third LOCAL class that is "persistent but gitignored AND outside the flush wipe-path." Contrast the three: `_resume.md` = local + ephemeral (per-turn overwrite); canonical files = committed + flush-curated; THIS = local + durable (append/curate, never auto-wiped). Candidate home: a gitignored `_thread.md` (or `threads/<id>.md`) under `.claude/memory/`, structure-committed/content-gitignored like `_pending.md`, recording per work-thread a short summary + load-bearing verbatim cues (user's exact framing, decision pivots, open questions), explicitly excluded from `/memory-flush`'s reset path. `.gitignore` + the README "Continuity vs knowledge" + "Files" table need updating to introduce the class.
+  (B) CONTEXT-SWITCH SHELVING via Stop hook + background worker [REFINED by 2nd verbatim]: the genuinely new primitive — the system has no concept of a mid-session TRANSITION today (workflow model knows only phase-advance and end-flush). User's chosen mechanism: the **Stop hook** fires a lightweight DETECT prompt each turn-end; if it detects a topic/feature switch (current turn's subject diverges from the active thread), it spawns a **background worker** to shelve the previous conversation into the durable trail from (A) — summary + verbatim cues, NOT the whole transcript ("even if not the whole conversation"). Architectural notes for design time: (i) a Stop hook is plain logic (Article VIII), so the "detect prompt" is either a cheap heuristic in the hook OR the hook emits a candidate and an LLM pass (background worker) does the real detection+summarization — the latter aligns with `llm-assisted-memory-capture-routing-cf4a`'s "LLM-assisted extraction" thrust; (ii) per Article II, a background worker only executes a pre-decided recipe (shelve = summarize active thread + append cues to `_thread.md`) — it makes no design calls; (iii) keep human-in-the-loop per Article IX.3 — auto-detected switch should stage the shelf and/or be confirmable, not silently mutate canonical (the local trail is non-canonical, which lowers the risk, but the detect→shelve action should still be observable/undoable). Pairs with `memory_stop.mjs` which already runs at Stop and already computes raw material (touched paths, recent prompts) — the shelve detector is a sibling concern at the same hook event. A manual `/shelve` + `/resume <thread>` command pair is the explicit-trigger complement to the auto-detector.
+  Cross-cutting constraints: preserve verbatim cues literally (Article IX.6 — user's words are canonical); shelf entries are summary+cues by design, not transcript dumps. Relationship: superset of `llm-assisted-memory-capture-routing-cf4a` (capture-time extraction quality) — shelving is the transition+persistence layer consuming the same salience signals. Test corpus: a session that starts feature X, pivots to urgent bug Y (Stop-hook should detect the switch and shelve X), then a NEW session that reconstructs X's thread verbatim without re-derivation.
+
+## document-public-site-feature-framing-not-behavior-7b3e
+
+> verbatim (user, 2026-05-30):
+> the current document only describes technical aspect but on public website we need to describe features not just the behavior. for now we can continue but we will later fix our document skill
+
+- source: user-feedback
+- status: open
+- raised-on: 2026-05-30
+- raised-in-context: conversation-thread-shelving /document phase (site-src/memory.njk _thread.md update)
+- estimated-effort: medium
+- verified-at: ab412d1
+- last-touched: 2026-05-30
+- caveat: The /document skill routes site-src/** prose through the reference-documentation register, so the memory.njk _thread.md row I wrote describes WHAT it does + HOW shelve/resume work, but not the user-facing FEATURE value ("never lose your train of thought across a pivot, /clear, or flush"). Improvement: /document Step 2 should detect site-src/** (public marketing/docs) targets and route value/feature framing through the persuasive register (copywriting) distinct from the behavior table — describe the feature, not just the mechanism. Verbatim is canonical.
+
+## thread-store-non-atomic-state-writes-9c12
+
+> verbatim (claude, 2026-05-30):
+> thread_store/resume_transform write the cursor/candidate/cache JSON via direct writeFileSync (not write-then-rename); CWE-362, self-healing (null -> fallback) so LOW; optional hardening: write-to-temp-then-rename for the JSON sidecars matching common.mjs writeMarkerAtomic.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-30
+- raised-in-context: conversation-thread-shelving /security review (LOW finding 2)
+- estimated-effort: small
+- verified-at: ab412d1
+- last-touched: 2026-05-30
+- caveat: thread_store.writeJson (cursor/candidate) + resume_transform.writeCache use direct writeFileSync; appendEntry uses appendFileSync. A crash mid-write can truncate a sidecar, but readJson/readCache catch parse failure and callers fall back gracefully (whole-transcript fallback / recompute / parseSections skips a partial trailing block) — no loss of prior entries. Cross-ref backlog workflow-migrator-write-not-atomic (higher impact there). Optional defense-in-depth.
+
+## thread-trail-unbounded-growth-bounding-rolloff-4d8a
+
+> verbatim (claude, 2026-05-30):
+> _thread.md is append-only and excluded from /memory-flush reset (durable by design) -> unbounded on-disk growth (CWE-400, low impact); follow-up: size-cap + roll-off of oldest sections (or a cold _thread.archive.md).
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-30
+- raised-in-context: conversation-thread-shelving /security review (LOW finding 3) + intake OQ-1 (bounding/lifecycle)
+- estimated-effort: medium
+- verified-at: ab412d1
+- last-touched: 2026-05-30
+- caveat: SessionStart injection is bounded (most-recent section only, ~10KB envelope — AC-009) and per-entry capture is capped (MAX_CUES/MAX_FILES/MAX_OPEN_QUESTIONS), so context/runtime cost is bounded; only on-disk size grows without limit. Resolves intake OQ-1. Follow-up: size-cap + roll-off of oldest sections, or move cold sections to _thread.archive.md.

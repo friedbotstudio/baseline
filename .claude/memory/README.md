@@ -15,6 +15,7 @@ Persistent project knowledge that travels with the repo. Loaded into Claude's co
 | `backlog.md` | `/memory-flush` | Future-work intent captured automatically by `memory_stop.mjs` (intent-line extraction from user prompts and assistant text). Stale-exempt. |
 | `_pending.md` | `memory_stop.mjs` (writes), `/memory-flush` (clears) | Auto-extracted candidates awaiting curation. **Content gitignored**; the file structure is committed. |
 | `_resume.md` | `memory_pre_compact.mjs` + `memory_stop.mjs` (write), `memory_session_start.mjs` (reads), `harness` (reads) | **Continuity** snapshot — last completed phase, next phase due, in-flight files, recent user prompts. Refreshed every turn-end and again before compaction. Re-injected at every session start (compact / clear / resume / startup). **Gitignored** — pure session state, not project knowledge. |
+| `_thread.md` | `shelve_capture.mjs` (appends), `shelve_detect.mjs` (stages candidate via `memory_stop`), `resume_transform.mjs` + `memory_session_start.mjs` (read) | **Durable local thread trail** (CLAUDE.md Art. IX clause 8). One append-only rolling section per shelve: verbatim cues + open questions + in-flight files + next step over the cursor span since the last shelve. Model-internal (Claude Code shelves/resumes; never the human; not a skill/command). **Gitignored content** (pristine structure ships in `src/memory/_thread.template.md`); **excluded from `/memory-flush`'s reset path**, so it survives flushes and `/clear`. Local + durable — neither ephemeral like `_resume.md` nor committed/curated like the canonical seven. |
 
 ## Source provenance (mandatory for feedback-derived entries)
 
@@ -126,3 +127,5 @@ Two paths:
 ## Continuity vs knowledge
 
 Seven canonical files plus `_pending.md` hold **project knowledge** — facts about the codebase that survive multiple sessions and get re-verified on every cite. `_resume.md` is different: it's a **continuity snapshot** describing the *current session* — what we just touched, what the user just asked, what phase we're on. It's overwritten each turn and gitignored. The split keeps long-term knowledge clean of session-state noise.
+
+`_thread.md` is a **third class — local + durable**. Unlike the canonical seven it is gitignored and never committed (continuity is per-developer noise across a team); unlike `_resume.md` it is append-only and durable rather than overwritten each turn, and it is explicitly excluded from `/memory-flush`'s reset so a shelved thread survives a flush or `/clear`. It is the durable home for the "what we were working on, and why" narrative that `_resume.md` only ever holds for the latest turn.

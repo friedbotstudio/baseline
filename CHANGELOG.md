@@ -4,10 +4,12 @@
 
 - 40,000-character cap on `CLAUDE.md`, enforced by `audit-baseline` (FAIL when the file or its `src/CLAUDE.template.md` mirror exceeds the cap). The binding rule is recorded in `CLAUDE.md` Article I.6 and `docs/init/seed.md` §14.
 - `.claude/CONSTITUTION.md` — a read-on-demand annex holding amendment history, enforcement-mechanism narration, and the reference appendices (Where things live, Skill index).
+- Durable local conversation-thread trail at `.claude/memory/_thread.md` (Article IX clause 8) — a third, local-and-durable memory class. Claude Code shelves the active work-thread on a topic switch and transforms it into a surfaced summary at resume; the trail survives `/memory-flush` and `/clear`, is gitignored, and is model-internal (no new skill or command). Backed by four `.claude/hooks/lib/` helpers (`thread_store`, `shelve_detect`, `shelve_capture`, `resume_transform`), a folded `memory_stop` detector, and most-recent-section injection at SessionStart.
 
 ### Changed
 
 - Trimmed `CLAUDE.md` from ~46k to ~39k characters by relocating non-binding content (history, mechanism narration, Appendices A/B) to the annex. All binding rules retained; only explanatory material moved.
+- Documented the new `_thread.md` memory class across the constitution and docs: `CLAUDE.md` Article IX clause 8 (and the `src/CLAUDE.template.md` mirror), `docs/init/seed.md` §4.1 (and the `src/seed.template.md` mirror), the `.claude/CONSTITUTION.md` annex, `.claude/memory/README.md`, and the public `site-src/memory.njk` page.
 
 # [0.12.0](https://github.com/friedbotstudio/baseline/compare/v0.11.0...v0.12.0) (2026-05-29)
 

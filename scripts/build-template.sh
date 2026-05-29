@@ -48,7 +48,7 @@ trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
 # "overwrite"). The same templates are used by stage 2 to overlay into the
 # shipped template tree, so dev repo and shipped tree start from identical
 # placeholders.
-for runtime_file in _pending _resume; do
+for runtime_file in _pending _resume _thread; do
   src_template="$PKG_ROOT/src/memory/${runtime_file}.template.md"
   dev_target="$PKG_ROOT/.claude/memory/${runtime_file}.md"
   if [ -f "$src_template" ] && [ ! -f "$dev_target" ]; then
@@ -115,6 +115,7 @@ rsync -a \
   --exclude='bin/plantuml.jar' \
   --exclude='memory/_pending.md' \
   --exclude='memory/_resume.md' \
+  --exclude='memory/_thread.md' \
   --exclude='skill-memory/' \
   --exclude='agent-memory/' \
   --exclude='workflows.jsonl' \

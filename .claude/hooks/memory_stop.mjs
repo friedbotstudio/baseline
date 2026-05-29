@@ -20,6 +20,8 @@ import {
 } from './lib/common.mjs';
 import { runMemoryStop } from './lib/memory_stop.mjs';
 import { writeSnapshot } from './lib/resume_writer.mjs';
+import { readEvents, eventText, readCursor } from './lib/thread_store.mjs';
+import { detect } from './lib/shelve_detect.mjs';
 
 const payload = await readPayload();
 
@@ -41,5 +43,22 @@ logLine('memory_stop', 'ran end-of-turn extraction');
 // Refresh the continuity snapshot. Best-effort; never fail the hook.
 try { writeSnapshot({ transcript, projectDir: CLAUDE_PROJECT_ROOT, trigger: 'stop' }); }
 catch {}
+
+// Stage a switch-candidate if the latest user turn diverges from the current
+// thread's opening subject (Decision D1). Passive: stages only — emits NOTHING
+// on stdout, so harness_continuation keeps the sole Stop-event block decision.
+// Best-effort so a detection fault never fails the turn.
+try {
+  const stateDir = join(CLAUDE_DOTDIR, 'state');
+  const events = readEvents(transcript);
+  const cursor = readCursor({ stateDir });
+  let prevSubject = '';
+  let started = !cursor || !cursor.last_event_uuid;
+  for (const ev of events) {
+    if (!started) { if (ev.uuid === cursor.last_event_uuid) started = true; continue; }
+    if (ev.role === 'user') { const t = eventText(ev.content); if (t) { prevSubject = t; break; } }
+  }
+  if (prevSubject) detect({ transcriptPath: transcript, prevSubject, stateDir });
+} catch {}
 
 process.exit(0);

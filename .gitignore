@@ -18,6 +18,11 @@
 # SessionStart hook reads). Pure session state, not project knowledge.
 .claude/memory/_resume.md
 
+# Durable local conversation-thread trail (shelve/resume — Article IX). The
+# content is per-developer continuity and is NEVER committed; only the pristine
+# structure in src/memory/_thread.template.md ships. Survives /memory-flush.
+.claude/memory/_thread.md
+
 # Legacy agent-memory directories (subagents removed in 2026-04-27 refactor;
 # any stragglers from prior sessions should not be committed)
 .claude/agent-memory/

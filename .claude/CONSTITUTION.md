@@ -40,6 +40,19 @@ The Article VIII table names every hook, its event, and the Article it enforces.
 
 The build script `scripts/build-manifest.mjs` reads each SKILL.md's `owner:` value and emits the canonical baseline-skill set into the shipped manifest at `obj/template/.claude/manifest.json` under `owners.skills` (a JSON object mapping slug → `"baseline"`). The recursive install copies the manifest straight to `<target>/.claude/manifest.json` (same path inside the `.claude/` subtree, no special-case). The CLI separately writes `<target>/.claude/.baseline-manifest.json` post-install as a runtime sha256 table of the target's actual on-disk contents (used by `doctor` and `upgrade`) — do not conflate the two. The audit at `.claude/skills/audit-baseline/audit.mjs` consumes `manifest.owners.skills` as the canonical baseline-skill enumeration (the previous hard-coded `EXPECTED_SKILLS` set is removed); it reads the manifest from `<root>/.claude/manifest.json` with a fallback to `<root>/obj/template/.claude/manifest.json`, re-derives sha256 hashes from `manifest.files` for every path under `.claude/skills/<slug>/` whose slug appears in `owners.skills`, and compares against on-disk content. Mismatches surface as `hash mismatch at <path>`; a baseline-listed slug missing from disk surfaces as `baseline skill missing`. These are hard FAIL — drift detection has no opt-out. Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals; the per-file `manifest.files` map already covers every file in every skill directory.
 
+### Durable local thread trail (Article IX clause 8)
+
+`.claude/memory/_thread.md` is a third, **local + durable** memory class for cross-session conversation continuity — distinct from the committed/curated canonical seven and from the overwritten-every-turn `_resume.md`. Its content is gitignored (only `src/memory/_thread.template.md` ships) and it is excluded from `/memory-flush`'s reset path, so a shelved thread survives a flush or `/clear`.
+
+It is **model-internal**: Claude Code performs shelve and resume automatically; the human never invokes them, and there is no skill or command surface (so the audited skill/command counts are unchanged). Four `.mjs` Foundation helpers in `.claude/hooks/lib/` back it:
+
+- **`thread_store.mjs`** — all `_thread.md` / cursor / candidate I/O, the transcript event reader, and the section render/parse (verbatim cues round-trip byte-identical via a JSON block embedded in an HTML comment).
+- **`shelve_detect.mjs`** — `detect(...)` compares the latest user turn's subject against the active thread's opening subject (token-overlap heuristic) and STAGES a `ShelveCandidate` on divergence. Folded into the `memory_stop` Stop hook; **passive** — it emits nothing on stdout, so `harness_continuation` keeps the sole Stop-event block decision (Decision D1). Best-effort; never fails the turn.
+- **`shelve_capture.mjs`** — `capture(...)` reads the cursor, extracts verbatim cues + open questions + in-flight files + next step over the span `[cursor → end]` (end = staged switch-point uuid for an auto-shelve, `now` for a model-initiated one; cross-session transcript mismatch → whole-transcript fallback), appends one section, and advances the cursor. Mechanical — NO model summary at shelve (Decisions D2 + D3).
+- **`resume_transform.mjs`** — `readMostRecent(...)` plus a TTL cache (`readCache`/`writeCache`, file `.claude/state/thread_transform_cache.json`, TTL `project.json → memory.thread_transform_ttl_seconds`, default 86400). The transform itself (verbatim → surfaced summary) is inline main-context model work, cached so resume does not recompute within the TTL (Decision D5).
+
+`memory_session_start.mjs` injects ONLY the most-recent section at SessionStart, bounded so the ~10KB envelope holds (Decision D3 bounding). The design rationale — extract verbatim cheaply at shelve, transform at resume for granularity control — and the full decision record live in `.claude/state/codesign/conversation-thread-shelving.json`.
+
 ---
 
 ## 3 — Appendix A — Where things live (reference)
@@ -50,7 +63,7 @@ The build script `scripts/build-manifest.mjs` reads each SKILL.md's `owner:` val
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 40 skills: artifact (4) + phases (11) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
-| `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `README.md` |
+| `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
 | `.claude/settings.json` | hook wiring + permissions |
 | `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |

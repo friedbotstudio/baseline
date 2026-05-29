@@ -9,6 +9,7 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
+import { readMostRecentMarkdown } from './thread_store.mjs';
 
 const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
 const PENDING_FILE = 'pending-questions';
@@ -355,6 +356,22 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       }
     } catch {}
   }
+
+  // Inject ONLY the most-recent shelved-thread section (Decision D3 bounding):
+  // older sections stay on disk; the read is bounded so the SessionStart
+  // envelope holds. Best-effort — absence/parse failure injects nothing.
+  try {
+    const threadMd = readMostRecentMarkdown({ memDir });
+    if (threadMd) {
+      const budget = 9000 - out.length - 80;
+      if (budget > 300) {
+        const block = threadMd.length > budget
+          ? threadMd.slice(0, budget).replace(/\s+$/, '') + '\n\n…(thread section truncated)'
+          : threadMd;
+        out = out + '\n\n---\n\n## Most-recent shelved thread (resume candidate)\n\n' + block;
+      }
+    }
+  } catch {}
 
   return JSON.stringify({
     hookSpecificOutput: {
