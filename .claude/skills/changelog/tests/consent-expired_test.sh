@@ -37,7 +37,8 @@ seed_stale_consent_project() {
 {
   "request": "consent-expired test",
   "slug": "$slug",
-  "entry_phase": "intake",
+  "track_id": "intake-full",
+  "skipped_alternates": [],
   "exceptions": [],
   "completed": ["intake","scout","research","spec","approve-spec","tdd","simplify","security","integrate","document","archive","memory-flush"],
   "source_backlog_keys": [],

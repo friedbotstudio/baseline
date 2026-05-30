@@ -45,8 +45,9 @@ Each entry's stable key is auto-numbered `Q-NNN`.
 
 ---
 
-## Q-006
+## Q-006 — CLOSED 2026-05-30
 
+- Resolution: Decided 2026-05-30 (cleanup WF-1) — shipped template KEEPS `refuse_dirty_tree: true` (the safe default per seed.md: baseline ambiguity would break the merge audit). This repo's live `false` is an intentional local override (its workflows always leave a dirty tree). Option (b) — phase-aware enforcement (enforce clean tree only when no workflow is active) — is the complete fix for out-of-box mid-workflow swarm and is the recommended follow-up if consumer swarm-on-fresh-install becomes a priority; tracked as a backlog candidate rather than flipping the safe default.
 - Question: Should `swarm.refuse_dirty_tree` default to `false` in `src/project.template.json` (shipping default for fresh installs), to match the live value we had to set in this baseline?
 - Raised in: 2026-05-15. See `landmines.md → swarm-refuse-dirty-tree-blocks-mid-workflow`. The workflow's mid-flow state always leaves a dirty tree (uncommitted artifacts in `docs/intake/`, `docs/scout/`, etc.). `refuse_dirty_tree: true` aborts swarm-dispatch on the exact state the workflow produces.
 - Blocker for: out-of-the-box swarm-dispatch on a fresh install of the baseline. Currently a user who runs through a full workflow with swarm enters Phase 6c and hits the abort.

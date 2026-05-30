@@ -31,13 +31,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-05-27
 - Caveat: pinned constants (`PINNED_SHA256`, `UPSTREAM_URL`, `PINNED_SIZE`) must update in lockstep with `.claude/bin/NOTICE` when the upstream PlantUML version bumps
 
-## scripts/build-template.sh:1
-
-- Role: regenerates `template/` from the live root via rsync + src/*.template.* overlay; invoked at `prepack`
-- Verified-at: HEAD
-- Last-touched: 2026-04-29
-- Caveat: the rsync exclude list is the authoritative ship-vs-don't-ship surface — extend when new dev-only paths land at root
-
 ## .claude/skills/design-ui/SKILL.md:1
 
 - Role: pure orchestrator of the vendored `impeccable` skill for UI design tasks. Classifies intent (Stage 0: design / development / copy via `references/design-vs-development.md`), translates design intents to an impeccable recipe (Stage 1 via `references/intent-table.md`), orchestrates with state persistence (Stage 2 via `references/orchestration.md` + `references/state-machine.md`). Writes only thin glue (state JSON at `.claude/state/design/<slug>.json`, snapshots under `docs/design/<slug>.*.md`, memory candidates) — never product code. Per Article X.2, every UI design task inside a workflow phase routes here.
@@ -114,20 +107,6 @@ Each entry's stable key is `path:line`.
 - Verified-at: 5a79b1c
 - Last-touched: 2026-05-17
 - Caveat: the stale predicate's non-git threshold (30 days) MUST stay in sync with `memory_session_start.mjs:1`'s `STALE_DAYS` — they re-derive the same set. Spec design diagram says 90 days; the 30-day choice matches the test plan AC-003 row and the index header label `stale (>=30 commits old)`. The helper trusts argv strings reaching `git rev-list` (e.g., the verified-at value as `<stamp>..HEAD`); a malicious memory file could feed a `--exec`-style argv flag — low risk because filesystem write to `.claude/memory/` already implies broader compromise. See `docs/archive/2026-05-13/memory-lifecycle-closure/security.md` LOW finding. stamp-closure has its own LOW finding (CWE-22 path traversal via slug; CWE-78 shell quoting of backlog-keys CSV) — see `docs/archive/2026-05-17/workflow-loop-closing-hygiene/security.md`; mitigations are non-blocking carve-outs for a future hardening workflow.
-
-## .claude/hooks/tests/memory_session_start_test.sh:1
-
-- Role: fixture-based integration tests for `.claude/hooks/memory_session_start.mjs:1`. Covers AC-003 (stale block listing, overflow, alphabetical tiebreak), AC-005 (closure-exclusion in stale count), AC-007 (audit re-run remains green), AC-008 (header+table byte-equality + legacy `_resume.md` compatibility). Builds synthetic `.claude/memory/` trees under tempdirs and invokes the real hook with `CLAUDE_PROJECT_DIR` redirected at the tempdir.
-- Verified-at: HEAD
-- Last-touched: 2026-05-13
-- Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline`); these are runnable manually during /tdd, /simplify, and /integrate. The AC-008 byte-equality test compares against `.claude/hooks/tests/fixtures/ac008_byte_equal_reference.txt` — that fixture was captured pre-spec against the live memory tree and represents today's bytes; if the live tree's entry count or stale count drifts, the fixture needs re-capture.
-
-## .claude/skills/memory-flush/tests/run.sh:1
-
-- Role: fixture-based integration tests for `.claude/skills/memory-flush/sweep.mjs:1`. Covers AC-001 (auto-close on structured closure fields + malformed date handling + invariant violation flagging), AC-002 (prose surface-and-confirm with y/n/skip on anchored R1/R2/R3 matches; mid-sentence non-matches stay silent), AC-004 (stale-sweep with re-verify/delete/mark-closed), AC-006 (no-closure no-prose entries survive all paths + grandfathered legacy entries).
-- Verified-at: HEAD
-- Last-touched: 2026-05-13
-- Caveat: invokes `sweep.mjs` via `python3` and `--memory-dir <tempdir>` — until `sweep.mjs` exists, every flush test fails RED (correct TDD state, demonstrated during this workflow's scenario-tick). Test order matters for stale-sweep tests because replies are read one-per-entry-iteration from stdin in file-order.
 
 ## .claude/skills/chore/SKILL.md:1
 
