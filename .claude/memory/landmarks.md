@@ -124,10 +124,10 @@ Each entry's stable key is `path:line`.
 
 ## .claude/hooks/lib/common.mjs:1
 
-- Role: shared Node ESM helpers imported by EVERY hook (all 22 are .mjs after the 2026-05-27 perf-pass port). Exports `readPayload`, `payloadGet`, `projectGet`, `emitBlock` / `emitAllow` / `emitAsk` / `emitInfo`, `logLine`, `canonicalRel`, `canonicalSlug`, `writeMarkerAtomic`, `validateConsentMarker`, `blockMarkerSelfWrite`, the consent-marker path constants (`CONSENT_MARKER_{SPEC,SWARM,COMMIT,PUSH}` plus `_REL` siblings), `matchAnyGlob(name, globs)` (shell-glob matcher for branch policy), `cmdMatchesAny(cmd, patterns)` (regex set for destructive-cmd guard), and `computeProposedContent(tool, payload, filePath)` (post-write content reconstruction for content-aware guards like artifact_template_guard / spec_diagram_presence_guard / spec_design_calls_guard / plantuml_syntax_guard).
+- Role: shared Node ESM helpers imported by EVERY hook (all 22 are .mjs after the 2026-05-27 perf-pass port). Exports `readPayload`, `payloadGet`, `projectGet`, `emitBlock` / `emitAllow` / `emitAsk` / `emitInfo`, `logLine`, `canonicalRel`, `canonicalSlug`, `writeMarkerAtomic`, `validateConsentMarker`, `blockMarkerSelfWrite`, the consent-marker path constants (`CONSENT_MARKER_{SPEC,SWARM,COMMIT,PUSH}` plus `_REL` siblings), `matchAnyGlob(name, globs)` (shell-glob matcher for branch policy), `cmdMatchesAny(cmd, patterns)` (regex set for destructive-cmd guard), and `computeProposedContent(tool, payload, filePath)` (post-write content reconstruction for content-aware guards like artifact_template_guard / spec_diagram_presence_guard / spec_design_calls_guard / plantuml_syntax_guard). Also hosts the **wrapper/quote-aware shell-command classifier** (added 2026-05-31): exported `gitSubcommandInvoked(cmd, sub)` + `gitSegments(cmd)`, backed by internal `executedFragments` / `shellTokens` / `extractSubstitutions` — used by `git_commit_guard` to detect real `git commit`/`git push` (including wrapped forms) without false-positiving on data. See landmine `shell-command-guards-must-classify-wrapper-and-quote-aware`.
 - Imported by: all 22 `.claude/hooks/*.mjs` hooks. No bash hooks remain.
 - Verified-at: HEAD
-- Last-touched: 2026-05-27
+- Last-touched: 2026-05-31
 - Caveat: every hook imports from this; breaking changes cascade. The earlier `common.sh` peer was deleted with the port — no parity obligation remains. Per-call cost is ~5× faster than the legacy bash + python3 chain because there's no subprocess fork per JSON-field access.
 
 ## .claude/hooks/git_commit_guard.mjs:1
@@ -490,3 +490,23 @@ Each entry's stable key is `path:line`.
 - Verified-at: 7901e65
 - Last-touched: 2026-05-27
 - Caveat: arrays are atomic. Future refinement: set-union for known list-shaped fields. Unit-tested in `tests/project-json-merge.test.mjs` (15 scenarios).
+
+## .claude/hooks/destructive_cmd_guard.mjs:1
+
+- Role: PreToolUse(Bash) guard. Two tiers from `project.json → destructive.{hard_block_patterns, ask_patterns}` (regex over the whole command; `mode: ask|block`): hard-block catastrophic ops (rm -rf /, fork bomb, dd of=/dev/sd, mkfs, shutdown), ask on risky ones (rm -rf, git reset --hard, git clean -f, drop table, npm publish…). PLUS a **Bash consent-write block** (added 2026-05-31, Finding B): denies any Bash command writing a consent path under `.claude/state/` (`commit_consent`, `push_consent`, `.*_grant` markers, `spec_approvals/**`, `swarm_approvals/**`) via redirect (`>`/`>>`/`>|`), write-verb (tee/cp/mv/install/dd/ln), `sed -i`, or a program write (JS `writeFileSync`… or python/ruby/perl `open(...,'w')`). Closes the gap that the four approval guards only match Write/Edit/MultiEdit — a Bash-written token bypassed them.
+- Verified-at: HEAD
+- Last-touched: 2026-05-31
+- Caveat: best-effort defense-in-depth behind the Write-matcher approval guards (the primary structural control). Known residual gaps tracked in backlog: `$VAR`-indirected paths and a symmetric whole-command false-positive (not segment-scoped).
+
+## .claude/hooks/lib/thread_store.mjs:1
+
+- Role: Foundation helper for the durable local conversation-thread trail (`.claude/memory/_thread.md`, Article IX clause 8). Reads/writes shelved-thread sections; entry JSON is **base64-encoded** inside an HTML-comment data block so verbatim cues round-trip even when they contain the `-->` close delimiter (a security MEDIUM fixed during the feature). Exports include `readMostRecentMarkdown({memDir})` used by `memory_session_start` to inject only the most-recent section at SessionStart.
+- Companion: `.claude/hooks/lib/shelve_detect.mjs`, `shelve_capture.mjs`, `resume_transform.mjs` (the shelve/resume pipeline); folded detector in `memory_stop.mjs`.
+- Verified-at: c9d0efc
+- Last-touched: 2026-05-31
+
+## .claude/hooks/lib/resume_transform.mjs:1
+
+- Role: transforms a shelved thread's verbatim cues into a surfaced resume summary, run inline in main context (keeps judgment in main context per Article II) and TTL-cached. Part of the conversation-thread-shelving pipeline ([[thread_store.mjs]]).
+- Verified-at: c9d0efc
+- Last-touched: 2026-05-31

@@ -13,6 +13,20 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
+## destructive-guard-and-grant-sweep-residual-hardening-7f2c
+
+> verbatim (assistant-deferral, 2026-05-31, from docs/archive/2026-05-30/infra-hardening/security.md Resolution):
+> Deferred (tracked in backlog / seed.md §16 guard-hardening sweep — deny-leaning or out of a regex guard's reach): MEDIUM `$VAR`-indirected consent paths (needs shell variable resolution); LOW symmetric false-positive in `destructive_cmd_guard` (whole-command match, not segment-scoped) — fold into the same segment-aware pass later; LOW `memory_session_start` grant-marker sweep symlink/TOCTOU — own-state, local-only.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-05-31
+- raised-in-context: infra-hardening security review (residuals after the HIGH + actionable MEDIUM were fixed in-workflow)
+- estimated-effort: small
+- verified-at: HEAD
+- last-touched: 2026-05-31
+- caveat: all three are deny-leaning or local-only (not remotely exploitable). The destructive false-positive could reuse the new `executedFragments`/segment-aware classifier from `common.mjs` to scope the consent-path-write check to the executed segment. Pairs with the broader seed.md §16 guard-hardening sweep (canonical_rel coverage, fail-closed on malformed payload, symlink defense across all guards).
+
 ## improved-backlog-item-detection-046c
 
 > verbatim (user, 2026-05-17):
@@ -68,20 +82,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: bfad579
 - last-touched: 2026-05-18
 - caveat: `project.json → consent.commit_ttl_seconds` defaults to 300. During this workflow's `/commit` step, the elapsed time from /grant-commit consent to actual git commit was 544 seconds — the message-drafting, humanizer pass, and a redundant "want me to go ahead?" stall ate the window. Two non-exclusive cures: (i) behavioral — don't insert post-grant stalls when there is no actual decision pending; the user's /grant-commit already authorized the commit. Add this as `/commit` SOP guidance: between Step 4 (humanizer) and Step 5 (git commit), do NOT emit a clarifying question to the user — humanizer's output is the final body and the commit fires immediately. (ii) configuration — raise `consent.commit_ttl_seconds` default to 600 to absorb humanizer latency on slower runs, or have `/commit` check the token's age before Step 4 and re-grant if `< 60s` remaining. Behavioral cure is YAGNI-aligned (no config change); configuration cure is more robust but adds knobs.
-
-## changelog-test-fixtures-use-pre-seventeen-entry-phase-shape-5d1a
-
-> assistant-deferral (claude, 2026-05-21):
-> The 3 changelog skill test fixtures at .claude/skills/changelog/tests/{idempotent-reentry,golden-path,consent-expired}_test.sh construct workflow.json with the legacy pre-§18 `entry_phase: "intake"` field instead of post-§18 `track_id: "intake-full"`. Tests still pass (changelog skill doesn't read either field — only reads completed[]) but the fixtures don't reflect the post-§18 reality.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-21
-- raised-in-context: workflow-extension-via-workflows-json drift analysis Round 6 (post-skill-alignment sweep)
-- estimated-effort: trivial
-- verified-at: HEAD
-- last-touched: 2026-05-21
-- caveat: Three files, each with one `"entry_phase": "intake"` line that should become `"track_id": "intake-full"` (and ideally `"skipped_alternates": []` added). Test logic doesn't depend on this field — changelog reads workflow.json → completed[] only. The fixtures work today because they're legal pre-§18 shape; nothing in the test harness exercises the post-§18 shape via these fixtures. Trivial alignment cleanup. Non-blocking.
 
 ## triage-skill-md-still-duplicates-workflows-jsonl-canonical-templates-c8f4
 
@@ -152,20 +152,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: HEAD
 - last-touched: 2026-05-28
 - caveat: The canonical track count lives in 10 places that must stay in sync: `.claude/workflows.jsonl` (live data; the actual track records), `site-src/_data/baseline.json → tracks.canonical` (homepage meta-strip), and 8 hardcoded prose mentions across `README.md` (×2: line 44 + table row), `CLAUDE.md` (Article IV via prose-mention indirectly — no explicit count line today), `src/CLAUDE.template.md` (mirror), `docs/init/seed.md` §18.1 (×2: 7-track set + canonical-four wording), `src/seed.template.md` (mirror), `.claude/skills/triage/SKILL.md` (canonical-track-shape reference paragraph), `site-src/workflows.njk` (frontmatter description + lead + body listing + sub-track count line + "as the canonical N" FAQ), and `site-src/index.njk` (`<h3>`, body, `<title>` SVG label, figcaption "N other tracks", FAQ "N canonical tracks"). Every change adds churn across all 10. The fix: derive the count from `.claude/workflows.jsonl` at build time and surface as a template variable. `site-src/_data/baseline.json` is already eleventy-data; an adjacent `tracks.js` (or extending `baseline.js`) could count selectable Tracks in workflows.jsonl and expose `baseline.tracks.canonical` to the site. Prose mentions that say "five canonical tracks" remain hardcoded — those need a different remedy (templated-prose injection, or an audit check that grep-counts vs the JSON source). At minimum, `baseline.json → tracks.canonical` should be the single template-source, and an audit check should fail when the JSON value disagrees with the actual selectable-track count in workflows.jsonl.
-
-## stale-sh-refs-in-tests-after-mjs-port-7c8e
-
-> assistant-deferral (claude, 2026-05-28):
-> 14 npm-test failures persisted across the introduce-freeform-track chore. Root cause: commit 756dd42 ported skill helpers from bash to Node ESM (audit.sh → audit.mjs, render.sh → render.mjs, lint.sh → lint.mjs) but left test files still spawning `bash <skill>/<helper>.sh`. The .mjs files exist; the .sh files don't. The audit-baseline skill's own test PASSES (it runs the audit binary directly via project.json → test.cmd) so the regression was invisible until `npm test` ran the full Node suite.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-28
-- raised-in-context: introduce-freeform-track chore — integrate phase surfaced the failures as advisory findings (not verdict-flipping)
-- estimated-effort: small
-- verified-at: 756dd42
-- last-touched: 2026-05-28
-- caveat: Affected tests and their failing assertion pattern: `tests/audit-baseline.test.mjs` (test_when_audit_baseline_runs_post_amendment_then_exits_zero, test_when_audit_runs_after_clean_build_then_exits_zero, test_when_baseline_SKILL_md_body_tampered_then_audit_reports_hash_mismatch, test_when_owner_field_removed_from_baseline_skill_then_audit_fails, test_when_baseline_skill_directory_removed_then_audit_reports_baseline_skill_missing, test_when_user_skill_added_then_audit_ignores_it, test_when_section_17_missing_from_seed_then_audit_reports_missing_citation, test_when_owner_field_present_then_value_is_baseline_or_user) — all spawn `bash .../audit-baseline/audit.sh`. `tests/spec-lint.test.mjs` (test_when_spec_lint_runs_on_*) — spawn `bash .../spec-lint/lint.sh`. `tests/spec-render.test.mjs` (test_when_spec_render_runs_with_*) — spawn `bash .../spec-render/render.sh`. One was already fixed inline during this chore (tests/memory-flush-phase.test.mjs:23 + 277, audit.sh → audit.mjs, bash → node). Remediation pattern proven: change AUDIT_SCRIPT path to `.mjs`, change spawnSync('bash', ...) to spawnSync('node', ...). Ideal vehicle: a freeform-track workflow that batches these 14 + checks for any other `*\.sh` references in tests against the actual skill-helper inventory. The freeform-track introduction (this same chore) was designed for exactly this kind of batched residual-debt work.
 
 ## changelog-actuator-reads-head-not-staged-4dc0
 

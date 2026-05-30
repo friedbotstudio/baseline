@@ -36,6 +36,8 @@ import {
   validateConsentMarker,
   blockMarkerSelfWrite,
   matchAnyGlob,
+  gitSubcommandInvoked,
+  gitSegments,
   CLAUDE_PROJECT_ROOT,
   STATE_DIR,
   CONSENT_MARKER_COMMIT,
@@ -143,16 +145,24 @@ function validateConsentToken(file, ttlKey, defaultTtl, gateLabel, cmdHint) {
 }
 
 function handleBash(cmd) {
-  if (!cmd || !/(^|\s)git(\s|$)/.test(cmd)) emitAllow();
+  if (!cmd) emitAllow();
 
-  // Hard-blocks first. Push is NOT in this set anymore.
-  if (FORBIDDEN_RE.test(cmd)) {
+  // Classify by ACTUAL git invocation segments, not naive substring (Q-003).
+  // A command that merely mentions "git commit" in a grep pattern, an echo, or
+  // a quoted string has no git segment and is allowed through here.
+  const segs = gitSegments(cmd);
+  if (segs.length === 0) emitAllow();
+
+  // Hard-blocks — checked only WITHIN actual git segments so a forbidden flag
+  // appearing in an unrelated command or a string can't false-trip. Push is
+  // NOT in this set anymore.
+  if (segs.some((seg) => FORBIDDEN_RE.test(seg))) {
     logLine(HOOK, `BLOCKED forbidden git op: ${cmd}`);
     emitBlock('Git Commit Guard: forbidden git operation detected. seed.md forbids `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f`, `git checkout -- `, `git branch -D`, `git config`, `git rebase -i`, `git add -i`, `git add -A|.` regardless of consent or branch. Ask the user to approve by stating the exact command.');
   }
 
-  const isCommit = /\bgit\s+commit\b/.test(cmd);
-  const isPush = /\bgit\s+push\b/.test(cmd);
+  const isCommit = gitSubcommandInvoked(cmd, 'commit');
+  const isPush = gitSubcommandInvoked(cmd, 'push');
   if (!isCommit && !isPush) emitAllow();
 
   // Article VII applicability: gate operations require git.

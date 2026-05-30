@@ -1,0 +1,23 @@
+{
+  "request": "Combined infra-hardening (cleanup WF-2 + WF-G): isolate 3 parallel-racing tests, env-gate publish/smoke, sync src/seed.template.md + parity test; harden consent guards (fix git_commit_guard naive git-commit substring match per Q-003; add Bash-leg blocking writes to consent paths; clean leaked markers).",
+  "slug": "infra-hardening",
+  "track_id": "tdd-quickfix",
+  "exceptions": [],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "consent-gates-bypassable-via-bash-token-write-e5d1",
+    "seed-template-md-pre-redesign-drift-a1f3"
+  ],
+  "created_at": 1780174009,
+  "updated_at": 1780182846
+}

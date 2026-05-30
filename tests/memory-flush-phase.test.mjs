@@ -16,6 +16,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { cloneAndBuild } from './helpers/clone-and-build.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
@@ -273,9 +274,16 @@ describe('AC-010 — phase-ordering enumerations consistently name memory-flush 
 });
 
 describe('AC-012 — audit-baseline exits 0 (regression guard; must stay green after the change)', () => {
-  it('test_when_audit_runs_then_zero_FAILs', () => {
-    const result = spawnSync('node', [AUDIT_SCRIPT], {
-      env: { ...process.env, CLAUDE_PROJECT_DIR: REPO_ROOT },
+  it('test_when_audit_runs_then_zero_FAILs', async () => {
+    // Audit an isolated clone+build, not the live REPO_ROOT. The live obj/template
+    // and its manifest are rebuilt by build-exercising tests under parallel
+    // `npm test`; auditing the live tree mid-rebuild is a flaky race. The clone
+    // rsyncs the current working tree, then build-template.sh regenerates the
+    // manifest to match — exactly what `npm run build` does — so a green audit
+    // here is the same guarantee, race-free. See helpers/clone-and-build.mjs.
+    const tmp = await cloneAndBuild('memflush-audit-');
+    const result = spawnSync('node', [path.join(tmp, '.claude/skills/audit-baseline/audit.mjs')], {
+      env: { ...process.env, CLAUDE_PROJECT_DIR: tmp },
       encoding: 'utf8',
     });
     assert.equal(

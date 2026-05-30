@@ -13,25 +13,23 @@
 //
 // Tests are RED until /implement lands.
 
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, cp, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { buildShippedClaudeDir } from './helpers/clone-and-build.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(here, '..');
-const SHIPPED_CLAUDE_DIR = join(REPO_ROOT, 'obj/template/.claude');
+// Build the shipped .claude/ into an isolated tmp tree ONCE for this file, so we
+// never read the live REPO_ROOT/obj/template that build-exercising tests rebuild
+// concurrently (parallel-run race). See helpers/clone-and-build.mjs.
+let SHIPPED_CLAUDE_DIR;
+before(async () => {
+  SHIPPED_CLAUDE_DIR = await buildShippedClaudeDir('seed-tasklist-build-');
+});
 
 async function makeConsumerLayout() {
-  if (!existsSync(SHIPPED_CLAUDE_DIR)) {
-    throw new Error(
-      `${SHIPPED_CLAUDE_DIR} missing. Run \`bash scripts/build-template.sh\` first.`,
-    );
-  }
   const root = await mkdtemp(join(tmpdir(), 'seed-tasklist-consumer-'));
   await cp(SHIPPED_CLAUDE_DIR, join(root, '.claude'), { recursive: true });
   return root;

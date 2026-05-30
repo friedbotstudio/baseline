@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { cloneAndBuild } from './helpers/clone-and-build.mjs';
 
 let manifest;
 try {
@@ -130,31 +131,7 @@ describe('installed manifest v2 — baseline_version field (upgrade-flow-rework)
 
 describe('manifest v2 shape (skill-ownership)', () => {
   it('test_when_manifest_built_then_v2_shape_has_owners_skills_present', async () => {
-    const { spawnSync } = await import('node:child_process');
-    const { fileURLToPath } = await import('node:url');
-    const { dirname, resolve } = await import('node:path');
-    const { readFile, mkdtemp: mkd } = await import('node:fs/promises');
-    const here = dirname(fileURLToPath(import.meta.url));
-    const repoRoot = resolve(here, '..');
-    const tmp = await mkd(join(tmpdir(), 'manifest-v2-'));
-    const rsync = spawnSync('rsync', [
-      '-a',
-      '--exclude=node_modules',
-      '--exclude=obj',
-      '--exclude=.git',
-      '--exclude=docs/archive',
-      '--exclude=.playwright-mcp',
-      `${repoRoot}/`,
-      tmp,
-    ], { encoding: 'utf8' });
-    if (rsync.status !== 0) throw new Error(`rsync failed: ${rsync.stderr}`);
-    const build = spawnSync('bash', [join(tmp, 'scripts/build-template.sh')], {
-      env: { ...process.env, PKG_ROOT: tmp, CLAUDE_PROJECT_DIR: tmp },
-      encoding: 'utf8',
-    });
-    if (build.status !== 0) {
-      throw new Error(`build failed: ${build.stderr || build.stdout}`);
-    }
+    const tmp = await cloneAndBuild('manifest-v2-');
     // Shipped manifest now lives inside the .claude/ subtree so the recursive
     // install delivers it at <target>/.claude/manifest.json without special-
     // casing — see CLAUDE.md Article XI.
@@ -174,24 +151,11 @@ describe('manifest v2 shape (skill-ownership)', () => {
 // turn by memory hooks; merge-time tier dispatch on them is structurally wrong.
 describe('shipped manifest — runtime-state file tier classification', () => {
   it('test_when_build_manifest_runs_then_pending_and_resume_tier_is_NEVER_TOUCH', async () => {
-    const { readFile: readFileFs } = await import('node:fs/promises');
-    const { dirname, resolve } = await import('node:path');
-    const { fileURLToPath } = await import('node:url');
-    const here = dirname(fileURLToPath(import.meta.url));
-    const repoRoot = resolve(here, '..');
-    const manifestPath = resolve(repoRoot, 'obj/template/.claude/manifest.json');
-
-    let text;
-    try {
-      text = await readFileFs(manifestPath, 'utf8');
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        assert.fail(
-          `obj/template/.claude/manifest.json not present — run \`npm run build\` first. (${err.message})`,
-        );
-      }
-      throw err;
-    }
+    // Build into a per-test tmpdir (not the live REPO_ROOT/obj/template, which
+    // build-running tests rm -rf + rebuild — a parallel-run race). cloneAndBuild
+    // serializes via the build script's TMPDIR-global mutex.
+    const tmp = await cloneAndBuild('manifest-tier-');
+    const text = await readFile(join(tmp, 'obj/template/.claude/manifest.json'), 'utf8');
     const m = JSON.parse(text);
 
     const pendingEntry = m.files['.claude/memory/_pending.md'];

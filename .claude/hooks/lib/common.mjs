@@ -281,6 +281,173 @@ export function cmdMatchesAny(cmd, patterns) {
   return false;
 }
 
+// Split a shell command line into top-level segments on UNQUOTED separators
+// (; | || & && and newline). Quote-aware so separators inside '...' / "..."
+// stay literal. Not a full shell grammar — sufficient to find which segment a
+// command verb leads. Quotes are preserved in the returned segment text.
+function splitShellSegments(cmd) {
+  const segs = [];
+  let cur = '';
+  let quote = null;
+  for (let i = 0; i < cmd.length; i++) {
+    const c = cmd[i];
+    if (quote) { cur += c; if (c === quote) quote = null; continue; }
+    if (c === '"' || c === "'") { quote = c; cur += c; continue; }
+    if (c === '\n' || c === ';') { segs.push(cur); cur = ''; continue; }
+    if (c === '|') { if (cmd[i + 1] === '|') i++; segs.push(cur); cur = ''; continue; }
+    if (c === '&') { if (cmd[i + 1] === '&') i++; segs.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  if (cur.trim()) segs.push(cur);
+  return segs;
+}
+
+// Quote-aware tokenizer: splits on unquoted whitespace and STRIPS quotes, so a
+// quoted command argument (`sh -c "git commit"`) survives as one dequoted token
+// (`git commit`). Unlike a naive split(/\s+/), this lets executor arguments be
+// extracted and re-parsed.
+function shellTokens(s) {
+  const toks = [];
+  let cur = '';
+  let q = null;
+  let has = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (q) { if (c === q) q = null; else cur += c; has = true; continue; }
+    if (c === '"' || c === "'") { q = c; has = true; continue; }
+    if (/\s/.test(c)) { if (has) { toks.push(cur); cur = ''; has = false; } continue; }
+    cur += c; has = true;
+  }
+  if (has) toks.push(cur);
+  return toks;
+}
+
+// Command tokens of a fragment after stripping leading `VAR=val` env-assignment
+// prefixes. The verb is `commandTokens(frag)[0]`.
+function commandTokens(s) {
+  const toks = shellTokens(s);
+  let i = 0;
+  while (i < toks.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[i])) i++;
+  return toks.slice(i);
+}
+
+// The contents of command substitutions `$( … )` and backtick spans that the
+// shell would ACTUALLY execute — i.e. NOT inside single quotes (single quotes
+// make `$(`/backtick literal; double quotes do not). Quote-aware so that a
+// `$(git commit)` appearing inside a single-quoted string (data, e.g. a for-loop
+// list item or an echo literal) is NOT mistaken for an executed command. This is
+// the quoting-context the Q-003 fix demands applied to substitution detection.
+function extractSubstitutions(s) {
+  const out = [];
+  let i = 0;
+  let sq = false; // inside single quotes (double quotes do not suppress substitution)
+  while (i < s.length) {
+    const c = s[i];
+    if (sq) { if (c === "'") sq = false; i++; continue; }
+    if (c === "'") { sq = true; i++; continue; }
+    if (c === '$' && s[i + 1] === '(') {
+      let depth = 1;
+      let j = i + 2;
+      let inner = '';
+      while (j < s.length && depth > 0) {
+        if (s[j] === '(') depth++;
+        else if (s[j] === ')') { depth--; if (depth === 0) break; }
+        inner += s[j];
+        j++;
+      }
+      out.push(inner);
+      i = j + 1;
+      continue;
+    }
+    if (c === '`') {
+      let j = i + 1;
+      let inner = '';
+      while (j < s.length && s[j] !== '`') { inner += s[j]; j++; }
+      out.push(inner);
+      i = j + 1;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+
+// Executors whose command arrives via a `-c <string>` argument.
+const SHELL_C_EXECUTORS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh']);
+// Executors that PREFIX a command as their remaining argv (the command is what
+// follows, after the executor's own option flags / env assignments).
+const PREFIX_EXECUTORS = new Set([
+  'command', 'env', 'sudo', 'doas', 'nice', 'time', 'nohup', 'setsid', 'xargs', 'timeout', 'stdbuf', 'ionice',
+]);
+
+// Every command line that `cmd` actually EXECUTES, dequoted and flattened.
+// Beyond the top-level segments this peels subshells `( … )` / brace groups
+// `{ …; }`, extracts command-substitution `$( … )` and backtick bodies, and
+// recurses into executor wrappers (`sh -c "…"`, `eval "…"`, `command git …`).
+// Backslash-newline line-continuations are normalized first. This is what makes
+// a wrapped `git commit` classify as a commit (security HIGH fix) WITHOUT
+// re-introducing the Q-003 false-positive: only EXECUTED strings recurse, so a
+// `grep "git commit"` pattern or an `echo "git commit"` literal stays data.
+function executedFragments(cmd, depth = 0) {
+  if (!cmd || depth > 6) return [];
+  const src = depth === 0 ? cmd.replace(/\\\r?\n/g, ' ') : cmd;
+  const frags = [];
+  for (const seg of splitShellSegments(src)) {
+    let s = seg.trim();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      if (s.startsWith('(')) { s = s.slice(1).replace(/\)\s*$/, '').trim(); changed = true; }
+      else if (s.startsWith('{')) { s = s.slice(1).replace(/;?\s*\}\s*$/, '').trim(); changed = true; }
+    }
+    if (!s) continue;
+    frags.push(s);
+    for (const inner of extractSubstitutions(s)) frags.push(...executedFragments(inner, depth + 1));
+    const toks = commandTokens(s);
+    const verb = toks[0];
+    if (verb === 'eval') {
+      frags.push(...executedFragments(toks.slice(1).join(' '), depth + 1));
+    } else if (SHELL_C_EXECUTORS.has(verb)) {
+      const ci = toks.indexOf('-c');
+      if (ci >= 0 && toks[ci + 1] != null) frags.push(...executedFragments(toks[ci + 1], depth + 1));
+    } else if (PREFIX_EXECUTORS.has(verb)) {
+      frags.push(...executedFragments(toks.slice(1).join(' '), depth + 1));
+    }
+  }
+  return frags;
+}
+
+// True iff the token list is a `git <sub>` invocation, skipping git global
+// flags (-C <path>, -c <kv>, --git-dir <p>, etc.) before reading the subcommand.
+function tokensAreGitSub(toks, sub) {
+  if (toks[0] !== 'git') return false;
+  let j = 1;
+  while (j < toks.length) {
+    const t = toks[j];
+    if (t === '-C' || t === '-c' || t === '--git-dir' || t === '--work-tree' || t === '--namespace') { j += 2; continue; }
+    if (t.startsWith('-')) { j += 1; continue; }
+    break;
+  }
+  return toks[j] === sub;
+}
+
+// The executed command fragments whose verb is `git`. Used to scope
+// FORBIDDEN-flag regex checks to ACTUAL git invocations (including wrapped ones).
+export function gitSegments(cmd) {
+  if (!cmd) return [];
+  return executedFragments(cmd).filter((f) => commandTokens(f)[0] === 'git');
+}
+
+// True iff `cmd` actually invokes `git <sub>` (e.g. `git commit`, `git push`) —
+// directly OR wrapped in an executor / substitution / subshell — NOT a mere
+// substring match. Q-003 + security-HIGH fix: `grep "git commit"` and
+// `echo "git commit"` stay unclassified (data, not executed); `sh -c "git
+// commit"`, `eval "git commit"`, `(git commit)`, `echo $(git commit)` classify.
+export function gitSubcommandInvoked(cmd, sub) {
+  if (!cmd) return false;
+  return executedFragments(cmd).some((f) => tokensAreGitSub(commandTokens(f), sub));
+}
+
 // Hand-rolled shell-glob → RegExp matcher. Used for git.protected_branches.
 // `*` matches anything except `/`; `**` matches anything including `/`;
 // `?` matches a single non-`/` char; `[...]` is a character class.

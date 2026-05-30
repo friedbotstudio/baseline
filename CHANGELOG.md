@@ -10,6 +10,18 @@
 
 - Trimmed `CLAUDE.md` from ~46k to ~39k characters by relocating non-binding content (history, mechanism narration, Appendices A/B) to the annex. All binding rules retained; only explanatory material moved.
 - Documented the new `_thread.md` memory class across the constitution and docs: `CLAUDE.md` Article IX clause 8 (and the `src/CLAUDE.template.md` mirror), `docs/init/seed.md` §4.1 (and the `src/seed.template.md` mirror), the `.claude/CONSTITUTION.md` annex, `.claude/memory/README.md`, and the public `site-src/memory.njk` page.
+- `src/seed.template.md` synced to `docs/init/seed.md` (pre-§16 body) with a byte-parity test that guards the §16 reserved-placeholder carve-out.
+- `memory_session_start` sweeps leaked single-use `*_grant` consent markers at session start.
+- 3 parallel-racing tests isolated to per-tmpdir builds via `tests/helpers/clone-and-build.mjs`; `publish-check` / `smoke-tarball` tests env-gated with a faithful npm-install probe so restricted sandboxes skip cleanly.
+
+### Fixed
+
+- `git_commit_guard` now classifies git subcommands via a wrapper- and quote-aware command tokenizer: closes a false-positive (read-only commands mentioning "git commit" are no longer blocked; Q-003) and a consent-gate bypass where a `git commit`/`git push` wrapped in `sh -c` / `eval` / `$(…)` / a subshell evaded gate C.
+- `destructive_cmd_guard` now blocks Bash writes to consent tokens/markers under `.claude/state/` (including non-JS-interpreter writes and the `>|` clobber redirect), closing the Bash bypass of the approval gates.
+
+### Security
+
+- Closed the consent-gate Bash-bypass class on the commit/push and spec/swarm approval paths — both wrapper-form command evasion (`sh -c "git commit"`) and Bash-written approval tokens are now denied.
 
 # [0.12.0](https://github.com/friedbotstudio/baseline/compare/v0.11.0...v0.12.0) (2026-05-29)
 

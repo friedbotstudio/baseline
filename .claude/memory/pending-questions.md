@@ -40,23 +40,12 @@ Each entry's stable key is auto-numbered `Q-NNN`.
   - (c) Proper tokenizer: parse the Bash command (e.g., via `bashlex` in Python or a small in-repo tokenizer) into argv, then inspect each `git ...` invocation's argv list. Eliminates the entire false-positive class. Larger change; needs a Python dep or a hand-rolled tokenizer.
 - Scope on adoption: applies to every Bash-matcher hook (`git_commit_guard`, `destructive_cmd_guard`, possibly `process_lifecycle_guard`). The decision is shared infrastructure.
 - Companion landmine pending: if (a) is chosen, write a `landmines.md` entry capturing the `-F /tmp/msg.txt` workaround for commit messages that mention forbidden git ops.
+- Resolution: chose **(c) proper tokenizer** (2026-05-31, infra-hardening WF). Implemented a hand-rolled wrapper+quote-aware classifier in `.claude/hooks/lib/common.mjs` (`executedFragments`/`gitSubcommandInvoked`/`gitSegments`), no Python/parser dep. Eliminates the Q-003 false-positive (read-only `grep "git commit"` no longer blocked) AND a discovered security-HIGH wrapper false-negative (`sh -c "git commit"` bypass). Landmine `shell-command-guards-must-classify-wrapper-and-quote-aware` captures the design. `git_commit_guard` + `destructive_cmd_guard` both hardened.
+- resolved-at: 2026-05-31
 - Verified-at: b327071
-- Last-touched: 2026-05-21
+- Last-touched: 2026-05-31
 
 ---
-
-## Q-006 — CLOSED 2026-05-30
-
-- Resolution: Decided 2026-05-30 (cleanup WF-1) — shipped template KEEPS `refuse_dirty_tree: true` (the safe default per seed.md: baseline ambiguity would break the merge audit). This repo's live `false` is an intentional local override (its workflows always leave a dirty tree). Option (b) — phase-aware enforcement (enforce clean tree only when no workflow is active) — is the complete fix for out-of-box mid-workflow swarm and is the recommended follow-up if consumer swarm-on-fresh-install becomes a priority; tracked as a backlog candidate rather than flipping the safe default.
-- Question: Should `swarm.refuse_dirty_tree` default to `false` in `src/project.template.json` (shipping default for fresh installs), to match the live value we had to set in this baseline?
-- Raised in: 2026-05-15. See `landmines.md → swarm-refuse-dirty-tree-blocks-mid-workflow`. The workflow's mid-flow state always leaves a dirty tree (uncommitted artifacts in `docs/intake/`, `docs/scout/`, etc.). `refuse_dirty_tree: true` aborts swarm-dispatch on the exact state the workflow produces.
-- Blocker for: out-of-the-box swarm-dispatch on a fresh install of the baseline. Currently a user who runs through a full workflow with swarm enters Phase 6c and hits the abort.
-- Options considered:
-  - (a) Default to `false` in `src/project.template.json`. Lose the safety check on pre-workflow runs.
-  - (b) Make the check phase-aware: enforce clean tree only when `.claude/state/workflow.json` is absent (no workflow in progress). Workflow-active = dirty tree expected.
-  - (c) Status quo: ship `true`; surface the issue at first run and document the toggle.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
 
 ## Q-007
 
