@@ -63,6 +63,10 @@ EOF
   # Fresh commit_consent (epoch now).
   date +%s > "$proj/.claude/state/commit_consent"
   echo "test consent" >> "$proj/.claude/state/commit_consent"
+  # Caller-supplied changelog entries (WF-4b: active mode renders these, not git-log).
+  cat > "$proj/entries.json" <<'EOF'
+[{"section":"Added","body":"the thing this workflow added","breaking":false}]
+EOF
   # workflow.json with all phases up through memory-flush completed.
   cat > "$proj/.claude/state/workflow.json" <<EOF
 {
@@ -107,7 +111,7 @@ test_when_grant_commit_token_fresh_then_changelog_writes_unreleased_section() {
     fail "AC-001 actuator not yet at $ACTUATOR — expected pre-implement RED state"
     return 1
   fi
-  node "$ACTUATOR" --slug golden-path --project-root "$proj" \
+  node "$ACTUATOR" --slug golden-path --project-root "$proj" --entries-file "$proj/entries.json" \
     > /tmp/changelog-stdout.$$ 2> /tmp/changelog-stderr.$$ \
     || { fail "AC-001 actuator exited non-zero; stderr: $(cat /tmp/changelog-stderr.$$)"; return 1; }
   assert_file_contains "$proj/CHANGELOG.md" "## [Unreleased]" "AC-001 Unreleased heading missing" || return 1
@@ -139,7 +143,7 @@ test_when_changelog_completed_then_commit_includes_changelog_md_in_stage_list() 
     return 1
   fi
   cd "$proj"
-  node "$ACTUATOR" --slug stage-list --project-root "$proj" >/dev/null 2>&1 \
+  node "$ACTUATOR" --slug stage-list --project-root "$proj" --entries-file "$proj/entries.json" >/dev/null 2>&1 \
     || { fail "AC-002 actuator exited non-zero"; return 1; }
   # CHANGELOG.md must now be modified in the working tree (the change the skill made).
   local diff_status; diff_status="$(cd "$proj" && git status --porcelain CHANGELOG.md)"

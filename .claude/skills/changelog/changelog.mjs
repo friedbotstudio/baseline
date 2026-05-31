@@ -28,6 +28,7 @@ function parseCli() {
       slug: { type: 'string' },
       'preview-only': { type: 'boolean', default: false },
       'project-root': { type: 'string', default: '.' },
+      'entries-file': { type: 'string' },
     },
     strict: true,
   });
@@ -39,7 +40,44 @@ function parseCli() {
     slug: values.slug,
     previewOnly: values['preview-only'],
     projectRoot: resolve(values['project-root']),
+    entriesFile: values['entries-file'],
   };
+}
+
+const KEEPACHANGELOG_SECTIONS = new Set(['Added', 'Changed', 'Deprecated', 'Removed', 'Fixed', 'Security']);
+
+// Read + validate the caller-supplied entries file: a JSON array of
+// { section, body, breaking? }. `section` must be a keepachangelog section and
+// `body` a non-empty string. Throws on any malformed input (the caller exits 1
+// BEFORE touching CHANGELOG.md, so a bad file never half-writes the changelog).
+function readEntriesFile(entriesPath) {
+  let raw;
+  try {
+    raw = readFileSync(entriesPath, 'utf8');
+  } catch (err) {
+    throw new Error(`cannot read --entries-file ${entriesPath}: ${err.message}`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(`--entries-file ${entriesPath} is not valid JSON: ${err.message}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(`--entries-file ${entriesPath} must contain a JSON array of {section, body, breaking?}`);
+  }
+  return parsed.map((entry, i) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new Error(`--entries-file entry ${i} is not an object`);
+    }
+    if (!KEEPACHANGELOG_SECTIONS.has(entry.section)) {
+      throw new Error(`--entries-file entry ${i} has invalid section ${JSON.stringify(entry.section)} (expected one of: ${[...KEEPACHANGELOG_SECTIONS].join(', ')})`);
+    }
+    if (typeof entry.body !== 'string' || entry.body.trim() === '') {
+      throw new Error(`--entries-file entry ${i} has an empty or non-string body`);
+    }
+    return { section: entry.section, body: entry.body, breaking: Boolean(entry.breaking) };
+  });
 }
 
 function checkConsent(projectRoot) {
@@ -123,28 +161,46 @@ async function runPreviewMode({ projectRoot }) {
   process.exit(0);
 }
 
-async function runActiveMode({ slug, projectRoot }) {
+async function runActiveMode({ slug, projectRoot, entriesFile }) {
+  // The caller (main context, which knows the impending change) supplies the
+  // keepachangelog entries. The actuator no longer classifies from `git log`:
+  // Phase 11.5 runs BEFORE /commit, so git-log holds prior commits, not this
+  // change. `--preview-only` still uses semantic-release for a version
+  // projection; active mode does not.
+  if (!entriesFile) {
+    process.stderr.write(
+      'error: active mode requires --entries-file <path> (a JSON array of {section, body, breaking?}). '
+      + 'The actuator no longer derives entries from git log; the caller writes the impending change\'s entries. '
+      + 'Use --preview-only for a semantic-release version projection.\n',
+    );
+    process.exit(1);
+  }
   const consent = checkConsent(projectRoot);
   if (!consent.ok) {
     process.stderr.write(`error: ${consent.reason}\n`);
     process.exit(1);
   }
-  const projection = await previewProjectedVersion(projectRoot);
-  const entries = projection.commits.map(buildEntry).filter(Boolean);
+  let entries;
+  try {
+    entries = readEntriesFile(resolve(projectRoot, entriesFile));
+  } catch (err) {
+    process.stderr.write(`error: ${err.message}\n`);
+    process.exit(1);
+  }
   const changelogPath = join(projectRoot, 'CHANGELOG.md');
   await appendUnderUnreleased(changelogPath, entries);
   const state = {
     slug,
     source_commit_sha: getHeadSha(projectRoot),
-    projected_version: projection.version,
-    projected_type: projection.type,
+    projected_version: null,
+    projected_type: null,
     entries,
     generated_at: new Date().toISOString(),
     unreleased_inserted_at: new Date().toISOString(),
   };
   await writeState(projectRoot, slug, state);
   process.stdout.write(
-    `changelog: wrote ${entries.length} entries to ${changelogPath} (projected ${projection.version})\n`,
+    `changelog: wrote ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'} to ${changelogPath} from ${entriesFile}\n`,
   );
 }
 

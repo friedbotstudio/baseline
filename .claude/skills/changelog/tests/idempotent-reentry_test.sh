@@ -32,6 +32,11 @@ seed_idem_project() {
   git commit -q -m "feat: add the thing"
   date +%s > "$proj/.claude/state/commit_consent"
   echo "fresh" >> "$proj/.claude/state/commit_consent"
+  # Caller-supplied entries (WF-4b). Idempotency holds because appendUnderUnreleased
+  # REPLACES the [Unreleased] body with these entries — same entries, same result.
+  cat > "$proj/entries.json" <<'EOF'
+[{"section":"Added","body":"add the thing","breaking":false}]
+EOF
   cat > "$proj/.claude/state/workflow.json" <<EOF
 {
   "request": "idempotent re-entry test",
@@ -83,14 +88,14 @@ test_when_invoked_twice_then_no_duplicate_unreleased_entries() {
     return 1
   fi
   # First invocation.
-  node "$ACTUATOR" --slug idem-test --project-root "$proj" >/dev/null 2>&1 \
+  node "$ACTUATOR" --slug idem-test --project-root "$proj" --entries-file "$proj/entries.json" >/dev/null 2>&1 \
     || { fail "first invocation exited non-zero"; return 1; }
   local hash1; hash1="$(sha256sum "$proj/CHANGELOG.md" | awk '{print $1}')"
   local state1; state1="$(cat "$proj/.claude/state/changelog/idem-test.json")"
   # Sleep 1s so generated_at advances detectably.
   sleep 1
-  # Second invocation (same slug, same git HEAD).
-  node "$ACTUATOR" --slug idem-test --project-root "$proj" >/dev/null 2>&1 \
+  # Second invocation (same slug, same git HEAD, same entries).
+  node "$ACTUATOR" --slug idem-test --project-root "$proj" --entries-file "$proj/entries.json" >/dev/null 2>&1 \
     || { fail "second invocation exited non-zero"; return 1; }
   local hash2; hash2="$(sha256sum "$proj/CHANGELOG.md" | awk '{print $1}')"
   if [ "$hash1" != "$hash2" ]; then

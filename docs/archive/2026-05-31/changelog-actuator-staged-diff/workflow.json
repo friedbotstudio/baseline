@@ -18,10 +18,12 @@
     "document",
     "archive",
     "memory-flush",
-    "changelog"
+    "changelog",
+    "commit"
   ],
   "skipped_alternates": [],
   "source_backlog_keys": [],
   "created_at": 1780256273,
-  "updated_at": 1780260470
+  "updated_at": 1780260470,
+  "commit_sha": "4585688"
 }

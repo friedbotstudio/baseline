@@ -33,6 +33,11 @@ seed_stale_consent_project() {
   local stale_epoch; stale_epoch=$(( $(date +%s) - 910 ))
   echo "$stale_epoch" > "$proj/.claude/state/commit_consent"
   echo "stale" >> "$proj/.claude/state/commit_consent"
+  # Active mode is always invoked with --entries-file (WF-4b); a valid file is
+  # present so the run reaches the consent check (which then fails on staleness).
+  cat > "$proj/entries.json" <<'EOF'
+[{"section":"Fixed","body":"a fix that must NOT be written under stale consent"}]
+EOF
   cat > "$proj/.claude/state/workflow.json" <<EOF
 {
   "request": "consent-expired test",
@@ -89,7 +94,7 @@ test_when_commit_consent_token_stale_then_changelog_exits_with_consent_expired()
   # set -uo pipefail is active (no `-e`), so a non-zero exit from the assigned
   # command propagates to $? without aborting the test. Adding `|| true` here
   # would clobber $? to 0 and silently break the exit-code assertion below.
-  out="$(node "$ACTUATOR" --slug stale-consent --project-root "$proj" 2>/tmp/changelog-stderr.$$)"
+  out="$(node "$ACTUATOR" --slug stale-consent --project-root "$proj" --entries-file "$proj/entries.json" 2>/tmp/changelog-stderr.$$)"
   local ec=$?
   err="$(cat /tmp/changelog-stderr.$$)"
   if [ "$ec" -eq 0 ]; then

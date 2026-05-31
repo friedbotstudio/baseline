@@ -1,0 +1,29 @@
+{
+  "request": "WF-4b: fix the Phase-11.5 changelog actuator classification source. Active mode currently derives [Unreleased] entries from previewProjectedVersion (semantic-release commits-since-last-tag) — already-committed work, not the impending change. Switch active mode to a caller-supplied-entries model: accept --entries-file <json> (array of {section, body, breaking?}) and render those under [Unreleased]; the changelog SKILL.md SOP has main-context (which knows the workflow's change) write that entries file before invoking the actuator. Preview mode keeps semantic-release for version projection. Rewrite golden-path/idempotent-reentry tests to the entries-file contract.",
+  "slug": "changelog-classify-from-entries",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "changelog-actuator-reads-head-not-staged-4dc0"
+  ],
+  "created_at": 1780260776,
+  "updated_at": 1780264363
+}

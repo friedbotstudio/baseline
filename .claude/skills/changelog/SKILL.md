@@ -1,7 +1,7 @@
 ---
 name: changelog
 owner: baseline
-description: Workflow Phase 11.5 — Pre-commit changelog curation. Reads the staged commit's diff + conventional-type, classifies entries into keepachangelog 1.0.0 sections, appends them under `## [Unreleased]` in CHANGELOG.md, and writes ChangelogState to `.claude/state/changelog/<slug>.json`. Runs between `/grant-commit` (gate C) and `/commit`. Authorized by the same `commit_consent` token that authorizes `/commit` — no new gate. Also supports `--preview-only` for ad-hoc projected-version lookups outside a workflow.
+description: Workflow Phase 11.5 — Pre-commit changelog curation. Main context (which knows the impending change) writes the keepachangelog entries to an entries file; the actuator renders them under `## [Unreleased]` in CHANGELOG.md and writes ChangelogState to `.claude/state/changelog/<slug>.json`. Runs between `/grant-commit` (gate C) and `/commit`. Authorized by the same `commit_consent` token that authorizes `/commit` — no new gate. Also supports `--preview-only` for ad-hoc projected-version lookups outside a workflow.
 argument-hint: "[--preview-only]"
 ---
 
@@ -20,9 +20,10 @@ Git projects only. Non-git projects auto-except this phase at `/triage` time alo
 ## Steps
 
 1. **Prereq check.** Read `.claude/state/workflow.json`. Confirm `archive` and `memory-flush` are in `completed`. If not, exit 1 with a clear error.
-2. **Invoke the actuator.** `node .claude/skills/changelog/changelog.mjs --slug <slug> --project-root <root>`. The actuator does all the work: reads the consent token, classifies commits, appends to `## [Unreleased]`, writes state.
-3. **On actuator success.** The harness marks this task `completed`, appends `"changelog"` to `workflow.json → completed`, and continues to `/commit`.
-4. **On actuator failure (exit 1).** Surface the stderr to the user. Most likely cause: `commit_consent` expired. User re-runs `/grant-commit`.
+2. **Build the entries (main context).** The actuator does NOT classify from `git log` — Phase 11.5 runs before `/commit`, so git-log holds prior commits, not this change. Main context (which has the full picture of what this workflow changed) decides the keepachangelog entries for the impending commit and writes them to `.claude/state/changelog/<slug>.entries.json` as a JSON array of `{ "section": "<Added|Changed|Deprecated|Removed|Fixed|Security>", "body": "<one-line entry>", "breaking": <bool, optional> }`. Keep it to the entries a reader of the release notes needs — one bullet per user-visible change, not per file.
+3. **Invoke the actuator.** `node .claude/skills/changelog/changelog.mjs --slug <slug> --project-root <root> --entries-file .claude/state/changelog/<slug>.entries.json`. The actuator verifies the consent token, validates the entries, renders them under `## [Unreleased]`, and writes ChangelogState. Active mode with no `--entries-file` exits 1.
+4. **On actuator success.** The harness marks this task `completed`, appends `"changelog"` to `workflow.json → completed`, and continues to `/commit`.
+5. **On actuator failure (exit 1).** Surface the stderr. Likely causes: `commit_consent` expired (user re-runs `/grant-commit`), or a malformed entries file (fix the JSON — invalid section or empty body — and re-invoke).
 
 ## Ad-hoc preview mode
 
