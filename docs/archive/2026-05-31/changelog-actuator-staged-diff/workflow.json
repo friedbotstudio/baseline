@@ -1,0 +1,27 @@
+{
+  "request": "WF-4 (critical-first, defects 1+3): fix unreleased-writer.mjs so appendUnderUnreleased bounds the [Unreleased] body at the next level-1 OR level-2 heading (not just level-2) — the data-loss bug that deleted # [0.12.0]..[0.9.0] released blocks; ensure exactly one ## [Unreleased] at the top above the first version block; one-time structural cleanup of CHANGELOG.md. Defect 2 (classify from staged not HEAD) split to follow-up WF-4b.",
+  "slug": "changelog-actuator-staged-diff",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780256273,
+  "updated_at": 1780260470
+}

@@ -31,6 +31,17 @@ const CHANGELOG_HEADING = '# Changelog';
 
 const CATEGORY_ORDER = ['Added', 'Changed', 'Deprecated', 'Removed', 'Fixed', 'Security'];
 
+// Index of `heading` ONLY where it occupies a full line — never a prose mention
+// (e.g. the intro paragraph "The `## [Unreleased]` section is curated…" quotes
+// the heading in backticks). A bare `indexOf` matched that prose first and
+// inserted entries above the real heading; anchoring to line-start fixes it.
+function lineAnchoredIndex(text, heading) {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = new RegExp(`^${escaped}\\s*$`, 'm').exec(text);
+  return m ? m.index : -1;
+}
+const hasLineAnchored = (text, heading) => lineAnchoredIndex(text, heading) >= 0;
+
 function groupBySection(entries) {
   const map = new Map();
   for (const entry of entries) {
@@ -63,12 +74,17 @@ function renderUnreleasedBody(entries) {
 // is the content between that and the next `##` heading, and rest is from
 // the next `##` heading onward.
 function splitAroundUnreleased(text) {
-  const unreleasedIdx = text.indexOf(UNRELEASED_HEADING);
+  const unreleasedIdx = lineAnchoredIndex(text, UNRELEASED_HEADING);
   if (unreleasedIdx < 0) return null;
   const afterHeading = text.indexOf('\n', unreleasedIdx);
   const headingEnd = afterHeading < 0 ? text.length : afterHeading + 1;
-  // Find the next `## ` heading after the Unreleased heading.
-  const restMatch = text.slice(headingEnd).match(/\n## [^\n]+\n/);
+  // Find the next version-block heading after the Unreleased heading. Version
+  // blocks are level-1 (`# [0.12.0]`, how @semantic-release writes minor/major)
+  // OR level-2 (`## [0.8.2]`, how it writes patches). Match `# ` or `## ` but
+  // NOT `### ` (a level-3 section header inside the Unreleased body), so the
+  // body bound stops at the first version block instead of swallowing every
+  // `# ` block down to the next `## ` — the data-loss bug (WF-4 defect 1).
+  const restMatch = text.slice(headingEnd).match(/\n#{1,2} [^\n]+\n/);
   const restOffset = restMatch ? headingEnd + restMatch.index + 1 : text.length;
   return {
     preamble: text.slice(0, headingEnd),
@@ -88,10 +104,10 @@ export async function appendUnderUnreleased(changelogPath, entries) {
   } else {
     text = defaultChangelogText();
   }
-  if (!text.includes(CHANGELOG_HEADING)) {
+  if (!hasLineAnchored(text, CHANGELOG_HEADING)) {
     text = `${CHANGELOG_HEADING}\n\n${text}`;
   }
-  if (!text.includes(UNRELEASED_HEADING)) {
+  if (!hasLineAnchored(text, UNRELEASED_HEADING)) {
     text = text.replace(
       new RegExp(`(${CHANGELOG_HEADING}\\n)`, ''),
       `$1\n${UNRELEASED_HEADING}\n\n`,

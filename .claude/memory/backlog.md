@@ -13,6 +13,22 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
+## changelog-unreleased-rerelease-risk-after-union-merge-3a5e
+
+> verbatim (assistant-deferral, 2026-06-01, WF-4 union-merge decision):
+> The WF-4 one-time CHANGELOG.md cleanup unioned ~138 lines of detailed keepachangelog notes for ALREADY-RELEASED versions (0.4.0–0.12.0) into the single `## [Unreleased]` section (the user chose union to preserve the prose rather than drop it). Because `@semantic-release/changelog` moves the `[Unreleased]` body into a new version block at release time, the next version bump will re-emit all of that already-released detail as a bogus, bloated new version block.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-01
+- raised-in-context: changelog-actuator-staged-diff (WF-4) — union-merge scope decision (user picked "union" over "drop orphaned detail")
+- estimated-effort: small
+- verified-at: HEAD
+- last-touched: 2026-06-01
+- caveat: Before the next `semantic-release` run, prune `CHANGELOG.md`'s `## [Unreleased]` down to genuinely-unreleased work only (the current infra-hardening + brainstorm/thread + 40k-cap + this WF-4 entries), OR redistribute the orphaned detail into the version blocks it describes. The terse `# [0.x]` version blocks already record those releases, and git history preserves the detailed prose, so the safe move at release time is to drop the already-released detail from `[Unreleased]`. Pairs with the source-of-truth fix tracked in [[changelog-actuator-reads-head-not-staged-4dc0]] (WF-4b) — once the actuator stops re-listing committed work, [Unreleased] hygiene is easier to maintain.
+
+---
+
 ## destructive-guard-and-grant-sweep-residual-hardening-7f2c
 
 > verbatim (assistant-deferral, 2026-05-31, from docs/archive/2026-05-30/infra-hardening/security.md Resolution):
@@ -40,20 +56,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: HEAD
 - last-touched: 2026-05-17
 - caveat: Direct-write to `backlog.md` because `memory_stop.mjs` intent-detection didn't fire on this item's prose phrasing — which is itself the evidence the user cites. The intent regex set in `memory_stop.mjs` (anchored line-start patterns like `TODO:`, `next we (should|need to|must)`, `let's also`, `we should also`, `backlog this`, `after this (lands|ships)`) misses descriptive numbered-list items like "1. improved backlog item detection". Scope of follow-up: widen the trigger set toward higher recall while preserving the precision contract from the backlog-memory-bucket intake ("only obvious future-intent phrasings should match; mid-sentence accidental matches should not"); add a test corpus of true-positive sentences from real conversations; consider a second pass at flush-time that lets the curator manually promote anything the hook missed.
-
-## seed-template-md-pre-redesign-drift-a1f3
-
-> assistant-deferral (claude, 2026-05-17):
-> src/seed.template.md is significantly drifted from docs/init/seed.md — the template still uses pre-redesign "auto-continuation signal" framing AND retains the deprecated "Per-tick atomicity" header that the existing test `test_harness_skill_md_lacks_one_skill_per_tick_phrase` already rejects on CLAUDE.md. The shipped baseline (via `npx @friedbotstudio/create-baseline`) overlays src/seed.template.md → docs/init/seed.md at install time, so this drift means freshly-installed projects get the older mental model.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: harness-auto-resume-after-consent-gate /document phase
-- estimated-effort: medium
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: Discovered while updating docs/init/seed.md for rung 4 — src/seed.template.md lines around 141, 167, 365 still describe the older mental model. Out of scope to fix here (the harness-auto-resume spec's `write_set` didn't include src/seed.template.md and the drift predates this workflow). Future workflow: bring src/seed.template.md to byte-parity with docs/init/seed.md, OR add a byte-mirror test analogous to `test_claude_template_md_byte_mirrors_claude_md`. The byte-mirror test is probably the better fix — automates detection of future drift the same way Article XI's CLAUDE.md mirror does.
 
 ## document-phase-public-site-update-trigger-5e07
 
@@ -164,8 +166,8 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - raised-in-context: branded-cli-tui workflow Phase 11.5 (`/changelog` actuator first real-world invocation)
 - estimated-effort: medium
 - verified-at: db291ed
-- last-touched: 2026-05-18
-- caveat: Two distinct bugs surfaced on the same run. (1) Source-of-truth: `.claude/skills/changelog/changelog.mjs` reads `git log` since the last release tag and classifies each commit; but Phase 11.5 runs BEFORE `/commit`, so the upcoming commit's content is in the working tree / staged index, not in `git log`. The actuator should read `git diff --staged` (or `git diff HEAD` plus `git ls-files --others --exclude-standard` for new files) and classify based on the diff + conventional-type the impending commit will use, OR read the prepared commit message from a known location (e.g., the `/commit` skill could write its drafted message to `.claude/state/commit_draft/<slug>.message` before invoking the changelog actuator). (2) Placement: even when the actuator picks the right content, it appended `### Added` ABOVE `## [Unreleased]` rather than under it — likely a regex bug in `unreleased-writer.mjs → appendUnderUnreleased`. The branded-cli-tui workflow worked around both manually by editing CHANGELOG.md after the actuator wrote. Test corpus needed: (a) a workflow that adds a feat commit AND the previous HEAD is already released-pending (the common case), (b) a workflow where the previous commit's content is already described under `[Unreleased]` (don't duplicate). The `golden-path_test.sh` test passes because it simulates a clean state where HEAD == base, which doesn't reproduce either bug.
+- last-touched: 2026-06-01
+- caveat: Two distinct bugs surfaced on the same run. (1) Source-of-truth: `.claude/skills/changelog/changelog.mjs` reads `git log` since the last release tag and classifies each commit; but Phase 11.5 runs BEFORE `/commit`, so the upcoming commit's content is in the working tree / staged index, not in `git log`. The actuator should read `git diff --staged` (or `git diff HEAD` plus `git ls-files --others --exclude-standard` for new files) and classify based on the diff + conventional-type the impending commit will use, OR read the prepared commit message from a known location (e.g., the `/commit` skill could write its drafted message to `.claude/state/commit_draft/<slug>.message` before invoking the changelog actuator). (2) Placement: even when the actuator picks the right content, it appended `### Added` ABOVE `## [Unreleased]` rather than under it — likely a regex bug in `unreleased-writer.mjs → appendUnderUnreleased`. The branded-cli-tui workflow worked around both manually by editing CHANGELOG.md after the actuator wrote. Test corpus needed: (a) a workflow that adds a feat commit AND the previous HEAD is already released-pending (the common case), (b) a workflow where the previous commit's content is already described under `[Unreleased]` (don't duplicate). The `golden-path_test.sh` test passes because it simulates a clean state where HEAD == base, which doesn't reproduce either bug. **PARTIAL RESOLUTION 2026-06-01 (WF-4, slug changelog-actuator-staged-diff, archived docs/archive/2026-05-31/):** bug (2) is FIXED — `splitAroundUnreleased` now bounds the `[Unreleased]` body at the next level-1 OR level-2 heading (`/\n#{1,2} /`), which also closed a worse data-loss variant (it had been deleting `# [0.12.0]`-style level-1 released blocks). Covered by `tests/changelog-unreleased-writer.test.mjs` (5 cases). **Bug (1) — source-of-truth, classify-from-staged — REMAINS OPEN as WF-4b** (deferred deliberately: it's a contract redesign touching changelog.mjs active mode + the changelog SKILL.md + harness wiring + the golden-path/idempotent tests). This entry now tracks ONLY bug (1).
 
 ## llm-assisted-memory-capture-routing-cf4a
 
@@ -222,17 +224,3 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: ab412d1
 - last-touched: 2026-05-30
 - caveat: SessionStart injection is bounded (most-recent section only, ~10KB envelope — AC-009) and per-entry capture is capped (MAX_CUES/MAX_FILES/MAX_OPEN_QUESTIONS), so context/runtime cost is bounded; only on-disk size grows without limit. Resolves intake OQ-1. Follow-up: size-cap + roll-off of oldest sections, or move cold sections to _thread.archive.md.
-
-## consent-gates-bypassable-via-bash-token-write-e5d1
-
-> incident (claude, 2026-05-31, cleanup WF-1 investigation):
-> The gate guards only match Write|Edit|MultiEdit (spec_approval_guard.mjs:35; git_commit_guard handleWrite). A consent TOKEN or MARKER written via Bash (node fs.writeFileSync, echo redirect, cp, tee, mv) bypasses validateConsentMarker entirely. Evidence: a .spec_approval_grant marker leaked (never consumed) because the spec-approval token was written via Bash node this session, so the guard never fired.
-
-- source: incident
-- status: open
-- raised-on: 2026-05-31
-- raised-in-context: cleanup WF-1 grant-commit failure investigation (pairs with Q-003 guard-hardening)
-- estimated-effort: medium
-- verified-at: ab412d1
-- last-touched: 2026-05-31
-- caveat: Article IV claims the consent gate is "structurally unforgeable" because Claude cannot write the marker. That holds ONLY for the Write-tool path. For the commit gate there is a partial backstop (the actual commit Bash command is separately gated by handleBash), but spec/swarm APPROVAL have NO backstop — a Bash-written approval token fully bypasses the gate and self-approves. Fix (fold with Q-003 into a guard-hardening WF): add a Bash-matcher leg to each gate guard (and/or extend destructive_cmd_guard) that DENIES any Bash command writing to .claude/state/{commit_consent,push_consent,*_grant,spec_approvals/**,swarm_approvals/**} — detect redirects / tee / cp / mv / install / fs.writeFileSync / writeFile targeting those paths. Also a Stop or PostToolUse sweep should clean leaked single-use markers. Interim behavioral mitigation: Claude writes consent tokens via the Write tool only, so the guard fires.

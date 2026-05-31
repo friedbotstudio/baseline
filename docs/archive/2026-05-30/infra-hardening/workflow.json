@@ -11,7 +11,8 @@
     "document",
     "archive",
     "memory-flush",
-    "changelog"
+    "changelog",
+    "commit"
   ],
   "skipped_alternates": [],
   "source_backlog_keys": [
@@ -19,5 +20,6 @@
     "seed-template-md-pre-redesign-drift-a1f3"
   ],
   "created_at": 1780174009,
-  "updated_at": 1780182846
+  "updated_at": 1780182846,
+  "commit_sha": "35e3926"
 }
