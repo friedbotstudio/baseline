@@ -1,0 +1,25 @@
+{
+  "request": "At the gate-A (/approve-spec) yield, a helper extracts, dedupes, and buckets the open-questions from a slug's intake/research/spec (and brief) artifacts so the reviewer sees them consolidated before approving. Small helper module + wiring into the approve-spec/harness yield surface.",
+  "slug": "surface-open-questions-at-gate",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "cli-copy-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "auto-summarize-spec-and-surface-open-questions-at-gate-4ab5"
+  ],
+  "created_at": 1780328866,
+  "updated_at": 1780334187
+}

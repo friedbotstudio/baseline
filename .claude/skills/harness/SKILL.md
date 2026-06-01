@@ -77,6 +77,7 @@ Inside each iteration:
    - Marker FIRST: `rm -f .claude/state/.harness_active`.
    - Write `harness_state` with `{state: "yielded", slug, reason: "yielded at /<gate>"}` — exactly three fields.
    - Break out of the loop; the terminal message names the consent command for the user to run.
+   - **Gate-A open-questions consolidation.** When the gate being yielded at is `approve-spec` (the `/approve-spec` consent task), first run `node .claude/skills/harness/consolidate-open-questions.mjs --slug <slug>` and include its stdout in the yield terminal message, above the `/approve-spec` instruction. The helper extracts the `## Open questions` bullets from `docs/intake/<slug>.md`, `docs/research/<slug>.md`, and `docs/specs/<slug>.md`, dedupes them across phases (a question restated downstream collapses to one line tagged with every phase it appeared in), and buckets them spec-first so the reviewer settles the still-open items before approving. Zero questions → it prints a single "No open questions found" line; surface that too. This readout is advisory context for the human; it never gates or auto-approves.
 5. **Otherwise INVOKE the phase skill(s):**
    - **Single-task path** (no parallel cluster detected at step 2):
      - `TaskUpdate` to `in_progress` (set `activeForm` to the imperative-progressive form, e.g. "Running scout").
