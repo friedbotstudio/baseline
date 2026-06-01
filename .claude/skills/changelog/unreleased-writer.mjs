@@ -97,7 +97,7 @@ function defaultChangelogText() {
   return `# Changelog\n\n## [Unreleased]\n\n`;
 }
 
-export async function appendUnderUnreleased(changelogPath, entries) {
+export async function appendUnderUnreleased(changelogPath, entries, opts = {}) {
   let text;
   if (existsSync(changelogPath)) {
     text = await readFile(changelogPath, 'utf8');
@@ -117,6 +117,26 @@ export async function appendUnderUnreleased(changelogPath, entries) {
   if (!parts) {
     // Defensive: should be unreachable after the insertions above.
     throw new Error(`could not locate ${UNRELEASED_HEADING} in ${changelogPath}`);
+  }
+  // Data-loss guard: this RMW replaces the whole [Unreleased] body. Supplying
+  // fewer entries than are currently present silently drops the difference
+  // (hit live in WF-5 — a 5-entry file would have wiped 27 accumulated entries).
+  // Refuse a shrinking replace unless the caller explicitly opts in, so the
+  // common accumulate case is safe by default and an intentional prune is
+  // deliberate.
+  // Opt-in (guardShrink): the actuator enables it; direct callers that
+  // legitimately replace or clear the body (and the writer's own unit tests)
+  // pass nothing and are unaffected.
+  if (opts.guardShrink) {
+    const existingBullets = (parts.unreleasedBody.match(/^- /gm) || []).length;
+    if (entries.length < existingBullets) {
+      throw new Error(
+        `refusing to shrink ${UNRELEASED_HEADING} from ${existingBullets} to ${entries.length} `
+        + `entr${entries.length === 1 ? 'y' : 'ies'} in ${changelogPath} — this would drop `
+        + `${existingBullets - entries.length}. Supply the full accumulated set, or pass `
+        + `--allow-shrink to intentionally prune (e.g. post-release or dedup).`,
+      );
+    }
   }
   const body = renderUnreleasedBody(entries);
   const merged = `${parts.preamble}${body}\n${parts.rest.startsWith('\n') ? parts.rest : '\n' + parts.rest}`;

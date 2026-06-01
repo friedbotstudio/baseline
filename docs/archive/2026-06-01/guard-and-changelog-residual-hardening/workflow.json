@@ -1,0 +1,30 @@
+{
+  "request": "Club A — correctness/guard hardening: (1) changelog actuator --entries-file silently drops accumulated [Unreleased] entries on a shrinking replace (data-loss class, hit live in WF-5); add a shrinkage guard with explicit --allow-shrink opt-in for intentional prunes. (2) 7f2c guard residuals: MEDIUM $VAR-indirected consent-path Bash writes evade git_commit_guard; LOW destructive_cmd_guard whole-command (not segment-scoped) false-positive; LOW memory_session_start grant-marker sweep symlink/TOCTOU.",
+  "slug": "guard-and-changelog-residual-hardening",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "destructive-guard-and-grant-sweep-residual-hardening-7f2c"
+  ],
+  "created_at": 1780315041,
+  "updated_at": 1780318747
+}

@@ -29,6 +29,7 @@ function parseCli() {
       'preview-only': { type: 'boolean', default: false },
       'project-root': { type: 'string', default: '.' },
       'entries-file': { type: 'string' },
+      'allow-shrink': { type: 'boolean', default: false },
     },
     strict: true,
   });
@@ -41,6 +42,7 @@ function parseCli() {
     previewOnly: values['preview-only'],
     projectRoot: resolve(values['project-root']),
     entriesFile: values['entries-file'],
+    allowShrink: values['allow-shrink'],
   };
 }
 
@@ -161,7 +163,7 @@ async function runPreviewMode({ projectRoot }) {
   process.exit(0);
 }
 
-async function runActiveMode({ slug, projectRoot, entriesFile }) {
+async function runActiveMode({ slug, projectRoot, entriesFile, allowShrink }) {
   // The caller (main context, which knows the impending change) supplies the
   // keepachangelog entries. The actuator no longer classifies from `git log`:
   // Phase 11.5 runs BEFORE /commit, so git-log holds prior commits, not this
@@ -188,7 +190,7 @@ async function runActiveMode({ slug, projectRoot, entriesFile }) {
     process.exit(1);
   }
   const changelogPath = join(projectRoot, 'CHANGELOG.md');
-  await appendUnderUnreleased(changelogPath, entries);
+  await appendUnderUnreleased(changelogPath, entries, { guardShrink: !allowShrink });
   const state = {
     slug,
     source_commit_sha: getHeadSha(projectRoot),

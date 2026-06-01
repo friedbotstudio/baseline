@@ -45,6 +45,9 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - `destructive_cmd_guard` now blocks Bash writes to consent tokens/markers under `.claude/state/` (including non-JS-interpreter writes and the `>|` clobber redirect), closing the Bash bypass of the approval gates.
 - The docs site rendered "5 consent commands" while six ship; the count is now derived (6) and can no longer go stale.
 - `audit-baseline` silently skipped its entire run — exiting 0 without checking anything — when invoked under a symlinked path (e.g. macOS `/tmp` → `/private/tmp`), because its main-module guard compared a realpath-resolved `import.meta.url` against the verbatim `process.argv[1]`. The guard now realpath-resolves both sides.
+- The Phase 11.5 changelog actuator no longer silently drops accumulated `[Unreleased]` entries. `appendUnderUnreleased` gained an opt-in `guardShrink` (the actuator enables it; `--allow-shrink` disables it for intentional prunes) that refuses a replace which would reduce the entry count before writing — a partial entries-file would otherwise have wiped the difference.
+- `destructive_cmd_guard` now blocks shell-variable-indirected Bash writes to consent tokens/markers (a redirect whose directory is spelled via `$VAR`/`${VAR}` rather than a literal `.claude/state/` path). The detector (`writesConsentPath`) moved to `.claude/hooks/lib/common.mjs`, matches the reserved consent basename in the redirect target however the directory is written, and is boundary-anchored so a longer filename merely containing the token as a substring does not false-trip (7f2c MEDIUM).
+- The session-start leaked consent-marker sweep no longer follows a symlinked marker to its target. `sweepLeakedGrantMarkers` (`.claude/hooks/lib/common.mjs`) `lstat`s each marker and removes only the link, never reading or deleting through it (7f2c LOW, CWE-59/CWE-367).
 
 ### Security
 

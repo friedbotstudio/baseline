@@ -71,20 +71,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - last-touched: 2026-05-18
 - caveat: The `/document` skill's Step 2 survey classifies touched files into documentation / technical-tutorials / prose delegate buckets. It does NOT classify by "the change modifies behavior that an existing public-docs page describes." During workflow-loop-closing-hygiene's first `/document` pass, I anchored on "no site-src/ file is in my write_set" → "no site work needed" — which got the direction backwards. The site DESCRIBES behavior; when behavior changes, the description needs updating even when no site-src/ file initially appears in the diff. Cure surfaces: (i) extend `/document` Step 2 with a "site-describes-this-behavior" check that greps the public-docs surface (site-src/**.njk) for references to skill names + workflow-phase names touched by the diff and routes any matches through the `documentation` delegate; (ii) require the spec's Archive plan section to enumerate any public-docs pages that describe behavior the spec changes, surfacing the requirement at /spec time rather than at /document time. Either path requires the trigger to be REFLECTIVE (the diff's behavior change implies a docs surface that may not be in the diff yet), not just file-presence-driven. See `workflow-loop-closing-hygiene` archive bundle's session log for the live miss-and-fix-up cycle.
 
-## triage-skill-md-still-duplicates-workflows-jsonl-canonical-templates-c8f4
-
-> verbatim (user, 2026-05-21):
-> shall we perform an drift analysis; my understanding is that triage still has hardocoded tracks
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-21
-- raised-in-context: workflow-extension-via-workflows-json drift analysis Round 4 (post-document, pre-archive)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-21
-- caveat: After the post-§18 architecture landed, `.claude/skills/triage/SKILL.md` lines 57-71 still carry the four canonical track templates (chore / tdd-quickfix / spec-entry / intake-full) verbatim under a "Reference: canonical track shapes (mirrored in workflows.jsonl)" subheading. The runtime path (seed-tasklist.mjs + materializer) reads `.claude/workflows.jsonl`, NOT these SKILL.md templates — so behavior is correct today. But the source of truth is split: workflows.jsonl is authoritative; the SKILL.md text is a duplicate description. A downstream user editing workflows.jsonl to add a new track or modify ordering will NOT see that reflected in the SKILL.md body. The templates were RESTORED (not kept by design) during /integrate because the N-file enumerating tests in `tests/memory-flush-phase.test.mjs:235-272` parameterize over 8 files including triage SKILL.md and assert each mentions "memory-flush" with archive before + commit after — removing the templates broke 2 tests; restoring them satisfied the assertions. Remediation: (1) rewrite memory-flush-phase.test.mjs to parse `.claude/workflows.jsonl` directly for the canonical tracks (scenario territory, can't be done inside an /implement pass); (2) once those tests pass off workflows.jsonl, remove the "Reference: canonical track shapes" subsection from triage SKILL.md; (3) re-run byte-equivalent + mirror checks. Both edits are ~10 lines total. Until done, the duplication is latent drift; the byte-equivalent migration test catches it as long as someone keeps both in sync.
-
 ## auto-summarize-spec-and-surface-open-questions-at-gate-4ab5
 
 > verbatim (user, 2026-05-20):
@@ -98,20 +84,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: HEAD
 - last-touched: 2026-05-20
 - caveat: When the harness yields at `/approve-spec`, the reviewer often has to manually open three artifacts (intake, research, spec) to find every open question — and across them, the same question can recur under different framings while the spec's own §Open questions list omits items the upstream artifacts already declared. The user surfaced this gap at the workflow-extension-via-workflows-json approve-gate. Proposed automation: a small helper invoked at gate-A yield that (i) reads the slug's intake/research/spec/BRD if present, (ii) extracts every `## Open questions` entry (and equivalents like research's "Open questions for /spec to resolve"), (iii) dedupes by semantic intent, (iv) classifies each as `must-decide-before-approval` (touches load-bearing design choice surfaced in the recommendation pivot or in the spec's §Open questions) vs `settled-in-spec` (spec already picked a default but flagged as decidable) vs `defer-to-tdd` (resolvable at impl time), and (v) emits a tight summary + bucketed question list to the harness yield message. Probably belongs in the harness skill body (an extra step before emitting the yield terminal message when `reason: "yielded at /approve-spec"`) or as a new `spec-summary` skill the harness invokes inline. Tradeoff: more harness-body logic vs cleaner separation in a dedicated skill. Test corpus: any past workflow's approve-gate transcript; verify the extracted question set matches what a human reviewer would surface.
-
-## canonical-track-count-duplicated-across-10-surfaces-9a2b
-
-> verbatim (user, 2026-05-28):
-> we missed updating on homepage. proof that our data is still duplicated across different pages
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-28
-- raised-in-context: introduce-freeform-track chore — homepage meta-strip stat rendered the old "4 Tracks" because `site-src/_data/baseline.json → tracks.canonical` wasn't bumped alongside the prose mentions
-- estimated-effort: medium
-- verified-at: HEAD
-- last-touched: 2026-05-28
-- caveat: The canonical track count lives in 10 places that must stay in sync: `.claude/workflows.jsonl` (live data; the actual track records), `site-src/_data/baseline.json → tracks.canonical` (homepage meta-strip), and 8 hardcoded prose mentions across `README.md` (×2: line 44 + table row), `CLAUDE.md` (Article IV via prose-mention indirectly — no explicit count line today), `src/CLAUDE.template.md` (mirror), `docs/init/seed.md` §18.1 (×2: 7-track set + canonical-four wording), `src/seed.template.md` (mirror), `.claude/skills/triage/SKILL.md` (canonical-track-shape reference paragraph), `site-src/workflows.njk` (frontmatter description + lead + body listing + sub-track count line + "as the canonical N" FAQ), and `site-src/index.njk` (`<h3>`, body, `<title>` SVG label, figcaption "N other tracks", FAQ "N canonical tracks"). Every change adds churn across all 10. The fix: derive the count from `.claude/workflows.jsonl` at build time and surface as a template variable. `site-src/_data/baseline.json` is already eleventy-data; an adjacent `tracks.js` (or extending `baseline.js`) could count selectable Tracks in workflows.jsonl and expose `baseline.tracks.canonical` to the site. Prose mentions that say "five canonical tracks" remain hardcoded — those need a different remedy (templated-prose injection, or an audit check that grep-counts vs the JSON source). At minimum, `baseline.json → tracks.canonical` should be the single template-source, and an audit check should fail when the JSON value disagrees with the actual selectable-track count in workflows.jsonl.
 
 ## llm-assisted-memory-capture-routing-cf4a
 

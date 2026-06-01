@@ -10,7 +10,7 @@
 // Behavior is preserved verbatim from lib/common.sh. The one addition is
 // matchAnyGlob — needed by git_commit_guard.mjs for branch policy.
 
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 
 export const CLAUDE_PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -508,4 +508,82 @@ function globToRegex(glob) {
   }
   pattern += '$';
   return new RegExp(pattern);
+}
+
+// --- Consent-path Bash-write detection (consumed by destructive_cmd_guard) ---
+//
+// A Bash command must not WRITE a consent token/marker — those are produced
+// only by the gate flow (the Write tool after /grant-*, /approve-*). The
+// reserved consent basenames are detected regardless of how the directory is
+// spelled (literal `.claude/state/`, a `$VAR`/`${VAR}` indirection, `~`, etc.),
+// so an indirected redirect like `C=.claude/state; echo x > $C/commit_consent`
+// cannot evade the check (7f2c MEDIUM). The basename is boundary-anchored
+// (`(?![\w.-])`) so a longer filename that merely contains the token as a
+// substring (e.g. `commit_consent_notes.txt`) does not match.
+const CONSENT_BASENAMES =
+  '(?:(?:commit_consent|push_consent|\\.(?:commit_consent|push_consent|spec_approval|swarm_approval)_grant)(?![\\w.-])|spec_approvals/|swarm_approvals/)';
+// A reserved consent basename referenced anywhere in the command (the gate;
+// a write-signal must ALSO be present for the command to be blocked, so reads
+// like `grep commit_consent` or `cat .../commit_consent` pass through).
+const CONSENT_REF_RE = new RegExp(CONSENT_BASENAMES);
+// A redirect (>, >>, >|) whose target path ends in a reserved consent basename,
+// however the leading directory is spelled. `[^'">\s|;&]*?` consumes `$C/`,
+// `${HOME}/`, `~/`, a literal path, etc. up to the basename.
+const CONSENT_REDIRECT_RE = new RegExp('(?:>>?\\|?)\\s*[\'"]?[^\'">\\s|;&]*?' + CONSENT_BASENAMES);
+// Write-verb tokens that, alongside a consent-path reference, signal write
+// intent. `cat`/`grep`/`ls`/`head`/`tail` are deliberately ABSENT so reads pass.
+const CONSENT_WRITE_VERB_RE = /\b(tee|cp|mv|install|truncate|dd|ln)\b/;
+const CONSENT_SED_INPLACE_RE = /\bsed\b[^|;&]*\s-[a-zA-Z]*i/;
+// A program write inside `node -e` / `python -c` / `perl -e` / `ruby -e` etc.
+const CONSENT_PROG_WRITE_RE = /\b(writeFileSync|appendFileSync|createWriteStream|writeFile)\b|open\s*\([^)]*['"][wa]b?\+?['"]|open\s*\([^)]*,\s*['"]?>>?/;
+
+// True iff the Bash command writes (not merely references) a consent
+// token/marker. Exported for unit testing and reuse across guards.
+export function writesConsentPath(cmd) {
+  if (typeof cmd !== 'string' || !CONSENT_REF_RE.test(cmd)) return false;
+  if (CONSENT_REDIRECT_RE.test(cmd)) return true;
+  if (CONSENT_WRITE_VERB_RE.test(cmd)) return true;
+  if (CONSENT_SED_INPLACE_RE.test(cmd)) return true;
+  if (CONSENT_PROG_WRITE_RE.test(cmd)) return true;
+  return false;
+}
+
+// --- Leaked consent-gate marker sweep (consumed by memory_session_start) ---
+//
+// Single-use `*_grant` markers are written by consent_gate_grant and consumed
+// (deleted) by the matching approval guard. A session that ends after the grant
+// but before the guard fired leaves a leaked, replayable consent window; this
+// removes any older than the gate-marker TTL. A marker is only ever a regular
+// file — a SYMLINK at a marker path is anomalous and is never followed to its
+// target (7f2c LOW symlink/TOCTOU): lstat detects the link and only the link is
+// removed. Returns the list of swept markers (for the caller to log).
+export function sweepLeakedGrantMarkers(stateDir, opts = {}) {
+  const ttl = Number.isFinite(opts.ttlSeconds) ? opts.ttlSeconds : 120;
+  const nowMs = Number.isFinite(opts.nowMs) ? opts.nowMs : Date.now();
+  const names = ['.commit_consent_grant', '.push_consent_grant', '.spec_approval_grant', '.swarm_approval_grant'];
+  const swept = [];
+  for (const name of names) {
+    const grant = join(stateDir, name);
+    let st;
+    try { st = lstatSync(grant); } catch { continue; } // absent
+    if (st.isSymbolicLink()) {
+      // Never readFileSync/follow a symlinked marker. Remove the LINK only.
+      try { unlinkSync(grant); } catch {}
+      swept.push({ name, reason: 'symlink', ageSec: null });
+      continue;
+    }
+    if (!st.isFile()) continue;
+    let ageSec = Infinity;
+    try {
+      const first = readFileSync(grant, 'utf8').split(/\r?\n/)[0].trim();
+      if (/^\d+$/.test(first)) ageSec = Math.floor(nowMs / 1000) - parseInt(first, 10);
+      else ageSec = Math.floor((nowMs - st.mtimeMs) / 1000);
+    } catch {
+      ageSec = Math.floor((nowMs - st.mtimeMs) / 1000);
+    }
+    if (ageSec <= ttl) continue;
+    try { unlinkSync(grant); } catch {}
+    swept.push({ name, reason: 'expired', ageSec });
+  }
+  return swept;
 }

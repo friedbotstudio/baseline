@@ -21,6 +21,7 @@ import {
   emitAsk,
   emitAllow,
   logLine,
+  writesConsentPath,
 } from './lib/common.mjs';
 
 function cmdMatchesAny(cmd, patterns) {
@@ -40,42 +41,8 @@ function cmdMatchesAny(cmd, patterns) {
 // consent path bypasses marker validation entirely. This guard runs on every
 // Bash command, so it is the right place to deny Bash writes to consent paths.
 // Reads (cat/grep/ls/head/tail) stay allowed — only WRITE intent is blocked.
-
-// A consent path referenced anywhere in the command. Suffix match — works for
-// relative, absolute, and $CLAUDE_PROJECT_DIR-prefixed forms alike.
-const CONSENT_PATH_RE = new RegExp(
-  '\\.claude/state/(' +
-    'commit_consent' +
-    '|push_consent' +
-    '|\\.commit_consent_grant' +
-    '|\\.push_consent_grant' +
-    '|\\.spec_approval_grant' +
-    '|\\.swarm_approval_grant' +
-    '|spec_approvals/' +
-    '|swarm_approvals/' +
-  ')'
-);
-
-// Write-verb tokens that, alongside a consent-path reference, signal write
-// intent. `cat`/`grep`/`ls`/`head`/`tail` are deliberately ABSENT so reads pass.
-const WRITE_VERB_RE = /\b(tee|cp|mv|install|truncate|dd|ln)\b/;
-const SED_INPLACE_RE = /\bsed\b[^|;&]*\s-[a-zA-Z]*i/;
-// A program write inside `node -e` / `python -c` / `perl -e` / `ruby -e` etc.:
-// the JS fs methods, OR an `open(..., 'w'|'a')` (python/ruby), OR an
-// `open(..., '>'|'>>'...)` / `open(F,'>path')` (perl). Best-effort — a regex
-// guard cannot resolve every interpreter idiom; this covers the common ones.
-const PROG_WRITE_RE = /\b(writeFileSync|appendFileSync|createWriteStream|writeFile)\b|open\s*\([^)]*['"][wa]b?\+?['"]|open\s*\([^)]*,\s*['"]?>>?/;
-// A redirect (>, >>, or the >| clobber) whose target is a consent path.
-const CONSENT_REDIRECT_RE = /(?:>>?\|?)\s*['"]?[^'">\s|;&]*\.claude\/state\/(commit_consent|push_consent|\.(commit_consent|push_consent|spec_approval|swarm_approval)_grant|spec_approvals\/|swarm_approvals\/)/;
-
-function writesConsentPath(cmd) {
-  if (!CONSENT_PATH_RE.test(cmd)) return false;
-  if (CONSENT_REDIRECT_RE.test(cmd)) return true;
-  if (WRITE_VERB_RE.test(cmd)) return true;
-  if (SED_INPLACE_RE.test(cmd)) return true;
-  if (PROG_WRITE_RE.test(cmd)) return true;
-  return false;
-}
+// The detector lives in lib/common.mjs (`writesConsentPath`) so it is unit-
+// testable and reused; it blocks $VAR-indirected redirects too (7f2c MEDIUM).
 
 const payload = await readPayload();
 

@@ -18,6 +18,7 @@ import {
   payloadGet,
   projectGet,
   logLine,
+  sweepLeakedGrantMarkers,
 } from './lib/common.mjs';
 import { buildIndex } from './lib/memory_session_start.mjs';
 
@@ -44,30 +45,21 @@ if (existsSync(marker)) {
 // by the consent_gate_grant UserPromptSubmit hook and consumed (deleted) by the
 // matching approval guard on the token Write. If a session ends after the grant
 // but before the guard fired, the marker lingers — a leaked, replayable consent
-// window. Best-effort: remove any older than the gate-marker TTL.
+// window. The sweep (lib/common.mjs) removes any older than the gate-marker TTL
+// and never follows a symlinked marker to its target (7f2c LOW symlink/TOCTOU).
 let gateTtl = projectGet('.consent.gate_marker_ttl_seconds');
 if (typeof gateTtl !== 'number' || !Number.isFinite(gateTtl)) gateTtl = 120;
-const nowMs = Date.now();
-for (const name of ['.commit_consent_grant', '.push_consent_grant', '.spec_approval_grant', '.swarm_approval_grant']) {
-  const grant = join(STATE_DIR, name);
-  if (!existsSync(grant)) continue;
-  let ageSec = Infinity;
-  try {
-    // Markers carry their grant epoch on line 1; fall back to mtime.
-    const first = readFileSync(grant, 'utf8').split(/\r?\n/)[0].trim();
-    if (/^\d+$/.test(first)) ageSec = Math.floor(nowMs / 1000) - parseInt(first, 10);
-    else ageSec = Math.floor((nowMs - statSync(grant).mtimeMs) / 1000);
-  } catch {
-    try { ageSec = Math.floor((nowMs - statSync(grant).mtimeMs) / 1000); } catch {}
-  }
-  if (ageSec <= gateTtl) continue;
-  try { rmSync(grant); } catch {}
+const sweptMarkers = sweepLeakedGrantMarkers(STATE_DIR, { ttlSeconds: gateTtl });
+if (sweptMarkers.length) {
   try { mkdirSync(LOG_DIR, { recursive: true }); } catch {}
   const ts = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
-  try {
-    appendFileSync(join(LOG_DIR, 'harness_continuation.log'),
-      `${ts}  INFO  swept leaked consent marker ${name} (age=${ageSec}s ttl=${gateTtl}s)\n`);
-  } catch {}
+  for (const m of sweptMarkers) {
+    const detail = m.reason === 'symlink' ? 'anomalous symlink (link removed, target untouched)' : `age=${m.ageSec}s ttl=${gateTtl}s`;
+    try {
+      appendFileSync(join(LOG_DIR, 'harness_continuation.log'),
+        `${ts}  INFO  swept leaked consent marker ${m.name} (${detail})\n`);
+    } catch {}
+  }
 }
 
 const memDir = join(CLAUDE_DOTDIR, 'memory');
