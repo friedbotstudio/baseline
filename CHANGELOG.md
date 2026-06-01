@@ -17,6 +17,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - **`spec-lint` Check #4: codesign-decisions presence.** `spec-lint/lint.mjs` gained a new check that fires only when `workflow.json → codesign_mode` is `true` AND the saved spec lacks a `## Decisions` heading. Suppressed entirely when `codesign_mode` is false. Test coverage at `tests/spec-codesign-missing-decisions-section.test.mjs`.
 - **`docs/brief/<slug>.md` in the archive bundle.** `archive.sh` `PAIRS` array gained a new row mapping the brainstorm brief into the workflow's archive bundle as `brief.md`, alongside `intake.md`, `scout.md`, etc.
 - **Read-time defaults pattern for additive `workflow.json` fields.** `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults(workflowJson)` applies `?? false` on missing `skip_brainstorm` and `codesign_mode` fields so legacy in-flight workflow.json files continue working without an on-disk migrator write. Convention documented at `.claude/memory/conventions.md → workflow-json-read-time-defaults`.
+- `audit-baseline` now derives the governance counts (skills, hooks, commands, subagents, selectable/sub tracks, memory files, MCP servers) from the on-disk artifacts via a shared `.claude/skills/audit-baseline/derive-counts.mjs`, and hard-FAILs when a count literal in a prose surface (CLAUDE.md orientation line, the mirror) or the skills category-breakdown sum disagrees with the derived truth.
 
 ### Changed
 
@@ -33,6 +34,8 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - **`PRODUCT.md` stale counts corrected.** Line 20 "thirty-six skills" → "forty"; line 40 anti-references "36 skills, 1 subagent, 11 phases, 3 gates" → "40 skills, 1 subagent, 11 phases, 4 gates". Article X.1 governance file but the counts leak into impeccable's loaded context every session, so factual accuracy matters.
 - **17 new tests** at `tests/brainstorm-*.test.mjs`, `tests/codesign-*.test.mjs`, `tests/spec-codesign-*.test.mjs`, `tests/triage-flag-parsing.test.mjs`, `tests/intake-*.test.mjs`, `tests/workflow-json-defaults.test.mjs`, `tests/audit-skill-count-drift.test.mjs`, `tests/archive-brief-pairs.test.mjs`, plus two fixtures at `tests/fixtures/{intake,spec}-prefeature-baseline.md`.
 - **Archive bundle for `brainstorm-and-codesign`** includes the spec rendered as 16 SVGs at `docs/archive/2026-05-29/brainstorm-and-codesign/spec-rendered/` (c4_context, c4_container, 2 c4_components, class, 9 sequences, state, dependency_graph).
+- The docs site reads governance counts from a computed `site-src/_data/baseline.cjs` (replacing the static `baseline.json`) that calls the shared deriver at build time, so rendered counts can no longer drift from the artifacts.
+- `triage/SKILL.md` no longer carries duplicated canonical track-shape templates; `.claude/workflows.jsonl` is the single source and `tests/memory-flush-phase.test.mjs` AC-006 now reads the track node order directly from it.
 
 ### Fixed
 
@@ -40,6 +43,8 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - The Phase 11.5 changelog actuator now sources its `[Unreleased]` entries from a caller-supplied `--entries-file` (a JSON array of `{section, body, breaking?}`) instead of classifying `git log`. Phase 11.5 runs before `/commit`, so git-log held already-committed/prior-workflow commits and the actuator re-listed stale work into `[Unreleased]` on every run; the caller — which knows the impending change — now writes the entries. `--preview-only` still uses semantic-release for a version projection. This resolves the follow-up noted above (the classify-from-staged half of the changelog-actuator work).
 - `git_commit_guard` now classifies git subcommands via a wrapper- and quote-aware command tokenizer: closes a false-positive (read-only commands mentioning "git commit" are no longer blocked; Q-003) and a consent-gate bypass where a `git commit`/`git push` wrapped in `sh -c` / `eval` / `$(…)` / a subshell evaded gate C.
 - `destructive_cmd_guard` now blocks Bash writes to consent tokens/markers under `.claude/state/` (including non-JS-interpreter writes and the `>|` clobber redirect), closing the Bash bypass of the approval gates.
+- The docs site rendered "5 consent commands" while six ship; the count is now derived (6) and can no longer go stale.
+- `audit-baseline` silently skipped its entire run — exiting 0 without checking anything — when invoked under a symlinked path (e.g. macOS `/tmp` → `/private/tmp`), because its main-module guard compared a realpath-resolved `import.meta.url` against the verbatim `process.argv[1]`. The guard now realpath-resolves both sides.
 
 ### Security
 

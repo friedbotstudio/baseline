@@ -1,0 +1,31 @@
+{
+  "request": "WF-5 governance count de-duplication: derive canonical counts (skills/hooks/commands/tracks) at build time from real artifacts, expose as eleventy/template vars, fail audit-baseline on hardcoded-vs-derived mismatch; remove duplicated track templates from triage/SKILL.md after rewiring memory-flush-phase.test.mjs to read workflows.jsonl.",
+  "slug": "governance-count-single-source",
+  "track_id": "intake-full",
+  "exceptions": [
+    "brd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "canonical-track-count-hardcoded-across-surfaces-9a2b",
+    "triage-skill-md-still-duplicates-workflows-jsonl-canonical-templates-c8f4"
+  ],
+  "created_at": 1780307432,
+  "updated_at": 1780312969
+}

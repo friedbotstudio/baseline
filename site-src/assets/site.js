@@ -9,7 +9,7 @@
   "use strict";
 
   /* The DevTools console signature is emitted by an inline templated <script>
-     in _layouts/base.njk so its counts stay bound to _data/baseline.json. */
+     in _layouts/base.njk so its counts stay bound to _data/baseline.cjs. */
 
   const reducedMotion =
     typeof matchMedia === "function" &&

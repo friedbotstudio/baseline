@@ -29,22 +29,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## changelog-unreleased-rerelease-risk-after-union-merge-3a5e
-
-> verbatim (assistant-deferral, 2026-06-01, WF-4 union-merge decision):
-> The WF-4 one-time CHANGELOG.md cleanup unioned ~138 lines of detailed keepachangelog notes for ALREADY-RELEASED versions (0.4.0–0.12.0) into the single `## [Unreleased]` section (the user chose union to preserve the prose rather than drop it). Because `@semantic-release/changelog` moves the `[Unreleased]` body into a new version block at release time, the next version bump will re-emit all of that already-released detail as a bogus, bloated new version block.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-06-01
-- raised-in-context: changelog-actuator-staged-diff (WF-4) — union-merge scope decision (user picked "union" over "drop orphaned detail")
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-06-01
-- caveat: Before the next `semantic-release` run, prune `CHANGELOG.md`'s `## [Unreleased]` down to genuinely-unreleased work only (the current infra-hardening + brainstorm/thread + 40k-cap + this WF-4 entries), OR redistribute the orphaned detail into the version blocks it describes. The terse `# [0.x]` version blocks already record those releases, and git history preserves the detailed prose, so the safe move at release time is to drop the already-released detail from `[Unreleased]`. Pairs with the source-of-truth fix tracked in [[changelog-actuator-reads-head-not-staged-4dc0]] (WF-4b) — once the actuator stops re-listing committed work, [Unreleased] hygiene is easier to maintain.
-
----
-
 ## destructive-guard-and-grant-sweep-residual-hardening-7f2c
 
 > verbatim (assistant-deferral, 2026-05-31, from docs/archive/2026-05-30/infra-hardening/security.md Resolution):

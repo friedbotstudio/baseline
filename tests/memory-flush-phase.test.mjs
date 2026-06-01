@@ -119,31 +119,45 @@ describe('AC-001 — harness phase ordering includes memory-flush between archiv
   });
 });
 
-describe('AC-006 — triage TaskList templates seed memory-flush between archive and grant-commit', () => {
-  it('test_when_triage_seeds_intake_entry_full_track_then_memory_flush_task_is_between_archive_and_grant_commit', async () => {
-    const sop = await readRepoFile('.claude/skills/triage/SKILL.md');
-    const intakeTemplate = sop.match(/For\s+`intake`-entry\s+full\s+track[\s\S]*?(?=\n\s*\n\s+For\s+every\s+task|\n##\s)/);
-    assert.ok(intakeTemplate, 'triage/SKILL.md must contain "For `intake`-entry full track" template paragraph');
-    const block = intakeTemplate[0];
-    const archiveIdx = block.indexOf('/archive');
-    const memflushIdx = block.indexOf('/memory-flush');
-    const grantIdx = block.indexOf('/grant-commit');
-    assert.ok(memflushIdx > -1, 'intake-entry template must list `Run /memory-flush`');
+// AC-006 reads the AUTHORITATIVE track DAGs from .claude/workflows.jsonl
+// (WF-5 / AC-005 decoupling). The canonical track shapes live in workflows.jsonl,
+// not in triage/SKILL.md prose; this test must not depend on that prose so the
+// duplicated template subsection can be deleted without breaking the suite.
+async function trackNodeOrder(trackId) {
+  const jsonl = await readRepoFile('.claude/workflows.jsonl');
+  const track = jsonl
+    .split('\n')
+    .filter((l) => l.trim())
+    .map((l) => JSON.parse(l))
+    .find((t) => t.track_id === trackId);
+  assert.ok(track, `workflows.jsonl must declare track_id "${trackId}"`);
+  const order = new Map(track.nodes.map((n, i) => [n.id, i]));
+  return (id) => (order.has(id) ? order.get(id) : -1);
+}
+
+describe('AC-006 — canonical tracks (workflows.jsonl) order memory-flush between archive and grant-commit', () => {
+  it('test_when_intake_full_track_then_memory_flush_node_is_between_archive_and_grant_commit', async () => {
+    const idx = await trackNodeOrder('intake-full');
+    const archiveIdx = idx('archive');
+    const memflushIdx = idx('memory-flush');
+    const grantIdx = idx('grant-commit');
+    assert.ok(memflushIdx > -1, 'intake-full must contain a memory-flush node');
     assert.ok(
       archiveIdx > -1 && archiveIdx < memflushIdx && memflushIdx < grantIdx,
-      `intake template ordering: archive (${archiveIdx}) → memory-flush (${memflushIdx}) → grant-commit (${grantIdx}) violated`
+      `intake-full node order: archive (${archiveIdx}) → memory-flush (${memflushIdx}) → grant-commit (${grantIdx}) violated`
     );
   });
 
-  it('test_when_triage_seeds_chore_track_then_memory_flush_task_is_between_chore_and_grant_commit', async () => {
-    const sop = await readRepoFile('.claude/skills/triage/SKILL.md');
-    const choreTemplate = sop.match(/For\s+`chore`\s+track[\s\S]*?(?=\n\s*\n\s+\*\*For\s|\n##\s)/);
-    assert.ok(choreTemplate, 'triage/SKILL.md must contain "For `chore` track" template paragraph');
-    const block = choreTemplate[0];
-    const memflushIdx = block.indexOf('/memory-flush');
-    const grantIdx = block.indexOf('/grant-commit');
-    assert.ok(memflushIdx > -1, 'chore-track template must list `Run /memory-flush`');
-    assert.ok(memflushIdx < grantIdx, `chore template ordering: memory-flush (${memflushIdx}) must precede grant-commit (${grantIdx})`);
+  it('test_when_chore_track_then_memory_flush_node_is_between_chore_and_grant_commit', async () => {
+    const idx = await trackNodeOrder('chore');
+    const choreIdx = idx('chore');
+    const memflushIdx = idx('memory-flush');
+    const grantIdx = idx('grant-commit');
+    assert.ok(memflushIdx > -1, 'chore must contain a memory-flush node');
+    assert.ok(
+      choreIdx > -1 && choreIdx < memflushIdx && memflushIdx < grantIdx,
+      `chore node order: chore (${choreIdx}) → memory-flush (${memflushIdx}) → grant-commit (${grantIdx}) violated`
+    );
   });
 });
 

@@ -9,9 +9,27 @@
 // clean audit, 1 if any FAIL. Read-only; safe to run any time, in CI, or as
 // the final step of /init-project.
 
-import { existsSync, readFileSync, readdirSync, statSync, accessSync, constants as fsc } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, accessSync, realpathSync, constants as fsc } from 'node:fs';
 import { join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import { deriveCounts, SKILL_CATEGORIES } from './derive-counts.mjs';
+
+// True only when run as a script (`node audit.mjs`), false when imported by a
+// test. Guards the top-level audit run + process.exit so importing the exported
+// surface-check helpers does not execute the whole audit or kill the importer.
+// realpathSync both sides: import.meta.url is symlink-resolved by Node, but
+// process.argv[1] is passed verbatim, so an invocation under a symlinked path
+// (macOS /tmp -> /private/tmp) would otherwise mis-compare and silently skip
+// the entire audit run.
+const IS_MAIN = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return import.meta.url === pathToFileURL(process.argv[1]).href;
+  }
+})();
 
 const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
@@ -117,6 +135,30 @@ function toInt(s) {
   const t = (s || '').trim().toLowerCase();
   if (/^\d+$/.test(t)) return parseInt(t, 10);
   return Object.prototype.hasOwnProperty.call(WORDS, t) ? WORDS[t] : null;
+}
+
+// Cross-check a single count literal in a prose surface against the derived
+// truth. Returns {status, detail}. WARN (never silent-pass) when the literal
+// cannot be extracted, so a regex that stops matching surfaces as a signal
+// rather than a false PASS. Exported for unit testing.
+export function checkSurfaceCount(file, regex, expected) {
+  if (!existsSync(file)) return { status: 'WARN', detail: `surface missing: ${file}` };
+  const m = readFileSync(file, 'utf8').match(regex);
+  if (!m) return { status: 'WARN', detail: 'count literal not found (unextractable)' };
+  const got = toInt(m[1]);
+  if (got === null) return { status: 'WARN', detail: `unparseable literal "${m[1]}"` };
+  return got === expected
+    ? { status: 'PASS', detail: `${got}` }
+    : { status: 'FAIL', detail: `expected ${expected}, found ${m[1]}` };
+}
+
+// Assert a skills category breakdown adds up to the skills total. Returns
+// {status, detail}. Exported for unit testing.
+export function checkByCategorySum(byCategory, total) {
+  const sum = Object.values(byCategory).reduce((a, b) => a + b, 0);
+  return sum === total
+    ? { status: 'PASS', detail: `sum ${sum} == total ${total}` }
+    : { status: 'FAIL', detail: `byCategory sum ${sum} != skills total ${total}` };
 }
 
 function listDir(rel, opts = {}) {
@@ -850,16 +892,37 @@ if (!qf7Text) {
   }
 }
 
-// ---------- output ----------
-const nameW = Math.max(20, ...results.map(r => r[0].length));
-let failN = 0, warnN = 0;
-for (const [, s] of results) { if (s === 'FAIL') failN++; else if (s === 'WARN') warnN++; }
-process.stdout.write('check'.padEnd(nameW) + '  ' + 'status'.padEnd(6) + '  detail\n');
-process.stdout.write('-'.repeat(nameW) + '  ' + '-'.repeat(6) + '  ' + '-'.repeat(50) + '\n');
-for (const [name, status, detail] of results) {
-  process.stdout.write(`${name.padEnd(nameW)}  ${status.padEnd(6)}  ${detail}\n`);
+// ---------- WF-5: derived-count surfaces (single source of truth) ----------
+// The deriver is the one place counts are computed; these checks pin the
+// surfaces that state a count literal but cannot be templated (binding prose).
+// The existing cross-doc machinery above already covers hooks/skills/subagents
+// headline claims in CLAUDE.md/README.md/seed.md; these add the commands
+// orientation line (not covered there) and the skills byCategory breakdown.
+const derived = deriveCounts(ROOT);
+const COMMANDS_ORIENTATION_RE = /\.claude\/commands\/[^(]*\((\d+)\s+commands?\)/i;
+for (const rel of ['CLAUDE.md', 'src/CLAUDE.template.md']) {
+  const p = join(ROOT, rel);
+  if (!existsSync(p)) continue;
+  const r = checkSurfaceCount(p, COMMANDS_ORIENTATION_RE, derived.commands);
+  add(`commands count (${rel} orientation)`, r.status, r.detail);
 }
-process.stdout.write('-'.repeat(nameW) + '  ' + '-'.repeat(6) + '\n');
-const overall = failN > 0 ? 'FAIL' : 'PASS';
-process.stdout.write(`${'overall'.padEnd(nameW)}  ${overall.padEnd(6)}  fails=${failN} warns=${warnN}\n`);
-process.exit(failN > 0 ? 1 : 0);
+const byCat = checkByCategorySum(SKILL_CATEGORIES, derived.skills);
+add('skills byCategory sum vs derived total', byCat.status, byCat.detail);
+
+// ---------- output ----------
+// Guarded: only when run as a script. When imported (by a test) the exported
+// helpers are available without printing the table or calling process.exit.
+if (IS_MAIN) {
+  const nameW = Math.max(20, ...results.map(r => r[0].length));
+  let failN = 0, warnN = 0;
+  for (const [, s] of results) { if (s === 'FAIL') failN++; else if (s === 'WARN') warnN++; }
+  process.stdout.write('check'.padEnd(nameW) + '  ' + 'status'.padEnd(6) + '  detail\n');
+  process.stdout.write('-'.repeat(nameW) + '  ' + '-'.repeat(6) + '  ' + '-'.repeat(50) + '\n');
+  for (const [name, status, detail] of results) {
+    process.stdout.write(`${name.padEnd(nameW)}  ${status.padEnd(6)}  ${detail}\n`);
+  }
+  process.stdout.write('-'.repeat(nameW) + '  ' + '-'.repeat(6) + '\n');
+  const overall = failN > 0 ? 'FAIL' : 'PASS';
+  process.stdout.write(`${'overall'.padEnd(nameW)}  ${overall.padEnd(6)}  fails=${failN} warns=${warnN}\n`);
+  process.exit(failN > 0 ? 1 : 0);
+}
