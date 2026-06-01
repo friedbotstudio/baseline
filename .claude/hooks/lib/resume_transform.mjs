@@ -7,9 +7,10 @@
 // immutable, so the TTL is a regenerate-for-freshness knob, not a
 // source-staleness knob.
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { readMostRecent } from './thread_store.mjs';
+import { writeJsonAtomic } from './common.mjs';
 
 const CACHE_FILENAME = 'thread_transform_cache.json';
 
@@ -31,10 +32,13 @@ export function readCache({ stateDir, ttlSeconds, nowMs }) {
 
 export function writeCache({ stateDir, summary, sourceShelvedAt, nowMs }) {
   try { mkdirSync(stateDir, { recursive: true }); } catch {}
-  writeFileSync(cachePath(stateDir), JSON.stringify({
+  // Atomic temp+rename (CWE-362) so a crash can't leave a corrupt cache that the
+  // next SessionStart would fail to parse (readCache treats parse failure as a
+  // miss, but a half-written file shouldn't be observable at all).
+  writeJsonAtomic(cachePath(stateDir), {
     source_shelved_at: sourceShelvedAt,
     summary,
     cached_at: nowMs,
-  }, null, 2));
+  });
 }
 

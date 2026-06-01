@@ -167,6 +167,23 @@ export function writeMarkerAtomic(markerPath, ...lines) {
   }
 }
 
+// Atomic JSON write: serialize to a sibling temp file, then rename over the
+// target. rename(2) is atomic on POSIX, so a crash mid-write can never leave a
+// half-written / corrupt JSON state file — a reader sees either the old bytes
+// or the complete new bytes. Mirrors writeMarkerAtomic. Throws on failure (after
+// cleaning the temp) so callers that need the write to land see the error rather
+// than silently continuing on stale state.
+export function writeJsonAtomic(path, obj) {
+  const tmp = `${path}.tmp.${process.pid}`;
+  try {
+    writeFileSync(tmp, JSON.stringify(obj, null, 2) + '\n');
+    renameSync(tmp, path);
+  } catch (err) {
+    try { unlinkSync(tmp); } catch {}
+    throw err;
+  }
+}
+
 // Block Claude from writing a consent-marker file via Write/Edit/MultiEdit.
 // The marker's unforgeability is what makes consent gates structural — only
 // consent_gate_grant (UserPromptSubmit, outside Claude's tool boundary) may

@@ -15,6 +15,6 @@ Steps:
 2. **Pending memory advisory (non-blocking).** Count `## CANDIDATE:` blocks in `.claude/memory/_pending.md`. If the count is > 0, surface a one-line advisory to the user *before* writing the consent token: "Pending memory: <N> candidate(s) in `.claude/memory/_pending.md` — run `/memory-flush` if relevant, or proceed with `git commit` (memory is harness-local; this never blocks)." If 0, no advisory. The token is written regardless.
 3. Run `date +%s` to get the current epoch.
 4. Write the epoch (and the optional note `$ARGUMENTS` on line 2 if non-empty) to `.claude/state/commit_consent`, overwriting any prior token.
-5. Confirm to the user: "Commit consent granted at <epoch>, valid for 300s (until <HH:MM:SS local>). The next `git commit` will be allowed; forbidden flags (push, --amend, --no-verify, reset --hard, etc.) remain blocked regardless."
+5. Confirm to the user: "Commit consent granted at <epoch>, valid for 900s (until <HH:MM:SS local>). The next `git commit` will be allowed; forbidden flags (push, --amend, --no-verify, reset --hard, etc.) remain blocked regardless." (900s is the `git_commit_guard` commit-consent TTL default; `/grant-push` is a separate 300s window for pushes.)
 
 Do not run `git commit` yourself in this command. The user asks explicitly when they want a commit; this command only opens the window.

@@ -1,0 +1,32 @@
+{
+  "request": "WF-3: atomic-write + small security/correctness batch. (a) Add writeJsonAtomic(path,obj) to .claude/hooks/lib/common.mjs (mirror writeMarkerAtomic: temp+rename) and apply to the non-atomic JSON writes in src/cli/workflow-migrator.js (+ .claude/skills/harness/workflow-migrator.js mirror), .claude/hooks/lib/thread_store.mjs (writeCursor/stageCandidate), .claude/hooks/lib/resume_transform.mjs (cache) — CWE-362. (b) Validate the slug to ^[a-z0-9][a-z0-9-]*$ where /triage passes it into the seed-tasklist.mjs subprocess — CWE-78. (c) Correct /grant-commit SKILL.md TTL doc drift (300s -> 900s) + note the post-grant stall.",
+  "slug": "atomic-writes-and-slug-hardening",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "workflow-migrator-write-not-atomic-power-loss-corruption-3e91",
+    "thread-store-non-atomic-state-writes-9c12",
+    "triage-helper-slug-interpolation-into-bash-subprocess-a720",
+    "commit-consent-ttl-too-tight-for-humanizer-flow-8917"
+  ],
+  "created_at": 1780264629,
+  "updated_at": 1780305001
+}

@@ -10,6 +10,7 @@
 
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { writeJsonAtomic } from './common.mjs';
 
 export const THREAD_FILENAME = '_thread.md';
 const CURSOR_FILENAME = 'thread_cursor.json';
@@ -149,7 +150,9 @@ function readJson(path) {
 }
 function writeJson(path, obj) {
   try { mkdirSync(join(path, '..'), { recursive: true }); } catch {}
-  writeFileSync(path, JSON.stringify(obj, null, 2));
+  // Atomic temp+rename (CWE-362) — a crash mid-write can't corrupt the cursor /
+  // candidate sidecar that the next session reads.
+  writeJsonAtomic(path, obj);
 }
 
 export function readCursor({ stateDir }) { return readJson(join(stateDir, CURSOR_FILENAME)); }

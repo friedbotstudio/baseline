@@ -53,7 +53,16 @@ async function runValidate() {
   process.exit(0);
 }
 
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
 async function runMaterialize(trackId, slug, excludedNodeIds) {
+  // CWE-78: the slug flows into task subjects and state-file paths downstream;
+  // constrain it to a safe charset before use so a crafted slug (shell
+  // metacharacters, path traversal, mixed case/underscores) can't slip through.
+  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
+    process.stderr.write(`invalid slug '${slug}': must match ${SLUG_RE} (lowercase letters, digits, hyphens; first char alphanumeric)\n`);
+    process.exit(2);
+  }
   const result = await validateWorkflowsJsonl(WORKFLOWS_PATH);
   if (!result.ok) {
     printValidationErrors(result.errors);

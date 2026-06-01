@@ -45,6 +45,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 
 ### Changed
 
+- Hardened state-file writes and input handling. JSON state writes now go through an atomic temp+rename (`writeJsonAtomic` in `.claude/hooks/lib/common.mjs`, applied to the thread cursor/candidate, the resume-transform cache, and the `workflow.json` migrator), so a crash mid-write can't leave a corrupt file (CWE-362). `seed-tasklist.mjs` validates the workflow slug against `^[a-z0-9][a-z0-9-]*$` before use (CWE-78). The `/grant-commit` consent window is documented as 900s (matching the guard default; the public FAQ "five minutes" is corrected to fifteen).
 - Trimmed `CLAUDE.md` from ~46k to ~39k characters by relocating non-binding content (history, mechanism narration, Appendices A/B) to the annex. All binding rules retained; only explanatory material moved.
 - Documented the new `_thread.md` memory class across the constitution and docs: `CLAUDE.md` Article IX clause 8 (and the `src/CLAUDE.template.md` mirror), `docs/init/seed.md` §4.1 (and the `src/seed.template.md` mirror), the `.claude/CONSTITUTION.md` annex, `.claude/memory/README.md`, and the public `site-src/memory.njk` page.
 - `src/seed.template.md` synced to `docs/init/seed.md` (pre-§16 body) with a byte-parity test that guards the §16 reserved-placeholder carve-out.

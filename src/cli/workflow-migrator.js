@@ -3,7 +3,7 @@
 // skipped_alternates[]) in place. Idempotent on already-post-§18 input.
 // Throws a named error when entry_phase is not in the canonical map.
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, rename, unlink } from 'node:fs/promises';
 
 export const ENTRY_PHASE_TO_TRACK_ID = Object.freeze({
   intake: 'intake-full',
@@ -35,6 +35,19 @@ export async function migrateWorkflowJsonInPlace(filePath) {
   migrated.skipped_alternates = Array.isArray(data.skipped_alternates) ? data.skipped_alternates : [];
   migrated.updated_at = Math.floor(Date.now() / 1000);
   delete migrated.entry_phase;
-  await writeFile(filePath, JSON.stringify(migrated, null, 2) + '\n');
+  // Atomic temp+rename (CWE-362): rename(2) is atomic on POSIX, so a crash
+  // mid-migration can't leave workflow.json half-written and unparseable — the
+  // file the harness reads on the next session is either the old shape or the
+  // fully-migrated one. Inlined (not the hooks-lib writeJsonAtomic) to keep this
+  // src/cli module free of a cross-tree dependency; the build mirrors this file
+  // byte-for-byte to .claude/skills/harness/workflow-migrator.js.
+  const tmp = `${filePath}.tmp.${process.pid}`;
+  try {
+    await writeFile(tmp, JSON.stringify(migrated, null, 2) + '\n');
+    await rename(tmp, filePath);
+  } catch (err) {
+    try { await unlink(tmp); } catch {}
+    throw err;
+  }
   return { migrated: true, track_id: trackId };
 }

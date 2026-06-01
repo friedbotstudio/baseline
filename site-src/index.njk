@@ -585,7 +585,7 @@ eleventyComputed:
 
       <details class="faq-item" name="baseline-faq">
         <summary class="faq-q">Will it commit to my repo without me knowing?</summary>
-        <div class="faq-a">No. Gate C requires a typed <code>/grant-commit</code> within the last five minutes; without a fresh consent token at <code>.claude/state/commit_consent</code>, the <code>git_commit_guard</code> hook blocks the <code>git commit</code> Bash call. The consent marker is written on <code>UserPromptSubmit</code>, outside Claude's tool boundary. Claude cannot forge it.</div>
+        <div class="faq-a">No. Gate C requires a typed <code>/grant-commit</code> within the last fifteen minutes; without a fresh consent token at <code>.claude/state/commit_consent</code>, the <code>git_commit_guard</code> hook blocks the <code>git commit</code> Bash call. The consent marker is written on <code>UserPromptSubmit</code>, outside Claude's tool boundary. Claude cannot forge it.</div>
       </details>
 
       <details class="faq-item" name="baseline-faq">

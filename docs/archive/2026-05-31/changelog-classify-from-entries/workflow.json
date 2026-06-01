@@ -18,12 +18,14 @@
     "document",
     "archive",
     "memory-flush",
-    "changelog"
+    "changelog",
+    "commit"
   ],
   "skipped_alternates": [],
   "source_backlog_keys": [
     "changelog-actuator-reads-head-not-staged-4dc0"
   ],
   "created_at": 1780260776,
-  "updated_at": 1780264363
+  "updated_at": 1780264363,
+  "commit_sha": "ce7e11c"
 }
