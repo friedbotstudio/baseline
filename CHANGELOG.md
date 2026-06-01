@@ -1,3 +1,27 @@
+# [0.13.0](https://github.com/friedbotstudio/baseline/compare/v0.12.0...v0.13.0) (2026-06-01)
+
+
+### Bug Fixes
+
+* **changelog:** source [Unreleased] entries from --entries-file, not git log ([ce7e11c](https://github.com/friedbotstudio/baseline/commit/ce7e11c8224b63f9e0a15b41f565525ccfc78c5e))
+* **changelog:** stop the Phase 11.5 actuator from deleting released version blocks ([4585688](https://github.com/friedbotstudio/baseline/commit/4585688c9b25c781aca76878172bbc052ad7e153))
+* **guards:** wrapper/quote-aware git classification + Bash consent-write block ([35e3926](https://github.com/friedbotstudio/baseline/commit/35e392664281f48676360d73b80abefe3ee9d413))
+* **hooks,changelog:** changelog shrink guard + 7f2c consent-guard residuals ([08899d1](https://github.com/friedbotstudio/baseline/commit/08899d1f811f287465805d287d6f336ac7b99305))
+* **hooks,cli:** atomic JSON state writes + slug validation + consent-TTL doc ([cb132d6](https://github.com/friedbotstudio/baseline/commit/cb132d659499cf0b6b3812203b367171e5f683b2))
+* **memory:** bound the local thread trail with a roll-off cap ([464da06](https://github.com/friedbotstudio/baseline/commit/464da063cd21a8258742664b002e3b9462ce0a32))
+* **test:** align python3 allow-list with seed.md _thread.md amendment; stamp b7e2 closure ([08718b7](https://github.com/friedbotstudio/baseline/commit/08718b71af6a97cb79d821b6ad2600baa0861b53))
+
+
+### Features
+
+* **audit:** single source of truth for governance counts + drift cross-check ([13fd15f](https://github.com/friedbotstudio/baseline/commit/13fd15f2c9bf5cbe0126ab455012b24bd43876db))
+* brainstorm helper (PM mode) and /spec codesign mode (Engineer mode) ([4cd839d](https://github.com/friedbotstudio/baseline/commit/4cd839dbd2650c13df47fc79b7c56df0b6d3a17b)), closes [#4](https://github.com/friedbotstudio/baseline/issues/4)
+* **document:** reflective public-site trigger + feature-value register ([ad558d7](https://github.com/friedbotstudio/baseline/commit/ad558d7ff91a1f815e5ee427cc593aa25f642e58))
+* durable local conversation-thread trail with context-switch shelving ([f7a8f85](https://github.com/friedbotstudio/baseline/commit/f7a8f856d848d197de08e0aa65d9d9ed57b4bc01))
+* **harness:** consolidate open questions at the /approve-spec gate ([5ae9178](https://github.com/friedbotstudio/baseline/commit/5ae91782b8ec953935981c88ddf082612bfabc85))
+* **hooks:** make plantuml_syntax_guard advisory by default (no JVM) ([ce4d2c7](https://github.com/friedbotstudio/baseline/commit/ce4d2c7cdc4dcda2e7f3db674b50a1c9fa81a8d1))
+* **memory:** capture unanchored backlog-routing intent markers + ReDoS cap ([28f2d6f](https://github.com/friedbotstudio/baseline/commit/28f2d6f2a3a9e01fe4ac796359bf6cd0ac4cb23d)), closes [hi#precision](https://github.com/hi/issues/precision)
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
