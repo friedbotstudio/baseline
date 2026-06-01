@@ -29,20 +29,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## destructive-guard-and-grant-sweep-residual-hardening-7f2c
-
-> verbatim (assistant-deferral, 2026-05-31, from docs/archive/2026-05-30/infra-hardening/security.md Resolution):
-> Deferred (tracked in backlog / seed.md §16 guard-hardening sweep — deny-leaning or out of a regex guard's reach): MEDIUM `$VAR`-indirected consent paths (needs shell variable resolution); LOW symmetric false-positive in `destructive_cmd_guard` (whole-command match, not segment-scoped) — fold into the same segment-aware pass later; LOW `memory_session_start` grant-marker sweep symlink/TOCTOU — own-state, local-only.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-31
-- raised-in-context: infra-hardening security review (residuals after the HIGH + actionable MEDIUM were fixed in-workflow)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-31
-- caveat: all three are deny-leaning or local-only (not remotely exploitable). The destructive false-positive could reuse the new `executedFragments`/segment-aware classifier from `common.mjs` to scope the consent-path-write check to the executed segment. Pairs with the broader seed.md §16 guard-hardening sweep (canonical_rel coverage, fail-closed on malformed payload, symlink defense across all guards).
-
 ## improved-backlog-item-detection-046c
 
 > verbatim (user, 2026-05-17):

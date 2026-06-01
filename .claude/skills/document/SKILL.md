@@ -39,9 +39,21 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 2. **Survey the diff.** `git diff --name-status <merge-base>..HEAD`. Classify touched files:
    - Public API / CLI / contract surfaces → `documentation` candidate.
    - New capability a user learns by doing → `technical-tutorials` candidate.
-   - Marketing / pricing / feature / landing pages → `prose` (persuasive register) candidate.
+   - Marketing / pricing / feature / landing pages (`site-src/**`) → BOTH registers (see 2.5).
    - README surface or prose anywhere in the diff → `prose` candidate.
    - Internal-only refactor with no external surface → just inline docstrings + the README sanity check.
+
+   **2.5 Reflective public-site check (do NOT rely on file-presence alone).** The public site (`site-src/**/*.njk`) *describes* the harness's behavior; a behavior change can require a description update even when **no `site-src/**` file is in the diff**. Anchoring on "no site file changed → no site work" gets the direction backwards (backlog 5e07). So always run the reflective check:
+
+   ```
+   node -e "import('./.claude/skills/document/public-site-reflect.mjs').then(m => console.log(JSON.stringify(m.findDescribedSurfaces({changedPaths: <diff paths>}), null, 2)))"
+   ```
+
+   `findDescribedSurfaces` derives the skill/hook/command tokens the diff touches and returns the public pages that name them. For **each** returned page, route it through TWO registers (per the canonical user feedback, backlog 7b3e — *"on public website we need to describe features not just the behavior"*):
+   - `documentation` (reference register) — update WHAT/HOW the page states, so the mechanism description stays accurate.
+   - `prose` in the **persuasive / feature-value register** (name `copywriting` as the conditional skill) — frame the user-facing FEATURE VALUE, not just the mechanism. A `_thread.md` row that says "shelves the active thread and surfaces a resume summary" describes behavior; the feature value is "never lose your train of thought across a pivot, `/clear`, or flush."
+
+   A `site-src/**` file that IS in the diff gets the same two-register treatment. If the reflective check returns nothing and no `site-src/**` file is in the diff, there is genuinely no public surface — say so.
 
 3. **Always: inline docs.** For every changed public symbol — module-level docstring / header comment / doc comment appropriate to the language. Short. If you need a comment to explain *what*, the abstraction is wrong; comments are for non-obvious *why*.
 

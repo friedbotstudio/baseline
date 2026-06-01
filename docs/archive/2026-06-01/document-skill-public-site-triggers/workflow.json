@@ -1,0 +1,31 @@
+{
+  "request": "Club B — /document skill improvements. (7b3e, user-feedback, verbatim canonical) /document routes site-src/** prose through the reference register only; it should also frame user-facing FEATURE VALUE via the persuasive (copywriting) register, distinct from the behavior/reference table. (5e07) /document Step 2 classifies by file-presence, not by whether the change alters behavior an existing public page DESCRIBES; add a REFLECTIVE check that greps site-src/**.njk for the skill-names + workflow-phase-names the diff touches and routes matches through the documentation delegate even when no site file is in the diff.",
+  "slug": "document-skill-public-site-triggers",
+  "track_id": "spec-entry",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "document-public-site-feature-framing-not-behavior-7b3e",
+    "document-phase-public-site-update-trigger-5e07"
+  ],
+  "created_at": 1780321325,
+  "updated_at": 1780322586
+}

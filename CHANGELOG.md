@@ -36,6 +36,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - **Archive bundle for `brainstorm-and-codesign`** includes the spec rendered as 16 SVGs at `docs/archive/2026-05-29/brainstorm-and-codesign/spec-rendered/` (c4_context, c4_container, 2 c4_components, class, 9 sequences, state, dependency_graph).
 - The docs site reads governance counts from a computed `site-src/_data/baseline.cjs` (replacing the static `baseline.json`) that calls the shared deriver at build time, so rendered counts can no longer drift from the artifacts.
 - `triage/SKILL.md` no longer carries duplicated canonical track-shape templates; `.claude/workflows.jsonl` is the single source and `tests/memory-flush-phase.test.mjs` AC-006 now reads the track node order directly from it.
+- The `/document` phase (Step 2) gained a reflective public-site trigger. A new `.claude/skills/document/public-site-reflect.mjs` → `findDescribedSurfaces` derives the skill/hook/command tokens a change touches and word-boundary-greps `site-src/**/*.njk` for pages that name them, so a behavior change surfaces the public page that describes it even when no `site-src/**` file is in the diff (closing the file-presence blind spot). Each surfaced page now routes through BOTH the reference register (`documentation`) and the persuasive feature-value register (`prose`/`copywriting`) — per the standing guidance to describe the user-facing feature, not just the mechanism.
 
 ### Fixed
 
