@@ -1,0 +1,25 @@
+{
+  "request": ".claude/memory/_thread.md grows one section per shelve with no roll-off (unbounded local-file growth). Add a count-based roll-off cap with oldest-section eviction in thread_store.appendEntry (.claude/hooks/lib/thread_store.mjs); the file is outside /memory-flush's reset path by design so the cap lives in the shelve/append path.",
+  "slug": "thread-trail-rolloff-cap",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "cli-copy-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "thread-trail-unbounded-growth-bounding-rolloff-4d8a"
+  ],
+  "created_at": 1780334350,
+  "updated_at": 1780336932
+}

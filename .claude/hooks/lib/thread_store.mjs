@@ -8,7 +8,7 @@
 // The trail survives `/memory-flush` by construction: `_thread.md` is NOT a
 // member of sweep.mjs CANONICAL_FILES and is not the _pending reset target.
 
-import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeJsonAtomic } from './common.mjs';
 
@@ -109,12 +109,47 @@ function parseSections(text) {
 
 // ---- trail file ----
 
-export function appendEntry({ memDir, entry }) {
+// Count cap on the rolling trail. One section is appended per shelve and the
+// trail is OUTSIDE /memory-flush's reset path by design, so without a cap it
+// grows unbounded. Only the most-recent section is ever injected at
+// SessionStart, so retaining the newest N bounds disk growth with no loss of
+// live continuity.
+export const THREAD_MAX_SECTIONS = 20;
+
+export function appendEntry({ memDir, entry, maxSections = THREAD_MAX_SECTIONS }) {
   const path = join(memDir, THREAD_FILENAME);
   try { mkdirSync(memDir, { recursive: true }); } catch {}
   if (!existsSync(path)) writeFileSync(path, TRAIL_HEADER);
   appendFileSync(path, '\n' + renderSection(entry));
+  pruneTrail({ memDir, maxSections });
   return entry;
+}
+
+// Evict oldest sections so at most `maxSections` remain. Sections are identified
+// by their base64 data block (parseSections), NOT by the `## SHELVED` heading
+// line: a multi-line verbatim cue can render a bare line beginning `## SHELVED `,
+// and counting those would miscount boundaries and wrongly evict a surviving
+// section. Survivors are re-rendered from the parsed entries — deterministic and
+// byte-identical to the originals because the entry round-trips through base64.
+// Atomic rewrite (temp + rename) so a crash can't truncate the trail mid-write.
+// Best-effort: any read/write failure leaves the trail untouched, reports none.
+export function pruneTrail({ memDir, maxSections = THREAD_MAX_SECTIONS }) {
+  const path = join(memDir, THREAD_FILENAME);
+  if (!existsSync(path)) return { kept: 0, evicted: 0 };
+  let entries;
+  try { entries = parseSections(readFileSync(path, 'utf8')); }
+  catch { return { kept: 0, evicted: 0 }; }
+  if (entries.length <= maxSections) return { kept: entries.length, evicted: 0 };
+  const keep = entries.slice(entries.length - maxSections);
+  const rebuilt = TRAIL_HEADER + keep.map((e) => '\n' + renderSection(e)).join('');
+  try {
+    const tmp = path + '.tmp';
+    writeFileSync(tmp, rebuilt);
+    renameSync(tmp, path);
+  } catch {
+    return { kept: entries.length, evicted: 0 };
+  }
+  return { kept: maxSections, evicted: entries.length - maxSections };
 }
 
 export function listSections({ memDir }) {
