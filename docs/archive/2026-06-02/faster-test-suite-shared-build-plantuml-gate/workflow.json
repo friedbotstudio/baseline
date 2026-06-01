@@ -1,0 +1,21 @@
+{
+  "request": "Part A test-suite speedup (behavior-preserving): (1) hoist redundant per-test cloneAndBuild/runBuild in build/manifest tests to shared before() blocks (skill-ownership.test.mjs AC-004 6x, manifest.test.mjs 2x); (2) env-gate the ~6 JVM-spawning PlantUML tests behind PLANTUML_TESTS=1 (off by default). Full node --test suite must stay green; integrate must run. No production code change.",
+  "slug": "faster-test-suite-shared-build-plantuml-gate",
+  "track_id": "chore",
+  "exceptions": [
+    "cli-copy-review"
+  ],
+  "completed": [
+    "chore",
+    "simplify",
+    "integrate",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780339489,
+  "updated_at": 1780340944
+}

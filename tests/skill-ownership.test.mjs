@@ -53,6 +53,31 @@ async function readManifest(tmp) {
   return JSON.parse(raw);
 }
 
+// One clean clone+build, shared across the build/audit/drift blocks below. A
+// build rsyncs the tree and sha256-hashes ~260 files (~18s); doing it once and
+// `cp -a`-copying the BUILT tree per consumer turns ~7 builds into 1 build +
+// cheap copies. Mutating drift tests tamper with their own writable copy.
+let _pristinePromise;
+function pristineBuiltTree() {
+  _pristinePromise ??= (async () => {
+    const tmp = await cloneRepo();
+    const r = runBuild(tmp);
+    if (r.status !== 0) throw new Error(`pristine build failed: ${r.stderr || r.stdout}`);
+    return tmp;
+  })();
+  return _pristinePromise;
+}
+async function freshBuiltClone() {
+  const src = await pristineBuiltTree();
+  const dst = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-ownership-'));
+  const r = spawnSync('cp', ['-a', `${src}/.`, dst], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`cp -a failed: ${r.stderr}`);
+  return dst;
+}
+after(async () => {
+  if (_pristinePromise) await fs.rm(await _pristinePromise, { recursive: true, force: true });
+});
+
 function parseFrontmatter(content) {
   const m = content.match(/^---\n([\s\S]*?)\n---\n/);
   return m ? m[1] : '';
@@ -101,11 +126,7 @@ describe('skill ownership — frontmatter (AC-001)', () => {
 describe('skill ownership — build manifest v2 (AC-002, AC-008)', () => {
   let tmp;
   before(async () => {
-    tmp = await cloneRepo();
-    const result = runBuild(tmp);
-    if (result.status !== 0) {
-      throw new Error(`build failed: ${result.stderr || result.stdout}`);
-    }
+    tmp = await freshBuiltClone();
   });
   after(async () => {
     if (tmp) await fs.rm(tmp, { recursive: true, force: true });
@@ -144,11 +165,7 @@ describe('skill ownership — build manifest v2 (AC-002, AC-008)', () => {
 describe('skill ownership — audit on clean build (AC-003)', () => {
   let tmp;
   before(async () => {
-    tmp = await cloneRepo();
-    const buildResult = runBuild(tmp);
-    if (buildResult.status !== 0) {
-      throw new Error(`build failed: ${buildResult.stderr || buildResult.stdout}`);
-    }
+    tmp = await freshBuiltClone();
   });
   after(async () => {
     if (tmp) await fs.rm(tmp, { recursive: true, force: true });
@@ -166,9 +183,8 @@ describe('skill ownership — audit on clean build (AC-003)', () => {
 
 describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
   it('test_when_baseline_SKILL_md_body_tampered_then_audit_reports_hash_mismatch', async () => {
-    const tmp = await cloneRepo();
+    const tmp = await freshBuiltClone();
     try {
-      assert.equal(runBuild(tmp).status, 0);
       const target = path.join(tmp, '.claude/skills/spec/SKILL.md');
       await fs.appendFile(target, ' ');
       const audit = runAudit(tmp);
@@ -182,9 +198,8 @@ describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
   });
 
   it('test_when_owner_field_removed_from_baseline_skill_then_audit_fails', async () => {
-    const tmp = await cloneRepo();
+    const tmp = await freshBuiltClone();
     try {
-      assert.equal(runBuild(tmp).status, 0);
       const target = path.join(tmp, '.claude/skills/spec/SKILL.md');
       const content = await fs.readFile(target, 'utf8');
       const stripped = content.replace(/^owner:.*\n/m, '');
@@ -208,9 +223,8 @@ describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
   });
 
   it('test_when_baseline_skill_directory_removed_then_audit_reports_baseline_skill_missing', async () => {
-    const tmp = await cloneRepo();
+    const tmp = await freshBuiltClone();
     try {
-      assert.equal(runBuild(tmp).status, 0);
       await fs.rm(path.join(tmp, '.claude/skills/spec'), { recursive: true, force: true });
       const audit = runAudit(tmp);
       assert.notEqual(audit.status, 0, 'audit should fail when a baseline skill directory is removed');
@@ -225,9 +239,8 @@ describe('skill ownership — drift detection (AC-004, AC-006, AC-009)', () => {
 
 describe('skill ownership — user skill ignored (AC-005)', () => {
   it('test_when_user_skill_added_then_audit_ignores_it', async () => {
-    const tmp = await cloneRepo();
+    const tmp = await freshBuiltClone();
     try {
-      assert.equal(runBuild(tmp).status, 0);
       const userSkillDir = path.join(tmp, '.claude/skills/user-example');
       await fs.mkdir(userSkillDir);
       await fs.writeFile(
@@ -248,9 +261,8 @@ describe('skill ownership — user skill ignored (AC-005)', () => {
 
 describe('skill ownership — constitutional citation (AC-007)', () => {
   it('test_when_section_17_missing_from_seed_then_audit_reports_missing_citation', async () => {
-    const tmp = await cloneRepo();
+    const tmp = await freshBuiltClone();
     try {
-      assert.equal(runBuild(tmp).status, 0);
       const seedPath = path.join(tmp, 'docs/init/seed.md');
       const content = await fs.readFile(seedPath, 'utf8');
       const without17 = content.replace(/## §17[\s\S]*?(?=\n## §|\n---\n|$)/m, '');

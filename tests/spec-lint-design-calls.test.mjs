@@ -14,6 +14,11 @@ const UI_GLOBS         = ['app/**/*.{tsx,jsx}', '**/*.css'];
 const UI_GLOBS_TARGET  = 'app/settings/page.tsx';
 const BACKEND_TARGET   = 'src/api/orders.ts';
 
+// These tests run the full spec-lint, which shells out to `java -jar … -checkonly`
+// to validate the spec's PlantUML fences — a slow JVM spawn per block. Off by
+// default; set PLANTUML_TESTS=1 to exercise them.
+const PLANTUML_SKIP = process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests';
+
 // Synthesizes a project root under tmpdir with a minimal .claude/project.json
 // that lint.sh and the hook both read. Cloning the live project.json preserves
 // the artifacts.required_sections + required_diagrams config those tools need.
@@ -128,7 +133,7 @@ function runHook(root, payload) {
 }
 
 describe('spec-lint check_design_calls (AC-004 preflight)', () => {
-  it('test_when_spec_lint_runs_on_ui_spec_without_design_calls_then_fails', async () => {
+  it('test_when_spec_lint_runs_on_ui_spec_without_design_calls_then_fails', { skip: PLANTUML_SKIP }, async () => {
     const root = await makeProject({ uiGlobs: UI_GLOBS });
     try {
       const slug = 'fixture-ui-no-design-calls';
@@ -148,7 +153,7 @@ describe('spec-lint check_design_calls (AC-004 preflight)', () => {
     }
   });
 
-  it('test_when_spec_lint_runs_on_ui_spec_with_design_calls_then_passes', async () => {
+  it('test_when_spec_lint_runs_on_ui_spec_with_design_calls_then_passes', { skip: PLANTUML_SKIP }, async () => {
     const root = await makeProject({ uiGlobs: UI_GLOBS });
     try {
       const slug = 'fixture-ui-with-design-calls';
@@ -167,7 +172,7 @@ describe('spec-lint check_design_calls (AC-004 preflight)', () => {
     }
   });
 
-  it('test_when_spec_lint_runs_on_non_ui_spec_without_design_calls_then_passes', async () => {
+  it('test_when_spec_lint_runs_on_non_ui_spec_without_design_calls_then_passes', { skip: PLANTUML_SKIP }, async () => {
     const root = await makeProject({ uiGlobs: UI_GLOBS });
     try {
       const slug = 'fixture-backend-no-design-calls';

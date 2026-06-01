@@ -102,7 +102,7 @@ const VALID_FENCE = '```plantuml\n@startuml\nA -> B\n@enduml\n```\n';
 const INVALID_FENCE = '```plantuml\n@startuml\nthis is not valid syntax!@#$\n@enduml\n```\n';
 
 describe('plantuml_syntax_guard — java -jar rewire (B4)', () => {
-  it('test_when_plantuml_syntax_guard_runs_with_jar_and_java_then_validates_fence_and_blocks_bad_syntax', () => {
+  it('test_when_plantuml_syntax_guard_runs_with_jar_and_java_then_validates_fence_and_blocks_bad_syntax', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, () => {
     const root = buildSandbox({ withJar: true });
     const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${INVALID_FENCE}`));
     assert.equal(

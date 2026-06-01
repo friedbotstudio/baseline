@@ -50,7 +50,7 @@ function runCliWithJava(args, javaState, tpl) {
 }
 
 describe('install — Java preflight (D1 + D3 + D4)', () => {
-  it('test_when_install_runs_with_java_on_path_then_no_java_related_stderr_emitted', async () => {
+  it('test_when_install_runs_with_java_on_path_then_no_java_related_stderr_emitted', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, async () => {
     const tpl = await makeTemplateFixture();
     const target = await mkdtemp(join(tmpdir(), 'java-target-'));
     const r = runCliWithJava([target, '--no-plantuml'], 'present', tpl);

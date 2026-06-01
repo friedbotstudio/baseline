@@ -82,7 +82,7 @@ function runRender(root, env = {}) {
 }
 
 describe('spec-render/render.mjs — java -jar rendering (B4)', () => {
-  it('test_when_spec_render_runs_with_jar_and_java_then_writes_svg_outputs', () => {
+  it('test_when_spec_render_runs_with_jar_and_java_then_writes_svg_outputs', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, () => {
     const root = buildSandbox({ withJar: true });
     const r = runRender(root);
     assert.equal(

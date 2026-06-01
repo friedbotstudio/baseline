@@ -1,6 +1,6 @@
-import { describe, it } from 'node:test';
+import { describe, it, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, mkdir, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cloneAndBuild } from './helpers/clone-and-build.mjs';
@@ -13,6 +13,17 @@ try {
 }
 
 const { hashFile, buildManifestFromDir, saveManifest, loadManifest } = manifest;
+
+// One shared clone+build for the read-only "built manifest shape" assertions
+// below. Rebuilding per test was the dominant cost (each build rsyncs the tree
+// and sha256-hashes ~260 files); both consumers only READ the built manifest,
+// so a single cached build is safe.
+let _builtPromise;
+function sharedBuilt() {
+  _builtPromise ??= cloneAndBuild('manifest-shared-');
+  return _builtPromise;
+}
+after(async () => { if (_builtPromise) await rm(await _builtPromise, { recursive: true, force: true }); });
 
 describe('manifest module', () => {
   it('hashFile returns sha256 hex string of known content', async () => {
@@ -131,7 +142,7 @@ describe('installed manifest v2 — baseline_version field (upgrade-flow-rework)
 
 describe('manifest v2 shape (skill-ownership)', () => {
   it('test_when_manifest_built_then_v2_shape_has_owners_skills_present', async () => {
-    const tmp = await cloneAndBuild('manifest-v2-');
+    const tmp = await sharedBuilt();
     // Shipped manifest now lives inside the .claude/ subtree so the recursive
     // install delivers it at <target>/.claude/manifest.json without special-
     // casing — see CLAUDE.md Article XI.
@@ -154,7 +165,7 @@ describe('shipped manifest — runtime-state file tier classification', () => {
     // Build into a per-test tmpdir (not the live REPO_ROOT/obj/template, which
     // build-running tests rm -rf + rebuild — a parallel-run race). cloneAndBuild
     // serializes via the build script's TMPDIR-global mutex.
-    const tmp = await cloneAndBuild('manifest-tier-');
+    const tmp = await sharedBuilt();
     const text = await readFile(join(tmp, 'obj/template/.claude/manifest.json'), 'utf8');
     const m = JSON.parse(text);
 
