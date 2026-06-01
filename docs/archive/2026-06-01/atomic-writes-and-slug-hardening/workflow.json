@@ -18,7 +18,8 @@
     "document",
     "archive",
     "memory-flush",
-    "changelog"
+    "changelog",
+    "commit"
   ],
   "skipped_alternates": [],
   "source_backlog_keys": [
@@ -28,5 +29,6 @@
     "commit-consent-ttl-too-tight-for-humanizer-flow-8917"
   ],
   "created_at": 1780264629,
-  "updated_at": 1780305001
+  "updated_at": 1780305001,
+  "commit_sha": "cb132d6"
 }

@@ -87,20 +87,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - last-touched: 2026-05-18
 - caveat: The `/document` skill's Step 2 survey classifies touched files into documentation / technical-tutorials / prose delegate buckets. It does NOT classify by "the change modifies behavior that an existing public-docs page describes." During workflow-loop-closing-hygiene's first `/document` pass, I anchored on "no site-src/ file is in my write_set" → "no site work needed" — which got the direction backwards. The site DESCRIBES behavior; when behavior changes, the description needs updating even when no site-src/ file initially appears in the diff. Cure surfaces: (i) extend `/document` Step 2 with a "site-describes-this-behavior" check that greps the public-docs surface (site-src/**.njk) for references to skill names + workflow-phase names touched by the diff and routes any matches through the `documentation` delegate; (ii) require the spec's Archive plan section to enumerate any public-docs pages that describe behavior the spec changes, surfacing the requirement at /spec time rather than at /document time. Either path requires the trigger to be REFLECTIVE (the diff's behavior change implies a docs surface that may not be in the diff yet), not just file-presence-driven. See `workflow-loop-closing-hygiene` archive bundle's session log for the live miss-and-fix-up cycle.
 
-## commit-consent-ttl-too-tight-for-humanizer-flow-8917
-
-> assistant-deferral (claude, 2026-05-18):
-> The 300s commit_consent TTL is tight for commits that need humanizer + an explanation hop in between. The cure is to not add a stall ("want me to go ahead?") between grant-commit and git commit when no new question is actually pending.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-18
-- raised-in-context: workflow-loop-closing-hygiene end-of-workflow lessons (commit bfad579 required a /grant-commit re-grant after the first token expired)
-- estimated-effort: small
-- verified-at: bfad579
-- last-touched: 2026-05-18
-- caveat: `project.json → consent.commit_ttl_seconds` defaults to 300. During this workflow's `/commit` step, the elapsed time from /grant-commit consent to actual git commit was 544 seconds — the message-drafting, humanizer pass, and a redundant "want me to go ahead?" stall ate the window. Two non-exclusive cures: (i) behavioral — don't insert post-grant stalls when there is no actual decision pending; the user's /grant-commit already authorized the commit. Add this as `/commit` SOP guidance: between Step 4 (humanizer) and Step 5 (git commit), do NOT emit a clarifying question to the user — humanizer's output is the final body and the commit fires immediately. (ii) configuration — raise `consent.commit_ttl_seconds` default to 600 to absorb humanizer latency on slower runs, or have `/commit` check the token's age before Step 4 and re-grant if `< 60s` remaining. Behavioral cure is YAGNI-aligned (no config change); configuration cure is more robust but adds knobs.
-
 ## triage-skill-md-still-duplicates-workflows-jsonl-canonical-templates-c8f4
 
 > verbatim (user, 2026-05-21):
@@ -114,34 +100,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: HEAD
 - last-touched: 2026-05-21
 - caveat: After the post-§18 architecture landed, `.claude/skills/triage/SKILL.md` lines 57-71 still carry the four canonical track templates (chore / tdd-quickfix / spec-entry / intake-full) verbatim under a "Reference: canonical track shapes (mirrored in workflows.jsonl)" subheading. The runtime path (seed-tasklist.mjs + materializer) reads `.claude/workflows.jsonl`, NOT these SKILL.md templates — so behavior is correct today. But the source of truth is split: workflows.jsonl is authoritative; the SKILL.md text is a duplicate description. A downstream user editing workflows.jsonl to add a new track or modify ordering will NOT see that reflected in the SKILL.md body. The templates were RESTORED (not kept by design) during /integrate because the N-file enumerating tests in `tests/memory-flush-phase.test.mjs:235-272` parameterize over 8 files including triage SKILL.md and assert each mentions "memory-flush" with archive before + commit after — removing the templates broke 2 tests; restoring them satisfied the assertions. Remediation: (1) rewrite memory-flush-phase.test.mjs to parse `.claude/workflows.jsonl` directly for the canonical tracks (scenario territory, can't be done inside an /implement pass); (2) once those tests pass off workflows.jsonl, remove the "Reference: canonical track shapes" subsection from triage SKILL.md; (3) re-run byte-equivalent + mirror checks. Both edits are ~10 lines total. Until done, the duplication is latent drift; the byte-equivalent migration test catches it as long as someone keeps both in sync.
-
-## workflow-migrator-write-not-atomic-power-loss-corruption-3e91
-
-> assistant-deferral (claude, 2026-05-21):
-> Workflow.json migrator at src/cli/workflow-migrator.js:38 writes via writeFile — non-atomic. A process crash, kill signal, or power loss between open and fsync leaves a partially-written workflow.json on disk. The next harness invocation reads a corrupt or truncated file and aborts.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-21
-- raised-in-context: workflow-extension-via-workflows-json /security review (LOW finding 1)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-21
-- caveat: OWASP A08 / CWE-362 (race condition). Mitigation: use the write-to-temp-then-rename pattern. POSIX rename is atomic on the same filesystem. Code shape: `await writeFile(filePath + '.tmp', body); await rename(filePath + '.tmp', filePath);`. ~3-line change in workflow-migrator.js. Defers risk from "partial corruption" to "rename interrupt" which is recoverable (.tmp file left behind; harness can detect on next preflight and clean). No data loss possible in either case (user can re-run /triage to restart the workflow). Non-blocking; advisory per the /security skill's MEDIUM/LOW → continue rule.
-
-## triage-helper-slug-interpolation-into-bash-subprocess-a720
-
-> assistant-deferral (claude, 2026-05-21):
-> Triage SKILL.md instructs Claude to run `node .claude/skills/triage/seed-tasklist.mjs <track_id> <slug>` via the Bash tool. <slug> and <track_id> are substituted by Claude at invocation time. If Claude generates a slug containing shell metacharacters (`;`, `&&`, backticks), the Bash invocation could execute attacker-controlled commands.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-21
-- raised-in-context: workflow-extension-via-workflows-json /security review (LOW finding 2)
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-21
-- caveat: OWASP A03 / CWE-78 (OS command injection). Theoretical: the triage SOP already constrains slug to canonical-kebab via `lib/common.sh → canonical_slug` (strip directory prefix + trailing `.md`); triage classifies and confirms before substitution. Realized exploit requires multiple chained social-engineering steps. Defense in depth options: (a) quote the args in the documented invocation pattern (`node .claude/skills/triage/seed-tasklist.mjs "$track_id" "$slug"`); (b) have triage instruct Claude to assert `[[ "$slug" =~ ^[a-z][a-z0-9-]*$ ]]` before invoking the helper. Either is ~1 SOP line. Non-blocking; advisory.
 
 ## auto-summarize-spec-and-surface-open-questions-at-gate-4ab5
 
@@ -198,20 +156,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: ab412d1
 - last-touched: 2026-05-30
 - caveat: The /document skill routes site-src/** prose through the reference-documentation register, so the memory.njk _thread.md row I wrote describes WHAT it does + HOW shelve/resume work, but not the user-facing FEATURE value ("never lose your train of thought across a pivot, /clear, or flush"). Improvement: /document Step 2 should detect site-src/** (public marketing/docs) targets and route value/feature framing through the persuasive register (copywriting) distinct from the behavior table — describe the feature, not just the mechanism. Verbatim is canonical.
-
-## thread-store-non-atomic-state-writes-9c12
-
-> verbatim (claude, 2026-05-30):
-> thread_store/resume_transform write the cursor/candidate/cache JSON via direct writeFileSync (not write-then-rename); CWE-362, self-healing (null -> fallback) so LOW; optional hardening: write-to-temp-then-rename for the JSON sidecars matching common.mjs writeMarkerAtomic.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-30
-- raised-in-context: conversation-thread-shelving /security review (LOW finding 2)
-- estimated-effort: small
-- verified-at: ab412d1
-- last-touched: 2026-05-30
-- caveat: thread_store.writeJson (cursor/candidate) + resume_transform.writeCache use direct writeFileSync; appendEntry uses appendFileSync. A crash mid-write can truncate a sidecar, but readJson/readCache catch parse failure and callers fall back gracefully (whole-transcript fallback / recompute / parseSections skips a partial trailing block) — no loss of prior entries. Cross-ref backlog workflow-migrator-write-not-atomic (higher impact there). Optional defense-in-depth.
 
 ## thread-trail-unbounded-growth-bounding-rolloff-4d8a
 
