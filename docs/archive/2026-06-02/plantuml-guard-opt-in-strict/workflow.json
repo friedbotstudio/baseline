@@ -1,0 +1,23 @@
+{
+  "request": "Part B: make plantuml_syntax_guard not spawn java by default. Default = advisory (no JVM): emit a one-line 'syntax not validated at write time; run /spec-lint' and allow. A new project.json knob plantuml.strict_syntax_check (default false) re-enables the current java -jar -checkonly behavior. Authoritative syntax validation stays in /spec-lint (on-demand, pre-approval). Constitutional: amend seed.md §4.1 (hook table row + lines 41,415) + CLAUDE.md Article VIII row, keeping src/seed.template.md and src/CLAUDE.template.md byte-mirrors in sync. Add the project.json knob (+ template). Update plantuml-syntax-guard-runtime tests.",
+  "slug": "plantuml-guard-opt-in-strict",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "cli-copy-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780341297,
+  "updated_at": 1780343054
+}

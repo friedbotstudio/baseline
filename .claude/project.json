@@ -192,6 +192,9 @@
   "memory": {
     "thread_transform_ttl_seconds": 86400
   },
+  "plantuml": {
+    "strict_syntax_check": false
+  },
   "git": {
     "protected_branches": null,
     "branch_pattern": null

@@ -25,6 +25,7 @@ import {
   emitInfo,
   emitBlock,
   computeProposedContent,
+  projectGet,
   logLine,
 } from './lib/common.mjs';
 
@@ -35,7 +36,16 @@ function hasJava() {
   const r = spawnSync('which', ['java'], { encoding: 'utf8' });
   return r.status === 0 && (r.stdout || '').trim() !== '';
 }
-const HAS_JAVA = hasJava();
+
+// Extract ```plantuml ... ``` fenced blocks (case-insensitive language tag).
+const fenceRe = /^[ \t]*```[ \t]*plantuml[ \t]*$([\s\S]*?)^[ \t]*```[ \t]*$/gmi;
+function plantumlBlocks(content) {
+  const blocks = [];
+  let m;
+  fenceRe.lastIndex = 0;
+  while ((m = fenceRe.exec(content)) !== null) blocks.push(m[1]);
+  return blocks;
+}
 
 const payload = await readPayload();
 
@@ -51,6 +61,25 @@ if (!(rel.startsWith('docs/specs/') && rel.endsWith('.md'))) emitAllow();
 const base = basename(rel);
 if (base.startsWith('_TEMPLATE_') || /TEMPLATE.*\.md$/.test(base)) emitAllow();
 
+const content = computeProposedContent(tool, payload, file);
+if (!content.trim()) emitAllow();
+
+// Default behavior: do NOT spawn a JVM at the write boundary. The authoritative
+// `java -jar … -checkonly` syntax validation runs on-demand in `/spec-lint`
+// (before `/approve-spec`); the LLM does not need it inline. Opt in to
+// write-time strict checking via `project.json → plantuml.strict_syntax_check`.
+const STRICT = projectGet('plantuml.strict_syntax_check') === true;
+if (!STRICT) {
+  const n = plantumlBlocks(content).length;
+  if (n > 0) {
+    emitInfo(`PlantUML syntax is not validated at the write boundary (project.json → plantuml.strict_syntax_check is off) — ${n} fence(s) in '${rel}'. Run \`/spec-lint <slug>\` to validate before \`/approve-spec\`, or set plantuml.strict_syntax_check: true to check at write time.`);
+    logLine('plantuml_syntax_guard', `ADVISORY (strict off) ${rel} fences=${n}`);
+  }
+  emitAllow();
+}
+
+// Strict mode (opt-in): validate each fence via `java -jar plantuml.jar -checkonly`.
+const HAS_JAVA = hasJava();
 const projectDir = process.env.CLAUDE_PROJECT_DIR || CLAUDE_PROJECT_ROOT;
 const plantumlJar = join(projectDir, '.claude', 'bin', 'plantuml.jar');
 
@@ -66,14 +95,7 @@ if (!HAS_JAVA) {
   emitAllow();
 }
 
-const content = computeProposedContent(tool, payload, file);
-if (!content.trim()) emitAllow();
-
-// Extract ```plantuml ... ``` fenced blocks (case-insensitive language tag).
-const fenceRe = /^[ \t]*```[ \t]*plantuml[ \t]*$([\s\S]*?)^[ \t]*```[ \t]*$/gmi;
-const blocks = [];
-let m;
-while ((m = fenceRe.exec(content)) !== null) blocks.push(m[1]);
+const blocks = plantumlBlocks(content);
 if (blocks.length === 0) emitAllow();
 
 const failures = [];

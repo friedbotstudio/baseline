@@ -73,7 +73,7 @@ toc:
     <tr><td class="phase">verify_pass_guard</td><td>V, VI</td><td>Block writing PASS to verify artifacts when truth source says FAIL.</td></tr>
     <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce per-track DAG ordering for workflow artifacts.</td></tr>
     <tr><td class="phase">artifact_template_guard</td><td>IV</td><td>Block artifact writes missing required sections.</td></tr>
-    <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Validate PlantUML fences in <code>docs/specs/*.md</code>.</td></tr>
+    <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Advisory by default (no JVM): notes that PlantUML fences in <code>docs/specs/*.md</code> are unvalidated at write time. Runs the strict <code>java -checkonly</code> parse only when <code>project.json</code> sets <code>plantuml.strict_syntax_check</code> to true; otherwise validate on demand with <code>/spec-lint</code>.</td></tr>
     <tr><td class="phase">spec_diagram_presence_guard</td><td>IV (phase 4)</td><td>Block specs missing required diagram kinds.</td></tr>
     <tr><td class="phase">spec_design_calls_guard</td><td>X.2</td><td>Block specs whose <code>write_set</code> intersects <code>tdd.ui_globs</code> from omitting a populated <code>## Design calls</code> section.</td></tr>
     <tr><td class="phase">swarm_boundary_guard</td><td>IV (phase 6c)</td><td>Enforce write-set discipline in shared isolation mode.</td></tr>

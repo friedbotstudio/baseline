@@ -190,7 +190,7 @@ The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `verify_pass_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. V, VI | Block writing PASS to verify artifacts when truth source says FAIL |
 | `track_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Enforce 11-phase ordering for workflow artifacts |
 | `artifact_template_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Block artifact writes missing required `##` sections |
-| `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Validate PlantUML fences in `docs/specs/*.md` |
+| `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true; else `/spec-lint`. |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
 | `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block UI-touching specs that omit a populated `## Design calls` section |
 | `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |

@@ -29,48 +29,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## improved-backlog-item-detection-046c
-
-> verbatim (user, 2026-05-17):
-> improved backlog item detection (this I am saying without testing anything but given that last memory flush deleted it means backlog item extraction can be improved)
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-17
-- raised-in-context: post-backlog-memory-bucket review (no active workflow)
-- estimated-effort: medium
-- verified-at: HEAD
-- last-touched: 2026-05-17
-- caveat: Direct-write to `backlog.md` because `memory_stop.mjs` intent-detection didn't fire on this item's prose phrasing — which is itself the evidence the user cites. The intent regex set in `memory_stop.mjs` (anchored line-start patterns like `TODO:`, `next we (should|need to|must)`, `let's also`, `we should also`, `backlog this`, `after this (lands|ships)`) misses descriptive numbered-list items like "1. improved backlog item detection". Scope of follow-up: widen the trigger set toward higher recall while preserving the precision contract from the backlog-memory-bucket intake ("only obvious future-intent phrasings should match; mid-sentence accidental matches should not"); add a test corpus of true-positive sentences from real conversations; consider a second pass at flush-time that lets the curator manually promote anything the hook missed.
-
-## document-phase-public-site-update-trigger-5e07
-
-> assistant-deferral (claude, 2026-05-18):
-> The /document phase needs a better trigger for "behavior change → public docs site update" — I treated it as internal-only when site-src/ described the workflow.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-05-18
-- raised-in-context: workflow-loop-closing-hygiene end-of-workflow lessons (commit bfad579)
-- estimated-effort: medium
-- verified-at: bfad579
-- last-touched: 2026-05-18
-- caveat: The `/document` skill's Step 2 survey classifies touched files into documentation / technical-tutorials / prose delegate buckets. It does NOT classify by "the change modifies behavior that an existing public-docs page describes." During workflow-loop-closing-hygiene's first `/document` pass, I anchored on "no site-src/ file is in my write_set" → "no site work needed" — which got the direction backwards. The site DESCRIBES behavior; when behavior changes, the description needs updating even when no site-src/ file initially appears in the diff. Cure surfaces: (i) extend `/document` Step 2 with a "site-describes-this-behavior" check that greps the public-docs surface (site-src/**.njk) for references to skill names + workflow-phase names touched by the diff and routes any matches through the `documentation` delegate; (ii) require the spec's Archive plan section to enumerate any public-docs pages that describe behavior the spec changes, surfacing the requirement at /spec time rather than at /document time. Either path requires the trigger to be REFLECTIVE (the diff's behavior change implies a docs surface that may not be in the diff yet), not just file-presence-driven. See `workflow-loop-closing-hygiene` archive bundle's session log for the live miss-and-fix-up cycle.
-
-## auto-summarize-spec-and-surface-open-questions-at-gate-4ab5
-
-> verbatim (user, 2026-05-20):
-> can you summarize the spec and present me all the open questions that needs my attention (add this for backlog too, this would be nice feature improvement)
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-05-20
-- raised-in-context: workflow-extension-via-workflows-json /approve-spec consent gate
-- estimated-effort: small
-- verified-at: HEAD
-- last-touched: 2026-05-20
-- caveat: When the harness yields at `/approve-spec`, the reviewer often has to manually open three artifacts (intake, research, spec) to find every open question — and across them, the same question can recur under different framings while the spec's own §Open questions list omits items the upstream artifacts already declared. The user surfaced this gap at the workflow-extension-via-workflows-json approve-gate. Proposed automation: a small helper invoked at gate-A yield that (i) reads the slug's intake/research/spec/BRD if present, (ii) extracts every `## Open questions` entry (and equivalents like research's "Open questions for /spec to resolve"), (iii) dedupes by semantic intent, (iv) classifies each as `must-decide-before-approval` (touches load-bearing design choice surfaced in the recommendation pivot or in the spec's §Open questions) vs `settled-in-spec` (spec already picked a default but flagged as decidable) vs `defer-to-tdd` (resolvable at impl time), and (v) emits a tight summary + bucketed question list to the harness yield message. Probably belongs in the harness skill body (an extra step before emitting the yield terminal message when `reason: "yielded at /approve-spec"`) or as a new `spec-summary` skill the harness invokes inline. Tradeoff: more harness-body logic vs cleaner separation in a dedicated skill. Test corpus: any past workflow's approve-gate transcript; verify the extracted question set matches what a human reviewer would surface.
-
 ## llm-assisted-memory-capture-routing-cf4a
 
 > verbatim (user, 2026-05-30):
@@ -85,30 +43,30 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - last-touched: 2026-05-30
 - caveat: Verbatim is canonical (per `.claude/memory/README.md → Source provenance`); this interpretation refines, not overrides. Factual nuance to carry into design: `/memory-flush` is ALREADY LLM-assisted — it runs in main context with the model as curator (Step 2 promote/discard/defer). The genuinely PURE-LOGIC pieces the user is reacting to are (a) `.claude/hooks/lib/memory_stop.mjs` intent/landmark extraction — anchored, line-start regex (`INTENT_TRIGGERS`) that is precision-tuned to NOT fire mid-sentence, and (b) `.claude/skills/memory-flush/sweep.mjs` closure/stale mechanics. Live evidence captured this session: this very instruction would have been DROPPED by the auto-extractor — "...we need to fix..." is mid-sentence (line starts "actually this means") and "let us work on... (add to backlog)" matches none of the triggers (`let's also`, `backlog this`), so `memory_stop` emitted no candidate and the item only survived because it was hand-promoted here. Improvement scope to explore next session: (1) LLM-assisted EXTRACTION at capture time (replace/augment the anchored regex with a model pass that recognizes salient intent regardless of sentence position) and routing to the right canonical bucket (landmark / decision / open-question / backlog) automatically; (2) make `_resume.md` (or a sibling) carry a durable, curated "what we were working on + why" thread rather than a per-turn-overwritten snapshot, so cross-session continuity survives a `/clear`; (3) keep the human-in-the-loop curation guarantee (Article IX.3: promotion to canonical only via `/memory-flush`) — any auto-routing should still stage to `_pending` for review, not write canonical directly. Cross-refs: the auto-extraction regex misses are a recurring theme (see also `stale-sh-refs-in-tests-after-mjs-port` for a different residual-debt pattern). Companion entry: `shelve-conversation-on-context-switch-with-verbatim-cues-b7e2` extends point (2) into a mid-session *transition* event (shelving on topic-switch) and hardens "durable" into "committed + survives `/memory-flush`".
 
-## document-public-site-feature-framing-not-behavior-7b3e
+## shelve-capture-grabs-skill-sop-boilerplate-not-decisions-91a3
 
-> verbatim (user, 2026-05-30):
-> the current document only describes technical aspect but on public website we need to describe features not just the behavior. for now we can continue but we will later fix our document skill
+> verbatim (user, 2026-06-01):
+> the cue extractor shelve_capture.mjs grabs skill-SOP boilerplate as "cues" instead of real decision text ... let us add both as 1 backlog item
 
-- source: user-feedback
+- source: user-instruction
 - status: open
-- raised-on: 2026-05-30
-- raised-in-context: conversation-thread-shelving /document phase (site-src/memory.njk _thread.md update)
-- estimated-effort: medium
-- verified-at: ab412d1
-- last-touched: 2026-05-30
-- caveat: The /document skill routes site-src/** prose through the reference-documentation register, so the memory.njk _thread.md row I wrote describes WHAT it does + HOW shelve/resume work, but not the user-facing FEATURE value ("never lose your train of thought across a pivot, /clear, or flush"). Improvement: /document Step 2 should detect site-src/** (public marketing/docs) targets and route value/feature framing through the persuasive register (copywriting) distinct from the behavior table — describe the feature, not just the mechanism. Verbatim is canonical.
+- raised-on: 2026-06-01
+- raised-in-context: post-mortem of the thread-trail-rolloff-cap (4d8a) workflow; the ONE existing shelf entry (2026-05-31) was dominated by injected SKILL.md bodies captured as cues
+- estimated-effort: small (Tier 1) + large/deferred (Tier 2)
+- verified-at: 464da06
+- last-touched: 2026-06-01
+- caveat: `.claude/hooks/lib/shelve_capture.mjs → extract` (lines ~40-50) pushes EVERY `user`-role event's text as a verbatim cue with NO noise filter, so Skill-launch SKILL.md bodies (which arrive as user-role text, prefixed `Base directory for this skill:`) plus `<command-name>` / `<system-reminder>` / `<local-command-` wrappers get captured as "cues". The fix is two tiers, tracked here as ONE item per user request. **Tier 1 (small, do first, `tdd-quickfix`):** add an `isBoilerplate(text)` guard in `extract`'s user-branch, mirroring `memory_stop.mjs`'s existing `NOISE_PREFIXES`/`filterNoise` (`<system-reminder>`, `<command-name>`, `<local-command-`) plus a `^Base directory for this skill:` skill-SOP marker; optional DRY win = lift the shared noise list into `.claude/hooks/lib/common.mjs` so `memory_stop`, `resume_writer`, and `shelve_capture` share one source (the thread_store landmark caveat already says "Noise filters must mirror resume_writer.mjs"). Deterministic; ~20-40 lines + a fixture test. **Tier 2 (large, fold into [[llm-assisted-memory-capture-routing-cf4a]]):** *weight* actual user/assistant decision text vs chatter — semantic, not prefix-matchable; an LLM pass at capture time, which IS the cf4a item. Do Tier 1 standalone; do NOT attempt Tier 2 with regex.
 
-## thread-trail-unbounded-growth-bounding-rolloff-4d8a
+## reduce-full-test-suite-runtime-toward-one-minute-652c
 
-> verbatim (claude, 2026-05-30):
-> _thread.md is append-only and excluded from /memory-flush reset (durable by design) -> unbounded on-disk growth (CWE-400, low impact); follow-up: size-cap + roll-off of oldest sections (or a cold _thread.archive.md).
+> verbatim (user, 2026-06-02):
+> let us add a backlog item to reduce this testing time to ~1 minutes (or whatever least is possible)
 
-- source: assistant-deferral
+- source: user-instruction
 - status: open
-- raised-on: 2026-05-30
-- raised-in-context: conversation-thread-shelving /security review (LOW finding 3) + intake OQ-1 (bounding/lifecycle)
-- estimated-effort: medium
-- verified-at: ab412d1
-- last-touched: 2026-05-30
-- caveat: SessionStart injection is bounded (most-recent section only, ~10KB envelope — AC-009) and per-entry capture is capped (MAX_CUES/MAX_FILES/MAX_OPEN_QUESTIONS), so context/runtime cost is bounded; only on-disk size grows without limit. Resolves intake OQ-1. Follow-up: size-cap + roll-off of oldest sections, or move cold sections to _thread.archive.md.
+- raised-on: 2026-06-02
+- raised-in-context: right after Part A (`faster-test-suite-shared-build-plantuml-gate`, commit 2afb07c) cut the serial suite ~644s→~459s; the user wants a deeper target (~1 min) and Part B (plantuml-guard-opt-in-strict) was in flight
+- estimated-effort: medium-large
+- verified-at: 2afb07c
+- last-touched: 2026-06-02
+- caveat: Part A already (a) gated the 6 JVM-spawning PlantUML tests behind `PLANTUML_TESTS=1` and (b) shared the per-test template build inside `skill-ownership.test.mjs` / `manifest.test.mjs`. To go from ~459s toward ~60s the dominant levers, in priority order: **(1) Run the suite in PARALLEL.** It is pinned to `--test-concurrency=1` because some build-exercising tests mutate the LIVE `obj/template` (`tests/build-template.test.mjs` rm -rf's + rebuilds it; others READ it) — a data race under concurrency. Route EVERY build/manifest/audit test through an isolated tmpdir (the `tests/helpers/clone-and-build.mjs` pattern) so NOTHING touches live `obj/template`, then drop the concurrency pin. Wall-clock then approaches max-single-test (~15-30s) instead of sum-of-all. This is the single biggest win. **(2) Build the template ONCE per suite, not per file.** ~10 test cases each run a full `scripts/build-template.sh` (rsync + sha256 of ~260 files + audit, ~20-30s each). node:test isolates files in separate processes, so a process-level cache won't cross files — instead build one pristine tree in a global setup (or a make-style prebuilt fixture under a known tmp path) and have all read-only build/manifest tests point at it; mutating drift tests `cp -a` from it (Part A already does this within a file). **(3) Speed up the build itself:** `scripts/build-manifest.mjs:138-150` reads+sha256s ~260 files per build (~8-12s); `build-template.sh` Stage 4 then re-hashes them again in `audit.mjs:295` — skip the redundant Stage-4 re-hash after a fresh build (the DEFERRED "audit `--skip-hash-check`" idea, ~16-24s total across tests). **(4)** Env-gate or trim the npm-pack/install `publish-check`/`smoke-tarball` tests (~1.5 min) behind a flag like the PlantUML gate, since they need network/npm and rarely change. Measured baseline + per-test breakdown captured during the Part A investigation (top offenders: spec-lint check_design_calls 59s [now gated], build-audit-gate 35s, manifest-tier 28s, audit-exits-0 27s, manifest-v2 25s, skill-ownership drift cluster). Net: parallelization (1) + single-build (2) should plausibly reach 1-2 min; (3)+(4) trim further. Risk: (1) requires auditing every test for hidden shared-state writes (live `obj/template`, `.claude/state/`, `.claude/memory/`) before lifting the concurrency pin.

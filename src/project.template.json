@@ -188,6 +188,9 @@
     "gate_marker_ttl_seconds": 120,
     "push_ttl_seconds": 300
   },
+  "plantuml": {
+    "strict_syntax_check": false
+  },
   "git": {
     "protected_branches": null,
     "branch_pattern": null

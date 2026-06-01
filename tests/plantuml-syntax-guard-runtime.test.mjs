@@ -27,14 +27,17 @@ const HOOK_SRC = join(REPO_ROOT, '.claude/hooks/plantuml_syntax_guard.mjs');
 const LIB_DIR_SRC = join(REPO_ROOT, '.claude/hooks/lib');
 const REAL_JAR = join(REPO_ROOT, '.claude/bin/plantuml.jar');
 
-function buildSandbox({ withJar }) {
+function buildSandbox({ withJar, strict = false }) {
   const root = mkdtempSync(join(tmpdir(), 'pu-guard-'));
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   mkdirSync(join(root, 'docs/specs'), { recursive: true });
   cpSync(HOOK_SRC, join(root, '.claude/hooks/plantuml_syntax_guard.mjs'));
   cpSync(LIB_DIR_SRC, join(root, '.claude/hooks/lib'), { recursive: true });
-  writeFileSync(join(root, '.claude/project.json'), JSON.stringify({ configured: true }, null, 2));
+  writeFileSync(
+    join(root, '.claude/project.json'),
+    JSON.stringify({ configured: true, plantuml: { strict_syntax_check: strict } }, null, 2),
+  );
   if (withJar && existsSync(REAL_JAR)) {
     mkdirSync(join(root, '.claude/bin'), { recursive: true });
     cpSync(REAL_JAR, join(root, '.claude/bin/plantuml.jar'));
@@ -101,58 +104,67 @@ function specPayload(root, slug, body) {
 const VALID_FENCE = '```plantuml\n@startuml\nA -> B\n@enduml\n```\n';
 const INVALID_FENCE = '```plantuml\n@startuml\nthis is not valid syntax!@#$\n@enduml\n```\n';
 
-describe('plantuml_syntax_guard — java -jar rewire (B4)', () => {
-  it('test_when_plantuml_syntax_guard_runs_with_jar_and_java_then_validates_fence_and_blocks_bad_syntax', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, () => {
-    const root = buildSandbox({ withJar: true });
+describe('plantuml_syntax_guard — opt-in strict syntax check', () => {
+  // DEFAULT (strict_syntax_check off): no JVM at the write boundary. An invalid
+  // fence is allowed; an advisory points the author at /spec-lint. This is the
+  // path that runs during normal spec authoring.
+  it('test_when_strict_off_default_then_invalid_fence_allowed_without_java', () => {
+    const root = buildSandbox({ withJar: true }); // jar present, but strict off => java never invoked
     const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${INVALID_FENCE}`));
     assert.equal(
-      result.decision,
-      'deny',
-      `with java + jar present, an invalid fence must trigger decision=deny.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-    );
-  });
-
-  it('test_when_plantuml_syntax_guard_runs_with_jar_absent_then_guide_mode_allows_write', () => {
-    const root = buildSandbox({ withJar: false });
-    const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${VALID_FENCE}`));
-    assert.equal(
-      result.decision,
-      'allow',
-      `with jar absent, hook must allow + emit guide-mode info.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+      result.decision, 'allow',
+      `strict off (default) must allow even an invalid fence — no write-time java.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
     );
     const surfaced = result.stdout + result.stderr;
     assert.match(
-      surfaced,
-      /plantuml\.jar/,
-      `guide-mode message must name plantuml.jar.\nsurfaced: ${surfaced}`,
-    );
-    assert.match(
-      surfaced,
-      /guide mode/i,
-      `guide-mode message must include the phrase "guide mode".\nsurfaced: ${surfaced}`,
+      surfaced, /strict_syntax_check|spec-lint/i,
+      `strict-off advisory must point at strict_syntax_check / spec-lint.\nsurfaced: ${surfaced}`,
     );
   });
 
-  it('test_when_plantuml_syntax_guard_runs_with_java_absent_then_guide_mode_allows_write', () => {
+  it('test_when_strict_off_and_no_fences_then_allow', () => {
     const root = buildSandbox({ withJar: true });
+    const result = runGuard(root, specPayload(root, 'sample', `# spec\n\nno diagrams here\n`));
+    assert.equal(result.decision, 'allow', 'a spec with no plantuml fences must allow');
+  });
+
+  // STRICT on: opt-in java -checkonly validation (the prior default behavior).
+  it('test_when_strict_on_then_invalid_fence_blocked', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, () => {
+    const root = buildSandbox({ withJar: true, strict: true });
+    const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${INVALID_FENCE}`));
+    assert.equal(
+      result.decision, 'deny',
+      `strict on + java + jar: an invalid fence must deny.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+    );
+  });
+
+  it('test_when_strict_on_then_valid_fence_allowed', { skip: process.env.PLANTUML_TESTS ? false : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests' }, () => {
+    const root = buildSandbox({ withJar: true, strict: true });
+    const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${VALID_FENCE}`));
+    assert.equal(
+      result.decision, 'allow',
+      `strict on + valid fence must allow.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
+    );
+  });
+
+  // STRICT on but tooling absent → guide-mode allow (no JVM spawn).
+  it('test_when_strict_on_and_jar_absent_then_guide_mode_allows', () => {
+    const root = buildSandbox({ withJar: false, strict: true });
+    const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${VALID_FENCE}`));
+    assert.equal(result.decision, 'allow', 'strict on + jar absent must allow (guide mode)');
+    const surfaced = result.stdout + result.stderr;
+    assert.match(surfaced, /plantuml\.jar/, 'guide-mode message must name plantuml.jar');
+    assert.match(surfaced, /guide mode/i, 'guide-mode message must include "guide mode"');
+  });
+
+  it('test_when_strict_on_and_java_absent_then_guide_mode_allows', () => {
+    const root = buildSandbox({ withJar: true, strict: true });
     const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${VALID_FENCE}`), {
       PATH: pathWithoutJava(),
     });
-    assert.equal(
-      result.decision,
-      'allow',
-      `with java absent, hook must allow + emit guide-mode info.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-    );
+    assert.equal(result.decision, 'allow', 'strict on + java absent must allow (guide mode)');
     const surfaced = result.stdout + result.stderr;
-    assert.match(
-      surfaced,
-      /\bjava\b/i,
-      `guide-mode message must name Java.\nsurfaced: ${surfaced}`,
-    );
-    assert.match(
-      surfaced,
-      /\bJDK\b/,
-      `guide-mode message must include the JDK install hint.\nsurfaced: ${surfaced}`,
-    );
+    assert.match(surfaced, /\bjava\b/i, 'guide-mode message must name Java');
+    assert.match(surfaced, /\bJDK\b/, 'guide-mode message must include the JDK install hint');
   });
 });

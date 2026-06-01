@@ -38,7 +38,7 @@ Assumptions the baseline is allowed to make:
 
 - **Unix/Linux or macOS.** Windows is not a target.
 - **`node` ≥ 18.17 on PATH.** Every hook AND every skill helper runs as a Node ESM script (`.mjs`); no `bash` or `jq` at hook runtime. `npx` is also required for the three MCP servers (`context7`, `plantuml`, `playwright`).
-- **`plantuml` CLI on PATH** (optional but recommended). If absent, the PlantUML syntax guard runs in guide mode and `/spec-render` refuses.
+- **`plantuml` CLI on PATH** (optional). `/spec-render` refuses without it. The PlantUML syntax guard is **advisory by default** (no JVM); it invokes the CLI — and runs in guide mode when the CLI/jar is absent — only when `project.json → plantuml.strict_syntax_check` is enabled.
 - **Git repository.** Required for swarm worktree isolation mode; the baseline falls back to `shared` mode on non-git projects.
 - **Claude Code installed and authenticated.**
 
@@ -152,7 +152,7 @@ The single input-boundary hook (`consent_gate_grant`, on `UserPromptSubmit`) run
 | `verify_pass_guard` | PreToolUse / Write\|Edit\|MultiEdit | Blocks a `PASS` line in a verify artifact when `.claude/state/last_test_result` reports `FAIL`. |
 | `track_guard` | PreToolUse / Write\|Edit\|MultiEdit | Enforces 11-phase ordering. Phase `N+1` requires phase `N` in `completed` (or in `exceptions`). `/triage` writes `exceptions`. |
 | `artifact_template_guard` | PreToolUse / Write\|Edit\|MultiEdit | Writes to `docs/{intake,brd,specs,rca}/*.md` must contain required `##`/`###` headings sourced from `project.json → artifacts.required_sections`. Templates in skill directories are exempt. |
-| `plantuml_syntax_guard` | PreToolUse / Write\|Edit\|MultiEdit | Extracts every ````plantuml ...```` fence in `docs/specs/*.md` and pipes to `plantuml -checkonly -pipe`. Blocks on any parse error. Guide-mode when the CLI is absent. |
+| `plantuml_syntax_guard` | PreToolUse / Write\|Edit\|MultiEdit | Extracts every ````plantuml ...```` fence in `docs/specs/*.md`. **Default advisory (no JVM):** allows the write and notes that syntax is unvalidated at the boundary. When `project.json → plantuml.strict_syntax_check` is `true`, pipes each fence to `plantuml -checkonly -pipe` and blocks on any parse error (guide-mode when the CLI/jar/java is absent). Authoritative validation runs on-demand in `/spec-lint`, before `/approve-spec`. |
 | `spec_diagram_presence_guard` | PreToolUse / Write\|Edit\|MultiEdit | Writes to `docs/specs/*.md` must contain the six required diagram kinds inside PlantUML fences (C4 Context, C4 Container, C4 Component, sequence, class, dependency-graph). Config: `project.json → artifacts.required_diagrams.spec`. |
 | `spec_design_calls_guard` | PreToolUse / Write\|Edit\|MultiEdit | When a spec's `write_set` intersects `project.json → tdd.ui_globs`, blocks the write unless a populated `## Design calls` section is present. Structural enforcement of CLAUDE.md Article X.2 (design-task routing through `design-ui`). |
 | `swarm_boundary_guard` | PreToolUse / Write\|Edit\|MultiEdit | When `.claude/state/swarm/active_wave.json` exists (shared isolation mode), blocks writes in enforced roots whose path is not in the union of active task `write_set`s. Dormant in worktree mode. |
@@ -412,7 +412,7 @@ Preflight in worktree mode refuses a dirty working tree (`swarm.refuse_dirty_tre
 The spec template ships six required PlantUML diagrams (§4.7). Three write-boundary hooks enforce:
 
 - `artifact_template_guard` — required `##` headings present.
-- `plantuml_syntax_guard` — every fence parses via `plantuml -checkonly -pipe`.
+- `plantuml_syntax_guard` — when `plantuml.strict_syntax_check` is enabled, every fence parses via `plantuml -checkonly -pipe`; advisory (deferred to `/spec-lint`) by default.
 - `spec_diagram_presence_guard` — every required diagram kind present.
 
 Two skills iterate safely while drafting:
