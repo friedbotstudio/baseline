@@ -1,0 +1,25 @@
+{
+  "request": "Improve memory_stop intent-detection recall: strengthen the backlog-candidate intent detection in .claude/hooks/memory_stop.mjs (and/or its lib) so real future-work intent in user/assistant turns is reliably captured as a backlog candidate.",
+  "slug": "improved-backlog-item-detection",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "cli-copy-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit",
+    "changelog"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "improved-backlog-item-detection-046c"
+  ],
+  "created_at": 1780324355,
+  "updated_at": 1780328567
+}

@@ -72,6 +72,30 @@ const TRIGGER_STRIP = new RegExp(
   'i',
 );
 
+// Explicit backlog-routing markers. Unlike INTENT_TRIGGERS these are NOT
+// line-anchored: a user routes work to the backlog with a phrase like
+// "(add to backlog)" or "...in the next session" that lands mid- or end-of-
+// line, so anchoring would drop it (the recurring miss documented in
+// backlog.md). These phrasings are high-precision even unanchored — nobody
+// writes "add to backlog" casually — so they fire anywhere, for either role.
+const BACKLOG_MARKER_BODY =
+  String.raw`add(?:\s+(?:this|it|that|them|these))?\s+(?:to|for|into)\s+(?:the\s+)?backlog` +
+  String.raw`|backlog\s+(?:this|it|that|these|them)` +
+  String.raw`|for\s+the\s+backlog` +
+  String.raw`|(?:in|for)\s+(?:the\s+)?next\s+session` +
+  String.raw`|in\s+a\s+(?:later|future)\s+session`;
+
+const BACKLOG_MARKER_RE = new RegExp(String.raw`\b(?:${BACKLOG_MARKER_BODY})\b`, 'i');
+
+// Removes a marker phrase wherever it occurs in a line — together with any
+// wrapping parens/brackets, a trailing "too", and trailing punctuation — so
+// the derived slug captures the intent payload, not the routing phrase. The
+// stored verbatim keeps the full original line; only slug derivation strips.
+const MARKER_STRIP_GLOBAL = new RegExp(
+  String.raw`\s*[([]?\s*\b(?:${BACKLOG_MARKER_BODY})\b(?:\s+too)?\s*[)\]]?[.,;:!?]?`,
+  'gi',
+);
+
 const NOISE_PREFIXES = ['<system-reminder>', '<command-name>', '<local-command-'];
 const MAX_INTENT_TEXT_LEN = 240;
 // Minimum edit-only touch count to emit a landmark candidate. Write events
@@ -101,19 +125,28 @@ function filterNoise(text) {
   return NOISE_PREFIXES.some((p) => head.startsWith(p));
 }
 
+function matchesIntent(line, patterns) {
+  for (const pat of patterns) {
+    if (pat.test(line)) return true;
+  }
+  return BACKLOG_MARKER_RE.test(line);
+}
+
 function* iterIntentMatches(text, patterns) {
   for (const line of text.split(/\r?\n/)) {
-    for (const pat of patterns) {
-      if (pat.test(line)) {
-        yield line;
-        break;
-      }
-    }
+    if (matchesIntent(line, patterns)) yield line;
   }
 }
 
 function normalizeIntent(line) {
-  const stripped = line.replace(TRIGGER_STRIP, '').trim();
+  // Bound the strip input. MARKER_STRIP_GLOBAL is an unanchored global regex; on a
+  // pathological multi-KB line that matches a marker, its leading-whitespace
+  // alternation backtracks super-linearly (CWE-1333). The slug only ever uses the
+  // first 8 words and the stored verbatim is already capped at MAX_INTENT_TEXT_LEN,
+  // so capping here loses nothing for real lines and makes the strip O(1) in line
+  // length for crafted ones.
+  const bounded = line.length > MAX_INTENT_TEXT_LEN ? line.slice(0, MAX_INTENT_TEXT_LEN) : line;
+  const stripped = bounded.replace(TRIGGER_STRIP, '').replace(MARKER_STRIP_GLOBAL, ' ').trim();
   if (!stripped) return '';
   return stripped.replace(/\s+/g, ' ').toLowerCase();
 }

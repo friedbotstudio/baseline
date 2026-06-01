@@ -18,6 +18,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 - **`docs/brief/<slug>.md` in the archive bundle.** `archive.sh` `PAIRS` array gained a new row mapping the brainstorm brief into the workflow's archive bundle as `brief.md`, alongside `intake.md`, `scout.md`, etc.
 - **Read-time defaults pattern for additive `workflow.json` fields.** `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults(workflowJson)` applies `?? false` on missing `skip_brainstorm` and `codesign_mode` fields so legacy in-flight workflow.json files continue working without an on-disk migrator write. Convention documented at `.claude/memory/conventions.md → workflow-json-read-time-defaults`.
 - `audit-baseline` now derives the governance counts (skills, hooks, commands, subagents, selectable/sub tracks, memory files, MCP servers) from the on-disk artifacts via a shared `.claude/skills/audit-baseline/derive-counts.mjs`, and hard-FAILs when a count literal in a prose surface (CLAUDE.md orientation line, the mirror) or the skills category-breakdown sum disagrees with the derived truth.
+- `memory_stop` backlog-intent extraction now captures explicit unanchored routing markers (`add to backlog`, `backlog this`, `for the backlog`, and `(in/for) the next session` / `in a later|future session` deferrals) anywhere in a line for both user and assistant turns, alongside the existing line-anchored triggers — closing a recall gap where parenthetical or mid-line backlog intent (e.g. `(add to backlog)`) was silently dropped. Marker phrases are stripped from the derived slug while the full line is preserved as the verbatim. New `tests/memory-stop-recall.test.mjs` (7 tests).
 
 ### Changed
 
@@ -53,6 +54,7 @@ The format follows [keepachangelog.com 1.0.0](https://keepachangelog.com/en/1.0.
 ### Security
 
 - Closed the consent-gate Bash-bypass class on the commit/push and spec/swarm approval paths — both wrapper-form command evasion (`sh -c "git commit"`) and Bash-written approval tokens are now denied.
+- Bounded the `memory_stop` intent-strip input to `MAX_INTENT_TEXT_LEN` (240 chars) in `normalizeIntent`, preventing super-linear regex backtracking (CWE-1333) in the new unanchored marker strip on a crafted multi-KB transcript line that matches a backlog marker — a ~10 KB line previously stalled the Stop hook 12s+. Guarded by `test_when_pathological_long_marker_line_then_bounded_time_and_candidate`.
 
 # [0.12.0](https://github.com/friedbotstudio/baseline/compare/v0.11.0...v0.12.0) (2026-05-29)
 
