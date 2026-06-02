@@ -1,3 +1,10 @@
+# [0.14.0](https://github.com/friedbotstudio/baseline/compare/v0.13.0...v0.14.0) (2026-06-02)
+
+
+### Features
+
+* **whatsnew:** replace mandatory Phase 11.5 changelog with on-demand generator ([6e11f2f](https://github.com/friedbotstudio/baseline/commit/6e11f2fc998d25d099076cd3e646d5c2fe8f0f60))
+
 # [0.13.0](https://github.com/friedbotstudio/baseline/compare/v0.12.0...v0.13.0) (2026-06-01)
 
 
