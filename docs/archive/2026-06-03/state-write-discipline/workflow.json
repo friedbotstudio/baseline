@@ -1,0 +1,11 @@
+{
+  "request": "harden state-write SOPs: add a 'State-Write Discipline' canonical rule to .claude/CONSTITUTION.md (annex only) and cite it from each SOP. Tier 1 consent/approval tokens = Write-tool only, never Bash. Tier 2 workflow/runtime state = prefer Write tool, Bash only via shell builtins, rm -f sole external-binary exception for marker deletes. Path/existence checks via Read/Glob. Drop Bash(tee:*) from grant-commit/grant-push; trim vestigial Bash(basename:*)/Bash(mkdir:*) from approve-spec/approve-swarm; add cite + anti-Bash-write legalese to all 4 gate commands; add Tier-2 citation to harness/integrate/tdd/verify SKILLs.",
+  "slug": "state-write-discipline",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd"],
+  "completed": ["chore", "integrate", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780428008,
+  "updated_at": 1780434062
+}

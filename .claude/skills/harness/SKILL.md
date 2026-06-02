@@ -49,6 +49,8 @@ Before writing `harness_state`, do the marker op FIRST:
 
 THEN write `harness_state`. The marker is the session-scoped "in the loop" signal; partial-write resilience requires marker-first ordering so a crash between steps leaves the conservative state on disk.
 
+**State-write discipline (binding — see `.claude/CONSTITUTION.md` §2 "State-write discipline").** `.harness_active`, `harness_state`, and `harness/<slug>.log` are **Tier 2 workflow state** — not consent paths, not guard-blocked. The marker *refresh* (`echo "<slug>" > .claude/state/.harness_active`) uses a shell **builtin** redirect and is PATH-independent; the marker *delete* (`rm -f`) is the sole sanctioned external-binary exception (there is no builtin delete). Prefer the **Write tool** for the `harness_state` JSON. Never use `tee` or `sed -i`, and resolve any paths with Read/Glob, never `dirname`/`basename`.
+
 ## Preflight (once per Skill(harness) invocation, before entering the loop)
 
 1. **Project configured?** Read `.claude/project.json`. If `configured: false` → stop with: "Run `/init-project` first. The baseline hooks are in guide mode until the project is configured."

@@ -84,6 +84,8 @@ Create tasks via `TaskCreate`; wire `addBlockedBy` so the chain is sequential. U
 
 Marker FIRST: `echo "<slug>" > .claude/state/.harness_active` (the harness loop is in flight; the active marker stays set across the worker chain). Then write `.claude/state/harness_state` with `{state: "continue", slug, reason: "tdd recipe + contract + tasks ready; next: scenario"}` — exactly three keys; no `written_at`, no `tick_count`.
 
+**State-write discipline (binding — see `.claude/CONSTITUTION.md` §2 "State-write discipline").** `tdd/<slug>.json`, `harness_state`, and `.harness_active` are **Tier 2 workflow state** — not consent paths. The marker refresh uses a shell **builtin** redirect (PATH-independent); prefer the **Write tool** for the coordinator JSON and the `harness_state` JSON. Never use `tee`/`sed -i`, and resolve paths with Read/Glob, never `dirname`/`basename`/`[ -f ]`.
+
 ## 8. Emit terminal message and return
 
 Tell the user (one line): `"TDD recipe + contract written to .claude/state/tdd/<slug>.json. N worker tasks seeded. Continuing."` Return. The Stop hook reads `harness_state` and re-fires the harness on the same turn, which picks up Task A (scenario-tick).

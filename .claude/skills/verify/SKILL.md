@@ -69,6 +69,7 @@ The report's role is human review; the statefile's role is the binding gate.
 
 - **Do not modify source or tests.** Inlined verify reads; it never writes outside `.claude/state/last_test_result`.
 - **Do not retry the command.** One run, one verdict.
+- **State-write discipline (binding — see `.claude/CONSTITUTION.md` §2 "State-write discipline").** `last_test_result` is **Tier 2 workflow state** — not a consent path. Prefer the **Write tool** for the four-line statefile (write-then-rename when atomicity is needed); if Bash is used, only a shell **builtin** redirect — never `tee` or `sed -i`. The byte format is what `verify_pass_guard` parses; the tool that writes it is the caller's choice within this rule.
 - **Do not synthesize, summarize, or "clean up" test output.** Capture raw output for the report; the statefile records the verdict only.
 - **A timeout is FAIL. A killed process is FAIL.**
 - **The truth lives in the statefile.** The inline report is for the human; the hook trusts the four-line file.
