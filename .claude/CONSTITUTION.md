@@ -61,7 +61,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 |---|---|
 | `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 40 skills: artifact (4) + phases (11) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
+| `.claude/skills/` | 40 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
 | `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
@@ -78,8 +78,8 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Artifact drafting (4)** — each ships a `template.md`:
 - `intake` (Phase 1), `brd` (cross-functional pre-spec), `spec` (Phase 4, diagram-driven), `rca` (out-of-band postmortem)
 
-**Workflow phases (11)** — auto-invocable; orchestrator chains them:
-- `triage`, `scout`, `research`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`, `changelog` (Phase 11.5), `commit`
+**Workflow phases (10)** — auto-invocable; orchestrator chains them:
+- `triage`, `scout`, `research`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`, `commit`
 
 **Phase workers (5)** — execute pre-decided recipes; mandatorily invoke a sub-skill:
 - `scenario`, `implement`, `verify`, `prose`, `design-ui`
@@ -95,6 +95,9 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 
 **Phase helpers (1)** — invoked by entry phases as a Step 0.5 / Step 1.5 gate; never on user-direct invocation:
 - `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article X.3.
+
+**Generators (1)** — on-demand; not a workflow phase, never blocks a commit:
+- `whatsnew` — emits a structured "what's new" fragment to `.claude/state/whatsnew/<slug>.json` (gitignored, transient) for a set of changes; an optional `project.json → whatsnew.route_workflow` names a per-project routing workflow that consumes the fragment. Never writes `CHANGELOG.md` (owned solely by `@semantic-release/changelog` in CI). Replaced the former Phase 11.5 `changelog` skill.
 
 **Navigation (1)** — the default tool for code-navigation questions; prefer it over global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F":
 - `code-browser` — walks the import graph from a page or entry file to the network boundary, returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. `discover.mjs` writes a per-repo `conventions.json` once; `walk.mjs` then runs deterministically in milliseconds. Read-only.

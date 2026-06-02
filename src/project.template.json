@@ -219,6 +219,9 @@
       "docs/"
     ]
   },
+  "whatsnew": {
+    "route_workflow": null
+  },
   "additions": {
     "agents": [],
     "skills": [],

@@ -16,7 +16,7 @@ const CANONICAL_MEMORY = [
 
 const SPELLED = {
   1: 'one', 3: 'three', 5: 'five', 6: 'six', 7: 'seven',
-  11: 'eleven', 12: 'twelve', 22: 'twenty-two', 40: 'forty',
+  11: 'eleven', 12: 'twelve', 13: 'thirteen', 22: 'twenty-two', 40: 'forty',
 };
 
 // The skills category breakdown. Category ASSIGNMENT is editorial (not
@@ -25,13 +25,14 @@ const SPELLED = {
 // copy, and audit-baseline asserts its sum equals the derived skills total.
 export const SKILL_CATEGORIES = {
   artifact: 4,
-  phases: 11,
+  phases: 10,
   workers: 5,
   specHelpers: 4,
   orchestration: 3,
   memory: 1,
   navigation: 1,
   phaseHelpers: 1,
+  generators: 1,
   sharedGlobals: 7,
   audit: 1,
   altTracks: 1,

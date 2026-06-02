@@ -38,7 +38,7 @@ toc:
       <tr><td class="phase">Node ≥ 18.17</td><td>The CLI uses <code>node:util.parseArgs</code> with <code>strict</code> mode, available from this version.</td></tr>
       <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec @friedbotstudio/create-baseline</code> works too.</td></tr>
       <tr><td class="phase">A target directory</td><td>An existing project root, or an empty directory you intend to populate. The CLI does not <code>mkdir</code> for you.</td></tr>
-      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 auto-excepts, including <code>/grant-commit</code>, the ship-pair sub-step <code>changelog</code> at 11.5, and <code>commit</code> at 11. See <a href="{{ '/swarm/#dispatch' | rel }}"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
+      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 auto-excepts, including <code>/grant-commit</code> and <code>commit</code> at 11. See <a href="{{ '/swarm/#dispatch' | rel }}"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
       <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="{{ '/cli/#plantuml' | rel }}">CLI · PlantUML jar</a>.</td></tr>
     </tbody>
   </table>

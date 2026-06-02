@@ -1,0 +1,30 @@
+{
+  "request": "move changelog from mandatory Phase 11.5 to an on-demand generator skill emitting a structured JSON/YAML what's-new fragment, routed by an optional per-project workflow (scaffoldable at init-project or later); CHANGELOG.md becomes semantic-release-only",
+  "slug": "changelog-generator-routing",
+  "track_id": "intake-full",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "changelog"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780348479,
+  "updated_at": 1780405290
+}

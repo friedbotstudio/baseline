@@ -35,11 +35,11 @@ toc:
   <h3 id="canonical">The canonical set</h3>
   <p>Five selectable tracks ship in the pristine template:</p>
   <ul>
-    <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, changelog, commit.</li>
+    <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, commit.</li>
     <li><code>spec-entry</code>. Starts at <code>/spec</code>. For a bugfix where the failing case is contract-level. Skips intake, scout, research.</li>
     <li><code>tdd-quickfix</code>. Starts at <code>/tdd</code>. For a localised bug with a known failing case. Skips spec entirely.</li>
     <li><code>chore</code>. Stripped-down. For documentation, configuration tweaks, dependency bumps. Skips scenario and implement.</li>
-    <li><code>freeform</code>. Ad-hoc batch of edits with relaxed phase ordering. The DAG carries only the closing sequence: <code>memory-flush</code>, <code>/grant-commit</code>, <code>changelog</code>, <code>commit</code>. All 22 hooks remain active, so per-tool guards still fire. For batches of unrelated edits that share no single goal.</li>
+    <li><code>freeform</code>. Ad-hoc batch of edits with relaxed phase ordering. The DAG carries only the closing sequence: <code>memory-flush</code>, <code>/grant-commit</code>, <code>commit</code>. All 22 hooks remain active, so per-tool guards still fire. For batches of unrelated edits that share no single goal.</li>
   </ul>
 
   <h3 id="subtracks">Sub-tracks</h3>

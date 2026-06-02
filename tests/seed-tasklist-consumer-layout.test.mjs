@@ -76,7 +76,7 @@ describe('seed-tasklist.mjs — consumer-layout invocation (no src/ available)',
       );
       const parsed = JSON.parse(result.stdout);
       assert.ok(Array.isArray(parsed), 'stdout must be a JSON array');
-      assert.ok(parsed.length >= 10, `tdd-quickfix track must emit >= 10 tasks; got ${parsed.length}`);
+      assert.ok(parsed.length >= 9, `tdd-quickfix track must emit >= 9 tasks; got ${parsed.length}`);
       assert.equal(parsed[0].metadata.phase, 'tdd', 'first task is the tdd phase');
       const hasGrantCommit = parsed.some((t) => t.metadata?.phase === 'grant-commit');
       assert.ok(hasGrantCommit, 'tdd-quickfix must include a grant-commit consent task');

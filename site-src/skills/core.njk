@@ -19,6 +19,7 @@ toc:
   - { id: orchestration, label: "Orchestration" }
   - { id: memory,        label: "Memory" }
   - { id: phasehelpers,  label: "Phase helpers" }
+  - { id: generators,    label: "Generators" }
   - { id: globals,       label: "Shared globals" }
   - { id: audit,         label: "Audit" }
   - { id: alt,           label: "Alternate tracks" }
@@ -58,7 +59,6 @@ toc:
     <li><code>integrate</code>. Phase 9. Runs the full test suite and stamps the binding verify verdict.</li>
     <li><code>document</code>. Phase 10. Routes technical writing through the documentation, technical-tutorials, and prose skills.</li>
     <li><code>archive</code>. Phase 10.5. Moves slug artifacts to <code>docs/archive/&lt;date&gt;/&lt;slug&gt;/</code>.</li>
-    <li><code>changelog</code>. Phase 11.5. The ship-pair sub-step between <code>/grant-commit</code> and <code>/commit</code>. Reads the staged commit history; classifies each commit into a <a href="https://keepachangelog.com/en/1.0.0/">keepachangelog 1.0.0</a> section (Added, Changed, Fixed, and so on); appends entries under <code>## [Unreleased]</code> in <code>CHANGELOG.md</code>. The same <code>commit_consent</code> token authorizes both this step and <code>/commit</code>; no new gate. Supports <code>--preview-only</code> for ad-hoc projected-version lookups outside a workflow.</li>
     <li><code>commit</code>. Phase 11. Stages and creates the commit, gated by <code>/grant-commit</code>. After the commit lands, if <code>workflow.json</code> declares <code>source_backlog_keys</code>, the commit step invokes <code>sweep.mjs stamp-closure</code> to mark each named backlog entry <code>status: picked-up</code> with <code>superseded-at: &lt;today&gt;</code>; the next <code>/memory-flush</code> auto-close sweep deletes the stamped blocks. Pushes to protected branches need <code>/grant-push</code> (Article VII).</li>
   </ul>
 </section>
@@ -154,6 +154,19 @@ toc:
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ IX</p>
+      <h2 id="generators">Generators ({{ baseline.skills.byCategory.generators }})</h2>
+    </div>
+    <p>On-demand. Not a workflow phase, so they never block a commit. A generator produces a structured artifact a project routes wherever it wants.</p>
+  </div>
+  <ul>
+    <li><code>whatsnew</code>. Emits a structured "what's new" fragment for a set of changes to <code>.claude/state/whatsnew/&lt;slug&gt;.json</code> (gitignored, transient). An optional <code>project.json &rarr; whatsnew.route_workflow</code> names a per-project routing workflow that consumes the fragment and renders it wherever the project wants: a site page, a release body, a docs page. Absent that knob, the fragment simply waits at the conventional path. Never writes <code>CHANGELOG.md</code>, which <code>@semantic-release/changelog</code> owns at release time. Replaced the former Phase 11.5 <code>changelog</code> skill.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ X</p>
       <h2 id="globals">Shared globals ({{ baseline.skills.byCategory.sharedGlobals }})</h2>
     </div>
     <p>Vendored or globally available. Available to any phase that needs them.</p>
@@ -172,7 +185,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ X</p>
+      <p class="section-num">§ XI</p>
       <h2 id="audit">Audit ({{ baseline.skills.byCategory.audit }})</h2>
     </div>
     <p>One drift defender keeps the implementation honest against seed.md and the constitution.</p>
@@ -185,7 +198,7 @@ toc:
 <section class="section">
   <div class="lede">
     <div class="lede-head">
-      <p class="section-num">§ XI</p>
+      <p class="section-num">§ XII</p>
       <h2 id="alt">Alternate tracks ({{ baseline.skills.byCategory.altTracks }})</h2>
     </div>
     <p>A stripped-down pipeline for tasks that need no failing-test-driven code change.</p>

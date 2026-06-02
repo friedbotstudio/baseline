@@ -192,7 +192,7 @@ eleventyComputed:
     <figure class="figure">
       <svg class="diagram-svg arch-bento" viewBox="0 0 1000 1200" preserveAspectRatio="xMinYMin slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title" aria-describedby="workflow-diag-desc">
         <title id="workflow-diag-title">intake-full workflow track: eleven phases with three consent gates and a paired ship at the end.</title>
-        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-spec, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, changelog, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. Runtime gate /grant-push fires at git push time under Article VII.</desc>
+        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-spec, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. Runtime gate /grant-push fires at git push time under Article VII.</desc>
 
         {# DESKTOP BENTO (v2: two-hero side-by-side) — visible above 768px.
            Spec hero left dominant (580x230); TDD tall right anchor (330x440).
@@ -304,21 +304,21 @@ eleventyComputed:
             <text class="stage-label" x="477" y="406">document</text>
           </g>
 
-          {# Pair brackets — above the tail row. Brackets align with new cell positions:
-             paired (archive+memflush) spans x=30..260; ship-pair (changelog+commit) spans x=380..610. #}
+          {# Pair brackets above the tail row. Brackets align with cell positions:
+             paired (archive+memflush) spans x=30..260; ship (commit) spans x=438..553. #}
           <g class="bento-pair">
             <line class="pair-rule" x1="30" y1="436" x2="260" y2="436"/>
             <text class="pair-tag" x="145" y="431" text-anchor="middle">PAIRED · CLEANUP</text>
           </g>
           <g class="bento-pair pair-ship">
-            <line class="pair-rule pair-rule-accent" x1="380" y1="436" x2="610" y2="436"/>
-            <text class="pair-tag pair-tag-accent" x="495" y="431" text-anchor="middle">SHIP PAIR</text>
+            <line class="pair-rule pair-rule-accent" x1="438" y1="436" x2="553" y2="436"/>
+            <text class="pair-tag pair-tag-accent" x="495" y="431" text-anchor="middle">SHIP</text>
           </g>
 
           {# Row 3: tail — y=445..505, h=60.
-             Layout: archive | memflush | [gate C gap, 110w] | changelog | commit
+             Layout: archive | memflush | [gate C gap, 110w] | commit
              Gate C gap is 110w so "/grant-commit" label (~85w in mono 10.5) fits without
-             overlapping changelog. #}
+             overlapping the commit ship node. #}
           <g class="bento-cell">
             <rect class="stage" x="30" y="445" width="110" height="60" rx="6"/>
             <text class="num" x="42" y="463">10.5</text>
@@ -329,24 +329,17 @@ eleventyComputed:
             <text class="num" x="162" y="463">10.6</text>
             <text class="stage-label" x="162" y="491">memory-flush</text>
           </g>
-          {# Gate C inline — 110w gap between memflush (ends x=260) and changelog (starts x=380) #}
+          {# Gate C inline — 110w gap between memflush (ends x=260) and commit (starts x=438) #}
           <g class="gate-anno bento-gate-inline">
             <rect class="node-gate" x="305" y="455" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 311,471 L 318,478 L 331,463" fill="none"/>
             <text class="gate-cmd" x="320" y="500" text-anchor="middle">/grant-commit</text>
           </g>
           <g class="bento-cell cell-ship">
-            <rect class="stage stage-ship" x="380" y="445" width="115" height="60" rx="6"/>
-            <text class="num" x="392" y="463">11.5</text>
-            <text class="stage-label" x="392" y="491">changelog</text>
+            <rect class="stage stage-ship" x="438" y="445" width="115" height="60" rx="6"/>
+            <text class="num" x="450" y="463">11</text>
+            <text class="stage-label" x="450" y="491">commit</text>
           </g>
-          <g class="bento-cell cell-ship">
-            <rect class="stage stage-ship" x="495" y="445" width="115" height="60" rx="6"/>
-            <text class="num" x="507" y="463">11</text>
-            <text class="stage-label" x="507" y="491">commit</text>
-          </g>
-          {# Ship pair accent seam — vertical accent rule between changelog (ends x=495) and commit (starts x=495) #}
-          <line class="ship-seam" x1="495" y1="452" x2="495" y2="498"/>
 
           {# Runtime gate — annotates the post-pipeline state. Rule spans the LEFT column only
              (x=30..610) because /grant-push fires after /commit, which lives in the left column.
@@ -446,31 +439,26 @@ eleventyComputed:
             <text class="stage-label" x="42" y="973">memory-flush</text>
           </g>
 
-          {# Gate C — small filled square between memory-flush and changelog #}
+          {# Gate C — small filled square between memory-flush and commit #}
           <g class="gate-anno bento-gate-inline-m">
             <rect class="node-gate" x="165" y="998" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 171,1014 L 178,1021 L 191,1006" fill="none"/>
             <text class="gate-cmd" x="180" y="1046" text-anchor="middle">/grant-commit</text>
           </g>
 
-          {# Ship pair: changelog ↔ commit. Accent right-side bracket. #}
+          {# Ship: the single commit closing node. Accent right-side bracket. #}
           <g class="bento-pair pair-m pair-ship">
-            <line class="pair-rule pair-rule-accent" x1="335" y1="1060" x2="335" y2="1190"/>
-            <text class="pair-tag pair-tag-accent" x="343" y="1125" transform="rotate(90 343 1125)">SHIP PAIR</text>
+            <line class="pair-rule pair-rule-accent" x1="335" y1="1060" x2="335" y2="1120"/>
+            <text class="pair-tag pair-tag-accent" x="343" y="1090" transform="rotate(90 343 1090)">SHIP</text>
           </g>
           <g class="bento-cell cell-ship">
             <rect class="stage stage-ship" x="30" y="1060" width="300" height="60" rx="6"/>
-            <text class="num" x="42" y="1080">11.5</text>
-            <text class="stage-label" x="42" y="1108">changelog</text>
-          </g>
-          <g class="bento-cell cell-ship">
-            <rect class="stage stage-ship" x="30" y="1130" width="300" height="60" rx="6"/>
-            <text class="num" x="42" y="1150">11</text>
-            <text class="stage-label" x="42" y="1178">commit</text>
+            <text class="num" x="42" y="1080">11</text>
+            <text class="stage-label" x="42" y="1108">commit</text>
           </g>
         </g>
       </svg>
-      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the paired endings (archive with memory-flush; changelog with commit as the ship pair). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. Four other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), and <code>freeform</code> (closing sequence only; relaxed phase ordering). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
+      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. Four other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), and <code>freeform</code> (closing sequence only; relaxed phase ordering). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
     </figure>
   </section>
 

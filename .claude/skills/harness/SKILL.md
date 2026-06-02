@@ -116,7 +116,7 @@ The phases the harness loops through, in order:
 ```
 intake → scout → research → spec → /approve-spec → tdd → simplify →
 security → integrate → document → archive → memory-flush →
-/grant-commit → changelog → commit
+/grant-commit → commit
 ```
 
 - Phases listed in `workflow.json → exceptions` are skipped.
@@ -168,8 +168,7 @@ On each `/harness` invocation, read `workflow.json` and decide whether to enter 
 | `completed` contains `spec` **and** approval token present, but `tdd`/`swarm-dispatch` not in `completed` | Enter loop; decide swarm-vs-solo at first iteration; invoke the next phase |
 | `completed` contains `swarm-plan` but no `swarm_approvals/<slug>.approval` | Enter loop; loop exits with `state: yielded` (approve-swarm gate) |
 | `completed` contains `archive` but no `commit_consent` (git project) | Enter loop; loop exits with `state: yielded` (grant-commit gate) |
-| `completed` contains `grant-commit` consent (token fresh) but no `changelog` | Enter loop; invoke `Skill(changelog)` (Phase 11.5); on success continue to commit |
-| `completed` contains `changelog` but no commit yet (git project) | Enter loop; invoke `Skill(commit)` (Phase 11) |
+| `completed` contains `grant-commit` consent (token fresh) but no commit yet (git project) | Enter loop; invoke `Skill(commit)` (Phase 11) |
 | Phase skill returned an error this invocation | Loop exits with phase-failure reason; user investigates |
 
 ## Constraints

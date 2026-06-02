@@ -38,7 +38,7 @@ describe('workflows-validator — happy path', () => {
     const selectable = result.tracks.filter((t) => t.selectable === true);
     assert.equal(selectable.length, 1, 'only intake-full is selectable in this fixture');
     const intakeFull = result.tracks.find((t) => t.track_id === 'intake-full');
-    assert.ok(intakeFull.nodes.length === 15, 'intake-full has 15 nodes');
+    assert.ok(intakeFull.nodes.length === 14, 'intake-full has 14 nodes');
     assert.ok(
       intakeFull.nodes.find((n) => n.type === 'selector' && n.id === 'implementation'),
       'intake-full has a selector node id=implementation'

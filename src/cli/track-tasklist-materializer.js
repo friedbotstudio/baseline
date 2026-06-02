@@ -178,7 +178,6 @@ const ACTIVE_FORM_OVERRIDES = Object.freeze({
   document: 'Running document',
   archive: 'Running archive',
   'memory-flush': 'Running memory-flush',
-  changelog: 'Running changelog',
   commit: 'Running commit',
   chore: 'Running chore',
   'swarm-plan': 'Running swarm-plan',

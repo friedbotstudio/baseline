@@ -159,3 +159,11 @@ Each entry's stable key is `path:line` or a short slug.
 - Mitigation: when you need to RUN a command that legitimately contains a consent-write shape (probing the guard, generating fixtures, doc examples), put the code in a throwaway file and run `node /tmp/probe.mjs` — the Bash command string is then just `node <path>` with no consent shape, so the guard passes; the file's CONTENTS are never scanned. (Same applies to `git commit -F <file>` for commit messages containing forbidden-looking strings.) The remaining false-positive is accepted/deny-leaning per backlog `destructive-guard-and-grant-sweep-residual-hardening-7f2c`; full shell-segment scoping is the deferred seed.md §16 sweep.
 - Verified-at: HEAD
 - Last-touched: 2026-06-01
+
+## live-objtemplate-rebuild-races-parallel-test-readers
+
+- Path: `tests/build-template.test.mjs` (and other build-exercisers) vs any test that reads `obj/template/**`; helper `tests/helpers/clone-and-build.mjs`.
+- Trap: `build-template.test.mjs` runs `scripts/build-template.sh` against the LIVE tree (PKG_ROOT=repo root), which `rm -rf`s + rebuilds `obj/template/` (including `manifest.json`). Under default-parallel `node --test tests/*.test.mjs`, any OTHER test that reads the live `obj/template/` races that rebuild and fails intermittently: ENOENT on `manifest.json`, a half-written manifest, a transient scan finding, or a build-mutex timeout. Observed: a fresh `whatsnew-counts.test.mjs` that read the live manifest produced 4 different failure shapes across 3 consecutive full runs (ENOENT -> mutex-timeout -> scan), every one GREEN in isolation. The flakes are NOT real test failures.
+- Mitigation: (1) a test that needs the BUILT tree must build its OWN isolated copy via `tests/helpers/clone-and-build.mjs` (`cloneAndBuild(label)` rsyncs the repo to a tmpdir, builds there, returns the path) and read from that path, NOT the live `obj/template/`. (2) Better still, assert the SOURCE of truth (e.g. skill frontmatter `owner: baseline` + dir presence) instead of the built manifest when possible — rebuild-free and contention-free. (3) For a deterministic binding verdict at `/integrate`, run the suite serially: `node --test --test-concurrency=1 tests/*.test.mjs` avoids the shared-live-tree race entirely.
+- Verified-at: 8b02aa8
+- Last-touched: 2026-06-02
