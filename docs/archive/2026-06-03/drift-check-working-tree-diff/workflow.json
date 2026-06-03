@@ -1,0 +1,11 @@
+{
+  "request": "Fix drift_check.mjs loadDiff: it diffs merge-base..HEAD (committed history), so it is a no-op during the pre-commit /tdd phase and reports every AC unresolved. Default loadDiff to a working-tree diff (uncommitted + intent-to-add untracked) instead of merge-base..HEAD.",
+  "slug": "drift-check-working-tree-diff",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["drift-check-diffs-committed-history-noop-pre-commit-d1f7"],
+  "created_at": 1748908800,
+  "updated_at": 1748945103
+}

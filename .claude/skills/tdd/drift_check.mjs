@@ -7,10 +7,13 @@
 //
 // Reads `docs/specs/<slug>.md` from `--project-root`, scores every numbered AC
 // in the ## Acceptance criteria table and every row of the ## Design calls
-// table against the implementation diff (--diff override, else `git diff
-// <merge-base>..HEAD` against the main branch). Writes a markdown report at
-// `<project-root>/.claude/state/drift/<slug>.md` with a per-item verdict of
-// `resolved | unresolved | unknown` plus evidence.
+// table against the implementation diff (--diff override, else the WORKING-TREE
+// diff: uncommitted changes via `git diff HEAD` plus untracked files via an
+// intent-to-add equivalent). Working-tree sourcing is what makes drift-check
+// meaningful during the pre-commit /tdd phase, where the workflow code is still
+// uncommitted and committed history (e.g. `merge-base..HEAD`) is empty. Writes a
+// markdown report at `<project-root>/.claude/state/drift/<slug>.md` with a
+// per-item verdict of `resolved | unresolved | unknown` plus evidence.
 //
 // Exit codes:
 //   0  zero unresolved
@@ -36,15 +39,28 @@ function loadSpec(projectRoot, slug) {
   return readFileSync(specPath, 'utf8');
 }
 
+function untrackedDiff(projectRoot) {
+  const listed = spawnSync('git', ['-C', projectRoot, 'ls-files', '--others', '--exclude-standard'], { encoding: 'utf8' });
+  if (listed.status !== 0 || !listed.stdout.trim()) return '';
+  const paths = listed.stdout.split('\n').map(p => p.trim()).filter(Boolean);
+  let out = '';
+  for (const rel of paths) {
+    // `--no-index` diffs an untracked file against /dev/null so its lines count
+    // as added, without staging it (no index mutation). It exits 1 when the
+    // files differ; the diff text is on stdout regardless of exit status.
+    const d = spawnSync('git', ['-C', projectRoot, 'diff', '--no-index', '--', '/dev/null', rel], { encoding: 'utf8' });
+    if (d.stdout) out += d.stdout;
+  }
+  return out;
+}
+
 function loadDiff(projectRoot, diffPath) {
   if (diffPath) {
     return readFileSync(diffPath, 'utf8');
   }
-  const mb = spawnSync('git', ['-C', projectRoot, 'merge-base', 'HEAD', 'main'], { encoding: 'utf8' });
-  if (mb.status !== 0) return '';
-  const mergeBase = mb.stdout.trim();
-  const diff = spawnSync('git', ['-C', projectRoot, 'diff', `${mergeBase}..HEAD`], { encoding: 'utf8' });
-  return diff.status === 0 ? diff.stdout : '';
+  const tracked = spawnSync('git', ['-C', projectRoot, 'diff', 'HEAD'], { encoding: 'utf8' });
+  const trackedDiff = tracked.status === 0 ? tracked.stdout : '';
+  return trackedDiff + untrackedDiff(projectRoot);
 }
 
 function writeReport(projectRoot, slug, body) {
