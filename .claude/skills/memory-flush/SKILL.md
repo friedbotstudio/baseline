@@ -106,6 +106,8 @@ Read `_pending.md` in full. Then read the canonical file each candidate targets 
 
 ## Step 2 — Decide per candidate
 
+**Route suggestion (Tier 3, optional aid).** Before deciding, you MAY run `node -e "import('./.claude/skills/memory-flush/route.mjs').then(m=>console.log(JSON.stringify(m.suggestRoutes(<candidates>))))"` (or import `suggestRoutes` directly) to get a deterministic `{suggested_bucket, weight, evidence}` per candidate. The suggestion is an **accept/override default**, not a decision: you remain final, and promotion to canonical stays human-only (Article IX.3). `route.mjs` is pure — it reads/writes nothing. A richer semantic pass (Sonnet-tier over transcript material) is an optional main-context step here, not part of the pure helper. A candidate's `weight`/`route` fields in `_pending` (when present) are the capture-time hints; the suggestion refines them.
+
 For each `## CANDIDATE:` block, decide one of:
 
 - **Promote.** The candidate is signal. Build the canonical entry shape (see `.claude/memory/README.md`) and append to the right file. If the candidate's stable key already exists in the canonical file → **replace** that entry; do not duplicate.

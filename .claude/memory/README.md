@@ -129,3 +129,14 @@ Two paths:
 Seven canonical files plus `_pending.md` hold **project knowledge** — facts about the codebase that survive multiple sessions and get re-verified on every cite. `_resume.md` is different: it's a **continuity snapshot** describing the *current session* — what we just touched, what the user just asked, what phase we're on. It's overwritten each turn and gitignored. The split keeps long-term knowledge clean of session-state noise.
 
 `_thread.md` is a **third class — local + durable**. Unlike the canonical seven it is gitignored and never committed (continuity is per-developer noise across a team); unlike `_resume.md` it is append-only and durable rather than overwritten each turn, and it is explicitly excluded from `/memory-flush`'s reset so a shelved thread survives a flush or `/clear`. It is the durable home for the "what we were working on, and why" narrative that `_resume.md` only ever holds for the latest turn.
+
+## Capture/route fields (Tier 2/3 — additive, backward-compatible)
+
+Auto-extracted `_pending.md` intent candidates MAY carry two optional lines, written by `memory_stop.mjs`:
+
+- `- route: unassigned` — the routing bucket. `unassigned` at capture; a human (with an optional model suggestion from `.claude/skills/memory-flush/route.mjs`) assigns the final bucket at `/memory-flush`. Promotion to canonical stays human-only (Article IX.3); the route is only ever a suggestion.
+- `- weight: <0..1>` — a deterministic salience score (higher = more likely worth keeping). Advisory; the human curates.
+
+Blocks without these lines parse exactly as before — the fields are additive.
+
+`_thread.md` entries MAY carry `working_thread: true` (inside the base64 entry JSON). Such an entry is the **durable working thread** — the "what/why" distilled by `resume_writer.mjs` at stop/pre-compact. `thread_store.pruneTrail` pins the most-recent working-thread entry (exempt from the 20-section cap) so it survives `/clear`; `readWorkingThread()` reads it and `memory_session_start` surfaces it on resume. This is a flag on the existing entry shape, not a new entry schema.

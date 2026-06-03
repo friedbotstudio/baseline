@@ -1,0 +1,16 @@
+[
+  { "text": "Here is some context. We need to fix the cue filter before shipping. More context follows.", "position": "mid-sentence", "expected": "captured" },
+  { "text": "I looked at the code and the cleanest approach is to share the noise list across the hooks.", "position": "mid-sentence", "expected": "captured", "bucket": "decision" },
+  { "text": "After reviewing, we are going to extract the scanner into its own module.", "position": "mid-sentence", "expected": "captured" },
+  { "text": "We decided to defer the flush routing to a follow-up.", "position": "mid-sentence", "expected": "captured", "bucket": "decision" },
+  { "text": "The plan is to add a fixture corpus and score recall.", "position": "mid-sentence", "expected": "captured" },
+  { "text": "TODO: add a regression test for the prune cap.", "position": "line-start", "expected": "captured", "bucket": "backlog" },
+  { "text": "Next we should converge the resume snapshot into the durable thread.", "position": "line-start", "expected": "captured", "bucket": "backlog" },
+  { "text": "Should the working thread be pinned or a separate file?", "position": "line-start", "expected": "captured", "bucket": "open-question" },
+  { "text": ".claude/hooks/lib/thread_store.mjs holds the durable trail I/O.", "position": "line-start", "expected": "captured", "bucket": "landmark" },
+  { "text": "Base directory for this skill: /x/.claude/skills/foo\n\n# foo\nDo the thing.", "position": "line-start", "expected": "ignored" },
+  { "text": "<system-reminder>remember the cap</system-reminder>", "position": "line-start", "expected": "ignored" },
+  { "text": "<command-name>grant-commit</command-name>", "position": "line-start", "expected": "ignored" },
+  { "text": "Thanks, that looks good to me.", "position": "line-start", "expected": "ignored" },
+  { "text": "The weather is fine and the build is green.", "position": "line-start", "expected": "ignored" }
+]

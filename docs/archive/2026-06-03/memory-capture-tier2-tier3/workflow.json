@@ -1,0 +1,13 @@
+{
+  "request": "Build Tier 2 + Tier 3 of the LLM-assisted memory epoch (completes cf4a; Tier 1 shipped in 8e6fecf). Tier 2: sentence-granularity capture in memory_stop + small expanded deterministic cue set + _pending route/weight fields (backward-compatible) + labeled fixture corpus (>=80% mid-sentence recall, 0 known-boilerplate noise). Tier 3: .claude/skills/memory-flush/route.mjs bucket+weight suggestion helper (reads transcript+_pending; human-final accept/override per IX.3; Sonnet-tier delegable per Article II); thread_store durable pinned working-thread entry exempt from the 20-section prune; resume_writer rework (keep per-turn _resume snapshot + distill durable what/why into the pinned working thread); memory_session_start surfaces it on resume. Design = Option C in archived spec docs/archive/2026-06-03/llm-assisted-memory-capture-routing/spec.md.",
+  "slug": "memory-capture-tier2-tier3",
+  "track_id": "spec-entry",
+  "exceptions": ["intake", "brd", "scout", "research"],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "skip_brainstorm": true,
+  "codesign_mode": false,
+  "source_backlog_keys": ["llm-assisted-memory-capture-routing-cf4a"],
+  "created_at": 1780507881,
+  "updated_at": 1780507881
+}

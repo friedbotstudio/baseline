@@ -9,7 +9,7 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { readMostRecentMarkdown } from './thread_store.mjs';
+import { readMostRecentMarkdown, readWorkingThread } from './thread_store.mjs';
 
 const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
 const PENDING_FILE = 'pending-questions';
@@ -370,6 +370,17 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
           : threadMd;
         out = out + '\n\n---\n\n## Most-recent shelved thread (resume candidate)\n\n' + block;
       }
+    }
+  } catch {}
+
+  // Surface the durable pinned working thread (Tier 3) — the "what/why" that
+  // survives /clear. Short, distinct from the shelved-thread section above.
+  try {
+    const wt = readWorkingThread({ memDir });
+    const whatWhy = wt && Array.isArray(wt.verbatim_cues) ? wt.verbatim_cues.join(' ') : '';
+    if (whatWhy && (9000 - out.length) > 200) {
+      out = out + '\n\n---\n\n## Working thread (durable what/why)\n\n'
+        + `> ${whatWhy.slice(0, 400)}\n\nNext: ${wt.next_step || '(continue)'}`;
     }
   } catch {}
 

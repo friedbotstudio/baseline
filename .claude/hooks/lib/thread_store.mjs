@@ -139,8 +139,20 @@ export function pruneTrail({ memDir, maxSections = THREAD_MAX_SECTIONS }) {
   let entries;
   try { entries = parseSections(readFileSync(path, 'utf8')); }
   catch { return { kept: 0, evicted: 0 }; }
-  if (entries.length <= maxSections) return { kept: entries.length, evicted: 0 };
-  const keep = entries.slice(entries.length - maxSections);
+  // Pin: the most-recent working-thread entry is retained regardless of the cap,
+  // and older working entries collapse to that single pin. Ordinary sections keep
+  // the last `maxSections`. Chronological order is preserved in the rewrite.
+  let pinnedIdx = -1;
+  for (let i = entries.length - 1; i >= 0; i--) {
+    if (entries[i] && entries[i].working_thread === true) { pinnedIdx = i; break; }
+  }
+  const ordinaryIdx = entries
+    .map((_, i) => i)
+    .filter((i) => !(entries[i] && entries[i].working_thread === true));
+  const keepIdx = new Set(ordinaryIdx.slice(Math.max(0, ordinaryIdx.length - maxSections)));
+  if (pinnedIdx >= 0) keepIdx.add(pinnedIdx);
+  if (keepIdx.size >= entries.length) return { kept: entries.length, evicted: 0 };
+  const keep = entries.filter((_, i) => keepIdx.has(i));
   const rebuilt = TRAIL_HEADER + keep.map((e) => '\n' + renderSection(e)).join('');
   try {
     const tmp = path + '.tmp';
@@ -149,7 +161,7 @@ export function pruneTrail({ memDir, maxSections = THREAD_MAX_SECTIONS }) {
   } catch {
     return { kept: entries.length, evicted: 0 };
   }
-  return { kept: maxSections, evicted: entries.length - maxSections };
+  return { kept: keep.length, evicted: entries.length - keep.length };
 }
 
 export function listSections({ memDir }) {
@@ -157,6 +169,16 @@ export function listSections({ memDir }) {
   if (!existsSync(path)) return [];
   try { return parseSections(readFileSync(path, 'utf8')); }
   catch { return []; }
+}
+
+// The durable working thread: the most-recent section flagged working_thread.
+// Pinned by pruneTrail, so it survives /clear and the 20-section cap (Tier 3).
+export function readWorkingThread({ memDir }) {
+  const all = listSections({ memDir });
+  for (let i = all.length - 1; i >= 0; i--) {
+    if (all[i] && all[i].working_thread === true) return all[i];
+  }
+  return null;
 }
 
 export function readMostRecent({ memDir }) {

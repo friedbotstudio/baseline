@@ -16,6 +16,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 import { isBoilerplate } from './common.mjs';
+import { appendEntry } from './thread_store.mjs';
 
 // #10: caps doubled from the original (3/12/5/5/400) so dense sessions
 // retain useful context. The composeSnapshot truncator still budget-checks
@@ -274,6 +275,52 @@ export function composeSnapshot({ transcript, projectDir, trigger }) {
   return lines.join('\n');
 }
 
+// Last authored user prompt in the transcript (boilerplate filtered), used as the
+// cheap deterministic "what/why" when no workflow request is on disk.
+function lastUserPrompt(transcript) {
+  let raw;
+  try { raw = readFileSync(transcript, 'utf8'); } catch { return ''; }
+  let last = '';
+  for (const line of raw.split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t) continue;
+    let ev;
+    try { ev = JSON.parse(t); } catch { continue; }
+    const msg = (ev && ev.message) || ev;
+    if (!msg || msg.role !== 'user') continue;
+    for (const block of extractTextBlocks(msg.content)) {
+      if (!isBoilerplate(block)) last = block;
+    }
+  }
+  return last;
+}
+
+// Distill the durable "what/why" into the pinned working-thread entry so it
+// survives /clear (Tier 3). Deterministic + cheap: workflow request, else the
+// last user prompt. The model backstop that enriches this lives at /memory-flush.
+function distillWorkingThread({ transcript, projectDir, memDir, trigger }) {
+  let slug = '';
+  let request = '';
+  try {
+    const wf = JSON.parse(readFileSync(join(projectDir, '.claude', 'state', 'workflow.json'), 'utf8'));
+    slug = wf.slug || '';
+    request = wf.request || '';
+  } catch {}
+  const whatWhy = (request || lastUserPrompt(transcript) || 'working thread').slice(0, 240);
+  const entry = {
+    shelved_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
+    trigger: 'working',
+    working_thread: true,
+    span_start_uuid: null,
+    span_end_uuid: null,
+    verbatim_cues: [whatWhy],
+    open_question_candidates: [],
+    in_flight_files: [],
+    next_step: slug ? `(resume: ${slug})` : '(resume working thread)',
+  };
+  try { appendEntry({ memDir, entry }); } catch {}
+}
+
 export function writeSnapshot({ transcript, projectDir, trigger }) {
   const memDir = join(projectDir, '.claude', 'memory');
   try {
@@ -283,6 +330,7 @@ export function writeSnapshot({ transcript, projectDir, trigger }) {
   const out = join(memDir, '_resume.md');
   try {
     writeFileSync(out, body, 'utf8');
-    return out;
   } catch { return null; }
+  distillWorkingThread({ transcript, projectDir, memDir, trigger });
+  return out;
 }

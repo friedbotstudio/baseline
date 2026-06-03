@@ -88,6 +88,25 @@ const BACKLOG_MARKER_BODY =
 
 const BACKLOG_MARKER_RE = new RegExp(String.raw`\b(?:${BACKLOG_MARKER_BODY})\b`, 'i');
 
+// Tier 2 — decision/approach cues. Unlike INTENT_TRIGGERS (line-start anchored
+// for precision) these fire ANYWHERE in a sentence, like BACKLOG_MARKER_RE: the
+// phrasings are high-precision ("the cleanest approach is", "decided to") so a
+// mid-sentence occurrence is still real intent, which line-start anchoring drops
+// (the recurring miss in backlog.md). Capture stays cheap + deterministic; the
+// semantic backstop is the model at /memory-flush.
+const DECISION_CUE_BODY =
+  String.raw`the\s+(?:right|cleanest|cleaner|better|simplest)\s+(?:approach|move|fix|option)\s+is` +
+  String.raw`|(?:i'?m|we'?re|i\s+am|we\s+are)\s+going\s+to\b` +
+  String.raw`|the\s+(?:fix|plan|approach)\s+is\b` +
+  String.raw`|let'?s\s+(?:go\s+with|do)\b` +
+  String.raw`|decided\s+to\b`;
+const DECISION_CUE_RE = new RegExp(String.raw`\b(?:${DECISION_CUE_BODY})`, 'i');
+
+// Sentence boundary — capture emits the salient SENTENCE containing the match,
+// not the whole line (Tier 2 granularity), so a one-sentence intent buried in a
+// multi-sentence paragraph stages cleanly.
+const SENTENCE_SPLIT = /(?<=[.?!])\s+/;
+
 // Removes a marker phrase wherever it occurs in a line — together with any
 // wrapping parens/brackets, a trailing "too", and trailing punctuation — so
 // the derived slug captures the intent payload, not the routing phrase. The
@@ -129,13 +148,23 @@ function matchesIntent(line, patterns) {
   for (const pat of patterns) {
     if (pat.test(line)) return true;
   }
-  return BACKLOG_MARKER_RE.test(line);
+  return BACKLOG_MARKER_RE.test(line) || DECISION_CUE_RE.test(line);
 }
 
+// Yield the salient SENTENCE for each match. Anchored INTENT_TRIGGERS are tested
+// at sentence start (so a trigger opening the 2nd sentence of a line fires);
+// BACKLOG_MARKER_RE / DECISION_CUE_RE fire anywhere within a sentence.
 function* iterIntentMatches(text, patterns) {
   for (const line of text.split(/\r?\n/)) {
-    if (matchesIntent(line, patterns)) yield line;
+    for (const raw of line.split(SENTENCE_SPLIT)) {
+      const sentence = raw.trim();
+      if (sentence && matchesIntent(sentence, patterns)) yield sentence;
+    }
   }
+}
+
+function intentWeight(sentence) {
+  return BACKLOG_MARKER_RE.test(sentence) || DECISION_CUE_RE.test(sentence) ? 0.8 : 0.6;
 }
 
 function normalizeIntent(line) {
@@ -246,7 +275,7 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
             if (verbatim.length > MAX_INTENT_TEXT_LEN) {
               verbatim = verbatim.slice(0, MAX_INTENT_TEXT_LEN).replace(/\s+$/, '') + '…';
             }
-            intentCandidates.push({ key, verbatim, role, source: sourceValue });
+            intentCandidates.push({ key, verbatim, role, source: sourceValue, weight: intentWeight(matchedLine) });
           }
         }
       }
@@ -327,6 +356,8 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
       `- Intent: ${cand.verbatim}`,
       `- Role: ${cand.role}`,
       `- Source: ${cand.source}`,
+      `- route: unassigned`,
+      `- weight: ${cand.weight}`,
       `- Context: ${workflowSlug || '(no active workflow)'}`,
       `- Emitted-at: ${ts}`,
       '',

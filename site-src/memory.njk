@@ -131,7 +131,7 @@ toc:
       <text class="mf-step" x="540" y="38" text-anchor="middle">03 · promote</text>
       <text class="mf-step" x="640" y="160" text-anchor="middle">04 · cite</text>
     </svg>
-    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Three signals (file edits, context7 queries, anchored intent text in user prompts or assistant responses) stream into <code>_pending.md</code> at every turn end. <code>/memory-flush</code> promotes keepers to the seven canonical files: six participate in re-verification on every cite (failed verifications correct or delete in the same run), and one (<code>backlog.md</code>) carries intent that does not decay.</figcaption>
+    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Three signals (file edits, context7 queries, salient sentence-level intent text in user prompts or assistant responses) stream into <code>_pending.md</code> at every turn end. <code>/memory-flush</code> promotes keepers to the seven canonical files: six participate in re-verification on every cite (failed verifications correct or delete in the same run), and one (<code>backlog.md</code>) carries intent that does not decay.</figcaption>
   </figure>
 
   <figure class="figure plate-flow" aria-labelledby="backlog-states-cap">
@@ -184,7 +184,7 @@ toc:
   </figure>
 
   <ol>
-    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and emits three kinds of candidates into <code>_pending.md</code>: file-edit events become landmark candidates, <code>context7</code> queries become library candidates, and anchored line-start intent text (in user prompts or assistant responses) becomes backlog candidates.</li>
+    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and emits three kinds of candidates into <code>_pending.md</code>: file-edit events become landmark candidates, <code>context7</code> queries become library candidates, and salient intent text becomes backlog candidates. Intent capture is sentence-level: line-start triggers plus a small set of high-precision decision and approach phrasings (in user prompts or assistant responses), each staged with a suggested <code>route</code> and a <code>weight</code> the curator can accept or override.</li>
     <li>At session start, the index lists the <code>_pending.md</code> row alongside the canonical files. <code>backlog.md</code> is stale-exempt; it never shows up in the stale count regardless of <code>verified-at</code> age.</li>
     <li><code>/memory-flush</code> runs at workflow Phase 10.6 (between <code>/archive</code> and <code>/grant-commit</code>); the session-start nag fires only on candidates carried over from a prior incomplete workflow.</li>
     <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file (landmark, library, backlog, decision, and so on), drops the rest, and clears <code>_pending.md</code>.</li>
