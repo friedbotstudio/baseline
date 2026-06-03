@@ -28,6 +28,19 @@ import { resolve, dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 
+// Spec/archive prose is excluded from the scored diff (backlog a1b2). An AC id
+// resolves only when it appears in an IMPLEMENTATION or TEST added-line — never
+// in the spec markdown's own `| AC-NNN | ... |` rows. During the pre-commit
+// /tdd phase the spec under review is uncommitted (untracked), so without this
+// exclusion every AC self-satisfies against the spec document and drift-check
+// becomes a trivial always-pass. `docs/archive/` is excluded for the same reason
+// (archived specs from prior workflows carry the same AC-id rows).
+const EXCLUDED_DIFF_PREFIXES = ['docs/specs/', 'docs/archive/'];
+
+function isExcludedDiffPath(relPath) {
+  return EXCLUDED_DIFF_PREFIXES.some(prefix => relPath.startsWith(prefix));
+}
+
 const AC_ROW_RE = /^\|\s*(AC-\d+)\s*\|/gm;
 const DESIGN_CALLS_SECTION_RE = /^##\s+Design calls\s*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
 const DESIGN_ROW_RE = /^\|\s*([^|]+?)\s*\|/gm;
@@ -42,7 +55,7 @@ function loadSpec(projectRoot, slug) {
 function untrackedDiff(projectRoot) {
   const listed = spawnSync('git', ['-C', projectRoot, 'ls-files', '--others', '--exclude-standard'], { encoding: 'utf8' });
   if (listed.status !== 0 || !listed.stdout.trim()) return '';
-  const paths = listed.stdout.split('\n').map(p => p.trim()).filter(Boolean);
+  const paths = listed.stdout.split('\n').map(p => p.trim()).filter(Boolean).filter(p => !isExcludedDiffPath(p));
   let out = '';
   for (const rel of paths) {
     // `--no-index` diffs an untracked file against /dev/null so its lines count
@@ -58,7 +71,12 @@ function loadDiff(projectRoot, diffPath) {
   if (diffPath) {
     return readFileSync(diffPath, 'utf8');
   }
-  const tracked = spawnSync('git', ['-C', projectRoot, 'diff', 'HEAD'], { encoding: 'utf8' });
+  // Exclude pathspecs keep spec/archive prose out of the tracked diff too (a
+  // tracked spec edited in this workflow would otherwise self-satisfy its ACs).
+  // The leading `.` positive pathspec is required so git does not reject an
+  // all-exclusion pathspec list.
+  const excludeSpecs = EXCLUDED_DIFF_PREFIXES.map(prefix => `:(exclude)${prefix}`);
+  const tracked = spawnSync('git', ['-C', projectRoot, 'diff', 'HEAD', '--', '.', ...excludeSpecs], { encoding: 'utf8' });
   const trackedDiff = tracked.status === 0 ? tracked.stdout : '';
   return trackedDiff + untrackedDiff(projectRoot);
 }

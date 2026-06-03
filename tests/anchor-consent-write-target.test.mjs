@@ -93,3 +93,37 @@ describe('writesConsentPath — target-anchored consent-write detection', () => 
     assert.equal(w('tee $UNKNOWN_LOG'), false, 'untraceable var, no literal consent → allow (out of scope)');
   });
 });
+
+// 6f65 — the necessary-condition prefilter that skips resolveAssignments +
+// expandWithEnv for commands that can carry no consent path. The prefilter must
+// be SOUND: it may only fast-path commands whose answer is already false. The
+// load-bearing case is a consent path ASSEMBLED across variables — it has no
+// literal `consent`/`approval`/`grant` substring in the raw text, so a naive
+// raw-substring-only prefilter would wrongly short-circuit it to allow. The
+// command-start-assignment leg keeps it on the full path, so it still BLOCKS.
+describe('writesConsentPath — prefilter soundness (6f65)', () => {
+  it('test_when_consent_split_across_vars_then_still_blocked', async () => {
+    // No contiguous "consent" substring anywhere in the raw command; the path is
+    // assembled only at expansion. Must still block (was true before 6f65).
+    assert.equal(
+      (await W())('A=con; B=sent; F=.claude/state/commit_${A}${B}; tee $F'),
+      true,
+      'var-assembled consent path must still block — prefilter must not fast-path it',
+    );
+  });
+
+  it('test_when_no_consent_word_and_no_assignment_then_false', async () => {
+    const w = await W();
+    // The common fast-path: ordinary commands with neither a consent substring
+    // nor a command-start assignment short-circuit to false.
+    assert.equal(w('npm test && echo done'), false, 'plain command');
+    assert.equal(w('git status; ls -la'), false, 'plain command 2');
+    assert.equal(w('node .claude/skills/tdd/drift_check.mjs --slug x'), false, 'plain node invocation');
+  });
+
+  it('test_when_no_consent_word_but_has_assignment_then_still_false', async () => {
+    // An env-prefixed command with no consent path: not fast-pathed (has an
+    // assignment), but the full path still correctly returns false.
+    assert.equal((await W())('FOO=bar npm test'), false, 'assignment present, no consent path');
+  });
+});

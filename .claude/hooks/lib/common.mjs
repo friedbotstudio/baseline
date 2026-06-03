@@ -536,6 +536,19 @@ const CONSENT_WRITE_VERB_RE = /\b(tee|cp|mv|install|truncate|dd|ln)\b/;
 const CONSENT_SED_INPLACE_RE = /\bsed\b[^|;&]*\s-[a-zA-Z]*i/;
 // A program write inside `node -e` / `python -c` / `perl -e` / `ruby -e` etc.
 const CONSENT_PROG_WRITE_RE = /\b(writeFileSync|appendFileSync|createWriteStream|writeFile)\b|open\s*\([^)]*['"][wa]b?\+?['"]|open\s*\([^)]*,\s*['"]?>>?/;
+// Necessary-condition prefilter for writesConsentPath (backlog 6f65). Every
+// CONSENT_BASENAMES token contains `consent` or `approval` as a substring (the
+// `*_grant` markers also contain `grant`). So a command can resolve to a consent
+// write only if its RAW text either (a) contains one of those substrings, or
+// (b) carries a command-start `VAR=` assignment from which expansion could
+// ASSEMBLE a consent path (`D=.claude/state; tee $D/commit_consent`, or even the
+// split form `A=con; B=sent; ...commit_${A}${B}`). With neither, resolveAssignments
+// returns an empty env, expandWithEnv leaves the command byte-identical (unmapped
+// `$VAR` is returned whole), and CONSENT_REF_RE cannot match — so the expensive
+// resolveAssignments + expandWithEnv pass is skipped soundly. COMMAND_START_ASSIGN_RE
+// mirrors resolveAssignments' assignment shape (delimiter + NAME=) — keep in sync.
+const CONSENT_PREFILTER_SUBSTR_RE = /consent|approval|grant/i;
+const COMMAND_START_ASSIGN_RE = /(?:^|[;&|\n(])\s*[A-Za-z_][A-Za-z0-9_]*=/;
 
 // Strip the MESSAGE payload of `git commit` segments before consent scanning.
 // A commit message that merely DESCRIBES consent tokens (e.g. a governance
@@ -690,6 +703,12 @@ function fragmentWritesConsentTarget(fragment) {
 export function writesConsentPath(cmd) {
   if (typeof cmd !== 'string') return false;
   const scan = sanitizeGitCommitForScan(cmd);
+  // Necessary-condition prefilter (6f65): skip the resolveAssignments +
+  // expandWithEnv pass when the raw command can carry no consent path — no
+  // consent-basename substring AND no command-start assignment to assemble one.
+  // Sound because expansion can only INTRODUCE a consent substring via a mapped
+  // variable, which requires an assignment (see the constant's comment).
+  if (!CONSENT_PREFILTER_SUBSTR_RE.test(scan) && !COMMAND_START_ASSIGN_RE.test(scan)) return false;
   const expanded = expandWithEnv(scan, resolveAssignments(scan));
   // This reject MUST stay AFTER expansion — do not "optimize" it onto raw `scan`.
   // A slash-terminated basename (`spec_approvals/`, `swarm_approvals/`) can be

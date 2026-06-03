@@ -120,6 +120,44 @@ describe('drift_check working-tree diff sourcing', () => {
     assert.equal(verdictOf(readReport(root), 'AC-001'), 'unresolved');
   });
 
+  it('test_when_spec_untracked_and_no_impl_then_unresolved_not_self_pass', () => {
+    // a1b2: the spec is uncommitted (the real pre-commit /tdd state). No impl
+    // references the AC. Before the fix, the untracked spec's own `| AC-001 |`
+    // row self-satisfied → false 'resolved' + exit 0. After excluding docs/specs/
+    // from the scored diff, the AC is correctly unresolved.
+    const root = initRepo();
+    writeSpec(root, ['AC-001']);
+    // Note: spec is NOT committed and NOT referenced by any impl file.
+    const res = runDrift(root);
+    assert.equal(res.status, 1, `expected exit 1, got ${res.status}\n${res.stderr}`);
+    assert.equal(verdictOf(readReport(root), 'AC-001'), 'unresolved');
+  });
+
+  it('test_when_spec_untracked_but_impl_references_ac_then_resolved', () => {
+    // The exclusion must not over-filter: a genuine impl reference still resolves
+    // even while the spec itself sits untracked in the tree.
+    const root = initRepo();
+    writeSpec(root, ['AC-001']);
+    writeFile(root, 'impl.txt', 'implements AC-001 here\n');
+    const res = runDrift(root);
+    assert.equal(res.status, 0, `expected exit 0, got ${res.status}\n${res.stderr}`);
+    assert.equal(verdictOf(readReport(root), 'AC-001'), 'resolved');
+  });
+
+  it('test_when_tracked_spec_edit_does_not_self_satisfy', () => {
+    // A spec committed and then EDITED in the working tree is part of `git diff
+    // HEAD`; the exclude pathspec must keep its AC rows out of the scored diff.
+    const root = initRepo();
+    writeSpec(root, ['AC-007']);
+    commit(root, ['docs/specs/drift-wt.md'], 'spec only');
+    // Edit the tracked spec (adds/touches the AC row in the working-tree diff).
+    writeSpec(root, ['AC-007', 'AC-008']);
+    const res = runDrift(root);
+    assert.equal(res.status, 1, `expected exit 1, got ${res.status}\n${res.stderr}`);
+    assert.equal(verdictOf(readReport(root), 'AC-007'), 'unresolved');
+    assert.equal(verdictOf(readReport(root), 'AC-008'), 'unresolved');
+  });
+
   it('test_when_diff_override_given_then_uses_file_not_git', () => {
     const root = initRepo();
     writeSpec(root, ['AC-001']);
