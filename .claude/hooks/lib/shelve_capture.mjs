@@ -10,6 +10,7 @@
 import {
   readEvents, eventText, appendEntry, readCursor, writeCursor,
 } from './thread_store.mjs';
+import { isBoilerplate } from './common.mjs';
 
 // Volume caps (parallel to resume_writer's MAX_* — a long thread is bounded
 // at capture so the trail and SessionStart injection stay readable).
@@ -40,7 +41,7 @@ function extract(events) {
   for (const ev of events) {
     if (ev.role === 'user') {
       const text = eventText(ev.content);
-      if (text) {
+      if (text && !isBoilerplate(text)) {
         cues.push(text.length > CUE_CHARS ? text.slice(0, CUE_CHARS) + '…' : text);
         for (const sentence of text.split(/(?<=[.?!])\s+/)) {
           if (/\?\s*$/.test(sentence) && openQuestions.length < MAX_OPEN_QUESTIONS) {

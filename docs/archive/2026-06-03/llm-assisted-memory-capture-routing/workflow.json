@@ -1,0 +1,11 @@
+{
+  "request": "LLM-assisted memory capture + routing (baseline epoch). Unify three backlog threads: (1) cf4a core — replace/augment the pure-regex memory_stop auto-extractor with an LLM-assisted capture pass that recognizes salient intent regardless of sentence position and routes candidates to the right canonical bucket (landmark/decision/open-question/backlog), still staging to _pending for human curation per Article IX.3; (2) cf4a point 2 — durable, curated resume thread that survives /clear instead of a per-turn-overwritten _resume.md snapshot; (3) 91a3 both tiers — Tier-1 deterministic isBoilerplate noise-filter in shelve_capture.mjs (shared noise list lifted into lib/common.mjs), Tier-2 semantic weighting of decision text vs SOP boilerplate folded into the cf4a LLM pass. Design-first; yield at /approve-spec and reassess build scope.",
+  "slug": "llm-assisted-memory-capture-routing",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["shelve-capture-grabs-skill-sop-boilerplate-not-decisions-91a3"],
+  "created_at": 1780481571,
+  "updated_at": 1780481571
+}

@@ -15,6 +15,7 @@
 
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
+import { isBoilerplate } from './common.mjs';
 
 // #10: caps doubled from the original (3/12/5/5/400) so dense sessions
 // retain useful context. The composeSnapshot truncator still budget-checks
@@ -78,8 +79,9 @@ function walk(transcript) {
 
     if (role === 'user') {
       for (const t of extractTextBlocks(content)) {
-        if (t.startsWith('<system-reminder>') || t.slice(0, 64).includes('<command-name>')) continue;
-        if (t.startsWith('<local-command-')) continue;
+        // Shared boilerplate filter (common.mjs) + retain the head-includes check
+        // for a <command-name> tag that isn't strictly at offset 0.
+        if (isBoilerplate(t) || t.slice(0, 64).includes('<command-name>')) continue;
         userPrompts.push(t);
       }
     } else if (role === 'assistant') {

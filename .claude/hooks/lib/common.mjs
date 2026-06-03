@@ -745,3 +745,23 @@ export function sweepLeakedGrantMarkers(stateDir, opts = {}) {
   }
   return swept;
 }
+
+// --- shared transcript-noise filtering ---
+//
+// Single source of truth for the boilerplate prefixes the memory capture path
+// must never treat as authored signal. Injected SOP text arrives as user-role
+// events: skill launches are prefixed `Base directory for this skill:`, and the
+// runtime wraps reminders/commands in the tag prefixes below. memory_stop,
+// resume_writer, and shelve_capture all import this so the filter cannot drift
+// between them.
+export const NOISE_PREFIXES = ['<system-reminder>', '<command-name>', '<local-command-'];
+const SKILL_SOP_MARKER = 'Base directory for this skill:';
+
+// True iff the head of `text` is injected boilerplate (a wrapper tag or a skill
+// SOP body), so the capture path can drop it before it consumes a cue slot.
+export function isBoilerplate(text) {
+  if (typeof text !== 'string') return false;
+  const head = text.replace(/^\s+/, '').slice(0, 64);
+  if (head.startsWith(SKILL_SOP_MARKER)) return true;
+  return NOISE_PREFIXES.some((p) => head.startsWith(p));
+}

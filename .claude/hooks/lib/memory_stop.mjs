@@ -10,6 +10,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { NOISE_PREFIXES } from './common.mjs';
 
 const SRC_PREFIXES = ['src/', 'lib/', 'app/', 'pkg/', 'internal/', 'cmd/', '.claude/hooks/', '.claude/skills/'];
 const SKIP_PREFIXES = [
@@ -96,7 +97,6 @@ const MARKER_STRIP_GLOBAL = new RegExp(
   'gi',
 );
 
-const NOISE_PREFIXES = ['<system-reminder>', '<command-name>', '<local-command-'];
 const MAX_INTENT_TEXT_LEN = 240;
 // Minimum edit-only touch count to emit a landmark candidate. Write events
 // bypass the threshold (new files are always interesting). 3 is the smallest
