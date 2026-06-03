@@ -691,6 +691,13 @@ export function writesConsentPath(cmd) {
   if (typeof cmd !== 'string') return false;
   const scan = sanitizeGitCommitForScan(cmd);
   const expanded = expandWithEnv(scan, resolveAssignments(scan));
+  // This reject MUST stay AFTER expansion — do not "optimize" it onto raw `scan`.
+  // A slash-terminated basename (`spec_approvals/`, `swarm_approvals/`) can be
+  // ASSEMBLED only at expansion: `VAR=spec_approvals; tee $VAR/x.approval` has no
+  // literal `spec_approvals/` in the raw command, so an early raw-scan reject
+  // would let it through. Expansion can only INTRODUCE a consent basename whose
+  // literal already lives in a `VAR=...` assignment in `scan`, so testing
+  // `expanded` is both sound and complete here.
   if (!CONSENT_REF_RE.test(expanded)) return false;
   if (CONSENT_REDIRECT_RE.test(expanded)) return true;
   for (const fragment of executedFragments(expanded)) {

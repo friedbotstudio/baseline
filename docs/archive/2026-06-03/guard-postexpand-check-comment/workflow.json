@@ -1,0 +1,11 @@
+{
+  "request": "Add a protective one-line comment at writesConsentPath in .claude/hooks/lib/common.mjs: the post-expansion `if (!CONSENT_REF_RE.test(expanded)) return false;` check MUST run after variable expansion because it catches var-assembled consent basenames (e.g. `VAR=spec_approvals; tee $VAR/x.approval`, where `spec_approvals/` is completed only at the use site). Moving the reject onto the raw scan would reintroduce a bypass. Comment-only; no behavior change. Rebuild the template (manifest hash) since a baseline-owned hook file changes.",
+  "slug": "guard-postexpand-check-comment",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd"],
+  "completed": ["chore", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780477297,
+  "updated_at": 1780477297
+}
