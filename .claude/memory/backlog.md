@@ -98,3 +98,17 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: ba5d91b
 - last-touched: 2026-06-02
 - caveat: Decision to make when picked up: (a) KEEP as-is — it ships for CONSUMER projects that ARE frontend apps (the baseline is a template; dormancy here ≠ dormancy downstream), and document that explicitly; OR (b) broaden its wiring (e.g., let `code-structure`/`scout` reach for it more readily, or surface it as user-invocable); OR (c) remove it and drop the skill count 40→39 (touches seed.md §4.3 count claims, CONSTITUTION Appendix B, audit-baseline skill-count assertions, manifest owners.skills). Option (a) is most likely correct given the template-vs-consumer distinction — the real action may just be a one-line note in seed.md/Appendix B that code-browser is a consumer-facing navigation skill, dormant in this repo by codebase type. Confirm intent before any removal: dropping a skill is a governance-count change cascading through CLAUDE.md/seed.md/README/audit. Cross-ref: `scout/SKILL.md:28` is the sole live invocation site.
+
+## drift-check-diffs-committed-history-noop-pre-commit-d1f7
+
+> verbatim (assistant-deferral, 2026-06-02):
+> drift_check.mjs diffs mergeBase..HEAD (committed history), so it is a no-op during the pre-commit /tdd phase
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-02
+- raised-in-context: the `guard-commit-msg-falsepos` workflow. The harness inlines `drift_check.mjs --slug <slug>` at the drift-check-tick during `/tdd`, before `/commit`. `loadDiff` (`.claude/skills/tdd/drift_check.mjs:46`) runs `git diff ${mergeBase}..HEAD` — COMMITTED history only. Since workflow code is uncommitted at the tdd phase (commit is the last phase), the diff is empty and EVERY AC reports `unresolved` ("no diff added-line references this item"). This workflow's drift-check-tick flagged all 8 ACs unresolved purely from this; passing `--diff <working-tree-diff>` showed the true 7/8.
+- estimated-effort: small
+- verified-at: 0a70375
+- last-touched: 2026-06-02
+- caveat: Fix options: (a) `loadDiff` should default to a WORKING-TREE diff that includes uncommitted + intent-to-add untracked files (e.g. `git diff HEAD` plus `git diff` for staged, or `git add -N`-style inclusion) rather than `mergeBase..HEAD`; (b) OR the harness drift-check-tick should generate the working-tree diff and pass it via `--diff`. Secondary, inherent limitation surfaced same run: a "regression meta-AC" like AC-008 ("existing suites still pass") is NEVER diff-line-traceable — it's defended by running the suite, not by an added line; drift_check will always report such ACs unresolved. Consider either (c) a spec convention that regression/no-op ACs are tagged so drift_check skips them, or (d) guidance that such ACs don't belong in the AC table. Cross-ref: `.claude/skills/tdd/drift_check.mjs:39-47` (loadDiff), `:89-97` (scoreAgainstDiff).

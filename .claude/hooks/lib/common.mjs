@@ -537,14 +537,104 @@ const CONSENT_SED_INPLACE_RE = /\bsed\b[^|;&]*\s-[a-zA-Z]*i/;
 // A program write inside `node -e` / `python -c` / `perl -e` / `ruby -e` etc.
 const CONSENT_PROG_WRITE_RE = /\b(writeFileSync|appendFileSync|createWriteStream|writeFile)\b|open\s*\([^)]*['"][wa]b?\+?['"]|open\s*\([^)]*,\s*['"]?>>?/;
 
+// Strip the MESSAGE payload of `git commit` segments before consent scanning.
+// A commit message that merely DESCRIBES consent tokens (e.g. a governance
+// commit body mentioning `commit_consent` and the word `tee`) is not a consent
+// write, but the raw command string carries those words and would trip the
+// write-signal tests. Two payload sources pollute the command string: an inline
+// `-m`/`--message` argument, and a heredoc body feeding the commit (`-F -`).
+// Both are removed; everything else — and every NON-commit segment — is kept
+// verbatim, so a real write in a compound command (`git commit -m x; tee
+// .../commit_consent`) is still caught.
+
+// Remove heredoc bodies whose opener line is a `git commit` invocation. The
+// body (and the `<<TAG` opener token) is dropped; the closing TAG line is the
+// first line matching `^\s*TAG\s*$`. Non-commit heredocs are left intact.
+function stripGitCommitHeredocBodies(cmd) {
+  if (!cmd.includes('<<')) return cmd;
+  const lines = cmd.split('\n');
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const opener = line.match(/<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1/);
+    if (opener && gitSubcommandInvoked(line, 'commit')) {
+      const closeRe = new RegExp('^\\s*' + opener[2] + '\\s*$');
+      let j = i + 1;
+      while (j < lines.length && !closeRe.test(lines[j])) j++;
+      if (j >= lines.length) {
+        // Unterminated heredoc: strip only the opener token; do NOT swallow the
+        // trailing lines (they would otherwise hide a real consent write). The
+        // remaining lines are processed normally on subsequent iterations.
+        out.push(line.replace(/<<-?\s*['"]?[A-Za-z_][A-Za-z0-9_]*['"]?/, '').trimEnd());
+        continue;
+      }
+      out.push(line.replace(/<<-?\s*['"]?[A-Za-z_][A-Za-z0-9_]*['"]?/, '').trimEnd());
+      i = j; // loop ++ steps past the closing TAG line
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+// Every command-substitution / backtick body the shell would EXECUTE in `s`,
+// collected recursively (a substitution may nest another). Reuses the
+// quote-aware, single-quote-suppressing `extractSubstitutions`. Used so that a
+// real consent write hidden inside a commit-message substitution
+// (`git commit -m "$(tee .../commit_consent)"`) is NOT lost when the message
+// prose is stripped — the executed body is retained for the consent scan.
+function collectExecutedSubstitutions(s, depth = 0) {
+  if (!s || depth > 6) return [];
+  const out = [];
+  for (const body of extractSubstitutions(s)) {
+    out.push(body);
+    out.push(...collectExecutedSubstitutions(body, depth + 1));
+  }
+  return out;
+}
+
+// Drop `-m <arg>` / `-m<arg>` / `--message <arg>` / `--message=<arg>` tokens from
+// a single git-commit segment. Returns the dequoted remainder — adequate for
+// consent scanning, which only reads the result, never re-executes it.
+function stripCommitMessageArgs(seg) {
+  const toks = shellTokens(seg);
+  const kept = [];
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    if (t === '-m' || t === '--message') { i++; continue; } // flag + its separate arg
+    if (/^-m./.test(t) || /^--message=/.test(t)) continue;   // -m<joined> / --message=<joined>
+    kept.push(t);
+  }
+  return kept.join(' ');
+}
+
+// Neutralize git-commit message payloads in `cmd` so consent scanning sees only
+// the executable shape, not the prose. Pure; non-string passes through.
+export function sanitizeGitCommitForScan(cmd) {
+  if (typeof cmd !== 'string' || cmd === '') return cmd;
+  const noHeredoc = stripGitCommitHeredocBodies(cmd);
+  const segs = splitShellSegments(noHeredoc).map((seg) =>
+    gitSubcommandInvoked(seg, 'commit') ? stripCommitMessageArgs(seg) : seg,
+  );
+  const scrubbed = segs.join('\n'); // newline is an unquoted separator: segments stay isolated
+  // Re-append every EXECUTED substitution body from the ORIGINAL command. A
+  // consent write hidden in a message substitution would otherwise vanish with
+  // the stripped prose; retaining the executed body keeps it visible to the
+  // consent scan (over-inclusion is the safe direction for a security guard).
+  const executed = collectExecutedSubstitutions(cmd);
+  return executed.length ? `${scrubbed}\n${executed.join('\n')}` : scrubbed;
+}
+
 // True iff the Bash command writes (not merely references) a consent
 // token/marker. Exported for unit testing and reuse across guards.
 export function writesConsentPath(cmd) {
-  if (typeof cmd !== 'string' || !CONSENT_REF_RE.test(cmd)) return false;
-  if (CONSENT_REDIRECT_RE.test(cmd)) return true;
-  if (CONSENT_WRITE_VERB_RE.test(cmd)) return true;
-  if (CONSENT_SED_INPLACE_RE.test(cmd)) return true;
-  if (CONSENT_PROG_WRITE_RE.test(cmd)) return true;
+  if (typeof cmd !== 'string') return false;
+  const scan = sanitizeGitCommitForScan(cmd);
+  if (!CONSENT_REF_RE.test(scan)) return false;
+  if (CONSENT_REDIRECT_RE.test(scan)) return true;
+  if (CONSENT_WRITE_VERB_RE.test(scan)) return true;
+  if (CONSENT_SED_INPLACE_RE.test(scan)) return true;
+  if (CONSENT_PROG_WRITE_RE.test(scan)) return true;
   return false;
 }
 

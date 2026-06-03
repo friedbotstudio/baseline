@@ -1,0 +1,11 @@
+{
+  "request": "Fix destructive_cmd_guard/writesConsentPath false-positive: a `git commit` whose message payload (-m / -F / heredoc) merely contains a consent basename (commit_consent/push_consent/*_grant) plus a write-verb word (tee/cp/mv/...) is wrongly blocked, because the guard scans the whole command string including the message. Carve out git-commit message payloads from consent-path scanning while still blocking real Bash writes to consent paths, including in compound commands (e.g. `git commit -m x; tee .../commit_consent` must still be caught).",
+  "slug": "guard-commit-msg-falsepos",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780436772,
+  "updated_at": 1780437100
+}
