@@ -1,0 +1,11 @@
+{
+  "request": "Precisely anchor the consent-write guard's write-signals (CONSENT_WRITE_VERB_RE, CONSENT_SED_INPLACE_RE, CONSENT_PROG_WRITE_RE) to the write's actual TARGET, so writesConsentPath stops false-blocking commands that merely READ a consent path (e.g. `head .claude/state/commit_consent; git mv a b`) WITHOUT under-blocking any real forge — including variable indirection (`F=.claude/state/commit_consent; tee $F`, multi-level `G=$F`), redirects, subshells, eval, and executor wrappers. Spec must define the target-resolution / variable-taint model and an EXHAUSTIVE bypass test matrix; the security non-negotiable is zero under-block relative to the current coarse whole-scan guard (committed 6b310eb, sound). Escalated from an abandoned tdd-quickfix whose per-fragment co-occurrence approach /security proved unsound (HIGH under-block on variable indirection). Single-file impl (.claude/hooks/lib/common.mjs) + tests.",
+  "slug": "anchor-consent-write-target",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780474715,
+  "updated_at": 1780474715
+}

@@ -625,16 +625,77 @@ export function sanitizeGitCommitForScan(cmd) {
   return executed.length ? `${scrubbed}\n${executed.join('\n')}` : scrubbed;
 }
 
+// Expand `$VAR` / `${VAR}` occurrences in `str` against `env`. Unknown names are
+// left literal — matching the current scanner's blind spot (a value with no
+// literal consent basename is unreachable by any literal scanner; see the spec
+// Non-goals). Used both to resolve assignment values and to expand the command.
+function expandWithEnv(str, env) {
+  return str.replace(
+    /\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
+    (whole, braced, bare) => {
+      const name = braced || bare;
+      return env.has(name) ? env.get(name) : whole;
+    },
+  );
+}
+
+// Build a map of shell variable assignments (`VAR=value` at a command-start
+// position) to their resolved values. Processed left-to-right so a later value
+// referencing an earlier var (`G=$F`) resolves through the map built so far
+// (multi-level taint). Quote stripping is best-effort; values with embedded
+// whitespace are out of scope (consent paths have none).
+function resolveAssignments(scan) {
+  const env = new Map();
+  const re = /(?:^|[;&|\n(])\s*([A-Za-z_][A-Za-z0-9_]*)=([^\s;&|)]*)/g;
+  let m;
+  while ((m = re.exec(scan)) !== null) {
+    const name = m[1];
+    const rawValue = m[2].replace(/^['"]|['"]$/g, '');
+    env.set(name, expandWithEnv(rawValue, env));
+  }
+  return env;
+}
+
+// True iff a single executed fragment writes a consent path via a write VERB /
+// sed-inplace / programmatic write whose operand is a consent path. Redirects are
+// NOT checked here — they are handled whole-command by the caller because the
+// `>|` clobber operator embeds a `|` that `splitShellSegments` treats as a pipe,
+// splitting the redirect across fragments. Because the caller runs this on the
+// VARIABLE-EXPANDED command, a variable-indirected target (`tee $F` where
+// `F=.../commit_consent`) is already a literal consent operand here. A fragment
+// with no consent reference is never a consent write. Over-inclusion (a consent
+// path read-out by `cp consent /tmp`, or a write verb whose operand merely
+// co-occurs) is the safe direction for a guard.
+function fragmentWritesConsentTarget(fragment) {
+  if (!CONSENT_REF_RE.test(fragment)) return false;
+  if (CONSENT_WRITE_VERB_RE.test(fragment)) return true;
+  if (CONSENT_SED_INPLACE_RE.test(fragment)) return true;
+  if (CONSENT_PROG_WRITE_RE.test(fragment)) return true;
+  return false;
+}
+
 // True iff the Bash command writes (not merely references) a consent
 // token/marker. Exported for unit testing and reuse across guards.
+//
+// Target-anchored: a write blocks only when its RESOLVED target is a consent
+// path. Variables are expanded first (so `F=.../commit_consent; tee $F` resolves
+// to a literal consent write and blocks). A redirect whose target is a consent
+// path is checked whole-command (path-anchored, so no false positive, and robust
+// to `>|` splitting). Verb / sed-inplace / programmatic writes are checked per
+// executed fragment so that a command which merely READS a consent path in one
+// fragment while a write targets something else in another (`head
+// .../commit_consent; git mv a b`) is allowed — the consent reference and the
+// write signal live in DIFFERENT fragments. The git-commit message carve-out
+// (sanitizeGitCommitForScan) is applied first and retained.
 export function writesConsentPath(cmd) {
   if (typeof cmd !== 'string') return false;
   const scan = sanitizeGitCommitForScan(cmd);
-  if (!CONSENT_REF_RE.test(scan)) return false;
-  if (CONSENT_REDIRECT_RE.test(scan)) return true;
-  if (CONSENT_WRITE_VERB_RE.test(scan)) return true;
-  if (CONSENT_SED_INPLACE_RE.test(scan)) return true;
-  if (CONSENT_PROG_WRITE_RE.test(scan)) return true;
+  const expanded = expandWithEnv(scan, resolveAssignments(scan));
+  if (!CONSENT_REF_RE.test(expanded)) return false;
+  if (CONSENT_REDIRECT_RE.test(expanded)) return true;
+  for (const fragment of executedFragments(expanded)) {
+    if (fragmentWritesConsentTarget(fragment)) return true;
+  }
   return false;
 }
 
