@@ -1,0 +1,29 @@
+{
+  "request": "Declare + detect + guard-enforce a git workflow topology model: project.json git.workflow_model enum (direct-to-main | github-flow | ask; gitflow/trunk reserved->ask), /init-project best-effort detection (ask on ambiguity), extend git_commit_guard (no 23rd hook) to hard-block commits whose branch contradicts the declared model with a remediation message, Article VII precedence clause (declared model overrides generic branching instincts) + swarm-worktree carve-out, commit SOP + seed.md updates, migrate this repo to direct-to-main.",
+  "slug": "git-workflow-topology-model",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "git-workflow-model-declared-detected-guard-enforced-topology-e579"
+  ],
+  "created_at": 1780580691,
+  "updated_at": 1780593092
+}

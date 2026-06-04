@@ -196,6 +196,8 @@
     "strict_syntax_check": false
   },
   "git": {
+    "workflow_model": "direct-to-main",
+    "release_branches": ["main", "next"],
     "protected_branches": null,
     "branch_pattern": null
   },

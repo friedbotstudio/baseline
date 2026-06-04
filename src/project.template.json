@@ -192,6 +192,8 @@
     "strict_syntax_check": false
   },
   "git": {
+    "workflow_model": "ask",
+    "release_branches": ["main"],
     "protected_branches": null,
     "branch_pattern": null
   },

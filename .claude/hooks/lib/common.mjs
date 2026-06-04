@@ -12,6 +12,7 @@
 
 import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 export const CLAUDE_PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 export const CLAUDE_DOTDIR = join(CLAUDE_PROJECT_ROOT, '.claude');
@@ -783,4 +784,65 @@ export function isBoilerplate(text) {
   const head = text.replace(/^\s+/, '').slice(0, 64);
   if (head.startsWith(SKILL_SOP_MARKER)) return true;
   return NOISE_PREFIXES.some((p) => head.startsWith(p));
+}
+
+// --- Git workflow-topology helpers ----------------------------------------
+// Consumed by git_commit_guard.mjs (topology enforcement) and /init-project
+// (best-effort model detection). See docs/specs/git-workflow-topology-model.md.
+
+// The enforceable workflow models. `gitflow` / `trunk` are reserved enum values
+// that resolve to `ask` until a consumer needs their enforcement logic.
+const WORKFLOW_MODELS = new Set(['direct-to-main', 'github-flow', 'ask']);
+
+// Resolve a project.json `git.workflow_model` value to its effective model.
+// Canonical values map to themselves; reserved (`gitflow`/`trunk`), absent,
+// non-string, and unrecognized values resolve to `ask`. Total fn — never throws.
+export function resolveWorkflowModel(value) {
+  return WORKFLOW_MODELS.has(value) ? value : 'ask';
+}
+
+// True iff `cwd` is the primary working tree (not a linked `git worktree`).
+// A linked worktree's --git-dir (`…/.git/worktrees/<name>`) differs from its
+// --git-common-dir (`…/.git`); on the primary tree the two are equal. Any git
+// failure (not a repo, git absent) returns true — fail toward enforcing
+// topology on the primary tree rather than silently skipping the check.
+export function isPrimaryWorkTree(cwd = CLAUDE_PROJECT_ROOT) {
+  try {
+    const opts = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd };
+    const gitDir = execFileSync('git', ['rev-parse', '--absolute-git-dir'], opts).trim();
+    const commonDir = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], opts).trim();
+    return gitDir === commonDir;
+  } catch {
+    return true;
+  }
+}
+
+// Parse the branch list out of a CI workflow's `push:` trigger
+// (`push:\n  branches: [main, next]`). Returns [] when no list is found.
+function parsePushBranches(ciText) {
+  const m = ciText.match(/push:\s*[\s\S]*?branches:\s*\[([^\]]*)\]/);
+  if (!m) return [];
+  return m[1]
+    .split(',')
+    .map((b) => b.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(Boolean);
+}
+
+// Best-effort classifier for /init-project `git.workflow_model` detection.
+// Pure over injected signals (no live `gh`/network). Total fn — malformed or
+// missing input floors to `{model:'ask'}`; conflicting signals also floor to ask.
+export function detectWorkflowModel(signals) {
+  const s = (signals && typeof signals === 'object') ? signals : {};
+  const ci = typeof s.ciText === 'string' ? s.ciText : '';
+  const semanticRelease = ci.includes('semantic-release');
+  const requiresReview = !!(s.ghProtection && typeof s.ghProtection === 'object'
+    && s.ghProtection.required_pull_request_reviews);
+
+  if (semanticRelease && requiresReview) return { model: 'ask' };
+  if (semanticRelease) {
+    const branches = parsePushBranches(ci);
+    return { model: 'direct-to-main', release_branches: branches.length ? branches : ['main'] };
+  }
+  if (requiresReview) return { model: 'github-flow' };
+  return { model: 'ask' };
 }

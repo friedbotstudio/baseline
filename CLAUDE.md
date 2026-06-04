@@ -152,18 +152,20 @@ The following bind every code change.
 
 ## Article VII — Git rules
 
-**Applicability.** Article VII applies only when the project is a git repository (`git rev-parse --is-inside-work-tree` exits 0 at the project root). On a non-git project, this Article is vacuously satisfied: you SHALL NOT attempt any git operation, gate C and the `commit` phase are auto-excepted at triage time (Art. IV), and the workflow ends after `/archive`. The rules below bind only inside the git-repository case.
+**Applicability.** Article VII binds only in a git repository (`git rev-parse --is-inside-work-tree` exits 0). On a non-git project it is vacuously satisfied: attempt no git operation; gate C and `commit` are auto-excepted at triage (Art. IV); the workflow ends after `/archive`.
 
 **Branch-aware consent policy.** Consent enforcement for `git commit` and `git push` is driven by two `project.json` knobs:
 
 - `git.protected_branches` — glob list. `null` (default) means every branch is protected. Set e.g. `["main", "release/*"]` to limit consent enforcement to those branches.
 - `git.branch_pattern` — regex. `null` (default) means no naming check. Set e.g. `"^(feat|fix|chore|docs)/[a-z0-9-]+$"` to require conformant branch names on commit.
 
-On a **protected branch**, commits require a fresh `commit_consent` token (written by `/grant-commit`, 5-min TTL) and pushes require a fresh `push_consent` token (written by `/grant-push`, 5-min TTL) — both gated by the user having explicitly asked for the operation in their current request. On a non-protected branch, commits and pushes proceed without consent. `git_commit_guard` (Art. VIII) is the enforcer.
+On a **protected branch**, commits require fresh `commit_consent` (`/grant-commit`, 5-min TTL) and pushes fresh `push_consent` (`/grant-push`, 5-min TTL), each gated on the user having asked for the op in their current request. Non-protected branches proceed without consent. `git_commit_guard` (Art. VIII) enforces.
 
-**Detached HEAD.** When the current branch resolves to the literal string `HEAD` (detached state), the guard denies both commit and push with an explicit message. Check out a named branch before attempting either — branch-aware policy needs a named branch to evaluate `git.protected_branches` and `git.branch_pattern`.
+**Branch topology (full rules: annex + seed.md Art. VII).** `git.workflow_model` + `git.release_branches` declare where commits may land; `git_commit_guard` enforces on the primary tree only (swarm worktrees exempt). **Binding precedence:** a non-`ask` model **overrides Claude's generic branching instincts and the harness default** — branch only as it prescribes; under `ask`, yield to the user.
 
-**Hard-blocks regardless of consent, branch, or user request.** These operations rewrite history, skip safety, or sweep paths; `git_commit_guard`'s `FORBIDDEN_RE` blocks them flat-out:
+**Detached HEAD.** When the branch resolves to the literal `HEAD`, the guard denies both commit and push; check out a named branch first (branch-aware policy needs one to evaluate `git.protected_branches`/`git.branch_pattern`).
+
+**Hard-blocks (regardless of consent, branch, or request).** These rewrite history, skip safety, or sweep paths; `git_commit_guard`'s `FORBIDDEN_RE` blocks them flat-out:
 
 - `git commit --amend` — always create a new commit.
 - `--no-verify`, `--no-gpg-sign`, or any flag that skips hooks/signing.
@@ -172,7 +174,7 @@ On a **protected branch**, commits require a fresh `commit_consent` token (writt
 - `git rebase -i`, `git add -i` (interactive).
 - `git add -A`, `git add .` — name the paths.
 
-`git push` is no longer in this set — it is governed by the branch-aware policy above. `git push --force` and `--force-with-lease` are still forbidden unless the user names the exact operation in their current request, AND additionally subject to the branch-aware policy (force-push to a protected branch requires fresh `push_consent` plus the user-named carve-out).
+`git push` is governed by the branch-aware policy above, not `FORBIDDEN_RE`. `git push --force`/`--force-with-lease` stay forbidden unless the user names the exact op in their current request, and remain subject to the branch-aware policy (force-push to a protected branch also needs fresh `push_consent`).
 
 ## Article VIII — Hooks (the enforcement layer)
 

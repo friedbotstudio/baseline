@@ -45,6 +45,7 @@ Survey the WHOLE project — not a task slice. Do this directly with Read/Grep/G
 - **External services referenced** (in code or config): databases, queues, third-party APIs, observability, project management tools.
 - **CI**: present? what runner?
 - **Conventions**: commit format, branch naming, code style notes from CLAUDE.md / CONTRIBUTING.md / README.
+- **Git workflow model** (best-effort): gather signals for `git.workflow_model` (Art. VII) — the release-CI trigger text (`.github/workflows/*.yml`: a `semantic-release` step + its `push: branches: [...]` list), branch protection (`gh api repos/{owner}/{repo}/branches/<default>/protection`, if `gh` is authenticated and reachable), and history shape (`git log --merges` linear-vs-merge). Pass these as `{ciText, ghProtection}` to `detectWorkflowModel` in `.claude/hooks/lib/common.mjs` — e.g. `node -e "import('./.claude/hooks/lib/common.mjs').then(m=>console.log(JSON.stringify(m.detectWorkflowModel({ciText:process.argv[1]||''}))))" "$(cat .github/workflows/*.yml 2>/dev/null)"`. The classifier floors to `{model:'ask'}` on any ambiguity, conflict, or unreachable `gh`. Record the proposed `model` (+ `release_branches` when `direct-to-main`) for Step 5; never treat detection as final — Step 5 confirms it.
 
 Keep the survey under 400 lines. Include exact file paths for the strongest evidence of each finding.
 
@@ -74,6 +75,7 @@ Show the user one review surface before writing anything:
    - `tdd.source_globs`, `test_globs`, `exempt_globs`
    - `destructive.hard_block_patterns` (baseline + extensions), `ask_patterns` (baseline + extensions)
    - `swarm.isolation` (`worktree` if git, else `shared`)
+   - `git.workflow_model` + `git.release_branches` (from the Step 3 `detectWorkflowModel` proposal). Surface the detected model via `AskUserQuestion` for confirmation — present the proposed value plus `ask` as an always-available option. On any ambiguity or unreachable `gh`, the proposal IS `ask`; never auto-pick an enforced model without the user's confirmation.
    - All other keys keep their baseline defaults.
 3. **Recommender additions** (from JSON `additions`): MCP servers, skills, hooks, and any `swarm_worker_skills` to preload — name + reason for each.
 4. **Gaps flagged** (from JSON `gaps`): things the baseline doesn't cover but might warrant a future spec.

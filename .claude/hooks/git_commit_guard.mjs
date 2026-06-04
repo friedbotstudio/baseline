@@ -38,6 +38,8 @@ import {
   matchAnyGlob,
   gitSubcommandInvoked,
   gitSegments,
+  resolveWorkflowModel,
+  isPrimaryWorkTree,
   CLAUDE_PROJECT_ROOT,
   STATE_DIR,
   CONSENT_MARKER_COMMIT,
@@ -118,6 +120,38 @@ function branchPolicy() {
   return { protected: isProtected, patternViolation, detached: false, branch, notGit: false };
 }
 
+// Topology policy: does the current branch contradict the declared workflow
+// model? Pure decision returning { block, reason, remediation }. `ask` and a
+// non-primary (linked) worktree both yield a non-blocking result. A non-blocking
+// result FALLS THROUGH in handleBash to the existing branch/consent policy —
+// topology composes with consent, it does not replace it.
+function topologyDecision({ model, branch, releaseBranches, isPrimary }) {
+  if (model === 'ask' || !isPrimary) {
+    return { block: false, reason: null, remediation: null };
+  }
+  const releaseSet = (Array.isArray(releaseBranches) && releaseBranches.length) ? releaseBranches : ['main'];
+  const inRelease = matchAnyGlob(branch, releaseSet);
+  if (model === 'direct-to-main') {
+    if (inRelease) return { block: false, reason: null, remediation: null };
+    return {
+      block: true,
+      reason: 'commit belongs on a release branch under the direct-to-main model',
+      remediation: `git checkout ${releaseSet[0]} && git merge --ff-only ${branch}`,
+    };
+  }
+  if (model === 'github-flow') {
+    if (inRelease) {
+      return {
+        block: true,
+        reason: 'github-flow: commits do not belong on the release branch — create a feature branch first',
+        remediation: 'git checkout -b <feature-branch>',
+      };
+    }
+    return { block: false, reason: null, remediation: null };
+  }
+  return { block: false, reason: null, remediation: null };
+}
+
 function validateConsentToken(file, ttlKey, defaultTtl, gateLabel, cmdHint) {
   let ttl = projectGet(ttlKey);
   if (typeof ttl !== 'number' || !Number.isFinite(ttl)) ttl = defaultTtl;
@@ -175,6 +209,26 @@ function handleBash(cmd) {
   if (policy.detached) {
     logLine(HOOK, `BLOCKED detached HEAD cmd=${cmd}`);
     emitBlock(`Git Commit Guard: detached HEAD. Check out a branch first. Branch-aware policy needs a named branch to evaluate \`git.protected_branches\` and \`git.branch_pattern\`.`);
+  }
+
+  // Topology enforcement (declared git.workflow_model) — after the detached
+  // deny, before the consent/pattern checks. Only commits carry a topology
+  // obligation; a PASS falls through so consent/pattern still apply.
+  if (isCommit) {
+    const model = resolveWorkflowModel(projectGet('.git.workflow_model'));
+    if (model !== 'ask') {
+      const decision = topologyDecision({
+        model,
+        branch: policy.branch,
+        releaseBranches: projectGet('.git.release_branches'),
+        isPrimary: isPrimaryWorkTree(),
+      });
+      if (decision.block) {
+        logLine(HOOK, `BLOCKED topology model=${model} branch=${policy.branch}`);
+        emitBlock(`Git Commit Guard: ${decision.reason}. Remediation: ${decision.remediation}`);
+      }
+      logLine(HOOK, `ALLOWED topology PASS model=${model} branch=${policy.branch}`);
+    }
   }
 
   if (isCommit && policy.patternViolation) {
