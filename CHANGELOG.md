@@ -1,3 +1,22 @@
+# [0.15.0](https://github.com/friedbotstudio/baseline/compare/v0.14.0...v0.15.0) (2026-06-04)
+
+
+### Bug Fixes
+
+* **gates:** write consent/state via Write tool; drop guard-blocked Bash redirect ([0a70375](https://github.com/friedbotstudio/baseline/commit/0a703757ecdc8ed3da319f5943503d076cd332e9))
+* **guard:** anchor consent write-detection to the resolved write target ([d70911f](https://github.com/friedbotstudio/baseline/commit/d70911f1faf1343027f53f7a5972d8e2dd4749bc))
+* **guard:** exempt git-commit message payloads from consent-write scan ([6b310eb](https://github.com/friedbotstudio/baseline/commit/6b310ebc2fec6700a8a92c89b6b0311e8c695b4d))
+* prefilter consent-path scan and exclude spec prose from drift-check ([e11e176](https://github.com/friedbotstudio/baseline/commit/e11e17696c04cb68795100ca98a3edbd559830b7))
+* **tdd:** drift_check sources the working tree, not committed history ([12db8fc](https://github.com/friedbotstudio/baseline/commit/12db8fc6ad6cfceb0211d4729a268d03c3ad0b45))
+
+
+### Features
+
+* **git:** declare and guard-enforce a git workflow topology model ([0e2fc79](https://github.com/friedbotstudio/baseline/commit/0e2fc790d15ddfa0204a90d0cab186dbfda4bcbc))
+* **memory:** filter boilerplate at capture, converge noise list into common.mjs ([8e6fecf](https://github.com/friedbotstudio/baseline/commit/8e6fecf361792e47eeafa82ca0f4ef3903090769))
+* **memory:** sentence-level capture, route suggestions, durable working thread ([9036fc4](https://github.com/friedbotstudio/baseline/commit/9036fc470ab13ae4be72163b3f395450215d0eed)), closes [hi#precision](https://github.com/hi/issues/precision)
+* **navigation:** make code-browser the primary navigation path in any language ([edd7b19](https://github.com/friedbotstudio/baseline/commit/edd7b1912c44a6d789bb161b496807998a79bb31))
+
 # [0.14.0](https://github.com/friedbotstudio/baseline/compare/v0.13.0...v0.14.0) (2026-06-02)
 
 
