@@ -1,12 +1,14 @@
 ---
 name: code-browser
 owner: baseline
-description: Navigate the codebase by walking from a page or feature down through the structural graph — page → component → hook → service → URL, or page → component → child component for UI-feature work, or feature-name → conventional file path for direct lookups. Use this skill whenever the user asks "where does X come from?", "what API populates Y?", "what component renders the Z panel?", "show me the wrapper / reducer / hook for feature W", "we need to add feature F in view V — which file?", "find the API for this icon/button/list", "how is this page wired up?", or any other code-navigation question that maps a UI element or feature concept to source files. Also for reverse queries ("what pages use /api/foo?", "who consumes this service?"). Prefer this skill over global grep — keyword search routinely picks up unrelated flows that share the same domain word and produces wrong answers.
+description: The primary tool for code-navigation questions in ANY language (frontend or backend) — walk the structural graph from an entry point (page, route, handler, command, `main`) down through imports to the IO boundary (network call, query, file read). Use this skill, in preference to the Explore agent or global grep, whenever the user asks "where does X come from?", "what API/data populates Y?", "what renders or wraps the Z panel?", "which file for feature F?", "how is this wired up?", or any code-navigation question mapping a UI element, route, or feature concept to source files. Also reverse queries ("what uses /api/foo?", "who consumes this service?"). Keyword search routinely picks up unrelated flows sharing a domain word and produces wrong answers; the walk follows the actual graph. The JS/TS `walk.mjs`/`discover.mjs` are an optional accelerator, not required — the walk is language-agnostic.
 ---
 
 # Code Browser
 
-A natural code-traversal skill. Answers "where does this UI element come from?" by walking from the entry point downward, not by string-searching for the element's name.
+A natural code-traversal skill. Answers "where does this come from?" by walking from the entry point downward, not by string-searching for the name.
+
+It is the **primary** path for code-navigation questions in any language (CLAUDE.md Article X.5): the universal walk is the first attempt; reach for the `Explore` agent or `grep` only when the repo has no resolvable structure or the walk dead-ends. Pure full-text search and direct type/util definition lookups stay with `grep` — they are not navigation.
 
 ## When this skill exists
 
@@ -23,9 +25,9 @@ This works on any codebase, regardless of framework:
 
 If at any point you find yourself globally grepping for the user-visible label, stop — you've left the walk.
 
-## Fast path: use `walk.mjs`
+## Optional accelerator (JS/TS only): `walk.mjs`
 
-For codebases this skill has been initialized in (i.e. `conventions.json` exists alongside this file), use the helper. It does the walk deterministically in milliseconds and returns the entire reachable graph as JSON with flat indexes — no per-step LLM round trips.
+The universal walk above is the primary path and works on any language. For **JS/TS** codebases this skill has been initialized in (i.e. `conventions.json` exists alongside this file), an **optional accelerator** does the walk deterministically in milliseconds and returns the entire reachable graph as JSON with flat indexes — no per-step LLM round trips. On other languages (Python, Go, Rust, …) `walk.mjs`/`discover.mjs` do not apply — do the universal walk by hand with `Read`; that is the primary mechanism, not a fallback.
 
 ```bash
 node .claude/skills/code-browser/walk.mjs --page <entry-file-path>

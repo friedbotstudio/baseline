@@ -130,10 +130,10 @@ toc:
       <p class="section-num">§ VII</p>
       <h2 id="navigation">Navigation ({{ baseline.skills.byCategory.navigation }})</h2>
     </div>
-    <p>The default mechanism for code-navigation questions. The baseline prefers it over global grep when a question is structural (where data comes from, what renders a panel, what wraps a component).</p>
+    <p>The first tool the baseline reaches for on any code-navigation question, in any language. Keyword search keeps landing on the wrong flow when the same name shows up in unrelated code; <code>code-browser</code> follows the actual import graph instead, so you get the right answer the first time. It is preferred over the Explore agent and global grep for structural questions like where data comes from or what wraps a component.</p>
   </div>
   <ul>
-    <li><code>code-browser</code>. Walks the import graph from a page or entry file to the network boundary and emits flat indexes (<code>byHook</code>, <code>byService</code>, <code>byApiCall</code>, <code>byComponent</code>). <code>discover.mjs</code> writes a per-repo <code>conventions.json</code>; <code>walk.mjs</code> runs deterministically in milliseconds and caches per-entry trees. Read-only.</li>
+    <li><code>code-browser</code>. Its primary path is a language-agnostic universal walk: start at an entry point (a page, route, handler, or command), follow imports to the IO boundary (a network call, a query, a file read), and you have your answer. It works the same in any language. On JS/TS repos, optional accelerators make it instant: <code>discover.mjs</code> maps the project layout once, then <code>walk.mjs</code> runs deterministically and returns flat <code>byHook</code>, <code>byService</code>, <code>byApiCall</code>, and <code>byComponent</code> indexes. It falls back to Explore or grep only when a repo has no resolvable structure or the walk hits a dead end; full-text search and type lookups stay with grep. Read-only.</li>
   </ul>
 </section>
 

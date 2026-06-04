@@ -15,7 +15,7 @@ This file is the **in-session constitution** for this repository. It binds Claud
 3. **Implementation** — the hooks, skills, commands, subagent, MCP servers, and config files are the actuators and enforcement mechanisms of (1) and (2).
 4. **Order of precedence** — `seed.md` > `CLAUDE.md` > implementation. Lower binds higher only via amendment in seed.md, which then propagates to this file, then to disk.
 5. **Project amendments** — Article X reserves space for project-owner amendments. Amendments bind alongside Articles I–IX but **SHALL NOT** contradict them.
-6. **Size cap (this file)** — `CLAUDE.md` SHALL NOT exceed **40,000 characters**. It carries binding rules only. Amendment history, enforcement-mechanism narration, and the reference appendices live in `.claude/CONSTITUTION.md` (the annex), read on demand. `audit-baseline` enforces the cap (FAIL when `CLAUDE.md` exceeds 40,000 chars), and the same cap binds the byte-equal mirror `src/CLAUDE.template.md`.
+6. **Size cap (this file)** — `CLAUDE.md` SHALL NOT exceed **40,000 characters** and carries binding rules only; amendment history, enforcement narration, and reference appendices live in the annex `.claude/CONSTITUTION.md`. `audit-baseline` enforces the cap (FAIL above 40,000 chars), which also binds the byte-equal mirror `src/CLAUDE.template.md`.
 
 ## Article II — Architectural principle
 
@@ -42,7 +42,7 @@ On every new session, before any work, you SHALL:
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
    > "This repo has the Claude Code baseline installed (22 hooks, 1 subagent, 40 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
-   You SHALL then proceed with whatever the user asks. Project-agnostic mode is **allowed** — the user is not required to run `/init-project` to use the baseline. The `setup_guard` hook surfaces a one-shot reminder on Write/Edit/MultiEdit (rate-limited to 10 minutes); it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
+   You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
 4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. The hook emits a **debt-mode nag** only when `_pending.md` has unflushed candidates AND no active workflow on disk (i.e., `.claude/state/workflow.json` is absent) — those candidates are debt from a prior workflow that didn't end-flush. During an active workflow, **Phase 10.6** (memory-flush, between archive and grant-commit) handles flushing automatically; the session-start nag stays silent. You SHALL run `/memory-flush` when the debt-mode nag fires, before starting new work.
@@ -77,9 +77,9 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - You SHALL NOT skip phases.
 - You SHALL NOT reorder phases.
 - The only mechanism to bypass a phase is the `exceptions` array in `.claude/state/workflow.json`, written by `/triage`.
-- **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, not as a non-git fallback (it does not restore the cross-task write isolation the swarm-worker assumes). See Article VII.
+- **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, never as a non-git fallback. See Article VII.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
-- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched consent marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) then allows Claude's approval-token write only while that marker is fresh. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent, and the same guards block Claude from writing the marker itself. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
+- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
 **Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`):
@@ -87,8 +87,8 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - New feature → `/triage` selects `intake`.
 - Bugfix → `/triage` selects `spec` or `tdd`.
 - Quickfix → `/triage` selects `tdd`.
-- Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). The chore skill skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `simplify` / `integrate` / `document` based on what the diff touches. `verify`, `archive`, and `/grant-commit` + `/commit` remain mandatory. Anything that actually needs a failing test routes to `tdd` or higher.
-- Freeform → `/triage` selects the `freeform` track for ad-hoc batches of edits that don't fit any other track — optimization sessions across multiple unrelated landmines, exploratory cleanup, small drive-by fixes. Phase ordering is relaxed by blanket exceptions on every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`); the DAG carries only the closing sequence `memory-flush` → `/grant-commit` → `/commit`. All 22 hooks remain active — `destructive_cmd_guard`, `env_guard`, `git_commit_guard`, `tdd_order_guard` (still blocks new source files without paired tests), `verify_pass_guard`, and the consent gates fire normally. Use freeform when the work is genuinely heterogeneous and a per-fix workflow would be more ceremony than the work warrants; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
+- Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (doc edits, governance count bumps, vendored-skill updates, config tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). It skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `simplify` / `integrate` / `document` by what the diff touches. `verify`, `archive`, `/grant-commit` + `/commit` remain mandatory. Work needing a failing test routes to `tdd` or higher.
+- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `memory-flush` → `/grant-commit` → `/commit`. All 22 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
 
 **Swarm vs solo at Phase 6.** When the approved spec has fewer than `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components **OR** the project is not a git repository, run `/tdd` solo. Otherwise route through `/swarm-plan` → `/approve-swarm` → `/swarm-dispatch`. On a non-git tree the swarm phases are excepted at triage time, so this always resolves to solo, and a user "use swarm" override SHALL be refused with the reason `swarm requires git`.
 
@@ -96,7 +96,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 
 ## Article V — Harness orchestration (MANDATORY SOP)
 
-`/harness` is invokable by both the user (via the slash command) and the model (via `Skill(harness)`). A single `Skill(harness)` invocation **loops internally through every non-gated phase boundary** until the loop hits one of four exit conditions: consent gate, phase-skill failure, integrate-failure-needs-spec-change, or workflow done. The user invokes `/harness` to start a fresh workflow or to resume after a yield. You SHALL suggest `/harness` when a concrete engineering ask crystallizes in conversation; the user decides when to invoke it.
+`/harness` is invokable by the user (slash command) and the model (`Skill(harness)`). A single invocation **loops through every non-gated phase boundary** until one of four exit conditions: consent gate, phase-skill failure, integrate-failure-needs-spec-change, or workflow done. The user invokes it to start a fresh workflow or resume after a yield. You SHALL suggest `/harness` when a concrete engineering ask crystallizes; the user decides when to invoke it.
 
 **Operational SOP lives in `.claude/skills/harness/SKILL.md`** — preflight, marker-first state writes, loop body iteration, safety-net interaction with `harness_continuation`, resume-after-yield mechanics, and task discipline. This Article declares the constitutional invariants the SOP must satisfy:
 
@@ -176,7 +176,7 @@ On a **protected branch**, commits require a fresh `commit_consent` token (writt
 
 ## Article VIII — Hooks (the enforcement layer)
 
-The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a corresponding amendment in `seed.md` §4.1. The table below names each hook, its event, and the Article it enforces; fuller per-hook behavior (`git_commit_guard` branch policy, `harness_continuation`'s three-rung gate, advisory memory surfacing, the approval-guard marker flow) lives in `.claude/CONSTITUTION.md` (annex).
+The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a `seed.md` §4.1 amendment. The table names each hook, its event, and the Article it enforces; fuller per-hook behavior lives in `.claude/CONSTITUTION.md` (annex).
 
 | Hook | Event | Article enforced | Behavior (terse) |
 |---|---|---|---|
@@ -214,7 +214,7 @@ The memory system at `.claude/memory/` accumulates project facts across sessions
 5. Respect `size-cap: 500` per canonical file. When a write exceeds the cap, prune the oldest unverified entries in the same write. Entries unverified for ≥ 30 commits or ≥ 90 days are stale; the next phase that touches them either re-verifies or deletes.
 6. **Preserve verbatim.** Memory entries with `source: user-instruction` or `source: user-feedback` SHALL include a `verbatim:` blockquote of the user's actual words. The verbatim is canonical; the entry body is Claude's interpretation. When verbatim and interpretation conflict, **verbatim wins**, and you SHALL surface the conflict to the user before acting on the interpretation. `/memory-flush` SHALL reject promotions to canonical files that lack a required verbatim. Schema: `.claude/memory/README.md → Source provenance`.
 7. **Respect advisory memory hooks.** Advisory PreToolUse hooks (e.g., `process_lifecycle_guard`) surface relevant memory entries inline before matching tool calls. You SHALL read the surfaced verbatim before executing the matched command, and SHALL treat it as binding for the current operation.
-8. **Durable local thread trail.** `.claude/memory/_thread.md` is a third memory class — **local + durable**: gitignored content (only `src/memory/_thread.template.md` ships the pristine structure), and explicitly OUTSIDE `/memory-flush`'s reset path, so a shelved thread survives flushes and `/clear`. Claude Code — never the human — shelves the active thread mechanically (verbatim cues over the cursor span since the last shelve) and transforms them into a surfaced summary at resume (TTL-cached). It is invoked by the model internally, not via any skill or command. Detail + the shelve/resume behavior: `.claude/CONSTITUTION.md` (annex).
+8. **Durable local thread trail.** `.claude/memory/_thread.md` is a third memory class — **local + durable**: gitignored content (only `src/memory/_thread.template.md` ships the pristine structure), and OUTSIDE `/memory-flush`'s reset path, so a shelved thread survives flushes and `/clear`. Claude Code (never the human) shelves the active thread mechanically and surfaces a summary at resume (TTL-cached); invoked by the model internally, not via any skill or command. Detail + shelve/resume behavior: `.claude/CONSTITUTION.md` (annex).
 
 Memory accelerates triage. It NEVER authorizes a skip.
 
@@ -246,7 +246,7 @@ The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Aud
 
 This override does **not** delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI.
 
-Future "impeccable says X, but we ship Y on purpose" decisions get a row in the same table without re-amending the constitution; each new row SHALL cite the impeccable rule scoped, the scope decision, and a one-line rationale. In-flight examples: `.claude/CONSTITUTION.md` (annex).
+Future "impeccable says X, but we ship Y" decisions get a row in the same table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale. Examples: `.claude/CONSTITUTION.md` (annex).
 
 ---
 
@@ -301,9 +301,15 @@ Codesign mode is opt-in (most workflows do not need it). `/triage`'s heuristic s
 
 ---
 
+### X.5 Navigation routing
+
+For a code-navigation question ("where does X come from", "what renders Y") in any repository, `code-browser`'s language-agnostic **universal walk** (entry → imports → IO boundary) is the **first** attempt; reach for the `Explore` agent or `grep` only when the repo has no resolvable structure or the walk dead-ends. Pure full-text search and type/util definition lookups stay grep's domain (not navigation). The JS/TS `walk.mjs`/`discover.mjs` accelerator is optional. Detail: `code-browser/SKILL.md`.
+
+---
+
 ## Article XI — Skill provenance and the baseline manifest
 
-A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill on disk — those without an `owner:` field, or declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project with pre-existing skills can install the baseline without annotating its own files. The shipped manifest at `obj/template/.claude/manifest.json` records baseline ownership (`owners.skills`) and per-file sha256 hashes; `audit-baseline` reconciles it against on-disk reality. Build + audit mechanics: see `.claude/CONSTITUTION.md` (annex).
+A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill (no `owner:` field, or `owner: user`) is user/third-party and out-of-scope of baseline audit checks — absence is the deliberate default so a project with pre-existing skills installs without annotating its files. The shipped manifest at `obj/template/.claude/manifest.json` records baseline ownership (`owners.skills`) + per-file sha256 hashes; `audit-baseline` reconciles it against disk. Build + audit mechanics: `.claude/CONSTITUTION.md` (annex).
 
 You SHALL:
 
@@ -313,15 +319,12 @@ You SHALL:
 4. **Preserve constitutional citation.** This Article XI SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations and reports `CLAUDE.md missing Article XI citation` or `seed.md missing §17 citation` on absence.
 5. **Out-of-scope skills don't break the audit.** Any skill on disk that doesn't declare `owner: baseline` is out-of-scope: excluded from the baseline count, the names-match check, and the hash-drift check. Installing the baseline into a project that already has its own skills is zero-friction — no per-file annotation required. Maintenance of those skills is the user's responsibility.
 
-Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals. The per-file `manifest.files` map already covers every file in every skill directory. A future `npx @friedbotstudio/create-baseline upgrade` subcommand will consume `manifest.owners.skills` + `manifest.files` to re-overlay baseline-owned files safely while leaving user-added or locally-customized files untouched — that subcommand is out of scope of this Article.
+Cryptographic attestation, signed lock files, and per-skill merkle hashes are non-goals; the per-file `manifest.files` map suffices. The `create-baseline upgrade` overlay mechanics (re-overlaying baseline-owned files while leaving user files untouched) are out of scope of this Article.
 
 ---
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables that used to live here now sit in **`.claude/CONSTITUTION.md`** (read on demand):
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 40 skills by category).
 
-- **Appendix A — Where things live**: every `.claude/` path and its role, plus `src/` and `docs/init/seed.md`.
-- **Appendix B — Skill index**: all 40 skills by category (artifact, phases, workers, spec helpers, orchestration, memory, navigation, phase helpers, shared globals, audit, alt tracks).
-
-Quick orientation: `.claude/hooks/` (22 hooks), `.claude/agents/` (1 subagent `swarm-worker`), `.claude/skills/` (40 skills), `.claude/commands/` (6 commands), `.claude/memory/` (7 canonical files), `.mcp.json` (3 MCP servers), `docs/init/seed.md` (genesis).
+Quick orientation: 22 hooks, 1 subagent (`swarm-worker`), 40 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).

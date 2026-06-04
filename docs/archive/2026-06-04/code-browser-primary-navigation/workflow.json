@@ -1,0 +1,11 @@
+{
+  "request": "Make code-browser the primary navigation path (over Explore/grep) by elevating its language-agnostic universal-walk doctrine: a SKILL.md rewrite plus a navigation-routing rule (likely constitutional — seed.md then CLAUDE.md per Article I.4). Keep the JS/TS walk.mjs/discover.mjs fast-path as-is; defer per-language fast-path adapters (Python/Go/Rust) to follow-on workflows. Symptom is in consumer/client installs, not this template repo. Scope = doctrine-primary now, adapters later (user-decided). Source: backlog code-browser-skill-dormant-only-scout-conditional-ref-9f3c.",
+  "slug": "code-browser-primary-navigation",
+  "track_id": "intake-full",
+  "exceptions": ["cli-copy-review"],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["code-browser-skill-dormant-only-scout-conditional-ref-9f3c"],
+  "created_at": 1780519587,
+  "updated_at": 1780572050
+}

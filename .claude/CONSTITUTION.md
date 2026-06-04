@@ -109,8 +109,8 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Generators (1)** — on-demand; not a workflow phase, never blocks a commit:
 - `whatsnew` — emits a structured "what's new" fragment to `.claude/state/whatsnew/<slug>.json` (gitignored, transient) for a set of changes; an optional `project.json → whatsnew.route_workflow` names a per-project routing workflow that consumes the fragment. Never writes `CHANGELOG.md` (owned solely by `@semantic-release/changelog` in CI). Replaced the former Phase 11.5 `changelog` skill.
 
-**Navigation (1)** — the default tool for code-navigation questions; prefer it over global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F":
-- `code-browser` — walks the import graph from a page or entry file to the network boundary, returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. `discover.mjs` writes a per-repo `conventions.json` once; `walk.mjs` then runs deterministically in milliseconds. Read-only.
+**Navigation (1)** — the default tool for code-navigation questions in any language; prefer it over the `Explore` agent and global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F" (CLAUDE.md Article X.5):
+- `code-browser` — the language-agnostic **universal walk** (entry → imports → IO boundary) is the primary path, regardless of language. For JS/TS, optional accelerators speed it up: `discover.mjs` writes a per-repo `conventions.json` once, then `walk.mjs` runs deterministically returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. The walk falls back to `Explore`/`grep` only on no resolvable structure or a dead-ended walk; pure full-text search and type/util lookups stay grep's domain. Read-only.
 
 **Shared globals (7)** — one written for this baseline, six vendored from external sources with their upstream licenses preserved in `LICENSE` + `NOTICE` alongside each skill:
 - `claude-automation-recommender` — vendored from Anthropic's `claude-code-setup` plugin, Apache 2.0.

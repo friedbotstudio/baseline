@@ -1,0 +1,32 @@
+[
+  {
+    "question": "Where is the consent-path write detector the git-commit guard relies on?",
+    "file": ".claude/hooks/lib/common.mjs",
+    "symbol": "writesConsentPath"
+  },
+  {
+    "question": "Where does the shared memory-capture boilerplate filter live?",
+    "file": ".claude/hooks/lib/common.mjs",
+    "symbol": "isBoilerplate"
+  },
+  {
+    "question": "Where is the deterministic route classifier for memory-flush candidates?",
+    "file": ".claude/skills/memory-flush/route.mjs",
+    "symbol": "suggestRoutes"
+  },
+  {
+    "question": "Where does drift-check source the diff it scores acceptance criteria against?",
+    "file": ".claude/skills/tdd/drift_check.mjs",
+    "symbol": "loadDiff"
+  },
+  {
+    "question": "Where is the durable thread trail bounded to its section cap?",
+    "file": ".claude/hooks/lib/thread_store.mjs",
+    "symbol": "pruneTrail"
+  },
+  {
+    "question": "Where does the Stop-event transcript walker extract memory candidates?",
+    "file": ".claude/hooks/lib/memory_stop.mjs",
+    "symbol": "runMemoryStop"
+  }
+]
