@@ -26,6 +26,19 @@ const ISOLATION = /cloneAndBuild|buildShippedClaudeDir|cloneRepo|mkdtemp|PKG_ROO
 const GATE = /PUBLISH_TESTS/;
 const HAS_EXEC = /\b(execSync|execFileSync|exec|spawnSync|spawn)\s*\(/;
 
+// Strip comments before writer-detection so a mere PROSE mention of `npm pack`
+// or `build-template.sh` (e.g. a header docblock explaining the lock) is never
+// treated as an executed writer — this guard flags only EXECUTED writers (see
+// the docblock above). Removes block comments and whole-line `//` comments;
+// whole-line stripping avoids the `://`-in-string-literal edge case.
+function stripComments(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .split('\n')
+    .filter((line) => !/^\s*\/\//.test(line))
+    .join('\n');
+}
+
 function executesLiveWriter(text) {
   if (!HAS_EXEC.test(text)) return false;
   // `npm pack --ignore-scripts` skips prepack → no obj/template rebuild → not a
@@ -39,10 +52,11 @@ function executesLiveWriter(text) {
 }
 
 function isUnisolatedWriter(text) {
-  if (!executesLiveWriter(text)) return false;
+  const code = stripComments(text);
+  if (!executesLiveWriter(code)) return false;
   // A writer is safe iff it runs in isolation OR the whole file is gated behind
   // PUBLISH_TESTS (heavy on-demand tier).
-  return !ISOLATION.test(text) && !GATE.test(text);
+  return !ISOLATION.test(code) && !GATE.test(code);
 }
 
 function findOffenders() {
@@ -74,6 +88,9 @@ describe('default tier has no un-isolated live-obj/template writer', () => {
     assert.equal(isUnisolatedWriter("const tmp = await cloneRepo('x'); execFileSync('npm', ['pack'], {cwd: tmp})"), false);
     assert.equal(isUnisolatedWriter("it('x', {skip: process.env.PUBLISH_TESTS ? false : 'reason'}, () => execSync('npm pack'))"), false);
     assert.equal(isUnisolatedWriter("// scripts/build-template.sh Stage 0b — assert it contains a block"), false);
+    // A whole-line comment mentioning `npm pack` alongside an UNRELATED exec
+    // (e.g. spawning a small helper) must NOT flag — prose is not a writer.
+    assert.equal(isUnisolatedWriter("// prepack (npm pack) + a live-tree build share one lock\nconst r = spawnSync('node', [SCRIPT, dir]);"), false);
     assert.equal(isUnisolatedWriter("spawnSync('npm', ['run', 'build:site'], {cwd: REPO_ROOT})"), false);
     assert.equal(isUnisolatedWriter("execFileSync('npm', ['pack', '--dry-run', '--ignore-scripts', '--json'], {cwd: repoRoot})"), false);
     assert.equal(isUnisolatedWriter('const x = 1;'), false);

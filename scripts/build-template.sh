@@ -26,7 +26,11 @@ TEMPLATE_DIR="$PKG_ROOT/obj/template"
 # publish:check smoke test plus several other tests trigger `npm pack` from
 # subprocesses and would race on obj/template/ rebuild without this.
 # Uses mkdir as a portable atomic mutex (works on macOS + Linux without flock).
-LOCK_DIR="${TMPDIR:-/tmp}/create-baseline-build.lock.d"
+# The lock is keyed on the build TARGET dir (via build-lock-dir.mjs) so builds
+# into DIFFERENT targets — the isolated tmpdir builds from the parallel test
+# suite — no longer serialize machine-wide, while builds into the SAME target
+# (prepack + a live-tree build) still share one lock. See build-lock-dir.mjs.
+LOCK_DIR="$(node "$SCRIPT_DIR/build-lock-dir.mjs" "$TEMPLATE_DIR")"
 LOCK_WAITED=0
 while ! mkdir "$LOCK_DIR" 2>/dev/null; do
   sleep 0.2

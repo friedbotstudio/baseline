@@ -1,0 +1,11 @@
+{
+  "request": "reduce test suite wall-clock: key build-template.sh's global mkdir mutex on the resolved build-target dir so isolated tmpdir builds parallelize instead of serializing machine-wide",
+  "slug": "build-mutex-per-target",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review", "cli-copy-review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["reduce-test-suite-wall-clock-blocked-on-global-build-mutex-7b1e"],
+  "created_at": 1780648089,
+  "updated_at": 1780648097
+}

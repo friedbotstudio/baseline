@@ -29,20 +29,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## reduce-full-test-suite-runtime-toward-one-minute-652c
-
-> verbatim (user, 2026-06-02):
-> let us add a backlog item to reduce this testing time to ~1 minutes (or whatever least is possible)
-
-- source: user-instruction
-- status: open
-- raised-on: 2026-06-02
-- raised-in-context: right after Part A (`faster-test-suite-shared-build-plantuml-gate`, commit 2afb07c) cut the serial suite ~644s→~459s; the user wants a deeper target (~1 min) and Part B (plantuml-guard-opt-in-strict) was in flight
-- estimated-effort: medium-large
-- verified-at: 2afb07c
-- last-touched: 2026-06-02
-- caveat: Part A already (a) gated the 6 JVM-spawning PlantUML tests behind `PLANTUML_TESTS=1` and (b) shared the per-test template build inside `skill-ownership.test.mjs` / `manifest.test.mjs`. To go from ~459s toward ~60s the dominant levers, in priority order: **(1) Run the suite in PARALLEL.** It is pinned to `--test-concurrency=1` because some build-exercising tests mutate the LIVE `obj/template` (`tests/build-template.test.mjs` rm -rf's + rebuilds it; others READ it) — a data race under concurrency. Route EVERY build/manifest/audit test through an isolated tmpdir (the `tests/helpers/clone-and-build.mjs` pattern) so NOTHING touches live `obj/template`, then drop the concurrency pin. Wall-clock then approaches max-single-test (~15-30s) instead of sum-of-all. This is the single biggest win. **(2) Build the template ONCE per suite, not per file.** ~10 test cases each run a full `scripts/build-template.sh` (rsync + sha256 of ~260 files + audit, ~20-30s each). node:test isolates files in separate processes, so a process-level cache won't cross files — instead build one pristine tree in a global setup (or a make-style prebuilt fixture under a known tmp path) and have all read-only build/manifest tests point at it; mutating drift tests `cp -a` from it (Part A already does this within a file). **(3) Speed up the build itself:** `scripts/build-manifest.mjs:138-150` reads+sha256s ~260 files per build (~8-12s); `build-template.sh` Stage 4 then re-hashes them again in `audit.mjs:295` — skip the redundant Stage-4 re-hash after a fresh build (the DEFERRED "audit `--skip-hash-check`" idea, ~16-24s total across tests). **(4)** Env-gate or trim the npm-pack/install `publish-check`/`smoke-tarball` tests (~1.5 min) behind a flag like the PlantUML gate, since they need network/npm and rarely change. Measured baseline + per-test breakdown captured during the Part A investigation (top offenders: spec-lint check_design_calls 59s [now gated], build-audit-gate 35s, manifest-tier 28s, audit-exits-0 27s, manifest-v2 25s, skill-ownership drift cluster). Net: parallelization (1) + single-build (2) should plausibly reach 1-2 min; (3)+(4) trim further. Risk: (1) requires auditing every test for hidden shared-state writes (live `obj/template`, `.claude/state/`, `.claude/memory/`) before lifting the concurrency pin. Cross-ref: the live-`obj/template` race is now documented as the landmine `live-objtemplate-rebuild-races-parallel-test-readers` (landmines.md).
-
 ## reduce-test-suite-wall-clock-blocked-on-global-build-mutex-7b1e
 
 > verbatim (assistant, 2026-06-05, during reduce-test-suite-runtime):
@@ -56,3 +42,17 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: a493cdb
 - last-touched: 2026-06-05
 - caveat: **The blocker is `scripts/build-template.sh`'s machine-global mkdir mutex** (`$TMPDIR/create-baseline-build.lock.d`, build-template.sh:29) — it serializes EVERY build on the machine. ~7-10 build-exercising test files each run a full build (~18s); under the mutex they serialize, so the wall-clock floor is dominated by that build-contention chain (after publish-check is gated, `skill-ownership` ~39s — itself one build + one byte-identical rebuild — is the tent-pole). Build-once via `--test-global-setup` cannot help while the mutex forces machine-wide serialization AND while a cp-from-shared-clone of the full repo is itself costly. **Two viable directions for a future speed workflow, do FIRST before build-once:** (1) make the build mutex per-PKG_ROOT (lock keyed on the build target dir, not a single global path) so isolated builds genuinely parallelize; OR (2) a truly build-free shared fixture: globalSetup builds once into a known path, read-only build/manifest/audit tests consume that path directly WITHOUT copying (only mutating drift tests cp). Also reconsider whether `skill-ownership`'s byte-identical-rebuild test (the one test that MUST build twice) can assert determinism more cheaply. Measurement gate: re-confirm 5x parallel green AND wall-clock materially < 90s before claiming done. The determinism guard `tests/no-live-objtemplate-reads.test.mjs` and the `PUBLISH_TESTS`/`PLANTUML_TESTS`/`test:full` tiers from this workflow stay in place. Cross-ref: libraries.md `node:test@node-25.8.1`; landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
+
+## reduce-test-suite-non-build-tentpoles-after-per-target-lock-3faf
+
+> verbatim (assistant, 2026-06-05, during build-mutex-per-target):
+> Per-target build lock landed: 3 concurrent isolated builds run in ~2s vs ~8s under the old global lock. The build-serialization bottleneck is gone, but the full suite is still well over a minute — non-build tent-poles now dominate the wall-clock, so the "~1 minute" goal is not met by the lock change alone.
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: build-mutex-per-target workflow. This is the SUCCESSOR to `...global-build-mutex-7b1e`, which closed as picked-up: its direction (1) "make the build mutex per-PKG_ROOT" shipped as `scripts/build-lock-dir.mjs`. The residual SPEED goal (`reduce-full-test-suite-runtime-toward-one-minute`, the original 652c parent) is what remains.
+- estimated-effort: medium
+- verified-at: 2e5d3c2
+- last-touched: 2026-06-05
+- caveat: With build-serialization removed, the wall-clock floor is now set by individual slow tests, NOT the build lock. Single-shot full-suite timing on a loaded dev machine is noise-dominated (observed 154s / 274s / 285s across runs), so DON'T chase suite wall-clock directly — profile per-test and attack tent-poles. **Top suspect: `tests/skill-ownership.test.mjs` "build manifest v2" (~131s in one run)** — it is the test that builds TWICE (byte-identical-rebuild determinism assertion). Consider asserting determinism more cheaply (hash two manifest builds without two full template builds, or reuse one build + re-stamp). Other build-exercising files (~7-10) each run one ~2s build; with per-target locking they now parallelize up to CPU count, so they're no longer the bottleneck. The build-free shared-fixture idea (7b1e direction 2) is now LOWER priority since per-target locking already gives parallel builds — revisit only if profiling shows build cost still dominates. Measurement discipline: run the suite 3-5x on a quiesced machine (or measure in CI where the runner is consistent) and take the median before claiming any speed win; prefer per-test `duration_ms` from the spec reporter over total wall-clock. Cross-ref: landmark `scripts/build-lock-dir.mjs:1`; landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
