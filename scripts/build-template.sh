@@ -214,7 +214,11 @@ node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
 # by this reorder; only the manifest it reads is now fresh. Skipped if the
 # audit script is absent (e.g., in build-template fixture tests).
 if [ -f "$AUDIT_SCRIPT" ]; then
-  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" node "$AUDIT_SCRIPT" >&2; then
+  # --skip-hash-check: the manifest was just stamped (Stage 3) from this same
+  # source this run, so re-hashing those files here is tautological. Presence and
+  # every other drift check still run. The STANDALONE audit (verify/integrate
+  # verdict) runs WITHOUT this flag and keeps full hash-drift detection.
+  if ! CLAUDE_PROJECT_DIR="$PKG_ROOT" node "$AUDIT_SCRIPT" --skip-hash-check >&2; then
     echo "build aborted: audit-baseline reported failures (see above)" >&2
     exit 1
   fi

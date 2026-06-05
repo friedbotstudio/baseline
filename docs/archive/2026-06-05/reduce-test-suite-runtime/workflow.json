@@ -1,0 +1,28 @@
+{
+  "request": "Reduce full test suite runtime toward ~1 minute (from ~459s)",
+  "slug": "reduce-test-suite-runtime",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "reduce-full-test-suite-runtime-toward-one-minute-652c"
+  ],
+  "created_at": 1780597850,
+  "updated_at": 1780646960
+}

@@ -35,8 +35,15 @@ const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
 // --file=<rel> scoping
 let SCOPE_FILE = '';
+// --skip-hash-check suppresses ONLY the per-file sha256 re-hash of manifest-listed
+// skill files. It is for the build-internal Stage-4 invocation, where the manifest
+// was just stamped from the same source THIS run, so the re-hash is tautological.
+// The standalone audit (verify/integrate verdict) is invoked WITHOUT this flag and
+// keeps full hash-drift detection.
+let SKIP_HASH_CHECK = false;
 for (const arg of process.argv.slice(2)) {
   if (arg.startsWith('--file=')) SCOPE_FILE = arg.slice('--file='.length);
+  else if (arg === '--skip-hash-check') SKIP_HASH_CHECK = true;
 }
 
 if (SCOPE_FILE) {
@@ -291,6 +298,7 @@ function checkSkillOwnership() {
         add(`skill ownership: ${slug}`, 'FAIL', `baseline skill missing: ${path}`);
         continue;
       }
+      if (SKIP_HASH_CHECK) continue; // presence still verified above; re-hash suppressed (build-internal)
       const expectedHash = typeof entry === 'string' ? entry : (entry && entry.sha256);
       const actual = createHash('sha256').update(readFileSync(diskFile)).digest('hex');
       if (actual !== expectedHash) {

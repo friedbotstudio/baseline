@@ -19,6 +19,7 @@
     "build": "bash scripts/build-template.sh",
     "prepack": "bash scripts/build-template.sh",
     "test": "node --test --test-reporter=spec tests/*.test.mjs",
+    "test:full": "PUBLISH_TESTS=1 PLANTUML_TESTS=1 node --test --test-reporter=spec tests/*.test.mjs",
     "build:site": "eleventy",
     "dev:site": "eleventy --serve --port=4321",
     "publish:check": "bash scripts/publish-check.sh",

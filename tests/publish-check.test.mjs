@@ -62,9 +62,16 @@ function smokeInstallWorks() {
     if (dir) { try { rmSync(dir, { recursive: true, force: true }); } catch {} }
   }
 }
-const PACK_SKIP = smokeInstallWorks()
-  ? false
-  : 'npm-pack/tarball-install toolchain unavailable here (e.g. no npm/tar, or sandbox tmpdir where `npm install <local-tgz>` writes no node_modules)';
+// Heavy publish/pack tier: gated behind PUBLISH_TESTS so the default run is fast
+// and deterministic (these tests run `npm pack` → prepack → rebuild the live
+// obj/template, the parallel-race writer). CI runs them via `npm run publish:check`
+// / `npm run test:full`. When the gate is set, the original toolchain probe still
+// applies (skip cleanly where npm/tar can't pack-install).
+const PACK_SKIP = !process.env.PUBLISH_TESTS
+  ? 'set PUBLISH_TESTS=1 to run the npm-pack/tarball-install publish tier (heavy, on-demand)'
+  : (smokeInstallWorks()
+      ? false
+      : 'npm-pack/tarball-install toolchain unavailable here (e.g. no npm/tar, or sandbox tmpdir where `npm install <local-tgz>` writes no node_modules)');
 
 describe('publish:check — orchestrator (AC-001, AC-008)', () => {
   it('test_when_publish_check_runs_on_current_tree_then_exits_zero_with_pass_summary', { skip: PACK_SKIP }, () => {
@@ -436,7 +443,7 @@ describe('check-files-diff — script hook allowlist (AC-002)', () => {
 });
 
 describe('check-files-diff — executable allowlist (AC-003)', () => {
-  it('test_when_repo_has_surprise_executable_then_files_diff_fails', async () => {
+  it('test_when_repo_has_surprise_executable_then_files_diff_fails', { skip: process.env.PUBLISH_TESTS ? false : 'set PUBLISH_TESTS=1 — this case writes the live obj/template (race writer); gated to the heavy tier' }, async () => {
     const injected = path.join(REPO_ROOT, 'obj/template/.claude/router_runtime.js');
     await fs.mkdir(path.dirname(injected), { recursive: true });
     await fs.writeFile(injected, '#!/usr/bin/env node\nconsole.log("simulated injection");\n');

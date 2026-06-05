@@ -17,8 +17,9 @@ import { spawnSync } from 'node:child_process';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// Clone + build; returns the tmp PKG_ROOT (its obj/template is freshly built).
-export async function cloneAndBuild(label) {
+// Clone only (rsync, no build) into a fresh tmp PKG_ROOT. Internal factoring
+// shared by cloneAndBuild; not exported (no external consumer).
+async function cloneRepo(label) {
   const tmp = await mkdtemp(join(tmpdir(), label));
   const rsync = spawnSync('rsync', [
     '-a',
@@ -31,6 +32,12 @@ export async function cloneAndBuild(label) {
     tmp,
   ], { encoding: 'utf8' });
   if (rsync.status !== 0) throw new Error(`rsync failed: ${rsync.stderr}`);
+  return tmp;
+}
+
+// Clone + build; returns the tmp PKG_ROOT (its obj/template is freshly built).
+export async function cloneAndBuild(label) {
+  const tmp = await cloneRepo(label);
   const build = spawnSync('bash', [join(tmp, 'scripts/build-template.sh')], {
     env: { ...process.env, PKG_ROOT: tmp, CLAUDE_PROJECT_DIR: tmp },
     encoding: 'utf8',
