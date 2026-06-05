@@ -21,6 +21,11 @@ async function cloneRepo() {
       '--exclude=node_modules',
       '--exclude=obj',
       '--exclude=.git',
+      // .config is Claude Code's own gitignored local state (memory, transcripts,
+      // file-history) — ~200MB on a dev machine, zero relevance to the audit. It
+      // does not exist in CI or a normal checkout, so this exclude is a no-op there
+      // and a large clone speedup here.
+      '--exclude=.config',
       '--exclude=docs/archive',
       '--exclude=.playwright-mcp',
       `${REPO_ROOT}/`,
@@ -67,11 +72,21 @@ function pristineBuiltTree() {
   })();
   return _pristinePromise;
 }
+// Copy the built tree copy-on-write where the platform supports it: APFS
+// clonefile (`cp -c`, macOS) and Linux reflink (`cp --reflink=auto`) make the
+// per-consumer clone near-instant, and since each consumer mutates its own copy
+// the COW blocks diverge correctly on first write. Fall back to a plain archive
+// copy when the flag is rejected (non-COW filesystem or a cp that lacks it).
+function cowCopyTree(src, dst) {
+  const cowFlag = process.platform === 'darwin' ? '-ac' : '--reflink=auto';
+  let r = spawnSync('cp', [cowFlag, `${src}/.`, dst], { encoding: 'utf8' });
+  if (r.status !== 0) r = spawnSync('cp', ['-a', `${src}/.`, dst], { encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`clone copy failed: ${r.stderr}`);
+}
 async function freshBuiltClone() {
   const src = await pristineBuiltTree();
   const dst = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-ownership-'));
-  const r = spawnSync('cp', ['-a', `${src}/.`, dst], { encoding: 'utf8' });
-  if (r.status !== 0) throw new Error(`cp -a failed: ${r.stderr}`);
+  cowCopyTree(src, dst);
   return dst;
 }
 after(async () => {

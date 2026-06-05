@@ -1,0 +1,29 @@
+{
+  "request": "Reduce test-suite wall-clock toward ~1 minute by attacking non-build tent-poles after per-target build locking. Primary target: tests/skill-ownership.test.mjs 'build manifest v2' builds twice for byte-identical-rebuild determinism; assert determinism more cheaply. Profile per-test duration_ms, attack tent-poles.",
+  "slug": "reduce-test-tentpoles",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "chore",
+    "memory-flush",
+    "commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "reduce-test-suite-non-build-tentpoles-after-per-target-lock-3faf"
+  ],
+  "created_at": 1780660234,
+  "updated_at": 1780661739
+}

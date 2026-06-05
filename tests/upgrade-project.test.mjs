@@ -101,6 +101,9 @@ describe('/upgrade-project skill — shape', () => {
     const rsync = spawnSync('rsync', [
       '-a',
       '--exclude=node_modules', '--exclude=obj', '--exclude=.git',
+      // .config = Claude Code gitignored local state (~200MB on a dev machine);
+      // absent in CI/normal checkouts, so a no-op there and a clone speedup here.
+      '--exclude=.config',
       '--exclude=docs/archive', '--exclude=.playwright-mcp',
       `${repoRoot}/`,
       tmp,

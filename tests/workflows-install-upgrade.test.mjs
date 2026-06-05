@@ -29,6 +29,9 @@ async function cloneAndBuild() {
       '--exclude=node_modules',
       '--exclude=obj',
       '--exclude=.git',
+      // Claude Code's gitignored local state (~200MB on a dev machine); absent in
+      // CI/normal checkouts, so this exclude is a no-op there and a clone speedup here.
+      '--exclude=.config',
       '--exclude=docs/archive',
       '--exclude=.playwright-mcp',
       `${REPO_ROOT}/`,

@@ -70,6 +70,25 @@ lock and serialize, so the `obj/template` race stays closed. The difference is
 measurable: three concurrent isolated builds finish in about 2s when the lock is
 keyed per target, versus about 8s under a single global lock.
 
-Lifting this bottleneck speeds up the parallel suite but does not on its own
-bring the full run under a minute. Other slow tests, such as the skill-ownership
-manifest-v2 case, now set the wall-clock floor.
+### The per-test clone stays small and copy-on-write
+
+Once the build lock no longer serialized builds, the wall-clock floor turned out
+to be the clone itself, not any single test. `cloneAndBuild` (and the few tests
+that still inline their own `rsync`) copy the working tree into a temp dir, and
+that tree carried Claude Code's own `.config/` state — memory, transcripts, and
+file-history that can reach a few hundred megabytes on a dev machine. It is
+gitignored and irrelevant to any build or audit, so every clone excludes it
+alongside `node_modules`, `obj`, and `.git`. The exclude is a no-op in CI and on
+a fresh checkout (where `.config/` lives under `$HOME`, not in the repo), so it
+only ever helps.
+
+`skill-ownership.test.mjs` builds one pristine tree and hands each test its own
+writable copy. Those copies are made copy-on-write where the platform supports it
+— APFS clonefile (`cp -c`) on macOS, reflink (`cp --reflink=auto`) on Linux —
+falling back to a plain archive copy elsewhere. Because each test mutates only its
+own copy, the shared blocks diverge correctly on first write.
+
+Together these took the default suite from a few minutes to well under a minute on
+a quiesced machine. Single-shot timings are noise-dominated, so profile per-test
+`duration_ms` and run the suite a few times for a median before claiming a speed
+win; don't chase total wall-clock from one run.

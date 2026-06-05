@@ -26,6 +26,11 @@ async function cloneRepo(label) {
     '--exclude=node_modules',
     '--exclude=obj',
     '--exclude=.git',
+    // Claude Code's gitignored local state (memory, transcripts, file-history) —
+    // ~200MB on a dev machine, irrelevant to any build or audit. It does not exist
+    // in CI or a normal checkout, so this exclude is a no-op there and a large
+    // clone speedup on a dev machine.
+    '--exclude=.config',
     '--exclude=docs/archive',
     '--exclude=.playwright-mcp',
     `${REPO_ROOT}/`,
