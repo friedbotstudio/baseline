@@ -131,3 +131,16 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
 - Verified-at: e11e176
 - Last-touched: 2026-06-04
 - caveat: AC testability is artifact-checks-gate (rule present, SKILL deframed, mirrors synced, audit PASS); the behavioral "model defaults to code-browser" outcome is NOT unit-testable (model judgment) — demonstrated via the `.mjs` eval fixture, observed in practice. If A proves insufficient, Candidate B (hook nudge) is the deferred fallback. Deferred follow-up: per-language fast-path adapters (`walk.mjs` resolves only `.ts/.js/.tsx/.jsx`, not `.mjs`).
+
+## v1-maker-checker-substrate-2026-06-06
+
+- Decision: the v1 maker/checker execution substrate is Claude Code's dynamic **Workflow runtime** (Hybrid model): own the durable plan, the oracle/proof-obligation contract, the consent gates, and hook enforcement IN-REPO; **rent** the Workflow runtime for execution; fall back to **Mirror-lite** turn-by-turn swarm when the runtime is unavailable or disabled.
+- Rationale: the runtime is **subscription-native** (counts as normal plan usage, NOT Agent-SDK/API billing), gives deterministic code-driven control flow (what Article II + the v1 vision want), worktree isolation per agent, and schema-validated structured output. PoC this session (3 workflow runs) confirmed all three axes: the maker→checker round-trip works; a checker produced a grounded finding (a failing test, reproduced independently outside the workflow); and the constitutional PreToolUse hooks FIRE on workflow agents (`tdd_order_guard`, `verify_pass_guard`, `swarm_boundary_guard` each blocked a workflow-agent write with a verbatim message) — so makers ride the rented runtime under full governance.
+- Rejected alternatives:
+  - **Agent-SDK orchestrator (Mirror-true)**: subscription ToS forbids driving the SDK with subscription credentials; per-token API billing detonates the economics of a token-heavy multi-agent loop. Breaks the flat-rate model the baseline depends on.
+  - **Agent teams**: teammates CANNOT spawn subagents (verified against `code.claude.com/docs`), and teammates share one working dir with no worktree isolation.
+  - **Mirror-lite only** (model-driven turn-by-turn): forgoes deterministic code-driven orchestration; retained as the FALLBACK, not the substrate.
+- Source: freeform PoC archived at `docs/archive/2026-06-05/maker-checker-poc/` (brief.md, spec.md). Vision + 8-piece decomposition at `docs/vision/baseline-v1-thought-compiler.md` Part 5. Backlog `-c732` (minimal exception — OPEN, pending the intake-full corroboration workflow), `-9360` (full charter).
+- Verified-at: a63bbbe
+- Last-touched: 2026-06-06
+- caveat: the `§II.A` amendment that LEGALIZES this is NOT yet approved or committed — a fresh intake-full workflow will scout + research (external corroboration of the maker/checker + oracle-grounding patterns) before producing an approvable amendment. Decision recorded now to prevent re-litigating the agent-teams / Agent-SDK alternatives. When applying that amendment, heed `landmines.md → constitutional-amendment-tripwires-headroom-seedmirror-python3ledger` (CLAUDE.md 38,500-byte budget, seed.template parity, python3 ledger).

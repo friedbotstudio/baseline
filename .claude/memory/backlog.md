@@ -25,34 +25,167 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: large
 - verified-at: HEAD
 - last-touched: 2026-06-01
-- caveat: Full vision + audit captured at `docs/vision/baseline-v1-thought-compiler.md` (currently UNTRACKED — not in any commit yet; a future v1-design workflow should commit it). This is the big next epoch, NOT a quickfix. Sequence per the doc: (1) amend seed.md §Article II then CLAUDE.md to permit bounded agent-team execution under an orchestrator (workers decide inside an orchestrator-owned frame; scope/write_set escalation bounces up); (2) plan-as-durable-diffable-state schema (mirror workflow.json discipline); (3) maker/checker RALPH protocol with checkers BOUND TO MECHANICAL ORACLES (the load-bearing constraint — two LLMs alone agree on hallucinations); (4) the "safe vs ask-a-human" gate taxonomy BEFORE any autonomy; (5) AI-native debugging skill (explanation-trace as the reviewable object). Each of 1–5 deserves its own intake→spec→approve cycle. v2 (signal-driven AI-native OS: Sentry/GA4/CRM/CI connectors → diagnose → fix → deploy) rides on a trusted v1. Open questions (maker/checker deadlock cap, where reactivity lives, the merge/synthesis oracle, auto-deploy rollback + kill switch) are listed in the doc.
+- caveat: Full vision + audit captured at `docs/vision/baseline-v1-thought-compiler.md` (currently UNTRACKED — not in any commit yet; a future v1-design workflow should commit it). This is the big next epoch, NOT a quickfix. Sequence per the doc: (1) amend seed.md §Article II then CLAUDE.md to permit bounded agent-team execution under an orchestrator (workers decide inside an orchestrator-owned frame; scope/write_set escalation bounces up); (2) plan-as-durable-diffable-state schema (mirror workflow.json discipline); (3) maker/checker RALPH protocol with checkers BOUND TO MECHANICAL ORACLES (the load-bearing constraint — two LLMs alone agree on hallucinations); (4) the "safe vs ask-a-human" gate taxonomy BEFORE any autonomy; (5) AI-native debugging skill (explanation-trace as the reviewable object). Each of 1–5 deserves its own intake→spec→approve cycle. v2 (signal-driven AI-native OS: Sentry/GA4/CRM/CI connectors → diagnose → fix → deploy) rides on a trusted v1. Open questions (maker/checker deadlock cap, where reactivity lives, the merge/synthesis oracle, auto-deploy rollback + kill switch) are listed in the doc. **Decomposed 2026-06-05 into the 8 child entries below (keys `*-c732`, `*-1a2d`, `*-f029`, `*-d186`, `*-4c43`, `*-424f`, `*-9360`, `*-9008`). The refined checker mechanism + 8-piece sequencing live in the vision doc Part 5, which supersedes its Part 3.** This parent stays open as the epic umbrella; close it only when all 8 children are picked-up or dropped.
 
 ---
 
-## reduce-test-suite-wall-clock-blocked-on-global-build-mutex-7b1e
+## minimal-governance-exception-bounded-maker-checker-experiment-c732
 
-> verbatim (assistant, 2026-06-05, during reduce-test-suite-runtime):
-> Candidate B (--test-global-setup build-once) regressed badly (421s for 5 files). Root cause: scripts/build-template.sh holds a machine-global mkdir mutex, so builds serialize machine-wide and the shared-clone approach can't beat the contention.
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-06-05
-- raised-in-context: reduce-test-suite-runtime workflow. A+D+C shipped (determinism: parallel suite went from 2/3-red to 8/8-green; full suite ~61-120s green). But the SPEED half of the parent item `reduce-full-test-suite-runtime-toward-one-minute-652c` was NOT achieved — wall-clock stayed ~90s. Candidate B (build the template once via `--test-global-setup`, cp from a shared fixture) was attempted at the user's request and reverted.
-- estimated-effort: medium-large
-- verified-at: a493cdb
-- last-touched: 2026-06-05
-- caveat: **The blocker is `scripts/build-template.sh`'s machine-global mkdir mutex** (`$TMPDIR/create-baseline-build.lock.d`, build-template.sh:29) — it serializes EVERY build on the machine. ~7-10 build-exercising test files each run a full build (~18s); under the mutex they serialize, so the wall-clock floor is dominated by that build-contention chain (after publish-check is gated, `skill-ownership` ~39s — itself one build + one byte-identical rebuild — is the tent-pole). Build-once via `--test-global-setup` cannot help while the mutex forces machine-wide serialization AND while a cp-from-shared-clone of the full repo is itself costly. **Two viable directions for a future speed workflow, do FIRST before build-once:** (1) make the build mutex per-PKG_ROOT (lock keyed on the build target dir, not a single global path) so isolated builds genuinely parallelize; OR (2) a truly build-free shared fixture: globalSetup builds once into a known path, read-only build/manifest/audit tests consume that path directly WITHOUT copying (only mutating drift tests cp). Also reconsider whether `skill-ownership`'s byte-identical-rebuild test (the one test that MUST build twice) can assert determinism more cheaply. Measurement gate: re-confirm 5x parallel green AND wall-clock materially < 90s before claiming done. The determinism guard `tests/no-live-objtemplate-reads.test.mjs` and the `PUBLISH_TESTS`/`PLANTUML_TESTS`/`test:full` tiers from this workflow stay in place. Cross-ref: libraries.md `node:test@node-25.8.1`; landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
-
-## reduce-test-suite-non-build-tentpoles-after-per-target-lock-3faf
-
-> verbatim (assistant, 2026-06-05, during build-mutex-per-target):
-> Per-target build lock landed: 3 concurrent isolated builds run in ~2s vs ~8s under the old global lock. The build-serialization bottleneck is gone, but the full suite is still well over a minute — non-build tent-poles now dominate the wall-clock, so the "~1 minute" goal is not met by the lock change alone.
+> verbatim (assistant, 2026-06-05):
+> "Minimal governance exception — amend seed.md + Article II just enough to permit ONE bounded maker/checker experiment on a single disjoint-write_set task. Not the full agent-team charter."
 
 - source: assistant-deferral
 - status: open
 - raised-on: 2026-06-05
-- raised-in-context: build-mutex-per-target workflow. This is the SUCCESSOR to `...global-build-mutex-7b1e`, which closed as picked-up: its direction (1) "make the build mutex per-PKG_ROOT" shipped as `scripts/build-lock-dir.mjs`. The residual SPEED goal (`reduce-full-test-suite-runtime-toward-one-minute`, the original 652c parent) is what remains.
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
 - estimated-effort: medium
-- verified-at: 2e5d3c2
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: A (smallest dogfoodable slice; mostly independent)
+- verified-at: bcefe17
 - last-touched: 2026-06-05
-- caveat: With build-serialization removed, the wall-clock floor is now set by individual slow tests, NOT the build lock. Single-shot full-suite timing on a loaded dev machine is noise-dominated (observed 154s / 274s / 285s across runs), so DON'T chase suite wall-clock directly — profile per-test and attack tent-poles. **Top suspect: `tests/skill-ownership.test.mjs` "build manifest v2" (~131s in one run)** — it is the test that builds TWICE (byte-identical-rebuild determinism assertion). Consider asserting determinism more cheaply (hash two manifest builds without two full template builds, or reuse one build + re-stamp). Other build-exercising files (~7-10) each run one ~2s build; with per-target locking they now parallelize up to CPU count, so they're no longer the bottleneck. The build-free shared-fixture idea (7b1e direction 2) is now LOWER priority since per-target locking already gives parallel builds — revisit only if profiling shows build cost still dominates. Measurement discipline: run the suite 3-5x on a quiesced machine (or measure in CI where the runner is consistent) and take the median before claiming any speed win; prefer per-test `duration_ms` from the spec reporter over total wall-clock. Cross-ref: landmark `scripts/build-lock-dir.mjs:1`; landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
+- caveat: Resolves the prototype-vs-amend chicken-and-egg — Article II structurally forbids the prototype, so amend minimally first, prototype, then write the real amendment (child `-9360`). Detail: vision doc Part 5.7 piece 1.
+
+---
+
+## threat-value-tier-config-dial-oracle-floors-1a2d
+
+> verbatim (assistant, 2026-06-05):
+> "Threat/value tier config dial — project.json tiers → which oracles are mandatory vs advisory, plus each checker's floor + ceiling values. Pure config, tiny, every checker reads it."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: small
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: A
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: One dial sets BOTH the floor (quality threshold) and ceiling (effort budget) per checker, so "how hard do we search" and "know when to stop" are pinned config not per-run judgment. Same pattern as git.protected_branches. Foundational — every checker reads it. Detail: vision doc Part 5.4–5.5, piece 2.
+
+---
+
+## mutation-testing-oracle-for-tdd-checker-f029
+
+> verbatim (assistant, 2026-06-05):
+> "Mutation oracle for the TDD checker — the one genuinely new mechanical capability. Wire mutation testing as the test-quality oracle (mutation score, not coverage)."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: medium
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: A
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: Line coverage is the gameable fake oracle; mutation score is not — to raise it you must write tests that actually catch mutants. This is the TDD checker's "no shortcuts" teeth and gives the loop a clean stop (no surviving mutant). Dogfoodable on the baseline's own suite immediately. Detail: vision doc Part 5.2 + 5.7 piece 3.
+
+---
+
+## promote-review-skills-to-oracle-bound-checkers-d186
+
+> verbatim (assistant, 2026-06-05):
+> "Promote existing review skills to oracle-bound checkers — refit spec-lint / spec-diagram-review / security / simplify / code-structure to emit the proof-obligation contract: artifact → block, assertion → advisory → backlog."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: large
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: B (depends on slice A)
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: The checkers already exist on disk — this is re-wiring, not greenfield. Every finding carries a proof obligation: concrete artifact → can block; bare assertion → advisory, labeled low-confidence, logged to backlog with its proof. Maps brainstorm/spec/tdd/security/review/AC-conformance onto shipped skills (vision doc Part 5.3). Detail: Part 5.7 piece 4.
+
+---
+
+## maker-checker-ralph-protocol-stop-rule-arbitration-4c43
+
+> verbatim (assistant, 2026-06-05):
+> "Maker/checker RALPH protocol + stop rule + arbitration — floor→advisory, dry-rounds→stop, ceiling-below-floor→yield, plus the oracle-over-judgment precedence ordering."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: large
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: B (depends on pieces 2, 3, 4)
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: The loop itself. Load-bearing rule: ceiling-below-floor is a RED state (yield to human), never silently downgraded to advisory — otherwise it recreates the verify_pass_guard PASS-when-FAIL failure. Arbitration: oracle-bound findings outrank judgment always; two oracle-bound conflicts mean the SPEC is wrong → existing needs-spec-change yield. Maker is nearly free (reuse implement skill). Detail: vision doc Part 5.4–5.5, piece 5.
+
+---
+
+## plan-as-durable-diffable-state-schema-424f
+
+> verbatim (assistant, 2026-06-05):
+> "Plan-as-durable-diffable-state — .claude/state/plan/<slug>.json schema; replan = recorded diff; mirrors workflow.json discipline + consent-gate pattern. The orchestration spine."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: large
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: B
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: Mid-flight replanning is only safe if the plan is durable on-disk versioned state where a replan is a visible DIFF, not a silent mutation — same lineage as workflow.json. Goal + tasklist + per-node assignments + version/diff history. Spec → approve → plan → execute is the missing connective tissue (vision doc §2.1). Detail: Part 5.7 piece 6.
+
+---
+
+## real-article-ii-amendment-after-prototype-9360
+
+> verbatim (assistant, 2026-06-05):
+> "The real Article II amendment — written AFTER 1–6 are prototyped, blessing what was actually learned (supersedes the minimal exception from piece 1)."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: medium
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: C (after slices A+B prototyped)
+- verified-at: a63bbbe
+- last-touched: 2026-06-05
+- blocked-on: §II.A graduation criteria (≥3 governed maker→checker round-trips all-mechanical-blocking, zero false-positive blocking findings, clean /security on checker oracle artifacts, maintainer ratification)
+- caveat: RESCOPED 2026-06-06. The original "real Article II amendment after prototype" role was filled by `-c732` (the definitive §II.A bounded maker/checker charter, landed in seed.md §4.2 + mirrors + annex). `-9360` is now the **graduation-gated permanent Article II rewrite that lifts the §II.A one-maker/one-checker cap to multi-agent** (multiple makers/checkers, durable plan schema, tier dial). It no longer supersedes `-c732` — `-c732` absorbed `-9360`'s charter role; this entry is the future cap-lift. Children `-1a2d`, `-f029`, `-424f`, `-9008` still depend on it. Detail: vision doc §2.3 + Part 5.7 piece 7; charter narrative in `.claude/CONSTITUTION.md` §1/§2 "§II.A — bounded maker/checker charter".
+
+---
+
+## gate-taxonomy-then-debugging-skill-then-v2-9008
+
+> verbatim (assistant, 2026-06-05):
+> "Gate taxonomy → AI-native debugging skill → v2 — safe-vs-ask-a-human classifier, then the explanation-trace debugging UX, then the signal-driven OS. Kept as one far-out stub; fragment when closer."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-05
+- raised-in-context: v1 thought-compiler design discussion (no active workflow)
+- estimated-effort: large
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- slice: C (far out — deliberately coarse)
+- verified-at: bcefe17
+- last-touched: 2026-06-05
+- caveat: Deliberately coarse — build the gate taxonomy BEFORE any autonomy (vision doc §2.4); the debugging skill makes the explanation-trace the reviewable object (§2.5); v2 is the signal-driven OS riding on a trusted v1 (§2.6, §1.3). Fragment into separate intakes when v1 is proven. Detail: vision doc Part 5.7 piece 8.
+
+---
+
+## rebalance-claude-md-vs-constitution-annex-budget-b4d1
+
+> verbatim (user, 2026-06-06):
+> "I recommend rewriting claude.md to actually act as pointer to CONSTITUTION.md (it has no hardlimits) and rest of the budget can be used for additional quick references like memory system etc"
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-06-06
+- raised-in-context: maker-checker-amendment (decoupled from `-c732` at gate A)
+- estimated-effort: medium
+- verified-at: a63bbbe
+- last-touched: 2026-06-05
+- caveat: Decide what must stay always-loaded in `CLAUDE.md` (binding rules) vs move to the on-demand annex `.claude/CONSTITUTION.md` (no byte cap), and spend any reclaimed `CLAUDE.md` budget on quick-reference cards (e.g. a memory-system cheat sheet). This is a **seed.md-architecture amendment** (Art I.4) and needs its own intake→spec→approve cycle. Load-bearing caveat surfaced at `-c732` gate A: `CLAUDE.md` is auto-loaded into every session's context; `.claude/CONSTITUTION.md` is read on-demand only — so moving binding rules out has a real cost (rules stop being in-context by default). The 38500-byte test budget (`tests/code-browser-primary-navigation.test.mjs:39`) is a context-budget guardrail on the always-loaded file, not an arbitrary cap. Decoupled from `-c732` (which shipped with a minimal offsetting trim instead).
+
+---

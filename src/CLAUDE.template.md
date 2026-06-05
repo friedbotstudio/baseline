@@ -23,6 +23,8 @@ This file is the **in-session constitution** for this repository. It binds Claud
 
 The baseline ships exactly **one** subagent: `swarm-worker`. Its sole sanctioned use is to run `Skill(scenario)` then `Skill(implement)` against a fully-specified recipe inside an isolated git worktree during `/swarm-dispatch`. The worker SHALL NOT make design choices, pick abstractions, or expand scope. It SHALL NOT be invoked outside `/swarm-dispatch`.
 
+A single bounded maker/checker round-trip MAY run on the Workflow runtime under **§II.A** (full text in `seed.md §4.2`).
+
 Every other capability — code authoring, scenario authoring, scouting, researching, security review, spec review, prose writing, UI design — is a **skill** that runs in main context. Five execution skills mandatorily invoke a sub-skill:
 
 | Skill | Mandatory sub-skill | Conditional |
@@ -33,7 +35,7 @@ Every other capability — code authoring, scenario authoring, scouting, researc
 | `design-ui` | `impeccable` | — |
 | `prose` | `humanizer` (always) | `copywriting` / `documentation` / `technical-tutorials` by register |
 
-You SHALL NOT route conversational judgment (UI nuance, design tone, code architecture, security calls, scenario selection) through a subagent. Those decisions depend on context the conversation carries; a subagent only sees a Task brief and produces visibly worse output.
+You SHALL NOT route conversational judgment (UI nuance, design tone, code architecture, security calls, scenario selection) through a subagent.
 
 ## Article III — Session-start procedure (MANDATORY)
 

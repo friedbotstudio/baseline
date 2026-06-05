@@ -16,6 +16,10 @@ Workflow track definitions live in `.claude/workflows.jsonl` per `docs/init/seed
 
 Article X.1 scopes the `impeccable` "Shared design laws" bans to user-facing copy only. Future "impeccable says X, but we ship Y on purpose" decisions get a row in the Article X.1 scope table without re-amending the constitution. Examples already in flight: the meta-strip on the landing (qualified in PRODUCT.md anti-references as "structural counts naming load-bearing components"), and the em-dash scoping itself. New rows SHALL cite the impeccable rule being scoped, the scope decision, and a one-line rationale.
 
+### §II.A — bounded maker/checker charter (2026-06-06, `-c732`)
+
+`seed.md §4.2` gains `§II.A`, a bounded carve-out from Article II's "subagents only execute pre-decided recipes" rule: ONE governed maker + ONE oracle-bound checker MAY run on Claude Code's dynamic Workflow runtime, under the live PreToolUse hooks, gated by an evidence-keyed graduation criterion. `CLAUDE.md` Article II carries only a terse binding pointer (byte budget); the seven clauses live in `seed.md §4.2`; this section holds the narrative. The amendment absorbs the previously-separate `-9360` "full charter" backlog item; `-9360` is rescoped to the graduation target (the future permanent Article II rewrite that lifts the one-maker/one-checker cap to multi-agent). The full corroboration and graduation rationale are in §2 below.
+
 ---
 
 ## 2 — Enforcement-mechanism narration
@@ -62,6 +66,20 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 - **`resume_transform.mjs`** — `readMostRecent(...)` plus a TTL cache (`readCache`/`writeCache`, file `.claude/state/thread_transform_cache.json`, TTL `project.json → memory.thread_transform_ttl_seconds`, default 86400). The transform itself (verbatim → surfaced summary) is inline main-context model work, cached so resume does not recompute within the TTL (Decision D5).
 
 `memory_session_start.mjs` injects ONLY the most-recent section at SessionStart, bounded so the ~10KB envelope holds (Decision D3 bounding). The design rationale — extract verbatim cheaply at shelve, transform at resume for granularity control — and the full decision record live in `.claude/state/codesign/conversation-thread-shelving.json`.
+
+---
+
+### §II.A — bounded maker/checker charter (narrative + graduation rationale)
+
+**What the charter authorizes.** Exactly one maker and one checker, on the Workflow runtime, for one round-trip. The maker implements a main-context contract inside an explicit `write_set`, making no design decisions; the checker reviews the maker's output and emits findings ranked by evidence. The maker and checker are workflow-runtime agents, not declared subagents — the baseline still ships exactly one subagent (`swarm-worker`), so the `§4.2` count is unchanged.
+
+**Why oracle-binding is load-bearing.** Two LLMs left to confer will agree on a hallucination. The external literature is unambiguous: the generation-verification gap is real (models generate correct solutions but cannot reliably verify them, and self-critique can *reduce* accuracy via false positives), and LLM-as-judge carries position, verbosity, and self-preference bias (judges favor their own generations). So a finding counts only when it is mechanically grounded — a failing test, a guard block, a structural violation. Research/documentation evidence is advisory (surfaced, lower-confidence, never blocking alone); a bare opinion is not a finding at all.
+
+**Two corollaries encoded in clause 2.** (a) *Anti-circularity*: the checker's grounding test or relation must derive from intended behavior or the spec, never from the maker's implementation — a test generated from the code under test encodes the bug as "correct" (the documented "circularity of error"). (b) *Self-preference*: because the maker and checker may share a model family, a non-mechanical finding is advisory by construction.
+
+**Why bounded, and the graduation gate.** Multi-agent debate improves correctness only when paired with verification; unverified debate adds noise and can hurt. So the bound is keyed to *verification capability*, not a head-count or a calendar. The PoC already proved the substrate is functional, governable (`tdd_order_guard`, `verify_pass_guard`, `swarm_boundary_guard` fire on workflow agents), and oracle-capable. `§II.A` therefore stays a bounded exception until: (a) ≥ 3 governed round-trips where every blocking finding was mechanically grounded; (b) zero false-positive blocking findings across that window (a wrong block implies an anti-circularity violation); (c) a clean `/security` review of the checker's oracle artifacts; (d) maintainer ratification of a future permanent Article II rewrite. The numeric floor is checkable without telemetry — the evidence is read from the `/workflows` run record. A temporal sunset was rejected: boundedness here is capability-shaped, not calendar-shaped, and a sunset adds an expiry-cliff failure mode with no evidentiary basis.
+
+**Relationship to the downstream pieces.** This charter is the definitive one (`-c732`), absorbing the prior `-9360`. The multi-maker/checker scaling, the tier dial (`-1a2d`), the mutation oracle (`-f029`), the durable plan schema (`-424f`), and the gate taxonomy (`-9008`) are NOT part of it; they depend on the future permanent rewrite that the graduation gate guards. Empirical evidence: `docs/archive/2026-06-05/maker-checker-poc/`.
 
 ---
 

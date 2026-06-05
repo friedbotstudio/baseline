@@ -182,6 +182,20 @@ The baseline ships exactly one subagent. The architectural reason: subagents los
 
 **Automated re-rendering by `/init-project`.** Step 6.4 re-renders `swarm-worker.md` from the template, driven by the recommender's `additions.swarm_worker_skills`. The recommender does **not** propose new subagent types — only stack-skill additions for the existing worker. Specialization happens via skills loaded into the worker's context, not via parallel agent personas; new decision-making roles belong in skills, which run in main context.
 
+#### §II.A — Bounded maker/checker charter (v1)
+
+Notwithstanding the general rule that the lone subagent only executes pre-decided recipes, ONE bounded maker/checker round-trip MAY execute on Claude Code's dynamic Workflow runtime. The maker and checker are **workflow-runtime agents, not declared subagents** — the baseline still ships exactly one subagent (`swarm-worker`). The round-trip is subject to **all** of:
+
+1. **Pre-decided contract.** The maker implements a contract decided in main context, within an explicit `write_set`; it makes no design or scope decisions.
+2. **Oracle-bound checker.** Findings rank by evidence: a finding backed by a **mechanical** artifact (failing test, guard block, structural violation) is **blocking**; a finding backed by **research/documentation** evidence is **advisory** (surfaced, labeled lower-confidence, never blocking on its own); a bare opinion is not a finding. The checker's grounding test or relation SHALL derive from intended behavior or the spec, **never from the maker's implementation** (no self-confirming oracle). A non-mechanical finding is advisory by construction, because the maker and checker may share a model family (self-preference bias).
+3. **Hook governance is mandatory.** All workflow-agent writes remain under the live PreToolUse hooks; `tdd_order_guard`, `verify_pass_guard`, and `swarm_boundary_guard` were observed firing on workflow agents.
+4. **Escalation bounces up.** Any scope or `write_set` escalation returns to the main-context orchestrator; workers never widen scope themselves.
+5. **Fallback.** When the Workflow runtime is unavailable or disabled, the round-trip falls back to the Mirror-lite turn-by-turn swarm.
+6. **Bounded — exactly one maker, one checker.** No second maker/checker, no fan-out, waves, or panel. Lifting this cap requires a future permanent Article II rewrite, gated on clause 7.
+7. **Graduation gate.** §II.A remains a bounded exception until **all** hold: (a) ≥ 3 governed maker→checker round-trips in which every blocking finding was mechanically grounded; (b) **zero** false-positive blocking findings across that window; (c) a clean `/security` review of the checker's oracle artifacts; (d) explicit maintainer ratification of a future permanent Article II rewrite. Until that rewrite lands, the caps in clause 6 bind.
+
+Full charter narrative, the corroboration grounding, and the graduation rationale live in the annex `.claude/CONSTITUTION.md`. This charter is bounded by clause 6 and self-limiting via clause 7; it absorbs the prior `-9360` "full charter" role, and the multi-maker/checker scaling it would enable is the graduation target, not part of this charter.
+
 ### §4.3 Skills (40)
 
 Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, plus optional `template.md` (artifact skills) or helper scripts.

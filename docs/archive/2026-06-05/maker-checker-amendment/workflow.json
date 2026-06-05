@@ -1,0 +1,29 @@
+{
+  "request": "v1 maker/checker bounded-experiment amendment (-c732), intake-full. Scout the real change surface and research/corroborate the freeform PoC findings + potential improvements against external sources (multi-agent verification, maker/checker, oracle-grounding, deterministic orchestration) BEFORE producing an approvable seed.md §II.A amendment. PoC evidence archived at docs/archive/2026-06-05/maker-checker-poc/. Constitutional amendment: edit docs/init/seed.md FIRST (Art I.4), four mirror files in the write_set (docs/init/seed.md, CLAUDE.md, src/CLAUDE.template.md, src/seed.template.md). Heed landmines.md constitutional-amendment-tripwires: CLAUDE.md 38500-byte test budget, seed.template parity, python3 line-ledger.",
+  "slug": "maker-checker-amendment",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "minimal-governance-exception-bounded-maker-checker-experiment-c732"
+  ],
+  "created_at": 1780688367,
+  "updated_at": 1780693139
+}
