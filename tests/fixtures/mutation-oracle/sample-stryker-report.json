@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "thresholds": { "high": 80, "low": 60 },
+  "files": {
+    ".claude/skills/memory-flush/route.mjs": {
+      "language": "javascript",
+      "source": "export function suggestRoutes(candidates) { return candidates; }\n",
+      "mutants": [
+        {
+          "id": "1",
+          "mutatorName": "ConditionalExpression",
+          "status": "Survived",
+          "location": { "start": { "line": 40, "column": 5 }, "end": { "line": 40, "column": 20 } }
+        },
+        {
+          "id": "2",
+          "mutatorName": "EqualityOperator",
+          "status": "Killed",
+          "location": { "start": { "line": 42, "column": 3 }, "end": { "line": 42, "column": 10 } }
+        },
+        {
+          "id": "3",
+          "mutatorName": "StringLiteral",
+          "status": "NoCoverage",
+          "location": { "start": { "line": 45, "column": 1 }, "end": { "line": 45, "column": 8 } }
+        }
+      ]
+    }
+  }
+}

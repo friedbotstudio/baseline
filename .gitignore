@@ -4,6 +4,12 @@
 # Per-run state (workflow tracker, consent tokens, swarm plans, last test verdict, harness logs)
 .claude/state/
 
+# Mutation-testing oracle (-f029): Stryker's transient output. The advisory
+# report lives under .claude/state/mutation/ (already ignored above); these are
+# Stryker's own scratch/report dirs, regenerated each run, never staged.
+reports/
+.stryker-tmp/
+
 # Per-session signal collection. `memory_stop` hook auto-extracts memory
 # candidates here every turn; `/memory-flush` curates keepers into the
 # canonical six (landmarks/libraries/decisions/landmines/conventions/

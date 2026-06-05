@@ -156,18 +156,18 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## rebalance-claude-md-vs-constitution-annex-budget-b4d1
+## bump-eleventy-fix-liquidjs-critical-rce-vuln-8caf
 
-> verbatim (user, 2026-06-06):
-> "I recommend rewriting claude.md to actually act as pointer to CONSTITUTION.md (it has no hardlimits) and rest of the budget can be used for additional quick references like memory system etc"
+> verbatim (user, 2026-06-05):
+> "Proceed; file critical separately" (mutation-oracle install checkpoint — chose to proceed with Stryker and file the pre-existing critical as its own item).
 
 - source: user-instruction
 - status: open
-- raised-on: 2026-06-06
-- raised-in-context: maker-checker-amendment (decoupled from `-c732` at gate A)
-- estimated-effort: medium
-- verified-at: a63bbbe
+- raised-on: 2026-06-05
+- raised-in-context: mutation-testing-oracle (-f029) npm-install audit checkpoint
+- estimated-effort: small
+- verified-at: 97ead55
 - last-touched: 2026-06-05
-- caveat: Decide what must stay always-loaded in `CLAUDE.md` (binding rules) vs move to the on-demand annex `.claude/CONSTITUTION.md` (no byte cap), and spend any reclaimed `CLAUDE.md` budget on quick-reference cards (e.g. a memory-system cheat sheet). This is a **seed.md-architecture amendment** (Art I.4) and needs its own intake→spec→approve cycle. Load-bearing caveat surfaced at `-c732` gate A: `CLAUDE.md` is auto-loaded into every session's context; `.claude/CONSTITUTION.md` is read on-demand only — so moving binding rules out has a real cost (rules stop being in-context by default). The 38500-byte test budget (`tests/code-browser-primary-navigation.test.mjs:39`) is a context-budget guardrail on the always-loaded file, not an arbitrary cap. Decoupled from `-c732` (which shipped with a minimal offsetting trim instead).
+- caveat: `npm audit` surfaced a CRITICAL in `liquidjs` (GHSA-gf2q-c269-pqgc RCE + XSS/ReDoS/DoS, 6 advisories) reachable via `@11ty/eleventy@3.1.5` → `liquidjs@10.25.7`, plus a moderate `ws` via eleventy-dev-server. PRE-EXISTING (not introduced by -f029; surfaced only because the Stryker install re-ran the audit). Dev-only (eleventy build/serve toolchain), not in the shipped consumer payload. Fix: a dedicated chore/bugfix to bump `@11ty/eleventy` (latest 3.x) or targeted `npm audit fix`, then re-audit — kept OUT of -f029 to avoid an eleventy major bump mid-feature. Detail: `docs/archive/2026-06-05/mutation-testing-oracle/security.md`.
 
 ---

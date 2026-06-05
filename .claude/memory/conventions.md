@@ -173,3 +173,13 @@ Each entry's stable key is a short slug.
 - applies-to: `tests/helpers/clone-and-build.mjs` and any test that rsync-clones the repo (skill-ownership, audit-baseline-post-amendment, upgrade-project, workflows-install-upgrade, manifest, build-lock-dir, …). Measurement discipline: single-shot suite timings are noise-dominated — profile per-test `duration_ms` and take a median across runs. Cross-ref: `docs/testing.md → Tests that need a built template`; landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
 - verified-at: c32aaaa
 - last-touched: 2026-06-05
+
+## devdeps-exact-pinned-and-tests-not-strictly-co-named
+
+- source: code-pattern
+- convention: (1) Every entry in `package.json → devDependencies` SHALL be an EXACT version (no `^`/`~` range). `npm install -D <pkg>` writes a `^` range by default — change it to the bare version immediately. (2) A module's test is NOT reliably named `tests/<basename>.test.mjs`; tooling that needs a module's test SHALL take the test path explicitly rather than derive it from the module name.
+- why: (1) `scripts/check-files-diff.mjs` enforces `DEVDEP_RANGE_FORBIDDEN` and `tests/publish-check.test.mjs` fails the suite on any ranged devDep (caught `@stryker-mutator/core=^9.6.1` in `-f029`; fix was `9.6.1`). Exact pins keep the published/packed dependency set reproducible. (2) The co-name assumption is false in this repo — e.g. `.claude/skills/memory-flush/route.mjs` is tested by `tests/memory-flush-routing.test.mjs` (not `memory-flush-route.test.mjs`); the mutation oracle (`scripts/mutation-oracle.mjs`) therefore takes `<module> <testPath>` both explicit.
+- how to apply: after any `npm install -D`, edit the new `package.json` devDep to drop the `^`/`~`; run `node scripts/check-files-diff.mjs` (expects "files-diff: clean"). When wiring per-module tooling, pass the test path as an argument; do not infer it.
+- applies-to: `package.json` devDependencies; `scripts/check-files-diff.mjs`; `tests/publish-check.test.mjs`; `scripts/mutation-oracle.mjs` (the `test:mutation` interface).
+- verified-at: 97ead55
+- last-touched: 2026-06-05

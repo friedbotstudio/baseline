@@ -89,3 +89,12 @@ Each entry's stable key is `<lib>@<version>`. If the lockfile bumps, re-verify a
 - Verified-at: a493cdb
 - Last-touched: 2026-06-05
 - Caveat: `--test-global-setup` build-once was attempted (Candidate B) and reverted — see backlog `reduce-test-suite-wall-clock-blocked-on-global-build-mutex`. It regressed badly because `scripts/build-template.sh` holds a machine-global mkdir mutex (`$TMPDIR/create-baseline-build.lock.d`) that serializes ALL builds; build-once only pays off once that mutex is per-PKG_ROOT or a build-free shared fixture is used. The default-parallel run is intermittently flaky ONLY when a test WRITES the live `obj/template` (npm pack → prepack); gate or `--ignore-scripts` those writers and parallel is deterministic (see landmine `live-objtemplate-rebuild-races-parallel-test-readers`).
+
+## @stryker-mutator/core@9.6.1
+
+- Library: Stryker mutation-testing engine (`@stryker-mutator/core`), exact-pinned devDependency. The mutation-oracle (`-f029`) uses it.
+- Role: dev-only, advisory test-quality oracle (`npm run test:mutation -- <module> <testPath>` → `scripts/mutation-oracle.mjs`). Never a runtime dependency; never ships to consumers (AC-007).
+- Key API (context7 `/stryker-mutator/stryker-js`, verified 2026-06-05): `testRunner: 'command'` + `commandRunner.command` runs an ARBITRARY test command, so it drives the bare `node --test` suite (no Jest/Mocha/Vitest). **`coverageAnalysis: 'perTest'` is NOT supported by the command runner** (only Mocha/Jasmine/Karma/Jest plugins) → must be `'off'`, so every mutant re-runs the whole configured command; bound cost by scoping `mutate: ['<one file>']` + a command that runs only that module's test. `reporters: ['json']` writes `reports/mutation/mutation.json` (schema: mutation-testing-report-schema; survivors = mutants with `status: 'Survived'`). `--incremental` re-tests only changed mutants.
+- Verified-at: 97ead55
+- Last-touched: 2026-06-05
+- Caveat: install pulls ~27 direct deps; introduces ONE moderate audit finding (`qs` via `typed-rest-client`, Stryker's optional dashboard reporter — unreachable with `reporters:['json']`). The CRITICAL liquidjs finding seen at install time is PRE-EXISTING via `@11ty/eleventy`, not Stryker (backlog `bump-eleventy-fix-liquidjs-critical-rce-vuln-8caf`). Exact-pin required (`9.6.1`, no caret) per `check-files-diff DEVDEP_RANGE_FORBIDDEN` — see convention `devdeps-exact-pinned-and-tests-not-strictly-co-named`. `reports/` + `.stryker-tmp/` are gitignored.

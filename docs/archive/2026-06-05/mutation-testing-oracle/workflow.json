@@ -1,0 +1,12 @@
+{
+  "request": "Wire mutation testing as a mechanical test-quality oracle (mutation score over surviving mutants, not line coverage) for the baseline's node --test suite — the first real mechanical oracle for the v1 thought-compiler (slice-A piece 3). Research must settle the mutation tool (Stryker likely; verify via context7) and a tractable run-scoping strategy (per-module/changed-files, not whole-repo). A later tier dial (-1a2d) will configure this oracle's floor/ceiling.",
+  "slug": "mutation-testing-oracle",
+  "track_id": "intake-full",
+  "exceptions": ["cli-copy-review"],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["mutation-testing-oracle-for-tdd-checker-f029"],
+  "codesign_mode": true,
+  "created_at": 1780696979,
+  "updated_at": 1780700780
+}
