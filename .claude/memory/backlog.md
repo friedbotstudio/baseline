@@ -29,24 +29,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## minimal-governance-exception-bounded-maker-checker-experiment-c732
-
-> verbatim (assistant, 2026-06-05):
-> "Minimal governance exception — amend seed.md + Article II just enough to permit ONE bounded maker/checker experiment on a single disjoint-write_set task. Not the full agent-team charter."
-
-- source: assistant-deferral
-- status: open
-- raised-on: 2026-06-05
-- raised-in-context: v1 thought-compiler design discussion (no active workflow)
-- estimated-effort: medium
-- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
-- slice: A (smallest dogfoodable slice; mostly independent)
-- verified-at: bcefe17
-- last-touched: 2026-06-05
-- caveat: Resolves the prototype-vs-amend chicken-and-egg — Article II structurally forbids the prototype, so amend minimally first, prototype, then write the real amendment (child `-9360`). Detail: vision doc Part 5.7 piece 1.
-
----
-
 ## threat-value-tier-config-dial-oracle-floors-1a2d
 
 > verbatim (assistant, 2026-06-05):

@@ -36,7 +36,7 @@ const WALK_SHA = '35e4aaa57515192849a3cd32cff96bdd892854349789d72f4dd95917d93211
 const DISCOVER_SHA = 'ac80d14d2d65a3712e295ac8f00822044242838e5d2671128be28f602f721602';
 
 const CLAUDE_CHAR_CAP = 40000;
-const CLAUDE_TARGET_MAX = 38500; // >= 1500 headroom (AC-007)
+const CLAUDE_TARGET_MAX = 34000; // >= 6000 headroom (AC-007; lowered by claude-md-pointer-rewrite)
 
 // Binding-rule markers that MUST survive the CLAUDE.md compression (AC-007).
 const REQUIRED_ARTICLE_HEADINGS = [

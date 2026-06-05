@@ -230,78 +230,25 @@ Reserved for project-owner amendments. Rules below the boundary line bind alongs
 
 ### X.1 Copy register and skill overrides
 
-The `impeccable` skill (Apache 2.0, vendored) declares a set of "Shared design laws" with absolute bans, including:
-
-- No em dashes (`—`, or `--` as a substitute).
-- The hero-metric template.
-- Glassmorphism as default, gradient text, side-stripe borders > 1px, modal-first thinking, identical card grids.
-
-These bans bind **only on user-facing copy** — surfaces a public reader sees as rendered marketing or product prose:
-
-| Scope | Bans apply? | Examples |
-|---|---|---|
-| User-facing copy | YES | `site-src/**/*.njk`, `site-src/_data/site.json` user-visible strings, marketing emails, the rendered docs site |
-| Internal governance | NO | `CLAUDE.md`, `docs/init/seed.md`, `PRODUCT.md`, `DESIGN.md` |
-| Project source documents | NO | `README.md`, `bin/cli.js` help/error text, `.claude/skills/*/SKILL.md` |
-| Memory bodies | NO | `.claude/memory/*.md` entries |
-| Inline code / data samples | NO | `<code>` / `<pre>` blocks that quote literal data, CLI output, or canonical entry shapes |
-
-The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces.
-
-This override does **not** delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI.
-
-Future "impeccable says X, but we ship Y" decisions get a row in the same table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale. Examples: `.claude/CONSTITUTION.md` (annex).
+The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes; the hero-metric template; glassmorphism-as-default, gradient text, side-stripe borders > 1px, modal-first, identical card grids) bind **only on user-facing copy** — rendered marketing/product prose (`site-src/**`, the docs site). They do **NOT** bind internal governance (`CLAUDE.md`, `docs/init/seed.md`), project source docs (`README.md`, CLI text, `SKILL.md`), memory bodies, or inline code/data samples, where the constitutional voice uses em dashes deliberately. This override scopes the bans; it does not delete them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a scope-table row (cite the rule, the scope decision, a one-line rationale) without re-amending the constitution. Full scope table + examples: `.claude/CONSTITUTION.md §5.1` (annex).
 
 ---
 
 ### X.2 Design-task routing
 
-Every UI design task that originates inside a workflow phase SHALL route through the `design-ui` skill, and `design-ui` SHALL invoke the vendored `impeccable` skill for the underlying design move. This binds design / development / copy as separate concerns: design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article X.1 plus the `prose` skill's register choice. The three lanes may touch the same file for different concerns; they SHALL NOT substitute for one another.
-
-| Rule | Binding |
-|---|---|
-| A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section, one row per design surface. | `spec_design_calls_guard` (Art. VIII) at the Write boundary; `/spec-lint` at preflight. |
-| `/tdd` Step 6 SHALL invoke `Skill(design-ui, task_brief)` once per `## Design calls` row before Step 7 (verify). | `tdd` skill SOP. |
-| `design-ui` SHALL NOT write product code. Its only writes are the state file at `.claude/state/design/<slug>.json`, snapshots under `docs/design/<slug>.*.md`, and memory candidates. The product-code writes happen inside `impeccable` invocations. | `design-ui` SKILL.md. |
-| `design-ui` SHALL classify incoming intents at Stage 0 (design / development / copy). A misrouted intent returns one of two terminal states: `final_state: "not_a_design_task"` (single-lane misroute) with `correct_lane`, OR `final_state: "mixed_brief"` (multi-lane misroute) with a structured `lane_split` array. Neither writes code. | `design-ui` Stage 0 + `references/design-vs-development.md`. |
-| Iteration cap: `audit → polish` loops SHALL terminate after 3 iterations with `final_state: "needs_human"` if P0 ≥ 1 or P1 > 0 persist. P0 issues block (do not loop). | `design-ui` SKILL.md + `references/orchestration.md`. |
-| Multi-step impeccable recipes SHALL ask the user before proceeding. Single-step recipes SHALL auto-execute. | `references/intent-table.md` `mode` column. |
-
-The vendored `impeccable` skill stays untouched (Article IX). `design-ui` is the structural seam between workflow phases and `impeccable`; bypassing it inside a workflow phase is a violation of this Article.
+Every UI design task that originates inside a workflow phase SHALL route through the `design-ui` skill, and `design-ui` SHALL invoke the vendored `impeccable` skill for the underlying design move. Design / development / copy are separate concerns and SHALL NOT substitute for one another (design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article X.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (one row per surface), enforced by `spec_design_calls_guard` (Art. VIII) and `/spec-lint`. `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` once per row. `design-ui` SHALL NOT write product code (its writes are the state file, snapshots, and memory candidates; product code is written inside `impeccable`). Bypassing `design-ui` inside a workflow phase is a violation of this Article. Full rule table (Stage-0 classification + misroute states, the 3-iteration audit→polish cap, recipe modes): `.claude/CONSTITUTION.md §5.2` (annex).
 
 ---
 
 ### X.3 Entry-phase brainstorm (PM mode)
 
-Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true`. The brainstorm helper captures the requirement via Socratic dialogue (actor, trigger, current state, desired state, non-goals, solution-leakage detection) and writes the result to `docs/brief/<slug>.md`. The entry skill reads that brief as primary input for template-fill.
-
-| Rule | Binding |
-|---|---|
-| `workflow.json → skip_brainstorm` defaults to `false` when absent. Read-time defaults via `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults`. | `brainstorm/SKILL.md` Stage 0 contract; AC-008. |
-| Stage 2 dialogue SHALL NOT propose solutions. Discipline is structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn(text)`, which scans every model-emitted probe for solution verbs (`implement`, `refactor`, `add X`), library names (Redis, PostgreSQL, etc.), and proposal phrasing (`we could`, `I recommend`). | `brainstorm/references/interview-protocol.md`; AC-003. |
-| Stage 2 iteration cap is 5; unclosed gaps become `open_questions` in the brief. Stage 3 confirm-cycle cap is 5; exhaustion returns `final_state: "needs_human"`. | `brainstorm/probe-loop.mjs`; AC-004 boundary. |
-| `/intake` re-invocation on a slug whose `docs/brief/<slug>.md` already exists SHALL short-circuit and read the existing brief; no re-dialogue. | `brainstorm/skip-check.mjs → shouldSkipForExistingBrief`. |
-| `chore` and `freeform` tracks do NOT have an entry-skill seam where brainstorm can fire; the helper is silent on those tracks by construction. | Article IV phase ordering. |
-
-The opt-out flag is set at `/triage` time by `--no-brainstorm`, or detected heuristically when the request already carries a complete actor + trigger + desired-state framing (surfaced via `AskUserQuestion`; AC-010 governs parsing). `Skill(brainstorm)` runs in main context per Article II — no subagent delegation; the Stage 2 discipline assertor is the only programmatic gate.
+Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). Brainstorm captures the requirement via Socratic dialogue (actor, trigger, current/desired state, non-goals, solution-leakage detection) and writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn` (solution verbs, library names, proposal phrasing). `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. The opt-out flag is set at `/triage` by `--no-brainstorm` or heuristic detection of a complete actor+trigger+desired-state framing (via `AskUserQuestion`). Full rule table (caps, idempotency short-circuit, defaults helper): `.claude/CONSTITUTION.md §5.3` (annex).
 
 ---
 
 ### X.4 `/spec` codesign mode (Engineer mode)
 
-`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `.claude/state/workflow.json → codesign_mode` is `true`. The codesign mode identifies load-bearing technical decision points (where engineer domain expertise is the deciding factor — computer vision approach, model architecture, numerical method, IPC pattern, kernel scheduling), presents each with Claude's recommended option and rationale, and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`. The engineer's verbatim rationale becomes canonical when they override Claude's recommendation.
-
-| Rule | Binding |
-|---|---|
-| `workflow.json → codesign_mode` defaults to `false` when absent (opt-in). Set true by `/triage --codesign` or by manual edit. | `spec/SKILL.md` Step 1.5 contract; AC-008. |
-| Decision-point detection runs via `.claude/skills/spec/decision-finder.mjs → findDecisionPoints({researchMemo, scoutReport})`. A research memo with ≥2 candidates carrying comparable tradeoffs surfaces as ≥1 decision point. | AC-005. |
-| Per decision: Claude proposes the recommended option + 1–3 sentence rationale + `AskUserQuestion` (Approve / Suggest alternative / Discuss tradeoff). On `Suggest alternative`, capture the engineer's verbatim rationale via free-form turn. | AC-005 + AC-006 §Behavior #4. |
-| The spec's `## Decisions` section SHALL render engineer verbatim as a `>` markdown blockquote, with chosen-option recorded as the engineer's pick (NOT Claude's recommendation when they diverge). | `decisions-writer.mjs → writeDecisionsSection`; AC-006. |
-| `spec-lint` Check #4 fires when `codesign_mode: true` AND the saved spec lacks a `## Decisions` heading. Check #4 is suppressed entirely when `codesign_mode: false`. | `spec-lint/lint.mjs:checkCodesignDecisions`; AC-005 contract. |
-| On `/integrate` failure classified as "needs spec change" with `codesign_mode: true`, `harness/codesign-reentry.mjs → writeRevisitContext` appends a revisit_context to `.claude/state/codesign/<slug>.json`. Next `/harness` re-invocation reads the context and re-enters codesign on the named decision. | AC-007; Article V integrate-failure decision tree. |
-| Codesign decision revisit cap is 3 per decision point. The 4th revisit attempt terminates with `final_state: "needs_human"`. Hardcoded in `codesign-state.mjs → REVISIT_CAP`, parallel to design-ui's 3-iteration audit-polish cap. | AC-007 boundary. |
-
-Codesign mode is opt-in (most workflows do not need it). `/triage`'s heuristic suggestion fires on a fixed keyword list (`computer vision`, `model architecture`, `numerical`, `cryptographic`, `consensus`, `realtime`, `kernel`, `distributed`, `algorithm design`) — it triggers a confirmation `AskUserQuestion`, never auto-sets. `/research` may write a memo-only codesign recommendation when no candidate dominates on tradeoffs; per Article II it cannot auto-flip flow state — the user opts in via `/triage --codesign` or a manual `workflow.json` edit.
+`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `.claude/state/workflow.json → codesign_mode` is `true` (opt-in; defaults `false`). It identifies load-bearing technical decision points (where engineer domain expertise decides — e.g. CV approach, model architecture, numerical method, IPC pattern, kernel scheduling), presents each with Claude's recommendation + rationale, and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`. The engineer's verbatim rationale becomes canonical when it overrides Claude's recommendation, rendered into the spec's `## Decisions` section as a `>` blockquote. Codesign mode is never auto-set — `/triage`'s keyword heuristic only *suggests* via `AskUserQuestion`, and `/research` may write a memo-only recommendation but cannot flip flow state (Art. II); the user opts in via `/triage --codesign` or a manual edit. Revisit cap 3 per decision point. Full rule table (detection helper, `spec-lint` Check #4, integrate-failure re-entry): `.claude/CONSTITUTION.md §5.4` (annex).
 
 ---
 

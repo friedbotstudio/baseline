@@ -20,6 +20,10 @@ Article X.1 scopes the `impeccable` "Shared design laws" bans to user-facing cop
 
 `seed.md §4.2` gains `§II.A`, a bounded carve-out from Article II's "subagents only execute pre-decided recipes" rule: ONE governed maker + ONE oracle-bound checker MAY run on Claude Code's dynamic Workflow runtime, under the live PreToolUse hooks, gated by an evidence-keyed graduation criterion. `CLAUDE.md` Article II carries only a terse binding pointer (byte budget); the seven clauses live in `seed.md §4.2`; this section holds the narrative. The amendment absorbs the previously-separate `-9360` "full charter" backlog item; `-9360` is rescoped to the graduation target (the future permanent Article II rewrite that lifts the one-maker/one-checker cap to multi-agent). The full corroboration and graduation rationale are in §2 below.
 
+### Article X relocation — annex §5 detail tables (2026-06-05, `-b4d1`)
+
+To hold the 40,000-char cap with comfortable headroom, the elaborative rule tables of Article X.1–X.4 were relocated from `CLAUDE.md` into annex **§5** (this file). `CLAUDE.md` Article X now carries each amendment's terse binding clause plus a pointer to its `§5.x` detail; Article X.5 (navigation routing) stays in full in the constitution. No rule lost binding force — the relocation moved elaboration only, leaving every SHALL/SHALL-NOT clause, enforcement-hook citation, and `REQUIRED_BINDING_MARKER` in the always-loaded file. `seed.md §14` was reworded in place to authorize relocating Article-level detail (not just narration/appendices) to the annex. The enforced soft target dropped from 38,500 to **34,000** (pinned by the always-loaded budget test, `CLAUDE_TARGET_MAX`), taking `CLAUDE.md` from 38,479 to 33,679 bytes (~6.3k headroom under the hard cap, up from ~1.5k). Hard cap, precedence chain (Art I.4), and the hook→Article mapping (Art VIII) are unchanged.
+
 ---
 
 ## 2 — Enforcement-mechanism narration
@@ -144,3 +148,74 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 
 **Alternate tracks (1)** — stripped-down workflows routed via `/triage`:
 - `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `simplify` / `integrate` / `document` only when their triggers apply. `verify`, `archive`, `/grant-commit`, `/commit` mandatory. Not a bypass — silent skips of triggered conditional phases are forbidden.
+
+---
+
+## 5 — Article X project-amendment detail (reference)
+
+The binding clauses for project amendments X.1–X.4 live in `CLAUDE.md` Article X. This section holds the *elaborative rule tables* relocated from CLAUDE.md to hold the 40,000-char cap (Art I.6 / seed.md §14). Nothing here overrides the binding clause in CLAUDE.md; where this detail and the clause appear to conflict, **CLAUDE.md governs**. Article X.5 (navigation routing) stays in full in CLAUDE.md and has no annex detail.
+
+### 5.1 — X.1 Copy register and skill overrides (detail)
+
+The `impeccable` skill (Apache 2.0, vendored) declares "Shared design laws" with absolute bans, including:
+
+- No em dashes (`—`, or `--` as a substitute).
+- The hero-metric template.
+- Glassmorphism as default, gradient text, side-stripe borders > 1px, modal-first thinking, identical card grids.
+
+These bans bind **only on user-facing copy** — surfaces a public reader sees as rendered marketing or product prose:
+
+| Scope | Bans apply? | Examples |
+|---|---|---|
+| User-facing copy | YES | `site-src/**/*.njk`, `site-src/_data/site.json` user-visible strings, marketing emails, the rendered docs site |
+| Internal governance | NO | `CLAUDE.md`, `docs/init/seed.md`, `PRODUCT.md`, `DESIGN.md` |
+| Project source documents | NO | `README.md`, `bin/cli.js` help/error text, `.claude/skills/*/SKILL.md` |
+| Memory bodies | NO | `.claude/memory/*.md` entries |
+| Inline code / data samples | NO | `<code>` / `<pre>` blocks that quote literal data, CLI output, or canonical entry shapes |
+
+The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces. This override does not delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a row in the same scope table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale (in-flight examples in §1 "X.1 — copy-register scoping").
+
+### 5.2 — X.2 Design-task routing (detail)
+
+Design / development / copy are separate concerns: design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article X.1 plus the `prose` skill's register choice. The three lanes may touch the same file for different concerns; they SHALL NOT substitute for one another.
+
+| Rule | Binding |
+|---|---|
+| A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section, one row per design surface. | `spec_design_calls_guard` (Art. VIII) at the Write boundary; `/spec-lint` at preflight. |
+| `/tdd` Step 6 SHALL invoke `Skill(design-ui, task_brief)` once per `## Design calls` row before Step 7 (verify). | `tdd` skill SOP. |
+| `design-ui` SHALL NOT write product code. Its only writes are the state file at `.claude/state/design/<slug>.json`, snapshots under `docs/design/<slug>.*.md`, and memory candidates. The product-code writes happen inside `impeccable` invocations. | `design-ui` SKILL.md. |
+| `design-ui` SHALL classify incoming intents at Stage 0 (design / development / copy). A misrouted intent returns one of two terminal states: `final_state: "not_a_design_task"` (single-lane misroute) with `correct_lane`, OR `final_state: "mixed_brief"` (multi-lane misroute) with a structured `lane_split` array. Neither writes code. | `design-ui` Stage 0 + `references/design-vs-development.md`. |
+| Iteration cap: `audit → polish` loops SHALL terminate after 3 iterations with `final_state: "needs_human"` if P0 ≥ 1 or P1 > 0 persist. P0 issues block (do not loop). | `design-ui` SKILL.md + `references/orchestration.md`. |
+| Multi-step impeccable recipes SHALL ask the user before proceeding. Single-step recipes SHALL auto-execute. | `references/intent-table.md` `mode` column. |
+
+The vendored `impeccable` skill stays untouched (Article IX). `design-ui` is the structural seam between workflow phases and `impeccable`; bypassing it inside a workflow phase is a violation of Article X.2.
+
+### 5.3 — X.3 Entry-phase brainstorm (detail)
+
+The brainstorm helper captures the requirement via Socratic dialogue (actor, trigger, current state, desired state, non-goals, solution-leakage detection) and writes the result to `docs/brief/<slug>.md`. The entry skill reads that brief as primary input for template-fill.
+
+| Rule | Binding |
+|---|---|
+| `workflow.json → skip_brainstorm` defaults to `false` when absent. Read-time defaults via `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults`. | `brainstorm/SKILL.md` Stage 0 contract; AC-008. |
+| Stage 2 dialogue SHALL NOT propose solutions. Discipline is structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn(text)`, which scans every model-emitted probe for solution verbs (`implement`, `refactor`, `add X`), library names (Redis, PostgreSQL, etc.), and proposal phrasing (`we could`, `I recommend`). | `brainstorm/references/interview-protocol.md`; AC-003. |
+| Stage 2 iteration cap is 5; unclosed gaps become `open_questions` in the brief. Stage 3 confirm-cycle cap is 5; exhaustion returns `final_state: "needs_human"`. | `brainstorm/probe-loop.mjs`; AC-004 boundary. |
+| `/intake` re-invocation on a slug whose `docs/brief/<slug>.md` already exists SHALL short-circuit and read the existing brief; no re-dialogue. | `brainstorm/skip-check.mjs → shouldSkipForExistingBrief`. |
+| `chore` and `freeform` tracks do NOT have an entry-skill seam where brainstorm can fire; the helper is silent on those tracks by construction. | Article IV phase ordering. |
+
+The opt-out flag is set at `/triage` time by `--no-brainstorm`, or detected heuristically when the request already carries a complete actor + trigger + desired-state framing (surfaced via `AskUserQuestion`; AC-010 governs parsing). `Skill(brainstorm)` runs in main context per Article II — no subagent delegation; the Stage 2 discipline assertor is the only programmatic gate.
+
+### 5.4 — X.4 `/spec` codesign mode (detail)
+
+The codesign mode identifies load-bearing technical decision points (where engineer domain expertise is the deciding factor — computer vision approach, model architecture, numerical method, IPC pattern, kernel scheduling), presents each with Claude's recommended option and rationale, and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`. The engineer's verbatim rationale becomes canonical when they override Claude's recommendation.
+
+| Rule | Binding |
+|---|---|
+| `workflow.json → codesign_mode` defaults to `false` when absent (opt-in). Set true by `/triage --codesign` or by manual edit. | `spec/SKILL.md` Step 1.5 contract; AC-008. |
+| Decision-point detection runs via `.claude/skills/spec/decision-finder.mjs → findDecisionPoints({researchMemo, scoutReport})`. A research memo with ≥2 candidates carrying comparable tradeoffs surfaces as ≥1 decision point. | AC-005. |
+| Per decision: Claude proposes the recommended option + 1–3 sentence rationale + `AskUserQuestion` (Approve / Suggest alternative / Discuss tradeoff). On `Suggest alternative`, capture the engineer's verbatim rationale via free-form turn. | AC-005 + AC-006 §Behavior #4. |
+| The spec's `## Decisions` section SHALL render engineer verbatim as a `>` markdown blockquote, with chosen-option recorded as the engineer's pick (NOT Claude's recommendation when they diverge). | `decisions-writer.mjs → writeDecisionsSection`; AC-006. |
+| `spec-lint` Check #4 fires when `codesign_mode: true` AND the saved spec lacks a `## Decisions` heading. Check #4 is suppressed entirely when `codesign_mode: false`. | `spec-lint/lint.mjs:checkCodesignDecisions`; AC-005 contract. |
+| On `/integrate` failure classified as "needs spec change" with `codesign_mode: true`, `harness/codesign-reentry.mjs → writeRevisitContext` appends a revisit_context to `.claude/state/codesign/<slug>.json`. Next `/harness` re-invocation reads the context and re-enters codesign on the named decision. | AC-007; Article V integrate-failure decision tree. |
+| Codesign decision revisit cap is 3 per decision point. The 4th revisit attempt terminates with `final_state: "needs_human"`. Hardcoded in `codesign-state.mjs → REVISIT_CAP`, parallel to design-ui's 3-iteration audit-polish cap. | AC-007 boundary. |
+
+Codesign mode is opt-in (most workflows do not need it). `/triage`'s heuristic suggestion fires on a fixed keyword list (`computer vision`, `model architecture`, `numerical`, `cryptographic`, `consensus`, `realtime`, `kernel`, `distributed`, `algorithm design`) — it triggers a confirmation `AskUserQuestion`, never auto-sets. `/research` may write a memo-only codesign recommendation when no candidate dominates on tradeoffs; per Article II it cannot auto-flip flow state — the user opts in via `/triage --codesign` or a manual `workflow.json` edit.

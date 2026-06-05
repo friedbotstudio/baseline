@@ -1,0 +1,11 @@
+{
+  "request": "Rewrite CLAUDE.md to act primarily as a pointer to .claude/CONSTITUTION.md: decide which binding rules must stay always-loaded in CLAUDE.md vs which move to the on-demand annex (no byte cap), and spend reclaimed CLAUDE.md budget on quick-reference cards (e.g. a memory-system cheat sheet). seed.md-architecture amendment per Art I.4 — seed.md changes first, then CLAUDE.md + src/CLAUDE.template.md mirror.",
+  "slug": "claude-md-pointer-rewrite",
+  "track_id": "intake-full",
+  "exceptions": ["cli-copy-review"],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["rebalance-claude-md-vs-constitution-annex-budget-b4d1"],
+  "created_at": 1780693720,
+  "updated_at": 1780696600
+}
