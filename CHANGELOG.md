@@ -1,3 +1,10 @@
+## [0.15.1](https://github.com/friedbotstudio/baseline/compare/v0.15.0...v0.15.1) (2026-06-05)
+
+
+### Performance Improvements
+
+* **build:** key the template-build mutex per target so isolated builds parallelize ([c32aaaa](https://github.com/friedbotstudio/baseline/commit/c32aaaa044a1e4e4ea6b2eb247e2e09f82540d0d))
+
 # [0.15.0](https://github.com/friedbotstudio/baseline/compare/v0.14.0...v0.15.0) (2026-06-04)
 
 
