@@ -5,7 +5,7 @@
 // Scans canonical memory files for closure fields and prose closure signals,
 // applies the matching action (auto-close / surface-and-confirm / stale-sweep),
 // and emits a JSON action report. Also exposes a non-interactive stamp-closure
-// mode invoked by /commit (Phase 11, Step 6) to write status: picked-up +
+// mode invoked by /commit (Phase 11, Step 2.7 pre-stage) to write status: picked-up +
 // superseded-at: today on backlog entries named in workflow.json →
 // source_backlog_keys.
 //

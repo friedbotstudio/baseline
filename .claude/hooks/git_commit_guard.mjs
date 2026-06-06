@@ -47,6 +47,7 @@ import {
   CONSENT_MARKER_PUSH,
   CONSENT_MARKER_PUSH_REL,
 } from './lib/common.mjs';
+import { evaluateClosure } from './lib/closure-check.mjs';
 
 const HOOK = 'git_commit_guard';
 
@@ -178,6 +179,24 @@ function validateConsentToken(file, ttlKey, defaultTtl, gateLabel, cmdHint) {
   logLine(HOOK, `ALLOWED age=${age}s file=${file}`);
 }
 
+function gitCapture(args) {
+  try {
+    return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd: CLAUDE_PROJECT_ROOT });
+  } catch {
+    return null;
+  }
+}
+
+// Read the staged index (never the message — spec D2) and decide whether this
+// commit's closure obligation is satisfied. Pure logic lives in closure-check.
+function stagedClosureDecision() {
+  const names = gitCapture(['diff', '--cached', '--name-only']);
+  if (names === null) return { block: false, unsatisfied: [], reason: null };
+  const stagedPaths = names.split('\n').map((s) => s.trim()).filter(Boolean);
+  const readStaged = (path) => gitCapture(['show', `:${path}`]);
+  return evaluateClosure({ stagedPaths, readStaged });
+}
+
 function handleBash(cmd) {
   if (!cmd) emitAllow();
 
@@ -203,6 +222,17 @@ function handleBash(cmd) {
   if (!isInsideWorkTree()) {
     logLine(HOOK, `ALLOWED not-a-git-repo cmd=${cmd}`);
     emitAllow();
+  }
+
+  // Closure obligation (precedes consent/branch): a commit that stages a closing
+  // workflow.json (non-empty source_backlog_keys) MUST stage backlog.md with each
+  // key stamped picked-up + superseded-at, in this same commit. Index-only.
+  if (isCommit) {
+    const closure = stagedClosureDecision();
+    if (closure.block) {
+      logLine(HOOK, `BLOCKED closure obligation keys=[${closure.unsatisfied.join(',')}]`);
+      emitBlock(`Git Commit Guard: ${closure.reason}. The closing commit must stage \`.claude/memory/backlog.md\` with each \`source_backlog_keys\` entry stamped \`picked-up\` + \`superseded-at\` in the SAME commit (no split). \`/commit\` stamps pre-stage.`);
+    }
   }
 
   const policy = branchPolicy();

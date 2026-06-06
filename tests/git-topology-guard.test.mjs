@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
+const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
 
 const SANDBOXES = [];
 
@@ -38,6 +39,7 @@ function buildSandbox(projectJson) {
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
+  cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   spawnSync('git', ['init', '-q', '-b', 'main', root], { stdio: 'ignore' });
@@ -71,6 +73,7 @@ function addWorktree(root, branch, projectJson) {
   mkdirSync(join(wt, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(wt, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(wt, '.claude/hooks/lib/common.mjs'));
+  cpSync(CLOSURE, join(wt, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(GUARD, join(wt, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(wt, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   SANDBOXES.push(wt);

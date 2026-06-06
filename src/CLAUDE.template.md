@@ -186,7 +186,7 @@ The 22 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 |---|---|---|---|
 | `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited). Never blocks. |
 | `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask on risky |
-| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware commit/push consent; hard-block forbidden flags; gate consent-token writes. (annex) |
+| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware commit/push consent; hard-block forbidden flags; gate consent-token writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex) |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
 | `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow spec-approval token write only on fresh marker; block self-approval + marker writes |
 | `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Allow swarm-approval write only on fresh marker; block marker writes |

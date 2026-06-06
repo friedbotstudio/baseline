@@ -1,0 +1,23 @@
+{
+  "request": "Bugfix: /commit Step 6 stamps backlog closure post-commit via sweep.mjs but defines no step to commit the result, so the stamp strands uncommitted in the working tree and (per superseded-at) is at risk of auto-deletion by the next /memory-flush before it ever enters git. Make /commit carry the closure stamp into version control within its own commit cycle, honoring the --amend hard-block (Art. VII) and the sweep.mjs single-writer rule. Source: docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md (AI-02). Related backlog: backlog-status-not-auto-flipped-after-pickup-ac5d.",
+  "slug": "commit-closure-stamp-carry",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780743268,
+  "updated_at": 1780766433
+}

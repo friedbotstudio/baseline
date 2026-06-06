@@ -47,25 +47,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## mutation-testing-oracle-for-tdd-checker-f029
-
-> verbatim (assistant, 2026-06-05):
-> "Mutation oracle for the TDD checker — the one genuinely new mechanical capability. Wire mutation testing as the test-quality oracle (mutation score, not coverage)."
-
-- source: assistant-deferral
-- status: picked-up
-- raised-on: 2026-06-05
-- raised-in-context: v1 thought-compiler design discussion (no active workflow)
-- estimated-effort: medium
-- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
-- slice: A
-- verified-at: bcefe17
-- last-touched: 2026-06-05
-- caveat: Line coverage is the gameable fake oracle; mutation score is not — to raise it you must write tests that actually catch mutants. This is the TDD checker's "no shortcuts" teeth and gives the loop a clean stop (no surviving mutant). Dogfoodable on the baseline's own suite immediately. Detail: vision doc Part 5.2 + 5.7 piece 3. SHIPPED 2026-06-05 (commit 6c85282, `scripts/mutation-oracle.mjs`).
-- superseded-at: 2026-06-05
-
----
-
 ## promote-review-skills-to-oracle-bound-checkers-d186
 
 > verbatim (assistant, 2026-06-05):

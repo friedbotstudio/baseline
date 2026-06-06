@@ -19,6 +19,7 @@ const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
 const GRANT = join(REPO_ROOT, '.claude/hooks/consent_gate_grant.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
+const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
 
 // Build a temp CLAUDE_PROJECT_DIR with copies of the hooks + a writable
 // project.json + state dir. Returns the temp path.
@@ -27,6 +28,7 @@ function buildSandbox(projectJson) {
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
+  cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   cpSync(GRANT, join(root, '.claude/hooks/consent_gate_grant.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
