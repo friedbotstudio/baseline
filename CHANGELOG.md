@@ -1,3 +1,17 @@
+# [0.16.0](https://github.com/friedbotstudio/baseline/compare/v0.15.1...v0.16.0) (2026-06-08)
+
+
+### Bug Fixes
+
+* **deps:** bump @11ty/eleventy 3.1.5→3.1.6 to clear critical liquidjs RCE ([4e539ff](https://github.com/friedbotstudio/baseline/commit/4e539ff83994b7ccec6e79ce98330fca20dce95d))
+
+
+### Features
+
+* **governance:** add §II.A bounded maker/checker charter to Article II ([75257cb](https://github.com/friedbotstudio/baseline/commit/75257cb7c8842facf2b9f1f4fd58f3287d1831ec))
+* **governance:** enforce atomic backlog-closure stamping at the commit hook ([9fe7109](https://github.com/friedbotstudio/baseline/commit/9fe7109e85d0c40170cbd5573ce950da95267571))
+* **testing:** add dev-only mutation-testing oracle (Stryker, advisory) ([6c85282](https://github.com/friedbotstudio/baseline/commit/6c85282c4b3650f06fb60f461171313f260cde5e))
+
 ## [0.15.1](https://github.com/friedbotstudio/baseline/compare/v0.15.0...v0.15.1) (2026-06-05)
 
 
