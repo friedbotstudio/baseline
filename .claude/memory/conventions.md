@@ -183,3 +183,11 @@ Each entry's stable key is a short slug.
 - applies-to: `package.json` devDependencies; `scripts/check-files-diff.mjs`; `tests/publish-check.test.mjs`; `scripts/mutation-oracle.mjs` (the `test:mutation` interface).
 - verified-at: 97ead55
 - last-touched: 2026-06-05
+
+- source: code-pattern
+- convention: `.claude/skills/tdd/drift_check.mjs` (the harness drift-check-tick) resolves a spec AC to "resolved" ONLY when its literal `AC-NNN` token appears in an IMPLEMENTATION or TEST added-line of the branch diff — never from the spec markdown's own `| AC-NNN |` rows (those are excluded). Descriptive test names alone (`test_when_X_then_Y`) leave every AC `unresolved` and drift_check exits 1 (which the harness treats as a stop-and-surface yield, NO auto-loop).
+- why: caught live in `standup-skill` (2026-06-08) — all 9 ACs were implemented and green, but the test file used descriptive names with no `AC-NNN` literals, so drift_check reported 9/9 unresolved. The fix is annotation, not code: a top-of-file traceability comment block mapping each `AC-NNN` to its test, plus inline `// AC-NNN` on key tests, puts the tokens in added-lines.
+- how to apply: when authoring tests in `/scenario`, annotate each test with its covered `AC-NNN` (comment or string) so the token lands in the diff; after `/tdd`, run `node .claude/skills/tdd/drift_check.mjs --slug <slug>` expecting exit 0. If an AC is genuinely untested (e.g. an integration AC), add a real test rather than only a comment.
+- applies-to: `.claude/skills/tdd/drift_check.mjs`; every test file authored under `/scenario` for a spec-track workflow.
+- verified-at: dba75fe
+- last-touched: 2026-06-08

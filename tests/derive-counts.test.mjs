@@ -22,7 +22,7 @@ describe('AC-001 — deriveCounts() reflects the artifacts on disk', () => {
   it('test_when_deriveCounts_then_matches_disk', async () => {
     const { deriveCounts } = await import(DERIVER);
     const c = deriveCounts(REPO_ROOT);
-    assert.equal(c.skills, 40, 'baseline skills');
+    assert.equal(c.skills, 41, 'baseline skills');
     assert.equal(c.hooks, 22, 'top-level hooks');
     assert.equal(c.commands, 6, 'command files (incl init-project-doctor)');
     assert.equal(c.subagents, 1, 'subagents');
@@ -49,7 +49,7 @@ describe('AC-002 — site _data is computed from the deriver (no stale literal)'
     const data = await (typeof mod === 'function' ? mod() : mod);
     assert.equal(data.commands, 6, 'commands derived to 6 (was a static 5)');
     assert.equal(data.hooks.total, 22);
-    assert.equal(data.skills.total, 40);
+    assert.equal(data.skills.total, 41);
     assert.equal(data.subagents.total, 1);
     const { deriveCounts } = await import(DERIVER);
     const c = deriveCounts(REPO_ROOT);

@@ -136,7 +136,7 @@ const WORDS = {
   'twenty-four': 24, 'twenty-five': 25, 'twenty-six': 26, 'twenty-seven': 27, 'twenty-eight': 28,
   'twenty-nine': 29, thirty: 30, 'thirty-one': 31, 'thirty-two': 32, 'thirty-three': 33,
   'thirty-four': 34, 'thirty-five': 35, 'thirty-six': 36, 'thirty-seven': 37, 'thirty-eight': 38,
-  'thirty-nine': 39, forty: 40,
+  'thirty-nine': 39, forty: 40, 'forty-one': 41,
 };
 function toInt(s) {
   const t = (s || '').trim().toLowerCase();
@@ -224,7 +224,7 @@ const hooksClaimed = findCount(
 );
 const agentsClaimed = findCount(/\b(\d+|one|two|three|eight|nine|ten|eleven|twelve)\s+subagents?\b/i);
 const skillsClaimed = findCount(
-  /\b(\d+|twenty-(?:four|five|six|seven|eight|nine)|thirty|thirty-(?:one|two|three|four|five|six|seven|eight|nine)|forty)\s+skills?\b/i
+  /\b(\d+|twenty-(?:four|five|six|seven|eight|nine)|thirty|thirty-(?:one|two|three|four|five|six|seven|eight|nine)|forty-one|forty)\s+skills?\b/i
 );
 let cmdsClaimed = null;
 if (/four\s+consent\s+gates?\s*\+\s*one\s+bootstrap\s*\+\s*one\s+doctor/i.test(seedText)) cmdsClaimed = 6;
@@ -719,7 +719,7 @@ if (existsSync(hookPath) && hookExec && hookWired) {
 }
 
 // ---------- cross-doc count claims ----------
-const NUM_GROUP = String.raw`(?<![.\d\-])(\d+|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|twenty-eight|twenty-nine|thirty-one|thirty-two|thirty-three|thirty-four|thirty-five|thirty-six|thirty-seven|thirty-eight|thirty-nine|twenty|thirty|forty|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)`;
+const NUM_GROUP = String.raw`(?<![.\d\-])(\d+|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|twenty-six|twenty-seven|twenty-eight|twenty-nine|thirty-one|thirty-two|thirty-three|thirty-four|thirty-five|thirty-six|thirty-seven|thirty-eight|thirty-nine|forty-one|twenty|thirty|forty|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)`;
 
 const HEAD_PATTERNS = [
   [new RegExp(NUM_GROUP + String.raw`\s+hooks?\b`, 'gi'), diskBaselineHooks.size, 'hooks'],

@@ -10,6 +10,7 @@ import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { readMostRecentMarkdown, readWorkingThread } from './thread_store.mjs';
+import { gatherSync } from '../../skills/standup/gather.mjs';
 
 const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
 const PENDING_FILE = 'pending-questions';
@@ -136,6 +137,23 @@ function stripFrontmatter(text) {
   }
   if (closeIdx < 0) return text;
   return lines.slice(closeIdx + 1).join('\n');
+}
+
+function renderStandupSection(projectRoot) {
+  const recap = gatherSync({ rootDir: projectRoot });
+  const rel = recap.release || {};
+  const version = rel.lastVersion ? `v${rel.lastVersion}` : 'unreleased';
+  const unreleased = Array.isArray(rel.commitsSinceTag) ? rel.commitsSinceTag.length : 0;
+  const bump = rel.aggregateBump || 'none';
+  const pushed = rel.upstream && rel.upstream.state ? rel.upstream.state : 'unknown';
+  const lines = [
+    '## Standup',
+    '',
+    `Shipped: \`${version}\`  ·  unreleased commits: ${unreleased} (next bump: ${bump})  ·  upstream: ${pushed}`,
+    '',
+    'Run `/standup` for the full recap + recommendation.',
+  ];
+  return lines.join('\n');
 }
 
 export function buildIndex({ memDir, projectRoot, sessionSource }) {
@@ -381,6 +399,15 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
     if (whatWhy && (9000 - out.length) > 200) {
       out = out + '\n\n---\n\n## Working thread (durable what/why)\n\n'
         + `> ${whatWhy.slice(0, 400)}\n\nNext: ${wt.next_step || '(continue)'}`;
+    }
+  } catch {}
+
+  // Compact release/backlog standup — a section distinct from the resume
+  // snapshot above. Best-effort: a gather failure omits the section rather
+  // than breaking session start.
+  try {
+    if ((9000 - out.length) > 250) {
+      out = out + '\n\n---\n\n' + renderStandupSection(projectRoot);
     }
   } catch {}
 

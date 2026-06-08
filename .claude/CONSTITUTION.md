@@ -93,7 +93,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 |---|---|
 | `.claude/hooks/` | 22 hook scripts (17 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 40 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (1) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
+| `.claude/skills/` | 41 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (2) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (1) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
 | `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
@@ -128,8 +128,9 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Phase helpers (1)** — invoked by entry phases as a Step 0.5 / Step 1.5 gate; never on user-direct invocation:
 - `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article X.3.
 
-**Generators (1)** — on-demand; not a workflow phase, never blocks a commit:
+**Generators (2)** — on-demand; not a workflow phase, never blocks a commit:
 - `whatsnew` — emits a structured "what's new" fragment to `.claude/state/whatsnew/<slug>.json` (gitignored, transient) for a set of changes; an optional `project.json → whatsnew.route_workflow` names a per-project routing workflow that consumes the fragment. Never writes `CHANGELOG.md` (owned solely by `@semantic-release/changelog` in CI). Replaced the former Phase 11.5 `changelog` skill.
+- `standup` — read-only release + backlog recap. The `gather.mjs` helper deterministically collects the last release, commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin state, the backlog bucketed (open/picked-up/dropped with epic parent→child nesting), and condensed open questions; the next-pickup recommendation is assembled in main context (Article II). On-demand via `/standup`; a compact form is also surfaced at session start by `memory_session_start`. Never writes `CHANGELOG.md`; never starts or commits work.
 
 **Navigation (1)** — the default tool for code-navigation questions in any language; prefer it over the `Explore` agent and global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F" (CLAUDE.md Article X.5):
 - `code-browser` — the language-agnostic **universal walk** (entry → imports → IO boundary) is the primary path, regardless of language. For JS/TS, optional accelerators speed it up: `discover.mjs` writes a per-repo `conventions.json` once, then `walk.mjs` runs deterministically returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. The walk falls back to `Explore`/`grep` only on no resolvable structure or a dead-ended walk; pure full-text search and type/util lookups stay grep's domain. Read-only.

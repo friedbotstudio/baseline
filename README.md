@@ -41,7 +41,7 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 
 ## What this is
 
-The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **40 skills** organised into thirteen categories, **1 subagent** for parallel work in isolated worktrees, **5 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
+The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **22 hooks** at Claude's tool boundaries, **41 skills** organised into thirteen categories, **1 subagent** for parallel work in isolated worktrees, **5 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
 
 Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 

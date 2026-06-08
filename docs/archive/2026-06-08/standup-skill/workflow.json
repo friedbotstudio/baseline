@@ -1,0 +1,27 @@
+{
+  "request": "Add a baseline-owned `standup` skill — a read-only recap+recommend utility (release state from CHANGELOG + git commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin; backlog.md parsed into open/picked-up/dropped with epic parent→child resolution; pending-questions.md condensed; a recommended next pickup). Ships SKILL.md + a deterministic gather.mjs helper. owner: baseline. Touches governance counts (40→41 skills across CLAUDE.md, seed.md §16/§17, README, manifest.json, audit-baseline).",
+  "slug": "standup-skill",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780946849,
+  "updated_at": 1780950942
+}

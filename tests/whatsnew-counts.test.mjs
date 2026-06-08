@@ -1,10 +1,9 @@
 // whatsnew cutover — governance counts after reclassification + rename (AC-005).
 //
-// changelog moves out of the `phases` category into a new singleton `generators`
-// category; the total skill count stays 40; and the renamed skill is the one the
-// manifest's owners.skills records as baseline-owned.
-//
-// RED until derive-counts.mjs reclassifies and the skill dir is renamed.
+// changelog moves out of the `phases` category into a `generators` category, and
+// the renamed skill is the one the manifest's owners.skills records as
+// baseline-owned. The `standup` generator later joined this category, taking
+// generators to 2 and the total skill count to 41.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,15 +15,15 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const loadCounts = () => import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
 
 describe('whatsnew governance counts', () => {
-  it('test_when_derive_counts_then_generators_one_phases_ten_sum_40', async () => {
+  it('test_when_derive_counts_then_generators_two_phases_ten_sum_41', async () => {
     const { SKILL_CATEGORIES, deriveCounts } = await loadCounts();
-    assert.equal(SKILL_CATEGORIES.generators, 1, 'new generators category must be 1');
+    assert.equal(SKILL_CATEGORIES.generators, 2, 'generators category holds whatsnew + standup');
     assert.equal(SKILL_CATEGORIES.phases, 10, 'phases must drop from 11 to 10');
 
     const categorySum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
     const derived = deriveCounts(REPO_ROOT);
     assert.equal(categorySum, derived.skills, 'category sum must equal the derived skill total');
-    assert.equal(derived.skills, 40, 'total skills stays 40 (reclassified, not removed)');
+    assert.equal(derived.skills, 41, 'total skills is 41 after adding the standup generator');
   });
 
   // owners.skills is built by scanning skill dirs for `owner: baseline` frontmatter
