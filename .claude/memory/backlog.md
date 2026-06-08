@@ -144,7 +144,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "Proceed; file critical separately" (mutation-oracle install checkpoint — chose to proceed with Stryker and file the pre-existing critical as its own item).
 
 - source: user-instruction
-- status: open
+- status: picked-up
 - raised-on: 2026-06-05
 - raised-in-context: mutation-testing-oracle (-f029) npm-install audit checkpoint
 - estimated-effort: small
@@ -153,3 +153,4 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: `npm audit` surfaced a CRITICAL in `liquidjs` (GHSA-gf2q-c269-pqgc RCE + XSS/ReDoS/DoS, 6 advisories) reachable via `@11ty/eleventy@3.1.5` → `liquidjs@10.25.7`, plus a moderate `ws` via eleventy-dev-server. PRE-EXISTING (not introduced by -f029; surfaced only because the Stryker install re-ran the audit). Dev-only (eleventy build/serve toolchain), not in the shipped consumer payload. Fix: a dedicated chore/bugfix to bump `@11ty/eleventy` (latest 3.x) or targeted `npm audit fix`, then re-audit — kept OUT of -f029 to avoid an eleventy major bump mid-feature. Detail: `docs/archive/2026-06-05/mutation-testing-oracle/security.md`.
 
 ---
+- superseded-at: 2026-06-08

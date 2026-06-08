@@ -1,0 +1,26 @@
+{
+  "request": "Bump @11ty/eleventy 3.1.5 -> 3.1.6 to pull in liquidjs ^10.27.0 and fix the critical RCE (GHSA-gf2q-c269-pqgc) plus 5 other liquidjs advisories. Dev-only build toolchain dependency bump, no project code changes. Closes backlog -8caf.",
+  "slug": "bump-eleventy-fix-liquidjs-rce",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "bump-eleventy-fix-liquidjs-critical-rce-vuln-8caf"
+  ],
+  "created_at": 1780828074,
+  "updated_at": 1780909066
+}
