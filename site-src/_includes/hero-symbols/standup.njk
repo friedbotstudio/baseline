@@ -1,0 +1,34 @@
+{# Standup hero symbol: you are here, and what's next.
+   A release timeline runs left to right: stroke nodes are shipped releases,
+   the filled accent node is the current position (you are here). Below it a
+   short recap stack stands in for the readout, with one accent bullet marking
+   the recommended next pickup. Vocabulary: stroke = shipped/known, filled
+   accent = here and next. Styled inline with the shared design tokens so the
+   symbol carries no bespoke stylesheet. #}
+<svg class="hero-symbol-svg standup-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="standup-title">
+  <title id="standup-title">A release timeline with past releases as outline nodes and the current position marked in accent, above a short recap stack whose first line is flagged as the recommended next pickup.</title>
+
+  {# Timeline baseline. #}
+  <line x1="44" y1="132" x2="316" y2="132" stroke="var(--charcoal)" stroke-width="1.25"/>
+
+  {# Past releases, outline nodes. #}
+  <circle cx="84"  cy="132" r="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <circle cx="150" cy="132" r="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <circle cx="216" cy="132" r="7" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+
+  {# You are here: filled accent node with a short pin. #}
+  <line x1="280" y1="92" x2="280" y2="121" stroke="var(--accent)" stroke-width="1.25"/>
+  <circle cx="280" cy="132" r="10" fill="var(--accent)"/>
+  <text x="280" y="84" text-anchor="middle" style="font-family: var(--mono); font-size: 12px; fill: var(--accent); letter-spacing: .04em;">here</text>
+
+  {# Recap stack: the readout, three lines of varying length for rhythm. #}
+  <rect x="84" y="196" width="192" height="16" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <rect x="84" y="228" width="150" height="16" rx="3" fill="var(--paper)" stroke="var(--charcoal)" stroke-width="1.25"/>
+  <rect x="84" y="260" width="170" height="16" rx="3" fill="var(--paper)" stroke="var(--charcoal)" stroke-width="1.25"/>
+
+  {# Recommended-next bullet on the first recap line. #}
+  <rect x="64" y="197" width="14" height="14" rx="2" fill="var(--accent)"/>
+
+  {# Caption. #}
+  <text x="180" y="322" text-anchor="middle" style="font-family: var(--mono); font-size: 13px; fill: var(--muted); letter-spacing: .04em;">you are here · what's next</text>
+</svg>

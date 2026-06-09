@@ -613,6 +613,9 @@ footer.site {
   color: var(--accent);
   font-weight: 600;
 }
+.section .hero-readmore {
+  margin: 20px 0 56px;
+}
 @media (prefers-reduced-motion: reduce) {
   .hero .hero-readmore a:hover { transform: none; }
 }

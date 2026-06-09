@@ -160,6 +160,7 @@ toc:
   </div>
   <ul>
     <li><code>whatsnew</code>. Emits a structured "what's new" fragment for a set of changes to <code>.claude/state/whatsnew/&lt;slug&gt;.json</code> (gitignored, transient). An optional <code>project.json &rarr; whatsnew.route_workflow</code> names a per-project routing workflow that consumes the fragment and renders it wherever the project wants: a site page, a release body, a docs page. Absent that knob, the fragment simply waits at the conventional path. Never writes <code>CHANGELOG.md</code>, which <code>@semantic-release/changelog</code> owns at release time. Replaced the former Phase 11.5 <code>changelog</code> skill.</li>
+    <li><code>standup</code>. Read-only release and backlog recap. Reports the last release, commits since the last tag classified by type with the bump they trigger, the backlog bucketed, and open questions, then recommends what to pick up next. Runs on demand and as a compact line at session start. Reuses the gather helper; the recommendation is reasoned in main context.</li>
   </ul>
 </section>
 

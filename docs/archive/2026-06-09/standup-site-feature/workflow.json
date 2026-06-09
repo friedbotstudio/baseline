@@ -1,0 +1,27 @@
+{
+  "request": "Feature page + homepage teaser for the standup skill on the marketing site: a dedicated /standup feature page (site-src/standup.njk, docs.njk-layout peer of memory.njk/swarm.njk, TOC + new hero-symbol SVG) with the real /standup terminal readout as proof-by-demonstration; a compact homepage teaser section in site-src/index.njk between 'How it flows' and 'Adoption' linking to it; nav wiring in _data/nav.json + _includes/footer.njk; and a standup catalog entry on site-src/skills/core.njk. Persuasion: authority-via-competence + liking-via-shared-pain + demonstration (no scarcity/urgency). Copy is Article X.1-bound (lowercase, em-dash-free, no fluff). UI surfaces under site-src/** (tdd.ui_globs) → design-ui→impeccable at TDD Step 6, prose→copywriting for copy.",
+  "slug": "standup-site-feature",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1780958420,
+  "updated_at": 1780998020
+}

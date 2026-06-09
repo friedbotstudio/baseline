@@ -1,0 +1,131 @@
+---
+layout: docs.njk
+permalink: /standup/index.html
+pageTitle: "Standup · baseline"
+title: Standup
+titlePrimary: Standup
+titleAccent: "."
+description: "A read-only recap of where a project stands and what to pick up next, on demand and at session start."
+eyebrow: Feature
+lead: "A read-only recap of where a project stands and what to pick up next, on demand and at session start."
+active: standup
+sidebarActive: standup
+heroSymbol: standup
+toc:
+  - { id: question,  label: "The question" }
+  - { id: reads,     label: "What it reads" }
+  - { id: readout,   label: "The readout" }
+  - { id: modes,     label: "Two modes" }
+  - { id: judgment,  label: "Gather vs recommendation" }
+  - { id: run,       label: "Run it" }
+---
+
+{# Feature page for the standup skill. Design-call: standup-page (see docs/specs/standup-site-feature.md). Reuses the .dc-* dev-console and .cli-strip components; no bespoke stylesheet. #}
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="question">where are we, what's next<span class="accent">.</span></h2>
+    </div>
+    <p>Every planning session starts the same way. You read the changelog, scan git log against the last tag, open the backlog, hold it all in your head, then guess what is next.</p>
+  </div>
+  <p>Standup does the reading. One command turns the scattered state of a repository into one structured recap, so the question you actually care about, what to work on next, is the only one left to answer.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="reads">what it reads</h2>
+    </div>
+    <p>The recap is assembled from the repository itself, not from anything you maintain by hand.</p>
+  </div>
+  <ul>
+    <li>the last shipped release.</li>
+    <li>every commit since that tag, classified by conventional-commit type, with the version bump it will trigger.</li>
+    <li>whether those commits are pushed, or still only local.</li>
+    <li>the backlog, bucketed into open, picked-up, and dropped, with epics nested under their parent.</li>
+    <li>the open questions, condensed to one line each.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="readout">the readout</h2>
+    </div>
+    <p>The point of standup is the artifact it prints. Here is a real one, read from this repository.</p>
+  </div>
+
+  <figure class="figure" aria-labelledby="su-readout-cap">
+    <div class="wobble-frame dc-frame">
+      <div class="dev-console" aria-label="An example standup readout for the baseline repository">
+        <div class="dc-bar" aria-hidden="true">
+          <div class="dc-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <div class="dc-file">friedbotstudio/baseline · /standup</div>
+        </div>
+        <pre class="dc-body"><code><span class="dc-dim">shipped</span>            <span class="dc-ok">v0.16.0</span>
+<span class="dc-dim">unreleased</span>         1 commit since v0.16.0   <span class="dc-wait">(next bump: minor)</span>
+                     <span class="tok-key">feat</span>(skills)  add standup recap skill (40 to 41)   <span class="dc-wait">minor</span>
+<span class="dc-dim">upstream</span>           <span class="dc-wait">ahead 1, not pushed</span>
+
+<span class="dc-dim">backlog</span>            7 open, 0 picked-up, 0 dropped
+                     <span class="dc-ok">epic</span>  baseline-v1 thought-compiler   (open, 6 children)
+                     open  threat / value tier config dial
+                     open  promote review skills to oracle-bound checkers
+                     <span class="dc-dim">... and 4 more</span>
+
+<span class="dc-dim">open questions</span>     Q-002, Q-007, Q-008
+
+<span class="dc-dim">recommended next</span>
+                     tier config dial. small, foundational, it unblocks the
+                     slice-b checkers that the rest of the epic depends on.</code></pre>
+      </div>
+    </div>
+    <figcaption id="su-readout-cap">An example readout from this repository. Everything above the recommendation is read straight from git, the release rules, and the memory files.</figcaption>
+  </figure>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="modes">two modes</h2>
+    </div>
+    <p>Standup shows up where you need it, without a setup step.</p>
+  </div>
+  <p>Run it on demand with <code>/standup</code> when you sit down to plan a release or choose the next thing to build. A compact version of the same recap also appears at the top of every session, so you start already knowing where you left off. The two stay out of each other's way: the session-start line is the short form, the on-demand command is the full readout above.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="judgment">gather vs recommendation</h2>
+    </div>
+    <p>The recap has two halves, and they are held to different standards.</p>
+  </div>
+  <p>The gather step is deterministic. The same repository state always reads the same way, so the facts in the readout are reproducible, not a guess. The recommended next pickup is the one judgment call, and it is reasoned in context rather than emitted by the helper. Standup draws the line on purpose: it reports what is true, and it reasons about what is worth doing, and it keeps the two clearly apart.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="run">run it</h2>
+    </div>
+    <p>It ships with the baseline. There is nothing to install beyond the baseline itself.</p>
+  </div>
+  <button class="cli-strip" data-copy="/standup" aria-label="Copy the standup command to clipboard">
+    <span class="cli-prompt" aria-hidden="true">$</span>
+    <span class="cli-cmd">/standup</span>
+    <span class="cli-caret" aria-hidden="true"></span>
+    <svg class="cli-check" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14">
+      <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="cli-hint" data-default="click to copy" data-copied="copied to clipboard">click to copy</span>
+    <span class="visually-hidden" aria-live="polite"></span>
+  </button>
+</section>
