@@ -2,10 +2,10 @@
  * CLI entry point: prepare everything needed to enter the live variant poll loop.
  *
  * Does (all in one command):
- *   1. Check config.json (returns config_missing if first-ever run)
+ *   1. Check .impeccable/live/config.json (returns config_missing if first-ever run)
  *   2. Start the live server in the background (or reuse a running one)
  *   3. Inject the browser script tag into the project's entry file
- *   4. Read .impeccable.md for design context (if present)
+ *   4. Read PRODUCT.md / DESIGN.md for project context
  *   5. Print a single JSON blob with everything the agent needs
  *
  * After this, the agent's only remaining steps are:
@@ -21,11 +21,11 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadContext } from './load-context.mjs';
+import { loadContext } from './context.mjs';
 import { resolveFiles } from './live-inject.mjs';
+import { readLiveServerInfo } from './lib/impeccable-paths.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PID_FILE = path.join(process.cwd(), '.impeccable-live.json');
 
 async function liveCli() {
   const args = process.argv.slice(2);
@@ -34,10 +34,10 @@ async function liveCli() {
     console.log(`Usage: node live.mjs
 
 Prepare everything for live variant mode in a single command:
-  - Checks scripts/config.json (required, created once per project)
+  - Checks .impeccable/live/config.json (required, created once per project)
   - Starts (or reuses) the live server in the background
   - Injects the browser script tag
-  - Reads .impeccable.md for design context
+  - Reads PRODUCT.md / DESIGN.md for project context
 
 On success, prints a JSON blob with:
   { ok, serverPort, serverToken, pageFile, hasContext, context }
@@ -80,7 +80,7 @@ The agent should then:
     process.exit(1);
   }
 
-  // 4. Load PRODUCT.md + DESIGN.md context (auto-migrates legacy .impeccable.md)
+  // 4. Load PRODUCT.md + DESIGN.md context.
   const ctx = loadContext(process.cwd());
 
   // 5. Compute drift-heal: compare resolved inject targets against the
@@ -102,7 +102,6 @@ The agent should then:
     hasDesign: ctx.hasDesign,
     design: ctx.design,
     designPath: ctx.designPath,
-    migrated: ctx.migrated,
   }, null, 2));
 }
 
@@ -223,7 +222,7 @@ function safeParse(out) {
 function ensureServerRunning() {
   // Try to reuse an existing server
   try {
-    const existing = JSON.parse(fs.readFileSync(PID_FILE, 'utf-8'));
+    const existing = readLiveServerInfo(process.cwd())?.info;
     if (existing && existing.pid) {
       try {
         process.kill(existing.pid, 0); // throws if dead

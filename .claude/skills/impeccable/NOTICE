@@ -10,15 +10,17 @@ Upstream:
   Author:     Phil Bakaus (pbakaus)
 
 Vendored into:  .claude/skills/impeccable/
-Vendored on:    2026-05-15 (this commit) — prior install date unknown; LICENSE
-                + NOTICE added retroactively as part of the licensing-attribution
-                drift fix in the branch-aware-git-policy workflow.
 
-Local changes:
-  - Frontmatter `owner: baseline` added so the audit-baseline drift check
-    tracks this file as a shipped baseline artifact. The Apache 2.0 license
-    permits redistribution under attribution; this NOTICE file fulfills the
-    notice-preservation requirement.
-  - PROJECT_NOTES.md captures local annotations made in the course of using
-    impeccable within the baseline. The vendored SKILL.md and agents/* files
-    are otherwise unmodified from upstream.
+Local changes (Apache License 2.0 section 4(b) modification notice):
+  - Frontmatter `owner: baseline` is set so the audit-baseline drift check
+    tracks this skill as a shipped baseline artifact.
+  - 2026-05-15: LICENSE and NOTICE were added retroactively as part of a
+    licensing-attribution drift fix; the original install date is unknown.
+  - 2026-06-11: The vendored copy was updated to skill version 3.5.0. Its
+    reference docs and helper scripts were reorganized, and a `version:`
+    field was introduced in SKILL.md. LICENSE and NOTICE are retained
+    alongside the update.
+
+The Apache License 2.0 permits redistribution under attribution; this NOTICE
+file, kept beside the LICENSE copy, fulfills the notice-preservation
+requirement.
