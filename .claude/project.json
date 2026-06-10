@@ -225,6 +225,22 @@
       "docs/"
     ]
   },
+  "epic": {
+    "min_slices": 3
+  },
+  "simplify": {
+    "min_files": 4
+  },
+  "security": {
+    "sensitive_globs": [
+      ".claude/hooks/**",
+      ".claude/commands/**",
+      "src/cli/**",
+      "bin/**",
+      "**/auth/**",
+      "**/*.env*"
+    ]
+  },
   "whatsnew": {
     "route_workflow": null
   },

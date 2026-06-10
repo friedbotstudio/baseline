@@ -351,6 +351,8 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 - Bugfix → enter at spec (4) or tdd (6). Triage decides.
 - Quickfix → enter at tdd (6). Triage marks intake/scout/research/spec/review as exceptions.
 - Chore → enter at the `chore` track. Used when the request needs no failing-test-driven code change — documentation, governance counts, vendored-skill content, configuration tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations. Triage marks `intake / brd / scout / research / spec / review / tdd` as exceptions; `simplify / integrate / document` stay in the phase list and the chore skill decides per-phase whether triggers apply. `verify / archive / /grant-commit / /commit` always run. Anything needing a real failing test routes to tdd or higher.
+- Epic → enter at the `epic` track (§18.9). Used for a multi-subtask feature that warrants running discovery once: `intake → scout → research → spec (sliced) → approve-spec` run a single time, the sliced spec commits live at `docs/specs/<epic>.md`, and `/triage` writes `.claude/state/epic/<slug>.json` carrying one slice per future child.
+- Epic-child → enter at the `epic-child` track (§18.9). Auto-selected when an approved epic is active and the request matches one of its open slices. Inherits + pins the epic's scout/research/spec (enforced by `track_guard`), runs only `tdd → integrate → archive → /grant-commit → commit`, and escalates `simplify / security / document` into the child only when `/triage` risk-flags the slice.
 
 **Swarm path taken when:** the approved spec has ≥ `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components in its C4 Component + dependency graph **AND** the project is a git repository. Otherwise solo `/tdd`. Non-git projects route Phase 6 to solo unconditionally — `/triage` auto-excepts `swarm-plan`, `approve-swarm`, and `swarm-dispatch` because worktree isolation (the swarm contract's physical safety mechanism) requires git; `shared` isolation is a sanctioned configuration knob for git projects that opt out of worktrees but does not restore the cross-task write isolation the swarm-worker assumes.
 
@@ -715,9 +717,9 @@ This provenance system is intentionally minimal: the manifest tracks shipped-fil
 
 ### 18.1 Source of truth
 
-`.claude/workflows.jsonl` is the canonical source for every workflow this baseline can execute. The file holds one Track record per line (JSONL). It is project-owned and `NEVER_TOUCH` (declared in `src/cli/install.js:NEVER_TOUCH` and `scripts/build-manifest.mjs:NEVER_TOUCH_PATHS`); baseline upgrades preserve user customizations verbatim via `NEVER_TOUCH_PRESERVE`. The shipped baseline overlays the pristine 7-track set from `src/.claude/workflows.template.jsonl` onto fresh installs via `scripts/build-template.sh` Stage 2; existing installs are not touched. The JSON Schema document at `.claude/schemas/workflow-track.v1.json` is referenced by `Track.$schema` and is itself `NEVER_TOUCH`.
+`.claude/workflows.jsonl` is the canonical source for every workflow this baseline can execute. The file holds one Track record per line (JSONL). It is project-owned and `NEVER_TOUCH` (declared in `src/cli/install.js:NEVER_TOUCH` and `scripts/build-manifest.mjs:NEVER_TOUCH_PATHS`); baseline upgrades preserve user customizations verbatim via `NEVER_TOUCH_PRESERVE`. The shipped baseline overlays the pristine 9-track set from `src/.claude/workflows.template.jsonl` onto fresh installs via `scripts/build-template.sh` Stage 2; existing installs are not touched. The JSON Schema document at `.claude/schemas/workflow-track.v1.json` is referenced by `Track.$schema` and is itself `NEVER_TOUCH`.
 
-`workflows.jsonl` supersedes the hardcoded triage templates (intake-full / spec-entry / tdd-quickfix / chore). Triage reads `workflows.jsonl` at seed time, validates each Track, classifies the user's request, and materializes the chosen Track's DAG into the TaskList. The canonical four tracks shipped in the pristine template are byte-equivalent to the pre-§18 hardcoded templates per spec AC-016 (`tests/byte-equivalent-migration.test.mjs`). A fifth selectable track, `freeform`, is a §18-native addition with no pre-§18 byte-equivalent counterpart: its DAG carries only the closing sequence (`memory-flush` → `grant-commit` → `commit`) and relies on blanket exceptions across every pre-commit phase to silence track-ordering while keeping every hook active. The 7-track inventory: 5 selectable (intake-full, spec-entry, tdd-quickfix, chore, freeform) + 2 sub-tracks (swarm-implementation, tdd-worker-chain).
+`workflows.jsonl` supersedes the hardcoded triage templates (intake-full / spec-entry / tdd-quickfix / chore). Triage reads `workflows.jsonl` at seed time, validates each Track, classifies the user's request, and materializes the chosen Track's DAG into the TaskList. The canonical four tracks shipped in the pristine template are byte-equivalent to the pre-§18 hardcoded templates per spec AC-016 (`tests/byte-equivalent-migration.test.mjs`). A fifth selectable track, `freeform`, is a §18-native addition with no pre-§18 byte-equivalent counterpart: its DAG carries only the closing sequence (`memory-flush` → `grant-commit` → `commit`) and relies on blanket exceptions across every pre-commit phase to silence track-ordering while keeping every hook active. The 9-track inventory: 7 selectable (intake-full, spec-entry, tdd-quickfix, chore, freeform, epic, epic-child) + 2 sub-tracks (swarm-implementation, tdd-worker-chain). The `epic` / `epic-child` pair (§18.9) amortizes feature-scoped discovery across the subtasks of one feature.
 
 ### 18.2 Track schema
 
@@ -852,3 +854,74 @@ Migrator implementation: `src/cli/workflow-migrator.js` exports `migrateWorkflow
 - `src/cli/workflows-validator-predicates.js` — predicate vocabulary.
 - `src/cli/workflow-migrator.js` — pre-§18 → post-§18 migrator.
 - `src/cli/track-tasklist-materializer.js` — Track → TaskList shape.
+- `.claude/state/epic/<slug>.json` — per-epic discovery state read by `epic-child` children and `track_guard` (§18.9).
+
+### 18.9 The epic / epic-child contract — amortized discovery
+
+**Motivation.** The eleven-phase pipeline's unit of work is the subtask, but five of its phases — `intake`, `scout`, `research`, `spec`, `approve-spec` — are *feature-scoped*, not subtask-scoped: the codebase slice, the library landscape, and the design do not change between the subtasks of one feature. Running a full `intake-full` per subtask re-pays that discovery tax 3–8× across a decomposed feature (the live exemplar: backlog epic `…-9d4c` carries 8 children, each of which would otherwise re-derive the same `.claude/` slice). The `epic` / `epic-child` track pair amortizes discovery: it runs **once per feature**, and each subtask inherits the result.
+
+**The two tracks.**
+
+- **`epic`** (selectable) — discovery only. Canonical DAG: `intake → scout → research → spec → approve-spec → memory-flush → grant-commit → commit` (per-project review nodes such as `spec-shippability-review` insert before `approve-spec` exactly as they do in `intake-full`). It produces a **sliced spec** at `docs/specs/<epic>.md` (one `## Slice <id>` section per future child, each grouping the ACs that child owns), plus `docs/scout/<epic>.md` and `docs/research/<epic>.md`. It is approved **once** (one `/approve-spec` covers all slices) and commits the discovery bundle **live** — it deliberately omits `archive`, because the discovery is the deliverable of that commit and SHALL remain resolvable at its `docs/` path for children to pin. The epic stays *open* until its children resolve; archival of the whole bundle is an `/epic-close` concern (deferred; not actuated in this revision — children archive only their own slice artifacts).
+- **`epic-child`** (selectable) — fast implementation path for one slice. Declared DAG: `tdd → simplify → security → integrate → document → archive → memory-flush → grant-commit → commit`, of which `simplify`, `security`, and `document` are written into `workflow.json → exceptions` **by default** (effective fast path `tdd → integrate → archive → memory-flush → grant-commit → commit`) and escalated into a given child — removed from `exceptions` — only when `/triage` risk-flags the slice (see *Conditional review weight* below). It does **not** re-run any discovery phase; it inherits the epic's. The full chain is declared (not a trimmed DAG) so escalation is a triage-time exception edit, never a TaskList reshape.
+
+Both tracks satisfy I1–I11 as plain Track records. Neither introduces a new schema field or a new predicate — the inheritance lives entirely in runtime `workflow.json` + the epic state file, and is enforced by `track_guard`, not by the Track definition.
+
+**Epic state file.** `/triage`, on materializing an `epic` track, writes `.claude/state/epic/<slug>.json`:
+
+```jsonc
+{
+  "epic": "<epic-slug>",
+  "spec": "docs/specs/<epic>.md",
+  "scout": "docs/scout/<epic>.md",
+  "research": "docs/research/<epic>.md",
+  "slices": [{"id": "A", "title": "<...>", "acs": ["AC-001", "..."], "risk": ["security"]}, ...],
+  "approved": false,                 // flipped true by the epic's /approve-spec landing
+  "children": [{"slice": "A", "slug": "<child-slug>", "status": "open|committed"}, ...],
+  "created_at": <epoch>, "updated_at": <epoch>
+}
+```
+
+The file is gitignored runtime state (it mirrors `workflow.json`'s lifecycle), not a committed artifact.
+
+**Child inheritance fields.** A child's `workflow.json` carries, beyond the standard shape:
+
+```jsonc
+{ "track_id": "epic-child",
+  "epic": "<epic-slug>",
+  "slice": "A",
+  "pinned_artifacts": { "scout": "docs/scout/<epic>.md",
+                        "research": "docs/research/<epic>.md",
+                        "spec": "docs/specs/<epic>.md#slice-A" },
+  "exceptions": ["intake", "scout", "research", "spec", "approve-spec", ...] }
+```
+
+`/tdd` for a child reads the **slice** section (`#slice-A`) of the pinned spec as its behavior contract — not a fresh per-child spec.
+
+**Structural enforcement (the load-bearing rule).** The discovery exceptions on an `epic-child` are **not** honored as blanket exceptions. `track_guard` SHALL treat the inherited discovery phases (`intake`, `scout`, `research`, `spec`, `approve-spec`) as satisfied for an `epic-child` write **only when** all of the following hold; otherwise it blocks the write exactly as it would for a forged exception:
+
+1. `workflow.json → track_id == "epic-child"` and `workflow.json → epic` is a non-empty slug;
+2. `.claude/state/epic/<epic>.json` exists and parses, with `approved == true`;
+3. every path in `workflow.json → pinned_artifacts` resolves on disk (the `#slice-<id>` fragment is stripped before the existence check; the bare spec file SHALL exist).
+
+This makes the child's discovery-skip a *consequence of a real approved epic*, not a claim the child can assert on its own — preserving the constitution's preference for structural enforcement over skill-discipline. A child whose epic is unapproved or whose pins dangle is blocked at the write boundary, with a named reason.
+
+**Conditional review weight.** `simplify` / `security` / `document` do not scale with diff size or risk when run unconditionally. For `epic-child` they are excepted by default and escalated by `/triage` into the child's phase list (and out of `exceptions`) when the slice's `risk[]` (recorded in the epic state file at slicing time, derived from the slice's own ACs and write surface) warrants it:
+
+| Phase | Escalated into the child when the slice… |
+|---|---|
+| `security` | touches auth, an IO boundary, untrusted-input parsing, or a path in `project.json → security.sensitive_globs` |
+| `simplify`  | spans more than one architectural layer or more than `project.json → simplify.min_files` files |
+| `document`  | changes a public API, a CLI surface, or a committed `*.md` under `docs/` |
+
+The same escalation latitude applies to `tdd-quickfix`: `/triage` MAY except `simplify`/`security` for a demonstrably trivial quickfix using the same table, and the decision is recorded in `workflow.json → exceptions` with a one-line rationale in `completed_notes`. The decision is made once, in main context, from the slice/spec description — never silently inside a phase skill, and never against the diff (which does not yet exist at triage time).
+
+**Triage routing.** `/triage` classification gains three outcomes ahead of the existing single-shot tracks:
+
+- **`epic`** — a multi-subtask feature that warrants discovery-once: the request names ≥ `project.json → epic.min_slices` (default 3) separable slices, or the user frames it as an epic/umbrella. `/triage` runs the `epic` track and writes the epic state file with its slices.
+- **`epic-child`** — auto-selected when an `.claude/state/epic/*.json` with `approved == true` is active and the request matches one of its open slices. `/triage` pre-fills `epic`, `slice`, and `pinned_artifacts`, and escalates review phases per the table above.
+- **single-shot** — the existing `intake-full` / `spec-entry` / `tdd-quickfix` / `chore` / `freeform` tracks, unchanged, for work that is not part of an epic.
+
+**Wall-clock effect.** A decomposed feature pays discovery **once** (the `epic` track) instead of per child, and each child runs ~4–6 phases (most review phases excepted) instead of ~16. The dominant cost the pair removes is serial latency: the feature's end-to-end time approaches *one* discovery cycle plus the sum of thin child implementations, rather than N full pipelines.
+
+**New cross-references:** `.claude/state/epic/<slug>.json` (epic state), `track_guard` (inherited-satisfaction check), `project.json → epic.min_slices` / `simplify.min_files` / `security.sensitive_globs` (escalation knobs).

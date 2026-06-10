@@ -26,7 +26,7 @@ describe('AC-001 — deriveCounts() reflects the artifacts on disk', () => {
     assert.equal(c.hooks, 22, 'top-level hooks');
     assert.equal(c.commands, 6, 'command files (incl init-project-doctor)');
     assert.equal(c.subagents, 1, 'subagents');
-    assert.deepEqual(c.tracks, { canonical: 5, subTracks: 2 }, 'tracks');
+    assert.deepEqual(c.tracks, { canonical: 7, subTracks: 2 }, 'tracks');
     assert.equal(c.memoryFiles, 7, 'canonical memory files');
     assert.equal(c.mcpServers, 3, 'mcp servers');
   });

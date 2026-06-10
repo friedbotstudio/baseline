@@ -126,6 +126,14 @@ security → integrate → document → archive → memory-flush →
 - The four-pillar framing (Intake analysis · Track alignment · Implementation · Tying open ends) is documentary; the actual execution model is one phase per loop iteration, with the loop continuing through every non-gated boundary until it exits cleanly.
 - Inside `/tdd`'s seeded worker chain, the harness inlines a **drift-check-tick** task between the last `design-ui-tick` (or `verify-tick` when no design rows) and `tdd-finalize`. It invokes `node .claude/skills/tdd/drift_check.mjs --slug <slug>` against the approved spec and the branch diff. Exit 0 (zero unresolved) → continue to `tdd-finalize`; exit 1 (≥ 1 unresolved) → EXIT LOOP with YIELD (`reason: "drift analysis: <N> unresolved items"`). Drift failures stop-and-surface (NO auto-loop) — the user fixes the impl gap or amends the spec + re-`/approve-spec`s. The drift report lands at `.claude/state/drift/<slug>.md`. `chore`-track workflows (no spec on disk) exit 0 with "no spec; skipped" and proceed to `tdd-finalize`.
 
+### Epic / epic-child tracks (§18.9)
+
+Two tracks change the loop shape:
+
+- **`epic`** runs discovery only: `intake → scout → research → spec → approve-spec → memory-flush → grant-commit → commit` (plus any per-project review node like `spec-shippability-review` before `approve-spec`). It has **no implementation phases** — the loop exits cleanly after `commit`, leaving the sliced spec live at `docs/specs/<epic>.md`. Do **not** route an `epic` track into `tdd`/swarm; its children do the implementation on separate `epic-child` workflows.
+- **When the `epic` track's `approve-spec` phase completes** (the user has run `/approve-spec` and you are recording it in `completed`), also set `approved: true` and refresh `updated_at` in `.claude/state/epic/<epic>.json`. This is gated by the real gate-A consent that just happened — never set it ahead of the gate. The flip is what unblocks `epic-child` writes via `track_guard`.
+- **`epic-child`** starts at `tdd` with discovery inherited (pins in `workflow.json`, enforced by `track_guard`). Its effective loop is `tdd → integrate → archive → grant-commit → commit`; `simplify`/`security`/`document` run only when `/triage` left them out of `exceptions` (slice risk-escalation). At Phase 6 an `epic-child` is **always solo** — never swarm (a single slice is one component); `/tdd` reads the pinned spec's `## Slice <id>` section as its contract. On the child's `commit`, set that slice's entry in the epic state `children[]` to `status: "committed"`.
+
 ### Swarm vs solo at Phase 6
 
 Once the spec approval token is present on resume, count C4 Components in the approved spec:

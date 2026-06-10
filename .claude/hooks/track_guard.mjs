@@ -36,6 +36,39 @@ if (!existsSync(workflowState)) emitAllow();
 let ws;
 try { ws = JSON.parse(readFileSync(workflowState, 'utf8')); } catch { emitAllow(); }
 
+// Epic-child inherited-satisfaction gate (seed §18.9). An epic-child inherits the
+// epic's discovery (intake/scout/research/spec/approve-spec); that skip is honored
+// ONLY when the named epic is real, approved, and its pinned artifacts resolve.
+// A forged or dangling child is blocked at the write boundary for everything except
+// .claude/state recovery writes (so /triage can repair workflow.json / epic state).
+function epicInheritanceSatisfied(state) {
+  const epic = state.epic;
+  if (!epic || typeof epic !== 'string') return false;
+  const epicState = join(STATE_DIR, 'epic', `${epic}.json`);
+  if (!existsSync(epicState)) return false;
+  let es;
+  try { es = JSON.parse(readFileSync(epicState, 'utf8')); } catch { return false; }
+  if (es.approved !== true) return false;
+  const pins = state.pinned_artifacts;
+  if (!pins || typeof pins !== 'object') return false;
+  for (const key of ['scout', 'research', 'spec']) {
+    const raw = pins[key];
+    if (!raw || typeof raw !== 'string') return false;
+    const bare = raw.split('#')[0]; // strip #slice-<id> fragment before existence check
+    if (!existsSync(join(CLAUDE_PROJECT_ROOT, bare))) return false;
+  }
+  return true;
+}
+
+if (ws.track_id === 'epic-child' && !rel.startsWith('.claude/state/') && !epicInheritanceSatisfied(ws)) {
+  emitBlock(
+    `Track Guard: workflow declares track 'epic-child' (epic='${ws.epic || ''}') but its inherited ` +
+    `discovery is unverifiable — '.claude/state/epic/<epic>.json' must exist with approved:true and every ` +
+    `pinned_artifacts path (scout/research/spec) must resolve on disk. Re-run /triage against an approved ` +
+    `epic, or choose a single-shot track.`
+  );
+}
+
 const phases = projectGet('.workflow.phases');
 const artifacts = projectGet('.workflow.artifacts');
 if (!Array.isArray(phases) || phases.length === 0) emitAllow();
@@ -50,6 +83,8 @@ const TRACK_ID_TO_ENTRY_PHASE = {
   'spec-entry': 'spec',
   'tdd-quickfix': 'tdd',
   'chore': 'chore',
+  'epic': 'intake',
+  'epic-child': 'tdd',
 };
 const entry = ws.entry_phase || TRACK_ID_TO_ENTRY_PHASE[ws.track_id];
 

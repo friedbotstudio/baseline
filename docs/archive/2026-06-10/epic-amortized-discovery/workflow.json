@@ -1,0 +1,14 @@
+{
+  "request": "Amend the workflow track model: add epic-amortized discovery (epic + epic-child tracks with inherited/pinned discovery artifacts), make simplify/security/document conditional in epic-child and tdd-quickfix, and sharpen triage routing to classify epic vs epic-child vs single-shot. Governance text + config + one track_guard logic change with a paired test.",
+  "slug": "epic-amortized-discovery",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd"],
+  "completed": ["chore", "memory-flush", "grant-commit"],
+  "completed_notes": {
+    "chore": "Edits done; verify PASS (880/0, audit PASS); simplify skipped (additive governance + one focused tested guard fn, no refactor); security skipped (the one code change is a hardening block, reduces surface); document skipped (feature self-documented in seed §18.9 + skill SOPs, site counts derive dynamically); archive no-op (chore produced no intake/scout/spec artifacts)."
+  },
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781082449,
+  "updated_at": 1781082449
+}

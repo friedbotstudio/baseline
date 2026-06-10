@@ -137,3 +137,35 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: Deliberately coarse — build the gate taxonomy BEFORE any autonomy (vision doc §2.4); the debugging skill makes the explanation-trace the reviewable object (§2.5); v2 is the signal-driven OS riding on a trusted v1 (§2.6, §1.3). Fragment into separate intakes when v1 is proven. Detail: vision doc Part 5.7 piece 8.
 
 ---
+
+## epic-close-full-bundle-archival-when-children-resolve-02a3
+
+> verbatim (assistant, 2026-06-10):
+> "archival of the whole bundle is an /epic-close concern (deferred; not actuated in this revision — children archive only their own slice artifacts)."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-10
+- raised-in-context: epic-amortized-discovery (chore; seed §18.9 amendment)
+- estimated-effort: small
+- verified-at: f9c04e3
+- last-touched: 2026-06-10
+- caveat: The `epic` track (seed §18.9) deliberately omits `archive` so the sliced spec/scout/research stay live at `docs/.../<epic>.md` for children to pin. Nothing archives the discovery bundle when the epic completes. Add an `/epic-close` step (or last-child hook): when every `.claude/state/epic/<slug>.json → children[]` entry is `status: committed`, move the discovery bundle to `docs/archive/<date>/<epic>/` and close the epic. Until then epic discovery bundles accumulate live under `docs/`.
+
+---
+
+## harden-epic-approved-flip-tie-to-approval-marker-7227
+
+> verbatim (assistant, 2026-06-10):
+> "the `approved` flag flips to `true` when the epic's `approve-spec` phase completes (the harness does this post-gate; never set it yourself ahead of the real consent)."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-10
+- raised-in-context: epic-amortized-discovery (chore; seed §18.9 amendment)
+- estimated-effort: medium
+- verified-at: f9c04e3
+- last-touched: 2026-06-10
+- caveat: Today the epic state `approved: true` flip is written by the harness SOP (main context) after the epic's `/approve-spec` gate-A consent lands — trusted, not structurally enforced. `track_guard` reads `approved` to honor epic-child discovery-skips, so a forged `approved: true` (written without the real gate) would let a child skip discovery. Harden by tying the flip to the approve-spec consent marker (mirror `spec_approval_guard`): allow the epic-state `approved` write only while a fresh slug-matched approval marker exists; block self-written flips otherwise. Same trust-upgrade pattern as the consent-gate-grant chore.
+
+---
