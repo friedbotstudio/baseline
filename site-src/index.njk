@@ -104,14 +104,16 @@ eleventyComputed:
         </div>
         <div class="concept">
           <p class="num">03 · Workflow tracks</p>
-          <h3>Five canonical tracks, declared in <code>workflows.jsonl</code></h3>
-          <p>Every kind of work the baseline runs is a track: a DAG of skill nodes with dependencies, consent flags, and optional parallel clusters. Five canonical shapes ship in the pristine template, declared in <code>.claude/workflows.jsonl</code>. Triage classifies the request and presents the picked track plus alternates via <code>AskUserQuestion</code>; harness walks the chosen DAG.</p>
+          <h3>{{ baseline.tracks.canonical }} canonical tracks, declared in <code>workflows.jsonl</code></h3>
+          <p>Every kind of work the baseline runs is a track: a DAG of skill nodes with dependencies, consent flags, and optional parallel clusters. {{ baseline.tracks.canonical }} canonical shapes ship in the pristine template, declared in <code>.claude/workflows.jsonl</code>. Triage classifies the request and presents the picked track plus alternates via <code>AskUserQuestion</code>; harness walks the chosen DAG.</p>
           <div class="track-chips" aria-label="Canonical track set">
             <span class="track-chip">intake-full</span>
             <span class="track-chip">spec-entry</span>
             <span class="track-chip">tdd-quickfix</span>
             <span class="track-chip">chore</span>
             <span class="track-chip">freeform</span>
+            <span class="track-chip">epic</span>
+            <span class="track-chip">epic-child</span>
           </div>
           <p class="concept-readmore"><a href="{{ '/workflows/' | rel }}">Read more about workflow tracks <span class="arr" aria-hidden="true">→</span></a></p>
         </div>
@@ -458,7 +460,7 @@ eleventyComputed:
           </g>
         </g>
       </svg>
-      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. Four other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), and <code>freeform</code> (closing sequence only; relaxed phase ordering). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
+      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), and <code>epic-child</code> (inherits the epic's discovery). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
     </figure>
   </section>
 
@@ -604,7 +606,7 @@ eleventyComputed:
 
       <details class="faq-item" name="baseline-faq">
         <summary class="faq-q">What if I want Claude to do something the baseline forbids?</summary>
-        <div class="faq-a">Add a named exception to <code>.claude/state/workflow.json</code> via <code>/triage</code>. The exception is recorded, scoped to the current workflow, and visible to the audit. For a recurring need that the five canonical tracks do not cover, declare a project-local track in <code>.claude/workflows.jsonl</code> instead. The declared track binds against the same Article IV invariants and survives baseline upgrades verbatim (the file is tier-classified <code>NEVER_TOUCH</code>).</div>
+        <div class="faq-a">Add a named exception to <code>.claude/state/workflow.json</code> via <code>/triage</code>. The exception is recorded, scoped to the current workflow, and visible to the audit. For a recurring need that the {{ baseline.tracks.canonical }} canonical tracks do not cover, declare a project-local track in <code>.claude/workflows.jsonl</code> instead. The declared track binds against the same Article IV invariants and survives baseline upgrades verbatim (the file is tier-classified <code>NEVER_TOUCH</code>).</div>
       </details>
 
       <details class="faq-item" name="baseline-faq">

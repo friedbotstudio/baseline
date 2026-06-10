@@ -154,22 +154,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## harden-epic-approved-flip-tie-to-approval-marker-7227
-
-> verbatim (assistant, 2026-06-10):
-> "the `approved` flag flips to `true` when the epic's `approve-spec` phase completes (the harness does this post-gate; never set it yourself ahead of the real consent)."
-
-- source: assistant-deferral
-- status: picked-up
-- raised-on: 2026-06-10
-- raised-in-context: epic-amortized-discovery (chore; seed §18.9 amendment)
-- estimated-effort: medium
-- verified-at: f9c04e3
-- last-touched: 2026-06-10
-- caveat: Today the epic state `approved: true` flip is written by the harness SOP (main context) after the epic's `/approve-spec` gate-A consent lands — trusted, not structurally enforced. `track_guard` reads `approved` to honor epic-child discovery-skips, so a forged `approved: true` (written without the real gate) would let a child skip discovery. Harden by tying the flip to the approve-spec consent marker (mirror `spec_approval_guard`): allow the epic-state `approved` write only while a fresh slug-matched approval marker exists; block self-written flips otherwise. Same trust-upgrade pattern as the consent-gate-grant chore.
-
----
-- superseded-at: 2026-06-10
 ## spec-rollout-prerequisite-enforceability-oracle-checker-419d
 
 > verbatim (user, 2026-06-10):
@@ -199,5 +183,21 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 66fac2a
 - last-touched: 2026-06-10
 - caveat: Completeness gap in the just-shipped `epic_approval_guard` (commit pending). The guard makes the epic `approved: true` flip unforgeable on the file-write tool surface (the documented forgery path the harness uses), but the Bash write surface is uncovered — `lib/common.mjs` `CONSENT_BASENAMES`/`writesConsentPath` (consumed by `destructive_cmd_guard`) lists `commit_consent`/`push_consent`/`*_grant`/`spec_approvals/`/`swarm_approvals/` but NOT `.claude/state/epic/`. Since the spec deliberately left `track_guard`'s read side trusting `es.approved === true`, a Bash-set flag would be honored. Fix options: (a) extend `CONSENT_BASENAMES` / `destructive_cmd_guard` to block Bash writes under `.claude/state/epic/` that set `approved:true` (parity with consent-token Bash protection); or (b) adopt research Candidate C — have `track_guard` re-derive approval from the persistent token at read time, eliminating the trusted boolean. Was OUT of scope for harden-epic-approved-flip (its ACs modeled the Write/Edit/MultiEdit surface only). Full finding: `docs/archive/2026-06-10/harden-epic-approved-flip/security.md` (MEDIUM, OWASP A04 / CWE-862). Natural pairing with the `epic-close` / read-side-derivation work.
+
+---
+
+## audit-baseline-misses-docsite-prose-and-hooks-table-drift-9f31
+
+> verbatim (assistant finding, 2026-06-11; promotion directed by user — "fix the workflows and hooks pages via a chore and record this failure for future backlog tracking"):
+> The epic / epic-child feature (commits 66fac2a, 121078f) shipped in code, the constitution, and `workflows.jsonl`, but the docs site was never updated, and `audit-baseline` passed with fails=0 — the drift was silent. `derive-counts.mjs` keeps the `{{ baseline.* }}` numeric variables correct, but `audit-baseline` does not validate (a) `site-src/workflows.njk` hand-maintained prose ("Five selectable tracks", the track list omitting epic/epic-child, "All 22 hooks remain active") nor (b) that `site-src/hooks.njk`'s boundary table + per-hook enforcement table enumerate every hook on disk (epic_approval_guard and harness_continuation were BOTH absent, so the data-driven "23 hooks" header disagreed with a 21-row table).
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-11
+- raised-in-context: fix-docsite-epic-drift (chore)
+- estimated-effort: small
+- verified-at: 121078f
+- last-touched: 2026-06-11
+- caveat: Fix = extend `audit-baseline` to validate the docs site's hand-maintained prose/tables against the same derived counts (`derive-counts.mjs`) it already cross-checks for CLAUDE.md / README / seed.md. Two concrete checks: (1) `workflows.njk` selectable-track count plus presence of one list entry per selectable `track_id` in `workflows.jsonl`; (2) `hooks.njk` per-hook enforcement table enumerates every `.claude/hooks/*.mjs`, and the by-event boundary table covers each one. Natural pairing with the four-way Article IV mirror check and the `/init-project doctor` `workflows.jsonl` drift check. The `fix-docsite-epic-drift` chore corrected the content; this item is the guardrail so the same class of drift cannot pass CI silently again.
 
 ---

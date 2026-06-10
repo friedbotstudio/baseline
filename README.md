@@ -41,9 +41,9 @@ A discipline layer for Claude Code. Hooks at every tool boundary, a workflow tha
 
 ## What this is
 
-The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **23 hooks** at Claude's tool boundaries, **41 skills** organised into thirteen categories, **1 subagent** for parallel work in isolated worktrees, **5 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
+The Claude Code Baseline is a repository overlay shipped via `npx @friedbotstudio/create-baseline ./target`. It installs **23 hooks** at Claude's tool boundaries, **41 skills** organised into thirteen categories, **1 subagent** for parallel work in isolated worktrees, **7 canonical workflow tracks** declared in `.claude/workflows.jsonl` (where `intake-full` runs 11 nodes from intake to commit), and **3 user-typed consent gates** that Claude cannot forge.
 
-Every soft engineering rule a team usually repeats every session — *don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules* — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
+Every soft engineering rule a team usually repeats every session — _don't push, don't `--amend`, don't self-approve specs, don't skip phases, don't mock internal modules_ — becomes a structural guarantee because the hooks run **outside Claude's tool boundary**. Claude cannot disable a hook with a flag, cannot write a consent marker, cannot reorder the phases without an explicit exception that triage records on disk.
 
 The contract is small and traceable. `docs/init/seed.md` is the genesis prompt. `CLAUDE.md` is the in-session constitution. The hooks, skills, commands, and config files are the actuators. Order of precedence is `seed.md > CLAUDE.md > implementation`. Every claim in the docs points at a file you can open.
 
@@ -55,18 +55,18 @@ Claude Code on a real codebase, used unattended, will eventually do things you d
 
 The baseline is that written-down opinion. It chooses one default for every decision the team would otherwise repeat verbatim every session, and it enforces the default at the layer Claude cannot reach.
 
-A team that installs the baseline stops typing *"don't push, don't `--amend`, don't self-approve specs"* and starts trusting that the agent simply cannot.
+A team that installs the baseline stops typing _"don't push, don't `--amend`, don't self-approve specs"_ and starts trusting that the agent simply cannot.
 
 ## What gets installed
 
-| What | Count | Where it lives |
-|---|---:|---|
-| **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit | 23 | `.claude/hooks/` |
-| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, and maintenance | 40 | `.claude/skills/` |
-| **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
-| **Workflow tracks** declared in `.claude/workflows.jsonl`. Canonical set: `intake-full` (11 nodes), `spec-entry`, `tdd-quickfix`, `chore`, `freeform` (ad-hoc batch of edits with relaxed phase ordering; all hooks remain active). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set. | 5 selectable + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
-| **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude | 3 | `consent_gate_grant` UserPromptSubmit hook |
-| **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke) | 3 | `.mcp.json` |
+| What                                                                                                                                                                                                                                                                                                                                                       |                Count | Where it lives                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------: | ---------------------------------------------------- |
+| **Hooks** at PreToolUse / PostToolUse / SessionStart / Stop / PreCompact / UserPromptSubmit                                                                                                                                                                                                                                                                |                   23 | `.claude/hooks/`                                     |
+| **Skills** across artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, and maintenance                                                                                                                                                  |                   41 | `.claude/skills/`                                    |
+| **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees                                                                                                                                                                                                                                                                  |                    1 | `.claude/agents/`                                    |
+| **Workflow tracks** declared in `.claude/workflows.jsonl`. Canonical set: `intake-full` (11 nodes), `spec-entry`, `tdd-quickfix`, `chore`, `freeform` (ad-hoc batch of edits with relaxed phase ordering; all hooks remain active), `epic` (discovery once, sliced spec), `epic-child` (inherits epic discovery). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set. | 7 selectable + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
+| **Consent gates** — `/approve-spec`, `/approve-swarm`, `/grant-commit`. User-typed; structurally un-invokable by Claude                                                                                                                                                                                                                                    |                    3 | `consent_gate_grant` UserPromptSubmit hook           |
+| **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke)                                                                                                                                                                                                                |                    3 | `.mcp.json`                                          |
 
 Every count is asserted by `audit-baseline` against `docs/init/seed.md` on every build. Drift fails CI.
 
@@ -168,7 +168,7 @@ A fourth consent gate sits outside the phase pipeline:
 
 - **`/grant-push`** — opens a 5-minute window for `git push` on a protected branch (per `project.json → git.protected_branches`). Pushes on non-protected branches need no consent.
 
-Each gate writes a short-lived consent marker via a UserPromptSubmit hook that runs *before* Claude is invoked on the body. Claude cannot forge the marker; the write-boundary guard validates it on disk before allowing the approval token through.
+Each gate writes a short-lived consent marker via a UserPromptSubmit hook that runs _before_ Claude is invoked on the body. Claude cannot forge the marker; the write-boundary guard validates it on disk before allowing the approval token through.
 
 ## How the enforcement works
 
@@ -190,7 +190,7 @@ The constitution at `CLAUDE.md` is the source of truth for in-session behaviour;
 
 ## Contributing
 
-The baseline aims for a small, traceable surface. Contributions that make the structural enforcement *more* reliable — closing a hook gap, tightening a guard, fixing a regex, adding a missing test — land easily. Contributions that grow the surface need a stronger justification.
+The baseline aims for a small, traceable surface. Contributions that make the structural enforcement _more_ reliable — closing a hook gap, tightening a guard, fixing a regex, adding a missing test — land easily. Contributions that grow the surface need a stronger justification.
 
 Specifically: the **hook count, skill count, subagent count, command count, and MCP-server count are constitutional**. Any change to those counts requires:
 
@@ -219,23 +219,3 @@ Apache License 2.0. See [`LICENSE`](LICENSE).
 ## About
 
 The Claude Code Baseline is built and maintained by [Friedbot Studio](https://friedbotstudio.com). We build infrastructure for AI-augmented engineering teams — discipline layers, evaluation harnesses, audit trails — that make agentic tools usable on production systems.
-
-<details>
-<summary><strong>Update history</strong></summary>
-
-<br/>
-
-**2026-05-14**
-
-- `feat(site)` — page-relative URL filter + CNAME for dual-mount Pages deployment ([86cfbc7](https://github.com/friedbotstudio/baseline/commit/86cfbc7))
-- `fix(build)` — seed runtime memory placeholders so `audit-baseline` passes on fresh clones ([829f9cf](https://github.com/friedbotstudio/baseline/commit/829f9cf))
-- `fix(publish-check)` — surface `npm publish --dry-run` stderr on precheck failure ([095cda4](https://github.com/friedbotstudio/baseline/commit/095cda4))
-- `fix(release-workflow)` — correct AC-006 / AC-011 / AC-013 (cache:false fatal + missing build-verify needs edge) ([572fef7](https://github.com/friedbotstudio/baseline/commit/572fef7))
-- `fix(hook)` — `git_commit_guard` regex no longer false-positives on dot-prefixed paths ([064102d](https://github.com/friedbotstudio/baseline/commit/064102d))
-- `chore` — add `.nojekyll` guard + labels-as-code workflow ([f4f514b](https://github.com/friedbotstudio/baseline/commit/f4f514b))
-
-**2026-05-13**
-
-- Initial commit — Claude Code baseline + release workflow ([0dcf76e](https://github.com/friedbotstudio/baseline/commit/0dcf76e))
-
-</details>

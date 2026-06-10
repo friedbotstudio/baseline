@@ -1,0 +1,24 @@
+{
+  "request": "Fix docs-site drift from the epic/epic-child feature: update site-src/workflows.njk (five->seven tracks, add epic/epic-child, 22->23 hooks) and site-src/hooks.njk (add epic_approval_guard to both tables).",
+  "slug": "fix-docsite-epic-drift",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "document",
+    "archive",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781118746,
+  "updated_at": 1781118746
+}
