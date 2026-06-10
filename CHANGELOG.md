@@ -1,3 +1,18 @@
+# [0.17.0](https://github.com/friedbotstudio/baseline/compare/v0.16.0...v0.17.0) (2026-06-10)
+
+
+### Bug Fixes
+
+* **ci:** peel annotated tags in action SHA verifier ([f6495b2](https://github.com/friedbotstudio/baseline/commit/f6495b25334f133870bfb1c3329c4218d3b0a4b5))
+
+
+### Features
+
+* **governance:** add epic / epic-child tracks for amortized discovery ([66fac2a](https://github.com/friedbotstudio/baseline/commit/66fac2ad0144eb04c908b356d6858aecb0dd6d88))
+* **governance:** structurally gate the epic approved flip via epic_approval_guard (hooks 22→23) ([121078f](https://github.com/friedbotstudio/baseline/commit/121078f1df63ce287c17a6aaea6612c655a0b9f8))
+* **site:** add /standup feature page and homepage teaser ([f9c04e3](https://github.com/friedbotstudio/baseline/commit/f9c04e3f83ab28363a91bb9536d8c0a6281290c1))
+* **skills:** add standup release+backlog recap skill (40→41) ([3fffd06](https://github.com/friedbotstudio/baseline/commit/3fffd069d3953b1cd55d5cd5f925082019a239bc))
+
 # [0.16.0](https://github.com/friedbotstudio/baseline/compare/v0.15.1...v0.16.0) (2026-06-08)
 
 
