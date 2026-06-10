@@ -51,7 +51,13 @@ function dedupe(directives) {
 function resolveUpstream(owner_repo, tag) {
   const url = `https://github.com/${owner_repo}.git`;
   try {
-    const out = execFileSync('git', ['ls-remote', url, `refs/tags/${tag}`], {
+    // Query both the tag ref and its peeled form. For an annotated tag,
+    // `refs/tags/<tag>` resolves to the tag *object* SHA, while the commit
+    // that `owner/repo@<tag>` actually checks out is exposed only via the
+    // `refs/tags/<tag>^{}` peeled ref. Dependabot pins the peeled commit, so
+    // without this second pattern annotated tags false-positive as DRIFT.
+    // Lightweight tags ignore the harmless extra pattern (single line back).
+    const out = execFileSync('git', ['ls-remote', url, `refs/tags/${tag}`, `refs/tags/${tag}^{}`], {
       encoding: 'utf8',
       timeout: 15_000,
     }).trim();
