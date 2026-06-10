@@ -69,7 +69,7 @@ const REQUIRED_PATTERNS = [
   { name: 'plantuml LICENSE',     match: (p) => p === '.claude/bin/LICENSE' },
   { name: 'plantuml NOTICE',      match: (p) => p === '.claude/bin/NOTICE' },
   // Counts mirror seed §4 / audit-baseline.
-  { name: '22 hooks (.mjs)',      match: (p) => /^\.claude\/hooks\/[^/]+\.mjs$/.test(p), minCount: 22 },
+  { name: '23 hooks (.mjs)',      match: (p) => /^\.claude\/hooks\/[^/]+\.mjs$/.test(p), minCount: 23 },
   { name: '4 commands',           match: (p) => /^\.claude\/commands\/[^/]+\.md$/.test(p), minCount: 4 },
   { name: '36 skills (SKILL.md)', match: (p) => /^\.claude\/skills\/[^/]+\/SKILL\.md$/.test(p), minCount: 36 },
   { name: '6 memory schemas',     match: (p) => /^\.claude\/memory\/(conventions|decisions|landmarks|landmines|libraries|pending-questions)\.md$/.test(p), minCount: 6 },

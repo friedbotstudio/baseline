@@ -90,7 +90,7 @@ function isValidPreamble(text) {
 
 const EXPECTED_HOOKS = new Set([
   'setup_guard', 'destructive_cmd_guard', 'git_commit_guard', 'env_guard',
-  'spec_approval_guard', 'swarm_approval_guard', 'verify_pass_guard',
+  'spec_approval_guard', 'swarm_approval_guard', 'epic_approval_guard', 'verify_pass_guard',
   'track_guard', 'artifact_template_guard', 'plantuml_syntax_guard',
   'spec_diagram_presence_guard', 'spec_design_calls_guard',
   'swarm_boundary_guard', 'tdd_order_guard',

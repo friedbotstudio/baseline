@@ -18,6 +18,7 @@
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/env_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_approval_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/swarm_approval_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/epic_approval_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/verify_pass_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/track_guard.mjs" },

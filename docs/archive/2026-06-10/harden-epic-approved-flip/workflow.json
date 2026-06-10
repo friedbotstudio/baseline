@@ -1,0 +1,29 @@
+{
+  "request": "Harden the epic `approved: true` flip: tie it to a fresh slug-matched approve-spec consent marker so a forged flag cannot let an epic-child skip mandatory discovery phases. Mirror the spec_approval_guard pattern — allow the epic-state `approved` write only while a fresh approval marker exists; block self-written flips otherwise.",
+  "slug": "harden-epic-approved-flip",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "harden-epic-approved-flip-tie-to-approval-marker-7227"
+  ],
+  "created_at": 1781095031,
+  "updated_at": 1781111307
+}

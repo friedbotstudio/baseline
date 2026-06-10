@@ -160,12 +160,44 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "the `approved` flag flips to `true` when the epic's `approve-spec` phase completes (the harness does this post-gate; never set it yourself ahead of the real consent)."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-10
 - raised-in-context: epic-amortized-discovery (chore; seed §18.9 amendment)
 - estimated-effort: medium
 - verified-at: f9c04e3
 - last-touched: 2026-06-10
 - caveat: Today the epic state `approved: true` flip is written by the harness SOP (main context) after the epic's `/approve-spec` gate-A consent lands — trusted, not structurally enforced. `track_guard` reads `approved` to honor epic-child discovery-skips, so a forged `approved: true` (written without the real gate) would let a child skip discovery. Harden by tying the flip to the approve-spec consent marker (mirror `spec_approval_guard`): allow the epic-state `approved` write only while a fresh slug-matched approval marker exists; block self-written flips otherwise. Same trust-upgrade pattern as the consent-gate-grant chore.
+
+---
+- superseded-at: 2026-06-10
+## spec-rollout-prerequisite-enforceability-oracle-checker-419d
+
+> verbatim (user, 2026-06-10):
+> "with our maker-checker architecture coming into form thanks to v1 vision, I am inclining towards b but you can validate and confirm" — validated and confirmed as option (b)-with-structured-artifact; "record this against Q-002 and queue it on the backlog".
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-06-10
+- raised-in-context: standup follow-up (no active workflow) — resolution of pending-questions Q-002
+- estimated-effort: medium
+- verified-at: 66fac2a
+- last-touched: 2026-06-10
+- caveat: Resolves Q-002 (silent-failure prerequisites shipped unenforced — origin: the 2026-05-14 GitHub Pages `build_type=workflow` prerequisite, judgment-flagged 3× yet never given an enforcement AC). Build a new `spec-rollout-enforceability-review` skill in the spec-review family (alongside `spec-diagram-review` / `spec-traceability-review` / `spec-shippability-review`), oracle-bound from day one per the maker-checker proof-obligation contract (`-4c43`, `-d186`). Design = option (b) carrying a sliver of (a): (1) amend the spec format so the Rollout section's prerequisites are a STRUCTURED block — one row per prerequisite, each with an explicit `enforced-by: AC-NNN` pointer to an enforcement-type AC (preflight / smoke / error-mapping); (2) the checker mechanically verifies every prerequisite row has a non-empty `enforced-by` resolving to a real enforcement-type AC. Missing/dangling pointer → BLOCKER (hard-blocks `/approve-spec`, same as the other spec-review BLOCKERs); a prerequisite still living in free prose (un-structured) → ADVISORY. The structured `enforced-by:` field IS the mechanical oracle — a free-prose-only scan would be LLM-judgment and the contract forbids LLM-judgment from blocking (two LLMs agree on hallucinations). Concrete remediation for the origin bug also lives here: `scripts/bootstrap-pages.mjs` (`gh api -X PUT /repos/{owner}/{repo}/pages -f build_type=workflow`) and/or a fail-fast preflight in `release.yml`. Ships standalone now (useful immediately, independent of the rest of v1); later inducted into the oracle-bound-checker refit `-d186`, where it serves as a concrete fourth example to generalize the proof-obligation contract from. NOT a child of the v1 epic umbrella (`-9d4c`) — it's a standalone checker that the epic's slice B later absorbs by reference.
+
+---
+
+## extend-epic-approved-enforcement-to-bash-write-surface-abad
+
+> verbatim (assistant security finding, 2026-06-10; promotion directed by user):
+> "[MEDIUM] Bash redirect to the epic state file bypasses the guard. epic_approval_guard fires only on Write|Edit|MultiEdit; CONSENT_BASENAMES (Bash-write detection) covers consent tokens but NOT .claude/state/epic/. A `echo '{\"approved\":true}' > .claude/state/epic/<slug>.json` sets approved:true without passing the guard, and track_guard trusts the flag."
+
+- source: assistant-deferral
+- status: open
+- raised-on: 2026-06-10
+- raised-in-context: harden-epic-approved-flip (security review, Phase 8)
+- estimated-effort: small
+- verified-at: 66fac2a
+- last-touched: 2026-06-10
+- caveat: Completeness gap in the just-shipped `epic_approval_guard` (commit pending). The guard makes the epic `approved: true` flip unforgeable on the file-write tool surface (the documented forgery path the harness uses), but the Bash write surface is uncovered — `lib/common.mjs` `CONSENT_BASENAMES`/`writesConsentPath` (consumed by `destructive_cmd_guard`) lists `commit_consent`/`push_consent`/`*_grant`/`spec_approvals/`/`swarm_approvals/` but NOT `.claude/state/epic/`. Since the spec deliberately left `track_guard`'s read side trusting `es.approved === true`, a Bash-set flag would be honored. Fix options: (a) extend `CONSENT_BASENAMES` / `destructive_cmd_guard` to block Bash writes under `.claude/state/epic/` that set `approved:true` (parity with consent-token Bash protection); or (b) adopt research Candidate C — have `track_guard` re-derive approval from the persistent token at read time, eliminating the trusted boolean. Was OUT of scope for harden-epic-approved-flip (its ACs modeled the Write/Edit/MultiEdit surface only). Full finding: `docs/archive/2026-06-10/harden-epic-approved-flip/security.md` (MEDIUM, OWASP A04 / CWE-862). Natural pairing with the `epic-close` / read-side-derivation work.
 
 ---
