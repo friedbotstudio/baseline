@@ -1,3 +1,12 @@
+# [0.18.0](https://github.com/friedbotstudio/baseline/compare/v0.17.0...v0.18.0) (2026-06-15)
+
+
+### Features
+
+* **chore-track:** gate verify on test.kind; fix stale vitest reporter ([179e638](https://github.com/friedbotstudio/baseline/commit/179e638dd286e5342b15fbac6cecb08616fc5b85))
+* **gitignore:** add gitignore skill, commit-leak guard, and init .gitignore ([52a5f34](https://github.com/friedbotstudio/baseline/commit/52a5f34ea6fd1b349667a2aeb3f41984df6dfeea))
+* **site:** generate sitemap.xml from the page collection ([6e53aec](https://github.com/friedbotstudio/baseline/commit/6e53aec949f67fbeabc2bb6679b1e1bb2d8f9a6f))
+
 # [0.17.0](https://github.com/friedbotstudio/baseline/compare/v0.16.0...v0.17.0) (2026-06-10)
 
 
