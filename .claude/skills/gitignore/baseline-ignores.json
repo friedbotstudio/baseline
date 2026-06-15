@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "description": "Canonical baseline must-ignore set. Single source of truth shared by the gitignore skill (generation), src/cli install (materialize), and the gitignore_leak_guard hook (enforcement). Consumer additions live in project.json -> gitignore.extra_must_ignore.",
+  "entries": [
+    { "pattern": ".env", "comment": "Secrets: local environment file (allow .env.example separately)", "category": "secret" },
+    { "pattern": ".env*", "comment": "Secrets: any .env variant", "category": "secret" },
+    { "pattern": "*.pem", "comment": "Secrets: private keys / certificates", "category": "secret" },
+    { "pattern": ".claude/state/", "comment": "State: per-run workflow/consent/harness state", "category": "state" },
+    { "pattern": ".claude/memory/_pending.md", "comment": "State: auto-extracted memory inbox (session noise)", "category": "state" },
+    { "pattern": ".claude/memory/_resume.md", "comment": "State: cross-session continuity snapshot", "category": "state" },
+    { "pattern": ".claude/memory/_thread.md", "comment": "State: durable local thread trail", "category": "state" },
+    { "pattern": ".claude/skill-memory/", "comment": "State: per-skill working memory", "category": "state" },
+    { "pattern": ".claude/agent-memory/", "comment": "State: legacy agent-memory dirs", "category": "state" },
+    { "pattern": "node_modules/", "comment": "Tooling: npm dependencies", "category": "tooling" },
+    { "pattern": "obj/", "comment": "Tooling: build output tree", "category": "tooling" },
+    { "pattern": "reports/", "comment": "Tooling: transient test/report output", "category": "tooling" },
+    { "pattern": ".DS_Store", "comment": "Tooling: macOS finder cruft", "category": "tooling" },
+    { "pattern": "Thumbs.db", "comment": "Tooling: Windows thumbnail cache", "category": "tooling" },
+    { "pattern": ".vscode/", "comment": "Tooling: editor settings", "category": "tooling" },
+    { "pattern": ".idea/", "comment": "Tooling: JetBrains editor settings", "category": "tooling" },
+    { "pattern": "*.swp", "comment": "Tooling: vim swap files", "category": "tooling" }
+  ]
+}

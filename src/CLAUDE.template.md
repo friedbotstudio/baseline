@@ -4,7 +4,7 @@ This file is the **in-session constitution** for this repository. It binds Claud
 
 **Genesis prompt.** The governing specification of this baseline is `docs/init/seed.md`. It is the genesis prompt for the entire harness. When this constitution and seed.md conflict, **seed.md governs** and you SHALL stop and surface the drift before acting. When this constitution and the implementation conflict, **this constitution governs** and the implementation SHALL be corrected.
 
-**Enforcement.** The 23 hooks in `.claude/hooks/` are the structural enforcement layer of this constitution. Each is mapped to the Article it enforces in **Article VIII**.
+**Enforcement.** The 24 hooks in `.claude/hooks/` are the structural enforcement layer of this constitution. Each is mapped to the Article it enforces in **Article VIII**.
 
 ---
 
@@ -43,7 +43,7 @@ On every new session, before any work, you SHALL:
 
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
-   > "This repo has the Claude Code baseline installed (23 hooks, 1 subagent, 41 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+   > "This repo has the Claude Code baseline installed (24 hooks, 1 subagent, 42 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
    You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
@@ -90,7 +90,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - Bugfix → `/triage` selects `spec` or `tdd`.
 - Quickfix → `/triage` selects `tdd`.
 - Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (doc edits, governance count bumps, vendored-skill updates, config tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). It skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `verify` / `simplify` / `integrate` / `document` by what the diff touches. `archive`, `/grant-commit` + `/commit` remain mandatory. `verify` is conditional: skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs; any code/config change runs it regardless). Work needing a failing test routes to `tdd` or higher.
-- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `memory-flush` → `/grant-commit` → `/commit`. All 23 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
+- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `memory-flush` → `/grant-commit` → `/commit`. All 24 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
 - Epic / Epic-child → a multi-subtask feature runs `epic` once (discovery + sliced spec + one approval); each slice then runs an `epic-child` inheriting that discovery via `track_guard`. seed.md §18.9.
 
 **Swarm vs solo at Phase 6.** When the approved spec has fewer than `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components **OR** the project is not a git repository, run `/tdd` solo. Otherwise route through `/swarm-plan` → `/approve-swarm` → `/swarm-dispatch`. On a non-git tree the swarm phases are excepted at triage time, so this always resolves to solo, and a user "use swarm" override SHALL be refused with the reason `swarm requires git`.
@@ -181,23 +181,24 @@ On a **protected branch**, commits require fresh `commit_consent` (`/grant-commi
 
 ## Article VIII — Hooks (the enforcement layer)
 
-The 23 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a `seed.md` §4.1 amendment. The table names each hook, its event, and the Article it enforces; fuller per-hook behavior lives in `.claude/CONSTITUTION.md` (annex).
+The 24 hooks in `.claude/hooks/` are the structural enforcement of this constitution. Modifying, disabling, or bypassing a hook requires explicit user approval and a `seed.md` §4.1 amendment. The table names each hook, its event, and the Article it enforces; fuller per-hook behavior lives in `.claude/CONSTITUTION.md` (annex).
 
 | Hook | Event | Article enforced | Behavior (terse) |
 |---|---|---|---|
 | `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited). Never blocks. |
 | `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask on risky |
-| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware commit/push consent; hard-block forbidden flags; gate consent-token writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex) |
+| `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware consent; hard-block forbidden flags; gate consent writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex) |
+| `gitignore_leak_guard` | PreToolUse / Bash | Art. VII | Hard-block a commit staging a must-ignore path; fail-closed. |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
 | `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow spec-approval token write only on fresh marker; block self-approval + marker writes |
 | `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Allow swarm-approval write only on fresh marker; block marker writes |
-| `epic_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV (§18.9) | Allow an epic-state `approved: true` transition only when the matching persistent `spec_approvals/<slug>.approval` token exists; non-transition writes pass through |
+| `epic_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV (§18.9) | Allow an epic-state `approved: true` flip only when the matching `spec_approvals/<slug>.approval` token exists; other writes pass. (annex) |
 | `verify_pass_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. V, VI | Block writing PASS to verify artifacts when truth source says FAIL |
 | `track_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Enforce 11-phase ordering for workflow artifacts |
 | `artifact_template_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Block artifact writes missing required `##` sections |
-| `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true; else `/spec-lint`. |
+| `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true. |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
-| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block UI-touching specs that omit a populated `## Design calls` section |
+| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block UI-touching specs missing a populated `## Design calls` section |
 | `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |
 | `tdd_order_guard` | PreToolUse / Write | Art. VI.4 | Require test before new source file |
 | `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
@@ -278,6 +279,6 @@ Cryptographic attestation, signed lock files, and per-skill merkle hashes are no
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 41 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 42 skills by category).
 
-Quick orientation: 23 hooks, 1 subagent (`swarm-worker`), 41 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 24 hooks, 1 subagent (`swarm-worker`), 42 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).

@@ -1,6 +1,9 @@
 {
   "$schema_version": 1,
   "configured": true,
+  "gitignore": {
+    "extra_must_ignore": []
+  },
   "test": {
     "cmd": "node .claude/skills/audit-baseline/audit.mjs --file={file}",
     "kind": "structural",

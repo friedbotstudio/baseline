@@ -239,9 +239,9 @@ describe('§Behavior #8 — audit obligations (AC-012)', () => {
     assert.equal(r.status, 0, `audit-baseline must exit 0; got ${r.status}\n${(r.stdout || '').slice(-500)}`);
   });
 
-  it('test_when_top_level_hooks_counted_then_exactly_23', () => {
+  it('test_when_top_level_hooks_counted_then_exactly_24', () => {
     const count = readdirSync(join(REPO_ROOT, '.claude/hooks')).filter((n) => n.endsWith('.mjs')).length;
-    assert.equal(count, 23, 'top-level hook count is 23 (epic_approval_guard added by harden-epic-approved-flip)');
+    assert.equal(count, 24, 'top-level hook count is 24 (gitignore_leak_guard added by gitignore-setup)');
   });
 
   it('test_when_articleVII_topology_present_in_all_three_governance_files', () => {

@@ -189,7 +189,7 @@ describe('AC-006 — track_guard read side unchanged (regression)', () => {
 });
 
 describe('epic_approval_guard — governance lockstep (AC-007)', () => {
-  it('the hook is on disk, wired in settings.json, and listed in audit EXPECTED_HOOKS with count 23', () => {
+  it('the hook is on disk, wired in settings.json, and listed in audit EXPECTED_HOOKS with count 24', () => {
     // Hook file exists
     const guardSrc = readFileSync(EPIC_GUARD, 'utf8');
     assert.match(guardSrc, /epic/i);
@@ -199,8 +199,8 @@ describe('epic_approval_guard — governance lockstep (AC-007)', () => {
     // Listed in audit EXPECTED_HOOKS
     const audit = readFileSync(join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs'), 'utf8');
     assert.match(audit, /'epic_approval_guard'/);
-    // Canonical count bumped to 23 in the constitution
+    // Canonical count bumped to 24 in the constitution (gitignore_leak_guard added by gitignore-setup)
     const claude = readFileSync(join(REPO_ROOT, 'CLAUDE.md'), 'utf8');
-    assert.match(claude, /23 hooks/);
+    assert.match(claude, /24 hooks/);
   });
 });

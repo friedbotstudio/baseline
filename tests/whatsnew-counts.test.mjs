@@ -15,7 +15,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const loadCounts = () => import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
 
 describe('whatsnew governance counts', () => {
-  it('test_when_derive_counts_then_generators_two_phases_ten_sum_41', async () => {
+  it('test_when_derive_counts_then_generators_two_phases_ten_sum_42', async () => {
     const { SKILL_CATEGORIES, deriveCounts } = await loadCounts();
     assert.equal(SKILL_CATEGORIES.generators, 2, 'generators category holds whatsnew + standup');
     assert.equal(SKILL_CATEGORIES.phases, 10, 'phases must drop from 11 to 10');
@@ -23,7 +23,7 @@ describe('whatsnew governance counts', () => {
     const categorySum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
     const derived = deriveCounts(REPO_ROOT);
     assert.equal(categorySum, derived.skills, 'category sum must equal the derived skill total');
-    assert.equal(derived.skills, 41, 'total skills is 41 after adding the standup generator');
+    assert.equal(derived.skills, 42, 'total skills is 42 after adding the gitignore setup skill');
   });
 
   // owners.skills is built by scanning skill dirs for `owner: baseline` frontmatter

@@ -42,7 +42,7 @@ toc:
   <table>
   <thead><tr><th>Event</th><th>Hooks</th></tr></thead>
   <tbody>
-    <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, process_lifecycle_guard</td></tr>
+    <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, gitignore_leak_guard, process_lifecycle_guard</td></tr>
     <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, spec_approval_guard, swarm_approval_guard, epic_approval_guard, verify_pass_guard, track_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
     <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner</td></tr>
     <tr><td>UserPromptSubmit</td><td class="phase">consent_gate_grant</td></tr>
@@ -79,6 +79,7 @@ toc:
     <tr><td class="phase">spec_design_calls_guard</td><td>X.2</td><td>Block specs whose <code>write_set</code> intersects <code>tdd.ui_globs</code> from omitting a populated <code>## Design calls</code> section.</td></tr>
     <tr><td class="phase">swarm_boundary_guard</td><td>IV (phase 6c)</td><td>Enforce write-set discipline in shared isolation mode.</td></tr>
     <tr><td class="phase">tdd_order_guard</td><td>VI.4</td><td>Require a test before a new source file lands.</td></tr>
+    <tr><td class="phase">gitignore_leak_guard</td><td>VII</td><td>Blocks a <code>git commit</code> that stages a path meant to stay ignored, such as a secret (<code>.env</code>) or generated state (<code>.claude/state/</code>). It checks staged paths against the baseline must-ignore set offline with <code>git check-ignore</code> and names whatever leaks, and warns when a should-be-ignored path exists but is not yet covered. Secrets and build noise cannot slip into history by accident, and it never touches the network.</td></tr>
     <tr><td class="phase">process_lifecycle_guard</td><td>IX</td><td>Advisory. Surfaces relevant memory entries (e.g. <code>landmines.md → lsof-port-kill-takes-firefox-with-it</code>, <code>conventions.md → dev-server-ownership</code>) verbatim before any <code>kill</code>, <code>lsof</code>, or <code>serve</code> Bash. Never blocks.</td></tr>
     <tr><td class="phase">lint_runner</td><td>VI</td><td>Run <code>lint.cmd</code> on code changes (guide mode until configured).</td></tr>
     <tr><td class="phase">test_runner</td><td>VI</td><td>Run <code>test.cmd</code> on code changes (guide mode until configured).</td></tr>

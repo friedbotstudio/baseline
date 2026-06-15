@@ -130,11 +130,34 @@ async function materializeNpmrc(target) {
   await writeFile(dst, bytes);
 }
 
+// Every init ensures a correct .gitignore. The baseline must-ignore set is the
+// single source of truth at .claude/skills/gitignore/baseline-ignores.json (also
+// read by the gitignore skill and the gitignore_leak_guard hook). Merge is
+// ADD-ONLY: an existing .gitignore is preserved byte-for-byte and only the
+// baseline pattern lines it lacks are appended. Offline, deterministic.
+export async function materializeGitignore(target) {
+  const dataPath = join(target, '.claude/skills/gitignore/baseline-ignores.json');
+  if (!(await pathExists(dataPath))) return; // dev/fixture tree without the data — no-op
+  const data = JSON.parse(await readFile(dataPath, 'utf8'));
+  const entries = Array.isArray(data.entries) ? data.entries : [];
+  const dst = join(target, '.gitignore');
+  const existing = (await pathExists(dst)) ? await readFile(dst, 'utf8') : '';
+  const present = new Set(existing.split('\n').map((l) => l.trim()));
+  const additions = entries
+    .map((e) => (e && typeof e.pattern === 'string' ? e.pattern : null))
+    .filter((p) => p && !present.has(p.trim()));
+  if (additions.length === 0) return; // already covered — never rewrite
+  const base = existing && !existing.endsWith('\n') ? `${existing}\n` : existing;
+  const block = `\n# Baseline must-ignore set (managed by the gitignore skill; add-only)\n${additions.join('\n')}\n`;
+  await writeFile(dst, base + block);
+}
+
 export async function freshInstall(templateDir, target, opts = {}) {
   const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: false, skipSpecialMerge: true });
   await cp(templateDir, target, { recursive: true, force: false, filter });
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
+  await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);
   const baseline_version = await readPackageVersion();
   await writeBaselineManifest(target, baseline_version);
@@ -146,6 +169,7 @@ export async function forceInstall(templateDir, target, opts = {}) {
   await cp(templateDir, target, { recursive: true, force: true, filter });
   await applySpecialAndNeverTouch(templateDir, target);
   if (opts.withNpmrc === true) await materializeNpmrc(target);
+  await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);
   const baseline_version = await readPackageVersion();
   await writeBaselineManifest(target, baseline_version);

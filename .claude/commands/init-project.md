@@ -131,6 +131,7 @@ Do each sub-step in order; if any fails, stop and surface the error before conti
 
    Recommender output **must not** propose new subagent types — only stack-skill additions for the existing `swarm-worker`. If you see a `subagents` field in the recommender JSON, ignore it and surface a warning that the schema is stale.
 5. **Add new hooks** (if any) → write `.claude/hooks/<name>.mjs`, `chmod +x`, wire into `.claude/settings.json`. Use Node ESM with `import` from `lib/common.mjs`, no jq, follow §4.1 conventions.
+5a. **Ensure `.gitignore`** → run the baseline `.gitignore` materialization (the same add-only merge `src/cli/install.js → materializeGitignore` performs): create the target `.gitignore` from `.claude/skills/gitignore/baseline-ignores.json` if absent, or append only the baseline must-ignore lines it lacks (never overwrite or reorder existing entries). Offline; for stack-tailored enrichment, invoke the `gitignore` skill. This guarantees the `gitignore_leak_guard` hook's must-ignore set is actually ignored before the first commit.
 6. **Write `project.json`** with the agreed values, `configured: true`, **and a populated `additions` block**:
    ```jsonc
    "additions": {

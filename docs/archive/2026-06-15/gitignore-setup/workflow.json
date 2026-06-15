@@ -1,0 +1,12 @@
+{
+  "request": "Gitignore setup capability, three coupled parts: (1) a NEW `gitignore` skill that generates a .gitignore via the gitignore.io service (with a vendored-default fallback for offline, per Article VI.5 offline-first); (2) `/init-project` SHALL always create a .gitignore covering baseline-specific paths (.claude/state/, _pending.md content, obj/, swarm worktrees, etc.) plus common ignores (node_modules, .env*, OS/editor cruft); (3) a NEW PreToolUse hook that hard-blocks `git commit` when required must-ignore paths are not actually ignored — validated cheaply/offline via `git check-ignore` against a fixed list, NOT a per-commit gitignore.io fetch. USER DECISIONS (triage): track intake-full + codesign_mode on; validation mechanism = new PreToolUse hard-block hook (not a commit-skill step). Governance cascades to handle in spec: new skill 41->42 AND new hook 23->24 (derive-counts, manifest, seed.md §4.1/§4.3, CLAUDE.md/README counts, CONSTITUTION Appendix A/B, settings.json wiring; see landmines baseline-skill-count-cascade + baseline-skill-edit-needs-manifest-rebuild).",
+  "slug": "gitignore-setup",
+  "track_id": "intake-full",
+  "codesign_mode": true,
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781524370,
+  "updated_at": 1781524400
+}

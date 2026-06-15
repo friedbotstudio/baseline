@@ -16,8 +16,8 @@ const CANONICAL_MEMORY = [
 
 const SPELLED = {
   1: 'one', 3: 'three', 5: 'five', 6: 'six', 7: 'seven',
-  11: 'eleven', 12: 'twelve', 13: 'thirteen', 22: 'twenty-two', 40: 'forty',
-  41: 'forty-one',
+  11: 'eleven', 12: 'twelve', 13: 'thirteen', 22: 'twenty-two', 24: 'twenty-four', 40: 'forty',
+  41: 'forty-one', 42: 'forty-two',
 };
 
 // The skills category breakdown. Category ASSIGNMENT is editorial (not
@@ -37,7 +37,7 @@ export const SKILL_CATEGORIES = {
   sharedGlobals: 7,
   audit: 1,
   altTracks: 1,
-  maintenance: 1,
+  maintenance: 2,
 };
 
 // Spell out a count for prose/word-form surfaces. Throws on an unmapped value so
