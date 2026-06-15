@@ -8,12 +8,21 @@
 // Replaces the prior `site.json` (which carried a hardcoded "v0" literal that
 // drifted from package.json).
 
+const fs = require('node:fs');
+const path = require('node:path');
+
 const pkg = require('../../package.json');
 
 const [major, minor] = pkg.version.split('.');
 
+// Canonical deployed origin, derived from the GitHub Pages CNAME so the sitemap
+// (and any other absolute-URL need) stays in lockstep with the deploy domain.
+// Update site-src/CNAME to change domains; this is not a second hardcoded copy.
+const cname = fs.readFileSync(path.join(__dirname, '..', 'CNAME'), 'utf8').trim();
+
 module.exports = {
   brand: 'baseline',
+  url: `https://${cname}`,
   byline: 'by friedbotstudio',
   license: 'Apache 2.0',
   tagline: 'A discipline layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit.',

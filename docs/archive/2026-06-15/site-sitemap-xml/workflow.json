@@ -1,0 +1,12 @@
+{
+  "request": "Add a generated sitemap.xml to the Eleventy docs site (site-src). Approach A (research-confirmed, context7 /11ty): a template `site-src/sitemap.njk` with `permalink: /sitemap.xml` + `eleventyExcludeFromCollections: true`, iterating `collections.all` and emitting `<url><loc>{origin}{page.url}</loc><lastmod>{page.date}</lastmod></url>`. ABSOLUTE <loc> required — the `| url` filter only normalizes the path, it does not add an origin. Origin = https://baseline.friedbotstudio.com, derived from the existing site-src/CNAME (deployed at domain root, no pathPrefix; the rel-url filter handles page paths). Keep the origin in lockstep with the CNAME (e.g. expose a computed `url` on site-src/_data/site.cjs read from CNAME, or read CNAME in the sitemap data) rather than hardcoding a second copy. No new npm dependency (rejected the community plugin; offline-first). Test: build the site (obj/site) and assert sitemap.xml exists, parses as XML, and lists every public page's absolute URL while excluding itself.",
+  "slug": "site-sitemap-xml",
+  "track_id": "tdd-quickfix",
+  "skip_brainstorm": true,
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "approve-spec"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781548199,
+  "updated_at": 1781548199
+}
