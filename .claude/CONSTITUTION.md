@@ -149,7 +149,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 - `audit-baseline` — drift check between this constitution + seed.md and the implementation
 
 **Alternate tracks (1)** — stripped-down workflows routed via `/triage`:
-- `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `simplify` / `integrate` / `document` only when their triggers apply. `verify`, `archive`, `/grant-commit`, `/commit` mandatory. Not a bypass — silent skips of triggered conditional phases are forbidden.
+- `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `verify` / `simplify` / `integrate` / `document` only when their triggers apply. `archive`, `/grant-commit`, `/commit` mandatory; `verify` is conditional — skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs). Not a bypass — silent skips of triggered conditional phases are forbidden.
 
 ---
 

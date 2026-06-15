@@ -205,6 +205,6 @@ toc:
     <p>A stripped-down pipeline for tasks that need no failing-test-driven code change.</p>
   </div>
   <ul>
-    <li><code>chore</code>. Stripped-down workflow for tasks with no failing-test-driven code change: documentation edits, governance count bumps, formatting, dependency bumps. Skips scenario and implement; runs edits directly. Verify, archive, grant-commit, and commit remain mandatory.</li>
+    <li><code>chore</code>. Stripped-down workflow for tasks with no failing-test-driven code change: documentation edits, governance count bumps, formatting, dependency bumps. Skips scenario and implement; runs edits directly. Archive, grant-commit, and commit always run. Verify runs by default, but a pure-docs chore can skip it when the project marks its test suite behavior-only (project.json test.kind), so documentation work is not blocked by a code test that cannot apply to it, while real code changes still get verified.</li>
   </ul>
 </section>

@@ -1,7 +1,7 @@
 ---
 name: chore
 owner: baseline
-description: Workflow track for tasks that need no TDD — documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes. Skips `/scenario` and `/implement` (no failing test to drive) and runs the work directly. `verify`, `archive`, `memory-flush`, `/grant-commit`, and `/commit` remain mandatory. `simplify`, `integrate`, and `document` are conditional — required when the diff hits one of the listed triggers, optional otherwise. Chore is a stripped-down pipeline, not a bypass; never silently skip a conditional phase whose triggers apply.
+description: Workflow track for tasks that need no TDD — documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes. Skips `/scenario` and `/implement` (no failing test to drive) and runs the work directly. `archive`, `memory-flush`, `/grant-commit`, and `/commit` remain mandatory. `verify`, `simplify`, `integrate`, and `document` are conditional — required when the diff hits one of the listed triggers, optional otherwise. `verify` is skipped only when the diff is pure-docs/prose AND `project.json → test.kind` is `behavior` (absent/invalid `test.kind` → `structural` → verify runs). Chore is a stripped-down pipeline, not a bypass; never silently skip a conditional phase whose triggers apply.
 argument-hint: "<one-line description of the chore>"
 ---
 
@@ -42,27 +42,31 @@ The classification rule is: *if there is no failing test that should exist for t
 ### Mandatory phases (always run)
 
 1. **Edit** — apply the change directly. No `/scenario`, no `/implement` — there is no failing test to drive.
-2. **`verify`** — run the project test command and stamp `.claude/state/last_test_result`. FAIL means stop, surface, and route the user to `/triage` for a proper bugfix track. The verdict is binding (the `verify_pass_guard` hook reads this file).
-3. **`archive`** — empty bundle is fine; `/commit`'s prereq requires `archive` in `completed`.
-4. **`memory-flush`** — Phase 10.6. Empty pending is fine (fast-path runs Step 0 sweeps and short-circuits). `/commit`'s prereq requires `memory-flush` in `completed`.
-5. **`/grant-commit` then `/commit`** — user-required consent + commit. Same as every other workflow.
+2. **`archive`** — empty bundle is fine; `/commit`'s prereq requires `archive` in `completed`.
+3. **`memory-flush`** — Phase 10.6. Empty pending is fine (fast-path runs Step 0 sweeps and short-circuits). `/commit`'s prereq requires `memory-flush` in `completed`.
+4. **`/grant-commit` then `/commit`** — user-required consent + commit. Same as every other workflow.
 
 ### Conditional phases (required when triggers apply, optional otherwise)
 
-5. **`simplify`** — required when **any** of:
+5. **`verify`** — run the project test command and stamp `.claude/state/last_test_result` (the verdict is binding; `verify_pass_guard` reads this file). **Skipped only** when **both** hold:
+   - The diff is **pure-docs/prose only** — every changed path is documentation/prose (e.g. `**/*.md`, `docs/**`) and **no** path is code/config/script (`**/*.{mjs,js,cjs,ts,tsx,json,sh,py,yml,yaml}`, hook scripts, `settings.json`, `project.json`, etc.). Reuse the same diff inspection the triggers below use.
+   - `project.json → test.kind` is `behavior` — a code-only suite (e.g. a unit-test runner) that cannot exercise documentation.
+
+   Otherwise **run verify**. Specifically: any code/config/script path in the diff runs verify **regardless of `test.kind`**; and when `test.kind` is absent, invalid, or `structural` it resolves to `structural`, so verify runs even for a pure-docs diff (a structural/whole-repo check — e.g. the baseline audit — genuinely verifies docs). A `FAIL` from a verify that ran means stop, surface, and route the user to `/triage` for a proper bugfix track — chore does not loop. When verify is skipped, record the skip and its reason (pure-docs diff + `test.kind: behavior`) in the end-of-chore summary.
+6. **`simplify`** — required when **any** of:
    - Diff exceeds ~30 lines OR touches more than 3 files.
    - The change includes refactor-like moves (renames, restructuring, file relocations).
    - The chore creates duplication that future cleanup will need to consolidate.
    - More than one file in the diff would benefit from a reuse / structure pass.
    Otherwise skip — and say so in your end-of-chore summary so the choice is auditable.
 
-6. **`integrate`** — required when **any** of:
+7. **`integrate`** — required when **any** of:
    - The diff touches the test surface — test command, fixtures, hook scripts, `settings.json` hook wiring, `project.json → test/lint` keys.
    - The diff alters MCP server declarations or runtime config that affects how the harness behaves.
    - The diff could plausibly break unrelated downstream phases (e.g. editing an audit script's `EXPECTED_*` set).
-   Otherwise the mandatory `verify` stamp is sufficient — note the skip in the summary.
+   Otherwise the `verify` stamp (when verify ran) is sufficient — note the skip in the summary.
 
-7. **`document`** — required when **any** of:
+8. **`document`** — required when **any** of:
    - User-facing prose changes — `README.md`, `CLAUDE.md` prose, `docs/init/seed.md` prose, skill `SKILL.md` `description:` lines, public-facing reference docs.
    - Counts or inventories change — skill count, hook count, command count, MCP server count, alternate-track count.
    - New conventions are introduced — a new helper file, a new reference doc, a new directory.
@@ -77,8 +81,8 @@ If a conditional phase is required, run it **before** `/grant-commit`. If you sk
 1. Read `.claude/state/workflow.json`. Confirm `track_id == "chore"` (post-§18) OR `entry_phase == "chore"` (legacy pre-§18). If neither, stop and surface the mismatch — the user reached this skill without the correct triage classification.
 2. Restate the intended edits inline: file paths, brief description per file, estimated total diff size. Confirm with the user if anything is ambiguous.
 3. Apply the edits via `Edit` / `MultiEdit` / `Write`. Honour the engineering rules from CLAUDE.md Article VI (no stubs, no commented-out code, no `TODO` / `FIXME` / `HACK` / `XXX`).
-4. **Run the binding test command and stamp the verdict (inlined verify).** Per `.claude/skills/verify/SKILL.md` (the contract doc): read `.claude/project.json → test.cmd`; run via Bash from project root (capture stdout, stderr, exit code; no retry); apply verdict rules (`PASS` iff exit 0 AND at least one test executed AND no failed/errored test; otherwise `FAIL`); atomically write `.claude/state/last_test_result` with the canonical four-line format. The `verify_pass_guard` hook reads line 1 as the binding verdict. If the verdict is `FAIL`, stop — the user investigates; chore does not loop. Write `.claude/state/harness_state` with `state: "yielded"` and `reason: "chore verify FAIL"` so the Stop hook stays silent.
-5. Walk the conditional triggers in order. For each:
+4. **Apply the conditional `verify` trigger, and run + stamp the binding verdict when it fires (inlined verify).** Classify the diff (pure-docs/prose vs touches code/config/script) and read `.claude/project.json → test.kind` (absent or invalid → `structural`). **Skip verify** only when the diff is pure-docs/prose only **and** `test.kind` is `behavior`; in that case do **not** write `.claude/state/last_test_result`, and record the skip + reason in the end-of-chore summary. **Otherwise run verify**: per `.claude/skills/verify/SKILL.md` (the contract doc) read `.claude/project.json → test.cmd`; run via Bash from project root (capture stdout, stderr, exit code; no retry); apply verdict rules (`PASS` iff exit 0 AND at least one test executed AND no failed/errored test; otherwise `FAIL`); atomically write `.claude/state/last_test_result` with the canonical four-line format. The `verify_pass_guard` hook reads line 1 as the binding verdict. If the verdict is `FAIL`, stop — the user investigates; chore does not loop. Write `.claude/state/harness_state` with `state: "yielded"` and `reason: "chore verify FAIL"` so the Stop hook stays silent.
+5. Walk the remaining conditional triggers (`simplify` / `integrate` / `document`) in order. For each:
    - **Required** → invoke the phase skill and append it to `workflow.json → completed`.
    - **Skipped** → record the rationale in your end-of-chore summary; do not append to `completed`.
 6. Invoke `Skill(archive)` — mandatory.
@@ -93,7 +97,7 @@ If a conditional phase is required, run it **before** `/grant-commit`. If you sk
 
 ## Constraints
 
-- The `verify` stamp is binding. `verify_pass_guard` reads `.claude/state/last_test_result`; that file is the truth.
+- The `verify` stamp is binding **when verify runs**. `verify_pass_guard` reads `.claude/state/last_test_result`; that file is the truth. `verify` is skipped only when the diff is pure-docs/prose **and** `project.json → test.kind` is `behavior` (absent/invalid `test.kind` → `structural` → verify runs); a skipped verify writes no stamp and is recorded in the end-of-chore summary.
 - No subagent delegation — Article II applies to chore the same as every other phase skill.
 - A `FAIL` from `verify` is non-recoverable inside this skill — chore does not loop. If the audit reveals a real bug, the user runs `/triage` for a proper bugfix track.
 - Conditional phases are *conditional*, not *forbidden*. **If in doubt, run them.** The cost of running a `simplify` or `document` pass that turned out unnecessary is small; the cost of skipping one whose triggers actually applied is shipping drift.

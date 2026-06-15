@@ -42,11 +42,15 @@ When invoked from `/init-project`, structure your output as a JSON block (in add
     "language": "typescript",
     "framework": "next.js",
     "test_runner": "vitest",
-    "test_cmd": "vitest run --reporter=basic",
+    "test_cmd": "vitest run --reporter=dot",
+    "test_kind": "behavior",
     "linter": "biome",
     "lint_cmd": "biome check --apply"
   },
   "project_json": {
+    "test": {
+      "kind": "behavior"
+    },
     "tdd": {
       "source_globs": ["src/**", "app/**"],
       "test_globs": ["**/*.test.{ts,tsx}"]
@@ -68,6 +72,8 @@ When invoked from `/init-project`, structure your output as a JSON block (in add
   ]
 }
 ```
+
+Set `project_json.test.kind` (mirrored as the stack `test_kind` hint) to tell the chore track whether `test.cmd` can exercise a docs-only change: `behavior` — a code-only suite such as vitest — lets a pure-docs chore skip `verify`; `structural` (or an absent key) — a whole-repo check — always runs it. Recommend `behavior` whenever the `test_cmd` is a unit/integration runner. For vitest specifically, recommend `--reporter=dot` (the `basic` reporter was removed in vitest v4).
 
 When invoked outside `/init-project` (ad-hoc), the human-readable narrative alone is fine — skip the JSON.
 

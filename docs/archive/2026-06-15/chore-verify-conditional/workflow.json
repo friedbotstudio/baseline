@@ -1,0 +1,11 @@
+{
+  "request": "Two related fixes in one cycle: (1) Reporter bug — claude-automation-recommender/SKILL.md:45 recommends `vitest run --reporter=basic`, but `basic` was removed as a vitest reporter in v4.x, so every /init-project'd vitest repo gets a test.cmd that errors at startup. Change to `--reporter=dot`. (2) Docs-only verify trap — the chore track makes `verify` mandatory but its PASS rule assumes test.cmd is a whole-repo sanity check; when a repo wires test.cmd to a narrow behavior suite, any pure-docs chore can never pass verify and dead-ends. Make verify conditional in the chore track the way integrate already is — excepted when the write_set is pure-docs AND test.cmd is a behavior suite (not a structural check); /triage records the exception. Amends docs/init/seed.md → CLAUDE.md → chore SKILL + triage logic.",
+  "slug": "chore-verify-conditional",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781514069,
+  "updated_at": 1781514100
+}

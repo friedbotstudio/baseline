@@ -3,6 +3,7 @@
   "configured": false,
   "test": {
     "cmd": "node .claude/skills/audit-baseline/audit.mjs --file={file}",
+    "kind": "structural",
     "affected_resolver": null,
     "file_globs": [
       "**/*"
