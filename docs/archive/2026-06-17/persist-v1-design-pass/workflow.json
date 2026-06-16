@@ -1,0 +1,11 @@
+{
+  "request": "Persist the v1 design pass: annotate docs/vision/baseline-v1-thought-compiler.md Part 5.7 with shipped status + commit refs for pieces 1 (-c732, 75257cb) and 3 (-f029, 6c85282), record open-question resolutions (Q1→§5.4, Q3→§5.2 AC-conformance merge oracle, Q2/Q4→v2-deferred, §5.6→lean option b), record validated forward sequence 2→4→6→5, and update the -9d4c backlog caveat to reflect Slice A is 2/3 done.",
+  "slug": "persist-v1-design-pass",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "integrate", "document"],
+  "completed": ["chore", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781637145,
+  "updated_at": 1781637630
+}

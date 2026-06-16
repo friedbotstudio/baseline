@@ -298,13 +298,18 @@ Each piece is its own intake → spec → approve cycle. Ordered so Slice A is t
 smallest dogfoodable vertical slice.
 
 **Slice A — smallest end-to-end thing (mostly independent):**
-1. **Minimal governance exception** — amend seed.md + Article II *just enough* to
-   permit ONE bounded maker/checker experiment on a single disjoint-write_set task.
-   Resolves the prototype-vs-amend chicken-and-egg.
+1. ✅ **SHIPPED** (`-c732`, commit `75257cb`) — **Minimal governance exception** —
+   amended seed.md §4.2 + Article II §II.A *just enough* to permit ONE bounded
+   maker/checker experiment on a single disjoint-write_set task. Resolved the
+   prototype-vs-amend chicken-and-egg.
 2. **Threat/value tier config dial** — `project.json` tiers → mandatory-vs-advisory
    oracles + floor/ceiling per checker. Tiny, foundational, every checker reads it.
-3. **Mutation oracle for the TDD checker** — the one genuinely new mechanical
-   capability (mutation score, not coverage). Dogfoodable on the baseline's own suite.
+3. ✅ **SHIPPED** (`-f029`, commit `6c85282`) — **Mutation oracle for the TDD
+   checker** — the one genuinely new mechanical capability (mutation score, not
+   coverage), built on Stryker (`scripts/mutation-oracle.mjs`, `npm run test:mutation`).
+   Dogfoodable on the baseline's own suite. Currently **advisory-only**: floorless,
+   never writes `last_test_result`. Wiring it as a blocking checker needs the piece-2
+   floor (below) and the piece-5 loop.
 
 **Slice B — the loop (depends on A):**
 4. **Promote existing review skills to oracle-bound checkers** — refit
@@ -322,3 +327,66 @@ smallest dogfoodable vertical slice.
 8. **Gate taxonomy → AI-native debugging skill → v2** — safe-vs-ask-a-human
    classifier, then the explanation-trace debugging UX, then the signal-driven OS.
    Kept as one far-out stub; fragment when closer.
+
+---
+
+## Part 6 — Design-pass status (2026-06-17)
+
+A grounded re-validation of the 8-piece sequence against the implementation on disk.
+Parts 1–5 stand as captured; this part records what has shipped, resolves the Part-4
+open questions, and fixes the forward sequence. It supersedes the Part-5.7 *ordering*
+where they disagree (the piece definitions are unchanged).
+
+### 6.1 Shipped state — Slice A is 2/3 done
+
+| Piece | Key | State |
+|---|---|---|
+| 1 — Minimal governance exception (§II.A charter) | `-c732` | ✅ shipped `75257cb` |
+| 2 — Threat/value tier config dial | `-1a2d` | ⬜ open — no `tier`/`floor`/`ceiling` keys in `project.json`; no consumer floor exists |
+| 3 — Mutation oracle | `-f029` | ✅ shipped `6c85282` — advisory-only (floorless, never writes `last_test_result`, manually invoked) |
+| 4 — Promote review skills → oracle-bound checkers | `-d186` | ⬜ open (large) |
+| 5 — Maker/checker RALPH loop + stop rule | `-4c43` | ⬜ open (large) — depends on 2,3,4 |
+| 6 — Plan-as-durable-diffable-state | `-424f` | ⬜ open (large) |
+| 7 — Real Article II amendment | `-9360` | ⬜ blocked on ≥3 graduation round-trips |
+| 8 — Gate taxonomy → debugging → v2 | `-9008` | ⬜ far out |
+
+The §II.A charter (piece 1) being live means one bounded maker/checker round-trip is
+already sanctioned; piece 3 gives one working (advisory) oracle. What remains in
+Slice A is the floor that turns that oracle from "lists survivors" into "blocks below
+a mutation-score threshold" — which is piece 2.
+
+### 6.2 Open questions — re-validated, none block v1
+
+- **Part 4 Q1 (deadlock/oscillation cap)** → answered by **§5.4**: `green-stop` on k dry
+  rounds; `red-stop` (ceiling-below-floor → yield to human) is the oscillation escape.
+  Same lineage as the implement 5-iter / design-ui 3-iter caps.
+- **Part 4 Q3 (merge/synthesis oracle)** → answered by the **§5.2 added row**: the
+  AC-conformance checker (every AC's test green on the integrated tree) IS the merge
+  oracle. It is the existing `integrate` phase. The §2.4 "synthesis is a hard problem"
+  caveat has a mechanical answer.
+- **Part 4 Q2 (where reactivity lives)** + **Q4 (v2 rollback / kill switch)** → both are
+  **v2**. v1 is turn-driven by design; reactivity is a v2 architecture change. Scoped
+  out of v1.
+- **§5.6 (brainstorm checker has no oracle)** → lean **option (b)**: force every
+  brainstorm scope-cut to be a recorded explicit non-goal a later phase can challenge,
+  turning "we dropped X" into a falsifiable claim. Deferrable — not on the Slice-A/B
+  critical path.
+
+Net: nothing genuinely blocks the v1 critical path; the remaining work is mechanical
+sequencing, not unresolved design.
+
+### 6.3 Validated forward sequence: 2 → 4 → 6 → 5
+
+- **Piece 2 (tier dial) next** — small; the YAGNI objection dissolves now that the
+  mutation oracle is a real, floorless consumer awaiting a floor. Piece 5's stop-rule
+  cannot be specified without this dial.
+- **Piece 4 (oracle-bound checker refit)** — the mutation oracle is a working template
+  for an oracle-bound checker, and `spec-shippability-review` already emits
+  BLOCKER/ADVISORY. Generalize the proof-obligation contract from those two.
+- **Piece 6 (durable plan schema)** — the orchestration spine; mirrors `workflow.json`
+  discipline.
+- **Piece 5 (the loop)** — last, per the §5.7 dependency (after 2,3,4 exist).
+
+Each remaining piece is its own intake → spec → approve cycle, triaged as an
+`epic-child` of `-9d4c`, with its implementation run as a deliberate §II.A
+maker/checker round-trip (banking toward the ≥3 that unblock piece 7).
