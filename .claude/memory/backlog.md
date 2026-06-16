@@ -144,7 +144,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "archival of the whole bundle is an /epic-close concern (deferred; not actuated in this revision — children archive only their own slice artifacts)."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-10
 - raised-in-context: epic-amortized-discovery (chore; seed §18.9 amendment)
 - estimated-effort: small
@@ -153,7 +153,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: The `epic` track (seed §18.9) deliberately omits `archive` so the sliced spec/scout/research stay live at `docs/.../<epic>.md` for children to pin. Nothing archives the discovery bundle when the epic completes. Add an `/epic-close` step (or last-child hook): when every `.claude/state/epic/<slug>.json → children[]` entry is `status: committed`, move the discovery bundle to `docs/archive/<date>/<epic>/` and close the epic. Until then epic discovery bundles accumulate live under `docs/`.
 
 ---
-
+- superseded-at: 2026-06-16
 ## spec-rollout-prerequisite-enforceability-oracle-checker-419d
 
 > verbatim (user, 2026-06-10):

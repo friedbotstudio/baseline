@@ -1,0 +1,31 @@
+{
+  "request": "epic-close full-bundle archival when children resolve (backlog -02a3): add an /epic-close step or last-child hook that, when every .claude/state/epic/<slug>.json children[] entry is status: committed, moves the discovery bundle (sliced spec/scout/research at docs/.../<epic>.md) to docs/archive/<date>/<epic>/ and closes the epic. The epic track (seed 18.9) deliberately omits archive so children can pin live discovery; nothing archives the bundle on epic completion.",
+  "slug": "epic-close-bundle-archival",
+  "track_id": "spec-entry",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "review"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "epic-close-full-bundle-archival-when-children-resolve-02a3"
+  ],
+  "created_at": 1781607468,
+  "updated_at": 1781625291
+}
