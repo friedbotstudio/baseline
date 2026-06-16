@@ -1,0 +1,11 @@
+{
+  "request": "Fix data-corruption bug in .claude/skills/memory-flush/sweep.mjs: applyStaleAction (modeStaleSweep) and modeStampClosure use text.replace(block, updated) where String.replace interprets $`, $', $&, $n special patterns in the replacement string; entry bodies containing shell snippets with $ cause matched text to be re-injected, duplicating/corrupting the memory file. Replace with indexOf/slice splice or function replacer.",
+  "slug": "sweep-replace-dollar-injection",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781604160,
+  "updated_at": 1781605120
+}

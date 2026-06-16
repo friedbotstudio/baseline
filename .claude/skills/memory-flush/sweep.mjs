@@ -132,6 +132,17 @@ function deleteBlock(text, block) {
   return after;
 }
 
+// Splice `updated` in place of the first occurrence of `block` via indexOf/slice.
+// String.prototype.replace(block, updated) is UNSAFE here: a string replacement
+// interprets $`, $', $&, $$, $n patterns, and memory entry bodies contain shell
+// snippets with $-sequences, so .replace re-injects matched text and duplicates
+// the entry. This splice never interprets the replacement.
+function replaceBlock(text, block, updated) {
+  const idx = text.indexOf(block);
+  if (idx < 0) return text;
+  return text.slice(0, idx) + updated + text.slice(idx + block.length);
+}
+
 function updateField(block, name, value) {
   const pat = new RegExp(`(^\\s*-\\s*${escapeRegex(name)}\\s*:\\s*).+$`, 'im');
   if (pat.test(block)) {
@@ -313,7 +324,7 @@ function modeStampClosure(memdir, keysCsv) {
     const wasStamped = (readFieldValue(block, 'status') || '').trim() === 'picked-up';
     let updated = updateField(block, 'status', 'picked-up');
     updated = updateField(updated, 'superseded-at', today);
-    newText = newText.replace(block, updated);
+    newText = replaceBlock(newText, block, updated);
     if (wasStamped) report.already_closed.push(key);
     else report.stamped += 1;
   }
@@ -326,7 +337,7 @@ function applyStaleAction(text, block, name, reply, head, today, report) {
     let updated = updateField(block, 'verified-at', head || 'HEAD');
     updated = updateField(updated, 'last-touched', today);
     report.reverified += 1;
-    return text.replace(block, updated);
+    return replaceBlock(text, block, updated);
   }
   if (reply === 'delete') {
     report.deleted += 1;
@@ -336,7 +347,7 @@ function applyStaleAction(text, block, name, reply, head, today, report) {
     const field = closureFieldFor(name);
     const updated = updateField(block, field, today);
     report.mark_closed += 1;
-    return text.replace(block, updated);
+    return replaceBlock(text, block, updated);
   }
   report.kept += 1;
   return text;
@@ -362,17 +373,17 @@ function modeBacklogDecay(memdir, thresholdDays) {
     const reply = stdinReplies();
     if (reply === 'keep') {
       const updated = updateField(block, 'last-touched', today);
-      newText = newText.replace(block, updated);
+      newText = replaceBlock(newText, block, updated);
       report.kept += 1;
     } else if (reply === 'drop') {
       let updated = updateField(block, 'status', 'dropped');
       updated = updateField(updated, 'superseded-at', today);
-      newText = newText.replace(block, updated);
+      newText = replaceBlock(newText, block, updated);
       report.dropped += 1;
     } else if (reply === 'picked-up') {
       let updated = updateField(block, 'status', 'picked-up');
       updated = updateField(updated, 'superseded-at', today);
-      newText = newText.replace(block, updated);
+      newText = replaceBlock(newText, block, updated);
       report.picked_up += 1;
     } else {
       report.deferred += 1;
