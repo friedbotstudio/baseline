@@ -232,6 +232,9 @@
   "epic": {
     "min_slices": 3
   },
+  "tier": {
+    "level": "regulated"
+  },
   "simplify": {
     "min_files": 4
   },

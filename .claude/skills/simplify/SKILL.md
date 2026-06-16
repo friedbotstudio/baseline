@@ -4,6 +4,8 @@ owner: baseline
 description: Workflow Phase 7 — Mechanical cleanup pass over the branch diff, followed by a `code-structure` review pass and a `verify` re-stamp. Shadows the global `simplify` skill at project scope; the cleanup pass is performed inline rather than via Skill self-call.
 ---
 
+> Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('review')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
+
 # Prereq
 
 `tdd` in `completed` AND `.claude/state/last_test_result` line 1 is `PASS`.

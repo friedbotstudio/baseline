@@ -35,7 +35,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "Threat/value tier config dial — project.json tiers → which oracles are mandatory vs advisory, plus each checker's floor + ceiling values. Pure config, tiny, every checker reads it."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-05
 - raised-in-context: v1 thought-compiler design discussion (no active workflow)
 - estimated-effort: small
@@ -46,7 +46,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: One dial sets BOTH the floor (quality threshold) and ceiling (effort budget) per checker, so "how hard do we search" and "know when to stop" are pinned config not per-run judgment. Same pattern as git.protected_branches. Foundational — every checker reads it. Detail: vision doc Part 5.4–5.5, piece 2.
 
 ---
-
+- superseded-at: 2026-06-16
 ## promote-review-skills-to-oracle-bound-checkers-d186
 
 > verbatim (assistant, 2026-06-05):

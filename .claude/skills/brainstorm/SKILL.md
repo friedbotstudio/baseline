@@ -4,6 +4,8 @@ owner: baseline
 description: PM-mode brainstorm helper. Captures the requirement via Socratic dialogue before any entry phase (`/intake`, `/spec`, `/tdd`) drafts its artifact. Stage 0 skip-check, Stage 1 gap-analysis, Stage 2 probe-loop, Stage 3 confirm-and-persist. Output lives at `docs/brief/<slug>.md`. Never proposes solutions — Stage 2 dialogue discipline is structurally enforced via `discipline.mjs`.
 ---
 
+> Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('brainstorm')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
+
 # brainstorm — PM-mode requirement capture
 
 You are running a Socratic dialogue with the engineer to surface the underlying need behind a request before any solution shape is committed. This skill is invoked at Step 0.5 of `/intake`, `/spec`, and `/tdd` entry skills. Decisions live in main context (Article II); no subagent delegation.

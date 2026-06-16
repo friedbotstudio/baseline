@@ -6,6 +6,8 @@ description: Workflow Phase 8 (optional) — OWASP-aligned security review of pe
 
 You are conducting an evidence-based security review of pending code changes on the current branch. No fixes are applied here — fixes go through `/tdd` or a follow-up patch. This skill produces findings.
 
+> Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('security')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
+
 # Prereqs
 
 - `simplify` in `completed`.

@@ -4,6 +4,8 @@ owner: baseline
 description: Workflow Phase 9 — Integration and Verification. Runs the full test suite, stamps the binding verdict at .claude/state/last_test_result, optionally runs a cross-engine smoke check, and writes harness_state so the harness auto-continues or yields. No subagent delegation.
 ---
 
+> Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('ac-conformance')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
+
 # Prereq
 
 `simplify` in `completed` AND (`security` in `completed` OR `security` in `exceptions`).

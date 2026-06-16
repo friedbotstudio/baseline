@@ -16,8 +16,31 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+// tier-dial:read-path — the tdd checker's floor/ceiling come from the tier dial at
+// .claude/hooks/lib/tier-dial.mjs via resolveCheckerThreshold('tdd'). Advisory only
+// this slice (piece 2): the oracle surfaces score-vs-floor; it never blocks (piece 5).
+import { resolveCheckerThreshold } from '../.claude/hooks/lib/tier-dial.mjs';
 
 // ---------- Domain (pure) ----------
+
+/** Mutation score from raw counts: killed/total, or null when there are no mutants. */
+function scoreFromCounts(total, survivorCount) {
+  if (total === 0) return null;
+  return (total - survivorCount) / total;
+}
+
+/** Mutation score (0..1) for a report, or null when the report has no mutants. */
+export function computeScore(report) {
+  return scoreFromCounts(countMutants(report), parseSurvivors(report).length);
+}
+
+/** Compare a score against its floor. null score OR null floor → NA (no verdict). */
+export function surfaceComparison(score, floor) {
+  let relation;
+  if (score === null || floor === null) relation = 'NA';
+  else relation = score >= floor ? 'ABOVE' : 'BELOW';
+  return { score, floor, relation };
+}
 
 /** Build a Stryker config scoped to one module + one test command. */
 export function buildConfig(modulePath, testPath) {
@@ -76,6 +99,9 @@ export function emitAdvisory(run, { stateDir, generatedAt }) {
         scopeModule: run.scopeModule,
         mutantsTotal: run.mutantsTotal,
         survivors: run.survivors,
+        score: run.score ?? null,
+        floor: run.floor ?? null,
+        relation: run.relation ?? 'NA',
         generatedAt,
         advisory: true,
       },
@@ -122,10 +148,15 @@ async function main(argv) {
   }
   const cwd = process.cwd();
   const { survivors, mutantsTotal } = await runOracle(modulePath, testPath, { cwd });
+  const score = scoreFromCounts(mutantsTotal, survivors.length);
+  const { tier, floor } = resolveCheckerThreshold('tdd');
+  const { relation } = surfaceComparison(score, floor);
   const out = emitAdvisory(
-    { scopeModule: modulePath, mutantsTotal, survivors },
+    { scopeModule: modulePath, mutantsTotal, survivors, score, floor, relation },
     { stateDir: resolve(cwd, '.claude/state'), generatedAt: new Date().toISOString() },
   );
+  const pct = (x) => (x === null ? 'n/a' : `${Math.round(x * 100)}%`);
+  process.stdout.write(`mutation score ${pct(score)} vs floor ${pct(floor)} (${tier}): ${relation}\n`);
   if (survivors.length === 0) {
     process.stdout.write(`mutation-oracle: no surviving mutants in ${modulePath} (${mutantsTotal} mutants). Report: ${out}\n`);
   } else {

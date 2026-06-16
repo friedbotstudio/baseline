@@ -4,6 +4,8 @@ owner: baseline
 description: Preflight a spec draft without saving. Runs the same three checks as the write-boundary hooks — PlantUML syntax, required diagram presence, and AC-to-sequence traceability — and prints a compact pass/fail table. Use while iterating so the hooks don't bite on save.
 ---
 
+> Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('spec')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
+
 # spec-lint — preflight a spec draft
 
 Invocable by both user (`/spec-lint <slug>`) and Claude (when iterating on a spec and wanting to check status before writing).
