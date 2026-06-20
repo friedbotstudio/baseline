@@ -14,6 +14,9 @@ import { join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { deriveCounts, SKILL_CATEGORIES } from './derive-counts.mjs';
+import {
+  EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
+} from './expected-baseline.mjs';
 
 // True only when run as a script (`node audit.mjs`), false when imported by a
 // test. Guards the top-level audit run + process.exit so importing the exported
@@ -88,28 +91,10 @@ function isValidPreamble(text) {
   return [false, 'malformed frontmatter: missing closing separator'];
 }
 
-const EXPECTED_HOOKS = new Set([
-  'setup_guard', 'destructive_cmd_guard', 'git_commit_guard', 'env_guard',
-  'spec_approval_guard', 'swarm_approval_guard', 'epic_approval_guard', 'verify_pass_guard',
-  'track_guard', 'artifact_template_guard', 'plantuml_syntax_guard',
-  'spec_diagram_presence_guard', 'spec_design_calls_guard',
-  'swarm_boundary_guard', 'tdd_order_guard',
-  'gitignore_leak_guard',
-  'process_lifecycle_guard',
-  'lint_runner', 'test_runner',
-  'memory_session_start', 'memory_stop', 'memory_pre_compact',
-  'harness_continuation',
-  'consent_gate_grant',
-]);
-const EXPECTED_AGENTS = new Set(['swarm-worker']);
-const EXPECTED_COMMANDS = new Set([
-  'approve-spec', 'approve-swarm', 'grant-commit', 'grant-push',
-  'init-project', 'init-project-doctor',
-]);
-const EXPECTED_MEMORY_FILES = new Set([
-  'landmarks', 'libraries', 'decisions', 'landmines', 'conventions',
-  'pending-questions', 'backlog', '_pending', '_resume', '_thread',
-]);
+// Declared rosters (EXPECTED_HOOKS / EXPECTED_AGENTS / EXPECTED_COMMANDS /
+// EXPECTED_MEMORY_FILES) are the single source of truth in expected-baseline.mjs,
+// imported above and shared with the governance tests so a roster change is a
+// one-line edit that re-aligns the whole suite.
 
 function loadManifest() {
   for (const rel of ['.claude/manifest.json', 'obj/template/.claude/manifest.json']) {

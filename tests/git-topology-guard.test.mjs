@@ -23,6 +23,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync, cpSync, readFileSync, re
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
@@ -239,9 +240,9 @@ describe('§Behavior #8 — audit obligations (AC-012)', () => {
     assert.equal(r.status, 0, `audit-baseline must exit 0; got ${r.status}\n${(r.stdout || '').slice(-500)}`);
   });
 
-  it('test_when_top_level_hooks_counted_then_exactly_24', () => {
+  it('test_when_top_level_hooks_counted_then_matches_declared_roster', () => {
     const count = readdirSync(join(REPO_ROOT, '.claude/hooks')).filter((n) => n.endsWith('.mjs')).length;
-    assert.equal(count, 24, 'top-level hook count is 24 (gitignore_leak_guard added by gitignore-setup)');
+    assert.equal(count, EXPECTED_HOOKS.size, 'top-level hook count matches the declared roster (expected-baseline.mjs)');
   });
 
   it('test_when_articleVII_topology_present_in_all_three_governance_files', () => {

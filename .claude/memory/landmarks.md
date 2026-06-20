@@ -492,3 +492,30 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-06-18
 - caveat: `mandatory` is resolved DATA only this slice — nothing gates on it yet; blocking is piece 5 (the advisory mutation-score floor in `154cc1f` is advisory by design).
 
+## .claude/hooks/lib/timing.mjs
+
+- Path: `.claude/hooks/lib/timing.mjs`
+- Role: Foundation module for per-phase workflow timing (velocity Lever 0, `phase-timing-instrumentation`). Pure functions over `.claude/state/`: `stampFromWorkflow({rootDir, now})` appends `{phase,event:"completed",ts}` JSONL lines to `.claude/state/timing/<slug>.jsonl` for every phase newly present in `workflow.json → completed[]` (idempotent; `{appended:[]}` on absent/malformed workflow.json, never throws); `renderTable({rootDir, slug})` joins the stamps + consent-token mtimes into a `| Phase | Model (ms) | Human-wait (ms) |` markdown table (gate phases approve-spec/approve-swarm/grant-commit excluded as rows; the approve-spec gate's wait folds into the first post-spec work phase; negatives clamp to 0; missing token → `n/a`). CLI guard: `node .claude/hooks/lib/timing.mjs render <slug> [bundleDir]` writes `timing.md`.
+- Companion: `.claude/hooks/phase_timer.mjs` (the hook that calls `stampFromWorkflow`), `.claude/skills/archive/SKILL.md` Step 2 (invokes the render CLI before `archive.sh` moves the approval token).
+- Verified-at: 64d8a55
+- Last-touched: 2026-06-21
+- caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`.
+
+## .claude/hooks/phase_timer.mjs
+
+- Path: `.claude/hooks/phase_timer.mjs`
+- Role: PostToolUse(Write|Edit|MultiEdit) observe-only hook (the 25th hook). Reads the payload; no-ops unless `basename(tool_input.file_path) === 'workflow.json'`; then calls `stampFromWorkflow` (try/catch swallowed). Never blocks (PostToolUse has no deny path), never mutates the edited file — a timing-stamp failure must never disturb a workflow. Wired in `settings.json` + `src/settings.template.json` beside `lint_runner`/`test_runner`.
+- Companion: `.claude/hooks/lib/timing.mjs` (logic), `docs/init/seed.md §4.1` + `CLAUDE.md` Article VIII (governance rows).
+- Verified-at: 64d8a55
+- Last-touched: 2026-06-21
+- caveat: fires on EVERY Write/Edit/MultiEdit in the repo, so the basename guard must stay the first cheap check. Covers manual phase runs too (any path that appends to `completed[]`), not just `/harness`.
+
+## .claude/skills/audit-baseline/expected-baseline.mjs
+
+- Path: `.claude/skills/audit-baseline/expected-baseline.mjs`
+- Role: SINGLE SOURCE OF TRUTH for the baseline's declared rosters. Exports `EXPECTED_HOOKS`, `EXPECTED_AGENTS`, `EXPECTED_COMMANDS`, `EXPECTED_MEMORY_FILES`, `CANONICAL_MEMORY_FILES` (the non-`_` subset), `EXPECTED_MCP_SERVERS`, `EXPECTED_TRACKS`. `audit.mjs` imports the name rosters (extracted out of it); six governance tests import them so a count assertion is `<roster>.size`, never a literal. Adding a hook/command/agent/mcp-server is a ONE-LINE roster edit that re-aligns audit + the whole suite. Skills count stays sourced from `derive-counts.mjs → SKILL_CATEGORIES` (sum); disk counts come from `deriveCounts()`.
+- Companion: `.claude/skills/audit-baseline/audit.mjs`, `.claude/skills/audit-baseline/derive-counts.mjs` (disk deriver), tests: `derive-counts`, `epic-close-governance`, `epic-approval-guard`, `git-topology-guard`, `gitignore-governance-cascade`, `whatsnew-counts`.
+- Verified-at: 64d8a55
+- Last-touched: 2026-06-21
+- caveat: the roster is the *declaration*; `deriveCounts()` reads disk. Tests assert disk === roster (a real drift tripwire, not tautological). Prose count literals (CLAUDE.md/seed/README/CONSTITUTION) stay hand-maintained but are audit-checked against disk, so they track the roster transitively.
+

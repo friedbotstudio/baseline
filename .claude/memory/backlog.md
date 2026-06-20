@@ -164,6 +164,22 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: small
 - verified-at: 121078f
 - last-touched: 2026-06-11
-- caveat: Fix = extend `audit-baseline` to validate the docs site's hand-maintained prose/tables against the same derived counts (`derive-counts.mjs`) it already cross-checks for CLAUDE.md / README / seed.md. Two concrete checks: (1) `workflows.njk` selectable-track count plus presence of one list entry per selectable `track_id` in `workflows.jsonl`; (2) `hooks.njk` per-hook enforcement table enumerates every `.claude/hooks/*.mjs`, and the by-event boundary table covers each one. Natural pairing with the four-way Article IV mirror check and the `/init-project doctor` `workflows.jsonl` drift check. The `fix-docsite-epic-drift` chore corrected the content; this item is the guardrail so the same class of drift cannot pass CI silently again.
+- caveat: Fix = extend `audit-baseline` to validate the docs site's hand-maintained prose/tables against the same derived counts (`derive-counts.mjs`) it already cross-checks for CLAUDE.md / README / seed.md. Two concrete checks: (1) `workflows.njk` selectable-track count plus presence of one list entry per selectable `track_id` in `workflows.jsonl`; (2) `hooks.njk` per-hook enforcement table enumerates every `.claude/hooks/*.mjs`, and the by-event boundary table covers each one. Natural pairing with the four-way Article IV mirror check and the `/init-project doctor` `workflows.jsonl` drift check. The `fix-docsite-epic-drift` chore corrected the content; this item is the guardrail so the same class of drift cannot pass CI silently again. **RECURRED 2026-06-21**: `phase-timing-instrumentation` added the 25th hook and had to manually patch both `hooks.njk` tables (caught only by the `/document` reflective check, not by CI) — confirming this guardrail is still unbuilt and the drift class is live.
+
+---
+
+## baseline-velocity-levers-after-lever0-timing-v0lv
+
+> verbatim (user, 2026-06-21):
+> "I'd suggest we need to make baseline development faster i.e. right now baseline is slow (one feature takes ~1-3 hours) we need a strategy to make this faster ~20 minutes for a ~2 hours run"
+
+- source: user-instruction
+- status: open
+- raised-on: 2026-06-21
+- raised-in-context: baseline-velocity strategy discussion → `phase-timing-instrumentation` (Lever 0 shipped)
+- estimated-effort: large (multi-lever, sequenced)
+- verified-at: 64d8a55
+- last-touched: 2026-06-21
+- caveat: Strategy = stack multiplicative levers toward ~6× (no single lever suffices). **Lever 0 (measure-first) SHIPPED** as `phase-timing-instrumentation`: per-phase model-vs-human-wait timing via the `phase_timer` hook → `timing.md` in the archive bundle. The remaining levers, to be RANKED BY THE TIMING DATA once a few full runs accrue: **(1) parallelize the read-only checker fan-outs** (the 4 spec-review skills + lint, and scout∥research — Article II already permits pre-decided recipes in parallel; cleanest architectural win); **(2) right-size triage** so hook/skill/doc changes skip the heavy spec+diagram+4-review apparatus (biggest lever for typical baseline-on-baseline work); **(3) model/effort tiering** — mechanical phases (simplify/verify/integrate/archive/memory-flush) on a cheaper tier, judgment phases (spec/security/design) on the strong model; **(4) terser artifacts for internal dev** (output tokens dominate latency; gate diagram/verbosity by write_set); **(5) collapse human round-trips** — front-load gate decisions into one sitting, fast-path gate A for low-risk diffs (dominant lever IF timing shows the run is human-wait-bound). The critical unknown the timing data resolves: is a run model-generation-bound or human-wait-bound? That flips the ranking. Connects to the v1 thought-compiler epic (`-9d4c`): Levers 1+3 are the cheap-end of the same parallel maker/checker north star. NOTE the first real `timing.md` (this workflow's own bundle) collapsed pre-hook phases — a clean ranking needs a full run AFTER this ships.
 
 ---

@@ -49,7 +49,8 @@
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lint_runner.mjs" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test_runner.mjs" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test_runner.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase_timer.mjs" }
         ]
       }
     ],

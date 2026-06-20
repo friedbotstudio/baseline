@@ -13,6 +13,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { REPO_ROOT } from './helpers/epic-close-fixture.mjs';
+import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
 const read = (rel) => fs.readFile(path.join(REPO_ROOT, rel), 'utf8');
 
@@ -25,11 +26,12 @@ describe('epic-close governance — counts + mirror (AC-007)', () => {
     });
   });
 
-  it('test_when_counts_derived_then_skills_42_and_hooks_24', async () => {
+  it('test_when_counts_derived_then_skills_and_hooks_match_declarations', async () => {
     const mod = await import(pathToFileURL(path.join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs')).href);
     const counts = mod.deriveCounts(REPO_ROOT);
-    assert.equal(counts.skills, 42, 'skill count unchanged at 42 (epic-close adds no skill)');
-    assert.equal(counts.hooks, 24, 'hook count unchanged at 24 (epic-close adds no hook)');
+    const skillTotal = Object.values(mod.SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
+    assert.equal(counts.skills, skillTotal, 'skill count matches the category breakdown (epic-close adds no skill)');
+    assert.equal(counts.hooks, EXPECTED_HOOKS.size, 'hook count matches the declared roster (expected-baseline.mjs)');
   });
 
   it('test_when_constitution_compared_then_claude_md_byte_equal_template', async () => {

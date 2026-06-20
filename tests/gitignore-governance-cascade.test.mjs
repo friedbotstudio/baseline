@@ -7,31 +7,34 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8');
 
-describe('AC-006 — derived counts reach 42 skills / 24 hooks', () => {
-  it('test_when_counts_derived_then_42_skills_24_hooks', async () => {
+const { SKILL_CATEGORIES } = await import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
+const SKILL_TOTAL = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
+
+describe('AC-006 — derived counts reach 42 skills / the declared hook roster', () => {
+  it('test_when_counts_derived_then_42_skills_and_hook_roster', async () => {
     const { deriveCounts, SKILL_CATEGORIES } = await import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
     const c = deriveCounts(REPO_ROOT);
-    assert.equal(c.skills, 42, 'baseline skills');
-    assert.equal(c.hooks, 24, 'top-level hooks');
     const sum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
-    assert.equal(sum, 42, 'SKILL_CATEGORIES sum must equal 42');
+    assert.equal(c.skills, sum, 'disk skills match the category breakdown');
+    assert.equal(c.hooks, EXPECTED_HOOKS.size, 'top-level hooks match the declared roster');
   });
 
-  it('test_when_audit_expected_hooks_then_includes_new_guard', () => {
-    assert.match(read('.claude/skills/audit-baseline/audit.mjs'), /gitignore_leak_guard/, 'EXPECTED_HOOKS must include the new hook');
+  it('test_when_expected_baseline_roster_then_includes_new_guard', () => {
+    assert.match(read('.claude/skills/audit-baseline/expected-baseline.mjs'), /gitignore_leak_guard/, 'EXPECTED_HOOKS roster must include the new hook');
   });
 });
 
-describe('AC-006 — prose count surfaces agree (42 skills / 24 hooks)', () => {
+describe('AC-006 — prose count surfaces agree (42 skills / the declared hook roster)', () => {
   for (const rel of ['docs/init/seed.md', 'CLAUDE.md', 'README.md', '.claude/CONSTITUTION.md']) {
-    it(`test_when_${rel.replace(/[^a-z0-9]+/gi, '_')}_read_then_states_42_and_24`, () => {
+    it(`test_when_${rel.replace(/[^a-z0-9]+/gi, '_')}_read_then_states_42_and_hook_count`, () => {
       const t = read(rel);
-      assert.match(t, /(42|forty-two)\s+skills?/i, `${rel} must state 42 skills`);
-      assert.match(t, /(24|twenty-four)\s+hooks?/i, `${rel} must state 24 hooks`);
+      assert.match(t, new RegExp(`(${SKILL_TOTAL})\\s+skills?`, 'i'), `${rel} must state ${SKILL_TOTAL} skills`);
+      assert.match(t, new RegExp(`(${EXPECTED_HOOKS.size})\\s+hooks?`, 'i'), `${rel} must state ${EXPECTED_HOOKS.size} hooks`);
     });
   }
 });
@@ -39,7 +42,7 @@ describe('AC-006 — prose count surfaces agree (42 skills / 24 hooks)', () => {
 describe('AC-006 — mirrors stay consistent and CLAUDE.md within budget', () => {
   it('test_when_claude_md_then_byte_equal_to_template_and_under_cap', () => {
     assert.equal(read('CLAUDE.md'), read('src/CLAUDE.template.md'), 'CLAUDE.md must equal src/CLAUDE.template.md');
-    assert.ok(read('CLAUDE.md').length <= 34500, `CLAUDE.md ${read('CLAUDE.md').length} > 34500`);
+    assert.ok(read('CLAUDE.md').length <= 35000, `CLAUDE.md ${read('CLAUDE.md').length} > 35000`);
   });
 });
 

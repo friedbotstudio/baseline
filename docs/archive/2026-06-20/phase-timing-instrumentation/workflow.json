@@ -1,0 +1,11 @@
+{
+  "request": "Add per-phase wall-clock timing instrumentation to the workflow (velocity Lever 0). Stamp a durable, disk-persisted timestamp at every phase boundary so cross-yield human-wait gaps are captured alongside in-turn model time. At /archive, render a per-phase duration table that separates model-generation time per phase from the human-wait gaps at consent gates. Goal: measure where a workflow run's 1-3 hours actually goes so the remaining velocity levers can be ranked by data.",
+  "slug": "phase-timing-instrumentation",
+  "track_id": "intake-full",
+  "exceptions": ["cli-copy-review"],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781993628,
+  "updated_at": 1781996400
+}

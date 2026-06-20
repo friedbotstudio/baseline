@@ -26,6 +26,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
+
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const EPIC_GUARD = join(REPO_ROOT, '.claude/hooks/epic_approval_guard.mjs');
 const SPEC_GUARD = join(REPO_ROOT, '.claude/hooks/spec_approval_guard.mjs');
@@ -189,18 +191,18 @@ describe('AC-006 — track_guard read side unchanged (regression)', () => {
 });
 
 describe('epic_approval_guard — governance lockstep (AC-007)', () => {
-  it('the hook is on disk, wired in settings.json, and listed in audit EXPECTED_HOOKS with count 24', () => {
+  it('the hook is on disk, wired in settings.json, and listed in audit EXPECTED_HOOKS matching the declared roster', () => {
     // Hook file exists
     const guardSrc = readFileSync(EPIC_GUARD, 'utf8');
     assert.match(guardSrc, /epic/i);
     // Wired in live settings.json
     const settings = readFileSync(join(REPO_ROOT, '.claude/settings.json'), 'utf8');
     assert.match(settings, /epic_approval_guard\.mjs/);
-    // Listed in audit EXPECTED_HOOKS
-    const audit = readFileSync(join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs'), 'utf8');
-    assert.match(audit, /'epic_approval_guard'/);
-    // Canonical count bumped to 24 in the constitution (gitignore_leak_guard added by gitignore-setup)
+    // Listed in the declared roster (single source of truth)
+    const roster = readFileSync(join(REPO_ROOT, '.claude/skills/audit-baseline/expected-baseline.mjs'), 'utf8');
+    assert.match(roster, /'epic_approval_guard'/);
+    // Constitution states the hook count, which tracks the declared roster.
     const claude = readFileSync(join(REPO_ROOT, 'CLAUDE.md'), 'utf8');
-    assert.match(claude, /24 hooks/);
+    assert.match(claude, new RegExp(`${EXPECTED_HOOKS.size} hooks`));
   });
 });

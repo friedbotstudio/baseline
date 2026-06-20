@@ -13,6 +13,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  EXPECTED_HOOKS, EXPECTED_COMMANDS, EXPECTED_AGENTS, EXPECTED_MCP_SERVERS,
+  EXPECTED_TRACKS, CANONICAL_MEMORY_FILES,
+} from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DERIVER = join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs');
@@ -20,15 +24,16 @@ const require = createRequire(import.meta.url);
 
 describe('AC-001 — deriveCounts() reflects the artifacts on disk', () => {
   it('test_when_deriveCounts_then_matches_disk', async () => {
-    const { deriveCounts } = await import(DERIVER);
+    const { deriveCounts, SKILL_CATEGORIES } = await import(DERIVER);
     const c = deriveCounts(REPO_ROOT);
-    assert.equal(c.skills, 42, 'baseline skills');
-    assert.equal(c.hooks, 24, 'top-level hooks');
-    assert.equal(c.commands, 6, 'command files (incl init-project-doctor)');
-    assert.equal(c.subagents, 1, 'subagents');
-    assert.deepEqual(c.tracks, { canonical: 7, subTracks: 2 }, 'tracks');
-    assert.equal(c.memoryFiles, 7, 'canonical memory files');
-    assert.equal(c.mcpServers, 3, 'mcp servers');
+    const skillTotal = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
+    assert.equal(c.skills, skillTotal, 'baseline skills match the category breakdown');
+    assert.equal(c.hooks, EXPECTED_HOOKS.size, 'top-level hooks match the declared roster');
+    assert.equal(c.commands, EXPECTED_COMMANDS.size, 'command files match the declared roster');
+    assert.equal(c.subagents, EXPECTED_AGENTS.size, 'subagents match the declared roster');
+    assert.deepEqual(c.tracks, EXPECTED_TRACKS, 'tracks match the declared shape');
+    assert.equal(c.memoryFiles, CANONICAL_MEMORY_FILES.size, 'canonical memory files match the roster');
+    assert.equal(c.mcpServers, EXPECTED_MCP_SERVERS.size, 'mcp servers match the declared roster');
   });
 });
 
@@ -47,11 +52,12 @@ describe('AC-002 — site _data is computed from the deriver (no stale literal)'
   it('test_when_site_baseline_data_then_commands_is_6', async () => {
     const mod = require(join(REPO_ROOT, 'site-src/_data/baseline.cjs'));
     const data = await (typeof mod === 'function' ? mod() : mod);
-    assert.equal(data.commands, 6, 'commands derived to 6 (was a static 5)');
-    assert.equal(data.hooks.total, 24);
-    assert.equal(data.skills.total, 42);
-    assert.equal(data.subagents.total, 1);
-    const { deriveCounts } = await import(DERIVER);
+    const { deriveCounts, SKILL_CATEGORIES } = await import(DERIVER);
+    const skillTotal = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
+    assert.equal(data.commands, EXPECTED_COMMANDS.size, 'commands derived from the roster');
+    assert.equal(data.hooks.total, EXPECTED_HOOKS.size);
+    assert.equal(data.skills.total, skillTotal);
+    assert.equal(data.subagents.total, EXPECTED_AGENTS.size);
     const c = deriveCounts(REPO_ROOT);
     assert.equal(data.tracks.canonical, c.tracks.canonical, 'site tracks match deriver');
   });

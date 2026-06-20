@@ -44,7 +44,7 @@ toc:
   <tbody>
     <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, gitignore_leak_guard, process_lifecycle_guard</td></tr>
     <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, spec_approval_guard, swarm_approval_guard, epic_approval_guard, verify_pass_guard, track_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
-    <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner</td></tr>
+    <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner, phase_timer</td></tr>
     <tr><td>UserPromptSubmit</td><td class="phase">consent_gate_grant</td></tr>
     <tr><td>SessionStart</td><td class="phase">memory_session_start</td></tr>
     <tr><td>Stop</td><td class="phase">memory_stop, harness_continuation</td></tr>
@@ -83,6 +83,7 @@ toc:
     <tr><td class="phase">process_lifecycle_guard</td><td>IX</td><td>Advisory. Surfaces relevant memory entries (e.g. <code>landmines.md → lsof-port-kill-takes-firefox-with-it</code>, <code>conventions.md → dev-server-ownership</code>) verbatim before any <code>kill</code>, <code>lsof</code>, or <code>serve</code> Bash. Never blocks.</td></tr>
     <tr><td class="phase">lint_runner</td><td>VI</td><td>Run <code>lint.cmd</code> on code changes (guide mode until configured).</td></tr>
     <tr><td class="phase">test_runner</td><td>VI</td><td>Run <code>test.cmd</code> on code changes (guide mode until configured).</td></tr>
+    <tr><td class="phase">phase_timer</td><td>V</td><td>Observe-only. Stamps per-phase completion timing into <code>.claude/state/timing/&lt;slug&gt;.jsonl</code> when <code>workflow.json</code> <code>completed[]</code> grows; <code>/archive</code> renders a model-time-vs-human-wait table. Never blocks or mutates.</td></tr>
     <tr><td class="phase">memory_session_start</td><td>III, IX</td><td>Inject memory index and resume snapshot at session start.</td></tr>
     <tr><td class="phase">memory_stop</td><td>IX</td><td>Auto-extract memory candidates each turn-end.</td></tr>
     <tr><td class="phase">memory_pre_compact</td><td>IX</td><td>Capture resume snapshot before context compaction.</td></tr>

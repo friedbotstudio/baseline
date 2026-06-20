@@ -92,7 +92,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 
 | Path | Role |
 |---|---|
-| `.claude/hooks/` | 24 hook scripts (19 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
+| `.claude/hooks/` | 25 hook scripts (20 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 42 skills: artifact (4) + phases (10) + workers (5) + spec helpers (4) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (2) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (2) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |

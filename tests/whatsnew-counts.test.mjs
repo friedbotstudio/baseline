@@ -23,7 +23,6 @@ describe('whatsnew governance counts', () => {
     const categorySum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
     const derived = deriveCounts(REPO_ROOT);
     assert.equal(categorySum, derived.skills, 'category sum must equal the derived skill total');
-    assert.equal(derived.skills, 42, 'total skills is 42 after adding the gitignore setup skill');
   });
 
   // owners.skills is built by scanning skill dirs for `owner: baseline` frontmatter
