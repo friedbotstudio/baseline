@@ -1,0 +1,26 @@
+{
+  "request": "Memory cleanup chore: commit stale-entry re-verification (43 restamped + @11ty/eleventy 3.1.5->3.1.6), prune landmarks.md under 500-line cap (drop tdd/tests/run.sh + regenerate_ac008_test.sh landmarks), close pending-questions Q-007/Q-008 as (b)-skip, and fold in pre-existing uncommitted memory changes. Memory files only; no project code.",
+  "slug": "memory-stale-cleanup",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "integrate",
+    "archive",
+    "chore",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781989759,
+  "updated_at": 1781990347
+}

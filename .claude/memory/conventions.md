@@ -24,16 +24,16 @@ Each entry's stable key is a short slug.
 - Why: directory placement was an open question at workflow-extension-via-workflows-json's /approve-spec gate (OQ-2: should `workflows.jsonl` go at project root or under `.claude/`?). The user's answer codifies the broader principle to avoid re-asking on every future "where does this new file live?" decision. Resolution: `.claude/workflows.jsonl` (not `workflows.jsonl` at project root).
 - How to apply: any future spec phase proposing a new shipped file checks: is it CLAUDE.md or .mcp.json? If neither, it goes under `.claude/`. The choice is no longer open for discussion unless the user explicitly raises it.
 - Reference: docs/init/seed.md §3 Directory structure (this convention should be cited there at the next seed.md edit; tracked as part of the workflow-extension-via-workflows-json scope).
-- verified-at: HEAD
-- last-touched: 2026-05-21
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## scout-coverage-on-governance-and-hook-changes
 
 - Convention: when a workflow's write_set will touch `CLAUDE.md`, `docs/init/seed.md`, any hook implementation, or the consent-gate / commands surface, the `scout` phase SHALL enumerate `site-src/**` and `README.md` as touchpoints in addition to the obvious code paths. Also: every bash hook has a multi-paragraph header comment in its `.sh` body; when porting a hook to `.mjs` or renaming a peer hook's filename, the OTHER bash hooks' header comments need updates too (they reference the file by path).
 - Why: in branch-aware-git-policy (2026-05-15), the original scout report listed CLAUDE.md/seed.md/audit but missed `site-src/index.njk` (the homepage SVG diagram + "Eleven phases, X gates" copy), `site-src/hooks.njk` (consent-gates section), `site-src/skills/{core,third-party}.njk`, `README.md` line 151, and the header comments inside `spec_approval_guard.sh`, `swarm_approval_guard.sh`, and `lib/common.sh` (which reference `consent_gate_grant.sh` even after the port to `.mjs`). The user caught all of these post-implementation; we did three drift sweeps before commit.
 - How to apply: in the scout report's "Primary touchpoints" section, add a `## Rendered surfaces` subsection enumerating site templates and README files that mention the feature. Add a `## Peer-hook header comments` subsection for hook ports listing every `.claude/hooks/*.sh` whose header comment references the file being renamed.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## hook-script-shape
 
@@ -48,8 +48,8 @@ Each entry's stable key is a short slug.
 - Why: provenance + zero-friction install. Baseline-owned skills can be re-overlaid by a future `npx @friedbotstudio/create-baseline upgrade` while user-owned skills are left alone. The absence-default policy means a user with 20 pre-existing skills doesn't have to annotate any of them when installing the baseline — only baseline-shipped SKILL.md files carry `owner: baseline`.
 - Constraint: a SKILL.md with no `owner:` field is silently skipped (treated as user/third-party). A SKILL.md whose `owner:` value is present but malformed (anything other than `baseline` or `user`) fails the audit with `invalid owner=<value>`. Stripping `owner: baseline` from a baseline-listed slug surfaces as a `hash mismatch` row plus a `missing: [<slug>]` row in the names-match check — never as `missing owner frontmatter` (that error no longer fires).
 - Reference: CLAUDE.md Article XI, seed.md §17.
-- Verified-at: HEAD
-- Last-touched: 2026-05-15
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## dev-server-ownership
 
@@ -87,8 +87,8 @@ Each entry's stable key is a short slug.
   ```
 - applies-to: every skill or session needing a live preview — `impeccable live`, `verify` smoke, `integrate` browser tests, ad-hoc visual review during `/design-ui` or `/polish`, multi-pass `/impeccable` runs. Cross-reference with `landmines.md → lsof-port-kill-takes-firefox-with-it`.
 - surfaced-by: `process_lifecycle_guard` PreToolUse hook on Bash matching `kill|pkill|lsof|fuser|npm run.*serve|npm run.*dev|eleventy --serve|vite|next dev|astro dev|http.server`.
-- verified-at: HEAD
-- last-touched: 2026-04-30
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## test-yaml-line-parsing
 
@@ -98,8 +98,8 @@ Each entry's stable key is a short slug.
 - placement: helpers live ~10 lines each inside the test file that needs them. Do not extract a shared YAML utility module just for one or two test suites; DRY emerges from structure, not from premature extraction.
 - reference: `tests/release-workflow.test.mjs:30–87` (the 6 helpers).
 - applies-to: any test asserting on `.github/workflows/*.yml` shape or other project-controlled YAML.
-- verified-at: HEAD
-- last-touched: 2026-05-13
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## test-esm-env-cache-bust
 
@@ -108,8 +108,8 @@ Each entry's stable key is a short slug.
 - why: eleventy global data files at `site-src/_data/*.js` read `process.env.GITHUB_RUN_ID` at import time. The same module needs to return `'gha-…'` in one test and `'dev'` in the next; without cache-busting, the second test sees the first test's frozen value.
 - reference: `tests/site-build-id.test.mjs:39–58` (`importBuildData` helper).
 - applies-to: any eleventy-data-file test or env-driven ESM module test where the import surface depends on `process.env`.
-- verified-at: HEAD
-- last-touched: 2026-05-13
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## test-regression-trap-semantics
 
@@ -119,8 +119,8 @@ Each entry's stable key is a short slug.
 - example: `tests/build-template-build-id.test.mjs` has two tests — one for `GITHUB_RUN_ID` set (RED pre-implement; goes green after stamping logic lands) and one for unset (REGRESSION_TRAP_PRE_PASSING — must continue to pass after implement adds the conditional stamp; ensures the dev manifest stays byte-identical when env is unset).
 - reference: `.claude/skill-memory/scenario/MEMORY.md` (the originating note, now scratch-only after promotion).
 - applies-to: `/scenario` per-test report; any TDD pass where an AC is "X is absent" or "X is unchanged".
-- verified-at: HEAD
-- last-touched: 2026-05-13
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## action-labels-centralized-in-merge-js
 
@@ -129,8 +129,8 @@ Each entry's stable key is a short slug.
 - why: prior to 2026-05-21 each render site padded `action.kind` directly to 28 cols; users saw `MECHANICAL_MERGE_CLEAN  .claude/...` etc. The centralization keeps the two render paths byte-identical without duplicating the label dictionary, and it gives `/cli-copy-review` a single place to audit instead of every render call site.
 - how to apply: when introducing a new merge outcome, (1) add the enum to `ACTION_KINDS`, (2) add the label to `ACTION_LABELS` in the same `Object.freeze` block, (3) rebuild — `ACTION_LABEL_WIDTH` recomputes automatically. The rendered docs site (`site-src/cli.njk`'s action table) mirrors the same map manually; update it in the same commit to keep doc/CLI parity.
 - applies-to: any new ACTION_KIND added to `src/cli/merge.js`; any new render call site that displays per-file upgrade actions.
-- verified-at: cb1d511
-- last-touched: 2026-05-21
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## brainstorm-stage2-discipline-assertor-pattern
 
@@ -139,8 +139,8 @@ Each entry's stable key is a short slug.
 - why: structural discipline is harder to drift than prose-only rules. The discipline assertor is a piece of code with a test; the alternative ("Stage 2 SHALL NOT propose solutions" as prose-only guidance) is unenforceable across drift.
 - how to apply: when a new skill has a dialogue surface with a "shall not say X" rule, write the assertor as a Foundation-layer .mjs module beside the SKILL.md; reference it from the SKILL.md Stage description; add tests with both conforming and violating fixtures. The assertor is the structural enforcement; the SKILL.md prose is the documentation.
 - applies-to: any new skill with multi-turn dialogue + a structural rule on emission content. The brainstorm Stage 2 discipline is the first instance; the pattern generalizes.
-- verified-at: 8436ede
-- last-touched: 2026-05-29
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## workflow-json-read-time-defaults
 
@@ -149,8 +149,8 @@ Each entry's stable key is a short slug.
 - why: in-flight workflows on disk pre-date the new field. Forcing a migrator write on every reader is brittle (race conditions, partial writes, lockfile coordination). Read-time defaults keep the on-disk shape ungoverned at the cost of slightly more code per reader; the centralized helper keeps the per-reader cost ~3 lines.
 - how to apply: (1) add the helper at `.claude/skills/<owner>/workflow-defaults.mjs` with `export function withDefaults(workflowJson) { return { ...workflowJson, <new_field>: workflowJson?.<new_field> ?? <default> }; }`; (2) every skill that reads the field calls `withDefaults(JSON.parse(readFileSync(...)))` first; (3) test the default-applied path AND the explicit-true path AND the no-mutation invariant. AC-008 of brainstorm-and-codesign codifies this pattern.
 - applies-to: any future `workflow.json` schema additions. The pre-§18 → §18 migrator at `src/cli/workflow-migrator.js` is a different category (one-shot shape migration); the read-time defaults pattern is for additive optional fields.
-- verified-at: 8436ede
-- last-touched: 2026-05-29
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## state-write-discipline-tool-mandate
 
@@ -161,8 +161,8 @@ Each entry's stable key is a short slug.
 - why: the enforcement layer is tool-aware. An SOP that says "write the token" without binding the tool invites a Bash redirect that is structurally guaranteed to be blocked — observed: `/approve-spec` tried a Bash heredoc → destructive-guard block, then `command not found: dirname` under a stripped PATH. Binding the tool removes the detour.
 - how to apply: the 4 gate commands (approve-spec, approve-swarm, grant-commit, grant-push) and the harness/integrate/tdd/verify SKILLs cite §2 directly and name the tier. New SOPs that write state cite §2. Never grant `Bash(tee:*)` in a gate command's `allowed-tools` (it's a consent-path write-verb the destructive guard blocks).
 - applies-to: any command/skill SOP that writes under `.claude/state/`.
-- verified-at: ba5d91b
-- last-touched: 2026-06-02
+- verified-at: 3c74ba8
+- last-touched: 2026-06-20
 
 ## test-repo-clone-helpers-exclude-config-and-copy-cow
 

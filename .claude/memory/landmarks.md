@@ -218,21 +218,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-06-16
 - Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline`); run manually during /tdd, /simplify, /integrate. The test scenarios encode the contract documented in `docs/specs/workflow-loop-closing-hygiene.md` ACs — adding behaviors to `drift_check.mjs` requires extending this suite in lockstep, or the next drift-check-tick will go unverified.
 
-## .claude/skills/tdd/tests/run.sh:1
-
-- Role: Aggregate test runner for `.claude/skills/tdd/`. Iterates over sibling `*_test.sh` files (currently just `drift_check_test.sh`), invokes each via bash, exits 1 if any fail. Mirrors `.claude/skills/memory-flush/tests/run.sh:1` and `.claude/hooks/tests/run.sh` shape.
-- Verified-at: 6e53aec
-- Last-touched: 2026-06-16
-- Caveat: not invoked by `project.json → test.cmd` — surfaced manually in /integrate's optional test surface. New `*_test.sh` files in the same directory are picked up automatically by the glob; no runner edit needed.
-
-## .claude/hooks/tests/regenerate_ac008_test.sh:1
-
-- Role: Integration test for `.claude/hooks/tests/fixtures/regenerate-ac008.sh:1`. Covers AC-001 from `workflow-loop-closing-hygiene`: runs the regenerator, then invokes the AC-008 byte-equality case inside `memory_session_start_test.sh` and asserts both PASS. Validates the regen → test loop end-to-end so future fixture drift is fixable by one bash invocation.
-- Companion: `.claude/hooks/tests/fixtures/regenerate-ac008.sh:1` (the helper under test), `.claude/hooks/tests/memory_session_start_test.sh:1` (the downstream test that consumes the regenerated fixture).
-- Verified-at: 6e53aec
-- Last-touched: 2026-06-16
-- Caveat: depends on the live `.claude/memory/` tree matching the fixture shape at regen time. Re-run after any canonical-file entry count change. Bash dynamic-scoping gotcha applies — declare loop variables `local` or rename them (see `preamble_check_test.sh` caveat) so the parent `run()`'s `local name="$1"` is not clobbered by `for name in …`.
-
 ## src/cli/tui/install.js:1
 
 - Role: Domain — branded install flow. Exports `run({target, opts, prompts})`; composes `freshInstall` / `forceInstall` from `src/cli/install.js` and `fetchPlantumlIfMissing` from `src/cli/plantuml.js` behind a clack-style intro / spinner / outro presentation seam. Writes `renderHeader({version, subtitle: 'install'})` from `src/cli/tui/splash.js:1` to stdout ABOVE the clack intro so every install run carries the full BASELINE wordmark + tagline (changed from the slim `renderBrandStrip` on 2026-05-23 per cli-wordmark-on-all-commands; narrow terminals automatically fall back to the slim strip via `wordmarkFits`). The `prompts` parameter defaults to `@clack/prompts` and is injected in tests.
@@ -472,15 +457,15 @@ Each entry's stable key is `path:line`.
 
 - Role: Foundation — pure deterministic route classifier for `/memory-flush` (Tier 3, shipped in `memory-capture-tier2-tier3`). Exports `suggestRoutes(candidates)` returning one `{key, suggested_bucket, weight, evidence}` per pending candidate. `classify` is first-match-wins over four anchored regexes in priority order: PATH_RE → `landmark`, trailing `?` → `open-question`, FUTURE_RE (`TODO|backlog|follow-up|later|next we|defer`) → `backlog`, DECISION_RE (`decided to|the plan/approach/fix is|going to|chose|will use`) → `decision`, else `backlog`. `salience` returns 0.1 for chatter/short (<25 chars, no cue), 0.5 for backlog, 0.7 otherwise. PURE: no filesystem/network/model call. Per Article IX.3 the output only SUGGESTS an accept/override default — promotion to canonical stays human-only at `/memory-flush` Step 2.
 - Companion: `.claude/skills/memory-flush/SKILL.md:1` (Step 2 optional route-suggestion aid), `.claude/hooks/lib/memory_stop.mjs:1` (writes the capture-time `route`/`weight` hints this refines), `tests/memory-flush-routing.test.mjs:1`.
-- Verified-at: 9036fc4
-- Last-touched: 2026-06-04
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## .claude/skills/code-browser/SKILL.md:1
 
 - Role: The navigation skill, rewritten (`code-browser-primary-navigation`, 2026-06-04) so the language-agnostic **universal walk** (entry → imports → IO boundary) is the PRIMARY, framework-independent path and the JS/TS `walk.mjs`/`discover.mjs` are an OPTIONAL accelerator (not a precondition). The frontmatter `description:` is the auto-invoke trigger — now language-agnostic (frontend or backend) and names the `Explore` agent alongside grep. Grep carve-outs preserved: pure full-text search + direct type/util definition lookups stay grep's domain (not navigation). Bound by CLAUDE.md Article X.5.
 - Companion: CLAUDE.md Article X.5 (the binding rule), `docs/init/seed.md §4.3` + `.claude/CONSTITUTION.md` Appendix B (deframed narration + mirrors), `.claude/skills/code-browser/walk.mjs` + `discover.mjs` (the optional JS/TS accelerator — UNCHANGED, byte-identical), `.claude/skills/scout/SKILL.md:28` (sole workflow invocation site), `tests/code-browser-primary-navigation.test.mjs`. Decision: `decisions.md → navigation-routing-code-browser-primary-2026-06-04`.
-- Verified-at: e11e176
-- Last-touched: 2026-06-04
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 - caveat: Per-language fast-path adapters (Python/Go/Rust) are DEFERRED — `walk.mjs` resolves only `.ts/.js/.tsx/.jsx`, not `.mjs`, so on non-JS/TS repos code-browser uses the manual universal walk. "Primary" is doctrine (binding prose), not a structural hook; no test gates the model's actual tool choice.
 
 ## scripts/build-lock-dir.mjs:1
@@ -497,4 +482,13 @@ Each entry's stable key is `path:line`.
 - Verified-at: b7811f9
 - Last-touched: 2026-06-06
 - caveat: MUST stay shipped in `obj/template/.claude/manifest.json` — if dropped, `git_commit_guard`'s import crashes and the guard fails OPEN (consent bypass). Defended by `audit-baseline` + `tests/closure-amendment-governance.test.mjs`. See landmine `guard-new-lib-dep-breaks-sandbox-copy-tests`. Behavior documented in seed.md §4.1 + CLAUDE.md Art VIII + annex; RCA `docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md`.
+
+## .claude/hooks/lib/tier-dial.mjs
+
+- Path: `.claude/hooks/lib/tier-dial.mjs`
+- Role: Foundation module — the single read path for every checker's quality floor + effort ceiling (the threat/value "tier dial", v1 piece 2, `154cc1f`). `project.json → tier.level` selects a built-in profile (`internal-tool` / `customer-data` / `regulated`, fallback `internal-tool`); `tier.overrides` tunes per checker. Exports `CANONICAL_CHECKERS`, `DEFAULT_THRESHOLD`, `DEFAULT_PROFILES`. Reads via `common.mjs → projectGet`; resilient to missing/invalid project.json (returns defaults, never throws). Floor units differ per checker: tdd = mutation-score fraction (0..1), spec/ac-conformance = 1.0 traced, security/review = max-allowed findings (0); ceiling = rounds.
+- Companion: `.claude/hooks/lib/common.mjs` (`projectGet` reader), `docs/specs/tier-oracle-floor-dial.md` (spec).
+- Verified-at: 154cc1f
+- Last-touched: 2026-06-18
+- caveat: `mandatory` is resolved DATA only this slice — nothing gates on it yet; blocking is piece 5 (the advisory mutation-score floor in `154cc1f` is advisory by design).
 

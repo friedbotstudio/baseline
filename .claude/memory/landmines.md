@@ -21,9 +21,9 @@ Each entry's stable key is `path:line` or a short slug.
 - Mitigation: run `npm run build` IMMEDIATELY after the first baseline-skill SKILL.md edit, before any other Edit fires the PostToolUse hook. The build script's Stage 4 audit gate now correctly runs AFTER Stage 3 manifest rebuild (script reorder landed pre-2026-05-22 — see the script's own Stage 4 comment block), so `npm run build` succeeds in one shot. The pre-reorder workaround (inline Stages 1-3 followed by `node scripts/build-manifest.mjs obj/template`) is no longer necessary.
 - Companion requirement: if the edit touches `CLAUDE.md`, also update `src/CLAUDE.template.md` to the byte-equal mirror (Article XI). The build's Stage 2 overlays `src/CLAUDE.template.md` into `obj/template/CLAUDE.md`, so the manifest hash is computed from the src/ pristine — if PKG_ROOT/CLAUDE.md and src/CLAUDE.template.md aren't byte-equal, the audit will still FAIL on the CLAUDE.md hash after manifest rebuild.
 - Real fix (deferred): the `test_runner` hook could skip its audit invocation when the edit target itself is the manifest (or run the audit AFTER a manifest rebuild). Either eliminates the "every edit between SKILL.md change and manifest rebuild is blocked" window. Cheaper interim fix: document the immediate-rebuild pattern in the relevant workflow phase (tdd or implement) as "after editing a baseline SKILL.md, run `npm run build` before continuing." Tier1-merge-option's implement worker resolved SQ-3 inline by running the build after the SKILL.md edit; the same pattern works for future baseline-skill edits.
-- Verified-at: 1473b93
-- Last-touched: 2026-06-15
-- caveat: re-confirmed live 2026-06-15 in `chore-verify-conditional` — editing `chore/SKILL.md` + `claude-automation-recommender/SKILL.md` both drove `hash mismatch` until `bash scripts/build-template.sh` restamped the manifest; running the build immediately after the edits (per the mitigation) cleared it in one shot. Earlier re-confirmed 2026-06-08 in the standup-skill workflow (adding `standup` SKILL.md + editing `gather.mjs`). Corrected the stale `.sh` path refs (the hooks + audit were ported to `.mjs`). See companion landmine [[baseline-skill-count-cascade]].
+- Verified-at: 154cc1f
+- Last-touched: 2026-06-16
+- caveat: re-confirmed live 2026-06-16 in `tier-oracle-floor-dial` — adding a new shipped `.claude/hooks/lib/tier-dial.mjs` + editing 5 baseline SKILL.md files (read-path markers) drove `audit-baseline` to `fails=5` (manifest hash mismatch + baseline-skill-missing) until `npm run build` restamped the manifest; one shot cleared it. Earlier re-confirmed 2026-06-15 in `chore-verify-conditional` — editing `chore/SKILL.md` + `claude-automation-recommender/SKILL.md` both drove `hash mismatch` until `bash scripts/build-template.sh` restamped the manifest; running the build immediately after the edits (per the mitigation) cleared it in one shot. Earlier re-confirmed 2026-06-08 in the standup-skill workflow (adding `standup` SKILL.md + editing `gather.mjs`). Corrected the stale `.sh` path refs (the hooks + audit were ported to `.mjs`). See companion landmine [[baseline-skill-count-cascade]].
 
 ## track-guard-tdd-literal-on-swarm-path
 
@@ -31,8 +31,8 @@ Each entry's stable key is `path:line` or a short slug.
 - Trap: when Phase 6 is satisfied via the swarm path (`swarm-plan` + `approve-swarm` + `swarm-dispatch` in `workflow.json → completed`), the track guard still refuses Phase 7+ artifact writes because it expects literal `"tdd"` in `completed`. First write attempt to `docs/security/<slug>-<date>.md` after a swarm dispatch fails with "phase 'security': prior phases not completed: tdd".
 - Mitigation: after swarm-dispatch finishes, manually add `"tdd"` to `workflow.json → completed` with a rationale in a `completed_notes` field (e.g., `{"tdd": "satisfied via swarm path; track_guard literal-match workaround per seed.md §16 retrospective"}`). Documented in seed.md §16 deviation log too.
 - Real fix (deferred): teach track_guard to accept `(swarm-plan + swarm-dispatch)` as Phase-6 satisfaction equivalent to `tdd`.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## swarm-refuse-dirty-tree-blocks-mid-workflow
 
@@ -40,16 +40,16 @@ Each entry's stable key is `path:line` or a short slug.
 - Trap: `refuse_dirty_tree: true` (the original default) aborts swarm-dispatch when `git status --porcelain` is non-empty. But the 11-phase workflow ALWAYS leaves a dirty tree mid-flow: `docs/intake/<slug>.md`, `docs/scout/<slug>.md`, `docs/research/<slug>.md`, `docs/specs/<slug>.md`, `.claude/state/spec_approvals/`, etc. are all uncommitted until gate C / `/commit`. So `refuse_dirty_tree: true` is incompatible with running swarm-dispatch as part of the regular workflow — the check fires on the exact state the workflow is supposed to produce.
 - Mitigation: in branch-aware-git-policy (2026-05-15) we toggled `refuse_dirty_tree: false` permanently. The check was meant for pre-workflow runs only; it's effectively unreachable in normal flow with it true.
 - Open question (Q-007 in pending-questions): should the default ship as `false`? Currently disagreement between live `.claude/project.json` (false) and `src/project.template.json` (still true) needs resolving.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## hooks-edit-cascade
 
 - Path: `.claude/hooks/lib/common.sh:1`
 - Trap: every guard hook sources this. A breaking change to a helper signature breaks all 14 hooks at once, and Claude Code can't run any tool until they're fixed.
 - Mitigation: when editing common.sh, run a `find .claude/hooks -name '*.sh' -exec bash -n {} \;` syntax check across the fleet.
-- Verified-at: HEAD
-- Last-touched: 2026-04-27
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## swarm-cleanup-deletes-irreplaceable-assets
 
@@ -58,8 +58,8 @@ Each entry's stable key is `path:line` or a short slug.
 - Mitigation: swarm-plan tasks that delete files SHALL include a "preserve-to-archive" step that copies the deleted bytes to `docs/archive/_pre-delete/<slug>/<original-relpath>` (or equivalent) BEFORE `rm`. This applies in particular to: any file containing visual/design ground truth, any file >500 lines authored by hand, any file the workflow's own components were meant to replace. Cleanup is a real action; treat it like a destructive git operation.
 - Mitigation (workflow-level): the `archive` skill (Phase 10.5) runs AFTER cleanup, so it cannot rescue what cleanup deleted. Either move cleanup into the archive bundle's first step, or have swarm-plan emit cleanup tasks that explicitly write to the archive dir before `rm`.
 - Recovery surface (when this DOES bite): `/private/tmp/claude-502/<user-encoded-path>/<session-uuid>/tasks/*.output` JSONL transcripts contain every Read tool_use and tool_result. Match `tool_use(id)` → `tool_result(tool_use_id)` and stitch lines by the `<line>\t<content>` format from the result text. ~77% recovery is realistic if workers had the file in their read_set; 0% if no worker read it.
-- Verified-at: HEAD
-- Last-touched: 2026-04-29
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## lsof-port-kill-takes-firefox-with-it
 
@@ -71,8 +71,8 @@ Each entry's stable key is `path:line` or a short slug.
   - `pkill -f "<command-substring>"` — matches by command line (e.g., `pkill -f "http.server 4321"`).
   - PID-file pattern: write `$!` to a file when starting the server, kill by that PID.
 - Applies to: any skill or session where Claude runs a local dev server (`eleventy --serve`, `python -m http.server`, `vite`, `next dev`, etc.) and then cleans up. Also applies to Bash blocks generated by `impeccable live`, `verify`, `integrate` smoke runs.
-- Verified-at: HEAD
-- Last-touched: 2026-04-30
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## npm-pack-excludes-dotnpmrc
 
@@ -82,8 +82,8 @@ Each entry's stable key is `path:line` or a short slug.
 - Mitigation: ship `.npmrc` bytes under a non-excluded basename in `src/` (today: `src/.npmrc.template`). At install time, the CLI reads the bytes and writes them to `<target>/.npmrc`. The `obj/template/.npmrc` overlay step in build-template.sh is intentionally NOT present; the script body documents this with a comment so a future contributor doesn't re-add it.
 - Confirmation: `npm pack --dry-run --json --ignore-scripts | jq '.[0].files[].path'` lists `src/.npmrc.template` but not `obj/template/.npmrc` even when the latter exists on disk and is referenced in the shipped manifest.
 - Applies to: any future config file the baseline materializes into a target whose basename is on npm's exclusion list (`.npmrc`, `.npmignore`, `package-lock.json` under conditions). When in doubt, ship under `src/<name>.template` and overlay at install time.
-- Verified-at: HEAD
-- Last-touched: 2026-05-13
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## approve-spec-slug-marker-mismatch
 
@@ -100,8 +100,8 @@ Each entry's stable key is `path:line` or a short slug.
   - **D** (belt-and-suspenders): all three. Matches "Claude cannot forge consent, but a typo shouldn't break the gate."
 - Why it matters: the gate is structurally correct (Claude cannot forge), but the rough edge undermines confidence — a user thinks "I approved twice and the system still rejected me" when the second rejection was a TTL race, not a logic failure. Article IV gate language ("structurally un-invokable") implies the gate fires only on real violations.
 - Affects archive too: `.claude/skills/archive/archive.sh` looks for `<slug>.md.approval` in the spec_approvals dir; an approval token written under the workaround name (`<slug>.approval`) won't move into the bundle. Observed on `design-ui-orchestrator` archive 2026-05-12 — 5 artifacts archived, spec approval token left behind.
-- Verified-at: HEAD
-- Last-touched: 2026-05-12
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## bsdtar-vs-gnutar-default-extraction
 
@@ -109,16 +109,16 @@ Each entry's stable key is `path:line` or a short slug.
 - BUT the safety relies on the tar binary's default behavior. A custom-built tar, a future flag-default change, or a different tarball processor in the chain would re-expose path traversal. `src/cli/upgrade-tiers.js → extractFromTarball` adds an explicit `path.resolve(candidate).startsWith(tmpRoot + sep)` defense-in-depth check after extraction — throws `NoBaseError` with `kind: 'tarball_path_traversal'` on escape, which routes through the tier-1 binary-prompt fallback.
 - Why it matters: the security review for `upgrade-flow-rework` (2026-05-20) initially rated this HIGH because BSD tar absolute-path handling had been mis-recalled. The actual bsdtar behavior is safe-by-default per man bsdtar; the explicit check makes the safety contract platform-agnostic and survives future tar-binary changes.
 - Don't strip the defensive check thinking "tar handles it" — keep the belt-and-suspenders. Same principle applies to any future tarball/zip extraction code paths.
-- Verified-at: e2927c7
-- Last-touched: 2026-05-20
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## build-template-tests-need-workflows-template-fixture
 
 - Any test that calls `runBuild(fixtureRoot)` (a `bash scripts/build-template.sh` shellout against a synthetic `PKG_ROOT`) MUST seed `src/.claude/workflows.template.jsonl` in the fixture. `scripts/build-template.sh:127` runs `cp "$PKG_ROOT/src/.claude/workflows.template.jsonl" "$TEMPLATE_DIR/.claude/workflows.jsonl"` unconditionally as part of Stage 2; absence fails with a cryptic `cp: <path>: No such file or directory` rather than a structured assertion.
 - Why it matters: when §18 added the workflows.jsonl overlay (commit cb1d511), the fixture-seed helpers in `tests/build-template.test.mjs`, `tests/build-template-build-id.test.mjs`, and the rsync-clone in `tests/skill-ownership.test.mjs` were silently incomplete (rsync clones the full tree, so skill-ownership *did* work — but the two synthetic-fixture suites broke immediately and persisted as red until 2026-05-21). Future Stage-2 overlays (e.g. a new `src/.claude/<x>.template.<ext>`) will repeat the same trap unless tests are updated in lockstep.
 - How to apply: when adding a new `src/*.template.*` overlay, grep `scripts/build-template.sh` for `cp .* "\$PKG_ROOT/src/...`; any new line means every `mkTestRoot()`/`makeFixture()` that calls `runBuild` needs a matching `writeFile(join(root, 'src', ...))` for the new path. A minimal-but-valid stub is fine — the build script doesn't validate JSONL/JSON content, only file existence.
-- Verified-at: cb1d511
-- Last-touched: 2026-05-21
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## tdd-order-guard-test-stem-must-match-source-stem
 
@@ -126,8 +126,8 @@ Each entry's stable key is `path:line` or a short slug.
 - Trap: when creating a NEW source file under a path matching `project.json → tdd.source_globs`, the guard generates expected test paths via a fixed template: `tests/<src-stem>.test.<ext>`, `tests/<src-stem>_test.<ext>`, `tests/<src-stem>.spec.<ext>`, plus mirrored-layout variants. A test file whose stem does NOT exactly match the source stem will FAIL the guard with `no test file found for new source 'X'. Candidates were derived from project.json → tdd.test_globs (e.g. ...)`. Caught at the upgrade-version-aware-noop implement step (2026-05-27): scenario worker wrote `tests/project-json-refresh.test.mjs` for `src/cli/project-json.js`; the `-refresh` suffix broke the stem match and the guard refused the Write.
 - Mitigation: name tests `tests/<source-stem>.test.<ext>` exactly. For `src/cli/foo.js` → `tests/foo.test.mjs` or `tests/foo.test.js`. Suffixed names like `tests/foo-edge-cases.test.mjs` or `tests/foo-refresh.test.mjs` will fail the guard on the FIRST creation of the source file. After the source exists, the guard skips (only fires on file creation), so suffixed tests can be added later — but the first test file MUST match the stem.
 - Real fix (deferred): broaden the candidate-derivation Python to also accept `tests/<src-stem>-<anything>.test.<ext>` patterns. Until then, the convention applies.
-- Verified-at: b5d40eb
-- Last-touched: 2026-05-27
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## npm-install-local-tarball-under-os-tmpdir-writes-no-node-modules
 
@@ -150,8 +150,8 @@ Each entry's stable key is `path:line` or a short slug.
 - Path: `.claude/skills/tdd/drift_check.mjs` → `loadDiff()` (`git merge-base HEAD main` then `git diff <merge-base>..HEAD`); inlined by the harness as the `drift-check-tick` between the last design-ui/verify tick and `tdd-finalize`.
 - Trap: `drift_check` scores each spec AC / Design-call as `resolved` only if a `+`-added line in the diff literally `includes` the item id (`AC-001`, the design-call slug). But its default diff source is `merge-base..HEAD` — **committed** history. In the 11-phase workflow the implementation is written to the WORKING TREE and committed only at Phase 11 (`/commit`), so at drift-check time (Phase 6, inside `/tdd`) `HEAD` has none of the change → empty diff → ALL items report `unresolved` → exit 1 → false YIELD. A fully-correct, fully-tested in-flight implementation trips a spurious drift failure. Hit live in WF-5 (governance-count-single-source): 684/684 tests green, every AC backed, yet drift_check exit 1 with 8/8 ACs "no diff added-line references this item".
 - Mitigation: pass the WORKING-TREE diff via the `--diff <path>` override. Build it with `git add -N <untracked-new-files>` (intent-to-add so untracked files show as additions) → `git diff HEAD -- <scopes> > /tmp/x.diff` → `git reset -q` (clear the intent-to-add). Re-run `drift_check.mjs --slug <slug> --diff /tmp/x.diff`. Secondary limit: matching is literal-id-substring, so an AC verified behaviorally but never cited by id in any added source line (e.g. a mirror-byte-equality AC) can stay `unresolved` even with the right diff — judge those against the tests, don't blindly YIELD. NOT yet auto-fixed in drift_check (it still defaults to HEAD); the harness orchestrator must supply `--diff` for in-flight runs.
-- Verified-at: d336e01
-- Last-touched: 2026-06-01
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## destructive-guard-blocks-benign-bash-containing-consent-redirect-shapes
 
@@ -175,16 +175,16 @@ Each entry's stable key is `path:line` or a short slug.
 - Path: `.claude/hooks/lib/common.mjs` → `writesConsentPath` / `sanitizeGitCommitForScan` / `collectExecutedSubstitutions`.
 - Trap: `destructive_cmd_guard` now exempts a `git commit` MESSAGE payload (`-m`/`--message` arg + heredoc body) from consent-path scanning so a commit message that merely *describes* consent tokens isn't blocked (fixed the `git commit -F <file>` workaround papercut). The naive carve-out — strip the whole message arg/heredoc body before scanning — opened a HIGH guard BYPASS: a real consent write hidden in a command substitution inside the message (`git commit -m "$(tee .claude/state/commit_consent)"`, backtick form, `--message="$(... > .../push_consent)"`, or `$()` in an unquoted heredoc body) was stripped along with the prose and thus ALLOWED. The pre-carve-out whole-command scan had correctly blocked all of these. Caught by the `/security` phase, not by tests-first.
 - Mitigation: when sanitizing, RETAIN every EXECUTED command-substitution/backtick body (use `extractSubstitutions` recursively via `collectExecutedSubstitutions`) and re-append it to the scanned string — drop only literal, non-executed prose. Also: an unterminated heredoc must NOT swallow trailing lines (it would hide a trailing real write). General rule: any "exempt part of a command from a security scan" carve-out SHALL still scan whatever that part would EXECUTE. Over-inclusion (scan a literal that looks executable) is the safe direction; under-inclusion is a bypass. Regression tests: `tests/guard-commit-msg-falsepos.test.mjs` (5 SEC cases: 4 substitution forms BLOCK + plain prose ALLOW + unterminated-heredoc BLOCK).
-- Verified-at: 0a70375
-- Last-touched: 2026-06-02
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## consent-guard-precision-needs-target-anchoring-via-var-expansion
 
 - Path: `.claude/hooks/lib/common.mjs` → `writesConsentPath` / `resolveAssignments` / `expandWithEnv` / `fragmentWritesConsentTarget`.
 - Trap: making `writesConsentPath` MORE PRECISE (stop false-blocking commands that merely READ a consent path while a write-verb targets elsewhere, e.g. `head .claude/state/commit_consent; git mv a b`) is deceptively dangerous: any "is a write-verb NEAR a consent ref" heuristic UNDER-BLOCKS variable indirection. The first attempt — per-fragment co-occurrence (consent ref + write signal in the SAME executed fragment) — passed its own tests but `/security` proved a HIGH bypass: `F=.claude/state/commit_consent; tee $F` puts the basename in the `F=` fragment and the verb in the `tee $F` fragment, so neither fragment co-occurs. `executedFragments` does NOT expand variables. Two separate quickfix shapes failed `/security` (this + the git-commit carve-out above) before the sound design landed.
 - Mitigation: **expand-then-detect.** (1) `resolveAssignments(scan)` builds a `VAR→value` map left-to-right, expanding each value against the map so far (fixpoint, so `G=$F` inherits `F`). (2) `expandWithEnv` substitutes `$VAR`/`${VAR}` BEFORE detection, so `tee $F` becomes `tee .claude/state/commit_consent`. (3) the redirect check stays WHOLE-COMMAND (path-anchored; the `>|` clobber embeds a `|` that `splitShellSegments` splits, so a per-fragment redirect check misses it); verb/sed/prog checks run per executed fragment. Boundary (accepted): a consent path entering a var with NO literal basename (`X=$(...)`, `read X`, env, function args) is unreachable by any literal scanner — `tee $UNKNOWN` is allowed, same as the prior guard. General rule: **precision changes to a security guard are spec-entry territory, not quickfix** — write the exhaustive bypass matrix as the test plan and run `/security` against it. Regression: `tests/anchor-consent-write-target.test.mjs` (18-row matrix) + the 19-vector probe in the archived security report.
-- Verified-at: 6b310eb
-- Last-touched: 2026-06-03
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## constitutional-amendment-tripwires-headroom-seedmirror-python3ledger
 

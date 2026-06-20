@@ -24,8 +24,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - Defer JS port to a separate intake → would re-edit the same two hook files within weeks; rejected for efficiency.
 - Trade-offs accepted: branch-name discipline (`git.branch_pattern`) blocks commits only, not pushes; detached HEAD denies both with explicit error; force-push (`--force`, `--force-with-lease`) still requires user-named operation in addition to branch-policy consent.
 - Source: spec at `docs/archive/2026-05-15/branch-aware-git-policy/spec.md`. Workflow archive at `docs/archive/2026-05-15/branch-aware-git-policy/`.
-- Verified-at: 3a3314e
-- Last-touched: 2026-05-16
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## subagents-vs-skills
 
@@ -35,8 +35,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - Keep the 10-subagent fleet → ui-ux-designer empirically failing despite preloaded `impeccable` (decisions starvation).
   - Per-skill memory-bearing subagents → adds context layers that thin discipline rather than concentrate it.
 - Source: this conversation, 2026-04-27 refactor.
-- Verified-at: HEAD
-- Last-touched: 2026-04-27
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## cli-tui-presentation-layer-2026-05-18
 
@@ -48,8 +48,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - Eager `import '@clack/prompts'` at `bin/cli.js` top → also retired by empirical probe; would force clack to load even in pure-non-TTY invocations and was the original draft before the probe.
 - Trade-offs accepted: `--merge` flag is hard-removed (not deprecation-aliased) — pre-1.0 conventions allow the break; `tests/cli.test.mjs → '--dry-run on conflict' was deleted` since it exercised the removed flag. `scripts/check-files-diff.mjs` relaxes the "dependencies must be empty" rule via an explicit `DEPS_ALLOWLIST = {'@clack/prompts'}`; future additions to that set require a spec amendment.
 - Source: archived bundle at `docs/archive/2026-05-18/branded-cli-tui/` (intake, scout, research, spec, security, spec.approved).
-- Verified-at: db291ed
-- Last-touched: 2026-05-18
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## upgrade-base-recovery-hybrid-2026-05-20
 
@@ -59,8 +59,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - **npm-only re-fetch on demand** (research candidate 1A) — offline upgrade impossible; registry yank breaks even when content was previously present locally.
   - **Cache-only with no npm fallback** (research candidate 1B) — legacy cold-start (projects installed pre-rework) has no recovery path other than tier-1 fallback for every file. Hybrid keeps the cache fast path while preserving graceful resilience.
 - Source: archived bundle at `docs/archive/2026-05-20/upgrade-flow-rework/` (intake, scout, research, spec, security, spec.approved). Also: `src/cli/upgrade-tiers.js → resolveBase` is the implementation.
-- Verified-at: e2927c7
-- Last-touched: 2026-05-20
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## tier1-merge-option-design-picks
 
@@ -78,8 +78,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - **In-tree `<rel>.upgrade` sidecar** (rejected at intake AskUserQuestion): pollutes the project tree; staged location keeps state under `.claude/state/`.
   - **project.json field for pending-merge tracking** (rejected at intake): drift risk vs filesystem truth.
 - Source: archived bundle at `docs/archive/2026-05-22/tier1-merge-option/` (intake, scout, research, spec, security, spec.approved).
-- Verified-at: 92e0d10
-- Last-touched: 2026-05-22
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## additive-baseline-version-no-manifest-bump-2026-05-27
 
@@ -90,8 +90,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - Hash-set equivalence (compare oldManifest.files to a fresh buildManifestFromDir) instead of string-version compare → strictly correct but hashes every shipped file on every upgrade and is harder to message ("byte-identical templates" vs "already on baseline X.Y.Z"). The CLI's package version IS the causal identity of the bundled template, so string compare is sufficient.
   - Stamp baseline_version only in `.baseline-manifest.json` → leaves project.json without an inspectable version field for consumer tooling. The single extra `refreshBaselineVersion` call gives parity.
 - Source: archived bundle at `docs/archive/2026-05-26/upgrade-version-aware-noop/` (spec, security, spec.approved).
-- Verified-at: b5d40eb
-- Last-touched: 2026-05-27
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## pm-mode-engineer-mode-paired-helpers-2026-05-29
 
@@ -108,8 +108,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - **Auto-modify `workflow.json` from `/research` when codesign recommended** — violates Article II "decisions live in main context"; user remains the decider via subsequent `/triage --codesign` or manual edit.
 - How to apply: when adding a new entry-point phase, gate it through `Skill(brainstorm)` at Step 0.5 with `workflow-defaults.mjs → withDefaults` for read-time defaults. When a spec author needs engineer collaboration on technical approach, set `codesign_mode: true` in `workflow.json` and `/spec` Step 1.5 fires. When `/integrate` fails with `needs spec change` AND `codesign_mode: true`, `harness/codesign-reentry.mjs` writes `revisit_context` for the next `/spec` invocation to revisit a named decision (cap 3 revisits per decision).
 - Source: archived bundle at `docs/archive/2026-05-29/brainstorm-and-codesign/` (spec, security, intake, scout, research, spec.approved).
-- Verified-at: 8436ede
-- Last-touched: 2026-05-29
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## changelog-to-whatsnew-generator-2026-06-02
 
@@ -118,8 +118,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
 - Rejected: (a) keep both writers + reset Unreleased at release (still dual-ownership); (b) keep the `changelog` name (confusing once CHANGELOG.md is machine-only); (c) commit the fragment (git churn + duplicates the routing target); (d) required routing knob (violates "neither path mandatory").
 - How to apply: removed the `changelog` node from all 5 tracks (`commit.depends_on` -> `["grant-commit"]`, both jsonl mirrors + both materializer label maps); `SKILL_CATEGORIES` phases 11->10 + generators 1 (categories 12->13, "thirteen"); amended seed.md -> CLAUDE.md (Article IV) + src mirrors + CONSTITUTION Appendix B; `git mv` skill dir + manifest owners.skills key. The introducing workflow self-excepts its own `changelog` node (skill retired mid-run).
 - Source: archived bundle at `docs/archive/2026-06-02/changelog-generator-routing/`.
-- Verified-at: 8b02aa8
-- Last-touched: 2026-06-02
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 
 ## navigation-routing-code-browser-primary-2026-06-04
 
@@ -128,8 +128,8 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
 - Rejected: Candidate B (advisory navigation nudge in a hook) — no existing hook matches the Task/Grep tools, so it would breach the 22-hook cap for uncertain benefit; deferred unless A proves insufficient. Candidate C (description-only) — a subset of A that leaves the rule in the read-on-demand layer where it already failed to bind.
 - How to apply: chose research Candidate A (binding-layer prose, no new hook). Required a binding-preserving compression of CLAUDE.md (39367 → 38491 bytes; headroom under the 40k cap went 633 → ~1500) to seat X.5 + leave room for future amendments. Mirrors: `src/CLAUDE.template.md` byte-equal; `src/seed.template.md` carries the §4.3 deframe in lockstep but is NOT byte-equal overall (§16 diverges by design). Tests: `tests/code-browser-primary-navigation.test.mjs` (11 artifact assertions) + `tests/fixtures/code-browser-nav-eval.json` (baseline `.mjs` nav-eval corpus — evidence, not a model-behavior gate). `walk.mjs`/`discover.mjs` byte-identical (non-goal). Public site `site-src/skills/core.njk` deframed (two-register).
 - Source: archived bundle at `docs/archive/2026-06-04/code-browser-primary-navigation/`. Picks up backlog `code-browser-skill-dormant-only-scout-conditional-ref-9f3c`.
-- Verified-at: e11e176
-- Last-touched: 2026-06-04
+- Verified-at: 3c74ba8
+- Last-touched: 2026-06-20
 - caveat: AC testability is artifact-checks-gate (rule present, SKILL deframed, mirrors synced, audit PASS); the behavioral "model defaults to code-browser" outcome is NOT unit-testable (model judgment) — demonstrated via the `.mjs` eval fixture, observed in practice. If A proves insufficient, Candidate B (hook nudge) is the deferred fallback. Deferred follow-up: per-language fast-path adapters (`walk.mjs` resolves only `.ts/.js/.tsx/.jsx`, not `.mjs`).
 
 ## v1-maker-checker-substrate-2026-06-06
