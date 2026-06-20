@@ -1,3 +1,16 @@
+# [0.19.0](https://github.com/friedbotstudio/baseline/compare/v0.18.0...v0.19.0) (2026-06-20)
+
+
+### Bug Fixes
+
+* **memory-flush:** use $-safe block splice in sweep.mjs to prevent entry duplication ([8c5ff04](https://github.com/friedbotstudio/baseline/commit/8c5ff04e8cb3f79694ef1c3eb6c315f400007d98))
+
+
+### Features
+
+* **epic-close:** archive epic discovery bundle + close epic on last-child commit ([21556a5](https://github.com/friedbotstudio/baseline/commit/21556a5c2a760aeaf08ec7afb22f475be2671573))
+* **tier-dial:** threat/value tier config dial + advisory mutation-score floor ([154cc1f](https://github.com/friedbotstudio/baseline/commit/154cc1fc3be3e8163d8948873e750fb5acb2e9bb))
+
 # [0.18.0](https://github.com/friedbotstudio/baseline/compare/v0.17.0...v0.18.0) (2026-06-15)
 
 
