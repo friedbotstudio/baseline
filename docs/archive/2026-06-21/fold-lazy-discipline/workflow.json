@@ -1,0 +1,26 @@
+{
+  "request": "Fold the lazy-senior-dev discipline essence into code-structure/SKILL.md + simplify/SKILL.md (the ladder, the lazy: comment convention, deletion-over-addition stance; carve-outs point to existing homes). Drop the brief's skill-mode parts. Rebuild manifest + pass audit-baseline. Reference: docs/brief/lazy-skill.md (do NOT commit).",
+  "slug": "fold-lazy-discipline",
+  "track_id": "chore",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "integrate",
+    "archive",
+    "chore",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1781988064,
+  "updated_at": 1781988925
+}

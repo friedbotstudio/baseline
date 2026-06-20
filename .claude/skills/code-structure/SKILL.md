@@ -46,8 +46,23 @@ Not in this table? Map by the same principle: **Orchestration files are the tabl
 3. **Step-over / step-into.** Reading a file should work like a debugger. At the current level, you "step over" each named call (understand what it does from its name). To see how it works, you "step into" its definition. Each step-into reveals exactly one level deeper.
 4. **Compose, don't inline.** Instead of writing code directly, identify patterns first, build them as units, then assemble. For pattern identification, refer to https://refactoring.guru/design-patterns for established solutions. This is composition — not premature abstraction.
 5. **DRY emerges from structure.** Do not force DRY. If you follow the layer model and compose correctly, reuse happens naturally.
-6. **Comments become unnecessary.** If the code needs a comment to explain *what* it does, the abstraction is wrong. Names and composition should convey meaning. Comments for *why* — non-obvious constraints, workarounds, hidden invariants — are still valid.
+6. **Comments become unnecessary.** If the code needs a comment to explain *what* it does, the abstraction is wrong. Names and composition should convey meaning. Comments for *why* — non-obvious constraints, workarounds, hidden invariants — are still valid. Mark a **deliberate** simplification with a `lazy:` comment so a future reader sees intent, not ignorance: `// lazy: <what + why>`. When the shortcut has a known ceiling, the comment names the ceiling and the upgrade path — `# lazy: global lock; per-account locks if throughput matters`. A `lazy:` marker is a sanctioned *why*-comment documenting a bounded decision; it is **not** a forbidden `TODO` / `FIXME` / `HACK` / `XXX` (CLAUDE.md Art. VI.2), which flag deferred or unfinished work.
 7. **Refactoring is a separate concern.** If a module grows too large or complex, apply design patterns (see https://refactoring.guru/design-patterns) to restructure it during the `/simplify` review stage — not during initial composition.
+
+## Before you create: the laziness ladder
+
+The best module is the one you never write. Before composing anything new, stop at the **first rung that holds**:
+
+1. **Does this need to exist at all?** A speculative need is not a need — skip it and say so in one line. (YAGNI; CLAUDE.md Art. VI.4.)
+2. **Does the standard library do it?** Use it.
+3. **Does a native platform feature cover it?** Prefer the platform primitive over a hand-rolled one — a DB constraint over app-level validation, CSS over JS, an HTML input type over a widget library.
+4. **Does an already-installed dependency solve it?** Use it. The **Module Registry** below is this rung for *internal* modules: reuse or extend an existing module before writing a new one. Never add a *new* dependency for what a few lines of an existing one already do.
+5. **Can it be one line?** Make it one line.
+6. **Only then:** write the minimum module that works, placed in its correct layer.
+
+The ladder is a reflex, not a research project: if two rungs both work, take the higher one and move on. When two equal-size options differ in correctness, take the edge-case-correct one — laziness means *less code*, never the flimsier algorithm.
+
+**The ladder never overrides the trust-boundary rules.** Input validation, error handling that prevents data loss, security, and accessibility are never simplified away (CLAUDE.md Art. VI.1–VI.3; the `security` phase). Non-trivial logic still leaves one runnable check behind — that is the `scenario` / `tdd` discipline, not something the ladder lets you skip.
 
 ## Module Registry
 

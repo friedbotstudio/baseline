@@ -31,6 +31,8 @@ Across the diff of this branch — **delete, don't comment out**:
 - `TODO` / `FIXME` / `HACK` / `XXX` — resolve or remove; seed.md forbids them in source.
 - Stubs, `raise NotImplementedError`, "not implemented" placeholders.
 
+**Stance: deletion over addition.** The shortest working diff wins, and the fewest files. Prefer removing code to adding it, and a boring construct to a clever one. But a `lazy:` comment marking a *deliberate*, ceiling-named simplification is intent, not cruft (see `code-structure` Principle #6) — leave it in place; do not "clean it up" into the fuller implementation unless a test or requirement now demands it.
+
 ## 3. `code-structure` review pass
 
 Invoke `Skill(code-structure)` and apply its Detection Rules to every file the branch touches:
