@@ -1,0 +1,11 @@
+{
+  "request": "extend audit-baseline to catch docsite prose + hooks-table drift against derive-counts",
+  "slug": "audit-baseline-docsite-drift",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["audit-baseline-misses-docsite-prose-and-hooks-table-drift-9f31"],
+  "created_at": 1781999418,
+  "updated_at": 1782000680
+}

@@ -158,7 +158,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > The epic / epic-child feature (commits 66fac2a, 121078f) shipped in code, the constitution, and `workflows.jsonl`, but the docs site was never updated, and `audit-baseline` passed with fails=0 — the drift was silent. `derive-counts.mjs` keeps the `{{ baseline.* }}` numeric variables correct, but `audit-baseline` does not validate (a) `site-src/workflows.njk` hand-maintained prose ("Five selectable tracks", the track list omitting epic/epic-child, "All 22 hooks remain active") nor (b) that `site-src/hooks.njk`'s boundary table + per-hook enforcement table enumerate every hook on disk (epic_approval_guard and harness_continuation were BOTH absent, so the data-driven "23 hooks" header disagreed with a 21-row table).
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-11
 - raised-in-context: fix-docsite-epic-drift (chore)
 - estimated-effort: small
@@ -167,7 +167,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: Fix = extend `audit-baseline` to validate the docs site's hand-maintained prose/tables against the same derived counts (`derive-counts.mjs`) it already cross-checks for CLAUDE.md / README / seed.md. Two concrete checks: (1) `workflows.njk` selectable-track count plus presence of one list entry per selectable `track_id` in `workflows.jsonl`; (2) `hooks.njk` per-hook enforcement table enumerates every `.claude/hooks/*.mjs`, and the by-event boundary table covers each one. Natural pairing with the four-way Article IV mirror check and the `/init-project doctor` `workflows.jsonl` drift check. The `fix-docsite-epic-drift` chore corrected the content; this item is the guardrail so the same class of drift cannot pass CI silently again. **RECURRED 2026-06-21**: `phase-timing-instrumentation` added the 25th hook and had to manually patch both `hooks.njk` tables (caught only by the `/document` reflective check, not by CI) — confirming this guardrail is still unbuilt and the drift class is live.
 
 ---
-
+- superseded-at: 2026-06-21
 ## baseline-velocity-levers-after-lever0-timing-v0lv
 
 > verbatim (user, 2026-06-21):

@@ -154,6 +154,38 @@ export function checkByCategorySum(byCategory, total) {
     : { status: 'FAIL', detail: `byCategory sum ${sum} != skills total ${total}` };
 }
 
+// Slice the substring of `text` anchored at the section heading `id="<startId>"`
+// up to (exclusive) the next `id="<endId>"`. Returns '' when the start anchor is
+// absent, and the tail when the end anchor is absent. Used to scope a docsite
+// table check to its own section. Exported for unit testing.
+export function sectionSlice(text, startId, endId) {
+  const start = text.indexOf(`id="${startId}"`);
+  if (start === -1) return '';
+  const rest = text.slice(start);
+  const end = rest.indexOf(`id="${endId}"`);
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
+// Assert the docsite track list enumerates every selectable track. Returns
+// {status, detail}; FAIL names the omitted track_ids. Exported for unit testing.
+export function checkDocsiteTracks(njkText, selectableIds) {
+  const missing = selectableIds.filter(id => !njkText.includes(`<code>${id}</code>`));
+  return missing.length
+    ? { status: 'FAIL', detail: `missing track entries: ${JSON.stringify(missing)}` }
+    : { status: 'PASS', detail: `${selectableIds.length} tracks listed` };
+}
+
+// Assert a docsite hooks table enumerates every hook. `render` maps a hook name
+// to the literal the table is expected to carry (the bare name for the by-event
+// cell, the `<td>` row for the enforcement table). Returns {status, detail};
+// FAIL names the omitted hooks. Exported for unit testing.
+export function checkDocsiteHookTable(regionText, hookNames, render) {
+  const missing = hookNames.filter(h => !regionText.includes(render(h)));
+  return missing.length
+    ? { status: 'FAIL', detail: `missing: ${JSON.stringify(missing)}` }
+    : { status: 'PASS', detail: `${hookNames.length} hooks covered` };
+}
+
 function listDir(rel, opts = {}) {
   const p = join(ROOT, rel);
   if (!existsSync(p)) return [];
@@ -902,6 +934,44 @@ for (const rel of ['CLAUDE.md', 'src/CLAUDE.template.md']) {
 }
 const byCat = checkByCategorySum(SKILL_CATEGORIES, derived.skills);
 add('skills byCategory sum vs derived total', byCat.status, byCat.detail);
+
+// ---------- WF-6: docsite prose + table drift ----------
+// WF-5 above pins the derived COUNTS into the docsite via {{ baseline.* }}
+// template variables. These checks pin the hand-maintained PROSE that no
+// template variable covers: the workflows.njk track list must enumerate every
+// selectable track, and the two hooks.njk tables must enumerate every hook on
+// disk — so a new track or hook cannot ship with a silently stale docs page
+// (the recurring audit-baseline-misses-docsite-prose-and-hooks-table-drift
+// class). Skipped on consumer installs that ship no site-src/ tree: readText
+// returns '' for a missing file, matching the existsSync-continue pattern above.
+
+function selectableTrackIds() {
+  const text = readText('.claude/workflows.jsonl');
+  if (!text) return [];
+  const ids = [];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    let track;
+    try { track = JSON.parse(line); } catch { continue; }
+    if (track.selectable === true && typeof track.track_id === 'string') ids.push(track.track_id);
+  }
+  return ids;
+}
+
+const workflowsNjk = readText('site-src/workflows.njk');
+if (workflowsNjk) {
+  const r = checkDocsiteTracks(workflowsNjk, selectableTrackIds());
+  add('docsite: workflows.njk lists every selectable track', r.status, r.detail);
+}
+
+const hooksNjk = readText('site-src/hooks.njk');
+if (hooksNjk) {
+  const hooks = [...diskBaselineHooks].sort();
+  const eventCheck = checkDocsiteHookTable(sectionSlice(hooksNjk, 'boundary', 'article'), hooks, h => h);
+  add('docsite: hooks.njk by-event table covers every hook', eventCheck.status, eventCheck.detail);
+  const enforceCheck = checkDocsiteHookTable(sectionSlice(hooksNjk, 'article', 'consent'), hooks, h => `<td class="phase">${h}</td>`);
+  add('docsite: hooks.njk enforcement table covers every hook', enforceCheck.status, enforceCheck.detail);
+}
 
 // ---------- output ----------
 // Guarded: only when run as a script. When imported (by a test) the exported
