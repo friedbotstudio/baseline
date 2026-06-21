@@ -46,9 +46,13 @@ function epicInheritanceSatisfied(state) {
   if (!epic || typeof epic !== 'string') return false;
   const epicState = join(STATE_DIR, 'epic', `${epic}.json`);
   if (!existsSync(epicState)) return false;
-  let es;
-  try { es = JSON.parse(readFileSync(epicState, 'utf8')); } catch { return false; }
-  if (es.approved !== true) return false;
+  try { JSON.parse(readFileSync(epicState, 'utf8')); } catch { return false; }
+  // Authorization is DERIVED from the unforgeable spec-approval token, not the
+  // epic-state `approved` boolean: a Bash cd-relative write can forge the flag,
+  // but cannot mint the token (spec_approval_guard blocks self-writes). The
+  // epic-state file is read only to reject a missing or corrupt epic.
+  const approvalToken = join(STATE_DIR, 'spec_approvals', `${epic}.approval`);
+  if (!existsSync(approvalToken)) return false;
   const pins = state.pinned_artifacts;
   if (!pins || typeof pins !== 'object') return false;
   for (const key of ['scout', 'research', 'spec']) {
@@ -63,7 +67,8 @@ function epicInheritanceSatisfied(state) {
 if (ws.track_id === 'epic-child' && !rel.startsWith('.claude/state/') && !epicInheritanceSatisfied(ws)) {
   emitBlock(
     `Track Guard: workflow declares track 'epic-child' (epic='${ws.epic || ''}') but its inherited ` +
-    `discovery is unverifiable — '.claude/state/epic/<epic>.json' must exist with approved:true and every ` +
+    `discovery is unverifiable — '.claude/state/epic/<epic>.json' must exist (well-formed) with a matching ` +
+    `'.claude/state/spec_approvals/<epic>.approval' token, and every ` +
     `pinned_artifacts path (scout/research/spec) must resolve on disk. Re-run /triage against an approved ` +
     `epic, or choose a single-shot track.`
   );

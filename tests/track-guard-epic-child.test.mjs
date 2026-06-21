@@ -3,16 +3,23 @@
 // Drives track_guard.mjs via spawnSync with synthetic stdin payloads, in a temp
 // CLAUDE_PROJECT_DIR (NOT this repo's live dir) so workflow/epic state is isolated.
 // The gate must BLOCK every non-state write for an `epic-child` workflow until the
-// named epic state exists with approved:true AND every pinned_artifacts path resolves.
+// named epic's discovery is verifiably real.
+//
+// Authorization is DERIVED from the unforgeable spec_approvals/<epic>.approval token
+// at read time, NOT from the epic-state `approved` boolean (which a Bash cd-relative
+// write could forge). The boolean is retired from the authorization path.
 //
 // Coverage:
-//   - forged child (no epic named)            -> deny
-//   - epic state missing                       -> deny
-//   - epic present but approved:false          -> deny
-//   - approved:true but a pin dangles          -> deny
-//   - approved:true + all pins resolve         -> allow (gate passes; non-phase file)
-//   - .claude/state recovery write             -> allow (gate exempt)
-//   - non-epic-child track (tdd-quickfix)      -> allow (gate does not apply)
+//   - forged child (no epic named)                         -> deny
+//   - epic state missing                                   -> deny
+//   - epic state unparseable                               -> deny
+//   - forged approved:true but NO token (the bypass)       -> deny
+//   - token present + approved:true + pins resolve         -> allow
+//   - token present + approved:false + pins resolve        -> allow (boolean retired)
+//   - token present + approved field absent + pins resolve -> allow (boolean retired)
+//   - token present + approved:true but a pin dangles      -> deny
+//   - .claude/state recovery write                         -> allow (gate exempt)
+//   - non-epic-child track (tdd-quickfix)                  -> allow (gate does not apply)
 
 import { describe, it, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,7 +49,14 @@ const PROJECT_JSON = {
 };
 
 // Build a temp project dir with the guard + lib, a project.json, and a state dir.
-function buildSandbox({ workflow, epicState, pins = [] }) {
+// Options:
+//   workflow      — workflow.json contents
+//   epicState     — object written as JSON to .claude/state/epic/<epic>.json
+//   rawEpicState  — { epic, text } written verbatim (for the unparseable-JSON case);
+//                   takes precedence over epicState
+//   pins          — list of pinned artifact paths to materialize so they resolve
+//   token         — epic slug to mint a spec_approvals/<slug>.approval token for
+function buildSandbox({ workflow, epicState, rawEpicState = null, pins = [], token = null }) {
   const root = mkdtempSync(join(tmpdir(), 'trackg-'));
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/epic'), { recursive: true });
@@ -50,8 +64,14 @@ function buildSandbox({ workflow, epicState, pins = [] }) {
   cpSync(LIB_DIR, join(root, '.claude/hooks/lib'), { recursive: true });
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(PROJECT_JSON, null, 2));
   writeFileSync(join(root, '.claude/state/workflow.json'), JSON.stringify(workflow, null, 2));
-  if (epicState) {
+  if (rawEpicState) {
+    writeFileSync(join(root, `.claude/state/epic/${rawEpicState.epic}.json`), rawEpicState.text);
+  } else if (epicState) {
     writeFileSync(join(root, `.claude/state/epic/${epicState.epic}.json`), JSON.stringify(epicState, null, 2));
+  }
+  if (token) {
+    mkdirSync(join(root, '.claude/state/spec_approvals'), { recursive: true });
+    writeFileSync(join(root, `.claude/state/spec_approvals/${token}.approval`), 'APPROVED\n');
   }
   // Materialize any pinned artifact files that should resolve.
   for (const p of pins) {
@@ -100,6 +120,13 @@ const approvedEpic = (approved = true) => ({
   children: [],
 });
 
+// An epic state object with NO `approved` key at all.
+const epicWithoutApprovedField = () => {
+  const es = approvedEpic(true);
+  delete es.approved;
+  return es;
+};
+
 const ALL_PINS = ['docs/scout/demo-epic.md', 'docs/research/demo-epic.md', 'docs/specs/demo-epic.md'];
 
 after(() => { for (const s of SANDBOXES) rmSync(s, { recursive: true, force: true }); });
@@ -110,25 +137,47 @@ describe('track_guard epic-child inherited-satisfaction gate (§18.9)', () => {
     assert.equal(runGuard(root, 'src/foo.js').denied, true);
   });
 
-  it('blocks when the epic state file is missing', () => {
-    const root = buildSandbox({ workflow: childWorkflow(), pins: ALL_PINS });
+  it('AC-005: blocks when the epic state file is missing', () => {
+    const root = buildSandbox({ workflow: childWorkflow(), token: 'demo-epic', pins: ALL_PINS });
     assert.equal(runGuard(root, 'src/foo.js').denied, true);
   });
 
-  it('blocks when the epic exists but approved is false', () => {
-    const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(false), pins: ALL_PINS });
+  it('AC-005: blocks when the epic state file is present but unparseable', () => {
+    const root = buildSandbox({
+      workflow: childWorkflow(),
+      rawEpicState: { epic: 'demo-epic', text: '{ not valid json' },
+      token: 'demo-epic',
+      pins: ALL_PINS,
+    });
     assert.equal(runGuard(root, 'src/foo.js').denied, true);
   });
 
-  it('blocks when approved is true but a pinned artifact dangles', () => {
-    // Only scout + research exist; the spec pin is absent.
-    const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(true), pins: ['docs/scout/demo-epic.md', 'docs/research/demo-epic.md'] });
-    assert.equal(runGuard(root, 'src/foo.js').denied, true);
-  });
-
-  it('allows when the epic is approved and every pin resolves', () => {
+  it('AC-001 / AC-004: blocks a forged approved:true when NO approval token exists (closes the cd/pushd bypass)', () => {
+    // The pre-fix behavior trusted approved:true and ALLOWED this; deriving from the
+    // token instead means a forged flag with no real gate-A token is denied.
     const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(true), pins: ALL_PINS });
+    assert.equal(runGuard(root, 'src/foo.js').denied, true);
+  });
+
+  it('AC-002: allows when the token is present, approved:true, and every pin resolves', () => {
+    const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(true), token: 'demo-epic', pins: ALL_PINS });
     assert.equal(runGuard(root, 'src/foo.js').denied, false);
+  });
+
+  it('AC-003: allows when the token is present even though approved is false (boolean retired)', () => {
+    const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(false), token: 'demo-epic', pins: ALL_PINS });
+    assert.equal(runGuard(root, 'src/foo.js').denied, false);
+  });
+
+  it('AC-003: allows when the token is present even though the approved field is absent (boolean retired)', () => {
+    const root = buildSandbox({ workflow: childWorkflow(), epicState: epicWithoutApprovedField(), token: 'demo-epic', pins: ALL_PINS });
+    assert.equal(runGuard(root, 'src/foo.js').denied, false);
+  });
+
+  it('AC-002: blocks when the token is present but a pinned artifact dangles', () => {
+    // Only scout + research exist; the spec pin is absent.
+    const root = buildSandbox({ workflow: childWorkflow(), epicState: approvedEpic(true), token: 'demo-epic', pins: ['docs/scout/demo-epic.md', 'docs/research/demo-epic.md'] });
+    assert.equal(runGuard(root, 'src/foo.js').denied, true);
   });
 
   it('exempts .claude/state recovery writes even when the gate would fail', () => {

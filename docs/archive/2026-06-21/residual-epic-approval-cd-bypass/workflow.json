@@ -1,0 +1,33 @@
+{
+  "request": "Close the residual cd/pushd-into-epic-dir approval bypass: track_guard re-derives epic approval from the persistent spec_approvals/<slug>.approval token at read time, eliminating the trusted approved===true boolean (closes write AND read surface). Durable fix path (a) from backlog -eda6.",
+  "slug": "residual-epic-approval-cd-bypass",
+  "track_id": "spec-entry",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "review"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [
+    "tdd-quickfix"
+  ],
+  "source_backlog_keys": [
+    "residual-cd-pushd-into-epic-dir-approval-bypass-eda6"
+  ],
+  "created_at": 1782042526,
+  "updated_at": 1782042526
+}

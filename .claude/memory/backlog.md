@@ -136,22 +136,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## extend-epic-approved-enforcement-to-bash-write-surface-abad
-
-> verbatim (assistant security finding, 2026-06-10; promotion directed by user):
-> "[MEDIUM] Bash redirect to the epic state file bypasses the guard. epic_approval_guard fires only on Write|Edit|MultiEdit; CONSENT_BASENAMES (Bash-write detection) covers consent tokens but NOT .claude/state/epic/. A `echo '{\"approved\":true}' > .claude/state/epic/<slug>.json` sets approved:true without passing the guard, and track_guard trusts the flag."
-
-- source: assistant-deferral
-- status: picked-up
-- raised-on: 2026-06-10
-- raised-in-context: harden-epic-approved-flip (security review, Phase 8)
-- estimated-effort: small
-- verified-at: 66fac2a
-- last-touched: 2026-06-10
-- caveat: Completeness gap in the just-shipped `epic_approval_guard` (commit pending). The guard makes the epic `approved: true` flip unforgeable on the file-write tool surface (the documented forgery path the harness uses), but the Bash write surface is uncovered — `lib/common.mjs` `CONSENT_BASENAMES`/`writesConsentPath` (consumed by `destructive_cmd_guard`) lists `commit_consent`/`push_consent`/`*_grant`/`spec_approvals/`/`swarm_approvals/` but NOT `.claude/state/epic/`. Since the spec deliberately left `track_guard`'s read side trusting `es.approved === true`, a Bash-set flag would be honored. Fix options: (a) extend `CONSENT_BASENAMES` / `destructive_cmd_guard` to block Bash writes under `.claude/state/epic/` that set `approved:true` (parity with consent-token Bash protection); or (b) adopt research Candidate C — have `track_guard` re-derive approval from the persistent token at read time, eliminating the trusted boolean. Was OUT of scope for harden-epic-approved-flip (its ACs modeled the Write/Edit/MultiEdit surface only). Full finding: `docs/archive/2026-06-10/harden-epic-approved-flip/security.md` (MEDIUM, OWASP A04 / CWE-862). Natural pairing with the `epic-close` / read-side-derivation work.
-
----
-- superseded-at: 2026-06-21
 ## baseline-velocity-levers-after-lever0-timing-v0lv
 
 > verbatim (user, 2026-06-21):
@@ -174,7 +158,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "[MEDIUM] Residual `cd`/`pushd`-into-dir bypass — directory-relative write evades the directory-anchored detector. `cd .claude/state/epic && echo '{\"approved\":true}' > foo.json` returns false (NOT blocked): the detector's discriminator is the directory substring `.claude/state/epic/`, but after a cd the redirect target is a bare `<slug>.json` carrying no epic signal, and the `cd` argument fails the `epic/` anchor. `writesConsentPath` does not share this gap because its discriminator is a self-identifying basename that travels with the file."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-21
 - raised-in-context: epic-approved-bash-surface (security review, Phase 8)
 - estimated-effort: small-medium
@@ -183,3 +167,4 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: Residual of `-abad` (which shipped `writesEpicApproval` closing the direct redirect/verb/prog-write forms). OWASP A04 / CWE-862. Threat model is structural self-binding (constrained actor is Claude/the harness, not an external attacker) and the bypass is contrived (a deliberate `cd`+relative-write), so MEDIUM not HIGH; the `-abad` fix is a strict improvement over the prior all-bypass state. Two fix paths: (a) **durable/preferred** — adopt `-abad` option (b) / research Candidate C: have `track_guard` re-derive approval from the persistent `spec_approvals/<slug>.approval` token at read time, eliminating the trusted `approved===true` boolean entirely (closes write AND read surface, makes every write-surface detector belt-and-suspenders); (b) **incremental** — broaden `writesEpicApproval` to also flag a command that sets `approved:true`, has a write signal, and references `.claude/state/epic` via a `cd`/`pushd`/`-C`/`--directory` token (small over-block risk for reads after a cd). Natural pairing with the read-side-derivation work already noted in `-abad`. Also LOW (accepted, parity with consent control): content-var-assembly of the literal `approved` token across quotes, and the finite write-verb allowlist (e.g. `rsync`). Full finding: `docs/archive/2026-06-21/epic-approved-bash-surface/security.md`.
 
 ---
+- superseded-at: 2026-06-21

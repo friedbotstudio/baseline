@@ -22,5 +22,7 @@ Each entry's stable key is auto-numbered `Q-NNN`.
   - (a) Add the landmark + prune the oldest unverified landmark in the same write.
   - (b) Skip (the file is self-documenting; commit skill references it).
   - (c) Defer to a dedicated landmarks.md pruning workflow (resolves Q-007/Q-008/Q-009 together).
+- Resolution: option (b) — do NOT add the landmark. `landmarks.md` is over its 500-line size-cap (521), and `epic_close.mjs` is self-documenting (header CLI/exit-code contract) and already referenced by the commit skill, so nothing is lost by leaving it out. A dedicated landmarks pruning pass (Q-007/Q-008/Q-009 together) remains the path if a landmark is ever genuinely needed.
+- resolved-at: 2026-06-21
 - Verified-at: 21556a5
-- Last-touched: 2026-06-17
+- Last-touched: 2026-06-21

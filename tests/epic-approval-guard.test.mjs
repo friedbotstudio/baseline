@@ -151,12 +151,13 @@ describe('epic_approval_guard — write-time gate against the persistent approva
   });
 });
 
-// AC-006 — track_guard's read side (es.approved === true) is UNCHANGED by this
-// work. A legitimately-approved epic still lets a child write (discovery-skip
-// honored); an unapproved epic still blocks. This is a regression guard living
-// in this change's diff so AC-006 is traceable here, not only in the pre-existing
-// track-guard-epic-child suite.
-function buildTrackSandbox({ approved }) {
+// AC-006 — track_guard's read side now DERIVES approval from the persistent
+// spec_approvals/<epic>.approval token, not the forgeable es.approved boolean
+// (superseded by spec residual-epic-approval-cd-bypass). A child write is honored
+// only when the token exists; a forged approved:true with no token is blocked.
+// Regression guard living in this change's diff so the read-side contract is
+// traceable here, not only in the pre-existing track-guard-epic-child suite.
+function buildTrackSandbox({ approved, token }) {
   const root = mkdtempSync(join(tmpdir(), 'epicg-tg-'));
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/epic'), { recursive: true });
@@ -170,6 +171,10 @@ function buildTrackSandbox({ approved }) {
   };
   writeFileSync(join(root, '.claude/state/workflow.json'), JSON.stringify(workflow, null, 2));
   writeFileSync(join(root, '.claude/state/epic/demo-epic.json'), JSON.stringify(epic(approved), null, 2));
+  if (token) {
+    mkdirSync(join(root, '.claude/state/spec_approvals'), { recursive: true });
+    writeFileSync(join(root, `.claude/state/spec_approvals/${token}.approval`), 'APPROVED\n');
+  }
   for (const p of ['docs/scout/demo-epic.md', 'docs/research/demo-epic.md', 'docs/specs/demo-epic.md']) {
     const abs = join(root, p); mkdirSync(dirname(abs), { recursive: true }); writeFileSync(abs, '# pinned\n');
   }
@@ -177,14 +182,14 @@ function buildTrackSandbox({ approved }) {
   return root;
 }
 
-describe('AC-006 — track_guard read side unchanged (regression)', () => {
-  it('a legitimately-approved epic still lets a child write (discovery-skip honored)', () => {
-    const root = buildTrackSandbox({ approved: true });
+describe('AC-006 — track_guard read side derives approval from the token (regression)', () => {
+  it('a token-approved epic lets a child write (discovery-skip honored)', () => {
+    const root = buildTrackSandbox({ approved: true, token: 'demo-epic' });
     const payload = { tool_name: 'Write', tool_input: { file_path: join(root, 'src/foo.js') } };
     assert.equal(runGuard(root, 'track_guard.mjs', payload).denied, false);
   });
-  it('an unapproved epic still blocks the child write (read side still gates)', () => {
-    const root = buildTrackSandbox({ approved: false });
+  it('a forged approved:true with no token blocks the child write (read side derives from the token)', () => {
+    const root = buildTrackSandbox({ approved: true });
     const payload = { tool_name: 'Write', tool_input: { file_path: join(root, 'src/foo.js') } };
     assert.equal(runGuard(root, 'track_guard.mjs', payload).denied, true);
   });
