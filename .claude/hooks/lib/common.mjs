@@ -726,6 +726,59 @@ export function writesConsentPath(cmd) {
   return false;
 }
 
+// --- Epic approved:true Bash-write detection (backlog -abad) ---
+//
+// epic_approval_guard makes the epic `approved: true` flip un-forgeable on the
+// Write|Edit|MultiEdit surface, but it never fires on Bash. A Bash write like
+// `echo '{"approved":true}' > .claude/state/epic/<slug>.json` therefore sets the
+// flag that track_guard trusts WITHOUT a real gate-A approval. This detector lets
+// destructive_cmd_guard close that surface with parity to writesConsentPath.
+//
+// Scope mirrors epic_approval_guard's own discipline: block ONLY when the command
+// both (a) sets approved:true and (b) writes a path under .claude/state/epic/.
+// Writes that leave `approved` untouched (children[]/status/timestamps), reads,
+// and approved:true writes to non-epic paths all pass through.
+const EPIC_STATE_REF_RE = /\.claude\/state\/epic\//;
+const EPIC_REDIRECT_RE = new RegExp("(?:>>?\\|?)\\s*['\"]?[^'\">\\s|;&]*?\\.claude/state/epic/");
+// Mirrors epic_approval_guard.hasApprovedTrue's regex fallback — the literal flip.
+// `\\?` tolerates a shell-escaped quote (`{\"approved\":true}` inside a `node -e`
+// double-quoted arg) as well as the plain single-quoted JSON form.
+const APPROVED_TRUE_RE = /\\?"approved\\?"\s*:\s*true\b/;
+
+// True iff a single executed fragment writes (verb / sed-inplace / programmatic)
+// an operand under .claude/state/epic/. Redirects are handled whole-command by
+// the caller (the `>|` clobber operator embeds a `|` that splits fragments). The
+// generic write-verb regexes are reused from the consent detector — they encode
+// write intent, not consent-specificity.
+function fragmentWritesEpicTarget(fragment) {
+  if (!EPIC_STATE_REF_RE.test(fragment)) return false;
+  if (CONSENT_WRITE_VERB_RE.test(fragment)) return true;
+  if (CONSENT_SED_INPLACE_RE.test(fragment)) return true;
+  if (CONSENT_PROG_WRITE_RE.test(fragment)) return true;
+  return false;
+}
+
+// True iff the Bash command writes approved:true to an epic-state path. Exported
+// for unit testing and reuse. Variable-indirected epic dirs are resolved first
+// (`D=.claude/state/epic; echo {...} > $D/x.json`), matching writesConsentPath's
+// indirection resistance. Soundness prefilter (mirrors the 6f65 shape): a command
+// can set approved:true only if its raw text carries an `approved` substring, or a
+// command-start assignment from which expansion could assemble one — with neither,
+// expansion is byte-identical and APPROVED_TRUE_RE cannot match, so the expensive
+// resolveAssignments + expandWithEnv pass is skipped soundly.
+export function writesEpicApproval(cmd) {
+  if (typeof cmd !== 'string') return false;
+  if (!/approved/i.test(cmd) && !COMMAND_START_ASSIGN_RE.test(cmd)) return false;
+  const expanded = expandWithEnv(cmd, resolveAssignments(cmd));
+  if (!APPROVED_TRUE_RE.test(expanded)) return false;
+  if (!EPIC_STATE_REF_RE.test(expanded)) return false;
+  if (EPIC_REDIRECT_RE.test(expanded)) return true;
+  for (const fragment of executedFragments(expanded)) {
+    if (fragmentWritesEpicTarget(fragment)) return true;
+  }
+  return false;
+}
+
 // --- Leaked consent-gate marker sweep (consumed by memory_session_start) ---
 //
 // Single-use `*_grant` markers are written by consent_gate_grant and consumed

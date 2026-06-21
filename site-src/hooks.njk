@@ -65,7 +65,7 @@ toc:
   <thead><tr><th>Hook</th><th>Article</th><th>Behavior</th></tr></thead>
   <tbody>
     <tr><td class="phase">setup_guard</td><td>III</td><td>Advisory reminder when project is unconfigured (rate-limited 10 minutes). Does not block.</td></tr>
-    <tr><td class="phase">destructive_cmd_guard</td><td>VII</td><td>Hard-block catastrophic commands; ask risky.</td></tr>
+    <tr><td class="phase">destructive_cmd_guard</td><td>VII</td><td>Hard-blocks catastrophic Bash commands and asks before risky ones. Also blocks shell writes that would forge a consent token or flip an epic's <code>approved</code> flag, so the approval gates hold even when work drops to a shell.</td></tr>
     <tr><td class="phase">git_commit_guard</td><td>IV (gate C), VII</td><td>Require fresh consent for <code>git commit</code> and block forbidden flags. Enforce the branch model declared in <code>git.workflow_model</code> so commits never land on the wrong branch: under <code>direct-to-main</code> a feature-branch commit is blocked with a fix-it hint, and swarm worktrees are exempt. Gate writes to the commit-consent marker. A commit that closes backlog work has to record that closure in the same commit, so a finished item's done-stamp can't be left uncommitted.</td></tr>
     <tr><td class="phase">env_guard</td><td>VII</td><td>Block writes to <code>.env*</code> files (allows <code>.env.example</code>).</td></tr>
     <tr><td class="phase">spec_approval_guard</td><td>IV (gate A)</td><td>Validate fresh marker before allowing approval-token writes; block self-approval inside spec markdown.</td></tr>

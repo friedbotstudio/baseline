@@ -22,6 +22,7 @@ import {
   emitAllow,
   logLine,
   writesConsentPath,
+  writesEpicApproval,
 } from './lib/common.mjs';
 
 function cmdMatchesAny(cmd, patterns) {
@@ -55,6 +56,18 @@ if (!cmd) emitAllow();
 if (writesConsentPath(cmd)) {
   logLine('destructive_cmd_guard', `BLOCKED consent-path write via Bash: ${cmd}`);
   emitBlock('Destructive Command Guard: this Bash command writes a consent token/marker under .claude/state/. Consent tokens and gate markers are written ONLY by the gate flow — the Write tool after a /grant-commit, /grant-push, /approve-spec, or /approve-swarm command primes a fresh marker. Writing them via Bash would bypass marker validation (the approval guards only match Write/Edit/MultiEdit). Reads are fine; writes are not.');
+}
+
+// epic_approval_guard makes the epic `approved: true` flip un-forgeable on the
+// Write|Edit|MultiEdit surface, but it never fires on Bash — so a Bash write to
+// .claude/state/epic/<slug>.json setting approved:true would bypass it (and
+// track_guard trusts the flag to skip an epic-child's discovery). This guard runs
+// on every Bash command, so it is the right place to close that surface, parity
+// with the consent-path block above. Only approved:true writes are blocked;
+// children[]/status/timestamp writes and reads pass.
+if (writesEpicApproval(cmd)) {
+  logLine('destructive_cmd_guard', `BLOCKED epic approved:true write via Bash: ${cmd}`);
+  emitBlock('Destructive Command Guard: this Bash command sets `approved: true` on epic state under .claude/state/epic/. The epic approval flip is granted ONLY through the gated Write-tool flow — run `/approve-spec docs/specs/<slug>.md`, which produces the persistent spec-approval token that epic_approval_guard requires before it permits the flip. Setting it via Bash would bypass that gate (epic_approval_guard only matches Write/Edit/MultiEdit) and let an epic-child skip mandatory discovery. Writes that leave `approved` unchanged (children/status) and reads are fine.');
 }
 
 const hard = projectGet('.destructive.hard_block_patterns');

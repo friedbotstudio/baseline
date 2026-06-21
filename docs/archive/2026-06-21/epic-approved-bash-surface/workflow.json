@@ -1,0 +1,30 @@
+{
+  "request": "extend epic-approved enforcement to the Bash write surface (close the .claude/state/epic/ bypass)",
+  "slug": "epic-approved-bash-surface",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "extend-epic-approved-enforcement-to-bash-write-surface-abad"
+  ],
+  "created_at": 1782036818,
+  "updated_at": 1782039252
+}
