@@ -107,7 +107,7 @@ function sumTranscriptTokens(transcriptPath, beforeMs) {
 
 // ---- stamp -----------------------------------------------------------------
 
-export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath } = {}) {
+export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, subtickEnabled = true } = {}) {
   const wf = readWorkflow(rootDir);
   if (!wf || !Array.isArray(wf.completed)) return { appended: [] };
 
@@ -116,8 +116,11 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath } = 
 
   const existing = readStamps(rootDir, slug);
   const stamped = new Set(existing.map((s) => s.phase));
-  const fresh = wf.completed.filter((phase) => !stamped.has(phase));
-  if (fresh.length === 0) return { appended: [] };
+  const freshCompleted = wf.completed.filter((phase) => !stamped.has(phase));
+  const freshSub = subtickEnabled && Array.isArray(wf.tdd_ticks)
+    ? wf.tdd_ticks.map((t) => `tdd:${t}`).filter((label) => !stamped.has(label))
+    : [];
+  if (freshCompleted.length === 0 && freshSub.length === 0) return { appended: [] };
 
   const currentTokens = sumTranscriptTokens(transcriptPath) ?? {};
   const ts = now();
@@ -128,14 +131,17 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath } = 
     const baselineTokens = sumTranscriptTokens(transcriptPath, createdMs) ?? {};
     rows.push({ phase: 'run-start', event: 'baseline', ts, ...baselineTokens });
   }
-  for (const phase of fresh) {
+  for (const phase of freshSub) {
+    rows.push({ phase, event: 'sub', ts, ...currentTokens });
+  }
+  for (const phase of freshCompleted) {
     rows.push({ phase, event: 'completed', ts, ...currentTokens });
   }
 
   const p = timingPath(rootDir, slug);
   mkdirSync(dirname(p), { recursive: true });
   appendFileSync(p, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
-  return { appended: fresh };
+  return { appended: [...freshSub, ...freshCompleted] };
 }
 
 // ---- attribution + render --------------------------------------------------
@@ -161,7 +167,37 @@ function tokenDelta(prevStamp, curStamp, field) {
   return Number.isFinite(prev) && Number.isFinite(cur) ? cur - prev : 'n/a';
 }
 
-function attributeGaps(stamps, { runStart, approveTokenMs, baseline }) {
+// Sub-rows for one parent phase: the worker-tick breakdown captured as `event:'sub'`
+// stamps (e.g. `tdd:scenario`). The first sub anchors at the parent's effective
+// start (so the sub model deltas sum to the parent rollup model in both the plain
+// and the gate-attributed case); each subsequent sub chains off the previous one.
+function subRowsForParent(parentPhase, subStamps, parentStart, parentPrevStamp) {
+  const subs = subStamps
+    .filter((s) => s.phase.startsWith(`${parentPhase}:`))
+    .sort((a, b) => a.ts - b.ts);
+
+  const rows = [];
+  let prevEnd = parentStart;
+  let prevStamp = parentPrevStamp;
+  for (const cur of subs) {
+    rows.push({
+      phase: cur.phase,
+      model: Math.max(0, cur.ts - prevEnd),
+      human: 0,
+      tokens: {
+        out: tokenDelta(prevStamp, cur, 'out_tokens'),
+        in: tokenDelta(prevStamp, cur, 'in_tokens'),
+        cache: tokenDelta(prevStamp, cur, 'cache_tokens'),
+      },
+      sub: true,
+    });
+    prevEnd = cur.ts;
+    prevStamp = cur;
+  }
+  return rows;
+}
+
+function attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps = [] }) {
   const specIdx = lastSpecFamilyIndex(stamps);
   const gatePhaseIdx = specIdx === -1 ? -1 : firstWorkPhaseAfter(stamps, specIdx);
 
@@ -179,20 +215,19 @@ function attributeGaps(stamps, { runStart, approveTokenMs, baseline }) {
       cache: tokenDelta(prevStamp, cur, 'cache_tokens'),
     };
 
+    const isGate = i === gatePhaseIdx && approveTokenMs != null;
+    const start = isGate ? Math.max(prevEnd, approveTokenMs) : prevEnd;
     if (i === gatePhaseIdx) {
       if (approveTokenMs != null) {
-        rows.push({
-          phase,
-          model: Math.max(0, ts - Math.max(prevEnd, approveTokenMs)),
-          human: Math.max(0, approveTokenMs - prevEnd),
-          tokens,
-        });
+        rows.push({ phase, model: Math.max(0, ts - start), human: Math.max(0, approveTokenMs - prevEnd), tokens });
       } else {
         rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 'n/a', tokens });
       }
     } else {
       rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 0, tokens });
     }
+
+    rows.push(...subRowsForParent(phase, subStamps, start, prevStamp));
   }
   return rows;
 }
@@ -200,12 +235,13 @@ function attributeGaps(stamps, { runStart, approveTokenMs, baseline }) {
 export function renderTable({ rootDir, slug }) {
   const allStamps = readStamps(rootDir, slug);
   const baseline = allStamps.find((s) => s.event === 'baseline') || null;
-  const stamps = allStamps.filter((s) => s.event !== 'baseline');
+  const stamps = allStamps.filter((s) => s.event !== 'baseline' && s.event !== 'sub');
+  const subStamps = allStamps.filter((s) => s.event === 'sub');
   const wf = readWorkflow(rootDir);
   const runStart = wf && Number.isFinite(wf.created_at) ? wf.created_at * 1000 : 0;
   const approveTokenMs = readApprovalMtimeMs(rootDir, slug);
 
-  const rows = attributeGaps(stamps, { runStart, approveTokenMs, baseline });
+  const rows = attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps });
 
   const header = [
     `# Phase timing — ${slug}`,
@@ -213,9 +249,10 @@ export function renderTable({ rootDir, slug }) {
     '| Phase | Model (ms) | Human-wait (ms) | Tokens (out) | Tokens (in) | Tokens (cache) |',
     '|---|---|---|---|---|---|',
   ];
-  const body = rows.map(
-    (r) => `| ${r.phase} | ${r.model} | ${r.human} | ${r.tokens.out} | ${r.tokens.in} | ${r.tokens.cache} |`,
-  );
+  const body = rows.map((r) => {
+    const label = r.sub ? `└ ${r.phase}` : r.phase;
+    return `| ${label} | ${r.model} | ${r.human} | ${r.tokens.out} | ${r.tokens.in} | ${r.tokens.cache} |`;
+  });
   const footer = [
     '',
     '_Model = machine time; Human-wait = idle at a consent gate. Tokens = per-phase output/input/cache-read deltas vs the run-start baseline anchor (n/a when the transcript was unavailable). The grant-commit gate and commit phase land after /archive and are not covered by this render._',

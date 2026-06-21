@@ -190,6 +190,9 @@
     "compression": {
       "enabled": true
     },
+    "subtick_timing": {
+      "enabled": true
+    },
     "diagram_profiles": [
       {
         "id": "non-architectural",

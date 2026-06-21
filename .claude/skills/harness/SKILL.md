@@ -97,6 +97,7 @@ Inside each iteration:
      - Append the phase name to `workflow.json → completed`; update `updated_at`.
      - Log `completed <phase>`.
      - Refresh the marker (`echo "<slug>" > .claude/state/.harness_active`) and rewrite `harness_state` with `{state: "continue", slug, reason: "<phase> done; next: <next phase>"}`.
+     - For tdd worker-ticks specifically, also append the tick's short label to `workflow.json → tdd_ticks[]` (Edit tool) so `phase_timer` captures per-tick sub-timing (see `tdd/SKILL.md` → Sub-tick timing protocol).
      - **Continue the loop** to the next iteration (return to step 1).
    - On phase-skill failure (non-integrate):
      - Leave the task `in_progress` (do NOT mark `completed`).

@@ -16,7 +16,7 @@
 // Enforces CLAUDE.md Article (velocity Lever 0 / phase-timing-instrumentation).
 
 import { basename } from 'node:path';
-import { readPayload, payloadGet, CLAUDE_PROJECT_ROOT } from './lib/common.mjs';
+import { readPayload, payloadGet, projectGet, CLAUDE_PROJECT_ROOT } from './lib/common.mjs';
 import { stampFromWorkflow } from './lib/timing.mjs';
 
 const payload = await readPayload();
@@ -32,9 +32,10 @@ if (isEdit) {
 }
 
 const transcriptPath = payloadGet(payload, '.transcript_path');
+const subtickEnabled = projectGet('.artifacts.subtick_timing.enabled') !== false;
 
 try {
-  stampFromWorkflow({ rootDir: CLAUDE_PROJECT_ROOT, transcriptPath });
+  stampFromWorkflow({ rootDir: CLAUDE_PROJECT_ROOT, transcriptPath, subtickEnabled });
 } catch {
   // Timing is best-effort; a stamp failure must never disturb the workflow.
 }

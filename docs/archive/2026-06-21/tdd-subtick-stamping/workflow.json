@@ -1,0 +1,11 @@
+{
+  "request": "add tdd sub-tick stamping — worker ticks append their label to workflow.json tdd_ticks[] via Edit; lib/timing.mjs stampFromWorkflow diffs that array and emits {phase:'tdd:<tick>', event:'sub'} rows with token deltas; renderTable nests them under the tdd rollup (Option A); project.json flag gates it (default on)",
+  "slug": "tdd-subtick-stamping",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782058498,
+  "updated_at": 1782059820
+}
