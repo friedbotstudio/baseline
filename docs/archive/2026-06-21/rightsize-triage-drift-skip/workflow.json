@@ -1,0 +1,31 @@
+{
+  "request": "Fold two velocity levers: (1) Lever 2 right-size triage so small/low-risk diffs skip the reasoning-heavy apparatus (scenario-design pass + downstream simplify/security/document); (2) drift-check redundancy skip on tdd spec-entry runs when verify already passed on the same tree, mirroring simplify-reverify-guard.",
+  "slug": "rightsize-triage-drift-skip",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "source_backlog_keys_note": "Cleared at commit: the only candidate key (baseline-velocity-levers-after-lever0-timing-v0lv) is a multi-lever UMBRELLA that stays OPEN (Levers 1/3 + cross-track ranking remain). Closing it would auto-delete the DP1-7 velocity history. Progress recorded in its caveat instead (Lever 2 + Component 2 SHIPPED).",
+  "created_at": 1782069418,
+  "updated_at": 1782074063,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

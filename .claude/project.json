@@ -290,6 +290,21 @@
       "**/*.env*"
     ]
   },
+  "velocity": {
+    "rightsize": {
+      "enabled": true,
+      "max_lines": 80,
+      "doc_globs": [
+        "docs/**",
+        "**/*.md",
+        "src/cli/**",
+        "bin/**"
+      ]
+    },
+    "drift_reverify_skip": {
+      "enabled": true
+    }
+  },
   "whatsnew": {
     "route_workflow": null
   },
