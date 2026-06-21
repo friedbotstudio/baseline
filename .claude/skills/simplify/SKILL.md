@@ -38,6 +38,8 @@ When the table has zero `cleaned` rows, add one line — "no cleanups" — and p
 
 Read `.claude/state/last_test_result`; line 1 must be `PASS`.
 
+Then **snapshot the pre-cleanup tree** so Step 5 can skip a provably-redundant re-verify (Lever 4b-ii): run `node .claude/skills/simplify/reverify-guard.mjs capture <slug>`. This fingerprints the working tree vs HEAD (`git diff HEAD` + untracked file contents) while it is still in the binding-PASS state.
+
 ## 2. Mechanical cleanup pass over the diff
 
 Across the diff of this branch — **delete, don't comment out**:
@@ -71,7 +73,9 @@ Fixes here are in scope. Refactors that go beyond layering (new design patterns,
 
 ## 5. Re-verify (inlined)
 
-Inline the four mechanical operations from `.claude/skills/verify/SKILL.md` (the contract doc):
+**First, skip-check (Lever 4b-ii).** Run `node .claude/skills/simplify/reverify-guard.mjs check <slug>`. If it exits **3** (the tree is provably unchanged since the Step-1 snapshot), the cleanup deleted nothing — the binding PASS still holds because the audit's input tree is byte-identical. **Skip the four ops below**, keep the existing `last_test_result` stamp, and record `tree unchanged since binding PASS; re-verify skipped (Lever 4b-ii)` in the verdict table. On **any other exit** (0 = changed, or a non-zero error) fall through and run the four ops — the guard only signals skip on a positive match, so doubt always re-verifies.
+
+Otherwise, inline the four mechanical operations from `.claude/skills/verify/SKILL.md` (the contract doc):
 
 - Read `.claude/project.json` → `test.cmd`. If absent or empty, the verdict is `FAIL` with reason "project.json not configured" and step 5 stops with that verdict.
 - Run the command via Bash from the project root. Capture stdout, stderr, exit code. Do not retry.

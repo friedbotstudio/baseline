@@ -1,0 +1,12 @@
+{
+  "request": "Lever 4b-ii-A: skip simplify's redundant Step-5 re-verify when cleanup left the tree unchanged; add mechanical reverify-guard.mjs fingerprint helper + unit test + simplify SKILL.md Step1/Step5 edits",
+  "slug": "simplify-reverify-guard",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782065732,
+  "updated_at": 1782065740
+}
