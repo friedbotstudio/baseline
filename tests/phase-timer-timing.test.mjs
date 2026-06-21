@@ -89,9 +89,13 @@ describe('AC-001 — durable stamp when completed[] grows', () => {
       writeWorkflow(root, { slug: 'demo', completed: ['intake'], created_at: 1000 });
       const out = stampFromWorkflow({ rootDir: root, now: () => 5_000 });
       assert.deepEqual(out.appended, ['intake']);
+      // First stamp for a slug also writes a run-start baseline anchoring
+      // phase-1's token delta (phase-token-instrumentation). No transcriptPath
+      // here, so the baseline carries no token fields.
       const stamps = readStamps(root, 'demo');
-      assert.equal(stamps.length, 1);
-      assert.deepEqual(stamps[0], { phase: 'intake', event: 'completed', ts: 5_000 });
+      assert.equal(stamps.length, 2);
+      assert.deepEqual(stamps[0], { phase: 'run-start', event: 'baseline', ts: 5_000 });
+      assert.deepEqual(stamps[1], { phase: 'intake', event: 'completed', ts: 5_000 });
     });
   });
 

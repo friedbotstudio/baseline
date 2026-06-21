@@ -141,9 +141,9 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
   - **Agent teams**: teammates CANNOT spawn subagents (verified against `code.claude.com/docs`), and teammates share one working dir with no worktree isolation.
   - **Mirror-lite only** (model-driven turn-by-turn): forgoes deterministic code-driven orchestration; retained as the FALLBACK, not the substrate.
 - Source: freeform PoC archived at `docs/archive/2026-06-05/maker-checker-poc/` (brief.md, spec.md). Vision + 8-piece decomposition at `docs/vision/baseline-v1-thought-compiler.md` Part 5. Backlog `-c732` (minimal exception — OPEN, pending the intake-full corroboration workflow), `-9360` (full charter).
-- Verified-at: a63bbbe
-- Last-touched: 2026-06-06
-- caveat: the `§II.A` amendment that LEGALIZES this is NOT yet approved or committed — a fresh intake-full workflow will scout + research (external corroboration of the maker/checker + oracle-grounding patterns) before producing an approvable amendment. Decision recorded now to prevent re-litigating the agent-teams / Agent-SDK alternatives. When applying that amendment, heed `landmines.md → constitutional-amendment-tripwires-headroom-seedmirror-python3ledger` (CLAUDE.md 38,500-byte budget, seed.template parity, python3 ledger).
+- Verified-at: cd062af
+- Last-touched: 2026-06-21
+- caveat: the `§II.A` amendment that LEGALIZES this has SHIPPED — CLAUDE.md Art. II cites it ("A single bounded maker/checker round-trip MAY run on the Workflow runtime under §II.A"), full text at `docs/init/seed.md §II.A — Bounded maker/checker charter (v1)`. It is a BOUNDED exception, not a permanent Article II rewrite: seed.md §II.A clause 7 sets a graduation gate (≥3 governed round-trips with every blocking finding mechanically grounded, zero false-positive blocks, a clean `/security` of the checker's oracle artifacts, and maintainer ratification) before any permanent rewrite; clause 6 caps bind until then. Decision recorded to prevent re-litigating the agent-teams / Agent-SDK alternatives. When applying the future permanent rewrite, heed `landmines.md → constitutional-amendment-tripwires-headroom-seedmirror-python3ledger` (CLAUDE.md 38,500-byte budget, seed.template parity, python3 ledger).
 
 ## tier-dial-oracle-floors-2026-06-16
 

@@ -1,0 +1,11 @@
+{
+  "request": "Extend per-phase workflow instrumentation to capture output/input/cache token counts alongside timing: phase_timer stamps cumulative tokens from the transcript at each completed phase, lib/timing.mjs renders a per-phase token-delta column in timing.md, with a run-start token baseline so phase-1 is not over-counted.",
+  "slug": "phase-token-instrumentation",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review", "swarm-plan", "approve-swarm", "swarm-dispatch", "cli-copy-review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782033802,
+  "updated_at": 1782034992
+}

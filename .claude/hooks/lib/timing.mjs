@@ -1,14 +1,21 @@
-// Foundation — per-phase workflow timing (phase-timing-instrumentation, Candidate B).
+// Foundation — per-phase workflow timing + token accounting
+// (phase-timing-instrumentation, Candidate B; token capture: phase-token-instrumentation).
 //
 // Two pure operations over filesystem state, plus a `render` CLI:
 //   stampFromWorkflow — append a completion stamp for each phase newly present in
-//                       workflow.json → completed[]. Idempotent; never throws.
+//                       workflow.json → completed[], carrying cumulative token
+//                       totals (output/input/cache-read) read from the session
+//                       transcript. Idempotent; never throws.
 //   renderTable       — join the stamps + the approve-spec consent-token mtime into
-//                       a per-phase model-vs-human-wait markdown table.
+//                       a per-phase markdown table: model-vs-human-wait time plus
+//                       per-phase token deltas (out/in/cache).
 //
 // Timestamps in the JSONL are epoch milliseconds; workflow.json created_at is epoch
 // seconds (run-start anchor = created_at * 1000). Consent gates are folded into the
-// following work phase's human-wait, never shown as their own rows.
+// following work phase's human-wait, never shown as their own rows. The first stamp
+// for a slug also writes a `run-start` baseline row anchoring phase-1's token delta:
+// its token counts cover only transcript entries timestamped at/before created_at,
+// so phase-1 reflects in-workflow work, not the whole pre-workflow session.
 
 import {
   existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync, statSync,
@@ -56,25 +63,78 @@ function readApprovalMtimeMs(rootDir, slug) {
   }
 }
 
+// Best-effort cumulative token total over a session transcript JSONL. Sums
+// message.usage.{output,input,cache_read}_tokens across every assistant entry.
+// When `beforeMs` is given, only entries with an ISO `timestamp` at or before
+// that instant are counted — this yields the run-start anchor (tokens spent
+// before the workflow's created_at) so phase-1's delta is real work, not the
+// whole pre-workflow session. Returns null (token data absent) on a
+// missing/unreadable path or when no qualifying assistant-with-usage entry is
+// found. Never throws — a malformed line is skipped.
+function sumTranscriptTokens(transcriptPath, beforeMs) {
+  if (!transcriptPath || !existsSync(transcriptPath)) return null;
+  let raw;
+  try {
+    raw = readFileSync(transcriptPath, 'utf8');
+  } catch {
+    return null;
+  }
+  let out = 0;
+  let inp = 0;
+  let cache = 0;
+  let seen = false;
+  for (const line of raw.split('\n')) {
+    if (!line) continue;
+    let entry;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const usage = entry && entry.type === 'assistant' && entry.message && entry.message.usage;
+    if (!usage) continue;
+    if (Number.isFinite(beforeMs)) {
+      const tsMs = Date.parse(entry.timestamp);
+      if (!Number.isFinite(tsMs) || tsMs > beforeMs) continue;
+    }
+    seen = true;
+    out += usage.output_tokens || 0;
+    inp += usage.input_tokens || 0;
+    cache += usage.cache_read_input_tokens || 0;
+  }
+  return seen ? { out_tokens: out, in_tokens: inp, cache_tokens: cache } : null;
+}
+
 // ---- stamp -----------------------------------------------------------------
 
-export function stampFromWorkflow({ rootDir, now = Date.now }) {
+export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath } = {}) {
   const wf = readWorkflow(rootDir);
   if (!wf || !Array.isArray(wf.completed)) return { appended: [] };
 
   const slug = wf.slug;
   if (!slug) return { appended: [] };
 
-  const stamped = new Set(readStamps(rootDir, slug).map((s) => s.phase));
+  const existing = readStamps(rootDir, slug);
+  const stamped = new Set(existing.map((s) => s.phase));
   const fresh = wf.completed.filter((phase) => !stamped.has(phase));
   if (fresh.length === 0) return { appended: [] };
 
+  const currentTokens = sumTranscriptTokens(transcriptPath) ?? {};
+  const ts = now();
+
+  const rows = [];
+  if (existing.length === 0) {
+    const createdMs = Number.isFinite(wf.created_at) ? wf.created_at * 1000 : undefined;
+    const baselineTokens = sumTranscriptTokens(transcriptPath, createdMs) ?? {};
+    rows.push({ phase: 'run-start', event: 'baseline', ts, ...baselineTokens });
+  }
+  for (const phase of fresh) {
+    rows.push({ phase, event: 'completed', ts, ...currentTokens });
+  }
+
   const p = timingPath(rootDir, slug);
   mkdirSync(dirname(p), { recursive: true });
-  const lines = fresh
-    .map((phase) => JSON.stringify({ phase, event: 'completed', ts: now() }))
-    .join('\n');
-  appendFileSync(p, lines + '\n');
+  appendFileSync(p, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
   return { appended: fresh };
 }
 
@@ -95,16 +155,29 @@ function firstWorkPhaseAfter(stamps, fromIndex) {
   return -1;
 }
 
-function attributeGaps(stamps, { runStart, approveTokenMs }) {
+function tokenDelta(prevStamp, curStamp, field) {
+  const prev = prevStamp ? prevStamp[field] : undefined;
+  const cur = curStamp ? curStamp[field] : undefined;
+  return Number.isFinite(prev) && Number.isFinite(cur) ? cur - prev : 'n/a';
+}
+
+function attributeGaps(stamps, { runStart, approveTokenMs, baseline }) {
   const specIdx = lastSpecFamilyIndex(stamps);
   const gatePhaseIdx = specIdx === -1 ? -1 : firstWorkPhaseAfter(stamps, specIdx);
 
   const rows = [];
   for (let i = 0; i < stamps.length; i += 1) {
-    const { phase, ts } = stamps[i];
+    const cur = stamps[i];
+    const { phase, ts } = cur;
     if (GATE_PHASES.has(phase)) continue;
 
     const prevEnd = i === 0 ? runStart : stamps[i - 1].ts;
+    const prevStamp = i === 0 ? baseline : stamps[i - 1];
+    const tokens = {
+      out: tokenDelta(prevStamp, cur, 'out_tokens'),
+      in: tokenDelta(prevStamp, cur, 'in_tokens'),
+      cache: tokenDelta(prevStamp, cur, 'cache_tokens'),
+    };
 
     if (i === gatePhaseIdx) {
       if (approveTokenMs != null) {
@@ -112,35 +185,40 @@ function attributeGaps(stamps, { runStart, approveTokenMs }) {
           phase,
           model: Math.max(0, ts - Math.max(prevEnd, approveTokenMs)),
           human: Math.max(0, approveTokenMs - prevEnd),
+          tokens,
         });
       } else {
-        rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 'n/a' });
+        rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 'n/a', tokens });
       }
     } else {
-      rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 0 });
+      rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 0, tokens });
     }
   }
   return rows;
 }
 
 export function renderTable({ rootDir, slug }) {
-  const stamps = readStamps(rootDir, slug);
+  const allStamps = readStamps(rootDir, slug);
+  const baseline = allStamps.find((s) => s.event === 'baseline') || null;
+  const stamps = allStamps.filter((s) => s.event !== 'baseline');
   const wf = readWorkflow(rootDir);
   const runStart = wf && Number.isFinite(wf.created_at) ? wf.created_at * 1000 : 0;
   const approveTokenMs = readApprovalMtimeMs(rootDir, slug);
 
-  const rows = attributeGaps(stamps, { runStart, approveTokenMs });
+  const rows = attributeGaps(stamps, { runStart, approveTokenMs, baseline });
 
   const header = [
     `# Phase timing — ${slug}`,
     '',
-    '| Phase | Model (ms) | Human-wait (ms) |',
-    '|---|---|---|',
+    '| Phase | Model (ms) | Human-wait (ms) | Tokens (out) | Tokens (in) | Tokens (cache) |',
+    '|---|---|---|---|---|---|',
   ];
-  const body = rows.map((r) => `| ${r.phase} | ${r.model} | ${r.human} |`);
+  const body = rows.map(
+    (r) => `| ${r.phase} | ${r.model} | ${r.human} | ${r.tokens.out} | ${r.tokens.in} | ${r.tokens.cache} |`,
+  );
   const footer = [
     '',
-    '_Model = machine time; Human-wait = idle at a consent gate. The grant-commit gate and commit phase land after /archive and are not covered by this render._',
+    '_Model = machine time; Human-wait = idle at a consent gate. Tokens = per-phase output/input/cache-read deltas vs the run-start baseline anchor (n/a when the transcript was unavailable). The grant-commit gate and commit phase land after /archive and are not covered by this render._',
   ];
   return [...header, ...body, ...footer].join('\n') + '\n';
 }
