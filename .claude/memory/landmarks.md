@@ -479,8 +479,8 @@ Each entry's stable key is `path:line`.
 
 - Path: `.claude/hooks/lib/closure-check.mjs`
 - Role: Foundation module — pure backlog-closure stamp reader + staged-tree obligation evaluator. Exports `unsatisfiedKeys(backlogText, keys)` and `evaluateClosure({stagedPaths, readStaged})`; no git, no I/O (callers inject staged content). Single source of truth (spec D3) imported by BOTH `git_commit_guard.mjs` (the atomic-closure hard-block leg) and `.claude/skills/commit/closure-precommit-check.mjs` (the `/commit` SOP preflight + `Closes <key>` reconciliation).
-- Verified-at: b7811f9
-- Last-touched: 2026-06-06
+- Verified-at: b667aa8
+- Last-touched: 2026-06-21
 - caveat: MUST stay shipped in `obj/template/.claude/manifest.json` — if dropped, `git_commit_guard`'s import crashes and the guard fails OPEN (consent bypass). Defended by `audit-baseline` + `tests/closure-amendment-governance.test.mjs`. See landmine `guard-new-lib-dep-breaks-sandbox-copy-tests`. Behavior documented in seed.md §4.1 + CLAUDE.md Art VIII + annex; RCA `docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md`.
 
 ## .claude/hooks/lib/tier-dial.mjs
@@ -495,20 +495,20 @@ Each entry's stable key is `path:line`.
 ## .claude/hooks/lib/timing.mjs
 
 - Path: `.claude/hooks/lib/timing.mjs`
-- Role: Foundation module for per-phase workflow timing (velocity Lever 0, `phase-timing-instrumentation`). Pure functions over `.claude/state/`: `stampFromWorkflow({rootDir, now})` appends `{phase,event:"completed",ts}` JSONL lines to `.claude/state/timing/<slug>.jsonl` for every phase newly present in `workflow.json → completed[]` (idempotent; `{appended:[]}` on absent/malformed workflow.json, never throws); `renderTable({rootDir, slug})` joins the stamps + consent-token mtimes into a `| Phase | Model (ms) | Human-wait (ms) |` markdown table (gate phases approve-spec/approve-swarm/grant-commit excluded as rows; the approve-spec gate's wait folds into the first post-spec work phase; negatives clamp to 0; missing token → `n/a`). CLI guard: `node .claude/hooks/lib/timing.mjs render <slug> [bundleDir]` writes `timing.md`.
-- Companion: `.claude/hooks/phase_timer.mjs` (the hook that calls `stampFromWorkflow`), `.claude/skills/archive/SKILL.md` Step 2 (invokes the render CLI before `archive.sh` moves the approval token).
-- Verified-at: 64d8a55
+- Role: Foundation module for per-phase workflow timing + token capture (velocity Lever 0). Pure functions over `.claude/state/`: `stampFromWorkflow({rootDir, now})` appends `{phase,event:"completed",ts}` JSONL lines to `.claude/state/timing/<slug>.jsonl` for every phase newly present in `workflow.json → completed[]`, ALSO diffs `workflow.json → tdd_ticks[]` into `{phase:"tdd:<tick>",event:"sub"}` rows (sub-tick stamping, `tdd-subtick-stamping`), and captures cumulative output/input/cache-read tokens from the session transcript anchored on a `run-start` baseline (entries timestamped at/before `workflow.created_at`) (`phase-token-instrumentation`). Idempotent; `{appended:[]}` on absent/malformed workflow.json, never throws. `renderTable({rootDir, slug})` joins stamps + consent-token mtimes + token deltas into a markdown table with Model(ms)/Human-wait(ms) AND per-phase output/input/cache-read token columns; `tdd:<tick>` sub-rows nest under the `tdd` rollup (Option A; sum-of-subs == rollup), gated by `project.json → artifacts.subtick_timing.enabled`. Gate phases excluded as rows; approve-spec wait folds into first post-spec phase; negatives clamp to 0; missing → `n/a`. CLI: `node .claude/hooks/lib/timing.mjs render <slug> [bundleDir]` writes `timing.md`.
+- Companion: `.claude/hooks/phase_timer.mjs` (the hook that calls `stampFromWorkflow`, incl. its Bash leg), `.claude/skills/archive/SKILL.md` Step 2 (invokes the render CLI before `archive.sh` moves the approval token), `.claude/skills/tdd/SKILL.md` + `harness/SKILL.md` (worker ticks append to `tdd_ticks[]`).
+- Verified-at: b667aa8
 - Last-touched: 2026-06-21
-- caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`.
+- caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`. Token deltas only fire when phase-state writes go through tracked tools (Write/Edit) OR Bash (via phase_timer's Bash leg) — a pure-fs write that bypasses both captures no timing.
 
 ## .claude/hooks/phase_timer.mjs
 
 - Path: `.claude/hooks/phase_timer.mjs`
-- Role: PostToolUse(Write|Edit|MultiEdit) observe-only hook (the 25th hook). Reads the payload; no-ops unless `basename(tool_input.file_path) === 'workflow.json'`; then calls `stampFromWorkflow` (try/catch swallowed). Never blocks (PostToolUse has no deny path), never mutates the edited file — a timing-stamp failure must never disturb a workflow. Wired in `settings.json` + `src/settings.template.json` beside `lint_runner`/`test_runner`.
+- Role: PostToolUse observe-only hook (the 25th hook) with two legs. Write|Edit|MultiEdit leg: no-ops unless `basename(tool_input.file_path) === 'workflow.json'`, then calls `stampFromWorkflow`. **Bash leg** (`phase-timer-bash-trigger`): on `tool_name === 'Bash'` it skips the basename check and unconditionally calls the idempotent `stampFromWorkflow`, so Bash-driven `workflow.json` mutations (the manual-harness `>`/node-fs/jq path) also stamp — closing the gap where Write-only matching silently lost timing for human/Bash-driven runs. Try/catch swallowed; never blocks (PostToolUse has no deny path), never mutates the edited file. Wired in `settings.json` + `src/settings.template.json` (a Write/Edit/MultiEdit matcher AND a Bash matcher) beside `lint_runner`/`test_runner`.
 - Companion: `.claude/hooks/lib/timing.mjs` (logic), `docs/init/seed.md §4.1` + `CLAUDE.md` Article VIII (governance rows).
-- Verified-at: 64d8a55
+- Verified-at: b667aa8
 - Last-touched: 2026-06-21
-- caveat: fires on EVERY Write/Edit/MultiEdit in the repo, so the basename guard must stay the first cheap check. Covers manual phase runs too (any path that appends to `completed[]`), not just `/harness`.
+- caveat: fires on EVERY Write/Edit/MultiEdit AND every Bash call in the repo; the basename guard (Write leg) and idempotent `stampFromWorkflow` (both legs) keep the no-op cheap. Covers manual/Bash-driven phase runs too, not just `/harness`.
 
 ## .claude/skills/audit-baseline/expected-baseline.mjs
 

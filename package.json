@@ -18,6 +18,7 @@
   "scripts": {
     "build": "bash scripts/build-template.sh",
     "prepack": "bash scripts/build-template.sh",
+    "sync:constitution": "node scripts/sync-constitution-mirror.mjs --write",
     "test": "node --test --test-reporter=spec tests/*.test.mjs",
     "test:full": "PUBLISH_TESTS=1 PLANTUML_TESTS=1 node --test --test-reporter=spec tests/*.test.mjs",
     "test:mutation": "node scripts/mutation-oracle.mjs",

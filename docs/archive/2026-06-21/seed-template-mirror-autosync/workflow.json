@@ -1,0 +1,32 @@
+{
+  "request": "Add autosync so live constitution edits (docs/init/seed.md, CLAUDE.md) propagate into their src/*.template.md mirrors automatically, with the seed §16 reserved-placeholder carve-out preserved — closing the no-autosync recurring-drift gap.",
+  "slug": "seed-template-mirror-autosync",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "seed-template-mirror-parity-no-autosync-6c71"
+  ],
+  "created_at": 1782061320,
+  "updated_at": 1782063814,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

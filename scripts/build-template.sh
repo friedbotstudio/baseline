@@ -91,6 +91,17 @@ sync_vendored_mirror "$PKG_ROOT/src/cli/workflows-validator-predicates.js" "$PKG
 sync_vendored_mirror "$PKG_ROOT/src/cli/track-tasklist-materializer.js"    "$PKG_ROOT/.claude/skills/triage/track-tasklist-materializer.js"
 sync_vendored_mirror "$PKG_ROOT/src/cli/workflow-migrator.js"              "$PKG_ROOT/.claude/skills/harness/workflow-migrator.js"
 
+# Stage 0b (cont.) — self-heal the constitution mirror. The live constitution
+# (docs/init/seed.md, CLAUDE.md) is the edit-origin; src/*.template.md is the
+# derived shippable that Stage 2 overlays into obj/template. Reconcile live ->
+# template here, BEFORE Stage 2, so a forgotten manual sync can never ship drift
+# (the seed §16 reserved placeholder is preserved by the splice). Idempotent;
+# guarded on the helper existing (fixture builds override PKG_ROOT and skip).
+if [ -f "$PKG_ROOT/scripts/sync-constitution-mirror.mjs" ]; then
+  node "$PKG_ROOT/scripts/sync-constitution-mirror.mjs" --write --root "$PKG_ROOT" >&2 \
+    && echo "build: reconciled constitution mirror" >&2
+fi
+
 rm -rf "$TEMPLATE_DIR"
 mkdir -p "$TEMPLATE_DIR/.claude" "$TEMPLATE_DIR/docs/init"
 

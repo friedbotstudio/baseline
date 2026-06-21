@@ -181,8 +181,8 @@ Each entry's stable key is a short slug.
 - why: (1) `scripts/check-files-diff.mjs` enforces `DEVDEP_RANGE_FORBIDDEN` and `tests/publish-check.test.mjs` fails the suite on any ranged devDep (caught `@stryker-mutator/core=^9.6.1` in `-f029`; fix was `9.6.1`). Exact pins keep the published/packed dependency set reproducible. (2) The co-name assumption is false in this repo — e.g. `.claude/skills/memory-flush/route.mjs` is tested by `tests/memory-flush-routing.test.mjs` (not `memory-flush-route.test.mjs`); the mutation oracle (`scripts/mutation-oracle.mjs`) therefore takes `<module> <testPath>` both explicit.
 - how to apply: after any `npm install -D`, edit the new `package.json` devDep to drop the `^`/`~`; run `node scripts/check-files-diff.mjs` (expects "files-diff: clean"). When wiring per-module tooling, pass the test path as an argument; do not infer it.
 - applies-to: `package.json` devDependencies; `scripts/check-files-diff.mjs`; `tests/publish-check.test.mjs`; `scripts/mutation-oracle.mjs` (the `test:mutation` interface).
-- verified-at: 97ead55
-- last-touched: 2026-06-05
+- verified-at: b667aa8
+- last-touched: 2026-06-21
 
 - source: code-pattern
 - convention: `.claude/skills/tdd/drift_check.mjs` (the harness drift-check-tick) resolves a spec AC to "resolved" ONLY when its literal `AC-NNN` token appears in an IMPLEMENTATION or TEST added-line of the branch diff — never from the spec markdown's own `| AC-NNN |` rows (those are excluded). Descriptive test names alone (`test_when_X_then_Y`) leave every AC `unresolved` and drift_check exits 1 (which the harness treats as a stop-and-surface yield, NO auto-loop).
