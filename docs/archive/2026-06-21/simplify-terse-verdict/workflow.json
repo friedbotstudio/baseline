@@ -1,0 +1,11 @@
+{
+  "request": "Lever 4b-i: add structured terse-verdict output discipline to .claude/skills/simplify/SKILL.md to cut simplify-phase output-token over-sampling",
+  "slug": "simplify-terse-verdict",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "security", "integrate", "document"],
+  "completed": ["chore", "verify", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782064691,
+  "updated_at": 1782064696
+}

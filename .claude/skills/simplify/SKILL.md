@@ -14,6 +14,24 @@ description: Workflow Phase 7 — Mechanical cleanup pass over the branch diff, 
 
 This skill **shadows** the global `simplify` skill (same name, project scope wins). To avoid invoking itself, the cleanup pass is performed inline below — do **not** invoke `simplify` via the Skill tool from inside this file.
 
+# Output discipline (terse verdict)
+
+simplify's deliverable is the **clean diff**, not a narrated analysis. Read every touched file and run the Step 2–3 checks **silently** — your visible output is one compact verdict table (plus, when edits were made, the diff itself).
+
+**Emit exactly one verdict table**, one row per file the branch touches:
+
+| file | verdict | reason |
+|---|---|---|
+| path/to/file | `clean` \| `cleaned` \| `flagged` | ≤ 8 words |
+
+- `clean` — reviewed, no change needed.
+- `cleaned` — you deleted dead code / collapsed duplication / removed a stub here (the edit is in the diff).
+- `flagged` — an out-of-scope refactor noted for a follow-up spec (name it; do **not** fix it).
+
+**Do not** quote or restate diff contents, paste file bodies, or narrate per-file reasoning ("Looking at X… this sits at the orchestration layer… abstraction levels are consistent…"). The reasoning happens silently in your head; only the verdict row is emitted. The `reason` clause is the *sole* place free text is allowed — keep it ≤ 8 words.
+
+When the table has zero `cleaned` rows, add one line — "no cleanups" — and proceed; do **not** write a paragraph explaining why each file was already clean. This restatement is the over-sampling Lever 4b targets: it carries near-zero decision-relevant information per token.
+
 # Steps
 
 ## 1. Verify prereq
@@ -43,7 +61,7 @@ Invoke `Skill(code-structure)` and apply its Detection Rules to every file the b
 - Domain modules reaching directly for raw infrastructure.
 - Files longer than ~80 lines of substantive code — split along layer lines.
 
-Fixes here are in scope. Refactors that go beyond layering (new design patterns, interface changes) are **out of scope** — flag them and leave for a follow-up spec.
+Fixes here are in scope. Refactors that go beyond layering (new design patterns, interface changes) are **out of scope** — record them as a `flagged` row in the verdict table (see Output discipline) and leave for a follow-up spec; do not narrate the analysis that produced them.
 
 ## 4. Scope guardrails
 
@@ -62,7 +80,7 @@ Inline the four mechanical operations from `.claude/skills/verify/SKILL.md` (the
 
 ## 6. Decide + write harness_state
 
-- **Still PASS** → append `"simplify"` to `completed`. Marker FIRST: `echo "<slug>" > .claude/state/.harness_active` (refresh the active marker). Then write `.claude/state/harness_state` with `{state: "continue", slug, reason: "simplify clean; next: security or integrate"}` — exactly three keys; no `written_at`, no `tick_count`. Tell the user: "Cleanup done, tests green. Next: `/security` (optional) or `/integrate`."
+- **Still PASS** → emit the verdict table (see Output discipline), then append `"simplify"` to `completed`. Marker FIRST: `echo "<slug>" > .claude/state/.harness_active` (refresh the active marker). Then write `.claude/state/harness_state` with `{state: "continue", slug, reason: "simplify clean; next: security or integrate"}` — exactly three keys; no `written_at`, no `tick_count`. Tell the user: "Cleanup done, tests green. Next: `/security` (optional) or `/integrate`."
 - **FAIL** → revert the cleanup changes and surface exactly what broke (test name + first assertion). Marker FIRST: `rm -f .claude/state/.harness_active`. Then write `harness_state` with `{state: "yielded", slug, reason: "simplify FAIL after cleanup; reverted; needs user review"}`.
 
 # Constraints
