@@ -51,7 +51,11 @@ function matchesAnyGlob(path, globs) {
 function extractWriteSet(content) {
   const paths = new Set();
   for (const line of content.split(/\r?\n/)) {
-    const m = /write[_\s]set\s*:\s*(.+)$/i.exec(line);
+    // Accept the colon form (`write_set: ...`), the markdown-bold heading
+    // (`**Write set**: ...`), and the prose form (`The write_set is ...`) — real
+    // specs (and the compression feature's own spec) declare it in prose, which
+    // the colon-only regex silently missed, so the reduction never fired.
+    const m = /write[_\s]set\*{0,2}\s*(?::|is\s)\s*(.+)$/i.exec(line);
     if (!m) continue;
     for (let tok of m[1].split(/[`,\s|]+/)) {
       tok = tok.trim().replace(/^\*+|\*+$/g, '').trim();

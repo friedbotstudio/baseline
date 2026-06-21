@@ -200,7 +200,11 @@
           ".claude/skills/**",
           "docs/**",
           "*.md",
-          ".claude/*.json"
+          ".claude/*.json",
+          ".claude/*.md",
+          "src/*.template.md",
+          "tests/**",
+          "obj/**"
         ],
         "required_diagrams": {
           "c4_component": {

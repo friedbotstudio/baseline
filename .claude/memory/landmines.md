@@ -248,3 +248,23 @@ Each entry's stable key is `path:line` or a short slug.
 - Verified-at: 22c986b
 - Last-touched: 2026-06-22
 - caveat: confirmed live 2026-06-22 in `simplify-reverify-guard` — verify-tick + integrate stamped via the audit; the new helper's 10 unit tests AND the `tier-dial-coverage` regression risk were caught only by a manual `npm test` in `/integrate` (1057 tests, 1043 pass). The constituent facts existed but scattered across [[baseline-skill-edit-needs-manifest-rebuild]] and [[live-objtemplate-rebuild-races]]; no single entry synthesized the audit-vs-unit-suite split + its integrate implication, so it was re-derived from `project.json`/`package.json` from scratch. This entry is the synthesis. Companion: [[baseline-skill-edit-needs-manifest-rebuild]] (the manifest-rehash half).
+
+## diagram-profile-reduction-was-dead-on-arrival
+
+- file: `.claude/hooks/lib/write-set-profile.mjs`, `.claude/skills/spec-lint/lint.mjs`, `.claude/project.json` (artifacts.diagram_profiles)
+- symptom: the write_set-gated diagram-profile reduction (artifact-compression "Lever 4") shipped its config but NEVER fired — every spec still required all 6 C4 diagrams.
+- root-cause: `resolveProfile`'s `extractWriteSet` regex required `write_set:` (colon), but real specs declare it in prose — `The write_set is \`...\``. Unit tests used the colon form, so they were green while every production spec fell through fail-open to the full set. Compounded by: the non-arch profile `when[]` omitted `tests/**`/`obj/**`/governance mirrors (real write_sets always touch those → coverage failed); and `spec-lint/lint.mjs` ran its OWN diagram-presence check bypassing `resolveProfile` (so it contradicted the hook).
+- fix (2026-06-22, `checker-graduation-fanout` ad-hoc): regex accepts colon / `is` / `**Write set**:` forms; profile `when[]` += `tests/**`,`obj/**`,`src/*.template.md`,`.claude/*.md`; spec template prompts the declaration; `spec-lint` delegates to `resolveProfile`. Also beware: a Write-set declaration line trailing explanatory prose with OTHER backticked paths (e.g. `\`src/**\``) poisons extraction — keep the declaration path-only.
+- lesson: a feature whose trigger NO artifact ever emits is dead config. Test the real-world input form, not just the canonical one; when two checkers gate the same property, route both through one resolver.
+- verified-at: 9ba38f1
+- last-touched: 2026-06-22
+
+## governed-round-trips-catch-what-unit-tests-miss
+
+- file: `.claude/skills/spec-traceability-review/oracle.mjs`, `.claude/skills/harness/graduation-gate.mjs`
+- symptom: running the oracle checkers on a REAL spec (the §II.A graduation round-trips) produced 9 false-positive BLOCKER findings on a spec that actually traced all its ACs.
+- root-cause: the traceability oracle's `intake AC N` regex matched only the spaced form; real specs write hyphenated `intake AC-1` / zero-padded `intake AC-001`. The unit test used the spaced form, so it was green. The false positives only appeared against the real corpus.
+- significance: this IS the seed.md §II.A clause-7 graduation value working — the governed round-trip caught the false positive BEFORE the Article II amendment landed, fixed (broadened separator + regression test) before ratification. Exactly the "two LLMs agree on a hallucination" class the gate exists to prevent.
+- lesson: oracle-bound checkers must be validated against a REAL corpus, not just synthetic fixtures; the graduation gate (≥3 governed round-trips on real specs, 0 false-positive blocks) forces this. See [[diagram-profile-reduction-was-dead-on-arrival]] — same test-vs-reality gap class.
+- verified-at: 9ba38f1
+- last-touched: 2026-06-22

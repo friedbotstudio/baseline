@@ -26,6 +26,8 @@ Approval is a token written by /approve-spec.
 | Scout *(if any)* | `docs/scout/<slug>.md` |
 | Research *(if any)* | `docs/research/<slug>.md` |
 
+**Write set**: `<globs the implementation will touch, in backticks, comma-separated>` — drives the diagram profile. A non-architectural write_set (e.g. only `.claude/skills/**`, `docs/**`, `*.md`, `tests/**`) requires the reduced diagram set; touching app source (`src/**`, `bin/**`) or a `security.sensitive_globs` path requires the full C4 set. Leave the placeholder unfilled to default to the full set. See `project.json → artifacts.diagram_profiles`.
+
 ## Goal
 
 <One sentence. What the system does after this spec ships. Not why — the intake owns why.>

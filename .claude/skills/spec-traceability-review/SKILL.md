@@ -70,3 +70,7 @@ Verdict: READY FOR APPROVAL | REVISIONS REQUIRED
 - Do not judge the *quality* of ACs themselves (that's the diagram-review's and human reviewer's concern). Only check that the linkage is intact.
 - If the intake's AC format is ambiguous (mixed ID styles, un-numbered bullets), flag under **Minor** and proceed with your best mapping — do not fail the review on formatting alone.
 - Keep the report under ~120 lines.
+
+## Mechanical oracle (`-d186`)
+
+`oracle.mjs` provides the artifact-backed check that may **block**: a **dropped upstream AC** (an intake/BRD AC no spec AC references) yields a finding carrying `artifact{kind:'trace-gap', locus}`. Reference matching accepts the real separators specs use (`intake AC 1`, `intake AC-1`, zero-padded `intake AC-001`) — a space-only matcher false-flagged hyphenated refs (caught by a governed round-trip). A finding blocks only with an `ArtifactRef` **and** tier-dial `mandatory` (`resolveCheckerThreshold('spec-traceability')`); else ADVISORY.

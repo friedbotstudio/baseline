@@ -79,3 +79,7 @@ Verdict: READY FOR APPROVAL | REVISIONS REQUIRED
 - Do not rewrite the spec or propose new diagrams. Name the inconsistency; the author fixes it.
 - If a check cannot run (e.g., no class diagram block), say so — do not fail silently and do not guess.
 - Keep the report under ~150 lines. Long reports get skimmed; tight ones get acted on.
+
+## Mechanical oracle (`-d186`)
+
+`oracle.mjs` provides the artifact-backed checks that may **block**, distinct from this skill's LLM narrative review. Shipped this pass: **DFS dependency-graph acyclicity** — a cycle yields a finding carrying `artifact{kind:'cycle', locus}`. A finding blocks only when it carries an `ArtifactRef` **and** the tier dial marks the checker `mandatory` (`resolveCheckerThreshold('spec-diagram')`); otherwise it is ADVISORY. Relief valve: Container↔Component / class↔DDL / AC↔sequence consistency remain ADVISORY-only this pass, deferred to a follow-up. Per seed.md §II.A, oracle-bound checkers like this may fan out (parallel scripts).

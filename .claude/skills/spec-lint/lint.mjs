@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -42,11 +43,19 @@ function checkSyntax(blocks, hasPuml) {
   return bad.length === 0 ? ['PASS', 'all blocks parse'] : ['FAIL', bad.join('; ')];
 }
 
-function checkPresence(blocks, pj) {
+function checkPresence(blocks, pj, spec) {
   let required;
   try {
-    required = pj.artifacts.required_diagrams.spec;
+    // Honor the write-set-gated diagram profile (same resolver the
+    // spec_diagram_presence_guard hook uses) so spec-lint and the write-boundary
+    // guard never disagree on a non-architectural spec's reduced diagram set.
+    const projectGet = (dotted) =>
+      dotted.replace(/^\./, '').split('.').reduce((n, k) => (n == null ? undefined : n[k]), pj);
+    required = resolveProfile(spec, projectGet).required_diagrams;
   } catch {
+    return ['SKIP', 'required_diagrams.spec not configured'];
+  }
+  if (!required || typeof required !== 'object') {
     return ['SKIP', 'required_diagrams.spec not configured'];
   }
   const missing = [];
@@ -214,7 +223,7 @@ function main(argv) {
 
   const results = [
     ['plantuml_syntax', ...checkSyntax(blocks, hasPuml)],
-    ['diagram_presence', ...checkPresence(blocks, pj)],
+    ['diagram_presence', ...checkPresence(blocks, pj, spec)],
     ['ac_traceability', ...checkTraceability(spec, blocks)],
     ['design_calls', ...checkDesignCalls(spec, pj)],
   ];

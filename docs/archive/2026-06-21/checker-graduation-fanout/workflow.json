@@ -1,0 +1,13 @@
+{
+  "request": "Earn the seed.md §II.A clause-7 graduation in one cycle and conditionally lift the fan-out cap: build the bounded oracle-bound single-maker/single-checker round-trip for the spec-review checkers (-d186, -4c43 in bounded form), run >=3 genuinely-governed round-trips with mechanical grounding + zero false-positive blocks, run /security on the checker oracle artifacts, and IF the evidence is clean perform the -9360 permanent Article II rewrite (seed.md -> CLAUDE.md -> implementation) lifting the fan-out cap, then build the parallel read-only checker fan-out (velocity Lever 1's real win). If the gate is not met, land the bounded machinery + evidence and the rewrite waits. Maintainer ratification (clause 7d) pre-authorized at approve-spec, conditional on the evidence ACs mechanically passing.",
+  "slug": "checker-graduation-fanout",
+  "track_id": "intake-full",
+  "exceptions": ["cli-copy-review"],
+  "skip_brainstorm": true,
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782077562,
+  "updated_at": 1782080300
+}

@@ -65,6 +65,40 @@ describe('resolveProfile (write-set-gated diagram profile)', () => {
     assert.ok(!('c4_container' in out.required_diagrams), 'c4_container must be dropped');
   });
 
+  it('test_when_prose_writeset_is_form_then_reduced_profile', async () => {
+    // Regression: real specs (and the compression feature's own spec) declare
+    // the write_set in prose ("The write_set is `...`") with NO colon. The
+    // colon-only regex missed this, so the reduction never fired in practice.
+    const { resolveProfile } = await import(SUT);
+    for (const line of [
+      'The write_set is `.claude/skills/foo/SKILL.md`, `docs/x.md`.',
+      '**Write set**: `.claude/skills/foo/SKILL.md`',
+    ]) {
+      const out = resolveProfile(
+        specWithWriteSet(line),
+        fakeProjectGet(configWith({ enabled: true, profiles: [NONARCH_PROFILE] })),
+      );
+      assert.equal(out.id, 'non-architectural', `prose/markdown write_set must extract: ${line}`);
+      assert.ok(!('c4_context' in out.required_diagrams), 'c4_context dropped');
+    }
+  });
+
+  it('test_when_prose_writeset_mention_not_a_declaration_then_failopen', async () => {
+    // Inline prose mentions ("`write_set` intersects", "write_set has no UI")
+    // must NOT be mistaken for a declaration — they declare no path.
+    const { resolveProfile } = await import(SUT);
+    for (const line of [
+      "When this spec's `write_set` intersects `tdd.ui_globs` every surface needs a call.",
+      'If the write_set has no UI files, leave the section as none.',
+    ]) {
+      const out = resolveProfile(
+        specWithWriteSet(line),
+        fakeProjectGet(configWith({ enabled: true, profiles: [NONARCH_PROFILE] })),
+      );
+      assert.equal(out.id, 'full', `prose mention must not extract a write_set: ${line}`);
+    }
+  });
+
   it('test_when_flag_on_architectural_writeset_then_full_profile', async () => {
     const { resolveProfile } = await import(SUT);
     const out = resolveProfile(
