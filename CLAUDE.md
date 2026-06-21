@@ -204,7 +204,7 @@ The 25 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
 | `lint_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `lint.cmd` on code changes (guide mode until configured) |
 | `test_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `test.cmd` on code changes (guide mode until configured) |
-| `phase_timer` | PostToolUse / Edit\|Write\|MultiEdit | Art. V | Observe-only; stamps per-phase timing on `completed[]` growth. Never blocks or mutates. |
+| `phase_timer` | PostToolUse / Edit\|Write\|MultiEdit + Bash | Art. V | Observe-only; stamps per-phase timing on `completed[]` growth, incl. Bash-driven `workflow.json` writes. Never blocks or mutates. |
 | `memory_session_start` | SessionStart | Art. III, IX | Inject memory index + resume snapshot at session start |
 | `memory_stop` | Stop | Art. IX | Auto-extract memory candidates each turn-end |
 | `harness_continuation` | Stop | Art. V | Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex) |

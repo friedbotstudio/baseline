@@ -1,0 +1,11 @@
+{
+  "request": "fix phase_timer so Bash-driven workflow.json mutations get timing/token stamps — add a PostToolUse Bash leg that unconditionally attempts stampFromWorkflow (idempotent), plus settings.json wiring and a regression test",
+  "slug": "phase-timer-bash-trigger",
+  "track_id": "tdd-quickfix",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "approve-spec", "review"],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782056065,
+  "updated_at": 1782056960
+}
