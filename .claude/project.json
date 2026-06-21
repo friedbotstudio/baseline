@@ -186,7 +186,46 @@
           ]
         }
       }
-    }
+    },
+    "compression": {
+      "enabled": true
+    },
+    "diagram_profiles": [
+      {
+        "id": "non-architectural",
+        "when": [
+          ".claude/skills/**",
+          "docs/**",
+          "*.md",
+          ".claude/*.json"
+        ],
+        "required_diagrams": {
+          "c4_component": {
+            "min": 1,
+            "marker": "!include <C4/C4_Component>"
+          },
+          "class": {
+            "min": 1,
+            "any_of": [
+              "^\\s*class\\s+\\w"
+            ]
+          },
+          "sequence": {
+            "min": 1,
+            "any_of": [
+              "^\\s*participant\\b",
+              "^\\s*actor\\b"
+            ]
+          },
+          "dependency_graph": {
+            "min": 1,
+            "any_of": [
+              "'\\s*@kind\\s+dependency-graph"
+            ]
+          }
+        }
+      }
+    ]
   },
   "consent": {
     "commit_ttl_seconds": 900,

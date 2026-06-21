@@ -1,0 +1,28 @@
+{
+  "request": "Lever 4 of baseline-velocity (-v0lv): compress the spec and tdd persisted hand-off artifacts to the minimal decision-relevant invariant set, gating diagram/verbosity by write_set, without breaking the downstream hooks and reviews that read those artifacts (spec_diagram_presence_guard, spec_design_calls_guard, artifact_template_guard, spec-diagram-review, spec-traceability-review). Goal: cut output-token cost on the generative phases (spec ~40%, tdd ~37% of output tokens) without losing fidelity downstream phases depend on.",
+  "slug": "spec-tdd-artifact-compression",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782045924,
+  "updated_at": 1782051803,
+  "source_backlog_keys_note": "originally [baseline-velocity-...-v0lv]; cleared at commit — this workflow shipped Lever 4 only, not the whole multi-lever umbrella, so it does NOT close -v0lv"
+}

@@ -56,6 +56,7 @@ Per `.claude/state/workflow.json`, `research` must be in `completed` OR in `exce
 - **Context7 for every library API.** API shape confirmed via the `context7` MCP, not training recall. Record the library version.
 - **Acceptance criteria are testable.** Numbered, concrete, traced. "Users can retry" is not an AC; "on 5xx from upstream, worker retries with 100/200/400 ms backoff, max 3 tries, then dead-letters" is.
 - **Rollout and rollback are named, not 'standard.'** Which flag? Which kill-switch? Which metric + threshold + window detects a bad rollout within 5 minutes?
+- **Terseness (when `project.json → artifacts.compression.enabled`, default true).** Write the minimal decision-relevant content — diagrams + tables are the contract; prose only for what a diagram cannot say (`docs/references/token-efficiency.md`). For a non-architectural `write_set` the diagram guard requires the reduced profile, so don't author C4 Context/Container diagrams you don't need. Narration/verbosity trimming is **advisory** (AC-006 of the artifact-compression spec): the per-phase `timing.md` token columns are the advisory surface — non-blocking, never a gate.
 
 ## Archive planning
 

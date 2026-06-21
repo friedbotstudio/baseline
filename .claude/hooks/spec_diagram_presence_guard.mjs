@@ -22,6 +22,7 @@ import {
   emitBlock,
   computeProposedContent,
 } from './lib/common.mjs';
+import { resolveProfile } from './lib/write-set-profile.mjs';
 
 const payload = await readPayload();
 
@@ -37,11 +38,11 @@ if (!(rel.startsWith('docs/specs/') && rel.endsWith('.md'))) emitAllow();
 const base = basename(rel);
 if (base.startsWith('_TEMPLATE_') || /TEMPLATE.*\.md$/.test(base)) emitAllow();
 
-const required = projectGet('.artifacts.required_diagrams.spec');
-if (!required || typeof required !== 'object' || Array.isArray(required)) emitAllow();
-
 const content = computeProposedContent(tool, payload, file);
 if (!content.trim()) emitAllow();
+
+const required = resolveProfile(content, projectGet).required_diagrams;
+if (!required || typeof required !== 'object' || Array.isArray(required)) emitAllow();
 
 // Extract bodies of ```plantuml``` fences (case-insensitive, multiline).
 const fenceRe = /^[ \t]*```[ \t]*plantuml[ \t]*$([\s\S]*?)^[ \t]*```[ \t]*$/gmi;

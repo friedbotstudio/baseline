@@ -69,6 +69,8 @@ Create `.claude/state/tdd/` if missing. Write `.claude/state/tdd/<slug>.json` wi
 
 This file is the handoff: each subsequent harness tick reads the relevant slice and feeds it to its worker.
 
+**`behavior_excerpts` — verbatim or pointer.** Each entry is EITHER a verbatim §Behavior string (legacy) OR a pointer object `{spec_slug, ac_id, anchor}` resolved on demand via `.claude/skills/tdd/resolve-pointer.mjs → resolvePointer(pointer, rootDir)` (returns the anchored spec section; throws `DanglingPointerError` on a stale pointer). When `project.json → artifacts.compression.enabled` is true (default), prefer pointers and the minimal decision-relevant content — do not copy whole sequences verbatim (token-efficiency, `docs/references/token-efficiency.md`).
+
 ## 6. Seed worker tasks into the TaskList
 
 Create tasks via `TaskCreate`; wire `addBlockedBy` so the chain is sequential. Use these canonical entries:
