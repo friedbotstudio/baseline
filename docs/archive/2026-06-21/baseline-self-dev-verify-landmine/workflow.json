@@ -1,0 +1,11 @@
+{
+  "request": "Consolidate baseline-self-dev verification facts into one landmine (audit-vs-unit-suite) + enrich manifest landmine + v0lv measurement caveat — cut redundant diagnosis reasoning",
+  "slug": "baseline-self-dev-verify-landmine",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "security", "integrate", "document"],
+  "completed": ["chore", "verify", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782068598,
+  "updated_at": 1782068598
+}
