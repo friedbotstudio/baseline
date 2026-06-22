@@ -98,3 +98,11 @@ Each entry's stable key is `<lib>@<version>`. If the lockfile bumps, re-verify a
 - Verified-at: b667aa8
 - Last-touched: 2026-06-21
 - Caveat: install pulls ~27 direct deps; introduces ONE moderate audit finding (`qs` via `typed-rest-client`, Stryker's optional dashboard reporter — unreachable with `reporters:['json']`). The CRITICAL liquidjs finding seen at install time is PRE-EXISTING via `@11ty/eleventy`, not Stryker (backlog `bump-eleventy-fix-liquidjs-critical-rce-vuln-8caf`). Exact-pin required (`9.6.1`, no caret) per `check-files-diff DEVDEP_RANGE_FORBIDDEN` — see convention `devdeps-exact-pinned-and-tests-not-strictly-co-named`. `reports/` + `.stryker-tmp/` are gitignored.
+
+## @modelcontextprotocol/sdk@1.29.0
+
+- Library: MCP TypeScript SDK (`@modelcontextprotocol/sdk`), HARD-pinned exact `1.29.0` (no caret) — the build substrate for the planned baseline-owned sprint coordination channel (epic `mvp-sprint-parallel-cycles`, Slice B). See decision [[sprint-mode-mcp-channel-architecture-pivot-2026-06-23]].
+- Role: build a LOCAL MCP server over stdio. Key API (context7 `/modelcontextprotocol/typescript-sdk/v1.29.0`, 2026-06-23): `McpServer` from `@modelcontextprotocol/sdk/server/mcp.js`; `StdioServerTransport` from `@modelcontextprotocol/sdk/server/stdio.js`; `server.registerTool(name,{description,inputSchema:{…zod shape}},handler)`; `await server.connect(transport)`. v1.29 CONFIRMED to have `registerTool` + stdio (not only v2). Pairs with `zod` for schemas.
+- verified-at: unverified
+- last-touched: 2026-06-23
+- caveat: PLANNED dependency — NOT yet in `package.json`/lockfile (Slice B unbuilt), hence `verified-at: unverified`. Pin exact `1.29.0` per maintainer instruction (Q5, "pin it hard"); the v2 line publishes as `@modelcontextprotocol/server` (currently alpha) and is NOT adopted. Re-confirm the published version + exact-pin convention (`DEVDEP_RANGE_FORBIDDEN`) at implement time.
