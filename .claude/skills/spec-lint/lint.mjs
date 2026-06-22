@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
@@ -200,6 +201,35 @@ function checkCodesignDecisions(spec, root) {
   return ['PASS', '## Decisions section present'];
 }
 
+// D7 of swarm-mode-first-run-hardening (-e3f2) — advisory check that a
+// swarm-bound spec (>= swarm.min_tasks_worth_swarming C4 Components) pins each
+// component's API surface in the Contracts table, so swarm-plan's decomposition
+// is complete pre-dispatch. ADVISORY: returns {ok:false} but never blocks.
+export function checkApiSurfacePinned(specContent, minComponents) {
+  const content = String(specContent == null ? '' : specContent);
+  const componentCount = (content.match(/^\s*Component\(/gm) || []).length;
+  if (componentCount < minComponents) return { ok: true, reason: '' };
+
+  const m = content.match(/^#{2,3}\s+Contracts\s*$([\s\S]*?)(?=^#{1,3}\s|$(?![\s\S]))/im);
+  const body = m ? m[1] : '';
+  const dataRows = body.split('\n').filter((raw) => {
+    const line = raw.trim();
+    if (!line.startsWith('|')) return false;
+    if (/^\|[\s:|-]+\|?\s*$/.test(line)) return false; // separator row
+    if (/\b(Kind|Name|Input|Output|Errors|Idempotent)\b/.test(line)) return false; // header row
+    if (/\*?\(?none\)?\*?/i.test(line) && line.replace(/[|\s*()none]/gi, '') === '') return false; // placeholder
+    return true;
+  });
+
+  if (dataRows.length === 0) {
+    return {
+      ok: false,
+      reason: 'swarm-bound spec (>= min components) has no pinned API surface — populate the Contracts table so swarm-plan decomposition is complete pre-dispatch',
+    };
+  }
+  return { ok: true, reason: '' };
+}
+
 function main(argv) {
   const slug = argv[0];
   if (!slug) {
@@ -250,4 +280,6 @@ function main(argv) {
   process.exit(overallFail ? 1 : 0);
 }
 
-main(process.argv.slice(2));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main(process.argv.slice(2));
+}

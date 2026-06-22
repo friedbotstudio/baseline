@@ -62,7 +62,7 @@ toc:
   <p>Consent gate B, the second of three workflow-phase gates. The user types this command; Claude cannot invoke it. <code>consent_gate_grant</code> detects the command in the user's submission and writes a short-lived marker. <code>swarm_approval_guard</code> validates the marker before allowing the swarm-approval token to be written. Without a valid marker, the write is blocked.</p>
 
   <h3 id="dispatch">/swarm-dispatch</h3>
-  <p>Executes the approved swarm plan wave by wave. For each wave, the main context decides each task's recipe and spawns <code>swarm-worker</code> instances in parallel, each running inside an isolated git worktree (or under <code>swarm_boundary_guard</code> enforcement in shared mode). After each wave, a merge audit verifies write-set discipline before changes land. Waves proceed in dependency order; a failed wave stops further dispatch.</p>
+  <p>Executes the approved plan wave by wave. For each wave, the main context decides every task's recipe and spawns <code>swarm-worker</code> instances in parallel. Worktree isolation fits a single-wave plan, because the Agent tool owns each worktree's base commit and a later wave's worktree may not contain an earlier wave's output. Multi-wave plans run in shared mode instead, and <code>/swarm-dispatch</code> refuses a multi-wave worktree run rather than build on a stale base. After each wave, dispatch confirms every worker returned a complete status and audits the wave's changes against the declared write sets before it continues. A failed wave stops further dispatch.</p>
 </section>
 
 <section class="section">
@@ -83,10 +83,10 @@ toc:
       <p class="section-num">§ V</p>
       <h2 id="isolation">Worktree isolation vs shared mode</h2>
     </div>
-    <p>When git is available, <code>/swarm-dispatch</code> creates a separate git worktree per task. Each worker writes only to its assigned worktree; the merge audit checks write-set membership before merging changes back.</p>
+    <p>When git is available and the plan is a single wave, <code>/swarm-dispatch</code> creates a separate git worktree per task. Each worker writes only to its own worktree, and the merge audit checks write-set membership before changes land back on the branch.</p>
   </div>
   <p>Physical isolation means workers cannot accidentally touch each other's files.</p>
-  <p>When git is not available (a fresh directory with no repository), the harness falls back to shared mode. <code>swarm_boundary_guard</code> enforces write-set discipline at the Write boundary: any attempted write outside the declared write set is blocked before it lands. Shared mode is weaker than worktree isolation (no merge audit, no branch history) but functional for environments without git.</p>
+  <p>Multi-wave plans run in shared mode, and so does any project without git. <code>swarm_boundary_guard</code> blocks any write outside the declared write set at the Write boundary. That guard exempts some paths such as <code>.claude/</code>, so after each wave a diff-audit also compares the wave's real changes against the union of its write sets, catching drift the boundary guard lets through. Shared mode keeps no per-task branch history, but it is no longer audit-free.</p>
 </section>
 
 <section class="section">

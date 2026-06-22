@@ -27,6 +27,8 @@ Read `project.json → swarm.isolation` (default `"auto"`):
 
 **Default path is `worktree`.** The rest of this document describes that mode. The `shared` fallback is at the end.
 
+> **Worktree mode = single-wave only (D1).** The worktree base commit is chosen by the Agent tool's `isolation:"worktree"`, not by baseline (observed forking from a stale ref on the first real swarm run), and `swarm_merge.mjs` applies wave output without committing — so a multi-wave worktree plan's wave-N+1 worktrees branch from a base lacking wave-N output. Baseline cannot fix this, only refuse it. **Before dispatch, call `assertWorktreeWaveSafety({isolation, waves, baselineRef, worktreeBase})` from `.claude/skills/swarm-dispatch/worktree-safety.mjs`** (worktreeBase = `git -C <wt> merge-base HEAD <wt-HEAD>` once a worktree exists). On `ok:false` (multi-wave under worktree, or `baseline_ref` ≠ the worktree's real merge-base), **abort and steer the plan to shared isolation** — do not run the wave. Multi-wave plans belong in `shared` mode.
+
 ## Prereqs (worktree mode)
 
 Verify in order, abort on any failure:
@@ -155,6 +157,10 @@ The `swarm-worker` agent's body already knows the protocol. The prompt contains 
 
 Do not respond to the user until every task in the wave has completed. Each `Agent` return gives you the worktree path (if the worker made changes) and the JSON summary line.
 
+### 5.5 Classify each worker result (D4)
+
+For every worker return, run `parseWorkerResult(<final message text>)` from `.claude/skills/swarm-dispatch/parse_worker_result.mjs` (or the CLI `parse_worker_result.mjs <result-file>`). A worker is **complete** only when its final non-empty line is a valid `{task_id,status:"done"}` JSON line. A missing/garbled line, trailing prose after the JSON, or `status:"failed"` → **incomplete**: do NOT treat the task as done. Route it to **resume-if-possible** (re-dispatch / `SendMessage` where available) else **main-context completion** from the worker's RED tests. This closes the first-run gap where workers rested after scenario and were silently passed.
+
 ### 6. Per-task merge-audit
 
 For each completed task:
@@ -192,10 +198,11 @@ Delete `.claude/state/swarm/active_wave.json`.
 When isolation is `"shared"`:
 
 - No worktrees. Each `Agent` call uses `isolation` omitted or `"none"`.
-- `active_wave.json` carries `isolation: "shared"` and the union of write_sets (no `baseline_ref`).
-- `swarm_boundary_guard` is the runtime enforcer: writes in enforced paths must be in the union of active write_sets, else denied.
-- **No per-task merge-audit** (no worktrees to diff). The guard catches drift out of the wave; cross-task bleed within the wave is a known limitation.
-- After each wave: clear `active_wave.json`, update per-task status from the worker's self-reported JSON.
+- `active_wave.json` carries `isolation: "shared"` and the union of write_sets (no `baseline_ref`). **At wave start, also record `pre_wave_changed`** — the set of already-changed paths (`git status --porcelain`) before the wave runs — so the post-wave audit attributes only this wave's changes.
+- `swarm_boundary_guard` is the runtime enforcer: writes in enforced paths must be in the union of active write_sets, else denied. **But the guard exempts `.claude/` (D2 blind spot)** — so for baseline self-dev under `.claude/skills/**` it enforces nothing.
+- **Post-wave diff-audit (D2).** After each shared wave completes, run `swarm_wave_audit.mjs <plan-path> <wave-index>`. It diffs the wave's actual changes (current `git status` minus `pre_wave_changed`) against the union write_set **directly — not via the guard's exempt list** — so `.claude/skills/**` drift IS caught. Exit 1 (a path outside the union) → treat the wave as failed: stop, surface the offending paths, do not advance. This is the shared-mode analogue of worktree mode's per-task merge-audit.
+- Cross-task bleed *within* a wave (two tasks in the same wave writing each other's files) remains a known limitation — the audit catches out-of-union drift, not intra-union misattribution.
+- After each wave: run the post-wave audit, then clear `active_wave.json`, update per-task status from the worker's self-reported JSON (classified via §5.5, D4).
 
 Use shared mode deliberately — it trades real safety (physical isolation) for runtime permissiveness. Worktree mode is preferred whenever git is available.
 

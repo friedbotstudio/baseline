@@ -1,0 +1,36 @@
+{
+  "request": "swarm-mode first-run hardening (-e3f2): deliver D1 (worktree multi-wave stale-base — investigate possible Agent-tool constraint first, then fix baseline_ref derivation or document worktree=single-wave-only), D2 (shared-mode .claude/ boundary blind spot — post-wave diff-audit in swarm-dispatch), D4 (dispatch-side detection of workers that rest after scenario without emitting the JSON status line), D5 (swarm-plan classifies each task worker-safe vs needs-main-context up front), D7 (spec API-surface completeness so decomposition is complete pre-dispatch). D3+D6 already shipped.",
+  "slug": "swarm-first-run-hardening",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "swarm-mode-first-run-hardening-e3f2"
+  ],
+  "created_at": 1782152799,
+  "updated_at": 1782155955,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

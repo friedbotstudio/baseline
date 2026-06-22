@@ -36,7 +36,8 @@ If any prereq is missing, stop and surface what's needed.
       "acs": ["AC-001", "AC-002"],
       "write_set": ["src/foo/bar.py", "tests/foo/test_bar.py"],
       "read_set": ["src/common/http.py"],
-      "depends_on": []
+      "depends_on": [],
+      "execution": "worker-safe"
     }
   ],
   "waves": null
@@ -62,6 +63,7 @@ You produce `tasks[]`. The validator (`validate.mjs`) computes `waves[]` determi
    - `write_set`: union of (component files) + (test files covering those ACs). Every file must be explicit; no globs.
    - `read_set`: files this task will consult but not modify. Advisory; not enforced.
    - `depends_on`: for each component B such that this component depends on B (per the dependency graph), include the task id of the task owning B.
+   - `execution` (REQUIRED — D5 of swarm-mode-first-run-hardening): classify whether this task is safe to hand to a worker. **`worker-safe`** = pure + fully-specified by the spec (no design decision left, does not touch live shipped code that gate-A/the running harness depends on, depends on no not-yet-shipped API). **`needs-main-context`** = design-laden, touches live shipped code, or depends on an API a sibling task in this plan introduces. `validate.mjs` rejects a plan task whose `execution` is missing or outside `{worker-safe, needs-main-context}`. At `/swarm-dispatch`, only `worker-safe` tasks are spawned as workers; `needs-main-context` tasks are completed in main context. Classifying this UP FRONT (not mid-build) is what keeps the gate-B plan honest — the first real swarm run pulled tasks back to main context mid-wave precisely because the plan assumed every task was worker-safe.
 5. **Merge overlapping tasks where forced**:
    - If two tasks share any file AND have no `depends_on` relationship, either introduce a `depends_on` edge (making them sequential across waves) or merge them into one task. Merging is preferred when they're on the same component.
 6. **Validate the plan**:
@@ -75,11 +77,13 @@ You produce `tasks[]`. The validator (`validate.mjs`) computes `waves[]` determi
    Swarm plan for <slug> — <N> tasks across <M> waves
    
    wave 1:
-     T-001  webhook-worker       [AC-001, AC-002]   3 files
-     T-003  backoff-policy       [AC-004]           2 files
+     T-001  webhook-worker       [AC-001, AC-002]   3 files  worker-safe
+     T-003  backoff-policy       [AC-004]           2 files  worker-safe
    wave 2:
-     T-002  webhook-retry        [AC-003]           2 files  (needs T-001)
+     T-002  webhook-retry        [AC-003]           2 files  needs-main-context  (needs T-001)
    ```
+
+   The `execution` column is part of the gate-B review surface — the human approving the swarm at `/approve-swarm` sees which tasks will run as workers vs in main context.
 
 8. Tell the user: "Swarm planned at `.claude/state/swarm/<slug>.json`. Review it, then run `/approve-swarm <slug>`. After approval, run `/swarm-dispatch <slug>`."
 

@@ -35,7 +35,8 @@ function validateSchema(plan) {
   if (!Array.isArray(tasks) || tasks.length === 0) {
     errs.push('tasks[] must be a non-empty array');
   }
-  const REQ = ['id', 'title', 'component', 'acs', 'write_set', 'depends_on'];
+  const REQ = ['id', 'title', 'component', 'acs', 'write_set', 'depends_on', 'execution'];
+  const EXECUTION_VALUES = ['worker-safe', 'needs-main-context'];
   const ids = new Set();
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i];
@@ -59,6 +60,9 @@ function validateSchema(plan) {
     }
     if (Array.isArray(t.write_set) && t.write_set.length === 0) {
       errs.push(`task ${t.id}.write_set is empty — every task must declare at least one file`);
+    }
+    if (!EXECUTION_VALUES.includes(t.execution)) {
+      errs.push(`task ${t.id}.execution must be one of ${EXECUTION_VALUES.join('|')}`);
     }
   }
   return { errs, ids };
