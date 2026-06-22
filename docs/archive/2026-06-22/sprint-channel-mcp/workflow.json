@@ -1,0 +1,43 @@
+{
+  "request": "Slice B of epic mvp-sprint-parallel-cycles: the baseline-owned MCP coordination channel server (@modelcontextprotocol/sdk@1.29.0, stdio) exposing the 7 channel tools (register_peer, send_message, broadcast, claim_task [file-locked race-safe], signal_done [unblock dependents], raise_conflict, yield_fork), file-based channel state under .claude/state/sprint/, schema-validated closed message-type enum (mechanical-only), task-dependency state (claimable iff predecessors done); declared in .mcp.json. ACs AC-004/005/006/007.",
+  "slug": "sprint-channel-mcp",
+  "track_id": "epic-child",
+  "epic": "mvp-sprint-parallel-cycles",
+  "slice": "B",
+  "pinned_artifacts": {
+    "scout": "docs/scout/mvp-sprint-parallel-cycles.md",
+    "research": "docs/research/mvp-sprint-parallel-cycles.md",
+    "spec": "docs/specs/mvp-sprint-parallel-cycles.md#slice-B"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "archive",
+    "memory-flush"
+  ],
+  "completed_notes": {
+    "simplify": "risk-escalated: slice B risk=[simplify] (new MCP server spans >1 module under .claude/mcp/sprint-channel/**)",
+    "security": "risk-escalated: slice B risk=[security] (IO boundary: MCP stdio server + untrusted-input parsing of channel messages + file-locked state)"
+  },
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782164459,
+  "updated_at": 1782167799,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

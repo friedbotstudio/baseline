@@ -134,3 +134,52 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: No current exploit path — `slug` is developer-controlled (derived by `/triage`), so this is defense-in-depth, not a live vuln. But tier=`regulated` and the durable plan is meant to be a broadly-used v1 primitive a future caller could feed a less-trusted slug. Guard contract: reject any slug not matching `/^[a-z0-9][a-z0-9-]*$/`, throw before path construction; shared across `plan-store` + the two projection writers. Full findings (1 MEDIUM + 2 LOW): `docs/archive/2026-06-22/durable-plan-schema/security.md`.
 
 ---
+
+## sprint-channel-own-package-sdk-delivery-ac005-slice-c
+
+> verbatim (assistant-deferral, slice-B gate, 2026-06-23; user concurred): "publish the server as its own package, keep it in the same github repo... and we install sdk when user installs baseline (similar to plantuml)" → resolved to the own-package/npx form.
+
+- Intent: deliver AC-005 of `mvp-sprint-parallel-cycles` Slice B — the live MCP channel server + its `@modelcontextprotocol/sdk@1.29.0` dependency reaching consumer installs. Slice B (`sprint-channel-mcp`, committed) built only the SDK-FREE coordination CORE (`.claude/mcp/sprint-channel/` handlers+lib); the thin `server.mjs` (McpServer + StdioServerTransport, context7-verified) and `.mcp.json` registration were DEFERRED here.
+- Approach (decided): publish `sprint-channel` as its OWN npm package in the SAME repo via **npm workspaces** + **changesets** (or `semantic-release-monorepo`) + a CI publish step, so `.mcp.json` does `npx -y @friedbotstudio/sprint-channel-mcp` — the plantuml/context7 model: SDK bundled with the published package, fetched on demand, the baseline stays **zero-runtime-dep**. A local-file server cannot npx-fetch its own dep, which is why the own-package move (not a `package.json` dep) is the clean resolution.
+- status: open
+- raised-on: 2026-06-23
+- raised-in-context: sprint-channel-mcp
+- source: assistant-deferral
+- estimated-effort: medium (monorepo publish wiring is the real cost, not the server code)
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- verified-at: 80aeeca
+- last-touched: 2026-06-23
+
+## sprint-channel-lock-stale-ttl-recovery-medium
+
+> verbatim (assistant-deferral, slice-B security review, 2026-06-23): "stale lock on holder death (no TTL / recovery) — if the process dies between mkdirSync and the finally rmdirSync, the lock dir persists permanently and that task can never be claimed again."
+
+- Intent: add stale-lock recovery to `.claude/mcp/sprint-channel/lib/lock.mjs`. The atomic `mkdir` lock leaks permanently if a holder dies mid-task (crash/kill/OOM) → the task is unclaimable forever (availability/DoS). MEDIUM finding, accepted for the slice-B CORE; must land when Slice C exercises real worker death.
+- Approach: record a timestamp/PID in the lock dir; treat a lock older than a TTL (or whose PID is dead) as stale and reclaimable.
+- status: open
+- raised-on: 2026-06-23
+- raised-in-context: sprint-channel-mcp
+- source: assistant-deferral
+- estimated-effort: small
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- verified-at: 80aeeca
+- last-touched: 2026-06-23
+- caveat: from `docs/archive/2026-06-22/sprint-channel-mcp/security.md` (CWE-667/CWE-400). LOW companions (unbounded mailbox/yields growth; no peer authn — `peer_id` self-asserted) are accepted in the single-machine lead-spawned sandbox trust model; revisit on cross-machine (#28300).
+
+## epic-close-gate-on-slices-coverage-not-lazy-children
+
+> verbatim (assistant-deferral, slice-A commit recovery, 2026-06-23): "epic_close.mjs wrongly closed the epic on slice A (it checks children[] not slices[]; children register lazily) ... the FIRST child looks like the last."
+
+- Intent: fix `.claude/skills/commit/epic_close.mjs` — it closes the epic when every REGISTERED child is `committed`, but children register lazily (one per epic-child `/triage`), so the FIRST child to commit looks like the last → premature close: it archived the discovery bundle (spec/intake/brief/scout/research) AND displaced the gate-A approval token, breaking sibling slices' `track_guard` inheritance. Recovered manually during slice A (docs `git mv`'d back, epic reopened, B–E pre-registered open, token re-restored via a second `/approve-spec`).
+- Fix: gate the close on `slices[]` coverage — close only when every `slices[].id` has a `committed` child — AND/OR have `/triage` (or the epic approve-spec step) register ALL slices as `open` children at approval time so `children[]` is the full set from the start. Add a regression test (`epic-close-governance.test.mjs`) for the lazy-registration case.
+- status: open
+- raised-on: 2026-06-23
+- raised-in-context: sprint-completeness-oracle (slice A)
+- source: assistant-deferral
+- estimated-effort: small
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- verified-at: 80aeeca
+- last-touched: 2026-06-23
+- caveat: HIGH-impact governance bug (corrupts epic state + displaces consent token) but low-frequency (only multi-slice epics with lazy child registration). The epic state `.claude/state/epic/mvp-sprint-parallel-cycles.json → recovery_note` documents the live incident.
+
+---
