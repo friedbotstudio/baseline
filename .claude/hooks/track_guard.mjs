@@ -20,6 +20,7 @@ import {
   emitAllow,
   emitBlock,
 } from './lib/common.mjs';
+import { phaseSatisfied } from './lib/track-order.mjs';
 
 const payload = await readPayload();
 
@@ -122,7 +123,9 @@ const startIdx = entryIdx >= 0 ? entryIdx : 0;
 
 function existsForPhase(ph) {
   const pat = artifactsMap[ph];
-  if (!pat) return completed.has(ph);
+  // No artifact glob → resolve by completed-membership, with the swarm Phase-6
+  // equivalence (swarm-dispatch satisfies the `tdd` slot). See lib/track-order.mjs.
+  if (!pat) return phaseSatisfied(ph, completed);
   // Walk repo looking for any path that matches `pat`. Skip noisy dirs.
   const SKIP_TOP = new Set(['.git', 'node_modules', '.config']);
   const stack = [CLAUDE_PROJECT_ROOT];

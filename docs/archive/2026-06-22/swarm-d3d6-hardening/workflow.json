@@ -1,0 +1,33 @@
+{
+  "request": "D3+D6 swarm-mode hardening (from backlog swarm-mode-first-run-hardening-e3f2). D3: track_guard recognizes the swarm Phase-6 nodes (swarm-dispatch) as satisfying the 'tdd' ordering slot, so /security isn't blocked after a swarm build — a hook code change governed by a seed.md §4.1 amendment (Article VIII). D6: bake the single-test-file rule into the swarm-worker template + swarm-dispatch worker-prompt ('during the RALPH loop run only your own test file; full suite at /integrate') to avoid the live-objtemplate-rebuild-races landmine under concurrent workers.",
+  "slug": "swarm-d3d6-hardening",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "skip_brainstorm": true,
+  "source_backlog_keys": [],
+  "created_at": 1782150378,
+  "updated_at": 1782152291
+}

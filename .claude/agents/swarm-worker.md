@@ -28,7 +28,7 @@ The caller's prompt SHALL contain two recipes and the swarm metadata. You SHALL 
 
 1. **Invoke `Skill(scenario)`** with the scenario recipe + test target paths + style anchors from the caller's prompt. Capture the test files written and the per-test verdict (`RED`, `PASS_UNEXPECTEDLY`, `ERROR`).
 2. **Halt condition.** If any test in step 1 returned `PASS_UNEXPECTEDLY` or `ERROR`, you SHALL stop. Set status to `failed` and put the test name + reason in `note`. SHALL NOT proceed to implementation.
-3. **Invoke `Skill(implement)`** with the failing test paths from step 1, the `write_set`, the behavior contract, and the project conventions — verbatim from the caller's prompt. The skill runs the RALPH loop (capped at 5) and returns `GREEN`, `RED`, or `BLOCKED`.
+3. **Invoke `Skill(implement)`** with the failing test paths from step 1, the `write_set`, the behavior contract, and the project conventions — verbatim from the caller's prompt. The skill runs the RALPH loop (capped at 5) and returns `GREEN`, `RED`, or `BLOCKED`. **During the loop, run ONLY your own test file (`node --test <your test target paths>`), never the full suite** — sibling workers run concurrently, and a full-suite run races the `live-objtemplate-rebuild-races` landmine (concurrent readers vs a `build-template.sh`/`obj/template` rebuild). The full suite runs once, later, at `/integrate`.
 4. **Report JSON** as your final output line — exactly this shape, nothing else after it:
 
 ```json

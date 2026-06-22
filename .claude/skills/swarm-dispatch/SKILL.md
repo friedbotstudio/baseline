@@ -137,8 +137,14 @@ project conventions:
 1. Invoke Skill(scenario) with the scenario recipe + test target paths.
 2. If all expected tests are RED, invoke Skill(implement) with the failing test
    paths, the write_set, the behavior contract above, and the project
-   conventions.
-3. Report JSON on your final line per the swarm protocol:
+   conventions. During the RALPH loop run ONLY your own test file
+   (node --test <your test target paths>), never the full suite — sibling
+   workers run concurrently and a full-suite run races the
+   live-objtemplate-rebuild-races landmine; the full suite runs at /integrate.
+3. You SHALL complete BOTH step 1 (scenario) and step 2 (implement) before
+   reporting. Do not emit a final message until the JSON status line; a
+   scenario-only stop is status:failed.
+4. Report JSON on your final line per the swarm protocol:
    {"task_id": "<T-XXX>", "status": "done" | "failed",
     "files_touched": [...], "note": "<one short line>"}
 ```
@@ -177,8 +183,9 @@ Delete `.claude/state/swarm/active_wave.json`.
 ## After the last wave
 
 1. Set plan `status: "complete"`.
-2. Run `/integrate` on the full codebase — per-wave success is necessary but not sufficient; cross-component integration must be re-verified.
-3. If `/integrate` passes: tell the user "Swarm `<slug>` complete. `<N>` tasks across `<M>` waves. Next: `/document`."
+2. **Record the Phase-6 completion marker.** Append the canonical Phase-6 phase-name `"tdd"` to `workflow.json → completed` (alongside the swarm phases already there). The swarm path IS Phase 6 (6a/6b/6c), but `track_guard` resolves the `tdd` ordering slot by completed-membership; recording `"tdd"` is the SOP companion to `hooks/lib/track-order.mjs → phaseSatisfied` (which also accepts a completed `swarm-dispatch`) — belt-and-suspenders so downstream phases (`/security` etc.) are never false-blocked whether or not the guard fix is present.
+3. Run `/integrate` on the full codebase — per-wave success is necessary but not sufficient; cross-component integration must be re-verified.
+4. If `/integrate` passes: tell the user "Swarm `<slug>` complete. `<N>` tasks across `<M>` waves. Next: `/document`."
 
 ## Shared-mode fallback
 
