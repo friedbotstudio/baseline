@@ -15,8 +15,8 @@ const read = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8');
 const { SKILL_CATEGORIES } = await import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
 const SKILL_TOTAL = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
 
-describe('AC-006 — derived counts reach 43 skills / the declared hook roster', () => {
-  it('test_when_counts_derived_then_43_skills_and_hook_roster', async () => {
+describe('AC-006 — derived counts reach 45 skills / the declared hook roster', () => {
+  it('test_when_counts_derived_then_45_skills_and_hook_roster', async () => {
     const { deriveCounts, SKILL_CATEGORIES } = await import(join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs'));
     const c = deriveCounts(REPO_ROOT);
     const sum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
@@ -29,9 +29,9 @@ describe('AC-006 — derived counts reach 43 skills / the declared hook roster',
   });
 });
 
-describe('AC-006 — prose count surfaces agree (43 skills / the declared hook roster)', () => {
+describe('AC-006 — prose count surfaces agree (45 skills / the declared hook roster)', () => {
   for (const rel of ['docs/init/seed.md', 'CLAUDE.md', 'README.md', '.claude/CONSTITUTION.md']) {
-    it(`test_when_${rel.replace(/[^a-z0-9]+/gi, '_')}_read_then_states_42_and_hook_count`, () => {
+    it(`test_when_${rel.replace(/[^a-z0-9]+/gi, '_')}_read_then_states_45_and_hook_count`, () => {
       const t = read(rel);
       assert.match(t, new RegExp(`(${SKILL_TOTAL})\\s+skills?`, 'i'), `${rel} must state ${SKILL_TOTAL} skills`);
       assert.match(t, new RegExp(`(${EXPECTED_HOOKS.size})\\s+hooks?`, 'i'), `${rel} must state ${EXPECTED_HOOKS.size} hooks`);

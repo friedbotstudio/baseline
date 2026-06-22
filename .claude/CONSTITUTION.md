@@ -98,7 +98,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 |---|---|
 | `.claude/hooks/` | 25 hook scripts (20 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 43 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (2) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (2) |
+| `.claude/skills/` | 45 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (2) + shared globals (7) + audit (1) + alt tracks (1) + maintenance (2) + sprint (2) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-spec`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
 | `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
@@ -154,6 +154,10 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 
 **Alternate tracks (1)** — stripped-down workflows routed via `/triage`:
 - `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `verify` / `simplify` / `integrate` / `document` only when their triggers apply. `archive`, `/grant-commit`, `/commit` mandatory; `verify` is conditional — skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs). Not a bypass — silent skips of triggered conditional phases are forbidden.
+
+**Sprint (2)** — the sprint-mode completeness pair (Slice A of the `mvp-sprint-parallel-cycles` epic); not workflow phases:
+- `sprint-plan` — decompose an MVP vision into a sprint manifest where every feature carries explicit done-criteria (`done_record` + `edge_tests[]` + `wiring_test`). Authors + shape-validates the manifest (`validate-manifest.mjs`).
+- `sprint-oracle` — mechanical, exit-code-driven completeness gate: resolves each manifest feature's `// @sprint-feature:<id> @kind:edge|wiring|happy` tags and fails loud (exit 2) with a per-feature gap list until every feature has a done-record + a resolvable edge test + a resolvable wiring test (`oracle.mjs`). Read-only.
 
 ---
 

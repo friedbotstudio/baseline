@@ -1,0 +1,12 @@
+{
+  "sprint": "<sprint name>",
+  "features": [
+    {
+      "id": "<feature-id>",
+      "priority": "P0",
+      "done_record": "<spec AC id this feature traces to, e.g. AC-012>",
+      "edge_tests": ["<test name tagged @sprint-feature:<id> @kind:edge>"],
+      "wiring_test": "<test name tagged @sprint-feature:<id> @kind:wiring>"
+    }
+  ]
+}

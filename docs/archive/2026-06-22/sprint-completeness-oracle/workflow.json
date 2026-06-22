@@ -1,0 +1,42 @@
+{
+  "request": "Slice A of epic mvp-sprint-parallel-cycles: the sprint completeness oracle. /sprint-plan produces a manifest decomposing the MVP into prioritized features each with explicit done-criteria; a mechanical sprint-oracle .mjs (exit-code-driven) checks every feature for done-record + edge/error/empty coverage + end-to-end wiring, failing loud with a gap list. ACs AC-001/AC-002/AC-003.",
+  "slug": "sprint-completeness-oracle",
+  "track_id": "epic-child",
+  "epic": "mvp-sprint-parallel-cycles",
+  "slice": "A",
+  "pinned_artifacts": {
+    "scout": "docs/scout/mvp-sprint-parallel-cycles.md",
+    "research": "docs/research/mvp-sprint-parallel-cycles.md",
+    "spec": "docs/specs/mvp-sprint-parallel-cycles.md#slice-A"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "simplify",
+    "security"
+  ],
+  "completed": [
+    "tdd",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush"
+  ],
+  "completed_notes": {
+    "document": "risk-escalated: slice A risk=[document] (new /sprint-plan + sprint-oracle CLI/skill docs)"
+  },
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782160660,
+  "updated_at": 1782163625,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
