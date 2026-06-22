@@ -126,7 +126,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "with our maker-checker architecture coming into form thanks to v1 vision, I am inclining towards b but you can validate and confirm" — validated and confirmed as option (b)-with-structured-artifact; "record this against Q-002 and queue it on the backlog".
 
 - source: user-instruction
-- status: open
+- status: picked-up
 - raised-on: 2026-06-10
 - raised-in-context: standup follow-up (no active workflow) — resolution of pending-questions Q-002
 - estimated-effort: medium
@@ -135,7 +135,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: Resolves Q-002 (silent-failure prerequisites shipped unenforced — origin: the 2026-05-14 GitHub Pages `build_type=workflow` prerequisite, judgment-flagged 3× yet never given an enforcement AC). Build a new `spec-rollout-enforceability-review` skill in the spec-review family (alongside `spec-diagram-review` / `spec-traceability-review` / `spec-shippability-review`), oracle-bound from day one per the maker-checker proof-obligation contract (`-4c43`, `-d186`). Design = option (b) carrying a sliver of (a): (1) amend the spec format so the Rollout section's prerequisites are a STRUCTURED block — one row per prerequisite, each with an explicit `enforced-by: AC-NNN` pointer to an enforcement-type AC (preflight / smoke / error-mapping); (2) the checker mechanically verifies every prerequisite row has a non-empty `enforced-by` resolving to a real enforcement-type AC. Missing/dangling pointer → BLOCKER (hard-blocks `/approve-spec`, same as the other spec-review BLOCKERs); a prerequisite still living in free prose (un-structured) → ADVISORY. The structured `enforced-by:` field IS the mechanical oracle — a free-prose-only scan would be LLM-judgment and the contract forbids LLM-judgment from blocking (two LLMs agree on hallucinations). Concrete remediation for the origin bug also lives here: `scripts/bootstrap-pages.mjs` (`gh api -X PUT /repos/{owner}/{repo}/pages -f build_type=workflow`) and/or a fail-fast preflight in `release.yml`. Ships standalone now (useful immediately, independent of the rest of v1); later inducted into the oracle-bound-checker refit `-d186`, where it serves as a concrete fourth example to generalize the proof-obligation contract from. NOT a child of the v1 epic umbrella (`-9d4c`) — it's a standalone checker that the epic's slice B later absorbs by reference.
 
 ---
-
+- superseded-at: 2026-06-22
 ## baseline-velocity-levers-after-lever0-timing-v0lv
 
 > verbatim (user, 2026-06-21):

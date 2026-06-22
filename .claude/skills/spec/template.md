@@ -224,12 +224,12 @@ For specs with no UI surface:
 
 ## Acceptance criteria
 
-Numbered, testable, traced. Each AC points to the §Behavior sequence that defines it.
+Numbered, testable, traced. Each AC points to the §Behavior sequence that defines it. The `Kind` column tags enforcement ACs — one of `preflight` / `smoke` / `error-mapping` — that Rollout prerequisites bind to via `enforced-by`; every other AC is `behavior`.
 
-| ID | Criterion (given / when / then) | Upstream AC | Sequence |
-|---|---|---|---|
-| AC-001 | given X, when Y, then Z | intake AC 1 | §Behavior #1 |
-| AC-002 | given X, when Y, then Z | BR-001 | §Behavior #2 |
+| ID | Criterion (given / when / then) | Kind | Upstream AC | Sequence |
+|---|---|---|---|---|
+| AC-001 | given X, when Y, then Z | behavior | intake AC 1 | §Behavior #1 |
+| AC-002 | given X, when Y, then Z | preflight | BR-001 | §Behavior #2 |
 
 ## Test plan
 
@@ -253,6 +253,14 @@ Scenarios by category. The `scenario` skill (invoked from `/tdd` or `/swarm-disp
 | Alarm | `<name>` | `<metric + threshold + window>` | page target |
 
 ## Rollout
+
+### Prerequisites
+
+Structured preconditions that must hold for this rollout. One row per prerequisite; each `enforced-by` MUST point to an enforcement-type AC (a Kind of `preflight` / `smoke` / `error-mapping`). `spec-rollout-enforceability-review` BLOCKs `/approve-spec` on a missing, dangling, or non-enforcement binding; a prerequisite left in free prose below is ADVISORY. If this rollout has no preconditions, keep the heading and write `- *(none)*` instead of a table.
+
+| # | Prerequisite | enforced-by |
+|---|---|---|
+| 1 | `<precondition that must hold before/at rollout>` | AC-NNN |
 
 - **Feature flag**: `<flag.name>` — default off.
 - **Migration order**: 1 DDL → 2 backfill → 3 dual-write → 4 read-swap → 5 cleanup.

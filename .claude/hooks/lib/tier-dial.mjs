@@ -10,7 +10,7 @@
 
 import { projectGet } from './common.mjs';
 
-export const CANONICAL_CHECKERS = ['brainstorm', 'spec', 'tdd', 'security', 'review', 'ac-conformance'];
+export const CANONICAL_CHECKERS = ['brainstorm', 'spec', 'tdd', 'security', 'review', 'ac-conformance', 'spec-rollout'];
 
 // Unknown checker → this threshold (advisory, floorless, single round).
 export const DEFAULT_THRESHOLD = { floor: null, ceiling: 1, mandatory: false };
@@ -28,6 +28,7 @@ export const DEFAULT_PROFILES = {
     security: { floor: 0, ceiling: 1, mandatory: false },
     review: { floor: 0, ceiling: 1, mandatory: false },
     'ac-conformance': { floor: 1.0, ceiling: 1, mandatory: true },
+    'spec-rollout': { floor: 0, ceiling: 1, mandatory: true },
   },
   'customer-data': {
     brainstorm: { floor: null, ceiling: 1, mandatory: false },
@@ -36,6 +37,7 @@ export const DEFAULT_PROFILES = {
     security: { floor: 0, ceiling: 2, mandatory: true },
     review: { floor: 0, ceiling: 1, mandatory: false },
     'ac-conformance': { floor: 1.0, ceiling: 1, mandatory: true },
+    'spec-rollout': { floor: 0, ceiling: 2, mandatory: true },
   },
   regulated: {
     brainstorm: { floor: null, ceiling: 2, mandatory: false },
@@ -44,6 +46,7 @@ export const DEFAULT_PROFILES = {
     security: { floor: 0, ceiling: 3, mandatory: true },
     review: { floor: 0, ceiling: 2, mandatory: true },
     'ac-conformance': { floor: 1.0, ceiling: 2, mandatory: true },
+    'spec-rollout': { floor: 0, ceiling: 3, mandatory: true },
   },
 };
 

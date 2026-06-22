@@ -28,7 +28,7 @@ export const SKILL_CATEGORIES = {
   artifact: 4,
   phases: 10,
   workers: 5,
-  specHelpers: 4,
+  specHelpers: 5,
   orchestration: 3,
   memory: 1,
   navigation: 1,

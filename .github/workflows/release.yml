@@ -130,6 +130,18 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: '22'
+      - name: Verify Pages build_type is workflow
+        # Fail-fast preflight: deploy-pages silently no-ops if the repo's Pages
+        # build_type is not 'workflow' (the 2026-05-14 origin bug). Catch it here
+        # with an actionable message instead of a silent wrong deploy.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          build_type=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type || echo "")
+          if [ "$build_type" != "workflow" ]; then
+            echo "::error::GitHub Pages build_type is '${build_type:-unset}', expected 'workflow'. Fix it with: gh api -X PUT repos/${{ github.repository }}/pages -f build_type=workflow"
+            exit 1
+          fi
       - name: Install dependencies
         run: npm ci
       - name: Build docs site

@@ -4,11 +4,12 @@
 // allowed (parallel scripts are not subagents). LLM-AGENT fan-out is rejected until
 // the oracle-bound checker amendment lands (seed.md §II.A clause 6).
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
+import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
 
 /** Merge per-checker verdicts into one deterministic, order-independent result. */
 export function mergeVerdicts(verdicts) {
@@ -37,7 +38,15 @@ export const DEFAULT_CHECKER_REGISTRY = {
   'spec-traceability': (ctx) => (ctx.intakeContent == null
     ? { findings: [] }
     : runTraceabilityOracle({ spec: ctx.specContent, intake: ctx.intakeContent })),
+  'spec-rollout': (ctx) => runRolloutOracle({ specContent: ctx.specContent }),
 };
+
+/** Persist the merged verdict so spec_approval_guard can read it at gate A. */
+function persistVerdict(rootDir, slug, merged) {
+  const out = join(rootDir, '.claude/state/checker-fanout', `${slug}.json`);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(merged, null, 2)}\n`);
+}
 
 function readOptional(readFile, p) {
   try {
@@ -72,7 +81,9 @@ export async function runCheckerFanout({ slug, rootDir, enabled, checkers, regis
   };
   const names = checkers && checkers.length ? checkers : Object.keys(reg);
   const verdicts = await Promise.all(names.map((name) => runOne(reg, name, ctx)));
-  return mergeVerdicts(verdicts);
+  const merged = mergeVerdicts(verdicts);
+  persistVerdict(rootDir, slug, merged);
+  return merged;
 }
 
 function loadFlag(rootDir) {

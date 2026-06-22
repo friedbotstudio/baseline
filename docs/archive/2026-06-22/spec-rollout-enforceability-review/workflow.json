@@ -1,0 +1,12 @@
+{
+  "request": "Build a new spec-rollout-enforceability-review skill (spec-review family, oracle-bound) that mechanically verifies every Rollout-section prerequisite carries an enforced-by: AC-NNN pointer to a real enforcement-type AC (missing/dangling -> BLOCKER hard-blocking /approve-spec; free-prose-only -> ADVISORY). Amend the spec format so prerequisites are a structured block; wire as a 4th adapter into harness/checker-fanout.mjs DEFAULT_CHECKER_REGISTRY; remediate the origin bug (GitHub Pages build_type=workflow prerequisite shipped unenforced) via scripts/bootstrap-pages.mjs and/or a fail-fast preflight in release.yml. Resolves backlog -419d / pending-question Q-002.",
+  "slug": "spec-rollout-enforceability-review",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["spec-rollout-prerequisite-enforceability-oracle-checker-419d"],
+  "created_at": 1782135003,
+  "updated_at": 1782135050
+}

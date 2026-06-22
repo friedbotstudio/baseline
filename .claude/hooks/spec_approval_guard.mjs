@@ -66,6 +66,27 @@ ${summary}
 Full report: .claude/state/spec-shippability/${expectedSlug}.json`);
     }
   }
+
+  // Fan-out gate: if the spec-review checker fan-out persisted a BLOCKED verdict,
+  // refuse the approval token. Absent/unparseable verdict → fall through (fail-safe).
+  const fanoutReport = join(CLAUDE_DOTDIR, 'state', 'checker-fanout', `${expectedSlug}.json`);
+  if (existsSync(fanoutReport)) {
+    let report;
+    try { report = JSON.parse(readFileSync(fanoutReport, 'utf8')); } catch { report = null; }
+    if (report && report.verdict === 'BLOCKED') {
+      const blockers = (report.findings || []).filter((f) => f.severity === 'BLOCKER');
+      const head = blockers.slice(0, 3).map((f) => `  - [${f.checker || f.check}] ${f.message || ''}`);
+      const extra = blockers.length > 3 ? `  ...and ${blockers.length - 3} more BLOCKER finding(s)` : '';
+      const summary = [...head, ...(extra ? [extra] : [])].join('\n');
+      logLine('spec_approval_guard', `BLOCKED approval for '${expectedSlug}': checker-fanout verdict=BLOCKED`);
+      emitBlock(`Spec Approval Guard: the spec-review checker fan-out reports verdict=BLOCKED for slug '${expectedSlug}'. Fix the BLOCKER findings and re-run the spec-review checkers until CLEAN before re-running /approve-spec.
+
+BLOCKER findings:
+${summary}
+
+Full report: .claude/state/checker-fanout/${expectedSlug}.json`);
+    }
+  }
   emitAllow();
 }
 

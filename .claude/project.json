@@ -312,7 +312,8 @@
       "enabled": true,
       "checkers": [
         "spec-diagram",
-        "spec-traceability"
+        "spec-traceability",
+        "spec-rollout"
       ]
     }
   },
