@@ -3,6 +3,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { readPlan, appendRoundTripArtifact } from './plan-store.mjs';
 
 /** Read the ledger, or an empty ledger when the file is missing/unreadable. */
 export function readLedger(ledgerPath) {
@@ -22,4 +23,17 @@ export function appendRoundTrip(ledgerPath, roundTrip) {
   mkdirSync(dirname(ledgerPath), { recursive: true });
   writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2) + '\n');
   return ledger;
+}
+
+/**
+ * Migration (AC-007): record a round-trip durably through the plan object when one
+ * exists for `slug`, while preserving the on-disk projection at `ledgerPath` (which
+ * graduation-gate and existing readers depend on). Back-compat: with no plan on
+ * disk, this is identical to appendRoundTrip — projection only — and returns null.
+ * Returns the updated plan when mirrored.
+ */
+export function recordRoundTripOnPlan({ slug, rootDir, ledgerPath, roundTrip }) {
+  appendRoundTrip(ledgerPath, roundTrip);
+  const plan = readPlan(slug, rootDir);
+  return plan ? appendRoundTripArtifact(plan, roundTrip) : null;
 }

@@ -412,14 +412,24 @@ designed. Parts 1–6 stand as captured; where Part 6's status table disagrees w
 | 3 — mutation oracle | `-f029` | ✅ shipped (advisory) | ✅ shipped (advisory) |
 | 4 — oracle-bound checker refit | `-d186` | ⬜ open | **🟡 partial** — 3 oracle-bound checkers live (spec-diagram, spec-traceability, spec-rollout-enforceability) + `harness/checker-fanout.mjs` live-wired (velocity Lever 1). Security/simplify/code-structure still open. |
 | 5 — maker/checker RALPH loop | `-4c43` | ⬜ open | **🟡 partial** — bounded one-maker/one-checker machinery shipped (`harness/maker-checker.mjs` `assertBounded`, `evidence-ledger.mjs`, `graduation-gate.mjs`). Multi-round loop + stop-rule + arbitration open. |
-| 6 — durable plan schema | `-424f` | ⬜ open | **⬜ open ← next.** No `.claude/state/plan/`, no plan helpers. |
+| 6 — durable plan schema | `-424f` | ⬜ open | **✅ SHIPPED** (`harness/plan-store.mjs` — append-only versioned `.claude/state/plan/<slug>.json` + `mergeInput`; `plan-frame.readFrame` (the η lever); `plan-diff.diffVersions` (visible replan diff); `replan.applyReplan` (record-only primitive); `plan-wiring.mjs` (additive Tier-2 harness wiring behind `velocity.durable_plan.enabled`). Both consumers migrated additively (signatures + projections preserved): `evidence-ledger.recordRoundTripOnPlan`, `checker-fanout.mirrorVerdictToPlan` → plan `artifacts.{round_trips,verdicts}`. Built via a 7-task shared-mode swarm; **no Article II/IV amendment** (Decision D1: additive Tier-2 state, same class as `harness_state`/`checker-fanout`). |
 | 7 — real Article II amendment | `-9360` | ⬜ blocked | **🟡 partially lifted** — the oracle-bound read-only checker *class* graduated (clause 6/7 lifted for that class only; evidence: 4 governed round-trips, 0 false-positive blocks, clean `/security`, ratification). Multi-maker / judgment-checker fan-out residual; gate is per-class, not blanket. |
 
-`-424f` is **no longer speculative**: it has two already-shipped consumers
-(`evidence-ledger.mjs` from the bounded round-trip, and the live `checker-fanout.mjs`
-verdicts) that persist state ad-hoc and want a durable plan spine. The YAGNI
-objection that justified deferring it has dissolved — same way it dissolved for
-piece 2 once the mutation oracle became a real floorless consumer.
+`-424f` is **now shipped** (2026-06-22): the durable plan spine exists, and its two
+prior ad-hoc consumers (`evidence-ledger.mjs`, the live `checker-fanout.mjs` verdicts)
+now persist *through* it while keeping their on-disk projections for back-compat. The
+plan is the "encoder" of §7.3: a worker reads only its per-node frame (`readFrame`),
+every replan is a recorded diff (`applyReplan` → append-only `versions[]`, never a
+silent mutation), and per-node results are the merge oracle's structured input
+(`mergeInput`). Wiring it as **additive Tier-2 state** (not a mandatory phase) kept it
+amendment-free — the OQ-1 default the reviewer approved at gate A.
+
+**Next consumer: `-4c43`.** This spine is exactly what the maker/checker RALPH loop
+was blocked on. `-4c43` now layers the *decide-when-to-replan* policy
+(dry-round stop, ceiling-below-floor yield, oracle-over-judgment arbitration) on top
+of the record-only `applyReplan` primitive shipped here — the seam drawn in the
+`-424f` spec (§Decisions). The forward sequence collapses from `2 → 4 → 6 → 5` to its
+tail: **piece 5 (`-4c43`) is now next**, then piece 4's residual checker refits.
 
 ### 7.2 Two objectives the strategy was conflating: latency vs token-cost
 

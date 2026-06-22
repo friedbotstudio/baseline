@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
 import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
+import { readPlan, setVerdictArtifact } from './plan-store.mjs';
 
 /** Merge per-checker verdicts into one deterministic, order-independent result. */
 export function mergeVerdicts(verdicts) {
@@ -41,11 +42,23 @@ export const DEFAULT_CHECKER_REGISTRY = {
   'spec-rollout': (ctx) => runRolloutOracle({ specContent: ctx.specContent }),
 };
 
+/**
+ * Migration (AC-008): mirror a merged verdict into the durable plan object when one
+ * exists for `slug`. Back-compat: no plan on disk → returns null and nothing changes
+ * (the live gate-A path has no plan at spec-review time, so behavior is unchanged).
+ */
+export function mirrorVerdictToPlan(rootDir, slug, merged) {
+  const plan = readPlan(slug, rootDir);
+  return plan ? setVerdictArtifact(plan, slug, merged) : null;
+}
+
 /** Persist the merged verdict so spec_approval_guard can read it at gate A. */
 function persistVerdict(rootDir, slug, merged) {
   const out = join(rootDir, '.claude/state/checker-fanout', `${slug}.json`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(merged, null, 2)}\n`);
+  // Durable plan mirror (projection above stays canonical for spec_approval_guard).
+  mirrorVerdictToPlan(rootDir, slug, merged);
 }
 
 function readOptional(readFile, p) {

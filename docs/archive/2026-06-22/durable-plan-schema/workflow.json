@@ -1,0 +1,32 @@
+{
+  "request": "-424f — Plan-as-durable-diffable-state schema (vision doc piece 6): .claude/state/plan/<slug>.json with goal + tasklist + per-node assignment frame + version/diff history; replan = recorded diff (workflow.json lineage + consent-gate pattern); subsumes evidence-ledger.mjs + checker-fanout.mjs persisted state; tier-dial-aware; per-node result schema as merge-oracle input. Design contract: vision doc Part 7.4.",
+  "slug": "durable-plan-schema",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch",
+    "simplify",
+    "tdd",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "plan-as-durable-diffable-state-schema-424f"
+  ],
+  "created_at": 1782142287,
+  "updated_at": 1782147737
+}

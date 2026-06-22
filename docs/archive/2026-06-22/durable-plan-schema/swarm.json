@@ -1,0 +1,169 @@
+{
+  "slug": "durable-plan-schema",
+  "spec": "docs/specs/durable-plan-schema.md",
+  "created_at": 1782144600,
+  "status": "complete",
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "plan-store: createPlan/readPlan/recordRevision/validatePlan/getVersion, append-only versions[], tier-dial thresholds",
+      "component": "store",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-005",
+        "AC-006"
+      ],
+      "write_set": [
+        ".claude/skills/harness/plan-store.mjs",
+        "tests/plan-store.test.mjs"
+      ],
+      "read_set": [
+        ".claude/hooks/lib/tier-dial.mjs",
+        ".claude/skills/harness/evidence-ledger.mjs"
+      ],
+      "depends_on": [],
+      "status": "done"
+    },
+    {
+      "id": "T-002",
+      "title": "plan-frame: readFrame(plan,nodeId) returns per-node frame, not history; bytes(frame) < bytes(plan)",
+      "component": "frame",
+      "acs": [
+        "AC-004"
+      ],
+      "write_set": [
+        ".claude/skills/harness/plan-frame.mjs",
+        "tests/plan-frame.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-003",
+      "title": "plan-diff: diffVersions(plan,a,b) pure structural differ → {added,removed,changed}",
+      "component": "diff",
+      "acs": [
+        "AC-006"
+      ],
+      "write_set": [
+        ".claude/skills/harness/plan-diff.mjs",
+        "tests/plan-diff.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-004",
+      "title": "replan: applyReplan(plan,change,meta) validates+applies+records; records, does not decide",
+      "component": "replan",
+      "acs": [
+        "AC-003"
+      ],
+      "write_set": [
+        ".claude/skills/harness/replan.mjs",
+        "tests/replan.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-005",
+      "title": "evidence-ledger migration: adapter persists round-trips via plan-store + writes back-compat projection; signatures preserved",
+      "component": "ledger",
+      "acs": [
+        "AC-007"
+      ],
+      "write_set": [
+        ".claude/skills/harness/evidence-ledger.mjs",
+        "tests/evidence-ledger-migration.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs",
+        ".claude/skills/harness/graduation-gate.mjs",
+        "tests/evidence-ledger.test.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-006",
+      "title": "checker-fanout migration: persistVerdict via plan-store + writes back-compat projection at same path; exit codes preserved",
+      "component": "fanout",
+      "acs": [
+        "AC-008"
+      ],
+      "write_set": [
+        ".claude/skills/harness/checker-fanout.mjs",
+        "tests/checker-fanout-migration.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs",
+        "tests/checker-fanout.test.mjs",
+        "tests/checker-fanout-live-wiring.test.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "status": "done"
+    },
+    {
+      "id": "T-007",
+      "title": "harness live-wiring (E): create/update plan as Tier-2 state post-approval behind velocity.durable_plan.enabled flag",
+      "component": "loop",
+      "acs": [
+        "AC-009",
+        "AC-010"
+      ],
+      "write_set": [
+        ".claude/skills/harness/SKILL.md",
+        ".claude/project.json",
+        "src/project.template.json",
+        "tests/plan-harness-wiring.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/plan-store.mjs",
+        ".claude/skills/harness/plan-frame.mjs"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-005",
+        "T-006"
+      ],
+      "status": "done"
+    }
+  ],
+  "waves": [
+    [
+      "T-001"
+    ],
+    [
+      "T-002",
+      "T-003",
+      "T-004",
+      "T-005",
+      "T-006"
+    ],
+    [
+      "T-007"
+    ]
+  ],
+  "validated_at": 1782144758
+}

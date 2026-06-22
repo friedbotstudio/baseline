@@ -315,6 +315,9 @@
         "spec-traceability",
         "spec-rollout"
       ]
+    },
+    "durable_plan": {
+      "enabled": true
     }
   },
   "whatsnew": {
