@@ -390,3 +390,105 @@ sequencing, not unresolved design.
 Each remaining piece is its own intake → spec → approve cycle, triaged as an
 `epic-child` of `-9d4c`, with its implementation run as a deliberate §II.A
 maker/checker round-trip (banking toward the ≥3 that unblock piece 7).
+
+---
+
+## Part 7 — Re-orientation (2026-06-22)
+
+A re-validation of the strategy against (a) what shipped since Part 6, and (b) the
+velocity-instrumentation findings (`backlog.md → baseline-velocity-levers-...-v0lv`)
+and the token-efficiency reference (`docs/references/token-efficiency.md`). The
+8-piece sequence and the `2 → 4 → 6 → 5` ordering **still hold**; this part corrects
+the Part-6 status table and sharpens *why* piece 6 is next and *how* it must be
+designed. Parts 1–6 stand as captured; where Part 6's status table disagrees with
+§7.1, §7.1 governs.
+
+### 7.1 Corrected status — Part 6's table is stale
+
+| Piece | Key | Part 6 (06-17) | **Reality (06-22)** |
+|---|---|---|---|
+| 1 — §II.A charter | `-c732` | ✅ shipped | ✅ shipped |
+| 2 — tier dial | `-1a2d` | ⬜ open | **✅ shipped** (`hooks/lib/tier-dial.mjs`, `project.json → tier.level`) |
+| 3 — mutation oracle | `-f029` | ✅ shipped (advisory) | ✅ shipped (advisory) |
+| 4 — oracle-bound checker refit | `-d186` | ⬜ open | **🟡 partial** — 3 oracle-bound checkers live (spec-diagram, spec-traceability, spec-rollout-enforceability) + `harness/checker-fanout.mjs` live-wired (velocity Lever 1). Security/simplify/code-structure still open. |
+| 5 — maker/checker RALPH loop | `-4c43` | ⬜ open | **🟡 partial** — bounded one-maker/one-checker machinery shipped (`harness/maker-checker.mjs` `assertBounded`, `evidence-ledger.mjs`, `graduation-gate.mjs`). Multi-round loop + stop-rule + arbitration open. |
+| 6 — durable plan schema | `-424f` | ⬜ open | **⬜ open ← next.** No `.claude/state/plan/`, no plan helpers. |
+| 7 — real Article II amendment | `-9360` | ⬜ blocked | **🟡 partially lifted** — the oracle-bound read-only checker *class* graduated (clause 6/7 lifted for that class only; evidence: 4 governed round-trips, 0 false-positive blocks, clean `/security`, ratification). Multi-maker / judgment-checker fan-out residual; gate is per-class, not blanket. |
+
+`-424f` is **no longer speculative**: it has two already-shipped consumers
+(`evidence-ledger.mjs` from the bounded round-trip, and the live `checker-fanout.mjs`
+verdicts) that persist state ad-hoc and want a durable plan spine. The YAGNI
+objection that justified deferring it has dissolved — same way it dissolved for
+piece 2 once the mutation oracle became a real floorless consumer.
+
+### 7.2 Two objectives the strategy was conflating: latency vs token-cost
+
+The velocity instrumentation forced a distinction the original vision left implicit:
+
+- **Latency (wall-clock).** The velocity north star ("~2h run → ~20 min") is
+  wall-clock. DATA POINT 1 showed runs are **~96% model-bound** — so latency ≈
+  *serial* reasoning time. **Parallelism (checker fan-out, the v1 agent-team) is a
+  latency play:** it runs independent reasoning concurrently. It does **not** reduce
+  total tokens — N agents cost ~N× tokens to finish in ~1× time.
+- **Token-cost.** `token-efficiency.md` is a *cost* play (output tokens at ~3× input).
+
+These pull in tension: **v1's agent-team makes runs faster but potentially more
+expensive.** The vision already carried the resolution (§2.2 / §103): spend the
+parallelism budget on **adversarial oracle-bound checkers, not on N makers** —
+checkers are cheaper and catch more. That is the cost-discipline that keeps the
+latency win from blowing up the token bill. Stated as a rule for v1:
+
+> Parallelize for latency where the work is genuinely independent; keep the *maker*
+> count minimal; pay the parallelism tax on *grounded checking*, not on redundant
+> generation.
+
+### 7.3 The scenario-output mirage relocates the token-efficiency leverage
+
+The load-bearing empirical finding (DATA POINT 6 diagnosis, `baseline-self-dev-verify`):
+per-phase OUTPUT tokens are **~98% reasoning, ~2% artifacts** (the `tdd:scenario`
+tick measured 117k output tokens but produced ~2.7k tokens of actual test/recipe
+files). Consequences:
+
+1. **Single-context output compression has a low ceiling.** Output token cost is
+   irreducible reasoning — exactly `token-efficiency.md`'s own "computational
+   compression is bounded by intrinsic complexity" caveat. Lever 4b-i (terse
+   verdicts) confirmed this empirically: it only ever touched the small
+   visible-restatement slice. **Compressing artifacts/narration is mostly a dead end.**
+2. **Therefore `token-efficiency.md` is not an abstract north star — it is the design
+   spec for piece 6.** Its real target is the *inter-agent state channel*, not one
+   context's prose. In an agent team every worker re-reads shared context (DP cache-read
+   deltas of 3M–8.5M tokens/phase dominate the priced-input side). The **plan is what
+   each agent reads instead of the full history** — it *is* the "encoder" in the doc's
+   communication-channel model. Maximize **η = I(plan; correct future actions) /
+   plan-tokens**.
+3. **Cost leverage that remains is "don't reason at all" + "don't re-serialize."**
+   Right-size triage (Lever 2) cuts whole phases of reasoning for small diffs; a dense
+   plan schema cuts per-worker context re-reads and the lossy re-serialization at merge
+   (§2.4). Both are piece-6-adjacent.
+
+### 7.4 What this hands to the `-424f` intake/spec
+
+Piece 6 is the **convergence point**: the parallelism spine (latency) *and* the
+compressed state channel (cost). Design directives, to be carried into its intake:
+
+1. **Plan = sufficient statistic, not a transcript.** Schema: goal + tasklist +
+   per-node assignment (the frame a worker reads) + version/diff history. A worker
+   reads only its frame, never the whole history (§2.3 orchestrator-owns-cross-cutting-
+   context; token-doc "minimal belief state").
+2. **Replan = recorded diff, never silent mutation** — `workflow.json` lineage + the
+   consent-gate pattern (§2.1).
+3. **Per-node result schema is the merge oracle's input** — structured enough that the
+   AC-conformance / `integrate` merge oracle (Part 6.2, Q3) integrates *mechanically*,
+   attacking the §2.4 lossy-merge problem at the schema level rather than hoping
+   synthesis is cheap.
+4. **Unify the shipped consumers** — the plan object should subsume what
+   `evidence-ledger.mjs` and the fan-out verdicts persist today, so the bounded
+   round-trip writes plan-state, not a side ledger.
+5. **Tier-dial-aware** — floor/ceiling per node read from `project.json → tier`
+   (shipped, piece 2), so piece 5's stop-rule can be layered on without re-opening the
+   schema.
+
+Net: the development strategy holds. `-424f` is correctly next, is now grounded by
+real consumers, and has a sharper design contract than Part 6 implied — it is the
+piece where the velocity (latency) and token-efficiency (cost) threads are designed
+together rather than traded off blindly.
