@@ -238,6 +238,13 @@
     },
     "drift_reverify_skip": {
       "enabled": true
+    },
+    "checker_fanout": {
+      "enabled": true,
+      "checkers": [
+        "spec-diagram",
+        "spec-traceability"
+      ]
     }
   },
   "whatsnew": {

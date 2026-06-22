@@ -218,14 +218,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-06-16
 - Caveat: not invoked by `project.json → test.cmd` (which runs only `audit-baseline`); run manually during /tdd, /simplify, /integrate. The test scenarios encode the contract documented in `docs/specs/workflow-loop-closing-hygiene.md` ACs — adding behaviors to `drift_check.mjs` requires extending this suite in lockstep, or the next drift-check-tick will go unverified.
 
-## src/cli/tui/install.js:1
-
-- Role: Domain — branded install flow. Exports `run({target, opts, prompts})`; composes `freshInstall` / `forceInstall` from `src/cli/install.js` and `fetchPlantumlIfMissing` from `src/cli/plantuml.js` behind a clack-style intro / spinner / outro presentation seam. Writes `renderHeader({version, subtitle: 'install'})` from `src/cli/tui/splash.js:1` to stdout ABOVE the clack intro so every install run carries the full BASELINE wordmark + tagline (changed from the slim `renderBrandStrip` on 2026-05-23 per cli-wordmark-on-all-commands; narrow terminals automatically fall back to the slim strip via `wordmarkFits`). The `prompts` parameter defaults to `@clack/prompts` and is injected in tests.
-- Companion: `src/cli/tui/splash.js:1` (renderHeader renderer), `src/cli/tui/tokens.js:1` (brand colors), `tests/tui-install.test.mjs` (unit tests with `prompts` stub + wordmark-in-stdout assertion), `bin/cli.js → dispatchInstall` (router that picks tui vs plain).
-- Verified-at: HEAD
-- Last-touched: 2026-05-23
-- Caveat: never invoked from the non-TTY path. The router's `process.stdout.isTTY` check decides; if you add a new install entry point, route the same way or clack output will land in CI logs. The header write happens BEFORE `prompts.intro(...)` so the wordmark sits above clack's framing characters; reordering hides the wordmark beneath the clack box.
-
 ## src/cli/tui/upgrade.js:1
 
 - Role: Domain — interactive upgrade flow that replaces the retired `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts (including tier-2/3 customized files when `canRecoverBase` reports BASE unrecoverable — see [[src/cli/merge.js:1]]), (2) `prompts.select` per conflict with `CHOICE_OPTIONS` = four entries `keep-mine / take-theirs / merge / abort` (post tier1-merge-option workflow 2026-05-22; `show-diff` and the cap-at-2 loop are removed), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. The `merge` pick routes through `src/cli/merge.js → fallbackToBinaryPrompt`'s new branch and calls `writeStageBaseless` to stage incoming bytes under `.claude/state/upgrade/<ts>/`. Per-file action lines render `ACTION_LABELS[action.kind]` padded to `ACTION_LABEL_WIDTH` (single source of truth from `src/cli/merge.js`). Pending-stage timestamp is rendered via `formatStageTimestamp` (from `src/cli/upgrade-tiers.js:59`) so users see `2026-05-21 11:45 UTC` instead of the raw `2026-05-21T11-45-00-000Z`. Writes `renderHeader({version, subtitle: 'upgrade'})` from `src/cli/tui/splash.js:1` above the clack intro (changed from `renderBrandStrip` on 2026-05-23 per cli-wordmark-on-all-commands; narrow terminals fall back to the slim strip automatically). The legacy-manifest warning also revised that day to name `/upgrade-project` + the marker's silent-skip behavior. `listShippedFiles` filters `COPY_EXCLUDE` (imported from `src/cli/install.js`) so `manifest.json` is never sent into `threeWayMerge` as an ADD candidate. Cancel sentinel: `Symbol.for('clack:cancel')`.
@@ -233,15 +225,6 @@ Each entry's stable key is `path:line`.
 - Verified-at: 6e53aec
 - Last-touched: 2026-06-16
 - Caveat: `bin/cli.js`'s non-TTY upgrade path is a separate code branch (`runPlainUpgrade`) that calls `threeWayMerge` directly without the onSkipCustomized callback. Both branches use the same `ACTION_LABELS` render and the COPY_EXCLUDE-filtered `listShippedFiles`. The non-TTY path NEVER reaches the Merge choice (no interactive prompt) — customized files default to keep-mine with exit 3, by design (spec AC-006). If you change the apply logic or the exclude set in one branch, mirror the change in the other or the two paths diverge.
-
-## src/cli/tui/doctor.js:1
-
-- Role: Domain — branded sectioned doctor renderer. Exports `render(report)`; consumes the structured `DoctorReport` from `src/cli/doctor.js` (unchanged) and writes a colorized, sectioned rendering to stdout. The non-TTY plain path stays on `doctor.js`'s `formatReport`; the renderer is invoked only when `process.stdout.isTTY && !values.json`. Writes `renderHeader({subtitle: 'doctor'})` from `src/cli/tui/splash.js:1` at the top so the full BASELINE wordmark frames every doctor invocation (added 2026-05-23 per cli-wordmark-on-all-commands).
-- Error path: when `report.error` is set (e.g., manifest-missing), renders the wordmark header then the `Baseline doctor` label + muted target line, then the error message with a red `doctor:` marker. The router no longer short-circuits errors to `formatReport` in TTY mode.
-- Companion: `bin/cli.js → dispatchDoctor` routes between `tui/doctor.render(report)`, `JSON.stringify(report)` (when `--json`), and `formatReport(report)` (non-TTY default). `targetAndManifestLines(target, manifestInfo)` is a private helper inside the module (renamed from `brandHeader` on 2026-05-23 to reflect its narrower role after `renderHeader` took over the brand-frame) — extract pattern for any future renderer that needs the same metadata lines.
-- Verified-at: HEAD
-- Last-touched: 2026-05-23
-- Caveat: do not couple the renderer to the doctor data layer; the two-way separation (data in `src/cli/doctor.js`, presentation in `src/cli/tui/doctor.js`) is what makes `--json` a trivial rider. The error-path brand frame is intentional: even unhappy outcomes carry the brand surface.
 
 ## src/cli/tui/meta.js:1
 
@@ -518,4 +501,13 @@ Each entry's stable key is `path:line`.
 - Verified-at: 64d8a55
 - Last-touched: 2026-06-21
 - caveat: the roster is the *declaration*; `deriveCounts()` reads disk. Tests assert disk === roster (a real drift tripwire, not tautological). Prose count literals (CLAUDE.md/seed/README/CONSTITUTION) stay hand-maintained but are audit-checked against disk, so they track the roster transitively.
+
+## .claude/skills/harness/checker-fanout.mjs
+
+- Path: `.claude/skills/harness/checker-fanout.mjs`
+- Role: The §II.A oracle-bound checker machinery shipped in `checker-graduation-fanout` (8f6cfda). `checker-fanout.mjs` exports `mergeVerdicts` (deterministic, order-independent merge of read-only checker verdicts) + the clause-6 fan-out gate: mechanical SCRIPT fan-out is always allowed (scripts aren't subagents), LLM-AGENT fan-out is rejected until the clause-7 multi-agent amendment lands. This file is the LIVE-WIRING target of the `checker-fanout-live-wiring` workflow (Lever 1) — the mechanism shipped but is NOT yet referenced in `harness/SKILL.md` nor gated by a `velocity.checker_fanout` flag (absent in project.json as of 8f6cfda).
+- Companion: the two oracle-bound spec-review helpers `.claude/skills/spec-diagram-review/oracle.mjs` (DFS-acyclicity BLOCKER + advisory class↔DDL/AC↔seq relief-valves; exports `normalizeFinding`) and `.claude/skills/spec-traceability-review/oracle.mjs` (dropped-upstream-AC BLOCKER; imports `normalizeFinding` + `resolveCheckerThreshold` from `hooks/lib/tier-dial.mjs`) — both BLOCK only with a concrete ArtifactRef AND `mandatory` tier, else ADVISORY (proof-obligation contract). The bounded round-trip trio: `harness/maker-checker.mjs` (`assertBounded` — exactly 1 maker/1 checker), `harness/evidence-ledger.mjs` (append-only governed-round-trip ledger), `harness/graduation-gate.mjs` (fail-CLOSED counts-only clause-7 evaluator: ≥3 round-trips ∧ 0 false-positive blocks ∧ security-clean). Tests: `tests/checker-fanout.test.mjs`, `checker-oracle-diagram.test.mjs`, `checker-oracle-traceability.test.mjs`, `maker-checker-roundtrip.test.mjs`, `evidence-ledger.test.mjs`, `graduation-gate.test.mjs`.
+- Verified-at: 8f6cfda
+- Last-touched: 2026-06-22
+- caveat: `graduation-gate` fails CLOSED (opposite of `rightsize-gate`'s fail-OPEN) — a malformed/missing ledger yields `pass:false` so the Article II amendment can never ride on bad evidence. The clause-6 → clause-7 lift was granted for the oracle-bound READ-ONLY checker class ONLY (backlog `-9360`); multi-maker / judgment-checker fan-out each needs its own per-class graduation.
 

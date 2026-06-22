@@ -1,0 +1,35 @@
+{
+  "request": "Wire the graduated read-only spec-review checker fan-out (harness/checker-fanout.mjs + spec-review oracles) into the live harness loop: add a velocity.checker_fanout flag to project.json and have the harness run the checkers in parallel when enabled. Mechanism shipped in checker-graduation-fanout; this is the dormant-to-live wiring (Lever 1 under backlog -v0lv).",
+  "slug": "checker-fanout-live-wiring",
+  "track_id": "tdd-quickfix",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782128391,
+  "updated_at": 1782130718,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "finalize"
+  ]
+}
