@@ -1,0 +1,35 @@
+{
+  "request": "Companion channel pool: lobby default + enqueue_task primitive, plus a custom Bun channel plugin for push-dispatch, auto-join peer pool, and escalation transport (supersedes companion-lobby-enqueue; folds in Claude Code channels).",
+  "slug": "companion-channel-pool",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "supersedes": "companion-lobby-enqueue",
+  "created_at": 1782204523,
+  "updated_at": 1782207430,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
