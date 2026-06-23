@@ -21,6 +21,7 @@ const BUNDLE_DIRS = ['docs/intake', 'docs/scout', 'docs/research', 'docs/specs']
 export async function makeEpicRepo({
   epic = 'demo-epic',
   children = [{ slice: 'A', slug: 'child-a', status: 'committed' }],
+  slices,
   approved = true,
   closed = false,
   withBundle = true,
@@ -50,7 +51,9 @@ export async function makeEpicRepo({
     spec: `docs/specs/${epic}.md`,
     scout: `docs/scout/${epic}.md`,
     research: `docs/research/${epic}.md`,
-    slices: children.map((c) => ({ id: c.slice, title: `slice ${c.slice}`, acs: [], risk: [] })),
+    slices: Array.isArray(slices)
+      ? slices
+      : children.map((c) => ({ id: c.slice, title: `slice ${c.slice}`, acs: [], risk: [] })),
     approved,
     children,
     created_at: 1700000000,

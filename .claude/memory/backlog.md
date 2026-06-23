@@ -172,7 +172,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 - Intent: fix `.claude/skills/commit/epic_close.mjs` — it closes the epic when every REGISTERED child is `committed`, but children register lazily (one per epic-child `/triage`), so the FIRST child to commit looks like the last → premature close: it archived the discovery bundle (spec/intake/brief/scout/research) AND displaced the gate-A approval token, breaking sibling slices' `track_guard` inheritance. Recovered manually during slice A (docs `git mv`'d back, epic reopened, B–E pre-registered open, token re-restored via a second `/approve-spec`).
 - Fix: gate the close on `slices[]` coverage — close only when every `slices[].id` has a `committed` child — AND/OR have `/triage` (or the epic approve-spec step) register ALL slices as `open` children at approval time so `children[]` is the full set from the start. Add a regression test (`epic-close-governance.test.mjs`) for the lazy-registration case.
-- status: open
+- status: picked-up
 - raised-on: 2026-06-23
 - raised-in-context: sprint-completeness-oracle (slice A)
 - source: assistant-deferral
@@ -183,7 +183,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: HIGH-impact governance bug (corrupts epic state + displaces consent token) but low-frequency (only multi-slice epics with lazy child registration). The epic state `.claude/state/epic/mvp-sprint-parallel-cycles.json → recovery_note` documents the live incident.
 
 ---
-
+- superseded-at: 2026-06-23
 ## sprint-mode-dogfood-config-mcp-register-and-flag-flip
 
 > verbatim (assistant-deferral + user direction, 2026-06-23): user — "after C we will configure this session for dogfooding"; "in next session we will have a companion session to help". The dogfood-config is the explicit next step.

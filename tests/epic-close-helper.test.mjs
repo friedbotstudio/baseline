@@ -22,6 +22,8 @@ import {
 } from './helpers/epic-close-fixture.mjs';
 import path from 'node:path';
 
+const sliceSet = (...ids) => ids.map((id) => ({ id, title: `slice ${id}`, acs: [], risk: [] }));
+
 describe('epic_close.mjs — archive + close (AC-001)', () => {
   it('test_when_all_children_committed_then_bundle_archived_and_epic_closed', async () => {
     const { tmp, epic, statePath } = await makeEpicRepo({
@@ -173,6 +175,70 @@ describe('epic_close.mjs — standalone recovery stages, never commits (AC-006)'
       assert.match(porcelain(tmp), /^R/m, 'bundle move is staged (renames in the index)');
       assert.match(stdout, /grant-commit/, 'prompts the maintainer to /grant-commit');
       assert.match(stdout, /\/commit/, 'prompts the maintainer to /commit');
+    } finally {
+      await cleanup(tmp);
+    }
+  });
+});
+
+describe('epic_close.mjs — slices-coverage gate (lazy registration regression)', () => {
+  it('test_when_slices_uncovered_by_committed_children_then_noop_despite_registered_committed', async () => {
+    // Lazy child registration: the epic declares 5 slices, but only the first
+    // slice has registered + committed a child. The old children-only gate saw
+    // "every registered child committed" and wrongly closed the epic on the
+    // FIRST slice. The slices-coverage gate must keep it in flight.
+    const { tmp, epic, statePath } = await makeEpicRepo({
+      epic: 'feat-lazy',
+      slices: sliceSet('A', 'B', 'C', 'D', 'E'),
+      children: [{ slice: 'A', slug: 'child-a', status: 'committed' }],
+    });
+    try {
+      const { status, stdout } = runEpicClose(tmp, epic);
+      assert.equal(status, 0, 'lazily-registered epic is a clean no-op (exit 0)');
+      assert.match(stdout, /still in flight/i, 'reports still-in-flight');
+      assert.match(stdout, /4 of 5/, 'names 4 of 5 slices uncommitted');
+      assert.equal(await pathExists(path.join(tmp, 'docs/archive')), false, 'nothing archived');
+      const state = await readState(statePath);
+      assert.notEqual(state.closed, true, 'epic NOT closed while slices remain uncovered');
+    } finally {
+      await cleanup(tmp);
+    }
+  });
+
+  it('test_when_every_slice_has_committed_child_then_closes', async () => {
+    const { tmp, epic, statePath } = await makeEpicRepo({
+      epic: 'feat-covered',
+      slices: sliceSet('A', 'B'),
+      children: [
+        { slice: 'A', slug: 'child-a', status: 'committed' },
+        { slice: 'B', slug: 'child-b', status: 'committed' },
+      ],
+    });
+    try {
+      const { status } = runEpicClose(tmp, epic);
+      assert.equal(status, 0, 'fully-covered epic closes (exit 0)');
+      const bundle = await archivedBundleDir(tmp, epic);
+      assert.equal(await pathExists(path.join(bundle, 'spec.md')), true, 'bundle archived when every slice covered');
+      const state = await readState(statePath);
+      assert.equal(state.closed, true, 'epic state marked closed');
+    } finally {
+      await cleanup(tmp);
+    }
+  });
+
+  it('test_when_no_slices_declared_then_falls_back_to_children_gate', async () => {
+    // Legacy / no-slice epics carry no slices[]; the close gate must fall back
+    // to the registered-children rule so they still close.
+    const { tmp, epic, statePath } = await makeEpicRepo({
+      epic: 'feat-legacy',
+      slices: [],
+      children: [{ slice: 'A', slug: 'child-a', status: 'committed' }],
+    });
+    try {
+      const { status } = runEpicClose(tmp, epic);
+      assert.equal(status, 0, 'no-slice epic closes via the children-gate fallback (exit 0)');
+      const state = await readState(statePath);
+      assert.equal(state.closed, true, 'fallback path marks the epic closed');
     } finally {
       await cleanup(tmp);
     }

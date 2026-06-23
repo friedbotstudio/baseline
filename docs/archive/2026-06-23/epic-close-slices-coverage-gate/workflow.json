@@ -1,0 +1,12 @@
+{
+  "request": "fix epic_close.mjs premature-close bug: close gated on registered children but children register lazily, so the first slice to commit prematurely closes the epic (archives discovery bundle + displaces gate-A token). Fix: gate close on slices[] coverage. Add regression test epic-close-governance.test.mjs for the lazy-registration case.",
+  "slug": "epic-close-slices-coverage-gate",
+  "track_id": "tdd-quickfix",
+  "exceptions": [],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "memory-flush", "cli-copy-review", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": ["epic-close-gate-on-slices-coverage-not-lazy-children"],
+  "created_at": 1782196309,
+  "updated_at": 1782196309
+}

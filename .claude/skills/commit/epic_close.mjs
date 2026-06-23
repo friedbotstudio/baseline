@@ -4,13 +4,20 @@
 // CLI:
 //   node epic_close.mjs <epic>
 //
-// When every child of <epic> is `committed` and the epic is not already closed,
-// archives the live discovery bundle into docs/archive/<UTC-date>/<epic>/ (by
-// delegating to the shipped archive.sh — git mv for tracked files) and merges
-// closed:true + closed_at into the gitignored epic state file. It NEVER creates
-// a commit: the commit skill's last-child fold lets the staged move ride that
-// commit, and the standalone recovery path asks the maintainer to /grant-commit
-// then /commit. `approved` is never written; the state file is retained.
+// When every declared slice of <epic> is covered by a `committed` child and the
+// epic is not already closed, archives the live discovery bundle into
+// docs/archive/<UTC-date>/<epic>/ (by delegating to the shipped archive.sh — git
+// mv for tracked files) and merges closed:true + closed_at into the gitignored
+// epic state file. It NEVER creates a commit: the commit skill's last-child fold
+// lets the staged move ride that commit, and the standalone recovery path asks
+// the maintainer to /grant-commit then /commit. `approved` is never written; the
+// state file is retained.
+//
+// Completion is gated on slices[] coverage, not on the registered-children set:
+// children register lazily (one per epic-child /triage), so an "all registered
+// children committed" test fires on the FIRST slice and closes the epic
+// prematurely. A slice is covered only when it has a committed child. Legacy
+// epics that carry no slices[] fall back to the registered-children gate.
 //
 // Exit codes:
 //   0  acted, or a clean no-op (absent epic / in flight / already closed)
@@ -41,6 +48,17 @@ function readState(statePath) {
 function openChildren(state) {
   const children = Array.isArray(state.children) ? state.children : [];
   return children.filter((c) => c.status !== 'committed');
+}
+
+function committedSliceIds(state) {
+  const children = Array.isArray(state.children) ? state.children : [];
+  return new Set(children.filter((c) => c.status === 'committed').map((c) => c.slice));
+}
+
+function uncoveredSlices(state) {
+  const slices = Array.isArray(state.slices) ? state.slices : [];
+  const committed = committedSliceIds(state);
+  return slices.filter((s) => !committed.has(s.id));
 }
 
 function archiveBundle(root, epic) {
@@ -94,13 +112,30 @@ function main(argv) {
     return 0;
   }
 
-  const children = Array.isArray(state.children) ? state.children : [];
-  const open = openChildren(state);
-  if (children.length === 0 || open.length > 0) {
-    console.log(
-      `epic-close: epic ${epic} still in flight: ${open.length} of ${children.length} children open`,
-    );
-    return 0;
+  // Completion is gated on slices[] coverage, not on the registered-children
+  // set: children register lazily (one per epic-child /triage), so an
+  // all-registered-children-committed test fires on the FIRST slice and closes
+  // the epic prematurely. A slice is covered only when it has a committed child.
+  const slices = Array.isArray(state.slices) ? state.slices : [];
+  if (slices.length > 0) {
+    const uncovered = uncoveredSlices(state);
+    if (uncovered.length > 0) {
+      console.log(
+        `epic-close: epic ${epic} still in flight: ${uncovered.length} of ${slices.length} slices uncommitted`,
+      );
+      return 0;
+    }
+  } else {
+    // Legacy / no-slice epics carry no authoritative slice set; fall back to
+    // the registered-children gate.
+    const children = Array.isArray(state.children) ? state.children : [];
+    const open = openChildren(state);
+    if (children.length === 0 || open.length > 0) {
+      console.log(
+        `epic-close: epic ${epic} still in flight: ${open.length} of ${children.length} children open`,
+      );
+      return 0;
+    }
   }
 
   try {
