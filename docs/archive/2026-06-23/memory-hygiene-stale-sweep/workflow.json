@@ -1,0 +1,11 @@
+{
+  "request": "commit the already-applied memory-flush hygiene edits as their own chore: .claude/memory/landmarks.md (50 stale-sweep verified-at restamps), .claude/memory/libraries.md (sdk graduated planned->installed), .claude/memory/landmines.md (stale-sweep restamps). Pure memory-content curation, no project code.",
+  "slug": "memory-hygiene-stale-sweep",
+  "track_id": "chore",
+  "exceptions": ["intake", "brd", "scout", "research", "spec", "review", "tdd", "simplify", "integrate", "document"],
+  "completed": ["chore", "archive", "memory-flush"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782198697,
+  "updated_at": 1782198697
+}
