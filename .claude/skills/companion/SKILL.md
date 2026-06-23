@@ -70,6 +70,8 @@ Read any markers under `.claude/state/companion/`. For each, report `sprint_id`,
 
 The manual `on/off/status` flow above is the **polling** path: you type the join command and the session reads `tasks.json` on a loop. For running several peers at once, prefer the **pool channel** — a project-local Claude Code *channel* (`.claude/mcp/sprint-pool/`) that auto-registers the peer on launch and **pushes** work in, so the session never polls.
 
+The pool channel's transport is an **in-process broker over a Unix-domain socket** (`.claude/mcp/sprint-broker/`): the lead session hosts the broker (sole writer of coordination state) and every peer connects to it as a client, so claims/yields/done-signals cross sessions over the socket — not a shared file. This works even when peers run from **separate repo clones** (the rendezvous is `$SPRINT_BROKER_SOCK`, a short path outside any clone; `launch.sh` sets it, defaulting under the XDG runtime dir / `TMPDIR`). There is no 750ms watch loop — delivery is event-native.
+
 **Launch a pool peer** (one terminal per peer; the channel is custom so it needs the dev flag):
 
 ```
@@ -77,8 +79,8 @@ SPRINT_POOL_PEER_ID=peer-2 claude --dangerously-load-development-channels server
 ```
 
 - On startup the channel registers a `session` peer on the `lobby` channel (override with `SPRINT_POOL_CHANNEL`) — **no `/companion on` needed** — provided `velocity.sprint_mode.enabled` is true; otherwise it refuses to start.
-- The lead hands work over by calling the `enqueue_task` tool; the peer's channel pushes a `task-available` event and the peer claims via the existing `claim_task`. An un-decidable fork still goes through `yield_fork` (bounded-executor contract unchanged); the lead's own pool channel pushes the `yield` event, and the lead re-dispatches with `release_task` — no hand-editing of channel state.
-- **Launch the lead** with `SPRINT_POOL_ROLE=lead` so its channel watches `yields.json` for escalations.
+- The lead hands work over by calling the `enqueue_task` tool; the broker pushes a `task-available` event to peer clients and a peer claims via the existing `claim_task`. An un-decidable fork still goes through `yield_fork` (bounded-executor contract unchanged); the broker delivers the `yield` to the lead, and the lead re-dispatches with `release_task` (which also resolves the yield) — no hand-editing of channel state.
+- **Launch the lead** with `SPRINT_POOL_ROLE=lead` so this session hosts the broker and receives yield escalations.
 - Closing the terminal (SIGTERM) marks the peer inactive; or call `leave_peer`.
 
 Prerequisites and the bounded-peer contract above apply identically. Peers run **attended** — normal permission prompts still gate their tool use (no `--dangerously-skip-permissions`).

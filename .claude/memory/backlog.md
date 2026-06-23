@@ -182,4 +182,19 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 3d3cda7
 - last-touched: 2026-06-23
 
+## sprint-broker-free-form-peer-lead-query-channel
+
+> verbatim (peer-2 dogfood, 2026-06-23): "the broker pool transport only carries mechanical coordination — claim / done-unblock / yield. There is no free-form 'message the lead' tool in the sprint-pool toolset (broadcast/send_message exist only on the file-based sprint-channel, not the broker pool). So a peer's one sanctioned way to push a question up to the lead is yield_fork, which is task-bound."
+
+- Intent: add a dedicated free-form peer→lead message/query channel to the broker pool (parity with the file-based sprint-channel's `send_message`/`broadcast`). Today a peer with a non-task question must overload `yield_fork`, which is task-bound — surfaced live when a "junior-dev" peer raised a repo-hygiene query by re-opening an already-`done` task's yield (`release-note` pv=2). It works but couples a free-form ask to a task.
+- status: open
+- raised-on: 2026-06-23
+- raised-in-context: sprint-pool-broker-transport (live dogfood)
+- source: assistant-deferral
+- estimated-effort: small (a broker `message` op + a `sprint_message`/`ask_lead` pool tool + host onEvent bridge; same pattern as the lifecycle events)
+- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
+- verified-at: ca592c2
+- last-touched: 2026-06-23
+- caveat: This is a feature ADD, not a load-bearing fix — the broker's mechanical-coordination core (claim/done/yield/status) is proven and shipped; `yield_fork` is a workable (if awkward) vehicle for queries today. Deliberately NOT bolted onto the broker-transport workflow (which was already 3× its planned scope). Distinct from the load-bearing dogfood fixes (peer tools, lifecycle events, `sprint_status`) that the broker genuinely could not work without.
+
 ---

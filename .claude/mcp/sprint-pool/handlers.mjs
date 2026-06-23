@@ -3,7 +3,7 @@
 // mirroring the baseline sprint-channel handlers. Composed from the baseline Foundation
 // primitives (store/lock/safe-id), imported READ-ONLY — no baseline file is edited.
 
-import { readSprint, writeSprint, readTasks, writeTasks } from '../sprint-channel/lib/store.mjs';
+import { readSprint, writeSprint, readTasks, writeTasks, readYields, writeYields } from '../sprint-channel/lib/store.mjs';
 import { withLock } from '../sprint-channel/lib/lock.mjs';
 import { isSafeId } from '../sprint-channel/lib/safe-id.mjs';
 
@@ -55,6 +55,9 @@ export function releaseTask({ channelRoot, task_id, brief }) {
     target.claimed_by = null;
     if (brief !== undefined) target.brief = brief;
     writeTasks(channelRoot, tasks);
+    const yields = readYields(channelRoot);
+    const openYield = yields.find((y) => y.task_id === task_id && y.status === 'open');
+    if (openYield) { openYield.status = 'resolved'; writeYields(channelRoot, yields); }
     return { released: true };
   });
   if (!lock.acquired) return { released: false, reason: 'release lock held by a concurrent call' };

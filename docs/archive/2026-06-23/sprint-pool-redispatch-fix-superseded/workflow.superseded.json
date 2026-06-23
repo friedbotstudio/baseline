@@ -1,0 +1,23 @@
+{
+  "request": "Fix two coupled defects in the project-local sprint-pool re-dispatch path: (1) watcher.mjs monotonic seen-dedup suppresses re-dispatched tasks forever; (2) releaseTask leaves the matching yield record status:open. Both surfaced live during the slice-C dogfood.",
+  "slug": "sprint-pool-redispatch-fix",
+  "track_id": "spec-entry",
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "review"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782211988,
+  "updated_at": 1782212493,
+  "superseded_by": "sprint-pool-broker-transport",
+  "superseded_at": 1782213595,
+  "status": "superseded"
+}

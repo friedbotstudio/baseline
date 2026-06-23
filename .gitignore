@@ -4,6 +4,9 @@
 # Per-run state (workflow tracker, consent tokens, swarm plans, last test verdict, harness logs)
 .claude/state/
 
+# Sprint-mode dogfood scratch — throwaway peer write_set output (alpha.md, report.md, etc.)
+docs/scratch/
+
 # Mutation-testing oracle (-f029): Stryker's transient output. The advisory
 # report lives under .claude/state/mutation/ (already ignored above); these are
 # Stryker's own scratch/report dirs, regenerated each run, never staged.

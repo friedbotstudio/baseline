@@ -1,0 +1,27 @@
+#!/bin/sh
+# baseline — local dev dispatcher (project-local prototype tooling; NOT shipped).
+# A thin convenience entry point so you can run `./baseline launch ...` from the repo
+# root instead of the full skill path. Delegates to the companion launcher.
+#
+# Usage:
+#   ./baseline launch              # lead
+#   ./baseline launch --peer       # peer (auto id)
+#   ./baseline launch --peer <id>  # peer (explicit id)
+#
+# POSIX sh — runs under whatever /bin/sh is; no bash dependency.
+set -eu
+
+export SPRINT_BROKER_SOCK=/tmp/sprint-broker-lobby.sock
+
+here="$(cd "$(dirname "$0")" && pwd)"
+
+case "${1:-}" in
+  launch)
+    shift
+    exec "$here/.claude/skills/companion/launch.sh" "$@"
+    ;;
+  *)
+    echo "usage: ./baseline launch [--peer [<id>]]   (no args after launch = lead)" >&2
+    exit 2
+    ;;
+esac

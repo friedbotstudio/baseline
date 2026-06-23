@@ -1,0 +1,35 @@
+{
+  "request": "Re-architect project-local sprint-mode coordination from files-as-bus + poll-watch to an in-process broker over a Unix-domain socket (lead hosts; peer MCP servers are NDJSON clients), so coordination survives the clone-per-peer target topology. Root defect: channelRoot anchored to each session PROJECT_DIR (sprint-pool/server.mjs:25-27). Subsumes the superseded sprint-pool-redispatch-fix narrow workflow (broker removes the watch loop + dedup bug class, preserves yield-resolution as broker logic).",
+  "slug": "sprint-pool-broker-transport",
+  "track_id": "intake-full",
+  "exceptions": [],
+  "codesign_mode": true,
+  "skip_brainstorm": false,
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782213762,
+  "updated_at": 1782216397,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
