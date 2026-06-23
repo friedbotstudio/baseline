@@ -318,6 +318,9 @@
     },
     "durable_plan": {
       "enabled": true
+    },
+    "sprint_mode": {
+      "enabled": false
     }
   },
   "whatsnew": {

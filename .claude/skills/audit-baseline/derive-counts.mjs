@@ -18,6 +18,7 @@ const SPELLED = {
   1: 'one', 3: 'three', 5: 'five', 6: 'six', 7: 'seven',
   11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', 22: 'twenty-two', 24: 'twenty-four', 40: 'forty',
   41: 'forty-one', 42: 'forty-two', 43: 'forty-three', 44: 'forty-four', 45: 'forty-five',
+  46: 'forty-six',
 };
 
 // The skills category breakdown. Category ASSIGNMENT is editorial (not
@@ -38,7 +39,7 @@ export const SKILL_CATEGORIES = {
   audit: 1,
   altTracks: 1,
   maintenance: 2,
-  sprint: 2,
+  sprint: 3,
 };
 
 // Spell out a count for prose/word-form surfaces. Throws on an unmapped value so

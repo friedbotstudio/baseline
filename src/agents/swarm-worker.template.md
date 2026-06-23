@@ -39,6 +39,18 @@ The caller's prompt SHALL contain two recipes and the swarm metadata. You SHALL 
 - `files_touched` SHALL be the union of test files (from `scenario`) and source files (from `implement`) actually modified.
 - `note` SHALL be one short human-readable line explaining the outcome.
 
+# Sprint channel protocol (only when dispatched into a sprint)
+
+When your spawn prompt names a sprint channel (`sprint_id` + the `sprint-channel` MCP tools are present), you are a **channel peer**. Coordinate mid-flight over the channel instead of running standalone:
+
+- **On start:** `register_peer({sprint_id, peer_id, pclass: "worker", role, workspace})`.
+- **Before working:** `claim_task({sprint_id, peer_id, task_id})`. If `{claimed:false}` (held by another peer, or an unmet dependency), do not work that task.
+- **On GREEN:** `signal_done({sprint_id, peer_id, task_id})` to unblock dependents.
+- **Write-set clash:** `raise_conflict({sprint_id, peer_id, task_id, path})` — the lead arbitrates.
+- **Un-decidable fork:** if your recipe leaves a design/scope/abstraction choice you must NOT make, call `yield_fork({sprint_id, peer_id, task_id, fork_desc})` and stop — **do not guess**. The lead resolves it in main context and re-dispatches you with the fork settled. Yielding is the bounded-worker discipline, not a failure.
+
+The channel carries only these mechanical messages. You never send a design directive, and you never make the decision yourself — that is always the lead's. Absent a sprint channel, ignore this section and run as a standalone swarm worker.
+
 # Constitutional constraints (binding — Art. II)
 
 - **You SHALL NOT pick scenarios.** The recipe is given. If it is incomplete or ambiguous, set `failed` with the gap named in `note`. SHALL NOT improvise scenarios.

@@ -1,0 +1,43 @@
+{
+  "request": "Slice C of epic mvp-sprint-parallel-cycles: sandboxed sprint mode — the lead spawns bounded swarm-worker subagents that connect to the MCP channel (built in slice B) and coordinate mid-flight (claim/done-unblock/conflict); a worker at an un-decidable fork yields it to the lead (RALPH stop-rule, -4c43), the lead arbitrates in main context and re-dispatches, recording the yield on the durable plan lineage. FULL run: absorbs the deferred AC-005 live-server wiring (server.mjs McpServer+stdio + .mcp.json + local SDK install for dogfooding). Opt-in, off by default (velocity.sprint_mode.enabled). This is the throwaway-able PROTOTYPE that gates the §II.B charter (slice E). ACs AC-008/009/010/011/012 (+ absorbed AC-005).",
+  "slug": "sprint-dispatch",
+  "track_id": "epic-child",
+  "epic": "mvp-sprint-parallel-cycles",
+  "slice": "C",
+  "pinned_artifacts": {
+    "scout": "docs/scout/mvp-sprint-parallel-cycles.md",
+    "research": "docs/research/mvp-sprint-parallel-cycles.md",
+    "spec": "docs/specs/mvp-sprint-parallel-cycles.md#slice-C"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "archive",
+    "memory-flush"
+  ],
+  "completed_notes": {
+    "simplify": "risk-escalated: slice C risk=[simplify] (dispatch + server + worker-template span many modules)",
+    "security": "risk-escalated: slice C risk=[security] (live MCP server process + subagent spawn + the absorbed AC-005 server boundary)"
+  },
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1782189990,
+  "updated_at": 1782192853,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
