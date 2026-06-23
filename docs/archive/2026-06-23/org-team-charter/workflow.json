@@ -1,0 +1,34 @@
+{
+  "request": "Graduate sprint mode into the §II.B org-team charter: flat 4-peer pod, hybrid in-lane decisions (peers decide in-lane; un-decidable forks escalate lead→human), new selectable 'org' track, org-dispatch skill (graduates sprint-dispatch), and a free-form peer→lead→human escalation channel on the broker. Generalizes Article II's wording (decisions live in a main context / any peer, never in a subagent) without adding a subagent. Supersedes the bounded Slice E of mvp-sprint-parallel-cycles.",
+  "slug": "org-team-charter",
+  "track_id": "spec-entry",
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "real-article-ii-amendment-after-prototype-9360",
+    "sprint-broker-free-form-peer-lead-query-channel"
+  ],
+  "codesign_mode": true,
+  "skip_brainstorm": false,
+  "created_at": 1782238188,
+  "updated_at": 1782245096,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

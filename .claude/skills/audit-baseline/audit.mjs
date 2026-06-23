@@ -332,10 +332,10 @@ checkSkillOwnership();
 function checkConstitutionalCitations() {
   const claudeText = readText('CLAUDE.md');
   const seedT = readText('docs/init/seed.md');
-  if (!claudeText.includes('## Article XI') || !claudeText.includes('manifest')) {
-    add('CLAUDE.md citation', 'FAIL', 'CLAUDE.md missing Article XI citation');
+  if (!claudeText.includes('## Article XII') || !claudeText.includes('manifest')) {
+    add('CLAUDE.md citation', 'FAIL', 'CLAUDE.md missing Article XII citation');
   } else {
-    add('CLAUDE.md citation', 'PASS', 'Article XI present');
+    add('CLAUDE.md citation', 'PASS', 'Article XII present');
   }
   if (!seedT.includes('## §17') || !seedT.includes('manifest')) {
     add('seed.md citation', 'FAIL', 'seed.md missing §17 citation');
@@ -692,22 +692,22 @@ if (existsSync(plantumlDir) && statSync(plantumlDir).isDirectory()) {
   add('.claude/bin directory', 'FAIL', 'missing — required for vendored PlantUML LICENSE/NOTICE');
 }
 
-// ---------- Article X.2 / design-ui orchestrator surface ----------
+// ---------- Article XI.2 / design-ui orchestrator surface ----------
 const claudeMd = readText('CLAUDE.md');
-if (claudeMd.includes('### X.2 Design-task routing')) {
-  add('CLAUDE.md: Article X.2 present', 'PASS', 'design-task routing rule declared');
+if (claudeMd.includes('### XI.2 Design-task routing')) {
+  add('CLAUDE.md: Article XI.2 present', 'PASS', 'design-task routing rule declared');
 } else {
-  add('CLAUDE.md: Article X.2 present', 'FAIL',
-    'missing `### X.2 Design-task routing` heading — Article X.2 is the structural seam between design-ui and impeccable');
+  add('CLAUDE.md: Article XI.2 present', 'FAIL',
+    'missing `### XI.2 Design-task routing` heading — Article XI.2 is the structural seam between design-ui and impeccable');
 }
 
 if (!SKIP_SRC) {
   const templateClaude = readText('src/CLAUDE.template.md');
-  if (templateClaude.includes('### X.2 Design-task routing')) {
-    add('src/CLAUDE.template.md: Article X.2 mirrors', 'PASS', '');
+  if (templateClaude.includes('### XI.2 Design-task routing')) {
+    add('src/CLAUDE.template.md: Article XI.2 mirrors', 'PASS', '');
   } else {
-    add('src/CLAUDE.template.md: Article X.2 mirrors', 'FAIL',
-      'src template does not contain Article X.2 — template-drift will fail');
+    add('src/CLAUDE.template.md: Article XI.2 mirrors', 'FAIL',
+      'src template does not contain Article XI.2 — template-drift will fail');
   }
 }
 

@@ -2177,6 +2177,19 @@ main.article {
   margin: 0 auto;
 }
 
+/* Org-mode homepage teaser: a quiet experimental flag stacked under the h2 in
+   the lede-head column, and the org hero symbol centered in a single figure
+   card (the .hero-symbol-svg caps its own width at 320px). */
+.org-teaser .lede-head .org-flag {
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .06em;
+  line-height: 1.4;
+  color: var(--accent);
+  margin: 0;
+}
+.org-teaser .org-hero-figure { text-align: center; }
+
 /* Memory ring symbol — re-verified anchor + canonical inner ring +
    candidate stream on the outer dotted band. Uses the same filled / stroke /
    dotted / accent vocabulary as the strata SVG. */

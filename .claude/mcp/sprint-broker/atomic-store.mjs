@@ -5,13 +5,24 @@
 // Reads are the baseline store primitives, re-exported READ-ONLY (never edited). node
 // stdlib only.
 
-import { writeFileSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { readTasks, readYields, readSprint } from '../sprint-channel/lib/store.mjs';
 
 export { readTasks, readYields, readSprint };
 
-const SLICE_FILES = { tasks: 'tasks.json', yields: 'yields.json', sprint: 'sprint.json' };
+// Free-form peer→lead→human messages (org-team charter). The baseline store has no
+// messages primitive, so the broker owns this slice directly; a missing file reads as
+// an empty queue so a fresh channel never throws.
+export function readMessages(channelRoot) {
+  try {
+    return JSON.parse(readFileSync(join(channelRoot, 'messages.json'), 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+const SLICE_FILES = { tasks: 'tasks.json', yields: 'yields.json', sprint: 'sprint.json', messages: 'messages.json' };
 
 function persistSlice(channelRoot, name, value) {
   const tmp = join(channelRoot, `${name}.tmp-${process.pid}-${Math.floor(performance.now() * 1000)}`);

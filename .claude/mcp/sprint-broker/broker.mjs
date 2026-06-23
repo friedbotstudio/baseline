@@ -6,12 +6,12 @@
 // pending task is broadcast as a pushed frame, so the poll-watch loop and its
 // re-notify-suppression bug class are gone. node:net + Foundation only.
 
-import { createServer } from 'node:net';
+import { createServer, createConnection } from 'node:net';
 import { unlinkSync } from 'node:fs';
 import { registerPeer, claimTask, signalDone, yieldFork } from '../sprint-channel/handlers.mjs';
 import { enqueueTask, releaseTask } from '../sprint-pool/handlers.mjs';
 import { encodeFrame, createDecoder } from './codec.mjs';
-import { atomicPersist, readTasks, readYields, readSprint } from './atomic-store.mjs';
+import { atomicPersist, readTasks, readYields, readSprint, readMessages } from './atomic-store.mjs';
 
 export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
   const state = {
@@ -19,9 +19,15 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
     peers: (readSprint(channelRoot).peers || []).map((p) => ({ ...p, active: false })),
     tasks: readTasks(channelRoot),
     yields: readYields(channelRoot),
+    messages: readMessages(channelRoot),
   };
   const sockets = new Set();
   const socketPeers = new Map();
+  // Monotonic per-broker message id: pid + in-process counter is collision-free for a
+  // single-machine broker without reading the clock.
+  let messageSeq = state.messages.length;
+  const newMessageId = () => `m-${process.pid}-${messageSeq++}`;
+  const persistMessages = () => atomicPersist(channelRoot, { messages: state.messages });
 
   // lazy: baseline/pool handlers persist non-atomically; the broker re-persists the
   // refreshed slice via atomicPersist so the FINAL on-disk snapshot is crash-safe
@@ -62,8 +68,23 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
   const OPS = {
     // Read-only reconcile: returns authoritative state so a caller can recover from a
     // dropped push event (events are hints; this is the truth). No mutation, no onEvent.
-    status: () => ({ tasks: state.tasks, yields: state.yields, peers: state.peers }),
+    status: () => ({
+      tasks: state.tasks, yields: state.yields, peers: state.peers, messages: state.messages,
+      // Authoritative, never-dropped completion flag: the lead reconciles via status
+      // when it is waiting, so a lost task-done/all-done push can never strand it.
+      all_done: state.tasks.length > 0 && state.tasks.every((t) => t.status === 'done'),
+    }),
     register: handleRegister,
+    // Free-form peer→lead query/escalation (org-team charter). Persist first so a
+    // dropped push is still recoverable via status (never lost), then push to the lead.
+    message: (payload) => {
+      const { peer_id, kind = 'query', body = '' } = payload;
+      const message_id = newMessageId();
+      state.messages.push({ id: message_id, from_peer: peer_id, to: 'lead', kind, body, status: 'open', answer: null });
+      persistMessages();
+      onEvent({ kind: 'event', op: 'peer-message', payload: { message_id, from_peer: peer_id, kind, body } });
+      return { ok: true, message_id };
+    },
     claim: (payload) => {
       const r = claimTask({ channelRoot, ...payload });
       refresh();
@@ -73,7 +94,14 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
     signal_done: (payload) => {
       const r = signalDone({ channelRoot, ...payload });
       refresh();
-      if (r.ok) onEvent({ kind: 'event', op: 'task-done', payload: { task_id: payload.task_id, peer_id: payload.peer_id, unblocked: r.unblocked || [] } });
+      if (r.ok) {
+        onEvent({ kind: 'event', op: 'task-done', payload: { task_id: payload.task_id, peer_id: payload.peer_id, unblocked: r.unblocked || [] } });
+        // Aggregate completion: when the last lane drains, give the lead an unambiguous
+        // "all done" signal it can act on without polling (per-task pushes are lossy).
+        if (state.tasks.length > 0 && state.tasks.every((t) => t.status === 'done')) {
+          onEvent({ kind: 'event', op: 'all-done', payload: { count: state.tasks.length } });
+        }
+      }
       return r;
     },
     yield: (payload) => {
@@ -122,8 +150,19 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
       server.on('error', (err) => {
         if (err.code === 'EADDRINUSE' && !retried) {
           retried = true;
-          try { unlinkSync(sockPath); } catch { /* nothing to unlink */ }
-          server.listen(sockPath);
+          // Probe before reclaiming: a LIVE broker answers the socket, so refuse to
+          // hijack it (one lead per channel — a silent takeover would split the pod and
+          // hand the new broker fresh, empty state). Only a STALE socket left by a
+          // crashed broker (probe connection refused) is safe to unlink and reclaim.
+          const probe = createConnection({ path: sockPath });
+          probe.once('connect', () => {
+            probe.destroy();
+            reject(new Error(`a broker is already listening on ${sockPath}; refusing to take over (one lead per channel)`));
+          });
+          probe.once('error', () => {
+            try { unlinkSync(sockPath); } catch { /* nothing to unlink */ }
+            server.listen(sockPath);
+          });
         } else { reject(err); }
       });
       server.once('listening', resolve);
@@ -140,9 +179,11 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
   }
 
   function enqueue(task) {
-    enqueueTask({ channelRoot, task_id: task.id, brief: task.brief, write_set: task.write_set, depends_on: task.depends_on });
+    enqueueTask({ channelRoot, task_id: task.id, brief: task.brief, write_set: task.write_set, depends_on: task.depends_on, assignee: task.assignee ?? null });
     refresh();
-    broadcast({ kind: 'event', op: 'task-available', payload: { task_id: task.id } });
+    // Surface the assignee on the push so a well-behaved peer skips a lane that is not
+    // its own; claimTask enforces it server-side regardless (the hard guarantee).
+    broadcast({ kind: 'event', op: 'task-available', payload: { task_id: task.id, assignee: task.assignee ?? null } });
   }
 
   function release(task_id, brief) {
@@ -151,5 +192,17 @@ export function createBroker({ channelRoot, sockPath, onEvent = () => {} }) {
     broadcast({ kind: 'event', op: 'task-available', payload: { task_id } });
   }
 
-  return { listen, close, enqueue, release, state };
+  // The lead answers a peer's free-form message in its own main context, then routes
+  // the resolution back to every peer (the originating peer de-dupes by message_id).
+  function answer(message_id, answerBody) {
+    const message = state.messages.find((m) => m.id === message_id);
+    if (!message) return { error: 'unknown-message' };
+    message.status = 'answered';
+    message.answer = answerBody;
+    persistMessages();
+    broadcast({ kind: 'event', op: 'message-answered', payload: { message_id, answer: answerBody } });
+    return { ok: true };
+  }
+
+  return { listen, close, enqueue, release, answer, state };
 }

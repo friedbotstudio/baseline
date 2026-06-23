@@ -60,10 +60,17 @@ describe('epic-close governance — seed amendment + DAG stability (AC-008)', ()
     assert.match(tpl, /closed_at/, 'seed.template mirror carries closed_at');
   });
 
-  it('test_when_workflows_jsonl_checked_then_unchanged_vs_head', () => {
-    // No new track node: epic-close is folded into the existing commit node.
-    execFileSync('git', ['diff', '--quiet', 'HEAD', '--', '.claude/workflows.jsonl'], {
-      cwd: REPO_ROOT,
-    });
+  it('test_when_workflows_jsonl_checked_then_no_standalone_epic_close_node', async () => {
+    // epic-close is folded into the existing commit node — it adds no track node.
+    // (Asserting the structural invariant directly; the file may legitimately gain
+    // unrelated tracks such as `org`, so a byte-frozen-vs-HEAD check would be too broad.)
+    const wf = await read('.claude/workflows.jsonl');
+    for (const line of wf.trim().split('\n')) {
+      const track = JSON.parse(line);
+      for (const node of track.nodes || []) {
+        assert.notEqual(node.id, 'epic-close', 'epic-close must not be a standalone node');
+        assert.notEqual(node.skill, 'epic-close', 'epic-close must not be a standalone skill node');
+      }
+    }
   });
 });

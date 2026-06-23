@@ -443,15 +443,6 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-06-21
 - caveat: MUST stay shipped in `obj/template/.claude/manifest.json` — if dropped, `git_commit_guard`'s import crashes and the guard fails OPEN (consent bypass). Defended by `audit-baseline` + `tests/closure-amendment-governance.test.mjs`. See landmine `guard-new-lib-dep-breaks-sandbox-copy-tests`. Behavior documented in seed.md §4.1 + CLAUDE.md Art VIII + annex; RCA `docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md`.
 
-## .claude/hooks/lib/tier-dial.mjs
-
-- Path: `.claude/hooks/lib/tier-dial.mjs`
-- Role: Foundation module — the single read path for every checker's quality floor + effort ceiling (the threat/value "tier dial", v1 piece 2, `154cc1f`). `project.json → tier.level` selects a built-in profile (`internal-tool` / `customer-data` / `regulated`, fallback `internal-tool`); `tier.overrides` tunes per checker. Exports `CANONICAL_CHECKERS`, `DEFAULT_THRESHOLD`, `DEFAULT_PROFILES`. Reads via `common.mjs → projectGet`; resilient to missing/invalid project.json (returns defaults, never throws). Floor units differ per checker: tdd = mutation-score fraction (0..1), spec/ac-conformance = 1.0 traced, security/review = max-allowed findings (0); ceiling = rounds.
-- Companion: `.claude/hooks/lib/common.mjs` (`projectGet` reader), `docs/specs/tier-oracle-floor-dial.md` (spec).
-- Verified-at: 154cc1f
-- Last-touched: 2026-06-18
-- caveat: `mandatory` is resolved DATA only this slice — nothing gates on it yet; blocking is piece 5 (the advisory mutation-score floor in `154cc1f` is advisory by design).
-
 ## .claude/hooks/lib/timing.mjs
 
 - Path: `.claude/hooks/lib/timing.mjs`
@@ -497,3 +488,9 @@ Each entry's stable key is `path:line`.
 - Last-touched: 2026-06-22
 - caveat: Built via a 7-task SHARED-mode swarm — worktree mode was tried first and abandoned: Agent worktrees fork from the stale 0.19.0 release commit (17 behind HEAD) and `swarm_merge` applies to the working tree, so cross-wave dependency propagation breaks (everything imports `plan-store`). The two consumer migrations (T-005/T-006) + harness wiring (T-007) were done in main context, not boundary-only workers, because the plan↔consumer seam is a design decision (Article II). Wiring is additive Tier-2 (Decision D1: no Article II/IV amendment). Next consumer: `-4c43` layers the decide-when-to-replan RALPH loop on `applyReplan`. Goes live the first workflow after commit (introduction pattern).
 
+## .claude/skills/org-dispatch/org-mode.mjs
+
+- Role: org-team (Article X) decision helpers — `isOrgModeEnabled(project)`, `orgDispatchGate({project,isGitRepo})` (refuses unless org_mode on AND git), `toLaneTasks(lanes)` (claim-any lane-tagged tasks), `classifyFork({scope})` → 'decide' for in-lane-impl else 'escalate'.
+- Graduated from the retired sprint-dispatch's sprint-mode.mjs. Skill dir `.claude/skills/org-dispatch/` (SKILL.md + org-mode.mjs + peer-select.mjs + yield-arbiter.mjs) is the Phase-6 engine of the selectable `org` track.
+- Verified-at: 6abf123
+- Last-touched: 2026-06-23

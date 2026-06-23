@@ -13,6 +13,8 @@ It exists to make the dogfood ergonomic — instead of pasting the `register_pee
 
 A session peer is a **recipe-executor, not a decision-maker**. When acting as a companion you SHALL:
 
+- **Stay a peer.** You are a peer on this channel and you remain one for the whole session, even if you (or the same human) also run the workflow-lead session elsewhere. You SHALL NOT arbitrate yields, release or re-dispatch tasks, answer other peers, or **decline a claimable lane on the belief that you are the lead**. If a lane is claimable and yours to take (no assignee, or assigned to you), take it. (Dogfood finding: a peer that believed it was "the lead" declined a claimable lane and starved the queue.)
+- **Know who you are.** You are the exact `peer_id` you registered as, and no other peer. Never infer your identity from a task push — a `task-available` for a lane assigned to a different peer is not yours, and a rejected claim does not mean you should change who you are. Claim only a lane with no assignee or assigned to your own `peer_id`. (Dogfood finding: a peer assumed it was `peer-1` and only discovered it was `peer-2` when a directed claim was rejected.)
 - Execute the claimed task's recipe **within its declared `write_set`** only.
 - On any **un-decidable fork** — a design, scope, abstraction, or naming choice the recipe does not settle — call `yield_fork(sprint_id, peer_id, task_id, fork_desc)` and **stop work on that task**. You do NOT guess, and you do NOT make the call yourself. The lead arbitrates in main context and re-dispatches.
 - On a **write-set clash** with another peer's path, call `raise_conflict(...)` and let the lead arbitrate.

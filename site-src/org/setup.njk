@@ -1,0 +1,111 @@
+---
+layout: docs.njk
+permalink: /org/setup/index.html
+pageTitle: "Org mode setup · baseline"
+title: Getting started
+titlePrimary: Getting started
+titleAccent: "."
+description: "Stand up an org-mode pod and run one feature across lanes, end to end. The local setup and test procedure for the baseline's experimental org mode."
+eyebrow: "Experimental · Tutorial"
+lead: "A hands-on run, end to end. You will stand up a lead session and a peer pod, dispatch one small feature across lanes, and watch a question travel peer to lead to human. About ten minutes."
+active: org
+sidebarActive: org-tutorial
+toc:
+  - { id: prereqs,  label: "Prerequisites" }
+  - { id: run,      label: "The run" }
+  - { id: recap,    label: "What just happened" }
+  - { id: teardown, label: "Teardown and limits" }
+  - { id: trouble,  label: "If something stalls", lvl: 3 }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="prereqs">Prerequisites</h2>
+    </div>
+    <div>
+      <div class="callout">
+        <span class="icon" aria-hidden="true">!</span>
+        <div class="body">
+          <strong>Experimental, and local for now.</strong>
+          <p>Org mode is opt-in, off by default, and requires git. Today the coordination channel runs inside the baseline's own repo through a dev launcher; it is not yet a consumer-installable feature, since the MCP coordination server ships separately. These steps are the local dogfood: run them in this repo.</p>
+        </div>
+      </div>
+      <ul>
+        <li>This repo, checked out on a git branch.</li>
+        <li>The <code>claude</code> CLI on your PATH, or <code>CLAUDE_BIN</code> set.</li>
+        <li>Two or more terminals: one lead, one or more peers.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="run">The run</h2>
+    </div>
+    <p>Six steps. You end with a lead and a peer pod coordinating on one feature, and a question that travels peer to lead to human with the answer routed back.</p>
+  </div>
+
+  <h3>1 · Turn org mode on</h3>
+  <p>In <code>.claude/project.json</code>, set the flag (it is <code>false</code> by default):</p>
+  <pre><code>"velocity": { "org_mode": { "enabled": true } }</code></pre>
+  <p>With the flag on, the <code>org</code> track becomes selectable at triage and <code>org-dispatch</code> runs instead of refusing.</p>
+
+  <h3>2 · Launch the lead session</h3>
+  <p>In your first terminal, from the repo root:</p>
+  <pre><code>.claude/skills/companion/launch.sh</code></pre>
+  <p>No arguments means lead. It loads the broker pool on channel <code>lobby</code> (override with <code>SPRINT_POOL_CHANNEL</code>). Confirm the pool is connected:</p>
+  <pre><code>claude mcp list   # sprint-pool ... Connected</code></pre>
+
+  <h3>3 · Launch the peer pod</h3>
+  <p>In a second terminal, and a third for a larger pod, up to four total including the lead:</p>
+  <pre><code>.claude/skills/companion/launch.sh --peer p2</code></pre>
+  <p>Then, inside that peer session, register it on the pool:</p>
+  <pre><code>/companion on lobby p2</code></pre>
+  <p>Expect <code>{ ok: true, registered: true }</code>. The peer is now a flat member of the pod.</p>
+
+  <h3>4 · Dispatch a feature from the lead</h3>
+  <p>In the lead session, route a small, genuinely two-lane change through triage and pick the <code>org</code> track when offered:</p>
+  <pre><code>/triage "your small two-lane change"</code></pre>
+  <p>Drive it to phase 6. <code>org-dispatch</code> splits the approved spec into lane-tagged tasks and writes them to the pool; each peer claims an unblocked lane, does the bounded work in its lane, and signals done to unblock dependents.</p>
+  <p>Allocation is the lead's to control. Leave a lane open for claim-any, where the first free peer wins, or direct a lane at a named peer so only that peer takes it:</p>
+  <pre><code>enqueue_task { task_id: "lane-b", brief: "...", assignee: "p3" }</code></pre>
+  <p>A directed lane is the lead's lever to spread work across the pod or hand a specific lane to a specific peer; an undirected lane stays first-free-wins.</p>
+
+  <h3>5 · Exercise the escalation chain</h3>
+  <p>From a peer, raise a free-form question with the <code>ask_lead</code> tool. The broker pushes a <code>peer-message</code> to the lead; the lead arbitrates in its own main context and replies with <code>answer_peer</code>, and the peer receives the answer. For a task-bound fork it cannot settle, the peer uses <code>yield_fork</code> instead and stops. When a fork needs human judgment, the lead brings it to you and routes your decision back down: peer to lead to human.</p>
+
+  <h3>6 · Verify</h3>
+  <p>As lead, you are pushed <code>task-claimed</code>, <code>task-done</code>, and, when the last lane drains, <code>all-done</code>. Pushes are hints and can drop, so while you wait, pull authoritative state with the <code>sprint_status</code> tool: its <code>all_done</code> flag is true exactly when every lane has drained, so a lost push can never strand you. Confirm the lanes reached <code>done</code> and any escalation message reached <code>answered</code>.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="recap">What just happened</h2>
+    </div>
+    <p>You ran one feature across a flat pod. Each peer decided inside its own lane; the fork a peer could not settle traveled up to the lead, and the one that needed judgment traveled up to you. That is the chain Article X governs: peers decide, the lead relays, the human decides.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="teardown">Teardown and limits</h2>
+    </div>
+    <p>Set <code>org_mode.enabled</code> back to <code>false</code> to restore the default solo and swarm behavior; the <code>org</code> track is then no longer offered. One honest limit: there is no peer deregister tool yet, so <code>/companion off</code> only marks a peer inactive locally, and the lead may still list it.</p>
+  </div>
+
+  <h3 id="trouble">If something stalls</h3>
+  <ul>
+    <li><strong>org-dispatch refuses.</strong> Org mode is off, or the tree is not git. Check the flag and <code>git rev-parse --is-inside-work-tree</code>.</li>
+    <li><strong>Peer tools missing</strong> (<code>ask_lead</code> or <code>claim_task</code> not found). The session started before the server registered. Relaunch via <code>launch.sh</code>; <code>claude mcp list</code> should show <code>sprint-pool</code> connected.</li>
+    <li><strong>A peer cannot claim a lane.</strong> The lane's dependencies are not all done, or another peer won the race. Pull <code>sprint_status</code> and take another pending lane.</li>
+  </ul>
+</section>

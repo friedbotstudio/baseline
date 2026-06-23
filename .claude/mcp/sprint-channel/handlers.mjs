@@ -45,6 +45,10 @@ export function claimTask({ channelRoot, peer_id, task_id }) {
   const target = findTask(tasks, task_id);
   if (!target) return { claimed: false, reason: 'unknown task' };
   if (target.status === 'claimed' && target.claimed_by === peer_id) return { claimed: true };
+  // Directed allocation: a task may be targeted at a named peer. Only that peer may
+  // claim it; every other peer is rejected even while it is pending (the lead's
+  // allocation control). A task with no assignee stays claim-any.
+  if (target.assignee && target.assignee !== peer_id) return { claimed: false, reason: `task ${task_id} is assigned to ${target.assignee}` };
   if (target.status !== 'pending') return { claimed: false, reason: `task ${task_id} is not claimable (status ${target.status})` };
   const unmet = (target.depends_on || []).filter((dep) => {
     const d = findTask(tasks, dep);

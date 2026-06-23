@@ -7,15 +7,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { registerPoolPeer } from './handlers.mjs';
 
-function sprintModeEnabled(projectDir) {
+function poolEnabled(projectDir) {
   try {
-    const project = JSON.parse(readFileSync(join(projectDir, '.claude', 'project.json'), 'utf8'));
-    return project?.velocity?.sprint_mode?.enabled === true;
+    const velocity = JSON.parse(readFileSync(join(projectDir, '.claude', 'project.json'), 'utf8'))?.velocity || {};
+    return velocity.org_mode?.enabled === true || velocity.sprint_mode?.enabled === true;
   } catch {
     return false;
   }
 }
 
 export function runRegistration({ projectDir, channelRoot, peer_id, role = 'peer', workspace = '.' }) {
-  return registerPoolPeer({ channelRoot, peer_id, role, workspace, sprintModeEnabled: sprintModeEnabled(projectDir) });
+  return registerPoolPeer({ channelRoot, peer_id, role, workspace, poolEnabled: poolEnabled(projectDir) });
 }

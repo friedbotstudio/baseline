@@ -1,39 +1,63 @@
 {
   "primary": [
-    { "href": "/",                       "label": "Overview",  "key": "overview" },
-    { "href": "/hooks/",                 "label": "Hooks",     "key": "hooks" },
-    { "href": "/memory/",                "label": "Memory",    "key": "memory" },
-    { "href": "/workflows/",             "label": "Workflows", "key": "workflows" },
-    { "href": "/swarm/",                 "label": "Swarm",     "key": "swarm" },
-    { "href": "/standup/",               "label": "Standup",   "key": "standup" },
-    { "href": "/skills/",                "label": "Skills",    "key": "skills" },
-    { "href": "/cli/",                   "label": "CLI",       "key": "cli" }
+    { "href": "/", "label": "Overview", "key": "overview" },
+    { "href": "/hooks/", "label": "Hooks", "key": "hooks" },
+    { "href": "/memory/", "label": "Memory", "key": "memory" },
+    { "href": "/workflows/", "label": "Workflows", "key": "workflows" },
+    { "href": "/swarm/", "label": "Swarm", "key": "swarm" },
+    { "href": "/org/", "label": "Org", "key": "org" },
+    { "href": "/standup/", "label": "Standup", "key": "standup" },
+    { "href": "/skills/", "label": "Skills", "key": "skills" },
+    { "href": "/cli/", "label": "CLI", "key": "cli" }
   ],
   "sidebar": [
     {
       "label": "Getting started",
       "items": [
-        { "href": "/",         "label": "Overview", "key": "overview" },
-        { "href": "/install/", "label": "Install",  "key": "install" }
+        { "href": "/", "label": "Overview", "key": "overview" },
+        { "href": "/install/", "label": "Install", "key": "install" }
       ]
     },
     {
       "label": "Reference",
       "items": [
-        { "href": "/hooks/",     "label": "Hooks",           "key": "hooks" },
-        { "href": "/memory/",    "label": "Memory",          "key": "memory" },
-        { "href": "/workflows/", "label": "Workflow tracks", "key": "workflows" },
-        { "href": "/swarm/",     "label": "Swarm mode",      "key": "swarm" },
-        { "href": "/standup/",   "label": "Standup",         "key": "standup" },
-        { "href": "/cli/",       "label": "CLI",             "key": "cli" }
+        { "href": "/hooks/", "label": "Hooks", "key": "hooks" },
+        { "href": "/memory/", "label": "Memory", "key": "memory" },
+        {
+          "href": "/workflows/",
+          "label": "Workflow tracks",
+          "key": "workflows"
+        },
+        { "href": "/swarm/", "label": "Swarm mode", "key": "swarm" },
+        { "href": "/standup/", "label": "Standup", "key": "standup" },
+        { "href": "/cli/", "label": "CLI", "key": "cli" }
+      ]
+    },
+    {
+      "label": "Org Mode",
+      "items": [
+        { "href": "/org/", "label": "Overview", "key": "org" },
+        {
+          "href": "/org/setup",
+          "label": "Tutorial",
+          "key": "org-tutorial"
+        }
       ]
     },
     {
       "label": "Skills",
       "items": [
-        { "href": "/skills/",              "label": "Overview",     "key": "skills" },
-        { "href": "/skills/core/",         "label": "Core skills",  "key": "skills-core" },
-        { "href": "/skills/third-party/",  "label": "Third-party",  "key": "skills-third-party" }
+        { "href": "/skills/", "label": "Overview", "key": "skills" },
+        {
+          "href": "/skills/core/",
+          "label": "Core skills",
+          "key": "skills-core"
+        },
+        {
+          "href": "/skills/third-party/",
+          "label": "Third-party",
+          "key": "skills-third-party"
+        }
       ]
     }
   ]

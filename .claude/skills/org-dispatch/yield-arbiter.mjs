@@ -1,7 +1,8 @@
-// Domain: record a worker's RALPH yield and the lead's arbitration onto the
-// durable plan lineage. The worker makes no decision — it only records the fork;
-// the lead resolves it in main context (Article II). Both append an auditable,
-// append-only revision via the harness plan-store (monotonic versions).
+// Domain: record a peer's escalated fork and the lead's arbitration onto the durable
+// plan lineage. Under Article X a peer decides its own in-lane choices; what reaches
+// here is an escalated cross-lane/un-decidable fork the lead resolves in main context
+// (and may relay to the human). Both append an auditable, append-only revision via the
+// harness plan-store (monotonic versions).
 
 import { currentSnapshot, recordRevision } from '../harness/plan-store.mjs';
 
@@ -10,7 +11,7 @@ export async function recordYield(plan, { task_id, fork_desc, peer_id }) {
   const yields = [...(snapshot.yields || []), { task_id, fork_desc, status: 'open' }];
   return recordRevision(plan, { ...snapshot, yields }, {
     author: peer_id,
-    reason: `yield-fork ${task_id}: ${fork_desc}`,
+    reason: `escalate ${task_id}: ${fork_desc}`,
   });
 }
 

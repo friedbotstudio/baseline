@@ -44,4 +44,4 @@ export const CANONICAL_MEMORY_FILES = new Set(
 
 export const EXPECTED_MCP_SERVERS = new Set(['context7', 'plantuml', 'playwright']);
 
-export const EXPECTED_TRACKS = { canonical: 7, subTracks: 2 };
+export const EXPECTED_TRACKS = { canonical: 8, subTracks: 2 };

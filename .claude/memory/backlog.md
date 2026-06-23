@@ -71,7 +71,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "The real Article II amendment — written AFTER 1–6 are prototyped, blessing what was actually learned (supersedes the minimal exception from piece 1)."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-05
 - raised-in-context: v1 thought-compiler design discussion (no active workflow)
 - estimated-effort: medium
@@ -83,7 +83,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: RESCOPED 2026-06-06. The original "real Article II amendment after prototype" role was filled by `-c732` (the definitive §II.A bounded maker/checker charter, landed in seed.md §4.2 + mirrors + annex). `-9360` is now the **graduation-gated permanent Article II rewrite that lifts the §II.A one-maker/one-checker cap to multi-agent** (multiple makers/checkers, durable plan schema, tier dial). It no longer supersedes `-c732` — `-c732` absorbed `-9360`'s charter role; this entry is the future cap-lift. Children `-1a2d`, `-f029`, `-424f`, `-9008` still depend on it. Detail: vision doc §2.3 + Part 5.7 piece 7; charter narrative in `.claude/CONSTITUTION.md` §1/§2 "§II.A — bounded maker/checker charter". **PARTIAL 2026-06-22 (`checker-graduation-fanout`):** the graduation gate was MET and clause 6 was LIFTED for the **oracle-bound read-only checker class only** (seed.md §II.A clause 6/7 + CLAUDE.md Article II + annex; evidence: 4 governed round-trips, 0 false-positive blocks, clean /security, maintainer ratification). STILL OPEN (the residual `-9360`): multi-maker scaling, judgment-checker fan-out, RALPH waves — each needs its own clause-7 graduation; the gate is per-class, not a blanket lift.
 
 ---
-
+- superseded-at: 2026-06-23
 ## gate-taxonomy-then-debugging-skill-then-v2-9008
 
 > verbatim (assistant, 2026-06-05):
@@ -187,7 +187,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > verbatim (peer-2 dogfood, 2026-06-23): "the broker pool transport only carries mechanical coordination — claim / done-unblock / yield. There is no free-form 'message the lead' tool in the sprint-pool toolset (broadcast/send_message exist only on the file-based sprint-channel, not the broker pool). So a peer's one sanctioned way to push a question up to the lead is yield_fork, which is task-bound."
 
 - Intent: add a dedicated free-form peer→lead message/query channel to the broker pool (parity with the file-based sprint-channel's `send_message`/`broadcast`). Today a peer with a non-task question must overload `yield_fork`, which is task-bound — surfaced live when a "junior-dev" peer raised a repo-hygiene query by re-opening an already-`done` task's yield (`release-note` pv=2). It works but couples a free-form ask to a task.
-- status: open
+- status: picked-up
 - raised-on: 2026-06-23
 - raised-in-context: sprint-pool-broker-transport (live dogfood)
 - source: assistant-deferral
@@ -198,3 +198,4 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: This is a feature ADD, not a load-bearing fix — the broker's mechanical-coordination core (claim/done/yield/status) is proven and shipped; `yield_fork` is a workable (if awkward) vehicle for queries today. Deliberately NOT bolted onto the broker-transport workflow (which was already 3× its planned scope). Distinct from the load-bearing dogfood fixes (peer tools, lifecycle events, `sprint_status`) that the broker genuinely could not work without.
 
 ---
+- superseded-at: 2026-06-23

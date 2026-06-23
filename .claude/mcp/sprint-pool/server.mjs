@@ -49,18 +49,19 @@ function channelRoot(sprintId) {
 const TOOLS = [
   {
     name: 'enqueue_task',
-    description: 'Lead pushes a fully-specified unit of work onto the pool for an idle peer to claim',
+    description: 'Lead pushes a fully-specified unit of work onto the pool. Omit assignee for a claim-any lane (first free peer wins); set assignee to a peer_id to direct the lane to that peer (the lead controls allocation, e.g. to spread load or hand a lane to a named peer).',
     inputSchema: {
       type: 'object',
       properties: {
         sprint_id: { type: 'string' }, task_id: { type: 'string' }, brief: { type: 'string' },
         write_set: { type: 'array', items: { type: 'string' } }, depends_on: { type: 'array', items: { type: 'string' } },
+        assignee: { type: 'string', description: 'optional peer_id; when set, only that peer may claim the lane' },
       },
       required: ['task_id'],
     },
     run: (root, a) => {
       if (activeBroker) {
-        activeBroker.enqueue({ id: a.task_id, brief: a.brief || '', write_set: a.write_set || [], depends_on: a.depends_on || [] });
+        activeBroker.enqueue({ id: a.task_id, brief: a.brief || '', write_set: a.write_set || [], depends_on: a.depends_on || [], assignee: a.assignee || null });
         return { enqueued: true, task_id: a.task_id };
       }
       return enqueueTask({ channelRoot: root, ...a });
@@ -95,12 +96,33 @@ const TOOLS = [
   },
   {
     name: 'sprint_status',
-    description: 'Read authoritative pool state (tasks/yields/peers). Lossless source of truth — reconcile from this rather than trusting individual pushed events, which can be dropped in transit.',
+    description: 'Read authoritative pool state (tasks/yields/peers/messages). Lossless source of truth — reconcile from this rather than trusting individual pushed events, which can be dropped in transit.',
     inputSchema: { type: 'object', properties: {} },
     run: () => {
-      if (activeBroker) { const s = activeBroker.state; return { tasks: s.tasks, yields: s.yields, peers: s.peers }; }
+      if (activeBroker) {
+        const s = activeBroker.state;
+        return { tasks: s.tasks, yields: s.yields, peers: s.peers, messages: s.messages, all_done: s.tasks.length > 0 && s.tasks.every((t) => t.status === 'done') };
+      }
       if (activeClient) return activeClient.call('status', {});
       return { error: 'no active broker/client (not a connected pool session)' };
+    },
+  },
+  {
+    name: 'ask_lead',
+    description: 'Peer raises a free-form question or escalation to the lead through the broker (org-team charter). Use for non-task queries; yield_fork stays for task-bound un-decidable forks. The lead arbitrates in main context and may escalate to the human.',
+    inputSchema: { type: 'object', properties: { body: { type: 'string' }, kind: { type: 'string', enum: ['query', 'escalation'] } }, required: ['body'] },
+    run: (_root, a) => {
+      if (!activeClient) return { ok: false, error: 'no broker client (not a connected peer session)' };
+      return activeClient.call('message', { peer_id: PEER_ID, kind: a.kind || 'query', body: a.body });
+    },
+  },
+  {
+    name: 'answer_peer',
+    description: 'Lead answers a peer free-form message (after arbitrating in main context, or relaying a human decision); routes the answer back to the peer.',
+    inputSchema: { type: 'object', properties: { message_id: { type: 'string' }, answer: { type: 'string' } }, required: ['message_id', 'answer'] },
+    run: (_root, a) => {
+      if (!activeBroker) return { ok: false, error: 'no active broker (not the lead session)' };
+      return activeBroker.answer(a.message_id, a.answer);
     },
   },
   {
@@ -122,17 +144,39 @@ const TOOLS = [
 
 const reply = (result) => ({ content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result });
 
+// Role-scoped session instructions. A peer and a lead get DIFFERENT guidance: a peer
+// must never adopt the lead role, even when the same human runs it as the workflow
+// lead in another context. (Dogfood finding: a peer that believed it was "the lead"
+// declined a claimable lane and starved the queue.) Pushed events are hints; reconcile
+// via sprint_status before acting.
+const PEER_INSTRUCTIONS =
+  'You are a POOL PEER (role: peer) on this channel, and you stay a peer here regardless of any other role this session plays elsewhere. '
+  + 'On a task-available hint: reconcile via sprint_status, then claim_task a pending lane you are eligible for (a lane with no assignee, or one whose assignee is your peer_id), execute its recipe within its write_set, signal_done when finished, ask_lead for a free-form question, and yield_fork any un-decidable choice. '
+  + 'You NEVER arbitrate yields, NEVER release_task or answer_peer, and NEVER decline a claimable lane on the belief that you are the lead. If a lane is claimable and yours to take, take it.';
+const LEAD_INSTRUCTIONS =
+  'You are the POOL LEAD (role: lead) on this channel. The broker pushes peer lifecycle into this session: task-claimed, task-done (payload.unblocked lists newly-claimable dependents), all-done (every enqueued lane has drained), yield (arbitrate in main context, then release_task), and peer-message (answer with answer_peer). '
+  + 'Enqueue work with enqueue_task (set assignee to direct a lane at a named peer, or omit it for claim-any). '
+  + 'Pushed events can be dropped in transit, so treat them as hints, not guarantees: while you wait for completion, call sprint_status to read authoritative state (tasks/yields/peers/messages) — its all_done flag is true exactly when every enqueued lane has drained, so a lost task-done or all-done push can never strand you.';
+
+// Identity is baked into the instructions so a session knows exactly who it is on the
+// channel up front (dogfood finding: a peer guessed it was peer-1 and only learned its
+// real id when a directed claim was rejected). Tools always use the configured peer_id;
+// the model should never infer its identity from task pushes.
+export function instructionsFor(role, peerId = '') {
+  const base = role === 'lead' ? LEAD_INSTRUCTIONS : PEER_INSTRUCTIONS;
+  if (!peerId) return base;
+  const id = role === 'lead'
+    ? ` Your id on this channel is \`${peerId}\`.`
+    : ` Your peer id on this channel is \`${peerId}\` — you are \`${peerId}\` and no other peer; claim only a lane with no assignee or assigned to \`${peerId}\`, and never assume another peer's identity.`;
+  return base + id;
+}
+
 export function buildServer() {
   const server = new Server(
     { name: 'sprint-pool', version: '0.2.0' },
     {
       capabilities: { experimental: { 'claude/channel': {} }, tools: {} },
-      instructions:
-        'Pool coordination events arrive as <channel source="sprint-pool" event="task-available|yield" task_id="...">. '
-        + 'On task-available (peer): claim the task via the sprint-pool claim_task tool (broker-routed — NOT the file-based sprint-channel one), '
-        + 'execute its recipe within its write_set, signal_done when finished, and yield_fork any un-decidable choice (never decide). '
-        + 'On the lead: the broker pushes peer lifecycle into this session — task-claimed, task-done (payload.unblocked lists newly-claimable dependents), and yield (arbitrate, then release_task). '
-        + 'Pushed events can be dropped in transit, so treat them as hints: call sprint_status to read authoritative state (tasks/yields/peers) and reconcile before deciding a task is complete or the sprint is done.',
+      instructions: instructionsFor(ROLE, PEER_ID),
     },
   );
 

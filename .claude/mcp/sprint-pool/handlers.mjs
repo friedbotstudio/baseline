@@ -9,12 +9,12 @@ import { isSafeId } from '../sprint-channel/lib/safe-id.mjs';
 
 const findPeer = (sprint, peerId) => (sprint.peers || []).find((p) => p.peer_id === peerId);
 
-export function enqueueTask({ channelRoot, task_id, brief = '', write_set = [], depends_on = [] }) {
+export function enqueueTask({ channelRoot, task_id, brief = '', write_set = [], depends_on = [], assignee = null }) {
   if (!isSafeId(task_id)) return { enqueued: false, error: 'invalid task_id' };
   const lock = withLock(channelRoot, `enqueue-${task_id}`, () => {
     const tasks = readTasks(channelRoot);
     if (tasks.some((t) => t.id === task_id)) return { enqueued: false, reason: 'duplicate' };
-    tasks.push({ id: task_id, status: 'pending', brief, write_set, depends_on, claimed_by: null, origin: 'enqueue' });
+    tasks.push({ id: task_id, status: 'pending', brief, write_set, depends_on, claimed_by: null, assignee, origin: 'enqueue' });
     writeTasks(channelRoot, tasks);
     return { enqueued: true, task_id };
   });
@@ -22,9 +22,14 @@ export function enqueueTask({ channelRoot, task_id, brief = '', write_set = [], 
   return lock.result;
 }
 
-export function registerPoolPeer({ channelRoot, peer_id, role = 'peer', workspace = '.', sprintModeEnabled }) {
+// Pool coordination is enabled by org mode OR sprint mode. The legacy
+// `sprintModeEnabled` arg is honored as a fallback so existing callers keep working;
+// new callers pass `poolEnabled` (org_mode || sprint_mode), so peers can be handed
+// tasks under org mode with no sprint in place.
+export function registerPoolPeer({ channelRoot, peer_id, role = 'peer', workspace = '.', poolEnabled, sprintModeEnabled }) {
   if (!isSafeId(peer_id)) return { registered: false, error: 'invalid peer_id' };
-  if (!sprintModeEnabled) return { registered: false, reason: 'sprint_mode disabled' };
+  const enabled = poolEnabled ?? sprintModeEnabled;
+  if (!enabled) return { registered: false, reason: 'pool coordination disabled (enable velocity.org_mode or velocity.sprint_mode)' };
   const sprint = readSprint(channelRoot);
   sprint.peers = sprint.peers || [];
   const record = { peer_id, pclass: 'session', role, workspace, active: true, channel: 'sprint-pool' };

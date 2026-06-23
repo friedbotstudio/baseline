@@ -59,7 +59,7 @@ The Article VIII table names every hook, its event, and the Article it enforces.
 - **`spec_approval_guard`** / **`swarm_approval_guard`** (PreToolUse / Edit\|Write\|MultiEdit) — Validate the fresh `.spec_approval_grant` / `.swarm_approval_grant` marker before allowing approval-token writes; block self-approval inside spec markdown; block direct writes to the marker.
 - **`epic_approval_guard`** (PreToolUse / Edit\|Write\|MultiEdit) — Gates the epic-state `approved: true` flip (§18.9). Allows a transition of `approved` to true in `.claude/state/epic/<slug>.json` only when the matching persistent token `.claude/state/spec_approvals/<slug>.approval` exists — the durable, forge-proof record of a real gate-A approval. Non-transition writes (`children[]` appends, status flips) and idempotent re-writes pass through; existence + slug match only, no TTL. Unlike the three marker-based gates above it derives consent from the persistent token rather than a fresh marker — no new command or consent step — and rests on `spec_approval_guard` for the token's unforgeability. Covers the `Write`/`Edit`/`MultiEdit` surface; the Bash write surface is closed in parallel by `destructive_cmd_guard` (via `lib/common.mjs → writesEpicApproval`), which blocks any Bash command that sets `approved: true` on a path under `.claude/state/epic/` — parity with the consent-token Bash protection. The block is content-scoped to the `approved: true` flip, so `children[]`/status/timestamp writes and reads pass. The durable elimination of the trusted boolean is now closed: `track_guard`'s read side derives an epic-child's discovery-skip authorization directly from the `spec_approvals/<slug>.approval` token (§18.9), so the epic-state `approved` flag is no longer read for authorization and these write-surface detectors are defense-in-depth rather than load-bearing.
 
-### Skill provenance and the manifest (Article XI / seed.md §17)
+### Skill provenance and the manifest (Article XII / seed.md §17)
 
 The build script `scripts/build-manifest.mjs` reads each SKILL.md's `owner:` value and emits the canonical baseline-skill set into the shipped manifest at `obj/template/.claude/manifest.json` under `owners.skills` (a JSON object mapping slug → `"baseline"`). The recursive install copies the manifest straight to `<target>/.claude/manifest.json` (same path inside the `.claude/` subtree, no special-case). The CLI separately writes `<target>/.claude/.baseline-manifest.json` post-install as a runtime sha256 table of the target's actual on-disk contents (used by `doctor` and `upgrade`) — do not conflate the two. The audit at `.claude/skills/audit-baseline/audit.mjs` consumes `manifest.owners.skills` as the canonical baseline-skill enumeration (the previous hard-coded `EXPECTED_SKILLS` set is removed); it reads the manifest from `<root>/.claude/manifest.json` with a fallback to `<root>/obj/template/.claude/manifest.json`, re-derives sha256 hashes from `manifest.files` for every path under `.claude/skills/<slug>/` whose slug appears in `owners.skills`, and compares against on-disk content. Mismatches surface as `hash mismatch at <path>`; a baseline-listed slug missing from disk surfaces as `baseline skill missing`. These are hard FAIL — drift detection has no opt-out. Cryptographic supply-chain attestation, signed lock files, and per-skill aggregate merkle hashes are non-goals; the per-file `manifest.files` map already covers every file in every skill directory.
 
@@ -131,13 +131,13 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 - `memory-flush`
 
 **Phase helpers (1)** — invoked by entry phases as a Step 0.5 / Step 1.5 gate; never on user-direct invocation:
-- `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article X.3.
+- `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article XI.3.
 
 **Generators (2)** — on-demand; not a workflow phase, never blocks a commit:
 - `whatsnew` — emits a structured "what's new" fragment to `.claude/state/whatsnew/<slug>.json` (gitignored, transient) for a set of changes; an optional `project.json → whatsnew.route_workflow` names a per-project routing workflow that consumes the fragment. Never writes `CHANGELOG.md` (owned solely by `@semantic-release/changelog` in CI). Replaced the former Phase 11.5 `changelog` skill.
 - `standup` — read-only release + backlog recap. The `gather.mjs` helper deterministically collects the last release, commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin state, the backlog bucketed (open/picked-up/dropped with epic parent→child nesting), and condensed open questions; the next-pickup recommendation is assembled in main context (Article II). On-demand via `/standup`; a compact form is also surfaced at session start by `memory_session_start`. Never writes `CHANGELOG.md`; never starts or commits work.
 
-**Navigation (1)** — the default tool for code-navigation questions in any language; prefer it over the `Explore` agent and global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F" (CLAUDE.md Article X.5):
+**Navigation (1)** — the default tool for code-navigation questions in any language; prefer it over the `Explore` agent and global grep when a question asks "where does X come from", "what API populates Y", "what wraps Z", or "find the file for feature F" (CLAUDE.md Article XI.5):
 - `code-browser` — the language-agnostic **universal walk** (entry → imports → IO boundary) is the primary path, regardless of language. For JS/TS, optional accelerators speed it up: `discover.mjs` writes a per-repo `conventions.json` once, then `walk.mjs` runs deterministically returning flat `byHook` / `byService` / `byApiCall` / `byComponent` indexes. The walk falls back to `Explore`/`grep` only on no resolvable structure or a dead-ended walk; pure full-text search and type/util lookups stay grep's domain. Read-only.
 
 **Shared globals (7)** — one written for this baseline, six vendored from external sources with their upstream licenses preserved in `LICENSE` + `NOTICE` alongside each skill:
@@ -158,15 +158,15 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Sprint (3)** — the sprint-mode skills (`mvp-sprint-parallel-cycles` epic); not workflow phases:
 - `sprint-plan` — decompose an MVP vision into a sprint manifest where every feature carries explicit done-criteria (`done_record` + `edge_tests[]` + `wiring_test`). Authors + shape-validates the manifest (`validate-manifest.mjs`).
 - `sprint-oracle` — mechanical, exit-code-driven completeness gate: resolves each manifest feature's `// @sprint-feature:<id> @kind:edge|wiring|happy` tags and fails loud (exit 2) with a per-feature gap list until every feature has a done-record + a resolvable edge test + a resolvable wiring test (`oracle.mjs`). Read-only.
-- `sprint-dispatch` — the sprint execution engine (Slice C): opt-in (`velocity.sprint_mode.enabled`, off by default), the lead dispatches independent sprint slices to channel peers (human sessions or lead-spawned bounded `swarm-worker` subagents) that coordinate mid-flight over the MCP channel (claim/done-unblock/conflict), with a RALPH stop-rule (a peer yields an un-decidable fork; the lead arbitrates in main context and re-dispatches, recording each yield on the durable plan lineage). The sandboxed prototype that gates the §II.B charter; workers stay bounded, the lead is the sole decision locus (Article II preserved). Helpers: `sprint-mode.mjs`, `peer-select.mjs`, `yield-arbiter.mjs`.
+- `org-dispatch` — the org-team execution engine (Article X; graduates and supersedes the retired `sprint-dispatch` Slice-C prototype): opt-in (`velocity.org_mode.enabled`, off by default), requires git. A flat pod of up to four peer Claude Code sessions claims lane-tagged slices of an approved spec over the MCP broker pool and implements them concurrently. Each peer DECIDES its own in-lane implementation choices in its own main context and escalates un-decidable or cross-lane forks peer→lead→human (`yield_fork` for task-bound forks, `ask_lead`/`answer_peer` for free-form queries). One peer wears the lead hat (arbitration + human relay); consent gates stay structural. Helpers: `org-mode.mjs`, `peer-select.mjs`, `yield-arbiter.mjs`.
 
 ---
 
-## 5 — Article X project-amendment detail (reference)
+## 5 — Article XI project-amendment detail (reference)
 
-The binding clauses for project amendments X.1–X.4 live in `CLAUDE.md` Article X. This section holds the *elaborative rule tables* relocated from CLAUDE.md to hold the 40,000-char cap (Art I.6 / seed.md §14). Nothing here overrides the binding clause in CLAUDE.md; where this detail and the clause appear to conflict, **CLAUDE.md governs**. Article X.5 (navigation routing) stays in full in CLAUDE.md and has no annex detail.
+The binding clauses for project amendments XI.1–XI.4 live in `CLAUDE.md` Article XI. This section holds the *elaborative rule tables* relocated from CLAUDE.md to hold the 40,000-char cap (Art I.6 / seed.md §14). Nothing here overrides the binding clause in CLAUDE.md; where this detail and the clause appear to conflict, **CLAUDE.md governs**. Article XI.5 (navigation routing) stays in full in CLAUDE.md and has no annex detail.
 
-### 5.1 — X.1 Copy register and skill overrides (detail)
+### 5.1 — XI.1 Copy register and skill overrides (detail)
 
 The `impeccable` skill (Apache 2.0, vendored) declares "Shared design laws" with absolute bans, including:
 
@@ -186,9 +186,9 @@ These bans bind **only on user-facing copy** — surfaces a public reader sees a
 
 The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces. This override does not delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a row in the same scope table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale (in-flight examples in §1 "X.1 — copy-register scoping").
 
-### 5.2 — X.2 Design-task routing (detail)
+### 5.2 — XI.2 Design-task routing (detail)
 
-Design / development / copy are separate concerns: design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article X.1 plus the `prose` skill's register choice. The three lanes may touch the same file for different concerns; they SHALL NOT substitute for one another.
+Design / development / copy are separate concerns: design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article XI.1 plus the `prose` skill's register choice. The three lanes may touch the same file for different concerns; they SHALL NOT substitute for one another.
 
 | Rule | Binding |
 |---|---|
@@ -199,9 +199,9 @@ Design / development / copy are separate concerns: design lives behind `design-u
 | Iteration cap: `audit → polish` loops SHALL terminate after 3 iterations with `final_state: "needs_human"` if P0 ≥ 1 or P1 > 0 persist. P0 issues block (do not loop). | `design-ui` SKILL.md + `references/orchestration.md`. |
 | Multi-step impeccable recipes SHALL ask the user before proceeding. Single-step recipes SHALL auto-execute. | `references/intent-table.md` `mode` column. |
 
-The vendored `impeccable` skill stays untouched (Article IX). `design-ui` is the structural seam between workflow phases and `impeccable`; bypassing it inside a workflow phase is a violation of Article X.2.
+The vendored `impeccable` skill stays untouched (Article IX). `design-ui` is the structural seam between workflow phases and `impeccable`; bypassing it inside a workflow phase is a violation of Article XI.2.
 
-### 5.3 — X.3 Entry-phase brainstorm (detail)
+### 5.3 — XI.3 Entry-phase brainstorm (detail)
 
 The brainstorm helper captures the requirement via Socratic dialogue (actor, trigger, current state, desired state, non-goals, solution-leakage detection) and writes the result to `docs/brief/<slug>.md`. The entry skill reads that brief as primary input for template-fill.
 
@@ -215,7 +215,7 @@ The brainstorm helper captures the requirement via Socratic dialogue (actor, tri
 
 The opt-out flag is set at `/triage` time by `--no-brainstorm`, or detected heuristically when the request already carries a complete actor + trigger + desired-state framing (surfaced via `AskUserQuestion`; AC-010 governs parsing). `Skill(brainstorm)` runs in main context per Article II — no subagent delegation; the Stage 2 discipline assertor is the only programmatic gate.
 
-### 5.4 — X.4 `/spec` codesign mode (detail)
+### 5.4 — XI.4 `/spec` codesign mode (detail)
 
 The codesign mode identifies load-bearing technical decision points (where engineer domain expertise is the deciding factor — computer vision approach, model architecture, numerical method, IPC pattern, kernel scheduling), presents each with Claude's recommended option and rationale, and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`. The engineer's verbatim rationale becomes canonical when they override Claude's recommendation.
 
@@ -230,3 +230,23 @@ The codesign mode identifies load-bearing technical decision points (where engin
 | Codesign decision revisit cap is 3 per decision point. The 4th revisit attempt terminates with `final_state: "needs_human"`. Hardcoded in `codesign-state.mjs → REVISIT_CAP`, parallel to design-ui's 3-iteration audit-polish cap. | AC-007 boundary. |
 
 Codesign mode is opt-in (most workflows do not need it). `/triage`'s heuristic suggestion fires on a fixed keyword list (`computer vision`, `model architecture`, `numerical`, `cryptographic`, `consensus`, `realtime`, `kernel`, `distributed`, `algorithm design`) — it triggers a confirmation `AskUserQuestion`, never auto-sets. `/research` may write a memo-only codesign recommendation when no candidate dominates on tradeoffs; per Article II it cannot auto-flip flow state — the user opts in via `/triage --codesign` or a manual `workflow.json` edit.
+
+### 5.6 — Article X multi-session coordinated workflows (detail)
+
+Article X governs the **inter-session** axis — multiple peer Claude Code sessions coordinating on one body of work. It is orthogonal to Article II (the intra-session axis), which is byte-unchanged. A **peer** is a full session (a complete baseline instance with its own subagents/parallel agents); the subagent count (1) is a per-session property. An **org-team** is a flat pod of up to four peers over the MCP broker pool, one wearing the **lead** hat. The execution engine is `org-dispatch` (graduates and supersedes the retired `sprint-dispatch` prototype and the `mvp-sprint-parallel-cycles` Slice-E reserved-charter slot).
+
+| Rule | Binding |
+|---|---|
+| Org mode is opt-in and OFF by default; `velocity.org_mode.enabled` is the fence. It additionally **requires git** (worktree isolation). `org-dispatch` refuses with a named reason when either condition fails. | `org-dispatch/org-mode.mjs → orgDispatchGate`; spec AC-006. |
+| The pod is **flat** for claiming (any free peer claims any unblocked lane-tagged task, single-winner) and **capped at four**. One peer additionally wears the lead hat (arbitration + human-escalation relay). | `org-dispatch/SKILL.md`; spec AC-002. |
+| **Pool coordination is enabled by `org_mode` OR `sprint_mode`** — peers can be handed tasks with no sprint manifest in place; the lead may `enqueue_task` ad-hoc lanes onto the pod at any time. | `sprint-pool/handlers.mjs → registerPoolPeer`; `registrar.mjs`. (org-dogfood-1 regression) |
+| **Directed allocation:** a lane may carry an `assignee` (a `peer_id`); `claim_task` lets only that peer claim it, every other peer is rejected. An undirected lane stays claim-any (first free wins). This is the lead's allocation control (spread load, hand a lane to a named peer). | `sprint-channel/handlers.mjs → claimTask`; `enqueue_task`. (org-dogfood-1 regression) |
+| **A peer never adopts the lead role.** A session connected as a peer stays a peer for the whole session even if the same human runs the workflow-lead session elsewhere; it never arbitrates, releases, answers peers, or declines a claimable lane on the belief that it is the lead. The pool server hands role-scoped instructions to enforce this. | `sprint-pool/server.mjs → instructionsFor`; `companion/SKILL.md`. (org-dogfood-1 regression) |
+| **One lead per channel; no socket hijack.** A second broker on an occupied channel socket SHALL refuse rather than take it over: `listen()` probes the socket and rejects when a live broker answers (a silent takeover would split the pod with fresh state), reclaiming only a stale socket left by a crashed broker. | `sprint-broker/broker.mjs → listen`; `tests/org-broker-hijack.test.mjs`. (org-dogfood-1 security regression, MEDIUM) |
+| **A session knows its own identity.** The pool server bakes the session's own `peer_id` (and role) into its instructions, so a peer never infers its identity from a task push or a rejected claim (it acts only as its own id, never another peer's). | `sprint-pool/server.mjs → instructionsFor`. (org-dogfood-1 regression) |
+| **Completion is reliable, not push-only.** The broker pushes `all-done` when the last lane drains, but pushes are lossy hints; the authoritative completion check is the never-dropped `all_done` flag on `sprint_status`, which the lead reconciles against while waiting. | `sprint-broker/broker.mjs → OPS.status / signal_done`; `sprint-pool/server.mjs`. (org-dogfood-1 regression) |
+| A peer **decides its own in-lane implementation choices** in its own (Article-II-governed) main context. An un-decidable or cross-lane fork SHALL escalate, never be guessed across lanes. `classifyFork({scope}) → 'decide' | 'escalate'`. | `org-dispatch/org-mode.mjs → classifyFork`; spec AC-003. |
+| Escalation spine is peer→lead→human. Task-bound forks escalate via `yield_fork`; free-form queries via the broker `message`/`answer` ops surfaced as the `ask_lead` (peer) and `answer_peer` (lead) pool tools. An undeliverable escalation returns a structured error and is queued in `status` (never silently lost). | broker `message`/`answer`; spec AC-004, AC-005, AC-009. |
+| Consent gates (`approve-spec` / `approve-swarm` / `grant-commit`) and human-as-final-authority stay structural and un-forgeable; no peer or lead path bypasses or self-satisfies a gate. | Article IV gates; Article VII. |
+| No new subagent: peers are sessions, not subagents; `swarm-worker` remains the only declared subagent (§4.2 count unchanged). | seed.md §4.2. |
+| `org` is an added selectable track (Phase 6 runs `org-dispatch` instead of solo `/tdd`); the default 11-phase solo/swarm pipeline is unchanged. | `.claude/workflows.jsonl`; spec AC-001. |

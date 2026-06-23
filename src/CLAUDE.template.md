@@ -14,7 +14,7 @@ This file is the **in-session constitution** for this repository. It binds Claud
 2. **Constitution** — `CLAUDE.md` (this file) is the source of truth for Claude's in-session behavior in this repository.
 3. **Implementation** — the hooks, skills, commands, subagent, MCP servers, and config files are the actuators and enforcement mechanisms of (1) and (2).
 4. **Order of precedence** — `seed.md` > `CLAUDE.md` > implementation. Lower binds higher only via amendment in seed.md, which then propagates to this file, then to disk.
-5. **Project amendments** — Article X reserves space for project-owner amendments. Amendments bind alongside Articles I–IX but **SHALL NOT** contradict them.
+5. **Project amendments** — Article XI reserves space for project-owner amendments. Amendments bind alongside Articles I–X but **SHALL NOT** contradict them.
 6. **Size cap (this file)** — `CLAUDE.md` SHALL NOT exceed **40,000 characters** and carries binding rules only; amendment history, enforcement narration, and reference appendices live in the annex `.claude/CONSTITUTION.md`. `audit-baseline` enforces the cap (FAIL above 40,000 chars), which also binds the byte-equal mirror `src/CLAUDE.template.md`.
 
 ## Article II — Architectural principle
@@ -198,7 +198,7 @@ The 25 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `artifact_template_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Block artifact writes missing required `##` sections |
 | `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true. |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
-| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. X.2 | Block UI-touching specs missing a populated `## Design calls` section |
+| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. XI.2 | Block UI-touching specs missing a populated `## Design calls` section |
 | `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |
 | `tdd_order_guard` | PreToolUse / Write | Art. VI.4 | Require test before new source file |
 | `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
@@ -226,43 +226,56 @@ The memory system at `.claude/memory/` accumulates project facts across sessions
 
 Memory accelerates triage. It NEVER authorizes a skip.
 
-## Article X — Project-specific rules
+## Article X — Multi-session coordinated workflows
 
-Reserved for project-owner amendments. Rules below the boundary line bind alongside Articles I–IX but SHALL NOT contradict them. Amendments to Articles I–IX require an edit to `docs/init/seed.md` first per the precedence rule (Art. I.4).
+Article II governs the **intra-session** axis (within one session, decisions live in its main context, never in a subagent). This Article governs the **inter-session** axis — multiple peer sessions coordinating on one body of work. The two are orthogonal; **Article II is unchanged**.
 
----
+A **peer** is a full Claude Code session (with its own subagents/parallel agents); the subagent count (1, `swarm-worker`) is a per-session property, unchanged here. An **org-team** is a flat pod of up to four peers over the MCP broker pool, one wearing the **lead** hat. The model is **opt-in, OFF by default** (`velocity.org_mode.enabled`), **requires git**, and runs through the selectable **`org` track** (Phase 6 runs `org-dispatch`); the default 11-phase pipeline is unchanged. You SHALL:
 
-### X.1 Copy register and skill overrides
+1. **Decide in-lane; escalate out-of-lane.** A peer decides its own in-lane implementation choices in its own (Article-II-governed) main context. An un-decidable or cross-lane fork SHALL escalate — never be guessed across lanes (`yield_fork` for task-bound forks, `ask_lead` for free-form queries).
+2. **Escalate to the human for human-judgment forks.** The chain is peer→lead→human; the lead arbitrates what it can and relays the rest (`answer_peer`).
+3. **Keep gates structural.** No peer or lead path may bypass or self-satisfy a consent gate; the human remains the final authority.
+4. **Add no subagent.** Peers are sessions, not subagents.
 
-The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes; the hero-metric template; glassmorphism-as-default, gradient text, side-stripe borders > 1px, modal-first, identical card grids) bind **only on user-facing copy** — rendered marketing/product prose (`site-src/**`, the docs site). They do **NOT** bind internal governance (`CLAUDE.md`, `docs/init/seed.md`), project source docs (`README.md`, CLI text, `SKILL.md`), memory bodies, or inline code/data samples, where the constitutional voice uses em dashes deliberately. This override scopes the bans; it does not delete them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a scope-table row (cite the rule, the scope decision, a one-line rationale) without re-amending the constitution. Full scope table + examples: `.claude/CONSTITUTION.md §5.1` (annex).
+`org-dispatch` is the engine. Full rule table: `.claude/CONSTITUTION.md §5.6` (annex).
 
----
+## Article XI — Project-specific rules
 
-### X.2 Design-task routing
-
-Every UI design task that originates inside a workflow phase SHALL route through the `design-ui` skill, and `design-ui` SHALL invoke the vendored `impeccable` skill for the underlying design move. Design / development / copy are separate concerns and SHALL NOT substitute for one another (design lives behind `design-ui`; development is the rest of `/tdd`; copy is governed by Article X.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (one row per surface), enforced by `spec_design_calls_guard` (Art. VIII) and `/spec-lint`. `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` once per row. `design-ui` SHALL NOT write product code (its writes are the state file, snapshots, and memory candidates; product code is written inside `impeccable`). Bypassing `design-ui` inside a workflow phase is a violation of this Article. Full rule table (Stage-0 classification + misroute states, the 3-iteration audit→polish cap, recipe modes): `.claude/CONSTITUTION.md §5.2` (annex).
-
----
-
-### X.3 Entry-phase brainstorm (PM mode)
-
-Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). Brainstorm captures the requirement via Socratic dialogue (actor, trigger, current/desired state, non-goals, solution-leakage detection) and writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn` (solution verbs, library names, proposal phrasing). `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. The opt-out flag is set at `/triage` by `--no-brainstorm` or heuristic detection of a complete actor+trigger+desired-state framing (via `AskUserQuestion`). Full rule table (caps, idempotency short-circuit, defaults helper): `.claude/CONSTITUTION.md §5.3` (annex).
+Reserved for project-owner amendments. Rules below the boundary line bind alongside Articles I–X but SHALL NOT contradict them. Amendments to Articles I–X require an edit to `docs/init/seed.md` first per the precedence rule (Art. I.4).
 
 ---
 
-### X.4 `/spec` codesign mode (Engineer mode)
+### XI.1 Copy register and skill overrides
 
-`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `.claude/state/workflow.json → codesign_mode` is `true` (opt-in; defaults `false`). It identifies load-bearing technical decision points (where engineer domain expertise decides — e.g. CV approach, model architecture, numerical method, IPC pattern, kernel scheduling), presents each with Claude's recommendation + rationale, and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`. The engineer's verbatim rationale becomes canonical when it overrides Claude's recommendation, rendered into the spec's `## Decisions` section as a `>` blockquote. Codesign mode is never auto-set — `/triage`'s keyword heuristic only *suggests* via `AskUserQuestion`, and `/research` may write a memo-only recommendation but cannot flip flow state (Art. II); the user opts in via `/triage --codesign` or a manual edit. Revisit cap 3 per decision point. Full rule table (detection helper, `spec-lint` Check #4, integrate-failure re-entry): `.claude/CONSTITUTION.md §5.4` (annex).
+The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes; the hero-metric template; glassmorphism-as-default, gradient text, side-stripe borders > 1px, modal-first, identical card grids) bind **only on user-facing copy** — rendered marketing/product prose (`site-src/**`, the docs site). They do **NOT** bind internal governance, project source docs, memory bodies, or inline code/data samples, where the constitutional voice uses em dashes deliberately. This override scopes the bans; it does not delete them. Other shared design laws (color, theme, typography, motion, accessibility) remain in force everywhere Claude generates UI. Future scope decisions get a scope-table row without re-amending the constitution. Full scope table + examples: `.claude/CONSTITUTION.md §5.1` (annex).
 
 ---
 
-### X.5 Navigation routing
+### XI.2 Design-task routing
+
+Every UI design task inside a workflow phase SHALL route through `design-ui`, which SHALL invoke `impeccable` for the design move; `design-ui` SHALL NOT write product code (that is written inside `impeccable`). Design / development / copy are separate concerns and SHALL NOT substitute for one another (copy is governed by Article XI.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (enforced by `spec_design_calls_guard`, Art. VIII, and `/spec-lint`); `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` per row. Bypassing `design-ui` inside a workflow phase violates this Article. Full rule table: `.claude/CONSTITUTION.md §5.2` (annex).
+
+---
+
+### XI.3 Entry-phase brainstorm (PM mode)
+
+Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). Brainstorm captures the requirement via Socratic dialogue and writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn`. `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. Full rule table (caps, idempotency, opt-out heuristic): `.claude/CONSTITUTION.md §5.3` (annex).
+
+---
+
+### XI.4 `/spec` codesign mode (Engineer mode)
+
+`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `.claude/state/workflow.json → codesign_mode` is `true` (opt-in; defaults `false`). It surfaces load-bearing technical decision points with Claude's recommendation + rationale and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`; the engineer's verbatim rationale becomes canonical when it overrides Claude, rendered into the spec's `## Decisions` section as a `>` blockquote. Codesign is never auto-set (Art. II — `/triage` only *suggests*); revisit cap 3 per decision point. Full rule table: `.claude/CONSTITUTION.md §5.4` (annex).
+
+---
+
+### XI.5 Navigation routing
 
 For a code-navigation question ("where does X come from", "what renders Y") in any repository, `code-browser`'s language-agnostic **universal walk** (entry → imports → IO boundary) is the **first** attempt; reach for the `Explore` agent or `grep` only when the repo has no resolvable structure or the walk dead-ends. Pure full-text search and type/util definition lookups stay grep's domain (not navigation). The JS/TS `walk.mjs`/`discover.mjs` accelerator is optional. Detail: `code-browser/SKILL.md`.
 
 ---
 
-## Article XI — Skill provenance and the baseline manifest
+## Article XII — Skill provenance and the baseline manifest
 
 A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill (no `owner:` field, or `owner: user`) is user/third-party and out-of-scope of baseline audit checks — absence is the deliberate default so a project with pre-existing skills installs without annotating its files. The shipped manifest at `obj/template/.claude/manifest.json` records baseline ownership (`owners.skills`) + per-file sha256 hashes; `audit-baseline` reconciles it against disk. Build + audit mechanics: `.claude/CONSTITUTION.md` (annex).
 
@@ -271,7 +284,7 @@ You SHALL:
 1. **Declare baseline ownership only.** A SKILL.md that ships in the baseline SHALL declare `owner: baseline` in its frontmatter directly after `name:`. Authoring a user/third-party skill does NOT require any `owner:` annotation — absence is the default. Explicit `owner: user` is permitted but never required. The only frontmatter-related FAIL the audit emits is `invalid owner=<value>` (a present-but-malformed `owner:` field, e.g. typo). Missing-`owner:` is silently skipped.
 2. **Trust the manifest.** The shipped manifest at `obj/template/.claude/manifest.json` (delivered to `<target>/.claude/manifest.json` by the recursive install copy) is the canonical record of baseline-owned skills and their content hashes. The runtime `<target>/.claude/.baseline-manifest.json` written by the CLI post-install is a separate file that captures the target's actual on-disk hashes for `doctor`/`upgrade` — do not conflate the two. You SHALL NOT maintain a separate hard-coded list of baseline-skill slugs anywhere in the codebase.
 3. **Re-derive on drift.** The audit reads the manifest from `<root>/.claude/manifest.json` (consumer projects) with a fallback to `<root>/obj/template/.claude/manifest.json` (the baseline dev repo). It re-derives sha256 hashes from `manifest.files` for every path under `.claude/skills/<slug>/` whose slug appears in `owners.skills`, and compares against on-disk content. Mismatches surface as `hash mismatch at <path>`. A baseline-listed slug missing from disk surfaces as `baseline skill missing`. These are hard FAIL — drift detection has no opt-out.
-4. **Preserve constitutional citation.** This Article XI SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations and reports `CLAUDE.md missing Article XI citation` or `seed.md missing §17 citation` on absence.
+4. **Preserve constitutional citation.** This Article XII SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations and reports `CLAUDE.md missing Article XII citation` or `seed.md missing §17 citation` on absence.
 5. **Out-of-scope skills don't break the audit.** Any skill on disk that doesn't declare `owner: baseline` is out-of-scope: excluded from the baseline count, the names-match check, and the hash-drift check. Installing the baseline into a project that already has its own skills is zero-friction — no per-file annotation required. Maintenance of those skills is the user's responsibility.
 
 Cryptographic attestation, signed lock files, and per-skill merkle hashes are non-goals; the per-file `manifest.files` map suffices. The `create-baseline upgrade` overlay mechanics (re-overlaying baseline-owned files while leaving user files untouched) are out of scope of this Article.
