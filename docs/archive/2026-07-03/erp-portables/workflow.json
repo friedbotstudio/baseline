@@ -1,0 +1,14 @@
+{
+  "request": "Port the portable governance/harness improvements extracted from ../erp back into the baseline: (A) Article II §4.2-A read-only advisory subagents; (B) branch_guard hook 25→26 + currentBranch() in hooks/lib/common.mjs; (C) branch-aware gate C — isAutonomousFeatureLanding()/isProtectedBranch(), requires_commit_consent conditional DAG node, harness no-yield carve-out, commit push+PR; (D) leanest-safe-track triage with novelty classification + track_reason; (E) opt-in derivation-first brainstorm (default flip, probe cap 2, timeout-adopts-recommendation); (F) XI.12 decision economy; (G) VI.4 YAGNI floor/ceiling + two-sided faithful scope BLOCKER in spec-traceability-review; (H) lint_runner/test_runner file_globs fix; (I) commit-planner + retrospective skills; (J) CI/secrets posture — mandatory gitleaks, branch-protection config-as-code, low-risk auto-merge. erp defaults adopted. seed.md amended first per Art I.4. Reference: ../erp (read-only).",
+  "slug": "erp-portables",
+  "track_id": "epic",
+  "exceptions": [],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "memory-flush", "grant-commit", "commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "completed_notes": {
+    "triage": "AskUserQuestion timeout at track+slice confirmation — adopted recommended options (epic track, 10 slices A–J) as recorded assumption per decision-economy rule; re-surface at gate A."
+  },
+  "created_at": 1783055303,
+  "updated_at": 1783056117
+}
