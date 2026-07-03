@@ -870,6 +870,22 @@ export function isPrimaryWorkTree(cwd = CLAUDE_PROJECT_ROOT) {
   }
 }
 
+// Current git branch name via `git rev-parse --abbrev-ref HEAD`. Returns the
+// branch name, the literal 'HEAD' when detached, or null when not a git repo /
+// git unavailable. Total fn — never throws. Single-sourced here so the
+// work-start gate (branch_guard) and the commit-time backstop (git_commit_guard)
+// cannot drift on what "current branch" means.
+export function currentBranch(cwd = CLAUDE_PROJECT_ROOT) {
+  try {
+    const out = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd,
+    }).trim();
+    return out || null;
+  } catch {
+    return null;
+  }
+}
+
 // Parse the branch list out of a CI workflow's `push:` trigger
 // (`push:\n  branches: [main, next]`). Returns [] when no list is found.
 function parsePushBranches(ciText) {

@@ -1,0 +1,46 @@
+{
+  "request": "Run epic-child slice B of the approved erp-portables epic — branch_guard hook (25→26): PORT hook + test (new .claude/hooks/branch_guard.mjs, PreToolUse Write|Edit|MultiEdit, denies only CREATION of .claude/state/workflow.json when git.workflow_model resolves github-flow AND currentBranch() matches git.release_branches AND primary worktree AND configured: true; fail-open otherwise; pure exported decide(); currentBranch() added to lib/common.mjs; wired after track_guard) + REAUTHOR counts/prose reconciliation (seed §4.1 25→26 + hook row, CLAUDE.md preamble + Art. III greeting + Art. VIII table, annex, expected-baseline.mjs EXPECTED_HOOKS, README + site-src counts, manifest re-hash). ACs: AC-002.",
+  "slug": "erp-portables-slice-b",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "B",
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-B"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "security": "runs — escalated by slice B risk[] (new PreToolUse hook at the write boundary; input parsing of tool_input paths)",
+    "simplify": "runs — escalated by slice B risk[] (spans hooks/, settings wiring, constitution chain, audit expectations)",
+    "document": "runs — escalated by slice B risk[] (hook roster 25→26 touches README, site-src, annex, seed)"
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783096000,
+  "updated_at": 1783101599,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "design-ui",
+    "drift-check",
+    "finalize"
+  ]
+}

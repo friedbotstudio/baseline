@@ -43,7 +43,7 @@ toc:
   <thead><tr><th>Event</th><th>Hooks</th></tr></thead>
   <tbody>
     <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, gitignore_leak_guard, process_lifecycle_guard</td></tr>
-    <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, spec_approval_guard, swarm_approval_guard, epic_approval_guard, verify_pass_guard, track_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
+    <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, spec_approval_guard, swarm_approval_guard, epic_approval_guard, verify_pass_guard, track_guard, branch_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
     <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner, phase_timer</td></tr>
     <tr><td>PostToolUse · Bash</td><td class="phase">phase_timer</td></tr>
     <tr><td>UserPromptSubmit</td><td class="phase">consent_gate_grant</td></tr>
@@ -74,6 +74,7 @@ toc:
     <tr><td class="phase">epic_approval_guard</td><td>IV (§18.9)</td><td>Allow an epic-state <code>approved: true</code> transition only when the matching persistent <code>spec_approvals/&lt;slug&gt;.approval</code> token exists; non-transition writes pass through.</td></tr>
     <tr><td class="phase">verify_pass_guard</td><td>V, VI</td><td>Block writing PASS to verify artifacts when truth source says FAIL.</td></tr>
     <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce per-track DAG ordering for workflow artifacts.</td></tr>
+    <tr><td class="phase">branch_guard</td><td>IV, VII</td><td>Block starting a workflow on a release branch when the git model is PR-based (<code>github-flow</code>), so work always begins on a feature branch. Fails open on any ambiguity (other model, non-git, detached HEAD, linked worktree): editing is never bricked, and the commit-time guard remains the backstop.</td></tr>
     <tr><td class="phase">artifact_template_guard</td><td>IV</td><td>Block artifact writes missing required sections.</td></tr>
     <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Advisory by default (no JVM): notes that PlantUML fences in <code>docs/specs/*.md</code> are unvalidated at write time. Runs the strict <code>java -checkonly</code> parse only when <code>project.json</code> sets <code>plantuml.strict_syntax_check</code> to true; otherwise validate on demand with <code>/spec-lint</code>.</td></tr>
     <tr><td class="phase">spec_diagram_presence_guard</td><td>IV (phase 4)</td><td>Block specs missing the diagram kinds required for their <code>write_set</code> profile (full set by default; reduced for non-architectural changes).</td></tr>
