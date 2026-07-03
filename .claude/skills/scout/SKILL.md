@@ -1,7 +1,7 @@
 ---
 name: scout
 owner: baseline
-description: Workflow Phase 2 — Codebase Scouting and Constraint Discovery. Maps the relevant slice of the codebase for a given task. Produces a scout report at `docs/scout/<slug>.md` naming the files, modules, and patterns the proposed work touches or constrains. Executes in main context with full conversation visibility — no agent delegation.
+description: Workflow Phase 2 — Codebase Scouting and Constraint Discovery. Maps the relevant slice of the codebase for a given task. Produces a scout report at `docs/scout/<slug>.md` naming the files, modules, and patterns the proposed work touches or constrains. Report decisions execute in main context with full conversation visibility; gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
 argument-hint: "[optional: specific path to scope the scout]"
 ---
 
@@ -30,6 +30,8 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    - **Term sweeps** ("every file that references flag F", "all callers of util U", config / migration / deploy-manifest searches): `rg` (or `grep -r`) for the exact term, filtered to source directories. Read the top 3–5 hits with surrounding context. Follow imports/callers one hop out — do not recurse further.
 
    If a navigation question lands you in `rg` first, stop and switch to `code-browser` — that is the failure mode the skill exists to prevent.
+
+   **Gathering delegation (seed.md §4.2-A).** A broad sweep MAY be delegated to a read-only advisory subagent (e.g. `Explore`): it returns findings only — no writes, no decisions. What enters the report is decided here, in main context.
 3. **Identify entry points** — HTTP routes, CLI commands, cron jobs, queue consumers — that would trigger the code path being modified.
 4. **Identify existing tests** for the affected code. Note flaky/skipped ones.
 5. **Note constraints** — config files, feature flags, migrations, deploy manifests that need lockstep changes.

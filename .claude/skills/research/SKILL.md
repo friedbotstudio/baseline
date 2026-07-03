@@ -1,7 +1,7 @@
 ---
 name: research
 owner: baseline
-description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs via context7 MCP — never in training-data recall. Output lives at `docs/research/<slug>.md`. Executes in main context.
+description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs via context7 MCP — never in training-data recall. Output lives at `docs/research/<slug>.md`. Candidate ranking and the memo execute in main context; doc/source gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
 ---
 
 You are surfacing a small set of candidate approaches to a task, with honest tradeoffs, so the spec author can pick one. Decisions are not made here — the human reviewer decides at `/spec`. Your job is to lay out the option space.
@@ -36,6 +36,8 @@ For any library you intend to cite:
    - Test-ability: can it be driven by tests seed.md permits — no internal mocks, no mocked DB?
    - Reversibility: if it proves wrong post-implementation, what is the blast radius?
 4. **Rank candidates.** State your recommendation. Name what would flip the decision.
+
+**Gathering delegation (seed.md §4.2-A).** Doc/source gathering MAY be delegated to read-only advisory subagents; findings return here, and candidate evaluation, ranking, and the memo stay in main context.
 
 # Output
 

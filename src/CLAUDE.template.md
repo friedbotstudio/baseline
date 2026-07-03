@@ -35,7 +35,7 @@ Every other capability — code authoring, scenario authoring, scouting, researc
 | `design-ui` | `impeccable` | — |
 | `prose` | `humanizer` (always) | `copywriting` / `documentation` / `technical-tutorials` by register |
 
-You SHALL NOT route conversational judgment (UI nuance, design tone, code architecture, security calls, scenario selection) through a subagent.
+You SHALL NOT route **binding judgment** — a written decision or production change (design tone, code architecture, security calls, scenario selection) — through a subagent. **Read-only advisory subagents** (Explore/Plan, scout/research gathering, §II.A checkers) MAY gather and advise; they write nothing and decide nothing — main context decides and writes. Full clause: `seed.md §4.2-A`.
 
 ## Article III — Session-start procedure (MANDATORY)
 

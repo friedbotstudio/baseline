@@ -1,0 +1,24 @@
+{
+  "request": "Run epic-child slice A of the approved erp-portables epic — Article II §4.2-A: read-only advisory subagents. REAUTHOR constitution (seed.md §4.2 first, then CLAUDE.md Article II + src/CLAUDE.template.md + annex) + PORT scout/research SKILL.md gathering-delegation clause. ACs: AC-001.",
+  "slug": "erp-portables-slice-a",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "A",
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-A"
+  },
+  "exceptions": ["intake", "scout", "research", "spec", "approve-spec", "security"],
+  "completed": ["tdd", "simplify", "integrate", "document", "archive", "memory-flush"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "simplify": "runs — escalated by slice A risk[] (spans seed/CLAUDE.md/annex/skill mirrors)",
+    "document": "runs — escalated by slice A risk[] (constitution + skill prose change)",
+    "security": "excepted — slice A touches constitution/skill prose only; no IO boundary, no untrusted input, no sensitive_globs hit"
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783072280,
+  "updated_at": 1783072280
+}

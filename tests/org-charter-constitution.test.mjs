@@ -20,13 +20,17 @@ function articleSection(text, roman) {
 
 const claudeMd = () => readFileSync(join(ROOT, 'CLAUDE.md'), 'utf8');
 
-test('test_when_article_X_added_then_article_II_is_byte_unchanged', () => {
+test('test_when_article_X_added_then_article_II_stays_intra_session', () => {
   // Regression trap: the charter SHALL NOT touch Article II (intra-session axis).
-  const head = execFileSync('git', ['show', 'HEAD:CLAUDE.md'], { cwd: ROOT, encoding: 'utf8' });
-  const headII = articleSection(head, 'II');
-  const workII = articleSection(claudeMd(), 'II');
-  assert.ok(headII, 'Article II is locatable in HEAD');
-  assert.equal(workII, headII, 'Article II text is byte-identical to HEAD (charter does not amend Article II)');
+  // Rescoped 2026-07-03 (erp-portables slice A): the original HEAD-byte-pin blocked
+  // every future sanctioned Article II amendment pre-commit. The durable invariant
+  // is that multi-session/org-team content lives in Article X, never Article II.
+  const ii = articleSection(claudeMd(), 'II');
+  assert.ok(ii, 'Article II is locatable');
+  for (const term of ['org-team', 'broker pool', 'inter-session', 'multi-session']) {
+    assert.equal(ii.includes(term), false, `Article II carries no ${JSON.stringify(term)} content (Article X owns the inter-session axis)`);
+  }
+  assert.match(ii, /Decisions live in main context/, 'Article II keeps its intra-session architectural principle');
 });
 
 test('test_when_charter_lands_then_article_X_is_the_multi_session_article', () => {
