@@ -1,6 +1,7 @@
-import { cp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rmdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CI_POSTURE_DIRS, CI_POSTURE_PATHS } from './ci-posture.js';
 import { buildManifestFromDir, saveManifest } from './manifest.js';
 import { deepMergeMcpServers } from './mcp.js';
 import { refreshBaselineVersion } from './project-json.js';
@@ -93,8 +94,32 @@ function makeFilter(opts) {
     if (COPY_EXCLUDE.includes(rel)) return false;
     if (NEVER_TOUCH.includes(rel) && opts.skipNeverTouch) return false;
     if (SPECIAL_MERGE.includes(rel) && opts.skipSpecialMerge) return false;
+    if (opts.skipCiPosture && CI_POSTURE_PATHS.includes(rel)) return false;
     return true;
   };
+}
+
+// Opt-out aftermath: the cp filter skips posture FILES, which can leave their
+// (otherwise empty) parent dirs behind. rmdir only removes empty dirs, so a
+// dir holding anything else — e.g. a consumer's own scripts/ — survives.
+async function pruneEmptyCiPostureDirs(target) {
+  for (const rel of CI_POSTURE_DIRS) {
+    try {
+      await rmdir(join(target, rel));
+    } catch {
+      // non-empty or absent — leave it
+    }
+  }
+}
+
+// The opt-out must survive upgrades, so it lives in the delivered
+// project.json (`ci_posture.enabled: false`), not just in the file set.
+async function stampCiPostureDisabled(target) {
+  const projectJsonPath = join(target, '.claude/project.json');
+  if (!(await pathExists(projectJsonPath))) return;
+  const projectJson = JSON.parse(await readFile(projectJsonPath, 'utf8'));
+  projectJson.ci_posture = { ...(projectJson.ci_posture ?? {}), enabled: false };
+  await writeFile(projectJsonPath, JSON.stringify(projectJson, null, 2) + '\n');
 }
 
 async function applySpecialAndNeverTouch(templateDir, target) {
@@ -153,9 +178,14 @@ export async function materializeGitignore(target) {
 }
 
 export async function freshInstall(templateDir, target, opts = {}) {
-  const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: false, skipSpecialMerge: true });
+  const skipCiPosture = opts.ciPosture === false;
+  const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: false, skipSpecialMerge: true, skipCiPosture });
   await cp(templateDir, target, { recursive: true, force: false, filter });
   await applySpecialAndNeverTouch(templateDir, target);
+  if (skipCiPosture) {
+    await pruneEmptyCiPostureDirs(target);
+    await stampCiPostureDisabled(target);
+  }
   if (opts.withNpmrc === true) await materializeNpmrc(target);
   await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);
@@ -165,9 +195,14 @@ export async function freshInstall(templateDir, target, opts = {}) {
 }
 
 export async function forceInstall(templateDir, target, opts = {}) {
-  const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: true, skipSpecialMerge: true });
+  const skipCiPosture = opts.ciPosture === false;
+  const filter = makeFilter({ templateRoot: templateDir, skipNeverTouch: true, skipSpecialMerge: true, skipCiPosture });
   await cp(templateDir, target, { recursive: true, force: true, filter });
   await applySpecialAndNeverTouch(templateDir, target);
+  if (skipCiPosture) {
+    await pruneEmptyCiPostureDirs(target);
+    await stampCiPostureDisabled(target);
+  }
   if (opts.withNpmrc === true) await materializeNpmrc(target);
   await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);

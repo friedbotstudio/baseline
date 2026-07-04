@@ -46,7 +46,7 @@ export async function run({ target, opts = {}, prompts = clackModule } = {}) {
 }
 
 async function copyTemplate(target, opts) {
-  const installOpts = { withNpmrc: !!opts.withNpmrc };
+  const installOpts = { withNpmrc: !!opts.withNpmrc, ciPosture: opts.ciPosture !== false };
   if (opts.force) await forceInstall(opts.templateDir, target, installOpts);
   else await freshInstall(opts.templateDir, target, installOpts);
 }

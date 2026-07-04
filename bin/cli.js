@@ -69,6 +69,14 @@ npm posture (off by default):
                       (ignore-scripts=true, min-release-age=7). Existing
                       target/.npmrc is preserved verbatim.
 
+CI posture (on by default):
+  --no-ci-posture     Skip the CI/secrets-posture artifacts (.githooks/
+                      pre-commit gitleaks gate, scripts/ci/* helpers, the
+                      branch-protection config template) and set
+                      project.json ci_posture.enabled=false so upgrades
+                      never re-deliver them. Use when your project already
+                      runs its own solution.
+
 Misc:
   --help, -h       Show this message.
   --version        Print version.
@@ -91,6 +99,7 @@ const OPTIONS = {
   'no-plantuml': { type: 'boolean' },
   'require-plantuml': { type: 'boolean' },
   'with-npmrc': { type: 'boolean' },
+  'no-ci-posture': { type: 'boolean' },
   strict: { type: 'boolean' },
   json: { type: 'boolean' },
 };
@@ -177,6 +186,7 @@ async function runBrandedInstall(target, values, templateDir) {
       noPlantuml: !!values['no-plantuml'],
       requirePlantuml: !!values['require-plantuml'],
       withNpmrc: !!values['with-npmrc'],
+      ciPosture: !values['no-ci-posture'],
     },
   });
 }
@@ -198,12 +208,13 @@ async function runPlainInstall(target, values, templateDir) {
   }
 
   try {
+    const installOpts = { withNpmrc: !!values['with-npmrc'], ciPosture: !values['no-ci-posture'] };
     if (values.force) {
       if (dryRun) io.log(`Would force-install into ${target}`);
-      else await forceInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
+      else await forceInstall(templateDir, target, installOpts);
     } else {
       if (dryRun) io.log(`Would fresh-install into ${target}`);
-      else await freshInstall(templateDir, target, { withNpmrc: !!values['with-npmrc'] });
+      else await freshInstall(templateDir, target, installOpts);
     }
   } catch (err) {
     await usageError(`install failed: ${err.message}`);

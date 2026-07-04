@@ -1,0 +1,48 @@
+{
+  "request": "Run epic-child combined slice J1+J2 of the approved erp-portables epic — J1 GREENFIELD: (1) .githooks/pre-commit + scripts/ci/require-gitleaks.sh hard-fail when gitleaks binary absent (exit 1, message names install command), staged-diff scan when present, core.hooksPath activation as documented one-liner (never git config automation, Art. VII); (2) .github/branch-protection/main.json config-as-code + scripts/ci/apply-branch-protection.mjs gh-api subset-asserting applier, check contexts re-derived from this repo's live release.yml (repo PUBLIC, ruleset fully live); (3) scripts/ci/low-risk-classifier.mjs + auto-merge workflow with NEVER-list (.githooks/**, .claude/hooks/**, .github/**, scripts/ci/**, dependency manifests, licence/SBOM, CLAUDE.md, docs/init/**, .claude/CONSTITUTION.md) always low_risk:false — all authored template-ready. J2 GREENFIELD (depends on J1): ship posture to consumers default-on with opt-out — J1 artifacts into obj/template/ via scripts/build-template.sh with check-context placeholders + manifest re-hash; project.json → ci_posture.enabled knob (template default true); init-project --no-ci-posture seam sets knob false + skips delivery; upgrade-project respects existing knob (never re-delivers into opted-out project, never touches consumer's own hooks); consumer docs (activation one-liner, opt-out, artifact roles); seed §16-adjacent config note + annex row; NO new Claude Code hook (roster stays 26). ACs: AC-010 + AC-013.",
+  "slug": "erp-portables-slice-j",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "J1+J2",
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-J1"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "approved epic spec docs/specs/erp-portables.md §Slice J1 + §Slice J2 (AC-010, AC-013); .claude/state/epic/erp-portables.json approved:true with slices J1/J2 open",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "AskUserQuestion timed out (user away); recommended combined epic-child track (one child, one commit for J1+J2) adopted as recorded assumption per XI.12 — matches user's 'j1 and j2 as combined' framing and the DEF/GHI combined-slice precedent; surface at gate C",
+    "security": "runs — escalated by J1+J2 risk[] (secrets-scanning enforcement, branch-protection control plane, auto-merge classifier, CLI delivery seams under security.sensitive_globs src/cli/**)",
+    "simplify": "runs — escalated by J1+J2 risk[] (spans .githooks, scripts/ci, .github workflows, build-template, src/cli, obj/template, constitution chain)",
+    "document": "runs — escalated by J1+J2 risk[] (activation runbook, consumer opt-out docs, seed config note + annex row)"
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783147916,
+  "updated_at": 1783150900,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

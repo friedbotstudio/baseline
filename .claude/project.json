@@ -44,6 +44,7 @@
     "exempt_globs": [
       "**/*.md",
       "**/*.json",
+      "scripts/ci/*.sh",
       "**/*.yaml",
       "**/*.yml",
       "**/*.toml",
@@ -328,6 +329,9 @@
     "org_mode": {
       "enabled": false
     }
+  },
+  "ci_posture": {
+    "enabled": true
   },
   "whatsnew": {
     "route_workflow": null

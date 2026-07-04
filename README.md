@@ -115,9 +115,12 @@ npx @friedbotstudio/create-baseline ./your-project --no-plantuml
 
 # Materialize a security-hardened target/.npmrc (opt-in)
 npx @friedbotstudio/create-baseline ./your-project --with-npmrc
+
+# Skip the CI/secrets posture (gitleaks pre-commit gate, scripts/ci helpers, branch-protection config)
+npx @friedbotstudio/create-baseline ./your-project --no-ci-posture
 ```
 
-By default the scaffolder writes only inside `.claude/`, plus `CLAUDE.md`, `.mcp.json`, and `docs/init/seed.md`. Pass `--with-npmrc` to also drop `ignore-scripts=true` + `min-release-age=7` into `target/.npmrc`. Those defaults blunt the npm post-install-hook attack class and delay consumption of fresh malicious publishes. An existing `target/.npmrc` is preserved verbatim. Operators who already set these defaults in `~/.npmrc` don't need the flag.
+By default the scaffolder writes inside `.claude/`, plus `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`, and a small CI posture set: `.githooks/pre-commit` (a gitleaks secrets gate), three `scripts/ci/` helpers, and a fill-in branch-protection config at `.github/branch-protection/main.json`. If your project already runs its own secrets scanning or branch protection, pass `--no-ci-posture`: the install skips those files and sets `ci_posture.enabled: false` in `project.json`, and later upgrades will not re-deliver them or touch your own hooks. Pass `--with-npmrc` to also drop `ignore-scripts=true` + `min-release-age=7` into `target/.npmrc`. Those defaults blunt the npm post-install-hook attack class and delay consumption of fresh malicious publishes. An existing `target/.npmrc` is preserved verbatim. Operators who already set these defaults in `~/.npmrc` don't need the flag.
 
 ### Doctor
 

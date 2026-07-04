@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Baseline CI posture pre-commit hook.
+#
+# Activate once per clone (manual step — never automated; CLAUDE.md Art. VII
+# forbids `git config` automation):
+#
+#   git config core.hooksPath .githooks
+#
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+exec "$repo_root/scripts/ci/require-gitleaks.sh"

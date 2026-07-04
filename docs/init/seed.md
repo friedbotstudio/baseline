@@ -632,6 +632,20 @@ Its output is structured input to `/init-project`, not optional reading.
 
 ---
 
+## §15.5 — CI/secrets posture (default-on, CLI opt-out)
+
+The baseline ships a CI/secrets posture alongside the constitution (`erp-portables` slices J1+J2): a `.githooks/pre-commit` hook that hard-fails commits when the gitleaks binary is absent (and staged-scans when present), `scripts/ci/` helpers (`require-gitleaks.sh`, `low-risk-classifier.mjs`, `apply-branch-protection.mjs`), and a branch-protection config-as-code fill-in at `.github/branch-protection/main.json`. Governing rules:
+
+- **Knob**: `project.json → ci_posture.enabled`, template default `true`. `npx @friedbotstudio/create-baseline <target> --no-ci-posture` skips delivery and stamps the knob `false`; an upgrade of an opted-out project never re-delivers the artifacts and never touches the consumer's own hooks at those paths. The path set is single-sourced in `src/cli/ci-posture.js`.
+- **Activation is human-only.** The hook goes live via `git config core.hooksPath .githooks`, a documented one-liner the maintainer runs — Claude SHALL NOT automate it (Art. VII hard-blocks `git config`).
+- **Git hooks are not Claude Code hooks.** The posture adds no entry to `.claude/hooks/`; the roster stays 26.
+- **The applier is subset-asserting.** `apply-branch-protection.mjs` refuses to apply a config whose required contexts were not observed green on the live branch head, and refuses placeholder (fill-in) configs outright.
+- **Auto-merge is allowlist-and-NEVER-list.** Only all-prose diffs (`docs/**`, `site-src/**`, `README.md`) may auto-merge; enforcement hooks, CI control plane, dependency manifests, licence/SBOM files, and governance docs never do.
+
+Runbook: `docs/runbooks/ci-posture.md`. Annex entry: `.claude/CONSTITUTION.md §1`.
+
+---
+
 ## §16 — Project-specific configuration
 
 Generated: 2026-04-28T12:29:02Z

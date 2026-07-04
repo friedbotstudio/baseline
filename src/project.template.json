@@ -254,6 +254,9 @@
       "enabled": false
     }
   },
+  "ci_posture": {
+    "enabled": true
+  },
   "whatsnew": {
     "route_workflow": null
   },

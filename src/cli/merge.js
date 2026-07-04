@@ -4,6 +4,7 @@ import { hashFile, saveManifest } from './manifest.js';
 import { deepMergeMcpServers, computeMergedMcpServers } from './mcp.js';
 import { mergeProjectJsonFile, computeMergedProjectJson } from './project-json-merge.js';
 import { resolveBase } from './upgrade-tiers.js';
+import { CI_POSTURE_PATHS, readCiPostureEnabled } from './ci-posture.js';
 import { NEVER_TOUCH, SPECIAL_MERGE } from './install.js';
 import { pathExists } from './util.js';
 import { dispatchByTier, NoBaseError, canRecoverBase, writeStageBaseless } from './upgrade-tiers.js';
@@ -76,6 +77,10 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
   const baseline_version = oldManifest?.baseline_version;
   const allPaths = new Set([...Object.keys(oldFiles), ...Object.keys(newFiles)]);
   const marker = await readMarker(target);
+  // Opted-out CI posture (ci_posture.enabled: false): posture paths are
+  // invisible to the merge — never re-delivered, never pruned, never
+  // prompted — so a consumer's own hooks at those paths stay untouched.
+  const ciPostureEnabled = await readCiPostureEnabled(target);
 
   const tierCtx = {
     target,
@@ -90,6 +95,8 @@ export async function threeWayMerge(templateDir, target, oldManifest, newManifes
   for (const rel of allPaths) {
     const tplPath = join(templateDir, rel);
     const tgtPath = join(target, rel);
+
+    if (!ciPostureEnabled && CI_POSTURE_PATHS.includes(rel)) continue;
 
     if (NEVER_TOUCH.includes(rel)) {
       if (await pathExists(tgtPath)) {

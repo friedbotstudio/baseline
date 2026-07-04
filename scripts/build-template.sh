@@ -214,6 +214,28 @@ for src_file in "$PKG_ROOT/src/memory/"*.template.md; do
   cp "$src_file" "$TEMPLATE_DIR/.claude/memory/${base}.md"
 done
 
+# Stage 2.6 — CI posture artifacts (slice J2; default-on, CLI opt-out via
+# --no-ci-posture). The repo-local .githooks hook and scripts/ci helpers are
+# template-ready (no repo-hardcoded paths), so they ship verbatim. The
+# branch-protection config ships as the consumer fill-in variant from
+# src/branch-protection.template.json — this repo's live check contexts are
+# replaced by a placeholder the applier refuses to apply. Each copy is
+# conditional on the canonical source existing (fixture builds skip silently).
+if [ -f "$PKG_ROOT/.githooks/pre-commit" ]; then
+  mkdir -p "$TEMPLATE_DIR/.githooks"
+  cp "$PKG_ROOT/.githooks/pre-commit" "$TEMPLATE_DIR/.githooks/pre-commit"
+fi
+for ci_helper in require-gitleaks.sh low-risk-classifier.mjs apply-branch-protection.mjs; do
+  if [ -f "$PKG_ROOT/scripts/ci/$ci_helper" ]; then
+    mkdir -p "$TEMPLATE_DIR/scripts/ci"
+    cp "$PKG_ROOT/scripts/ci/$ci_helper" "$TEMPLATE_DIR/scripts/ci/$ci_helper"
+  fi
+done
+if [ -f "$PKG_ROOT/src/branch-protection.template.json" ]; then
+  mkdir -p "$TEMPLATE_DIR/.github/branch-protection"
+  cp "$PKG_ROOT/src/branch-protection.template.json" "$TEMPLATE_DIR/.github/branch-protection/main.json"
+fi
+
 # Stage 3 — build the sha256 manifest.
 node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
 

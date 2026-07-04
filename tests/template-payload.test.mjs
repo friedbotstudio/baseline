@@ -42,6 +42,11 @@ const ALLOWED_PREFIXES = [
   'docs/init/seed.md',
   // Build-time manifest consumed by --merge.
   'manifest.json',
+  // CI/secrets posture artifacts (slice J2; default-on, CLI opt-out via
+  // --no-ci-posture). Delivery is filtered by src/cli/ci-posture.js.
+  '.githooks/',
+  'scripts/ci/',
+  '.github/branch-protection/',
 ];
 
 // Subpaths inside .claude/ that must NOT ship.
@@ -73,6 +78,13 @@ const REQUIRED_PATTERNS = [
   { name: '4 commands',           match: (p) => /^\.claude\/commands\/[^/]+\.md$/.test(p), minCount: 4 },
   { name: '36 skills (SKILL.md)', match: (p) => /^\.claude\/skills\/[^/]+\/SKILL\.md$/.test(p), minCount: 36 },
   { name: '6 memory schemas',     match: (p) => /^\.claude\/memory\/(conventions|decisions|landmarks|landmines|libraries|pending-questions)\.md$/.test(p), minCount: 6 },
+  // CI posture (slice J2): the 5 shipped artifacts. The branch-protection
+  // config ships as the consumer fill-in variant (placeholder contexts).
+  { name: 'ci-posture pre-commit hook',      match: (p) => p === '.githooks/pre-commit' },
+  { name: 'ci-posture require-gitleaks',     match: (p) => p === 'scripts/ci/require-gitleaks.sh' },
+  { name: 'ci-posture classifier',           match: (p) => p === 'scripts/ci/low-risk-classifier.mjs' },
+  { name: 'ci-posture protection applier',   match: (p) => p === 'scripts/ci/apply-branch-protection.mjs' },
+  { name: 'ci-posture protection template',  match: (p) => p === '.github/branch-protection/main.json' },
 ];
 
 async function listFiles(root, base = root, acc = []) {
@@ -111,7 +123,7 @@ describe('template payload purity', () => {
     // (notably `npm-pack-tarball.test.mjs` which triggers `prepack` → rebuilds
     // the real `template/` mid-read).
     isolatedRoot = await mkdtemp(join(tmpdir(), 'payload-purity-'));
-    for (const entry of ['.claude', 'src', 'scripts', 'docs']) {
+    for (const entry of ['.claude', 'src', 'scripts', 'docs', '.githooks', '.github']) {
       const from = join(ROOT, entry);
       if (existsSync(from)) await cp(from, join(isolatedRoot, entry), { recursive: true });
     }
