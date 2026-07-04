@@ -85,7 +85,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
-**Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`):
+**Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`). **Step 0 — leanest-safe-track triage (seed.md §5):** `/triage` classifies novelty FIRST — `pattern-copy | spec-derived | novel | ambiguous` — with cited evidence, recorded as `workflow.json → novelty` (+ `novelty_evidence`); the DEFAULT is the leanest track whose guardrails cover the risk, and a heavier pick requires a named `track_reason`. Step 0 also writes `skip_brainstorm` explicitly on every workflow (XI.3). Helpers: `flag-parser.mjs → validateNoveltyRecord / resolveSkipBrainstorm`.
 
 - New feature → `/triage` selects `intake`.
 - Bugfix → `/triage` selects `spec` or `tdd`.
@@ -263,7 +263,7 @@ Every UI design task inside a workflow phase SHALL route through `design-ui`, wh
 
 ### XI.3 Entry-phase brainstorm (PM mode)
 
-Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). Brainstorm captures the requirement via Socratic dialogue and writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn`. `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. Full rule table (caps, idempotency, opt-out heuristic): `.claude/CONSTITUTION.md §5.3` (annex).
+Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). `/triage` Step 0 writes the flag **explicitly** on every workflow — `true` for spec-derived/complete-framing requests, `false` only when genuinely ambiguous AND answers would change the build; the read-time default is unchanged (absent → run). Brainstorm is **derivation-first**: Stage 1 derives every derivable field from context; only underivable, build-changing gaps probe (Stage 2 cap **2**). It writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn`. `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. Full rule table (caps, idempotency, opt-out heuristic): `.claude/CONSTITUTION.md §5.3` (annex).
 
 ---
 
@@ -276,6 +276,12 @@ Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brai
 ### XI.5 Navigation routing
 
 For a code-navigation question ("where does X come from", "what renders Y") in any repository, `code-browser`'s language-agnostic **universal walk** (entry → imports → IO boundary) is the **first** attempt; reach for the `Explore` agent or `grep` only when the repo has no resolvable structure or the walk dead-ends. Pure full-text search and type/util definition lookups stay grep's domain (not navigation). The JS/TS `walk.mjs`/`discover.mjs` accelerator is optional. Detail: `code-browser/SKILL.md`.
+
+---
+
+### XI.12 Decision economy
+
+Only **load-bearing, human's-call forks** may surface as questions or gate-A decision points — the closed category list (consent-adjacent scope, irreversible/destructive ops, policy flips, contradictory requirements) lives in the annex. Routine engineering choices are decided in main context and RECORDED in the spec's `## Decisions` section with rationale (`owner: engineer`) — reviewed at gate A, not asked. An `AskUserQuestion` timeout inside a phase skill adopts the recommended option as a **recorded assumption** surfaced at the next consent gate; questions never block an unattended run — consent gates still do (seed.md §6 governs FIRST). Full rule table: `.claude/CONSTITUTION.md §5.12` (annex).
 
 ---
 

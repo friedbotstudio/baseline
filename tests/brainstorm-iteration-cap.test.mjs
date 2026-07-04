@@ -1,7 +1,9 @@
-// brainstorm-and-codesign — AC-004 boundary
+// erp-portables slice DEF (E) — AC-005 boundary
 //
-// Brainstorm Stage 2 probe-loop terminates after 5 iterations when gaps remain;
-// Stage 3 fires with partial brief; open_questions enumerates unclosed gaps.
+// Brainstorm Stage 2 probe-loop terminates after 2 iterations when gaps remain
+// (derivation-first: only underivable, build-changing gaps probe — cap tightened
+// 5 → 2); Stage 3 fires with partial brief; open_questions enumerates unclosed
+// gaps.
 //
 // SUT: .claude/skills/brainstorm/probe-loop.mjs
 
@@ -23,14 +25,14 @@ try {
   );
 }
 
-describe('brainstorm probe-loop iteration cap (AC-004 boundary)', () => {
-  it('test_when_brainstorm_stage2_reaches_iteration_cap_5_then_advance_with_open_questions', () => {
+describe('brainstorm probe-loop iteration cap (AC-005 boundary)', () => {
+  it('test_when_probe_loop_gaps_remain_then_cap_is_exactly_2', () => {
     const gaps = ['actor', 'trigger', 'current_state', 'desired_state', 'non_goals', 'leakage'];
     // ambiguous-answer function: always returns a non-closing answer
     const askFn = (_q) => ({ closed: false, answer: 'I am not sure yet' });
 
     const result = probeLoop.runProbeLoop({ gaps, askFn });
-    assert.equal(result.iterations, 5, 'iteration cap is exactly 5');
+    assert.equal(result.iterations, 2, 'iteration cap is exactly 2 (derivation-first, 5 → 2)');
     assert.ok(result.open_questions.length > 0, 'unclosed gaps surface as open_questions');
     assert.ok(result.advanced_to_stage_3, 'after cap, advances to Stage 3 anyway');
   });

@@ -1,0 +1,46 @@
+{
+  "request": "Run epic-child slice DEF of the approved erp-portables epic — build-to-spec doctrine, one commit. D: leanest-safe-track triage — /triage Step 0 classifies novelty FIRST (pattern-copy|spec-derived|novel|ambiguous, cited evidence) recorded as workflow.json→novelty; leanest track whose guardrails cover the risk is default; heavier pick needs named track_reason; entry-point rebalance in workflows.jsonl description/selector_hints text only (DAGs unchanged). E: opt-in derivation-first brainstorm — workflow-defaults.mjs UNCHANGED (no read-time flip); /triage Step 0 writes skip_brainstorm explicitly on every workflow (true for spec-derived/complete framing, false only when genuinely ambiguous AND answers change the build); probe-loop cap 5→2; Stage 1 derivation-first; entry-skill Step 0.5 wording in intake/spec/tdd SKILL.md. F: XI.12 decision economy — new CLAUDE.md XI.12 + annex §5.x (only load-bearing human's-call forks surface as questions/gate-A decision points; routine forks decided in main context and RECORDED in spec ## Decisions owner: engineer; AskUserQuestion timeout adopts recommended option as recorded assumption surfaced at next consent gate); seed.md §5/§6 note FIRST. ACs: AC-004, AC-005, AC-006.",
+  "slug": "erp-portables-slice-def",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "DEF",
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-DEF"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "security"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "AskUserQuestion timed out (user away); recommended epic-child track adopted as recorded assumption — matches slices A/B/C precedent and the approved epic's open slice DEF",
+    "security": "excepted — NOT in slice DEF risk[] (write surface is SOP prose in .claude/skills/**, workflows.jsonl hint text, constitution chain, probe-loop cap; no hooks, no CLI, no IO boundary)",
+    "simplify": "runs — escalated by slice DEF risk[] (spans triage/brainstorm/intake/spec/tdd skills + workflows.jsonl + constitution chain + tests)",
+    "document": "runs — escalated by slice DEF risk[] (CLAUDE.md XI.12 + XI.3, annex §5.3/§5.x, seed.md §5/§6, Art. IV entry points; site/README if behavior prose shifts)"
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783139023,
+  "updated_at": 1783141078,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

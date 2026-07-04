@@ -33,7 +33,9 @@ Helpers: `skip-check.mjs → shouldSkip(workflowJson)` and `shouldSkipForExistin
 
 Validate inputs via `validate-call.mjs → validateCall({request, slug, calling_phase})`. On invalid (empty request, unknown calling_phase, missing slug) → return `{ final_state: "needs_human", brief_path: null, reason: <reason> }`.
 
-## Stage 1 — Gap analysis
+## Stage 1 — Gap analysis (derivation-first)
+
+Stage 1 is **derivation-first** (build-to-spec doctrine, CLAUDE.md XI.3): before declaring anything a gap, DERIVE each canonical field from what is already on hand — the request text, the pinned spec/backlog/epic artifact `/triage` cited in `workflow.json → novelty_evidence`, repo memory, and conversation context. A field you can derive with cited support is FILLED, not probed. Only **underivable, build-changing** gaps — where a wrong guess would change what gets built — proceed to Stage 2.
 
 Read the raw request. Identify which of the six canonical fields are missing or ambiguous:
 
@@ -48,11 +50,11 @@ Read the raw request. Identify which of the six canonical fields are missing or 
 
 For each detected solution-leakage instance, the gap is "probe the underlying need" — ask what the proposed solution would let the engineer accomplish, not how to implement it.
 
-The gap list is the input to Stage 2.
+The gap list — underivable, build-changing gaps only — is the input to Stage 2.
 
 ## Stage 2 — Probe dialogue
 
-Iterate over gaps via `probe-loop.mjs → runProbeLoop({gaps, askFn})`. Cap at 5 iterations. Each iteration:
+Iterate over gaps via `probe-loop.mjs → runProbeLoop({gaps, askFn})`. Cap at 2 iterations (derivation-first tightened the cap 5 → 2; questions are a scarce resource per CLAUDE.md XI.12). Each iteration:
 
 1. Draft a probe text for the current gap.
 2. Run `discipline.mjs → scanTurn(text)` on the probe BEFORE emitting. If `violations.length > 0`, rewrite — never emit a probe containing solution-shaped tokens. The discipline scanner catches solution verbs (`implement`, `refactor`, `add X`), library names (Redis, PostgreSQL, etc.), and solution-proposal phrasing (`we could`, `what if we`, `i recommend`).
@@ -102,7 +104,7 @@ The brainstorm gate skill SHALL NOT fire on `chore` or `freeform` tracks (those 
 
 - **Never propose a solution during Stage 2.** The `discipline.mjs` scanner is the structural enforcement.
 - **Never write outside `docs/brief/<slug>.md`.** Other outputs are the entry skill's territory.
-- **Honor the iteration cap (5 in Stage 2, 5 in Stage 3).** Cap exhaustion → `final_state: "needs_human"`.
+- **Honor the iteration cap (2 in Stage 2, 5 in Stage 3).** Cap exhaustion → `final_state: "needs_human"` (Stage 3) or `open_questions` in the brief (Stage 2).
 - **Honor `skip_brainstorm: true` immediately.** No AskUserQuestion fires when the gate skips.
 - **Honor existing brief.** Re-invocation reads the existing brief; no re-dialogue.
 

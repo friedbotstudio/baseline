@@ -19,6 +19,10 @@ If neither, stop and direct the user to `/triage` first.
 
 # Steps
 
+## 0.5 Brainstorm gate (tdd-quickfix entry only; CLAUDE.md Article XI.3)
+
+When `/tdd` is the workflow's ENTRY phase (`track_id == "tdd-quickfix"`): read `.claude/state/workflow.json` and apply read-time defaults via `.claude/skills/brainstorm/workflow-defaults.mjs → withDefaults`. `/triage` Step 0 writes `skip_brainstorm` explicitly on every workflow (build-to-spec doctrine — `true` for spec-derived/complete-framing requests, `false` only when genuinely ambiguous AND answers would change the build); an absent flag still resolves to `false` (read-time default unchanged). If `skip_brainstorm` is `false`, invoke `Skill(brainstorm, {request, slug, calling_phase: "tdd"})` before deciding the recipe — brainstorm runs **derivation-first** (Stage 1 derives every derivable field; only underivable, build-changing gaps probe, cap 2) and its brief at `docs/brief/<slug>.md` feeds Step 2's scenario decisions. On spec-entry / intake-full / epic-child tracks this gate is silent — discovery (or the pinned epic spec) already framed the work. If `skip_brainstorm` is `true`, proceed directly to Step 1.
+
 ## 1. Verify prereq
 
 Read `.claude/state/workflow.json`. Confirm `tdd` is the current phase to run: `track_id == "tdd-quickfix"` for quickfix (post-§18; legacy `entry_phase == "tdd"` also accepted), OR `spec` is in `completed` AND the spec approval token exists for spec-entry / intake-full tracks.

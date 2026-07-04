@@ -19,6 +19,15 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
 
 # Steps
 
+0. **Novelty classification FIRST — leanest-safe-track triage (build-to-spec doctrine; seed.md §5, CLAUDE.md Art. IV + XI.3).** Before any track ranking, classify the request's novelty with **cited evidence** (the spec chapter, backlog key, epic slice, precedent commit, or pattern the request derives from — or the absence of any):
+   - `pattern-copy` — repeats an existing in-repo pattern with new parameters (evidence: the precedent file/commit).
+   - `spec-derived` — derives from a spec chapter, roadmap item, backlog entry, or approved epic slice (evidence: the artifact path/key).
+   - `novel` — genuinely new surface with no spec/pattern precedent (evidence: what was searched and not found).
+   - `ambiguous` — the request's intent or scope cannot be pinned without answers (evidence: the specific unresolvable gap).
+
+   Record `novelty` + `novelty_evidence` in `workflow.json` (step 4). The DEFAULT pick is the **leanest** track whose guardrails cover the risk; picking a heavier track requires a named `track_reason` (recorded in `workflow.json`). Validate the record with `flag-parser.mjs → validateNoveltyRecord` before writing.
+
+   Step 0 also resolves `skip_brainstorm` **explicitly on every workflow** via `flag-parser.mjs → resolveSkipBrainstorm({novelty, complete_framing, no_brainstorm_flag})`: `true` for `spec-derived`/`pattern-copy` or `novel` with complete framing (actor + trigger + desired state all present), `false` only when genuinely ambiguous AND the answers would change the build. The read-time default is unchanged — an absent flag still resolves to run; `workflow-defaults.mjs` is deliberately untouched (maintainer decision: "no flag = run").
 1. Restate the request back to the user in 1-2 sentences, and name the entry phase you've chosen and why.
 2. **Git-repo detection (mandatory).** Run `git rev-parse --is-inside-work-tree 2>/dev/null` at the project root. If the exit status is non-zero, the project is not a git repository: gate C / `commit` are inapplicable AND the swarm path is unavailable because worktree isolation (the swarm contract's physical safety mechanism) requires git (CLAUDE.md Article IV "Phase 6c and Phase 11 are git-conditional", Article VII). Append `"swarm-plan"`, `"approve-swarm"`, `"swarm-dispatch"`, `"grant-commit"`, and `"commit"` to the exceptions array you'll write in step 4. Tell the user: "Non-git project detected — `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` auto-excepted. Phase 6 routes to solo `/tdd`. Workflow ends after `/archive`. Persistence outside git is your responsibility."
 3. If the user has not confirmed yet, ask: "Entry phase = <X>. Exceptions = <Y>. Proceed? (or tell me a different entry)"
@@ -28,6 +37,10 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
      "request": "<the request>",
      "slug": "<workflow slug>",
      "track_id": "<intake-full|spec-entry|tdd-quickfix|chore|freeform>",
+     "novelty": "<pattern-copy|spec-derived|novel|ambiguous>",
+     "novelty_evidence": "<the cited evidence from Step 0>",
+     "track_reason": "<required only when the pick is heavier than the leanest safe track>",
+     "skip_brainstorm": <boolean — written explicitly on EVERY workflow per Step 0>,
      "exceptions": ["<phase>", ...],
      "completed": [],
      "skipped_alternates": [],

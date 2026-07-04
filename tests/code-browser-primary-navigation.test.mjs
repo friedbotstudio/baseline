@@ -36,7 +36,7 @@ const WALK_SHA = '35e4aaa57515192849a3cd32cff96bdd892854349789d72f4dd95917d93211
 const DISCOVER_SHA = 'ac80d14d2d65a3712e295ac8f00822044242838e5d2671128be28f602f721602';
 
 const CLAUDE_CHAR_CAP = 40000;
-const CLAUDE_TARGET_MAX = 37000; // >= 3000 headroom (AC-007; lowered by claude-md-pointer-rewrite, raised +500 by harden-epic-approved-flip for the epic_approval_guard row, +500 by phase-timing-instrumentation for the phase_timer row, +500 by checker-graduation-fanout for the §II.A oracle-checker fan-out clause, +500 by erp-portables slice A for the §4.2-A advisory-subagents clause, +1000 by erp-portables slice C for the Art. IV gate-C-conditional row and the Art. VII autonomous-landing rule)
+const CLAUDE_TARGET_MAX = 38500; // >= 1500 headroom (AC-007; lowered by claude-md-pointer-rewrite, raised +500 by harden-epic-approved-flip for the epic_approval_guard row, +500 by phase-timing-instrumentation for the phase_timer row, +500 by checker-graduation-fanout for the §II.A oracle-checker fan-out clause, +500 by erp-portables slice A for the §4.2-A advisory-subagents clause, +1000 by erp-portables slice C for the Art. IV gate-C-conditional row and the Art. VII autonomous-landing rule, +1500 by erp-portables slice DEF for the Art. IV Step-0 triage rule, the XI.3 derivation-first rewrite, and the XI.12 decision-economy clause)
 
 // Binding-rule markers that MUST survive the CLAUDE.md compression (AC-007).
 const REQUIRED_ARTICLE_HEADINGS = [
