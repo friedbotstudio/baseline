@@ -43,7 +43,7 @@ On every new session, before any work, you SHALL:
 
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
-   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 46 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 48 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
    You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
@@ -142,6 +142,7 @@ The following bind every code change.
 - Reuse libraries for what they already do.
 - Abstract at the third concrete use case, not before.
 - Code without a test exercising it SHALL NOT exist.
+- Two-sided faithful scope: YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope. A spec AC row deferring committed scope SHALL carry `deferred: dependency|risk|cost|human-directed`; untagged or YAGNI-tagged deferral is a Critical BLOCKER at gate A (`spec-traceability-review`).
 
 ### VI.5 Context7 for third-party APIs
 - For ANY third-party library, you SHALL invoke the `context7` MCP before writing code that uses it.
@@ -303,6 +304,6 @@ Cryptographic attestation, signed lock files, and per-skill merkle hashes are no
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 46 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 48 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 46 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 48 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).

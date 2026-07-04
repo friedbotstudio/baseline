@@ -27,8 +27,8 @@ const REPO_ROOT = resolve(here, '..');
 const ALLOWED_LINES = {
   'CLAUDE.md': new Set([]),
   'src/CLAUDE.template.md': new Set([]),
-  'docs/init/seed.md': new Set([14, 173, 689]),
-  'src/seed.template.md': new Set([14, 173]),
+  'docs/init/seed.md': new Set([14, 174, 690]),
+  'src/seed.template.md': new Set([14, 174]),
 };
 
 async function scanFile(relPath) {

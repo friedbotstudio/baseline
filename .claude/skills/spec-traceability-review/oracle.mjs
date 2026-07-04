@@ -35,6 +35,32 @@ function extractReferencedAcNumbers(spec) {
   return refs;
 }
 
+const DEFERRAL_REASONS_RE = /deferred:\s*(dependency|risk|cost|human-directed)\b/i;
+const DEFERRAL_RE = /\bdeferred\b/i;
+
+/**
+ * AC-table rows inside "## Acceptance criteria" that defer spec-committed scope
+ * (VI.4 two-sided faithful scope, erp-portables slice G). Row convention:
+ * `deferred: <reason>` in the Criterion cell, reason from the closed list
+ * dependency|risk|cost|human-directed. An untagged or YAGNI-tagged deferral is
+ * a Critical BLOCKER — YAGNI never authorizes deferring committed scope.
+ */
+function extractUntaggedDeferrals(spec) {
+  const offenders = [];
+  let inAcs = false;
+  for (const line of spec.split(/\r?\n/)) {
+    if (/^##\s+Acceptance criteria/i.test(line)) { inAcs = true; continue; }
+    if (inAcs && /^##\s/.test(line)) break;
+    if (!inAcs || !line.trimStart().startsWith('|')) continue;
+    const cells = line.split('|').map((c) => c.trim());
+    const criterion = cells[2] || '';
+    if (!DEFERRAL_RE.test(criterion)) continue;
+    if (DEFERRAL_REASONS_RE.test(criterion)) continue;
+    offenders.push({ id: cells[1] || '(unnamed row)', criterion });
+  }
+  return offenders;
+}
+
 export function runTraceabilityOracle({ spec, intake }, deps = {}) {
   const tierDial = deps.tierDial || resolveCheckerThreshold;
   const { mandatory } = tierDial(CHECKER);
@@ -53,6 +79,18 @@ export function runTraceabilityOracle({ spec, intake }, deps = {}) {
       message: `Upstream intake AC ${n} is silently dropped — no spec AC traces to it.`,
       suggested_fix: `Add a spec AC row with "intake AC ${n}" in its Upstream column, or record the drop explicitly.`,
       artifact: { kind: 'trace-gap', locus: `intake AC ${n}` },
+    }, { mandatory }));
+  }
+
+  for (const { id, criterion } of extractUntaggedDeferrals(spec)) {
+    findings.push(normalizeFinding({
+      check: 'deferral_tagged',
+      file: null,
+      line: null,
+      evidence: `${id} Criterion: "${criterion}"`,
+      message: `${id} defers spec-committed scope without a sanctioned reason tag — YAGNI never authorizes deferring committed scope (CLAUDE.md VI.4).`,
+      suggested_fix: `Tag the row \`deferred: dependency|risk|cost|human-directed\` in the Criterion cell, or build the scope now.`,
+      artifact: { kind: 'deferral', locus: id },
     }, { mandatory }));
   }
 

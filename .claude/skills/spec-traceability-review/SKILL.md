@@ -73,4 +73,9 @@ Verdict: READY FOR APPROVAL | REVISIONS REQUIRED
 
 ## Mechanical oracle (`-d186`)
 
-`oracle.mjs` provides the artifact-backed check that may **block**: a **dropped upstream AC** (an intake/BRD AC no spec AC references) yields a finding carrying `artifact{kind:'trace-gap', locus}`. Reference matching accepts the real separators specs use (`intake AC 1`, `intake AC-1`, zero-padded `intake AC-001`) — a space-only matcher false-flagged hyphenated refs (caught by a governed round-trip). A finding blocks only with an `ArtifactRef` **and** tier-dial `mandatory` (`resolveCheckerThreshold('spec-traceability')`); else ADVISORY.
+`oracle.mjs` provides two artifact-backed checks that may **block**:
+
+- **Dropped upstream AC** (`upstream_ac_traced`): an intake/BRD AC no spec AC references yields a finding carrying `artifact{kind:'trace-gap', locus}`. Reference matching accepts the real separators specs use (`intake AC 1`, `intake AC-1`, zero-padded `intake AC-001`) — a space-only matcher false-flagged hyphenated refs (caught by a governed round-trip).
+- **Untagged deferral** (`deferral_tagged`, AC-007 / CLAUDE.md VI.4 two-sided faithful scope): a spec AC-table row whose Criterion cell defers spec-committed scope (matches `\bdeferred\b`) MUST carry a reason tag from the closed list — `deferred: dependency|risk|cost|human-directed`. An untagged deferral, or one tagged `deferred: YAGNI`, yields a Critical BLOCKER finding carrying `artifact{kind:'deferral', locus: <AC id>}` — YAGNI gates speculation beyond the approved spec; it never authorizes deferring committed scope.
+
+A finding blocks only with an `ArtifactRef` **and** tier-dial `mandatory` (`resolveCheckerThreshold('spec-traceability')`); else ADVISORY.

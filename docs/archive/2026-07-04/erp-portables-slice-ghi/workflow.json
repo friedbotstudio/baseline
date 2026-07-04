@@ -1,0 +1,35 @@
+{
+  "request": "Run epic-child combined slice GHI of the approved erp-portables epic — one commit. G: two-sided faithful scope + VI.4 YAGNI floor/ceiling (seed §2.4 FIRST, then CLAUDE.md VI.4 + mirror + annex): 'YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope.' spec-traceability-review oracle + SKILL.md: AC-table rows deferring spec-committed scope MUST carry `deferred: dependency|risk|cost|human-directed` in the Criterion cell; untagged or YAGNI-tagged deferral → Critical BLOCKER reaching gate A via existing checker-fanout wiring; spec SKILL.md documents the row convention; annex documents the closed list. H: lint_runner/test_runner gate on project.json → lint|test.file_globs before spawning (match → run; no match → skip silently; absent/empty globs → run, back-compat fail-open) using existing matchAnyGlob from common.mjs. I: commit-planner (split dirty tree into single-concern Conventional Commits; deterministic inventory.mjs; read-only until user approves plan) + retrospective (cycle-end retro converting recurring judgment failures into landmine entries + graduation candidates up the enforcement funnel) skills, both owner: baseline, generalized (no erp references); counts 46→48 reconciled across seed §4.3, CLAUDE.md Art. III greeting + Appendix, annex Appendix B, manifest owners.skills + hashes, README, site-src. ACs: AC-007, AC-008, AC-009.",
+  "slug": "erp-portables-slice-ghi",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "GHI",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/specs/erp-portables.md — ## Slice G / ## Slice H / ## Slice I sections + AC-007/AC-008/AC-009; .claude/state/epic/erp-portables.json approved: true with G, H, I open",
+  "skip_brainstorm": true,
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-GHI"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "simplify"
+  ],
+  "completed": ["tdd", "security", "integrate", "document", "archive", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "user confirmed epic-child GHI grouping via AskUserQuestion (2 blocks: GHI now, J1+J2 next)",
+    "simplify": "excepted — NOT in slice G/H/I risk[] (G: [document], H: [security], I: [document] per epic state)",
+    "security": "runs — escalated by slice H risk[] (hook execution gate on written file paths)",
+    "document": "runs — escalated by slice G + I risk[] (constitution chain, skill SKILL.md prose, counts across README/site-src)"
+  },
+  "source_backlog_keys": [],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "created_at": 1783144800,
+  "updated_at": 1783146000
+}

@@ -53,6 +53,7 @@ Per `.claude/state/workflow.json`, `research` must be in `completed` OR in `exce
 
 - **No stubs — EVER.** If the spec declares a function or endpoint, define its contract fully: inputs, outputs, errors, idempotency, side effects, ownership. If you can't, do not declare it — flag it as an Open question.
 - **YAGNI.** The spec describes what is built now. A "future option" with no current test driving it does not belong here.
+- **Deferral rows carry a closed-list tag (AC-007, CLAUDE.md VI.4 two-sided faithful scope).** An AC-table row that defers spec-committed scope writes `deferred: <reason>` in its Criterion cell, reason from `dependency|risk|cost|human-directed`. An untagged deferral — or `deferred: YAGNI` — is a Critical BLOCKER from `spec-traceability-review` at gate A: YAGNI gates speculation beyond the approved spec; it never authorizes deferring committed scope.
 - **Context7 for every library API.** API shape confirmed via the `context7` MCP, not training recall. Record the library version.
 - **Acceptance criteria are testable.** Numbered, concrete, traced. "Users can retry" is not an AC; "on 5xx from upstream, worker retries with 100/200/400 ms backoff, max 3 tries, then dead-letters" is.
 - **Rollout and rollback are named, not 'standard.'** Which flag? Which kill-switch? Which metric + threshold + window detects a bad rollout within 5 minutes?

@@ -2,8 +2,9 @@
 //
 // changelog moves out of the `phases` category into a `generators` category, and
 // the renamed skill is the one the manifest's owners.skills records as
-// baseline-owned. The `standup` generator later joined this category, taking
-// generators to 2 and the total skill count to 41.
+// baseline-owned. The `standup` generator later joined this category (generators
+// 2), and `commit-planner` + `retrospective` followed with erp-portables slice
+// GHI, taking generators to 4 and the total skill count to 48.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,7 +18,8 @@ const loadCounts = () => import(join(REPO_ROOT, '.claude/skills/audit-baseline/d
 describe('whatsnew governance counts', () => {
   it('test_when_derive_counts_then_generators_two_phases_ten_sum_42', async () => {
     const { SKILL_CATEGORIES, deriveCounts } = await loadCounts();
-    assert.equal(SKILL_CATEGORIES.generators, 2, 'generators category holds whatsnew + standup');
+    assert.equal(SKILL_CATEGORIES.generators, 4,
+      'generators category holds whatsnew + standup + commit-planner + retrospective');
     assert.equal(SKILL_CATEGORIES.phases, 10, 'phases must drop from 11 to 10');
 
     const categorySum = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);

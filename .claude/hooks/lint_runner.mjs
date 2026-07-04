@@ -15,6 +15,7 @@ import {
   emitAllow,
   emitInfo,
   logLine,
+  matchAnyGlob,
 } from './lib/common.mjs';
 
 const payload = await readPayload();
@@ -41,6 +42,11 @@ if (!cmd || cmd === 'None') {
   emitInfo(`Lint Runner: no .lint.cmd set in .claude/project.json. Skipping lint for '${rel}'.`);
   emitAllow();
 }
+
+// AC-008: honor lint.file_globs — a declared non-empty glob list scopes the
+// runner to matching paths; absent/empty stays fail-open (run everything).
+const fileGlobs = projectGet('.lint.file_globs');
+if (Array.isArray(fileGlobs) && fileGlobs.length > 0 && !matchAnyGlob(rel, fileGlobs)) emitAllow();
 
 let timeoutSec = projectGet('.lint.timeout_seconds');
 if (typeof timeoutSec !== 'number' || !Number.isFinite(timeoutSec)) timeoutSec = 60;

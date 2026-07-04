@@ -19,6 +19,7 @@ import {
   emitAllow,
   emitInfo,
   logLine,
+  matchAnyGlob,
 } from './lib/common.mjs';
 
 const payload = await readPayload();
@@ -45,6 +46,11 @@ if (!cmd || cmd === 'None') {
   emitInfo(`Test Runner: no .test.cmd set in .claude/project.json. Skipping tests for '${rel}'.`);
   emitAllow();
 }
+
+// AC-008: honor test.file_globs — a declared non-empty glob list scopes the
+// runner to matching paths; absent/empty stays fail-open (run everything).
+const fileGlobs = projectGet('.test.file_globs');
+if (Array.isArray(fileGlobs) && fileGlobs.length > 0 && !matchAnyGlob(rel, fileGlobs)) emitAllow();
 
 // Resolve affected tests via configured resolver, if any.
 let affected = '';
