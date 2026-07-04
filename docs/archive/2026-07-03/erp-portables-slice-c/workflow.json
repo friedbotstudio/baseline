@@ -1,0 +1,46 @@
+{
+  "request": "Run epic-child slice C of the approved erp-portables epic — branch-aware gate C: PORT predicates + materializer predicate + tests (add isProtectedBranch() + isAutonomousFeatureLanding() to lib/common.mjs, fail-safe false; optional TrackNode.condition with predicate enum requires_commit_consent in workflow-track.v1.json + validators; materializer resolves conditions in src/cli/track-tasklist-materializer.js first, Stage 0b syncs the skill mirror; annotate grant-commit nodes in workflows.jsonl) + REAUTHOR (harness SKILL.md no-yield carve-out when the predicate omitted the node; commit SKILL.md Step 7 git push -u + gh pr create --base <release>, any push/PR/gh-absent failure yields to user; seed §11/§18 + Art. IV/VII notes). Gate C byte-unchanged on protected branches; git_commit_guard untouched. ACs: AC-003.",
+  "slug": "erp-portables-slice-c",
+  "track_id": "epic-child",
+  "epic": "erp-portables",
+  "slice": "C",
+  "pinned_artifacts": {
+    "scout": "docs/scout/erp-portables.md",
+    "research": "docs/research/erp-portables.md",
+    "spec": "docs/specs/erp-portables.md#slice-C"
+  },
+  "exceptions": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "AskUserQuestion timed out (user away); recommended epic-child track adopted as recorded assumption — matches slices A/B precedent and the approved epic's open slice C",
+    "security": "runs — escalated by slice C risk[] (consent-gate semantics: conditional omission of grant-commit node; autonomous push + PR creation path)",
+    "simplify": "runs — escalated by slice C risk[] (spans common.mjs, schema, materializer + mirror, validators, workflows.jsonl, harness/commit SKILL.md, constitution chain)",
+    "document": "runs — escalated by slice C risk[] (Art. IV/VII + seed §11/§18 notes, README/site-src if counts or behavior prose shift)"
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783111165,
+  "updated_at": 1783138668,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

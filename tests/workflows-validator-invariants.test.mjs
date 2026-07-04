@@ -99,4 +99,20 @@ describe('workflows-validator — invariant + schema violations', () => {
     assert.equal(err.kind, 'unknown_schema_version');
     assert.match(err.message, /v99|supported.*version/i);
   });
+
+  it('test_when_unknown_condition_predicate_then_i11_named_error', async () => {
+    const err = await expectInvariantViolation('i11-unknown-condition-predicate.jsonl');
+    assert.equal(err.kind, 'invariant_i11');
+    assert.equal(err.track_id, 'i11-condition-violator');
+    assert.equal(err.node_id, 'grant-commit', 'error names the offending node');
+    assert.match(err.message, /requires_teapot/, 'error names the unknown predicate');
+    assert.match(err.message, /condition/i, 'error says the predicate came from a node condition');
+  });
+
+  it('test_when_condition_predicate_known_then_validator_passes', async () => {
+    const result = await validator.validateWorkflowsJsonl(
+      path.join(FIXTURES, 'condition-known-predicate.jsonl')
+    );
+    assert.equal(result.ok, true, `known condition predicate must validate: ${JSON.stringify(result.errors)}`);
+  });
 });

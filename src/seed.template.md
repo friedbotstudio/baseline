@@ -520,6 +520,8 @@ The following are forbidden unless the user names the exact operation in their c
 
 On a **protected branch**, commit requires fresh `commit_consent` (`/grant-commit`), push requires fresh `push_consent` (`/grant-push`). On a non-protected branch, both proceed without consent. **Detached HEAD** (`git rev-parse` returns the literal `HEAD`) denies both — branch-aware policy needs a named branch.
 
+**Autonomous feature landing (gate C, conditional).** On a commits-track, the `grant-commit` node carries `condition: {"name": "requires_commit_consent"}` (§18.4). At tasklist-materialization time the condition resolves via `lib/common.mjs → isAutonomousFeatureLanding()`: under `github-flow`, on the primary working tree, on a named feature branch that is neither in `release_branches` nor protected, consent is not required — the gate node is omitted, and `/commit` lands the branch autonomously (`git push -u origin <branch>` + `gh pr create --base <first release branch>`), yielding to the user on any push/PR/`gh`-absent failure. Everywhere else (protected branch, `ask`/`direct-to-main`, non-git, detached HEAD, linked worktree, missing resolution context) the predicate is fail-safe false and gate C yields exactly as before. The declared DAG is unchanged (I6); `git_commit_guard` is untouched and remains the commit-time backstop.
+
 **Branch topology policy (declared model + precedence).** Consent governs *whether* a commit is allowed; topology governs *where* it may land. `git_commit_guard` reads two more knobs:
 
 - `project.json → git.workflow_model` — enum `direct-to-main | github-flow | ask`. `gitflow` and `trunk` are reserved values that resolve to `ask` until a consumer needs their enforcement logic; absent or unrecognized also resolves to `ask`.
@@ -698,6 +700,7 @@ A **Node** is either a `task` (skill invocation or sub-track expansion) or a `se
   "blocks": ["<successor node id>", ...],
   "can_parallel": false,         // true: peers at same dep level dispatch concurrently
   "needs_user": false,           // true: consent gate; harness yields
+  "condition": Predicate,        // opt; resolved at materialize time (§18.4) — false omits the node
   "activeForm": "<TaskList spinner text>",
   "metadata": {"phase": "<...>"}
 }
@@ -732,12 +735,12 @@ Every Track in `workflows.jsonl` SHALL satisfy these invariants. Validation runs
 - **I3.** `type=task` nodes carry exactly one of `{skill, sub_track}`. `type=selector` nodes carry non-empty `alternates[]`.
 - **I4.** Every `depends_on` and `blocks` reference resolves to a `node.id` in the same track.
 - **I5.** The dependency DAG is acyclic.
-- **I6.** Tracks declaring the `commits` invariant SHALL include a `needs_user: true` `grant-commit` node ordered before the node with `skill: "commit"`.
+- **I6.** Tracks declaring the `commits` invariant SHALL include a `needs_user: true` `grant-commit` node ordered before the node with `skill: "commit"`. The node stays DECLARED even when it carries a `condition` — conditional omission happens only at materialize time, never in the declared DAG.
 - **I7.** Every `sub_track` reference resolves to a Track with `selectable: false`.
 - **I8.** Every `skill:` reference resolves to a known invokable — skill in `EXPECTED_SKILLS ∪ project.json additions.skills`, OR consent-gate command in `.claude/commands/` (e.g., `approve-spec`, `grant-commit`, `approve-swarm`).
 - **I9.** `needs_user: true` nodes appear in dependency order before any node that depends on their consent.
 - **I10.** A selector node's alternates SHALL share the same shape (all skill, or all sub_track) — they're interchangeable in the DAG.
-- **I11.** Every `Predicate.name` resolves to a known v1 predicate (see §18.4).
+- **I11.** Every `Predicate.name` — in Track/Alternate `preconditions[]` AND in a Node's `condition` — resolves to a known v1 predicate (see §18.4).
 
 ### 18.4 Predicate vocabulary (v1)
 
@@ -750,6 +753,9 @@ The closed set of declarative predicates that may appear in Track or Alternate `
 | `requires_min_components` | `<int>` | The approved spec has at least N C4 Components. |
 | `requires_phase_completed` | `<phase>` | The named phase appears in `workflow.json → completed`. |
 | `requires_skill_present` | `<skill_id>` | The named skill exists in `EXPECTED_SKILLS ∪ additions.skills`. |
+| `requires_commit_consent` | — | Commit consent is required for this workflow: `NOT isAutonomousFeatureLanding()` (`lib/common.mjs`). False only under a github-flow autonomous feature landing (§11). |
+
+**Node conditions.** The same Predicate vocabulary annotates a Node's optional `condition` field. Semantics differ from preconditions: a condition is resolved at tasklist-materialization time by `seed-tasklist.mjs` (which passes `ctx.commitConsentRequired = !isAutonomousFeatureLanding()` to the materializer), and it is **fail-safe toward inclusion** — a missing resolution context, a non-boolean context field, or an unresolvable predicate keeps the node. A node omitted by its condition hands its `depends_on` to its dependents so the chain stays connected. v1 actuates conditions for `requires_commit_consent` on `grant-commit` nodes only.
 
 Adding a new predicate is a constitutional change: update this section, update `src/cli/workflows-validator-predicates.js`, and update the corresponding seed.template.md mirror.
 

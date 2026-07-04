@@ -21,6 +21,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateWorkflowsJsonl } from './workflows-validator.js';
 import { materializeTaskList } from './track-tasklist-materializer.js';
+import { isAutonomousFeatureLanding } from '../../hooks/lib/common.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = resolve(dirname(__filename), '../../..');
@@ -77,7 +78,12 @@ async function runMaterialize(trackId, slug, excludedNodeIds) {
     process.stderr.write(`track '${trackId}' is selectable=false (sub-track); only selectable tracks may be materialized at workflow seed time.\n`);
     process.exit(1);
   }
-  const tasks = materializeTaskList(track, { slug });
+  // requires_commit_consent condition resolution (AC-003): consent stays
+  // required unless the live topology proves an autonomous feature landing
+  // (github-flow, primary tree, named non-release non-protected branch).
+  // isAutonomousFeatureLanding is fail-safe false, so ambiguity keeps gate C.
+  const ctx = { commitConsentRequired: !isAutonomousFeatureLanding() };
+  const tasks = materializeTaskList(track, { slug, ctx });
   const filtered = excludedNodeIds.size > 0
     ? tasks.filter((t) => !excludedTask(t, excludedNodeIds))
     : tasks;

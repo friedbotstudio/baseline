@@ -30,13 +30,13 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="tracks">What a track is</h2>
     </div>
-    <p>A track is a DAG of skill nodes declared in <code>.claude/workflows.jsonl</code>. One record per line. Each node names a skill, lists its predecessors and successors, and optionally flags itself as a consent gate or as part of a parallel cluster.</p>
+    <p>A track is a DAG of skill nodes declared in <code>.claude/workflows.jsonl</code>. One record per line. Each node names a skill, lists its predecessors and successors, and optionally flags itself as a consent gate or as part of a parallel cluster. A node may also carry an optional <code>condition</code> (a predicate such as <code>requires_commit_consent</code> on <code>grant-commit</code> nodes), resolved when the tasklist is materialized and fail-safe toward keeping the node.</p>
   </div>
 
   <h3 id="canonical">The canonical set</h3>
   <p>{{ baseline.tracks.canonical }} selectable tracks ship in the pristine template:</p>
   <ul>
-    <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, commit.</li>
+    <li><code>intake-full</code>. Eleven nodes for a new feature that needs a written spec: intake, scout, research, spec, <code>/approve-spec</code>, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, commit. Under github-flow, a plain feature branch skips the <code>/grant-commit</code> pause: commit, push, and PR land on their own, while protected branches still wait for your consent.</li>
     <li><code>spec-entry</code>. Starts at <code>/spec</code>. For a bugfix where the failing case is contract-level. Skips intake, scout, research.</li>
     <li><code>tdd-quickfix</code>. Starts at <code>/tdd</code>. For a localised bug with a known failing case. Skips spec entirely.</li>
     <li><code>chore</code>. Stripped-down. For documentation, configuration tweaks, dependency bumps. Skips scenario and implement.</li>
@@ -68,12 +68,12 @@ toc:
       <tr><td class="phase">I3</td><td><code>type=task</code> nodes carry exactly one of <code>{skill, sub_track}</code>. <code>type=selector</code> nodes carry non-empty <code>alternates</code>.</td></tr>
       <tr><td class="phase">I4</td><td>Every <code>depends_on</code> and <code>blocks</code> reference resolves to a <code>node.id</code> in the same track.</td></tr>
       <tr><td class="phase">I5</td><td>The dependency DAG is acyclic.</td></tr>
-      <tr><td class="phase">I6</td><td>Tracks declaring the <code>commits</code> invariant include a <code>needs_user</code> <code>/grant-commit</code> node ordered before the node with <code>skill: "commit"</code>.</td></tr>
+      <tr><td class="phase">I6</td><td>Tracks declaring the <code>commits</code> invariant include a <code>needs_user</code> <code>/grant-commit</code> node ordered before the node with <code>skill: "commit"</code>. The node stays declared even when it carries a <code>condition</code>; conditional omission happens only at materialize time.</td></tr>
       <tr><td class="phase">I7</td><td>Every <code>sub_track</code> reference resolves to a track with <code>selectable: false</code>.</td></tr>
       <tr><td class="phase">I8</td><td>Every <code>skill</code> reference resolves to a known invokable: a skill in <code>EXPECTED_SKILLS</code> plus <code>project.json additions.skills</code>, or a consent-gate command.</td></tr>
       <tr><td class="phase">I9</td><td><code>needs_user</code> nodes appear in dependency order before any node that depends on their consent.</td></tr>
       <tr><td class="phase">I10</td><td>A selector node's alternates share the same shape (all <code>skill</code>, or all <code>sub_track</code>).</td></tr>
-      <tr><td class="phase">I11</td><td>Every <code>Predicate.name</code> resolves to a known v1 predicate (see §III).</td></tr>
+      <tr><td class="phase">I11</td><td>Every <code>Predicate.name</code>, in <code>preconditions</code> and in a node's <code>condition</code>, resolves to a known v1 predicate (see §III).</td></tr>
     </tbody>
   </table>
 </section>

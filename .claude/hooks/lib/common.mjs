@@ -915,3 +915,65 @@ export function detectWorkflowModel(signals) {
   if (requiresReview) return { model: 'github-flow' };
   return { model: 'ask' };
 }
+
+// --- Branch-aware gate C predicates (erp-portables slice C, AC-003) --------
+// Consumed by seed-tasklist.mjs (requires_commit_consent condition resolution)
+// and the commit skill's autonomous-landing step. git_commit_guard keeps its
+// own policy evaluation — it is the commit-time backstop and stays unchanged.
+
+// Pure. True iff the branch is protected under the branch-aware consent
+// policy. Fail-safe direction is PROTECTED: non-git (branch null), detached
+// HEAD, absent/null globs (every branch protected), and invalid glob types
+// all return true — ambiguity must never relax a consent gate.
+export function computeProtectedBranch(signals) {
+  const s = (signals && typeof signals === 'object') ? signals : {};
+  const { branch, globs } = s;
+  if (typeof branch !== 'string' || branch === '' || branch === 'HEAD') return true;
+  if (globs === null || globs === undefined) return true;
+  if (!Array.isArray(globs)) return true;
+  return matchAnyGlob(branch, globs);
+}
+
+// Pure. True iff gate C may resolve to an autonomous feature landing:
+// github-flow model, primary working tree, a named feature branch that is
+// neither a release branch nor protected. Fail-safe direction is FALSE —
+// any ambiguous signal keeps the consent gate in place.
+export function computeAutonomousFeatureLanding(signals) {
+  const s = (signals && typeof signals === 'object') ? signals : {};
+  if (resolveWorkflowModel(s.model) !== 'github-flow') return false;
+  if (s.primary !== true) return false;
+  const { branch } = s;
+  if (typeof branch !== 'string' || branch === '' || branch === 'HEAD') return false;
+  const releaseGlobs = Array.isArray(s.releaseGlobs) && s.releaseGlobs.length > 0
+    ? s.releaseGlobs
+    : ['main'];
+  if (matchAnyGlob(branch, releaseGlobs)) return false;
+  return s.isProtected === false;
+}
+
+// Live wrapper over computeProtectedBranch. Total fn — never throws.
+export function isProtectedBranch(cwd = CLAUDE_PROJECT_ROOT) {
+  try {
+    return computeProtectedBranch({
+      branch: currentBranch(cwd),
+      globs: projectGet('.git.protected_branches'),
+    });
+  } catch {
+    return true;
+  }
+}
+
+// Live wrapper over computeAutonomousFeatureLanding. Total fn — never throws.
+export function isAutonomousFeatureLanding(cwd = CLAUDE_PROJECT_ROOT) {
+  try {
+    return computeAutonomousFeatureLanding({
+      model: projectGet('.git.workflow_model'),
+      primary: isPrimaryWorkTree(cwd),
+      branch: currentBranch(cwd),
+      releaseGlobs: projectGet('.git.release_branches'),
+      isProtected: isProtectedBranch(cwd),
+    });
+  } catch {
+    return false;
+  }
+}

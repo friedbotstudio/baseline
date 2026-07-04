@@ -11,6 +11,7 @@ export const V1_PREDICATES = Object.freeze(
     'requires_min_components',
     'requires_phase_completed',
     'requires_skill_present',
+    'requires_commit_consent',
   ])
 );
 

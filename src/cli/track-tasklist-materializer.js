@@ -16,8 +16,50 @@ export function materializeTaskList(track, { slug, ctx } = {}) {
     throw new Error('materializeTaskList requires a slug option (used for <slug> substitution in subjects/activeForms).');
   }
   const emitter = createEmitter(slug, track._allTracks ?? new Map(), ctx);
-  emitNodes(track.nodes, emitter);
+  emitNodes(resolveConditions(track.nodes, ctx), emitter);
   return finalize(emitter);
+}
+
+// Resolve per-node `condition` annotations against ctx BEFORE emission.
+// An omitted node's dependents inherit its depends_on so the chain stays
+// connected (grant-commit omitted → commit depends on memory-flush).
+// Fail-safe: a node is only ever omitted on a POSITIVE resolution that its
+// condition excludes it; missing ctx, a non-boolean ctx field, or an unknown
+// predicate all keep the node (I11 rejects unknown names at validate time).
+function resolveConditions(nodes, ctx) {
+  const omitted = new Map();
+  const kept = [];
+  for (const node of nodes) {
+    if (conditionIncludesNode(node, ctx)) {
+      kept.push(node);
+    } else {
+      omitted.set(node.id, node.depends_on || []);
+    }
+  }
+  if (omitted.size === 0) return nodes;
+  return kept.map((node) => ({
+    ...node,
+    depends_on: redirectDeps(node.depends_on || [], omitted),
+  }));
+}
+
+function conditionIncludesNode(node, ctx) {
+  if (!node.condition) return true;
+  if (node.condition.name !== 'requires_commit_consent') return true;
+  if (!ctx || typeof ctx.commitConsentRequired !== 'boolean') return true;
+  return ctx.commitConsentRequired;
+}
+
+function redirectDeps(deps, omitted) {
+  const out = [];
+  for (const dep of deps) {
+    if (omitted.has(dep)) {
+      out.push(...redirectDeps(omitted.get(dep), omitted));
+    } else {
+      out.push(dep);
+    }
+  }
+  return out;
 }
 
 function createEmitter(slug, allTracks, ctx) {

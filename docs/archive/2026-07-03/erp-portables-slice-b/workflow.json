@@ -24,7 +24,8 @@
     "document",
     "archive",
     "memory-flush",
-    "grant-commit"
+    "grant-commit",
+    "commit"
   ],
   "skipped_alternates": [],
   "completed_notes": {
@@ -34,7 +35,7 @@
   },
   "source_backlog_keys": [],
   "created_at": 1783096000,
-  "updated_at": 1783101599,
+  "updated_at": 1783101693,
   "tdd_ticks": [
     "scenario",
     "implement",

@@ -81,6 +81,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - A phase may be bypassed only by (1) `/triage`'s `exceptions` array, or (2) the post-`tdd` **right-size gate** (`.claude/skills/harness/rightsize-gate.mjs`) — a mechanical, fail-open, **additive-only** oracle that may auto-skip a hard subset of `{simplify, document}`, **never `security`** or a core phase, never overriding an existing exception. Gated by `velocity.rightsize.enabled`. Full rule: seed.md §5.
 - **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, never as a non-git fallback. See Article VII.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
+- **Gate C is branch-conditional (seed.md §18.4, §11).** Commits-tracks annotate `grant-commit` with `condition: {"name": "requires_commit_consent"}`; materialization resolves it via `isAutonomousFeatureLanding()` (fail-safe false). Only a github-flow autonomous feature landing omits the gate — `/commit` then pushes + opens a PR, yielding on any failure (Art. VII); everywhere else gate C yields as above, `git_commit_guard` the commit-time backstop.
 - **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
@@ -178,6 +179,8 @@ On a **protected branch**, commits require fresh `commit_consent` (`/grant-commi
 - `git add -A`, `git add .` — name the paths.
 
 `git push` is governed by the branch-aware policy above, not `FORBIDDEN_RE`. `git push --force`/`--force-with-lease` stay forbidden unless the user names the exact op in their current request, and remain subject to the branch-aware policy (force-push to a protected branch also needs fresh `push_consent`).
+
+**Autonomous feature landing (seed.md §11).** When `isAutonomousFeatureLanding()` is true (github-flow, primary tree, named feature branch neither in `git.release_branches` nor protected), `/commit` SHALL `git push -u origin <branch>` + `gh pr create --base <release>`, and SHALL yield to the user on any push/PR/`gh`-absent failure. Fail-safe false: protected branches and `ask`/`direct-to-main` behavior is unchanged.
 
 ## Article VIII — Hooks (the enforcement layer)
 

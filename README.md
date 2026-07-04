@@ -162,7 +162,7 @@ The three workflow-phase consent gates pause the workflow until you type the cor
 
 - **`/approve-spec <slug>`** — after the spec phase, before any code is written
 - **`/approve-swarm <slug>`** — after `/swarm-plan`, before parallel dispatch
-- **`/grant-commit`** — after `/archive` and `/memory-flush`, before the commit lands
+- **`/grant-commit`** — after `/archive` and `/memory-flush`, before the commit lands. Under github-flow, a non-protected feature branch omits this gate at materialize time: `/commit` pushes the branch and opens a PR on its own, and hands back to you if the push or PR fails. Protected branches pause exactly as before.
 
 A fourth consent gate sits outside the phase pipeline:
 

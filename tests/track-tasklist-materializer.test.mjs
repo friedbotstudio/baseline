@@ -148,6 +148,59 @@ describe('materializeTaskList — can_parallel preservation (SP-002)', () => {
   });
 });
 
+function trackWithConditionalGrantCommit({ annotate = true } = {}) {
+  const allTracks = new Map();
+  const gc = {
+    id: 'grant-commit', type: 'task', skill: 'grant-commit',
+    depends_on: ['memory-flush'], blocks: ['commit'], can_parallel: false, needs_user: true,
+  };
+  if (annotate) gc.condition = { name: 'requires_commit_consent' };
+  const track = {
+    track_id: 'conditional-gate',
+    invariants: ['commits'],
+    nodes: [
+      { id: 'memory-flush', type: 'task', skill: 'memory-flush', depends_on: [], blocks: ['grant-commit'], can_parallel: false, needs_user: false },
+      gc,
+      { id: 'commit', type: 'task', skill: 'commit', depends_on: ['grant-commit'], blocks: [], can_parallel: false, needs_user: false },
+    ],
+  };
+  allTracks.set('conditional-gate', track);
+  Object.defineProperty(track, '_allTracks', { value: allTracks, enumerable: false });
+  return track;
+}
+
+describe('materializeTaskList — requires_commit_consent condition (AC-003)', () => {
+  it('test_when_ctx_resolves_no_commit_consent_then_grant_commit_omitted_and_commit_rewired', () => {
+    const tasks = materializer.materializeTaskList(trackWithConditionalGrantCommit(), {
+      slug: 'demo', ctx: { commitConsentRequired: false },
+    });
+    assert.equal(tasks.length, 2, 'grant-commit node omitted under autonomous landing');
+    assert.equal(tasks[0].subject, 'Run /memory-flush for demo');
+    assert.equal(tasks[1].subject, 'Run /commit for demo');
+    assert.deepEqual(tasks[1].blockedBy, [1], "commit rewired to grant-commit's predecessor");
+  });
+
+  it('test_when_ctx_missing_or_nonboolean_then_grant_commit_included', () => {
+    for (const ctx of [undefined, {}, { commitConsentRequired: 'yes' }]) {
+      const tasks = materializer.materializeTaskList(trackWithConditionalGrantCommit(), { slug: 'demo', ctx });
+      assert.equal(tasks.length, 3, `ctx=${JSON.stringify(ctx)} → fail-safe include`);
+      assert.equal(tasks[1].subject, 'Wait for /grant-commit');
+      assert.equal(tasks[1].needs_user, true);
+      assert.deepEqual(tasks[2].blockedBy, [2], 'commit still blocked by the gate');
+    }
+  });
+
+  it('test_when_ctx_requires_consent_true_then_output_identical_to_unannotated_track', () => {
+    const annotated = materializer.materializeTaskList(trackWithConditionalGrantCommit(), {
+      slug: 'demo', ctx: { commitConsentRequired: true },
+    });
+    const plain = materializer.materializeTaskList(trackWithConditionalGrantCommit({ annotate: false }), {
+      slug: 'demo', ctx: { commitConsentRequired: true },
+    });
+    assert.deepEqual(annotated, plain, 'consent-required resolution is byte-identical to the unannotated track');
+  });
+});
+
 describe('materializeTaskList — freeform track (live workflows.jsonl)', () => {
   it('test_when_freeform_track_materialized_then_three_task_chain_with_consent_gate', async () => {
     const livePath = path.join(REPO_ROOT, '.claude/workflows.jsonl');

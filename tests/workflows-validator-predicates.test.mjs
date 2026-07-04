@@ -36,4 +36,12 @@ describe('workflows-validator-predicates — v1 vocabulary', () => {
     assert.equal(predicates.isKnownPredicate('requires_unicorns'), false);
     assert.equal(predicates.isKnownPredicate(''), false);
   });
+
+  it('test_when_predicate_vocabulary_read_then_requires_commit_consent_present', () => {
+    assert.equal(
+      predicates.isKnownPredicate('requires_commit_consent'),
+      true,
+      'requires_commit_consent joins the shared §18 predicate vocabulary (AC-003, erp-portables slice C)',
+    );
+  });
 });

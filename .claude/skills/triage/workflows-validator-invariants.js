@@ -380,6 +380,14 @@ export function checkI11_predicateNamesResolve(tracks) {
       }
     }
     for (const node of t.nodes) {
+      if (node.condition && !isKnownPredicate(node.condition.name)) {
+        errors.push({
+          kind: 'invariant_i11',
+          track_id: t.track_id,
+          node_id: node.id,
+          message: `Track '${t.track_id}' node '${node.id}' condition uses unknown predicate '${node.condition.name}'. Not in v1 vocabulary.`,
+        });
+      }
       if (!Array.isArray(node.alternates)) continue;
       for (const alt of node.alternates) {
         for (const pred of alt.preconditions || []) {
