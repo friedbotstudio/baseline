@@ -1,0 +1,27 @@
+{
+  "request": "Amend the approved erp-portables epic spec with Slice L (scope increase, maintainer-directed 2026-07-05): port ../erp's sprint-planner + power batch-sprint track, adapted for the baseline product. L1 — sprint-planner skill with a GENERIC graph engine: port roadmap-deriver's graph.mjs (analyze/order/compact; cycle detection, dangling-dep check, producer-after-consumer violations, deterministic topo order, compaction candidates) as .claude/skills/sprint-planner/graph.mjs with erp-specific default buckets dropped (buckets from input; absent → single implicit bucket) + shipped graph-schema reference; sprint-planner is source-adaptive: (1) explicit tasks file via project.json → sprint.tasks_path, (2) epic state slices[] gaining an OPTIONAL deps[] field written at epic decomposition from the spec dependency diagram, (3) flat backlog entries; graceful degradation — no deps anywhere → status-only readiness, stated in the proposal artifact, never silently claimed as proven ordering; planner.mjs selectSprint({tasks,statusById,capacity}) with capacity default 3; proposal at .claude/state/sprint/<name>/proposal.json validated by sprint-plan validateManifest + self-checked by sprint-oracle runOracle; PROPOSES ONLY — human confirms before /triage. L2 (depends on L1) — power track + skill: workflows.jsonl gains selectable power track (batch-sprint: mechanical phases amortized once over workflow.json → tickets[], security loops PER TICKET in-skill, static DAG, no governance-review node — this repo's spec-boundary judgment is the checker fan-out + spec-shippability-review; grant-commit keeps requires_commit_consent condition); power skill hosts the two behaviors: per-ticket security iteration with per-ticket verdicts in the harness log, and commit split via new power/commit-split.mjs planCommits over commit-planner/inventory.mjs (ordered Conventional Commits: build/config → implementation → tests → docs, closure LAST — closure atomicity already enforced by git_commit_guard; multi-commit landing rides the existing 900s TTL consent, no guard change); opt-in velocity.power_mode.enabled default false; requires git. Ripple: skills 48→50, selectable tracks 8→9, constitution chain counts, manifest re-hash, docsite, triage decision rules. Spec amendment → fresh gate A re-approval; implementation lands later as epic-child slice L.",
+  "slug": "erp-portables",
+  "track_id": "epic",
+  "epic": "erp-portables",
+  "novelty": "spec-derived",
+  "novelty_evidence": "../erp/.claude/skills/sprint-planner/SKILL.md + planner.mjs, ../erp/.claude/skills/power/SKILL.md + commit-split.mjs, ../erp power track in workflows.jsonl (ADR-0034), ../erp/.claude/skills/roadmap-deriver/scripts/graph.mjs; extends approved epic .claude/state/epic/erp-portables.json; maintainer scope-increase directive + generic-ship correction in-conversation 2026-07-05",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "scout",
+    "research"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "maintainer confirmed track in conversation ('yes, kick it off') — epic track, entry at spec (discovery inherited from the epic's own 2026-06-23 scout/research; this is a scope amendment). Slices L1/L2 appended to epic state; amended spec requires FRESH /approve-spec (the on-disk approval token predates the amendment and does not satisfy gate A for it)."
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783167137,
+  "updated_at": 1783167137
+}

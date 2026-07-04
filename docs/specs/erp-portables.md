@@ -372,6 +372,58 @@ note right : preceded by a Read this session\n(batched in preflight when writes 
 
 ```plantuml
 @startuml
+title Behavior #14 — sprint-planner: source-adaptive selection, proposal only (slice L1)
+actor Human
+participant "sprint-planner" as sp
+participant "source adapters" as src
+participant "graph.mjs (generic)" as g
+participant "planner.mjs" as pl
+sp -> src : resolve input (precedence)
+alt project.json sprint.tasks_path set
+  src --> sp : tasks.json (explicit file)
+else approved epic state present
+  src --> sp : tasks from slices[] (+ optional deps[])
+else
+  src --> sp : open backlog entries (flat)
+end
+alt any task carries deps[]
+  sp -> g : analyze + order (subprocess)
+  g --> sp : cycle/dangling/ordering proof + topo order
+else no deps anywhere
+  sp -> sp : status-only readiness\nproposal states "ordering: status-only"
+end
+sp -> pl : selectSprint({tasks, statusById, capacity})
+pl --> sp : {features, excluded: [{id, blockedBy}]}
+sp -> sp : validateManifest + runOracle self-check
+sp -> sp : write .claude/state/sprint/<name>/proposal.json (ONLY write)
+sp --> Human : proposed sprint + excluded-with-blockers
+Human -> Human : confirm/edit, then /triage (typically power track)
+@enduml
+```
+
+```plantuml
+@startuml
+title Behavior #15 — power batch-sprint track (slice L2)
+actor Human
+participant "harness (power track)" as h
+participant "security (per ticket)" as sec
+participant "power/commit-split.mjs" as split
+h -> h : mechanical phases ONCE for the batch\n(spec, tdd, simplify, integrate, document,\narchive, memory-flush)
+h -> sec : loop workflow.json -> tickets[]
+sec --> h : per-ticket verdict in harness log
+alt any ticket BLOCKER
+  h --> Human : yield (exactly as single-ticket would)
+end
+== landing ==
+Human -> h : /grant-commit (one grant, 900s TTL window)
+h -> split : planCommits(inventory.mjs files)
+split --> h : ordered groups (build/config -> impl -> tests -> docs)\nclosure on FINAL commit
+h -> h : commit each group in order\n(git_commit_guard closure-atomicity backstop)
+@enduml
+```
+
+```plantuml
+@startuml
 title Behavior #11 — epic-wide enforcement gates (preflight + smoke)
 participant "epic child commit" as ch
 participant "audit-baseline" as ab
@@ -407,6 +459,11 @@ left to right direction
 [J1 CI posture] --> [scripts/ci]
 [J2 consumer ship] --> [J1 CI posture]
 [J2 consumer ship] --> [build-template + CLI]
+[L1 sprint-planner] --> [graph engine (generic port)]
+[L1 sprint-planner] --> [sprint-plan/oracle seams]
+[L2 power track] --> [L1 sprint-planner]
+[L2 power track] --> [I new skills]
+[L2 power track] --> [workflows.jsonl rebalance]
 @enduml
 ```
 
@@ -427,6 +484,13 @@ left to right direction
 | Oracle | `runTraceabilityOracle({spec,intake})` | artifact text | findings incl. `deferral_untagged` Critical BLOCKER | never throws | yes |
 | Hook | `lint_runner`/`test_runner` glob gate | written file path | run cmd iff path matches `lint\|test.file_globs` (absent globs → run, today's behavior) | fail-open run | yes |
 | Skill | `commit-planner` | dirty tree | proposed commit split (read-only) | — | yes |
+| CLI | `sprint-planner/graph.mjs <analyze\|order\|compact> <tasks.json>` | `{buckets?, tasks:[{id, epic, bucket?, category?, title, deps[], order?}]}` — buckets from input; absent → single implicit bucket | analyze: cycles + dangling + producer-after-consumer (exit 0/2/3); order: deterministic topo (bucket→epic→id tie-break); compact: chain/parallel merge candidates | dangling deps exit 1 with named task | yes (pure read) |
+| Fn | `selectSprint({tasks, statusById, capacity=3})` | task graph + status map + capacity | `{features:[{id, done_record, edge_tests, wiring_test}], excluded:[{id, blockedBy}]}` — ready iff every dep done; no deps → status-only (declared in proposal) | never throws; empty input → empty features | yes |
+| Fn | `planCommits(files)` | `commit-planner/inventory.mjs` file groups | ordered commit groups (build/config → impl → tests → docs), Conventional subjects, closure group LAST | never reorders closure off the final group | yes |
+| Config | `project.json → sprint.tasks_path` | optional path to an explicit tasks.json | sprint-planner source precedence rung 1 | absent → epic-state/backlog adapters | yes |
+| Config | `project.json → velocity.power_mode.enabled` | bool, default `false` | `power` track selectable + power skill active iff true | absent → false (off-flag byte-unchanged) | yes |
+| Schema | `workflow.json → tickets[]` (power track) | one entry per ticket: `{id, acs[], done_record}` (epic sliced-spec shape) | per-ticket security iteration + commit-split grouping input | validator I-set unchanged (static DAG; in-skill loop) | — |
+| Schema | epic `slices[].deps` (optional) | array of sibling slice ids, written at epic decomposition from the spec dependency diagram | feeds graph.mjs edges for sprint-planner readiness | absent → status-only readiness | — |
 | Skill | `retrospective` | session + memory | landmine entries + graduation candidates | — | re-runnable |
 | CLI | `scripts/ci/require-gitleaks.sh` | none | exit 0 present / exit 1 absent (message names install cmd) | — | yes |
 | CLI | `scripts/ci/low-risk-classifier.mjs` | PR diff paths | `{low_risk: bool, reason}` — NEVER-list always false | — | yes |
@@ -513,6 +577,16 @@ Mode: **GREENFIELD** (CLI + template shipping; no erp precedent — erp kept it 
 Mode: **REAUTHOR** (no erp precedent; maintainer request 2026-07-03). Failure mode: Write/Edit on an existing file not yet Read this session fails with "File has not been read yet", costing a failed tool call + retry — observed twice in this epic's own discovery (harness_state, workflow.json). A hook CANNOT fix this (hooks deny; they cannot perform the Read), so the fix is SOP-level: (1) harness SKILL.md preflight step — Read `.claude/state/harness_state` AND `.claude/state/workflow.json` once, unconditionally, before the first state write (covers every later marker/state refresh in the loop). (2) The state-write discipline (annex §2 + harness SKILL.md binding note) gains: "Read-before-write: any Write/Edit to an EXISTING file SHALL be preceded by a Read of that file in the same session; batch the Reads into preflight where the writes are known in advance (workflow state, memory files, constitution mirrors)." (3) Phase skills with known recurring writes (`commit` — workflow.json/backlog; `memory-flush` — canonical files it will edit) get a one-line read-first note at their write steps. No hook, no schema change, roster unchanged.
 **ACs**: AC-014. **Write surface**: `.claude/skills/harness/SKILL.md`, `.claude/CONSTITUTION.md` (§2 state-write discipline), `.claude/skills/commit/SKILL.md`, `.claude/skills/memory-flush/SKILL.md`, structural test (SOP text present), `obj/template/**`.
 
+## Slice L1 — sprint-planner skill + generic graph engine
+
+Mode: **REAUTHOR** (erp = shape reference at `../erp/.claude/skills/sprint-planner/` + `roadmap-deriver/scripts/graph.mjs`; erp's roadmap-file input model does not exist here and MUST NOT be assumed — maintainer directive 2026-07-05: this is the baseline *product*; a consumer repo with a real roadmap needs the full engine, so it ships generic). Pieces: (1) `graph.mjs` ported near-verbatim to `.claude/skills/sprint-planner/graph.mjs` — same three commands (`analyze` cycles/dangling/producer-after-consumer, `order` deterministic topo with bucket→epic→id tie-break, `compact` chain/parallel merge candidates), erp's default buckets `['platform','solution','web','app']` dropped (buckets come from the input file; absent → single implicit bucket); the `tasks.json` contract ships as an adapted `references/graph-schema.md`. (2) `planner.mjs → selectSprint({tasks, statusById, capacity=3})` — ready iff every dep `done`; cohesive same-epic-preferred subset up to capacity; excluded tasks name their unmet prerequisites. (3) **Source-adaptive input**, precedence: `project.json → sprint.tasks_path` (explicit tasks file — erp-equivalent behavior) → approved epic state `slices[]` (gaining an OPTIONAL `deps[]` field written at epic decomposition from the spec's dependency diagram — this repo dogfoods its own edges) → open `backlog.md` entries via standup's `gatherSync` (flat). **Graceful, declared degradation**: no deps anywhere → the engine still runs (trivially acyclic), readiness collapses to status-based, and the proposal artifact states `ordering: status-only` — never a silent claim of proven ordering. (4) Output: proposal-only manifest at `.claude/state/sprint/<name>/proposal.json`, validated by `sprint-plan → validateManifest`, self-checked by `sprint-oracle → runOracle`; the human confirms/edits before `/triage` routes it (typically to `power`). Read-only otherwise — no source writes, no git, no autonomous selection into a build (Article II).
+**ACs**: AC-015. **Write surface**: `.claude/skills/sprint-planner/**` (SKILL.md, graph.mjs, planner.mjs, references/), `.claude/skills/epic`-adjacent slice-schema note + triage §18.9 `deps[]` write, `src/project.template.json` + `.claude/project.json` (`sprint.tasks_path`), constitution chain (counts 48→50 with L2), manifest, `README.md`/`site-src/**` (counts), tests, `obj/template/**`.
+
+## Slice L2 — power batch-sprint track + skill (depends on L1)
+
+Mode: **PORT + ADAPT** (erp ADR-0034 track + `power` skill; two deliberate divergences). Pieces: (1) `workflows.jsonl` gains the selectable `power` track — batch pipeline over `workflow.json → tickets[]` (epic sliced-spec shape): mechanical phases (`spec`, `tdd`, `simplify`, `integrate`, `document`, `archive`, `memory-flush`) run once for the batch; `security` runs once PER TICKET via in-skill iteration over `tickets[]` (static DAG, no runtime node fan-out; per-ticket verdicts recorded in the harness log); `grant-commit` keeps the `requires_commit_consent` condition (slice C landing behavior composes unchanged). **Divergence 1 — no `governance-review` node**: erp's per-ticket governance-review skill does not exist here; this repo's spec-boundary judgment is the checker fan-out (diagram/traceability/rollout) + `spec-shippability-review`, which already evaluate per-AC rows — `security` is the sole `per_ticket` node. (2) `power` skill hosts the two track behaviors: the per-ticket security loop (a silent per-ticket skip is forbidden; any ticket BLOCKER yields exactly as a single-ticket workflow would) and the commit split — new `power/commit-split.mjs → planCommits(files)` over the existing `commit-planner/inventory.mjs` (slice I), producing ordered Conventional Commits (build/config → implementation → tests → docs) with the closing workflow state + backlog stamp on the FINAL commit. **Divergence 2 — no consent-model change**: erp's ADR-0033 workflow-scoped grant maps onto this repo's existing TTL consent (`git_commit_guard` validates age, never consumes the token), so one `/grant-commit` already authorizes the batch's ordered commits within the 900s window; the closure-atomicity check remains the structural backstop. (3) Opt-in `velocity.power_mode.enabled` (default `false`, `org_mode` precedent); off-flag the track is not selectable and behavior is byte-unchanged. Requires git. Ripple: skills 48→50, selectable tracks 8→9, triage decision rules + selector hints, constitution chain, docsite.
+**ACs**: AC-016. **Write surface**: `.claude/skills/power/**`, `.claude/workflows.jsonl` + `src/.claude/workflows.template.jsonl`, `.claude/skills/triage/SKILL.md`, `.claude/skills/harness/SKILL.md` (power-track note), `src/project.template.json` + `.claude/project.json` (knob), constitution chain (seed §4.3/§18, CLAUDE.md counts + Art. IV track list, annex Appendix A/B), manifest, `README.md`/`site-src/**`, tests, `obj/template/**`.
+
 ## Acceptance criteria
 
 | ID | Criterion (given / when / then) | Kind | Upstream AC | Sequence |
@@ -531,6 +605,8 @@ Mode: **REAUTHOR** (no erp precedent; maintainer request 2026-07-03). Failure mo
 | AC-012 | given any epic-child commit, when the full test suite runs, then it is green (217+ tests incl. the new/adapted ones) | smoke | intake AC 11 | §Behavior #11 |
 | AC-013 | given a consumer install (default), when `init-project` runs, then CI-posture artifacts are delivered and `ci_posture.enabled: true`; given `--no-ci-posture` (or the prompt opt-out), none are delivered and the knob is `false`; given an upgrade of an opted-out project, `upgrade-project` never re-delivers and never touches the consumer's own hooks | behavior | intake AC 12 | §Behavior #12 |
 | AC-014 | given the harness preflight, when it arms the loop, then `harness_state` and `workflow.json` are Read once before any state write; given any phase-skill Write/Edit to an existing file, a Read of that file happened this session — zero "File has not been read yet" tool failures across a full workflow | behavior | intake AC 13 | §Behavior #13 |
+| AC-015 | given a tasks file (via `sprint.tasks_path`), approved epic slices, or open backlog entries, when `sprint-planner` runs, then it selects a ready cohesive subset up to capacity (default 3) with per-task readiness (dep-complete when edges exist — graph.mjs proves acyclicity/ordering; status-only when none do, declared as `ordering: status-only` in the proposal), excludes unready tasks naming their unmet prerequisites, and writes ONLY the proposal artifact validated by `validateManifest` + `runOracle` — the human confirms before `/triage`; graph.mjs carries no erp-specific bucket defaults | behavior | intake AC 14 | §Behavior #14 |
+| AC-016 | given `velocity.power_mode.enabled: true` on a git project and a triaged batch with `tickets[]`, when the `power` track runs, then mechanical phases execute once for the batch, `security` iterates per ticket (any ticket BLOCKER yields; a silent per-ticket skip is impossible), and commit lands ordered Conventional Commits via `planCommits` with closure on the final commit under one TTL-window grant; given the flag absent/false the track is unselectable and behavior is byte-unchanged | behavior | intake AC 15 | §Behavior #15 |
 
 ## Test plan
 
@@ -555,6 +631,16 @@ Mode: **REAUTHOR** (no erp precedent; maintainer request 2026-07-03). Failure mo
 | Golden path | init-project default delivers posture + knob true; `--no-ci-posture` skips + knob false | per flag | AC-013 |
 | Regression trap | upgrade-project on opted-out project re-delivers nothing, leaves consumer hooks alone | untouched | AC-013 |
 | Golden path | harness preflight reads both state files before first write; full workflow produces zero read-first tool failures | zero failures | AC-014 |
+| Golden path | graph.mjs analyze/order on a tasks.json with deps | cycle-free proof + deterministic topo order | AC-015 |
+| Golden path | selectSprint over epic slices with deps[] + statusById | ready subset ≤ capacity; excluded name blockers | AC-015 |
+| Input boundary | tasks with no deps anywhere (backlog-only source) | status-only readiness; proposal declares `ordering: status-only` | AC-015 |
+| Input boundary | tasks.json without buckets | single implicit bucket; no erp bucket names anywhere | AC-015 |
+| Contract violation | tasks.json with a cycle / dangling dep | analyze exits 2 / 1 naming the cycle/task | AC-015 |
+| Regression trap | sprint-planner writes nothing but the proposal artifact | no source/git writes | AC-015 |
+| Golden path | power track with 3 tickets: security loop count == ticket count; commit split ordered, closure last | per-ticket verdicts + ordered commits | AC-016 |
+| Contract violation | planCommits with closure files present | closure group is final; never split | AC-016 |
+| Failure mode | one ticket's security review raises BLOCKER | batch yields; no silent skip | AC-016 |
+| Regression trap | `velocity.power_mode.enabled` absent/false | power track unselectable; workflows.jsonl validation green; existing tracks byte-unchanged | AC-016 |
 
 ## Observability
 
@@ -575,8 +661,8 @@ Mode: **REAUTHOR** (no erp precedent; maintainer request 2026-07-03). Failure mo
 | 1 | audit-baseline green (counts/roster/cap/mirror reconciled) before any child merges | AC-011 |
 | 2 | full test suite green per child commit | AC-012 |
 
-- **Feature flag**: `ci_posture.enabled` (J2, template default `true`, CLI opt-out) — the only knob; other behavior changes ride constitution + config defaults; slice C activates only under `git.workflow_model: "github-flow"` (this repo runs `direct-to-main`, so gate C behavior here is unchanged until the model is switched).
-- **Migration order**: per-slice child commits in dependency order (B → C share `common.mjs`; J1 → J2; A, DEF, G, H, I, K independent). Additive JSON shapes need no data migration.
+- **Feature flag**: `ci_posture.enabled` (J2, template default `true`, CLI opt-out) and `velocity.power_mode.enabled` (L2, default `false` — off-flag byte-unchanged, `org_mode` precedent); other behavior changes ride constitution + config defaults; slice C activates only under `git.workflow_model: "github-flow"` (this repo runs `direct-to-main`, so gate C behavior here is unchanged until the model is switched).
+- **Migration order**: per-slice child commits in dependency order (B → C share `common.mjs`; J1 → J2; L1 → L2; A, DEF, G, H, I, K independent). Additive JSON shapes (`slices[].deps`, `tickets[]`, the two new knobs) need no data migration.
 - **Canary**: the first post-port workflow in this repo exercises D/E/F live (introduction-workflow pattern — this epic itself predates the new defaults).
 
 ## Rollback
@@ -600,6 +686,17 @@ Mode: **REAUTHOR** (no erp precedent; maintainer request 2026-07-03). Failure mo
 | 4 | Repo visibility | PUBLIC (verified) → J1 ruleset fully live | fact |
 | 5 | CI posture shipping | ship to consumers default-on with CLI opt-out; init/upgrade-project own the tailoring | maintainer — verbatim: "ship with a flag to skip in cli … the init-project and upgrade-project commands can handle this ship logic" |
 | 6 | `gh`-absent fail-safe | yield to gate C as today | maintainer |
+
+## Decisions (gate-A review, Slice L amendment, 2026-07-05)
+
+| # | Question | Decision | Owner |
+|---|---|---|---|
+| 7 | Scope increase | add Slice L (L1 sprint-planner + generic graph engine, L2 power track) → **12 slices: A B C DEF G H I J1 J2 K L1 L2** | maintainer — verbatim: "let us increase the scope of epic and add 1 more task to the system" |
+| 8 | Graph engine ships | port generic, do NOT skip — the baseline is a product; consumer repos with roadmaps need the engine. Buckets from input (erp defaults dropped); source-adaptive input with declared status-only degradation | maintainer — verbatim: "this is baseline product … we can make it a bit generic but it will work 100%" |
+| 9 | governance-review node | dropped — no such skill here; checker fan-out + spec-shippability-review are this repo's spec-boundary judgment; `security` is the sole per_ticket node | engineer |
+| 10 | Consent model for commit split | reuse existing TTL consent (900s window, token not consumed per commit); no ADR-0033 port, no guard change; closure-atomicity check is the backstop | engineer |
+| 11 | sprint-planner capacity default | 3 (aligns `swarm.min_tasks_worth_swarming`) | engineer |
+| 12 | power-track tdd mode | solo batch tdd first; swarm routing inside power is out of scope this epic | engineer |
 
 ## Open questions
 

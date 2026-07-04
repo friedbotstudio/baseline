@@ -99,6 +99,14 @@ Each entry's stable key is `<lib>@<version>`. If the lockfile bumps, re-verify a
 - Last-touched: 2026-06-21
 - Caveat: install pulls ~27 direct deps; introduces ONE moderate audit finding (`qs` via `typed-rest-client`, Stryker's optional dashboard reporter — unreachable with `reporters:['json']`). The CRITICAL liquidjs finding seen at install time is PRE-EXISTING via `@11ty/eleventy`, not Stryker (backlog `bump-eleventy-fix-liquidjs-critical-rce-vuln-8caf`). Exact-pin required (`9.6.1`, no caret) per `check-files-diff DEVDEP_RANGE_FORBIDDEN` — see convention `devdeps-exact-pinned-and-tests-not-strictly-co-named`. `reports/` + `.stryker-tmp/` are gitignored.
 
+## gitleaks@8.x-binary
+
+- Role: secrets scanner invoked by `scripts/ci/require-gitleaks.sh` (CI posture, slice J1). NOT an npm dep — a system binary (`brew install gitleaks`); no lockfile pin possible.
+- Load-bearing API fact (context7-verified 2026-07-04): the staged pre-commit scan is `gitleaks git --pre-commit --staged` — modern v8 subcommands are `git`/`dir`/`stdin`; the old `gitleaks protect --staged` form is gone from the current README. Do not recall `protect` from training data.
+- verified-at: 70d9047
+- last-touched: 2026-07-04
+- caveat: version floats with the operator's install; the invocation form is the stable fact — re-verify via context7 if the scan flags change.
+
 ## @modelcontextprotocol/sdk@1.29.0
 
 - Library: MCP TypeScript SDK (`@modelcontextprotocol/sdk`), HARD-pinned exact `1.29.0` (no caret) — the build substrate for the baseline-owned sprint coordination channel (epic `mvp-sprint-parallel-cycles`, Slice C live server). NOW INSTALLED: `package.json:54` + `package-lock.json:1376` (`version 1.29.0`). See decision [[sprint-mode-mcp-channel-architecture-pivot-2026-06-23]].

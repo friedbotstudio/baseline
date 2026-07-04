@@ -162,3 +162,16 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
 - verified-at: 3d3cda7
 - last-touched: 2026-06-23
+
+## auto-merge-classify-checkout-base-sha-hardening-6836
+
+> verbatim (assistant-deferral, 2026-07-04, slice-j security review): "Not exploitable under current settings, and the fix is one line (`ref: ${{ github.event.pull_request.base.sha }}` on the classify job's checkout) — say the word and I'll land it as a follow-up."
+
+- Intent: harden `.github/workflows/auto-merge.yml` — the `classify-and-enable` job checks out the PR merge ref, so a PR editing `scripts/ci/low-risk-classifier.mjs` is classified by its own code. Pin the classify job's checkout to the base SHA so the NEVER-list always comes from the target branch. Documented as the MEDIUM in `docs/archive/2026-07-04/erp-portables-slice-j/security.md`.
+- status: open
+- raised-on: 2026-07-04
+- raised-in-context: erp-portables-slice-j
+- source: assistant-deferral
+- estimated-effort: tiny (one workflow line + a structural test assertion)
+- verified-at: 70d9047
+- last-touched: 2026-07-04
