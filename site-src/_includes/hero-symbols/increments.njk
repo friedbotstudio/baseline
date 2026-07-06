@@ -1,0 +1,33 @@
+{# Increments hero symbol: the shipping cadence.
+   Increment squares flow left to right; between each pair sits a small filled
+   accent gate carrying a check, because an increment only becomes the next
+   one by passing a real gate. The rightmost increment is the one in flight
+   (accent fill); the gate ahead of it is stroke-only and unchecked, still to
+   be earned. Vocabulary matches the other symbols: stroke = shipped/known,
+   filled accent = active. Tokens only; no bespoke stylesheet. #}
+<svg class="hero-symbol-svg increments-svg" viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="increments-title">
+  <title id="increments-title">A row of increment squares connected left to right. Between shipped increments sit small filled gate squares with check marks; the increment in flight is filled in accent, and the gate ahead of it is an empty outline, not yet passed.</title>
+
+  {# Flow baseline behind everything. #}
+  <line x1="24" y1="110" x2="336" y2="110" stroke="var(--charcoal)" stroke-width="1.25"/>
+
+  {# Shipped increments: stroke squares. #}
+  <rect x="28"  y="86" width="48" height="48" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <rect x="118" y="86" width="48" height="48" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <rect x="208" y="86" width="48" height="48" rx="6" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+
+  {# Passed gates between shipped increments: small filled accent squares with checks. #}
+  <rect x="89"  y="102" width="16" height="16" rx="3" fill="var(--accent)"/>
+  <path d="M 92,110 L 95.5,113.5 L 102,106.5" fill="none" stroke="var(--paper)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="179" y="102" width="16" height="16" rx="3" fill="var(--accent)"/>
+  <path d="M 182,110 L 185.5,113.5 L 192,106.5" fill="none" stroke="var(--paper)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+
+  {# The increment in flight: accent fill. #}
+  <rect x="269" y="86" width="48" height="48" rx="6" fill="var(--accent)"/>
+
+  {# The gate ahead: outline only, unchecked, still to be earned. #}
+  <rect x="330" y="102" width="16" height="16" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+
+  {# Caption. #}
+  <text x="180" y="196" text-anchor="middle" style="font-family: var(--mono); font-size: 13px; fill: var(--muted); letter-spacing: .04em;">every increment passes a real gate</text>
+</svg>

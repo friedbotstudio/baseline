@@ -37,6 +37,11 @@ const EXECUTABLE_PATH_ALLOWLIST = [
   /^\.claude\/skills\/[^/]+\//,
   /^obj\/template\/\.claude\/hooks\//,
   /^obj\/template\/\.claude\/skills\/[^/]+\//,
+  // Shipped CI-posture artifacts (slice J2) are executable by design: the
+  // pre-commit hook and its scripts/ci helpers are dead weight without the
+  // exec bit. Prefix-scoped — never a blanket obj/template/ allowance.
+  /^obj\/template\/\.githooks\//,
+  /^obj\/template\/scripts\/ci\//,
 ];
 
 const DEVDEP_RANGE_TOKENS = ['^', '~', '*', '>', '<', '||', ' ', 'x'];

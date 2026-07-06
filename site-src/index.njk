@@ -114,6 +114,8 @@ eleventyComputed:
             <span class="track-chip">freeform</span>
             <span class="track-chip">epic</span>
             <span class="track-chip">epic-child</span>
+            <span class="track-chip">org</span>
+            <span class="track-chip track-chip-soon">power<span class="chip-soon-tag">spec'd</span></span>
           </div>
           <p class="concept-readmore"><a href="{{ '/workflows/' | rel }}">Read more about workflow tracks <span class="arr" aria-hidden="true">→</span></a></p>
         </div>
@@ -189,12 +191,12 @@ eleventyComputed:
         <p class="section-num">§ III</p>
         <h2>How it flows</h2>
       </div>
-      <p>A track is a DAG of skill nodes. The file <code>.claude/workflows.jsonl</code> holds the canonical set, one record per line, and the validators check eleven invariants on every read. The harness loads the chosen track, walks the DAG, resolves selector nodes by evaluating preconditions in declaration order, expands sub-tracks inline, and dispatches <code>can_parallel</code> clusters concurrently. The diagram below shows the <code>intake-full</code> track, which runs from intake to commit through eleven nodes. Three filled squares mark the consent gates. A fourth gate (<code>/grant-push</code>) sits outside the phase pipeline and gates pushes to protected branches. All four are user-typed commands; Claude cannot reach the code path that writes the markers.</p>
+      <p>A track is a DAG of skill nodes. The file <code>.claude/workflows.jsonl</code> holds the canonical set, one record per line, and the validators check eleven invariants on every read. The harness loads the chosen track, walks the DAG, resolves selector nodes by evaluating preconditions in declaration order, expands sub-tracks inline, and dispatches <code>can_parallel</code> clusters concurrently. The diagram below shows the <code>intake-full</code> track, which runs from intake to commit through eleven nodes. Three filled squares mark the consent gates. A fourth gate (<code>/grant-push</code>) sits outside the phase pipeline and gates pushes to protected branches. All four are user-typed commands; Claude cannot reach the code path that writes the markers. One gate is branch-aware: under a declared <code>github-flow</code> model, an autonomous feature landing on a non-protected branch omits the <code>/grant-commit</code> node at materialization time, and the commit pushes and opens a pull request instead. Everywhere else, gate C yields to the user exactly as drawn.</p>
     </div>
     <figure class="figure">
       <svg class="diagram-svg arch-bento" viewBox="0 0 1000 1200" preserveAspectRatio="xMinYMin slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title" aria-describedby="workflow-diag-desc">
         <title id="workflow-diag-title">intake-full workflow track: eleven phases with three consent gates and a paired ship at the end.</title>
-        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-spec, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. Runtime gate /grant-push fires at git push time under Article VII.</desc>
+        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-spec, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. The /grant-commit gate is branch-aware: under github-flow, an autonomous feature landing on a non-protected branch omits it and the commit pushes and opens a pull request. Runtime gate /grant-push fires at git push time under Article VII.</desc>
 
         {# DESKTOP BENTO (v2: two-hero side-by-side) — visible above 768px.
            Spec hero left dominant (580x230); TDD tall right anchor (330x440).
@@ -331,8 +333,10 @@ eleventyComputed:
             <text class="num" x="162" y="463">10.6</text>
             <text class="stage-label" x="162" y="491">memory-flush</text>
           </g>
-          {# Gate C inline — 110w gap between memflush (ends x=260) and commit (starts x=438) #}
+          {# Gate C inline — 110w gap between memflush (ends x=260) and commit (starts x=438).
+             BRANCH-AWARE tag: under github-flow an autonomous feature landing omits this node. #}
           <g class="gate-anno bento-gate-inline">
+            <text class="gate-tag" x="320" y="450" text-anchor="middle">BRANCH-AWARE</text>
             <rect class="node-gate" x="305" y="455" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 311,471 L 318,478 L 331,463" fill="none"/>
             <text class="gate-cmd" x="320" y="500" text-anchor="middle">/grant-commit</text>
@@ -441,8 +445,9 @@ eleventyComputed:
             <text class="stage-label" x="42" y="973">memory-flush</text>
           </g>
 
-          {# Gate C — small filled square between memory-flush and commit #}
+          {# Gate C — small filled square between memory-flush and commit. Branch-aware. #}
           <g class="gate-anno bento-gate-inline-m">
+            <text class="gate-tag" x="180" y="992" text-anchor="middle">BRANCH-AWARE</text>
             <rect class="node-gate" x="165" y="998" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 171,1014 L 178,1021 L 191,1006" fill="none"/>
             <text class="gate-cmd" x="180" y="1046" text-anchor="middle">/grant-commit</text>
@@ -460,7 +465,7 @@ eleventyComputed:
           </g>
         </g>
       </svg>
-      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), and <code>epic-child</code> (inherits the epic's discovery). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
+      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The <code>/grant-commit</code> square carries a BRANCH-AWARE tag: under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the gate and the commit pushes and opens a pull request. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), <code>epic-child</code> (inherits the epic's discovery), and <code>org</code> (a flat pod of peer sessions over the broker, off by default). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
     </figure>
   </section>
 
@@ -470,7 +475,7 @@ eleventyComputed:
         <p class="section-num">§ IV</p>
         <h2>Architectural principle</h2>
       </div>
-      <p>Decisions live in main context. Subagents only execute pre-decided recipes in parallel. The baseline ships exactly one subagent: <code>swarm-worker</code>. It runs <code>scenario</code> then <code>implement</code> against a fully-specified recipe inside an isolated git worktree, and never makes design choices.</p>
+      <p>Decisions live in main context. Subagents only execute pre-decided recipes in parallel. The baseline ships exactly one subagent: <code>swarm-worker</code>. It runs <code>scenario</code> then <code>implement</code> against a fully-specified recipe inside an isolated git worktree, and never makes design choices. Read-only advisory subagents may gather and check under Article II §4.2-A (scout and research fan-out, oracle-bound spec checkers); they write nothing and decide nothing.</p>
     </div>
     <div class="arch" role="img" aria-label="Main context decides; isolated worktree executes; merge audit gates the merge.">
       <div class="arch-col main">
@@ -537,6 +542,43 @@ eleventyComputed:
     </p>
   </section>
 
+  <section class="section recent-teaser">
+    <div class="lede">
+      <div class="lede-head">
+        <h2>recently landed<span class="accent">.</span></h2>
+      </div>
+      <p>The baseline moves in enforced increments. These shipped in the current cycle, each with its mechanism named.</p>
+    </div>
+    <div class="concepts is-row">
+      <div class="concept">
+        <p class="num">new · CI posture</p>
+        <h3>Secrets gate + branch protection as code</h3>
+        <p>Installs now deliver a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, a low-risk auto-merge classifier with a NEVER-list, and branch protection as reviewable config with a subset-asserting applier. On by default; <code>--no-ci-posture</code> opts out, and upgrades respect the choice.</p>
+      </div>
+      <div class="concept">
+        <p class="num">new · branch-aware landing</p>
+        <h3>Gate C knows your git model</h3>
+        <p>Under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the <code>/grant-commit</code> gate at materialization time and the commit pushes and opens a pull request. Everywhere else the gate yields to the user, unchanged, with the commit-time guard as the backstop.</p>
+      </div>
+      <div class="concept">
+        <p class="num">new · build-to-spec triage</p>
+        <h3>Leanest safe track, evidence required</h3>
+        <p>Triage now classifies every request's novelty with cited evidence and defaults to the leanest track whose guardrails cover the risk. A heavier pick requires a named reason, recorded in workflow state. Requirement capture became opt-in and derivation-first: at most two questions, only when the answer changes the build.</p>
+      </div>
+      <div class="concept">
+        <p class="num">new · cycle generators</p>
+        <h3>Clean commits in, lessons out</h3>
+        <p>A read-only planner that splits a heterogeneous tree into single-concern Conventional Commits, and a cycle-end retrospective that converts recurring friction into landmine entries and graduation proposals up the enforcement funnel. Part of the <a href="{{ '/pm/' | rel }}">PM Mode toolkit</a>.</p>
+      </div>
+      <figure class="concept concept-figure" aria-labelledby="increments-title">
+        {% include "hero-symbols/increments.njk" %}
+      </figure>
+    </div>
+    <p class="hero-readmore">
+      <a data-cta="pm-feature" href="{{ '/pm/' | rel }}"><span class="arr" aria-hidden="true">&rarr;</span> see PM Mode, including what lands next</a>
+    </p>
+  </section>
+
   <section class="section standup-teaser">
     <div class="lede">
       <div class="lede-head">
@@ -569,7 +611,7 @@ eleventyComputed:
         <p class="section-num">§ V</p>
         <h2>Adoption</h2>
       </div>
-      <p>One npx command lays down the full overlay: hooks, skills, subagent, MCP servers, and the constitutional documents. Then run <code>/init-project</code> in Claude Code to scout the repo and tailor the config to your stack.</p>
+      <p>One npx command lays down the full overlay: hooks, skills, subagent, MCP servers, and the constitutional documents. The overlay includes a CI posture by default: a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, and branch protection as reviewable config with an applier. Pass <code>--no-ci-posture</code> if your project runs its own. Then run <code>/init-project</code> in Claude Code to scout the repo and tailor the config to your stack.</p>
     </div>
     <div class="install">
       <div class="install-copy">

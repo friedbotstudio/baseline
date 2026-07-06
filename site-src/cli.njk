@@ -44,6 +44,7 @@ toc:
 <pre><code><span class="tok-com"># install or dry-run a target</span>
 npx @friedbotstudio/create-baseline &lt;target&gt; [--force] [--dry-run]
                               [--no-plantuml | --require-plantuml] [--with-npmrc]
+                              [--no-ci-posture]
 
 <span class="tok-com"># three-way upgrade against an installed target</span>
 npx @friedbotstudio/create-baseline upgrade [target] [--dry-run]
@@ -105,7 +106,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <tr><td class="phase">NEVER_TOUCH_ADD</td><td>add (never-touch)</td><td>Path is in <code>NEVER_TOUCH</code> and the target lacks it. Written from the template.</td></tr>
       <tr><td class="phase">SPECIAL_MERGE</td><td>merged (.mcp.json deep-merge)</td><td>Path is in <code>SPECIAL_MERGE</code> (currently <code>.mcp.json</code> only). The additive merge runs (see <a href="#mcp-merge">below</a>).</td></tr>
       <tr><td class="phase">MECHANICAL_MERGE_CLEAN</td><td>merged cleanly</td><td>Tier-2 customized file. <code>git merge-file --diff3</code> ran against the recovered BASE and produced no conflict hunks. The merged contents are now on disk.</td></tr>
-      <tr><td class="phase">MECHANICAL_MERGE_CONFLICTED</td><td>merged with conflicts — resolve manually</td><td>Tier-2 customized file. <code>git merge-file</code> wrote conflict markers into the target. Exit 4.</td></tr>
+      <tr><td class="phase">MECHANICAL_MERGE_CONFLICTED</td><td>merged with conflicts; resolve manually</td><td>Tier-2 customized file. <code>git merge-file</code> wrote conflict markers into the target. Exit 4.</td></tr>
       <tr><td class="phase">SEMANTIC_MERGE_STAGED</td><td>staged for /upgrade-project</td><td>Tier-3 customized file. The base/incoming/local triple is written to <code>.claude/state/upgrade/&lt;ts&gt;/</code> for the <code>/upgrade-project</code> Claude Code skill to reconcile in main context. Exit 5.</td></tr>
     </tbody>
   </table>
@@ -117,7 +118,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <p class="section-num">§ III</p>
       <h2 id="flags">Flags</h2>
     </div>
-    <p>Operational flags beyond the modes. Two control the PlantUML side-fetch; one materializes a security-hardened npm config.</p>
+    <p>Operational flags beyond the modes. Two control the PlantUML side-fetch; one materializes a security-hardened npm config; one opts out of the CI posture the install delivers by default.</p>
   </div>
   <table>
     <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
@@ -126,6 +127,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
       <tr><td class="phase">--no-plantuml</td><td>Skip the jar download entirely. PlantUML rendering will fall back to either system <code>plantuml</code> (if on <code>$PATH</code>) or the <code>plantuml-mcp-server</code> hosted endpoint.</td></tr>
       <tr><td class="phase">--require-plantuml</td><td>Treat jar fetch failure (network or sha256 mismatch) as fatal. Exit 4 instead of the default behavior of warning and continuing.</td></tr>
       <tr><td class="phase">--with-npmrc</td><td>Materialize <code>target/.npmrc</code> with security-hardened defaults (<code>ignore-scripts=true</code>, <code>min-release-age=7</code>). Off by default; existing <code>.npmrc</code> preserved verbatim.</td></tr>
+      <tr><td class="phase">--no-ci-posture</td><td>Skip the CI/secrets posture the install delivers by default (the <code>.githooks/pre-commit</code> gitleaks gate, the <code>scripts/ci/</code> helpers, and the branch-protection fill-in config) and set <code>project.json</code> <code>ci_posture.enabled: false</code>. Upgrades respect the knob: an opted-out project never has the artifacts re-delivered, and its own hooks at those paths are never touched.</td></tr>
       <tr><td class="phase">--help, -h</td><td>Print the usage block and exit 0.</td></tr>
       <tr><td class="phase">--version</td><td>Print the package version and exit 0.</td></tr>
     </tbody>

@@ -218,13 +218,13 @@ header.top {
   background: currentColor;
   border-radius: 2px;
   position: relative;
-  transition: transform .25s cubic-bezier(.22, 1, .36, 1), top .2s ease, opacity .15s ease;
+  transition: transform .25s cubic-bezier(.22, 1, .36, 1), opacity .15s ease;
 }
 .nav-toggle .bars::before { position: absolute; top: -5px; left: 0; }
 .nav-toggle .bars::after  { position: absolute; top:  5px; left: 0; }
 body.is-nav-open .nav-toggle .bars { background: transparent; }
-body.is-nav-open .nav-toggle .bars::before { top: 0; transform: rotate(45deg); }
-body.is-nav-open .nav-toggle .bars::after  { top: 0; transform: rotate(-45deg); }
+body.is-nav-open .nav-toggle .bars::before { transform: translateY(5px) rotate(45deg); }
+body.is-nav-open .nav-toggle .bars::after  { transform: translateY(-5px) rotate(-45deg); }
 
 /* Backdrop is inert outside the mobile drawer context. */
 .nav-backdrop { display: none; }
@@ -283,22 +283,33 @@ body.is-nav-open .nav-toggle .bars::after  { top: 0; transform: rotate(-45deg); 
   letter-spacing: -.005em;
   white-space: nowrap;
 }
-@media (max-width: 720px) {
-  .brand .byline { display: none; }
-}
 
 nav.primary {
   margin-left: 48px;
   display: flex;
   gap: 28px;
   font-size: 14px;
+  /* The header must never overflow the page. When the viewport is narrower
+     than the full link row (721-1120px band; the drawer only exists below
+     720 and only on docs pages), the nav scrolls within itself instead. */
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+nav.primary::-webkit-scrollbar { display: none; }
 nav.primary a {
   color: var(--muted);
   font-weight: 500;
+  white-space: nowrap;
 }
 nav.primary a:hover,
 nav.primary a.is-active { color: var(--ink); }
+@media (max-width: 1180px) {
+  nav.primary { margin-left: 24px; gap: 18px; }
+  .gh-link .gh-repo { display: none; }
+  .gh-link { padding: 0 8px; }
+  .brand .byline { display: none; }
+}
 
 .head-spacer { flex: 1; }
 
@@ -336,10 +347,6 @@ nav.primary a.is-active { color: var(--ink); }
 }
 .gh-link:hover .gh-repo {
   text-decoration: underline var(--accent) dashed;
-}
-@media (max-width: 640px) {
-  .gh-link .gh-repo { display: none; }
-  .gh-link { padding: 0 8px; }
 }
 
 /* ----- buttons ---------------------------------------------------------- */
@@ -735,7 +742,7 @@ figcaption.plate-caption code,
   letter-spacing: -.02em;
   fill: var(--ink);
 }
-.strata-svg .numeral.on-fill { fill: var(--paper); }
+.strata-svg .numeral.on-fill { fill: var(--paper) !important; }
 .strata-svg .numeral-mono {
   font-family: var(--mono);
   font-size: 12px;
@@ -977,6 +984,42 @@ a.concept:focus-visible::after {
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.005em;
+}
+/* Not-yet-shipped track: dashed outline on the page bg (not the filled cream),
+   muted ink, and a small caps affix in the gate-tag vocabulary. Reads as
+   "declared, not delivered" at a glance; the track_id text stays greppable. */
+.track-chip-soon {
+  background: var(--bg);
+  border-style: dashed;
+  color: var(--muted);
+  gap: 8px;
+}
+.track-chip-soon .chip-soon-tag {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* A soon-chip inline in a concept kicker (PM Mode "next" cards) sits beside
+   the kicker text rather than in the chip row. */
+.concept .num .track-chip-soon {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+/* A figure cell inside a concept grid (recently-landed): same paper plate as
+   its card siblings, symbol centered, margins zeroed against the UA figure
+   default so the hairline grid stays even. */
+.concept-figure {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.concept-figure .hero-symbol-svg {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
 }
 
 /* =========================================================================
@@ -2245,7 +2288,7 @@ main.article {
 }
 
 /* ----- Shared hero-symbol caption + numeral baselines ------------------- */
-.hero-symbol-svg .on-fill { fill: var(--paper); }
+.hero-symbol-svg .on-fill { fill: var(--paper) !important; }
 
 /* Swarm hero symbol — fan and merge. */
 .fanmerge-svg .fm-recipe { fill: var(--ink); }
@@ -2363,7 +2406,7 @@ main.article {
   letter-spacing: .08em;
   fill: var(--ink);
 }
-.boundary-svg .bnd-numeral.on-fill { fill: var(--paper); }
+.boundary-svg .bnd-numeral.on-fill { fill: var(--paper) !important; }
 .boundary-svg .bnd-rule {
   stroke: var(--accent);
   stroke-width: 2;

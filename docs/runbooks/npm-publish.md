@@ -138,11 +138,11 @@ The `pre-publish-checks` job already runs an equivalent install + materialize + 
 
 ---
 
-## Branch protection migration (deferred)
+## Branch protection migration
 
-v1 runs against an unprotected `main`. The default `GITHUB_TOKEN` provided by GitHub Actions has the `contents: write` scope the workflow needs to push the bump commit + tag back to the source branch.
+The protection config now exists as code (`erp-portables` slice J1): `.github/branch-protection/main.json` pins the `pre-publish-checks` context, and `scripts/ci/apply-branch-protection.mjs` applies it via `gh api` after subset-asserting the contexts against green main — see `docs/runbooks/ci-posture.md`. It is maintainer-applied, not yet live on `main`; `enforce_admins` is deliberately `false` so direct-to-main pushes keep working.
 
-When branch protection lands on `main` (required reviews, required status checks, restricted pushers), the default token will be rejected by `@semantic-release/git`'s push step and the workflow will fail. Migration path:
+The semantic-release constraint below still holds once the config is applied WITH restricted pushers or required reviews: the default `GITHUB_TOKEN` provided by GitHub Actions has the `contents: write` scope the workflow needs to push the bump commit + tag back to the source branch, but a protection rule that rejects it breaks `@semantic-release/git`'s push step. The shipped config avoids this (no required reviews, `enforce_admins: false`, no push restrictions); tighten beyond that shape only after the migration below:
 
 1. Provision a GitHub App named `release-bot` with `contents: write` and `metadata: read` on this repository only.
 2. Add the App as an exempt actor on the branch protection rule.

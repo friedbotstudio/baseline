@@ -1,0 +1,46 @@
+{
+  "request": "Make the epic's landed output publish-ready and bring the public site current (verification findings 2026-07-05 + maintainer directive 'let us update the public site too... validate them too and run a design-pass'). Mechanical fixes driven by the two red gates: (1) scripts/check-files-diff.mjs executable-allowlist gains the shipped CI-posture prefixes (obj/template/.githooks/, obj/template/scripts/ci/) — publish:check and publish-check.test.mjs currently FAIL on SURPRISE-EXECUTABLE; (2) tests/governance-no-python3-runtime.test.mjs seed.md allowed-line re-pin 690→704 (the §15.5 insertion shifted the historical mention) and anchor the allowlist to content, not raw line numbers, so future seed insertions stop breaking it. Public-site currency (design pass via design-ui/impeccable per XI.2): (a) site-src/index.njk — track chips gain org (landed, missing) and an explicitly-labeled UPCOMING power-mode mention (L2 is spec'd, not built — no workflows.njk row until it lands, keeps audit track-coverage green); §III gate prose + arch-bento SVG annotate the slice-C branch-aware gate-C carve-out (github-flow autonomous landing omits the grant-commit node; commit pushes + opens PR); §IV decisions prose gains the Article II §4.2-A read-only advisory-subagent nuance; adoption/§V mentions the CI posture; (b) site-src/cli.njk — --no-ci-posture in usage synopsis + Flags table + CI-posture delivery note; (c) site-src/install.njk if it enumerates delivered paths; (d) docs/runbooks/npm-publish.md branch-protection callout updated to reference the now-existing config-as-code + applier (scripts/ci/apply-branch-protection.mjs) and the semantic-release exempt-actor implication. Validation: publish:check green, full suite green, audit green, site builds (npm run build:site).",
+  "slug": "site-epic-currency",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "verification findings this session (publish:check FAIL log, red suite: publish-check.test.mjs + governance-no-python3-runtime.test.mjs), landed epic slices A/C/J behaviors the site must describe (docs/specs/erp-portables.md), approved slice L2 spec for the upcoming-power-mode label; maintainer directive in-conversation 2026-07-05",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "cli-copy-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "completed_notes": {
+    "triage": "maintainer directed the site update + design pass in conversation; tdd-quickfix is the leanest track with a failing-test path (suite is red). cli-copy-review excepted — no src/cli/tui or bin/ surface in this diff (cli.njk is site prose, not CLI copy). DECISION (engineer, surface at gate C): power-mode appears on the index as an explicitly-labeled upcoming capability only — describing it as shipped before L2 lands would be false product claims, and a workflows.njk row would break the audit's track-coverage check.",
+    "tdd_reopen_2026-07-06": "user-directed follow-up from /impeccable audit ('let us work on P1 and P3') folded into this workflow before gate C as design row 3 (header-adapt-fix): nav.primary internal scroll + <=1180 de-densify fixes the 721-1120px page overflow; nav-toggle X now transform-only. CSS-only diff; full suite + audit re-verified PASS after the change (binding stamp refreshed 2026-07-06).",
+    "tdd_reopen_2026-07-06_pm": "second maintainer directive ('roadmap planner ... own category under PM Mode; power mode ... attention; homepage should ... highlight newer features') folded as design rows 4-5: new site-src/pm.njk category page (shipped PM toolkit + spec'd roadmap-planner/power-mode section with SPEC'D chips — never claimed shipped; shape brief timed out, recommended option adopted per XI.12), nav.json primary link + PM Mode sidebar group, homepage recently-landed section (4 shipped highlights, /pm/ pointer). Build + audit + docsite tests + full suite re-verified PASS; binding stamp refreshed.",
+    "tdd_reopen_2026-07-06_svg_slop": "third maintainer directive: increments hero symbol fills the recently-landed grid's orphaned cell (new hero-symbols/increments.njk + figure-cell CSS); three-lens slop review (copywriting + marketing-psychology + humanizer skills) over the site copy — fixes: card-1 punctuation splice, card-4 benefit headline, cli.njk rendered em dash (XI.1). Verdict otherwise clean; two borderlines kept deliberately and recorded in the design state. Suite + audit re-verified PASS; stamp refreshed."
+  },
+  "source_backlog_keys": [],
+  "created_at": 1783227987,
+  "updated_at": 1783229100,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "design-ui",
+    "design-ui",
+    "design-ui",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

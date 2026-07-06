@@ -84,7 +84,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <p class="section-num">§ III</p>
       <h2 id="lands">What lands</h2>
     </div>
-    <p>Four sentinel paths plus a small set of vendored bins. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present, unless you pass <code>--force</code> or use the <code>upgrade</code> subcommand.</p>
+    <p>Four sentinel paths, a small set of vendored bins, and the default-on CI posture. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present, unless you pass <code>--force</code> or use the <code>upgrade</code> subcommand.</p>
   </div>
   <table>
     <thead><tr><th>Path</th><th>Role</th></tr></thead>
@@ -93,6 +93,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <tr><td class="phase">CLAUDE.md</td><td>In-session constitution. Binds Claude's behavior in this repository.</td></tr>
       <tr><td class="phase">.mcp.json</td><td>The three baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>.</td></tr>
       <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
+      <tr><td class="phase">.githooks/, scripts/ci/, .github/branch-protection/</td><td>The CI/secrets posture, delivered by default: a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, a low-risk auto-merge classifier, and branch protection as a fill-in config with a subset-asserting applier. Skip the whole set with <code>--no-ci-posture</code>.</td></tr>
       <tr><td class="phase">.claude/bin/LICENSE, NOTICE</td><td>Apache 2.0 license + provenance for the side-fetched PlantUML jar.</td></tr>
       <tr><td class="phase">.claude/bin/plantuml.jar</td><td>Side-fetched at install time, sha256-pinned, ~{{ baseline.size.plantumlJar }}. Skipped if <code>plantuml</code> is already on <code>$PATH</code>.</td></tr>
       <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by the <code>upgrade</code> subcommand to do a three-way reconcile on the next install.</td></tr>

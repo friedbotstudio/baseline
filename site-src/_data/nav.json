@@ -6,6 +6,7 @@
     { "href": "/workflows/", "label": "Workflows", "key": "workflows" },
     { "href": "/swarm/", "label": "Swarm", "key": "swarm" },
     { "href": "/org/", "label": "Org", "key": "org" },
+    { "href": "/pm/", "label": "PM Mode", "key": "pm" },
     { "href": "/standup/", "label": "Standup", "key": "standup" },
     { "href": "/skills/", "label": "Skills", "key": "skills" },
     { "href": "/cli/", "label": "CLI", "key": "cli" }
@@ -31,6 +32,12 @@
         { "href": "/swarm/", "label": "Swarm mode", "key": "swarm" },
         { "href": "/standup/", "label": "Standup", "key": "standup" },
         { "href": "/cli/", "label": "CLI", "key": "cli" }
+      ]
+    },
+    {
+      "label": "PM Mode",
+      "items": [
+        { "href": "/pm/", "label": "Overview", "key": "pm" }
       ]
     },
     {
