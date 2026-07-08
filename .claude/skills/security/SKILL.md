@@ -31,7 +31,7 @@ Focus areas, in order:
 
 1. `git diff --stat` then `git diff` against the base branch.
 2. For each changed file, identify the trust boundary (if any) and enumerate tainted data flows.
-3. For any library's secure-usage API in doubt, hit the `context7` MCP — never recall crypto/auth APIs from training data.
+3. For any library's secure-usage API in doubt, verify against current docs (the `context7` MCP is the default; official docs / `llms.txt` also work) — never recall crypto/auth APIs from training data.
 4. Run existing security linters if configured (`bandit`, `semgrep`, `gosec`, `npm audit`, `pip-audit`) via Bash. Do **not** install new tools.
 
 # Output

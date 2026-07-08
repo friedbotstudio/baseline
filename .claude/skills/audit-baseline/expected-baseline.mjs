@@ -42,6 +42,8 @@ export const CANONICAL_MEMORY_FILES = new Set(
   [...EXPECTED_MEMORY_FILES].filter((name) => !name.startsWith('_')),
 );
 
-export const EXPECTED_MCP_SERVERS = new Set(['context7', 'plantuml', 'playwright']);
+// Required MCP servers (hard). context7 is the DEFAULT §2.5 satisfier but is optional/replaceable.
+export const EXPECTED_MCP_SERVERS = new Set(['plantuml', 'playwright']);
+export const DEFAULT_MCP_SERVERS = new Set(['context7']);
 
 export const EXPECTED_TRACKS = { canonical: 8, subTracks: 2 };

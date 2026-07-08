@@ -73,7 +73,7 @@ toc:
   </div>
   <ul>
     <li><code>scenario</code>. Writes failing tests from a recipe. Invokes <code>code-structure</code>.</li>
-    <li><code>implement</code>. Writes production code that turns scenarios green. Invokes <code>code-structure</code>; uses <code>context7</code> for any third-party API.</li>
+    <li><code>implement</code>. Writes production code that turns scenarios green. Invokes <code>code-structure</code>; verifies any third-party API against current docs (<code>context7</code> is the default source).</li>
     <li><code>verify</code>. Mechanical worker. Runs the test command and stamps the official PASS or FAIL verdict.</li>
     <li><code>prose</code>. Drafts or revises English prose for any brief. Always invokes <code>humanizer</code>; conditionally <code>copywriting</code>, <code>documentation</code>, or <code>technical-tutorials</code>.</li>
     <li><code>design-ui</code>. Orchestrates <code>impeccable</code> for UI design tasks: classifies intent, picks an impeccable recipe, runs it under a 3-iteration loop cap, persists state at <code>.claude/state/design/&lt;slug&gt;.json</code>. Writes no product code itself. Per Article X.2, every design task in a workflow phase routes through this skill.</li>

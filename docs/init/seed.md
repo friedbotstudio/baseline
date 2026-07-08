@@ -76,13 +76,13 @@ Assumptions the baseline is allowed to make:
 - If no test exercises a line of code, that line should not exist.
 - Two-sided faithful scope: YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope. An AC-table row that defers spec-committed scope carries a reason tag from the closed list `dependency|risk|cost|human-directed` (`deferred: <reason>` in the Criterion cell); `spec-traceability-review` reports an untagged or YAGNI-tagged deferral as a Critical BLOCKER at gate A.
 
-### §2.5 Context7 rule
+### §2.5 Current-docs rule (context7 is the default, not a mandate)
 
-When writing or reviewing code that uses any third-party library, always invoke the `context7` MCP to retrieve current API documentation. Never assume an API from training recall.
+When writing or reviewing code that uses any third-party library, always verify its API against current documentation rather than training-data recall. This is a **capability requirement, not a tool mandate** — it is satisfied by any current-docs source: the `context7` MCP (the shipped default), a library's official docs or `llms.txt`, or a pinned local doc cache. Never assume an API from training recall.
 
-Prefix: `use context7 to find the current API for [library] [version]`.
+The baseline ships `context7` in `.mcp.json` as the default satisfier so the capability travels with the project; a project MAY replace or remove it provided the verify-against-current-docs outcome still holds. Rationale: the baseline is open-source and SHALL NOT hard-couple downstream users to any one commercial service (login / paid tier) — U6, no irreplaceable dependency.
 
-The rule applies at every gate: scout, research, spec (the "Libraries and versions" table requires a "confirmed via context7" column), TDD, simplify, security, integrate.
+The rule applies at every gate: scout, research, spec (the "Libraries and versions" table requires a "confirmed against current docs" column), TDD, simplify, security, integrate.
 
 ### §2.6 Code structure (language-agnostic)
 
@@ -299,7 +299,7 @@ Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly on
 
 All declared in `.mcp.json` at the repo root so the capability travels with the project:
 
-- **`context7`** — `npx -y @upstash/context7-mcp`. Live library documentation lookup. Required by §2.5.
+- **`context7`** — `npx -y @upstash/context7-mcp`. Live library documentation lookup. The **default satisfier** for §2.5 (replaceable / removable at will — §2.5 mandates the current-docs outcome, not this specific tool).
 - **`plantuml`** — `npx -y plantuml-mcp-server`. Diagram rendering and syntax validation. Used by the spec skill and by `/spec-render` as a fallback when the local CLI is absent.
 - **`playwright`** — `npx -y @playwright/mcp@latest`. Microsoft-official browser automation MCP (Apache 2.0). Drives Chromium / WebKit / Firefox via stdio. The `design-ui` skill uses it for cross-engine visual verification (screenshots per breakpoint, accessibility-tree snapshots, reserved-accent grep over the rendered DOM). The `integrate` skill uses it conditionally for cross-engine smoke when the diff touches the rendered UI. First run downloads ~300 MB of browser binaries — cost is paid once per project. Skills check `.mcp.json` for the server's presence before invoking; a project that drops the declaration silently disables those steps without breaking either skill.
 

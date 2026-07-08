@@ -42,7 +42,7 @@ describe('AC-006 — prose count surfaces agree (45 skills / the declared hook r
 describe('AC-006 — mirrors stay consistent and CLAUDE.md within budget', () => {
   it('test_when_claude_md_then_byte_equal_to_template_and_under_cap', () => {
     assert.equal(read('CLAUDE.md'), read('src/CLAUDE.template.md'), 'CLAUDE.md must equal src/CLAUDE.template.md');
-    assert.ok(read('CLAUDE.md').length <= 38500, `CLAUDE.md ${read('CLAUDE.md').length} > 38500 (budget raised +1500 by erp-portables slice DEF, in lockstep with CLAUDE_TARGET_MAX in code-browser-primary-navigation.test.mjs)`);
+    assert.ok(read('CLAUDE.md').length <= 38800, `CLAUDE.md ${read('CLAUDE.md').length} > 38800 (char budget raised +300 by context7-outcome-mandate for the VI.5 outcome-mandate rewrite; the byte budget CLAUDE_TARGET_MAX=39000 in code-browser-primary-navigation.test.mjs is unchanged, preserving >=1000 hard-cap headroom)`);
   });
 });
 

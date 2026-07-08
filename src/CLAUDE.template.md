@@ -30,7 +30,7 @@ Every other capability — code authoring, scenario authoring, scouting, researc
 | Skill | Mandatory sub-skill | Conditional |
 |---|---|---|
 | `scenario` | `code-structure` | — |
-| `implement` | `code-structure` | `context7` MCP for any third-party API |
+| `implement` | `code-structure` | current-docs check for any third-party API (`context7` default) |
 | `verify` | — (mechanical) | — |
 | `design-ui` | `impeccable` | — |
 | `prose` | `humanizer` (always) | `copywriting` / `documentation` / `technical-tutorials` by register |
@@ -144,11 +144,9 @@ The following bind every code change.
 - Code without a test exercising it SHALL NOT exist.
 - Two-sided faithful scope: YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope. A spec AC row deferring committed scope SHALL carry `deferred: dependency|risk|cost|human-directed`; untagged or YAGNI-tagged deferral is a Critical BLOCKER at gate A (`spec-traceability-review`).
 
-### VI.5 Context7 for third-party APIs
-- For ANY third-party library, you SHALL invoke the `context7` MCP before writing code that uses it.
-- Prefix: `use context7 to find the current API for [library] [version]`.
-- You SHALL NOT recall an API from training data for external libraries.
-- `context7` is declared in `.mcp.json` so the capability travels with the repo.
+### VI.5 Current docs for third-party APIs
+- For ANY third-party library, you SHALL verify its API against current documentation before writing code that uses it. You SHALL NOT recall an API from training data for external libraries.
+- **Outcome mandate, not tool mandate**: satisfy it with the `context7` MCP (the shipped default in `.mcp.json`), a library's official docs / `llms.txt`, or a pinned local doc cache. A project MAY replace or remove `context7` provided the outcome holds — U6, no irreplaceable dependency (rationale: seed.md §2.5).
 
 ### VI.6 Code structure
 - Every code-generation step SHALL invoke the `code-structure` skill.

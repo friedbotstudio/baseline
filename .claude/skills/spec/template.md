@@ -195,9 +195,9 @@ One row per endpoint / CLI command / message. Tables, not prose.
 
 ### Libraries and versions
 
-Every entry must be confirmed via the `context7` MCP — no training-data recall for third-party APIs (seed.md § Context7 Rule).
+Every entry must be confirmed against current docs — no training-data recall for third-party APIs. The `context7` MCP is the default source; a library's official docs / `llms.txt` or a pinned local cache also satisfy it (seed.md §2.5 Current-docs rule).
 
-| Library@version | Purpose | Key APIs | Confirmed via context7 |
+| Library@version | Purpose | Key APIs | Confirmed against current docs |
 |---|---|---|---|
 | `<lib@x.y.z>` | `<use>` | `<api names>` | yes |
 

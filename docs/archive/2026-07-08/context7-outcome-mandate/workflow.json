@@ -1,0 +1,31 @@
+{
+  "request": "context7 becomes an outcome-mandate not a tool-mandate — amend seed §2.5 / CLAUDE Article VI.5 + Art. II table + mirrors + audit-baseline + skill wording so the rule mandates verify-against-current-docs (context7 stays the default satisfier in .mcp.json, replaceable). Folds in the read-before-overwrite convention (§8). Per docs/handoff/context7-outcome-mandate.md.",
+  "slug": "context7-outcome-mandate",
+  "track_id": "chore",
+  "novelty": "novel",
+  "novelty_evidence": "Un-mandating a shipped MCP has no in-repo precedent; source is the change order docs/handoff/context7-outcome-mandate.md (self-contained exact edits). No prior 'make a mandated tool optional' pattern in the tree.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "memory-flush",
+    "commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783513708,
+  "updated_at": 1783517995
+}

@@ -16,6 +16,7 @@ import { pathToFileURL } from 'node:url';
 import { deriveCounts, SKILL_CATEGORIES } from './derive-counts.mjs';
 import {
   EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
+  EXPECTED_MCP_SERVERS, DEFAULT_MCP_SERVERS,
 } from './expected-baseline.mjs';
 
 // True only when run as a script (`node audit.mjs`), false when imported by a
@@ -483,7 +484,7 @@ if (!SKIP_SRC) {
     try {
       const m = JSON.parse(readFileSync(srcMcp, 'utf8'));
       const servers = Object.keys(m.mcpServers || {});
-      const missing = ['context7', 'plantuml', 'playwright'].filter(s => !servers.includes(s));
+      const missing = [...EXPECTED_MCP_SERVERS].filter(s => !servers.includes(s));
       if (missing.length) {
         add('src templates: .mcp.template.json', 'FAIL', `baseline servers missing: ${JSON.stringify(missing)}`);
       } else {
@@ -651,8 +652,14 @@ if (mcp === null) {
 } else {
   add('.mcp.json parses', 'PASS', '');
   const servers = Object.keys(mcp.mcpServers || {});
-  for (const s of ['context7', 'plantuml', 'playwright']) {
+  for (const s of [...EXPECTED_MCP_SERVERS]) {  // required
     add(`mcp server: ${s}`, servers.includes(s) ? 'PASS' : 'FAIL', servers.includes(s) ? '' : 'not declared');
+  }
+  // context7 — default §2.5 satisfier, optional & replaceable. Report if present; never FAIL on absence.
+  for (const s of [...DEFAULT_MCP_SERVERS]) {
+    if (servers.includes(s)) {
+      add(`mcp server: ${s} (default)`, 'PASS', 'present — default current-docs satisfier');
+    }
   }
 }
 

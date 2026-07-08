@@ -22,11 +22,11 @@ If any are missing, **stop and ask** — do not infer architecture or scope.
 
 # Library APIs
 
-For any third-party library API you use, hit the `context7` MCP first:
+For any third-party library API you use, verify it against current docs first — never training recall. The default source is the `context7` MCP:
 1. `mcp__plugin_context7_context7__resolve-library-id`
 2. `mcp__plugin_context7_context7__query-docs`
 
-Never recall an API from training data. Record `<library>@<version> — <api names>` in your final report.
+Any current-docs source satisfies the rule — context7 is the shipped default; a library's official docs / `llms.txt` or a pinned local doc cache work too when the project doesn't ship context7 (seed.md §2.5). Never recall an API from training data. Record `<library>@<version> — <api names>` in your final report.
 
 # Method (RALPH loop, capped at 5 iterations)
 
@@ -34,7 +34,7 @@ Never recall an API from training data. Record `<library>@<version> — <api nam
 2. **Read the behavior contract.** Cross-reference it against test assertions. Mismatches are caller decisions; surface as Open question, do not improvise.
 3. **Read existing code in the write set and immediate neighbors.** Match style, reuse helpers, follow naming. Reuse-before-create is `code-structure`'s rule, not a suggestion.
 4. **Run the failing tests once.** Confirm they fail, and that they fail for the right reason (`AssertionError` is the right reason; `ImportError` because the module doesn't exist yet is also right; `SyntaxError` in a fixture is the wrong reason — surface it).
-5. **Implement the minimum code that makes the failing tests pass.** Apply `code-structure` rules to every file. For any third-party API, hit `context7` first. Write only inside the write set.
+5. **Implement the minimum code that makes the failing tests pass.** Apply `code-structure` rules to every file. For any third-party API, verify against current docs first (context7 default). Write only inside the write set.
 6. **Run the tests again.**
    - **Green** → proceed to step 7.
    - **Red** → read the failure, adjust the implementation (not the tests), loop back to step 5.
@@ -56,7 +56,7 @@ GREEN | RED | BLOCKED
 - Command: <test cmd>
 - Last result: <green | failures: N>
 
-## Library APIs cited (context7-confirmed)
+## Library APIs cited (confirmed against current docs)
 - <library>@<version> — <api names>
 
 ## RALPH iterations used

@@ -1,7 +1,7 @@
 ---
 name: research
 owner: baseline
-description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs via context7 MCP — never in training-data recall. Output lives at `docs/research/<slug>.md`. Candidate ranking and the memo execute in main context; doc/source gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
+description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs (context7 MCP is the default source) — never in training-data recall. Output lives at `docs/research/<slug>.md`. Candidate ranking and the memo execute in main context; doc/source gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
 ---
 
 You are surfacing a small set of candidate approaches to a task, with honest tradeoffs, so the spec author can pick one. Decisions are not made here — the human reviewer decides at `/spec`. Your job is to lay out the option space.
@@ -17,19 +17,19 @@ You are surfacing a small set of candidate approaches to a task, with honest tra
 - The BRD at `docs/brd/<slug>.md` if present — NFR-### requirements (latency, compliance, etc.).
 - The existing tech stack — read `package.json`, `pyproject.toml`, `go.mod`, lockfiles.
 
-# Mandatory: context7 MCP for library APIs
+# Mandatory: verify library APIs against current docs (context7 is the default)
 
-For any library you intend to cite:
+For any library you intend to cite, verify its API against current documentation — never training recall. The default source is the `context7` MCP:
 
 1. `mcp__plugin_context7_context7__resolve-library-id`
 2. `mcp__plugin_context7_context7__query-docs`
 
-**Never cite an API from memory.** Record the version present in the lockfile and confirm the docs match that major version. If context7 has no coverage, fall back to `WebFetch` against the library's official docs and note that.
+**Never cite an API from memory.** Record the version present in the lockfile and confirm the docs match that major version. If context7 has no coverage (or the project doesn't ship it), fall back to `WebFetch` against the library's official docs / `llms.txt` and note the source. Any current-docs source satisfies the rule — context7 is the convenient default, not a hard requirement (seed.md §2.5).
 
 # Method
 
 1. **Identify libraries and frameworks** the solution would likely touch.
-2. **Verify each library API** via context7 (above).
+2. **Verify each library API** against current docs (context7 default, above).
 3. **For each candidate**, evaluate against:
    - Fit with existing patterns (per scout report).
    - YAGNI: does it need abstractions beyond what this task requires?

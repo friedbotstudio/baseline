@@ -15,7 +15,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   EXPECTED_HOOKS, EXPECTED_COMMANDS, EXPECTED_AGENTS, EXPECTED_MCP_SERVERS,
-  EXPECTED_TRACKS, CANONICAL_MEMORY_FILES,
+  DEFAULT_MCP_SERVERS, EXPECTED_TRACKS, CANONICAL_MEMORY_FILES,
 } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,7 +33,10 @@ describe('AC-001 — deriveCounts() reflects the artifacts on disk', () => {
     assert.equal(c.subagents, EXPECTED_AGENTS.size, 'subagents match the declared roster');
     assert.deepEqual(c.tracks, EXPECTED_TRACKS, 'tracks match the declared shape');
     assert.equal(c.memoryFiles, CANONICAL_MEMORY_FILES.size, 'canonical memory files match the roster');
-    assert.equal(c.mcpServers, EXPECTED_MCP_SERVERS.size, 'mcp servers match the declared roster');
+    // The baseline still SHIPS 3 MCP servers in .mcp.json: the required set
+    // (EXPECTED_MCP_SERVERS) plus the default §2.5 current-docs satisfier
+    // (DEFAULT_MCP_SERVERS = context7, optional/replaceable per Article VI.5).
+    assert.equal(c.mcpServers, EXPECTED_MCP_SERVERS.size + DEFAULT_MCP_SERVERS.size, 'mcp servers on disk = required + default roster');
   });
 });
 
