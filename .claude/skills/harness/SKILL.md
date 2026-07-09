@@ -95,7 +95,7 @@ Inside each iteration:
      - On any cluster member's failure: EXIT LOOP with YIELD; `reason: "cluster <ids>: <failed-id> failed: <summary>"`. Leave succeeded members `completed` and the failed member `in_progress` for inspection.
    - On phase-skill success:
      - `TaskUpdate` to `completed`.
-     - Append the phase name to `workflow.json → completed`; update `updated_at`.
+     - Append the phase name to `workflow.json → completed`; update `updated_at`. **Skip this append when `.claude/state/workflow.json` no longer exists** — the `commit` skill's Step 1 moves it into `docs/archive/<date>/<slug>/`, and the archived bundle is immutable. Never resolve `workflow.json` to the archived copy: writing there re-dirties a file the commit just landed. This is the terminal phase; there is nothing left to record.
      - Log `completed <phase>`.
      - Refresh the marker (`echo "<slug>" > .claude/state/.harness_active`) and rewrite `harness_state` with `{state: "continue", slug, reason: "<phase> done; next: <next phase>"}`.
      - For tdd worker-ticks specifically, also append the tick's short label to `workflow.json → tdd_ticks[]` (Edit tool) so `phase_timer` captures per-tick sub-timing (see `tdd/SKILL.md` → Sub-tick timing protocol).

@@ -105,8 +105,11 @@ function additionalContextOf(result) {
 describe('AC-001 — harness phase ordering includes memory-flush between archive and grant-commit', () => {
   it('test_when_archive_completes_then_taskList_next_pending_is_memory_flush', async () => {
     const sop = await readRepoFile('.claude/skills/harness/SKILL.md');
-    const orderingBlock = sop.match(/```\s*\n([\s\S]*?archive[\s\S]*?commit[\s\S]*?)```/);
-    assert.ok(orderingBlock, 'harness/SKILL.md must contain a fenced phase-ordering block listing archive and commit');
+    // Anchor on the fenced arrow-chain block itself (it opens with `intake`), not on the
+    // first fence pair that happens to span the words archive..commit. The looser regex
+    // silently re-targeted whenever prose elsewhere in the SOP mentioned those two words.
+    const orderingBlock = sop.match(/```\s*\n(intake[\s\S]*?)```/);
+    assert.ok(orderingBlock, 'harness/SKILL.md must contain a fenced phase-ordering block starting at intake');
     const chain = orderingBlock[1];
     const archiveIdx = chain.indexOf('archive');
     const memflushIdx = chain.indexOf('memory-flush');
