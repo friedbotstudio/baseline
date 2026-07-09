@@ -111,17 +111,28 @@ describe('Article VII hard-blocks cover every spelling of each forbidden operati
 // op hidden in an EXECUTED substitution stays visible (over-inclusion is the
 // safe direction). Landmine: shell-command-guards-must-classify-wrapper-and-quote-aware.
 describe('forbidden-op matching reads the executable shape, not commit prose', () => {
-  const guardDecision = (command) => {
+  // A `git commit` command has TWO independent reasons to be denied: the
+  // FORBIDDEN_RE hard-block, and the branch-aware consent policy (every branch is
+  // protected while git.protected_branches is null). Asserting on the decision
+  // alone makes these tests depend on whether a /grant-commit token happens to be
+  // fresh — green for 900s after a grant, red in CI, which never has one. Assert
+  // on the REASON so the hard-block is isolated from the consent gate.
+  const FORBIDDEN_REASON = /forbidden git operation/i;
+
+  const guardReason = (command) => {
     const payload = JSON.stringify({ tool_name: 'Bash', tool_input: { command } });
     const r = spawnSync('node', [GUARD], { input: payload, encoding: 'utf8' });
-    if (!r.stdout || !r.stdout.trim()) return 'allow';
+    if (!r.stdout || !r.stdout.trim()) return '';
     try {
-      const j = JSON.parse(r.stdout);
-      return (j.hookSpecificOutput || j).permissionDecision || 'allow';
+      const o = JSON.parse(r.stdout);
+      const h = o.hookSpecificOutput || o;
+      return h.permissionDecisionReason || h.reason || '';
     } catch {
-      return 'allow';
+      return '';
     }
   };
+
+  const blockedAsForbiddenOp = (cmd) => FORBIDDEN_REASON.test(guardReason(cmd));
 
   it('test_when_commit_heredoc_body_names_forbidden_ops_then_allowed', () => {
     const cmd = [
@@ -133,58 +144,79 @@ describe('forbidden-op matching reads the executable shape, not commit prose', (
       '`git stash drop` and `git stash clear` are now blocked too.',
       'MSG',
     ].join('\n');
-    assert.equal(guardDecision(cmd), 'allow', 'a commit message describing forbidden ops is prose, not an invocation');
+    assert.equal(blockedAsForbiddenOp(cmd), false, 'a commit message describing forbidden ops is prose, not an invocation');
   });
 
   it('test_when_commit_message_arg_names_forbidden_op_then_allowed', () => {
-    assert.equal(guardDecision('git commit -m "document that git restore is banned"'), 'allow');
-    assert.equal(guardDecision("git commit -m 'git clean -fd is forbidden'"), 'allow');
+    assert.equal(blockedAsForbiddenOp('git commit -m "document that git restore is banned"'), false);
+    assert.equal(blockedAsForbiddenOp("git commit -m 'git clean -fd is forbidden'"), false);
   });
 
   it('test_when_forbidden_op_hidden_in_executed_substitution_then_still_blocked', () => {
     // The message prose is stripped, but the substitution body IS executed.
-    assert.equal(guardDecision('git commit -m "$(git restore src/x.js)"'), 'deny');
+    assert.equal(blockedAsForbiddenOp('git commit -m "$(git restore src/x.js)"'), true);
   });
 
   it('test_when_unquoted_heredoc_expands_a_substitution_then_still_blocked', () => {
     // <<MSG (unquoted delimiter) DOES expand: the substitution really executes.
     // Only <<'MSG' makes the body literal. The strip must not confuse the two.
     const cmd = ['git commit -F - <<MSG', 'body $(git restore src/x.js)', 'MSG'].join('\n');
-    assert.equal(guardDecision(cmd), 'deny', 'an unquoted heredoc expands substitutions');
+    assert.equal(blockedAsForbiddenOp(cmd), true, 'an unquoted heredoc expands substitutions');
   });
 
   it('test_when_data_sink_heredoc_documents_forbidden_ops_then_allowed', () => {
     // Writing a memory entry / doc that DESCRIBES the ops. `cat` is a data sink.
+    // Not a git command at all, so this one must reach a full allow.
     const cmd = [
       "cat >> .claude/memory/landmines.md <<'ENTRY'",
       '- ops: (`git restore`, `git clean -fd`, `git stash drop`)',
       '- shape: `git commit -m "$(git restore x)"` still blocks',
       'ENTRY',
     ].join('\n');
-    assert.equal(guardDecision(cmd), 'allow', 'a heredoc fed to cat is data, not commands');
+    assert.equal(guardReason(cmd), '', 'a heredoc fed to cat is data, not commands');
+  });
+
+  it('test_when_data_sink_heredoc_mentions_git_commit_then_not_consent_gated', () => {
+    // Subcommand classification must read the executable shape too: prose that
+    // mentions `$(git commit ...)` in a doc heredoc is not a commit, and must not
+    // be gated on a fresh /grant-commit token.
+    const cmd = [
+      "cat >> notes.md <<'ENTRY'",
+      'the shape `git commit -m "$(git restore x)"` is denied',
+      'ENTRY',
+    ].join('\n');
+    assert.doesNotMatch(guardReason(cmd), /consent/i, 'a doc heredoc is not a commit invocation');
+  });
+
+  it('test_when_shell_executor_heredoc_commits_then_still_consent_gated', () => {
+    // SECURITY counterpart: `bash <<'EOF'` + `git commit` really commits, so the
+    // consent policy must still see it. (Reason is consent- or topology-shaped,
+    // never empty.)
+    const cmd = ["bash <<'EOF'", 'git commit -m x', 'EOF'].join('\n');
+    assert.notEqual(guardReason(cmd), '', 'a shell heredoc that commits must stay classified');
   });
 
   it('test_when_shell_executor_heredoc_carries_forbidden_op_then_blocked', () => {
     // SECURITY: `bash <<'EOF'` executes its body as a script. Quoted delimiter
     // suppresses expansion, but the shell still RUNS the lines.
     const cmd = ["bash <<'EOF'", 'git restore src/x.js', 'EOF'].join('\n');
-    assert.equal(guardDecision(cmd), 'deny', 'a heredoc fed to a shell is a script');
+    assert.equal(blockedAsForbiddenOp(cmd), true, 'a heredoc fed to a shell is a script');
   });
 
   it('test_when_quoted_heredoc_contains_backticks_then_treated_as_literal', () => {
     // Markdown backticks in a commit body are prose under <<'MSG', not a
     // command substitution. This is the exact shape that blocked its own commit.
     const cmd = ['git commit -F - <<\'MSG\'', 'note: `git clean -fd` was allowed', 'MSG'].join('\n');
-    assert.equal(guardDecision(cmd), 'allow');
+    assert.equal(blockedAsForbiddenOp(cmd), false);
   });
 
   it('test_when_forbidden_op_follows_a_commit_in_a_compound_then_still_blocked', () => {
-    assert.equal(guardDecision('git commit -m "safe message" && git restore src/x.js'), 'deny');
+    assert.equal(blockedAsForbiddenOp('git commit -m "safe message" && git restore src/x.js'), true);
   });
 
   it('test_when_real_forbidden_op_then_still_blocked', () => {
-    assert.equal(guardDecision('git restore src/x.js'), 'deny');
-    assert.equal(guardDecision('git clean -fd'), 'deny');
+    assert.equal(blockedAsForbiddenOp('git restore src/x.js'), true);
+    assert.equal(blockedAsForbiddenOp('git clean -fd'), true);
   });
 });
 

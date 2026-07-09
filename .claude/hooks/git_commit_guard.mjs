@@ -244,10 +244,19 @@ function stagedClosureDecision() {
 function handleBash(cmd) {
   if (!cmd) emitAllow();
 
+  // The EXECUTABLE SHAPE of the command: quoted heredoc bodies fed to a DATA
+  // sink (`cat >> notes.md <<'E'`, `git commit -F - <<'E'`) are literal text and
+  // are dropped; bodies fed to a SHELL (`bash <<'E'`) are scripts and survive, as
+  // do unquoted `<<TAG` bodies, which expand. Everything downstream — the
+  // subcommand classification AND the hard-block scan — reads this, never the raw
+  // string. Otherwise prose that merely MENTIONS `$(git commit …)` inside a doc
+  // heredoc is classified as a commit and consent-gated (Q-003, second edition).
+  const execCmd = stripQuotedHeredocBodies(cmd);
+
   // Classify by ACTUAL git invocation segments, not naive substring (Q-003).
   // A command that merely mentions "git commit" in a grep pattern, an echo, or
   // a quoted string has no git segment and is allowed through here.
-  const segs = gitSegments(cmd);
+  const segs = gitSegments(execCmd);
   if (segs.length === 0) emitAllow();
 
   // Hard-blocks — checked only WITHIN actual git segments so a forbidden flag
@@ -261,18 +270,14 @@ function handleBash(cmd) {
   // bodies and `-m`/`--message` args, then re-appends every EXECUTED command
   // substitution, so `git commit -m "$(git restore x)"` still blocks. Compound
   // segments (`git commit -m "..." && git restore x`) survive the split intact.
-  // `stripQuotedHeredocBodies` first: a quoted heredoc fed to a DATA sink
-  // (`cat >> notes.md <<'E'`, `git commit -F - <<'E'`) is literal text, and prose
-  // that documents a forbidden op would otherwise split into fake git segments.
-  // A heredoc fed to a SHELL (`bash <<'E'`) is a script and is preserved.
-  const forbiddenSegs = gitSegments(sanitizeGitCommitForScan(stripQuotedHeredocBodies(cmd)));
+  const forbiddenSegs = gitSegments(sanitizeGitCommitForScan(execCmd));
   if (forbiddenSegs.some((seg) => FORBIDDEN_RE.test(seg))) {
     logLine(HOOK, `BLOCKED forbidden git op: ${cmd}`);
     emitBlock('Git Commit Guard: forbidden git operation detected. seed.md Art. VII forbids, regardless of consent or branch: `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f` (any spelling: -fd, -xfd, --force), worktree path-discard in every spelling (`git checkout -- <path>`, `git checkout <tree-ish> -- <path>`, `git checkout .`, `git restore <path>`, `git restore --worktree`, `git restore --source=<tree-ish>`), `git switch --discard-changes`, `git stash drop`, `git stash clear`, `git branch -D`, `git config`, `git rebase -i`, `git add -i`, `git add -A|.`. Permitted alternatives: `git restore --staged <path>` unstages without discarding; to revert a file, edit it back explicitly or `git show <ref>:<path>` into it. Ask the user to approve by stating the exact command.');
   }
 
-  const isCommit = gitSubcommandInvoked(cmd, 'commit');
-  const isPush = gitSubcommandInvoked(cmd, 'push');
+  const isCommit = gitSubcommandInvoked(execCmd, 'commit');
+  const isPush = gitSubcommandInvoked(execCmd, 'push');
   if (!isCommit && !isPush) emitAllow();
 
   // Article VII applicability: gate operations require git.
