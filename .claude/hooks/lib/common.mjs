@@ -591,6 +591,43 @@ function stripGitCommitHeredocBodies(cmd) {
   return out.join('\n');
 }
 
+// Remove the body of every QUOTED heredoc (`<<'TAG'` / `<<"TAG"`) whose opener
+// command treats the body as DATA. A quoted delimiter suppresses all expansion,
+// so `cat >> f <<'E'` / `git commit -F - <<'E'` bodies are literal text:
+// backticks, `$(…)` and `git …` prose inside them are never executed. Without
+// this, a commit body or a memory entry that merely *documents* a forbidden op
+// (`` `git clean -fd` ``) is split into fake git segments and hard-blocked.
+//
+// SECURITY: a quoted heredoc fed to a SHELL is a script, not data — `bash <<'E'
+// git restore x
+// E` really does run it. So the body is preserved whenever the opener's command
+// verb is an executor (`sh`/`bash`/`eval`/`xargs`/`timeout`/…). Unquoted `<<TAG`
+// bodies also expand and are always preserved. Both directions are pinned by
+// tests/forbidden-git-ops-spellings.test.mjs.
+export function stripQuotedHeredocBodies(cmd) {
+  if (typeof cmd !== 'string' || !cmd.includes('<<')) return cmd;
+  const lines = cmd.split('\n');
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const opener = line.match(/<<-?\s*(['"])([A-Za-z_][A-Za-z0-9_]*)\1/);
+    if (!opener) {
+      out.push(line);
+      continue;
+    }
+    const verb = commandTokens(line)[0];
+    const executed = SHELL_C_EXECUTORS.has(verb) || PREFIX_EXECUTORS.has(verb);
+    const closeRe = new RegExp('^\\s*' + opener[2] + '\\s*$');
+    let j = i + 1;
+    while (j < lines.length && !closeRe.test(lines[j])) j++;
+    out.push(line.replace(/<<-?\s*['"][A-Za-z_][A-Za-z0-9_]*['"]/, ''));
+    // Unterminated heredoc, or an executor's script body: keep the trailing
+    // lines (never swallow a real command).
+    if (!executed && j < lines.length) i = j;
+  }
+  return out.join('\n');
+}
+
 // Every command-substitution / backtick body the shell would EXECUTE in `s`,
 // collected recursively (a substitution may nest another). Reuses the
 // quote-aware, single-quote-suppressing `extractSubstitutions`. Used so that a
@@ -635,7 +672,9 @@ export function sanitizeGitCommitForScan(cmd) {
   // consent write hidden in a message substitution would otherwise vanish with
   // the stripped prose; retaining the executed body keeps it visible to the
   // consent scan (over-inclusion is the safe direction for a security guard).
-  const executed = collectExecutedSubstitutions(cmd);
+  // Quoted-heredoc bodies are excluded first: a quoted delimiter suppresses
+  // expansion, so their backticks/`$(…)` are literal and were never executed.
+  const executed = collectExecutedSubstitutions(stripQuotedHeredocBodies(cmd));
   return executed.length ? `${scrubbed}\n${executed.join('\n')}` : scrubbed;
 }
 

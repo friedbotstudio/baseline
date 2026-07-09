@@ -38,6 +38,8 @@ import {
   matchAnyGlob,
   gitSubcommandInvoked,
   gitSegments,
+  sanitizeGitCommitForScan,
+  stripQuotedHeredocBodies,
   resolveWorkflowModel,
   isPrimaryWorkTree,
   CLAUDE_PROJECT_ROOT,
@@ -62,8 +64,22 @@ const FORBIDDEN_RE = new RegExp(
     '|--no-verify' +
     '|--no-gpg-sign' +
     '|\\bgit\\s+reset\\s+--hard\\b' +
-    '|\\bgit\\s+clean\\s+-[a-zA-Z]*f\\b' +
-    '|\\bgit\\s+checkout\\s+--\\s' +
+    // clean: any flag cluster containing `f`, plus the long form. The old
+    // `-[a-zA-Z]*f\b` could not match `-fd` — a \b never sits between f and d —
+    // so the canonical spelling of the most destructive op walked through.
+    '|\\bgit\\s+clean\\b[^|&;]*(?:\\s-[a-zA-Z]*f|\\s--force\\b)' +
+    // Worktree path-discard is ONE forbidden operation with several spellings.
+    // checkout with a `--` path separator, bare or after a tree-ish:
+    '|\\bgit\\s+checkout\\b[^|&;]*\\s--(?=\\s|$)' +
+    // checkout . (sweeps the whole tree):
+    '|\\bgit\\s+checkout\\s+\\.(?![A-Za-z0-9_/.\\-])' +
+    // restore touching the worktree, explicitly (-W/--worktree)...
+    '|\\bgit\\s+restore\\b[^|&;]*(?:--worktree|\\s-W)\\b' +
+    // ...or by default, i.e. any restore that is not staged-only. `git restore
+    // --staged <path>` unstages without touching the worktree and stays legal.
+    '|\\bgit\\s+restore\\b(?![^|&;]*(?:--staged|\\s-S)\\b)' +
+    '|\\bgit\\s+switch\\b[^|&;]*--discard-changes\\b' +
+    '|\\bgit\\s+stash\\s+(?:drop|clear)\\b' +
     '|\\bgit\\s+branch\\s+-D\\b' +
     '|\\bgit\\s+config\\b' +
     '|\\bgit\\s+rebase\\s+-i\\b' +
@@ -237,9 +253,22 @@ function handleBash(cmd) {
   // Hard-blocks — checked only WITHIN actual git segments so a forbidden flag
   // appearing in an unrelated command or a string can't false-trip. Push is
   // NOT in this set anymore.
-  if (segs.some((seg) => FORBIDDEN_RE.test(seg))) {
+  //
+  // Scan the EXECUTABLE SHAPE, not the payload (Q-003, second edition): a commit
+  // message that merely DESCRIBES `git restore` — a governance commit body, a
+  // `-m` string — is prose, and once FORBIDDEN_RE covers every spelling of each
+  // op, that prose trips it. `sanitizeGitCommitForScan` drops commit heredoc
+  // bodies and `-m`/`--message` args, then re-appends every EXECUTED command
+  // substitution, so `git commit -m "$(git restore x)"` still blocks. Compound
+  // segments (`git commit -m "..." && git restore x`) survive the split intact.
+  // `stripQuotedHeredocBodies` first: a quoted heredoc fed to a DATA sink
+  // (`cat >> notes.md <<'E'`, `git commit -F - <<'E'`) is literal text, and prose
+  // that documents a forbidden op would otherwise split into fake git segments.
+  // A heredoc fed to a SHELL (`bash <<'E'`) is a script and is preserved.
+  const forbiddenSegs = gitSegments(sanitizeGitCommitForScan(stripQuotedHeredocBodies(cmd)));
+  if (forbiddenSegs.some((seg) => FORBIDDEN_RE.test(seg))) {
     logLine(HOOK, `BLOCKED forbidden git op: ${cmd}`);
-    emitBlock('Git Commit Guard: forbidden git operation detected. seed.md forbids `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f`, `git checkout -- `, `git branch -D`, `git config`, `git rebase -i`, `git add -i`, `git add -A|.` regardless of consent or branch. Ask the user to approve by stating the exact command.');
+    emitBlock('Git Commit Guard: forbidden git operation detected. seed.md Art. VII forbids, regardless of consent or branch: `git commit --amend`, `--no-verify`, `--no-gpg-sign`, `git reset --hard`, `git clean -f` (any spelling: -fd, -xfd, --force), worktree path-discard in every spelling (`git checkout -- <path>`, `git checkout <tree-ish> -- <path>`, `git checkout .`, `git restore <path>`, `git restore --worktree`, `git restore --source=<tree-ish>`), `git switch --discard-changes`, `git stash drop`, `git stash clear`, `git branch -D`, `git config`, `git rebase -i`, `git add -i`, `git add -A|.`. Permitted alternatives: `git restore --staged <path>` unstages without discarding; to revert a file, edit it back explicitly or `git show <ref>:<path>` into it. Ask the user to approve by stating the exact command.');
   }
 
   const isCommit = gitSubcommandInvoked(cmd, 'commit');

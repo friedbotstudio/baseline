@@ -171,12 +171,13 @@ On a **protected branch**, commits require fresh `commit_consent` (`/grant-commi
 
 **Hard-blocks (regardless of consent, branch, or request).** These rewrite history, skip safety, or sweep paths; `git_commit_guard`'s `FORBIDDEN_RE` blocks them flat-out:
 
-- `git commit --amend` — always create a new commit.
-- `--no-verify`, `--no-gpg-sign`, or any flag that skips hooks/signing.
-- `git reset --hard`, `git clean -f`, `git checkout --`, `git branch -D`.
-- `git config` changes.
-- `git rebase -i`, `git add -i` (interactive).
-- `git add -A`, `git add .` — name the paths.
+- `git commit --amend`; `--no-verify`, `--no-gpg-sign`, any hook/signing-skip flag.
+- `git reset --hard`, `git clean -f` (any spelling), `git branch -D`, `git config`.
+- `git switch --discard-changes`, `git stash drop`, `git stash clear`.
+- **Worktree path-discard, any spelling** — `git checkout [<tree-ish>] -- <path>`, `git checkout .`, `git restore <path>` (`--staged` permitted: it unstages only).
+- `git rebase -i`, `git add -i`; `git add -A`, `git add .` — name the paths.
+
+Spelling table + the `git worktree remove --force` exemption: annex.
 
 `git push` is governed by the branch-aware policy above, not `FORBIDDEN_RE`. `git push --force`/`--force-with-lease` stay forbidden unless the user names the exact op in their current request, and remain subject to the branch-aware policy (force-push to a protected branch also needs fresh `push_consent`).
 
@@ -287,17 +288,15 @@ Only **load-bearing, human's-call forks** may surface as questions or gate-A dec
 
 ## Article XII — Skill provenance and the baseline manifest
 
-A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its YAML frontmatter declares `owner: baseline`. Every other skill (no `owner:` field, or `owner: user`) is user/third-party and out-of-scope of baseline audit checks — absence is the deliberate default so a project with pre-existing skills installs without annotating its files. The shipped manifest at `obj/template/.claude/manifest.json` records baseline ownership (`owners.skills`) + per-file sha256 hashes; `audit-baseline` reconciles it against disk. Build + audit mechanics: `.claude/CONSTITUTION.md` (annex).
+A skill at `.claude/skills/<slug>/SKILL.md` is **baseline-owned** iff its frontmatter declares `owner: baseline`. Every other skill (no `owner:`, or `owner: user`) is user/third-party and out-of-scope of baseline audit checks — absence is the deliberate default, so a project with pre-existing skills installs without annotating its files. The shipped manifest records baseline ownership (`owners.skills`) + per-file sha256 hashes; `audit-baseline` reconciles it against disk. Manifest paths, exact FAIL strings, non-goals, and build/audit mechanics: `.claude/CONSTITUTION.md` (annex) + `seed.md` §17.
 
 You SHALL:
 
-1. **Declare baseline ownership only.** A SKILL.md that ships in the baseline SHALL declare `owner: baseline` in its frontmatter directly after `name:`. Authoring a user/third-party skill does NOT require any `owner:` annotation — absence is the default. Explicit `owner: user` is permitted but never required. The only frontmatter-related FAIL the audit emits is `invalid owner=<value>` (a present-but-malformed `owner:` field, e.g. typo). Missing-`owner:` is silently skipped.
-2. **Trust the manifest.** The shipped manifest at `obj/template/.claude/manifest.json` (delivered to `<target>/.claude/manifest.json` by the recursive install copy) is the canonical record of baseline-owned skills and their content hashes. The runtime `<target>/.claude/.baseline-manifest.json` written by the CLI post-install is a separate file that captures the target's actual on-disk hashes for `doctor`/`upgrade` — do not conflate the two. You SHALL NOT maintain a separate hard-coded list of baseline-skill slugs anywhere in the codebase.
-3. **Re-derive on drift.** The audit reads the manifest from `<root>/.claude/manifest.json` (consumer projects) with a fallback to `<root>/obj/template/.claude/manifest.json` (the baseline dev repo). It re-derives sha256 hashes from `manifest.files` for every path under `.claude/skills/<slug>/` whose slug appears in `owners.skills`, and compares against on-disk content. Mismatches surface as `hash mismatch at <path>`. A baseline-listed slug missing from disk surfaces as `baseline skill missing`. These are hard FAIL — drift detection has no opt-out.
-4. **Preserve constitutional citation.** This Article XII SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations and reports `CLAUDE.md missing Article XII citation` or `seed.md missing §17 citation` on absence.
-5. **Out-of-scope skills don't break the audit.** Any skill on disk that doesn't declare `owner: baseline` is out-of-scope: excluded from the baseline count, the names-match check, and the hash-drift check. Installing the baseline into a project that already has its own skills is zero-friction — no per-file annotation required. Maintenance of those skills is the user's responsibility.
-
-Cryptographic attestation, signed lock files, and per-skill merkle hashes are non-goals; the per-file `manifest.files` map suffices. The `create-baseline upgrade` overlay mechanics (re-overlaying baseline-owned files while leaving user files untouched) are out of scope of this Article.
+1. **Declare baseline ownership only.** A SKILL.md shipped in the baseline SHALL declare `owner: baseline` directly after `name:`. Authoring a user/third-party skill requires no `owner:` annotation; explicit `owner: user` is permitted, never required. The only frontmatter FAIL is `invalid owner=<value>` (present-but-malformed); missing-`owner:` is silently skipped.
+2. **Trust the manifest.** It is the canonical record of baseline-owned skills and their content hashes. You SHALL NOT maintain a separate hard-coded list of baseline-skill slugs anywhere in the codebase.
+3. **Re-derive on drift.** The audit re-derives sha256 from `manifest.files` for every baseline-owned skill path and compares against disk. A hash mismatch, or a baseline-listed slug missing from disk, is a hard FAIL — drift detection has no opt-out.
+4. **Preserve constitutional citation.** This Article XII SHALL remain in CLAUDE.md AND in `src/CLAUDE.template.md` (byte-equal mirror). The genesis §17 in `docs/init/seed.md` SHALL remain present, with `src/seed.template.md` mirroring it. The audit verifies both citations.
+5. **Out-of-scope skills don't break the audit.** A skill that doesn't declare `owner: baseline` is excluded from the baseline count, the names-match check, and the hash-drift check. Installing into a project that already has its own skills is zero-friction; maintaining those skills is the user's responsibility.
 
 ---
 
