@@ -4,7 +4,7 @@ pageTitle: "baseline · A discipline layer for Claude Code"
 active: overview
 eleventyComputed:
   subtitle: "/ {{ site.versionMinor }}"
-  description: "Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent."
+  description: "A repository overlay that governs how Claude works in your codebase, from intake to commit, and enforces the rules at the tool boundary. Ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent."
 ---
 <main id="main" class="marketing">
   <section class="hero">
@@ -12,7 +12,7 @@ eleventyComputed:
       <div class="hero-content">
         <p class="eyebrow">Claude Code · constitutional baseline</p>
         <h1>A discipline layer<br>for Claude Code<span class="accent">.</span></h1>
-        <p class="lead">Constitutional governance, structural enforcement, and a workflow that runs from intake to commit. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. <em>Every phase produces one artifact</em>, <em>every gate is user-typed</em>, and <em>Claude cannot self-approve</em>.</p>
+        <p class="lead">A repository overlay that governs how Claude works in your codebase, from intake to commit, and enforces the rules at the tool boundary. The baseline ships {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, and {{ baseline.subagents.totalWord }} subagent. Every phase produces an artifact, and every consent gate is <em>user-typed</em>, so Claude <em>cannot self-approve</em>.</p>
         <div class="hero-install">
           {% include "install-pill.njk" %}
           <p class="pill-meta">{{ site.versionMinor }} · {{ site.license }} · open source</p>
@@ -48,7 +48,7 @@ eleventyComputed:
         <p class="section-num">§ I</p>
         <h2>What it is</h2>
       </div>
-      <p>A repository overlay for Claude Code. It sets the rules Claude follows in this codebase, in this session, with the hooks that enforce them at the tool boundary. Memory, prompts, and skills are helpful. Hooks are load-bearing.</p>
+      <p>A repository overlay for Claude Code. It sets the rules Claude follows in this codebase, in this session, with the hooks that enforce them at the tool boundary. Memory, prompts, and skills shape what Claude does; the hooks are what enforce it.</p>
     </div>
 
     <div class="columns">
@@ -115,7 +115,7 @@ eleventyComputed:
             <span class="track-chip">epic</span>
             <span class="track-chip">epic-child</span>
             <span class="track-chip">org</span>
-            <span class="track-chip track-chip-soon">power<span class="chip-soon-tag">spec'd</span></span>
+            <span class="track-chip">power</span>
           </div>
           <p class="concept-readmore"><a href="{{ '/workflows/' | rel }}">Read more about workflow tracks <span class="arr" aria-hidden="true">→</span></a></p>
         </div>
@@ -129,7 +129,7 @@ eleventyComputed:
         <p class="section-num">§ II</p>
         <h2>Why hooks</h2>
       </div>
-      <p>Hooks run outside Claude's tool boundary. When a hook blocks a tool call, Claude never executes it. The dashed lines below are the surfaces Claude cannot reach. Memory is helpful, prompts are helpful, hooks are load-bearing.</p>
+      <p>Hooks run outside Claude's tool boundary. When a hook blocks a tool call, Claude never executes it. The dashed lines below are the surfaces Claude cannot reach.</p>
     </div>
     <figure class="figure">
       <svg class="diagram-svg" viewBox="0 0 880 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="hook-diag-title">
@@ -549,7 +549,7 @@ eleventyComputed:
       </div>
       <p>The baseline moves in enforced increments. These shipped in the current cycle, each with its mechanism named.</p>
     </div>
-    <div class="concepts is-row">
+    <div class="concepts is-feed">
       <div class="concept">
         <p class="num">new · CI posture</p>
         <h3>Secrets gate + branch protection as code</h3>
@@ -570,12 +570,17 @@ eleventyComputed:
         <h3>Clean commits in, lessons out</h3>
         <p>A read-only planner that splits a heterogeneous tree into single-concern Conventional Commits, and a cycle-end retrospective that converts recurring friction into landmine entries and graduation proposals up the enforcement funnel. Part of the <a href="{{ '/pm/' | rel }}">PM Mode toolkit</a>.</p>
       </div>
+      <div class="concept">
+        <p class="num">new · roadmap-driven delivery</p>
+        <h3>Plan the order, batch the sprint</h3>
+        <p>A roadmap planner proves task order by re-deriving it from the spec and flagging producer-after-consumer violations. A sprint selector proposes the next dependency-ready batch, and the opt-in <code>power</code> track lands that batch in one cycle with per-ticket security and closure-last commits. Phase 10.6 <code>roadmap-sync</code> keeps the tracker current. Part of the <a href="{{ '/pm/' | rel }}">PM Mode toolkit</a>.</p>
+      </div>
       <figure class="concept concept-figure" aria-labelledby="increments-title">
         {% include "hero-symbols/increments.njk" %}
       </figure>
     </div>
     <p class="hero-readmore">
-      <a data-cta="pm-feature" href="{{ '/pm/' | rel }}"><span class="arr" aria-hidden="true">&rarr;</span> see PM Mode, including what lands next</a>
+      <a data-cta="pm-feature" href="{{ '/pm/' | rel }}"><span class="arr" aria-hidden="true">&rarr;</span> see the full PM Mode toolkit</a>
     </p>
   </section>
 

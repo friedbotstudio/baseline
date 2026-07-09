@@ -870,6 +870,9 @@ figcaption.strata-key strong {
   grid-column: 1 / -1;
 }
 .concepts.is-2col { grid-template-columns: 1fr 1fr; }
+/* Recently-landed changelog: a uniform 3-col card feed (not the 2+1 hero row).
+   Grows each cycle; the increments figure fills the final cell so the last row stays even. */
+.concepts.is-feed { grid-template-columns: repeat(3, 1fr); }
 .concept {
   background: var(--paper);
   padding: 32px;

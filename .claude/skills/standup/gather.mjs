@@ -22,7 +22,8 @@ export function gatherSync({ rootDir, now } = {}) {
   const release = collectRelease(rootDir, degraded);
   const backlog = collectBacklog(rootDir, degraded);
   const pendingQuestions = collectPendingQuestions(rootDir, degraded);
-  return { release, backlog, pendingQuestions, degraded };
+  const roadmap = collectRoadmap(rootDir, degraded);
+  return { release, backlog, pendingQuestions, roadmap, degraded };
 }
 
 // Async façade for callers that await (the CLI, tests, on-demand /standup).
@@ -138,6 +139,96 @@ function collectPendingQuestions(rootDir, degraded) {
       question: (field(block, /^-?\s*Question:\s*(.+)$/m) || '').trim(),
       blocker: (field(block, /^-?\s*Blocker(?: for)?:\s*(.+)$/m) || '').trim(),
     }));
+}
+
+// ---- Domain: roadmap execution plan ------------------------------------
+
+// Reads the project's execution roadmap (project.json → roadmap.path, default
+// docs/roadmap-execution-plan.md) — the epic-by-epic delivery tracker. Returns the
+// epic list (number/title/tag/status + per-task tallies) and the Progress summary
+// bullets. Status is read from the heading emoji legend (✅ done · 🟡 in progress ·
+// ⬜ planned); per-task tallies count the same emojis across the epic's bodies. This
+// is the machine-readable signal sprint-planner reads to compute per-task readiness
+// and roadmap-sync writes back to; fail-soft — a missing plan degrades, never throws.
+function collectRoadmap(rootDir, degraded) {
+  const raw = readFileSafe(join(rootDir, roadmapPathFor(rootDir)));
+  if (raw === null) {
+    degraded.push('no-roadmap-plan');
+    return null;
+  }
+  const epics = [];
+  let progress = [];
+  for (const { key, block } of parseEntries(raw)) {
+    const epic = parseEpicHeading(key);
+    if (epic) epics.push({ ...epic, tasks: countTaskStatuses(block) });
+    else if (/^Progress\b/.test(key)) progress = bulletLines(block);
+  }
+  return { epics, progress };
+}
+
+// project.json → roadmap.path, resolved leniently; falls back to the baseline default.
+function roadmapPathFor(rootDir) {
+  const raw = readFileSafe(join(rootDir, '.claude/project.json'));
+  if (raw) {
+    try {
+      const cfg = JSON.parse(raw);
+      const p = cfg && cfg.roadmap && cfg.roadmap.path;
+      if (typeof p === 'string' && p.trim()) return p.trim();
+    } catch {
+      /* fall through to default */
+    }
+  }
+  return 'docs/roadmap-execution-plan.md';
+}
+
+// Epic headings: `## Epic N — Title <emoji> (tag)`. The optional parenthetical is
+// captured as `tag` and stripped from the title.
+function parseEpicHeading(heading) {
+  const m = /^Epic\s+(\d+)\s+—\s+(.+)$/.exec(heading);
+  if (!m) return null;
+  const rest = m[2];
+  const tag = field(rest, /\(([^)]*)\)/);
+  const title = rest
+    .replace(/\s*(?:✅|🟡|⬜).*$/u, '')
+    .replace(/\s*\(.*$/, '')
+    .trim();
+  return { num: Number(m[1]), title, tag: tag ? tag.trim() : null, status: statusFromEmoji(rest) };
+}
+
+function countTaskStatuses(block) {
+  const body = block.slice(block.indexOf('\n') + 1); // drop the heading line (its emoji is the epic status)
+  return {
+    done: occurrences(body, '✅'),
+    inProgress: occurrences(body, '🟡'),
+    planned: occurrences(body, '⬜'),
+  };
+}
+
+const STATUS_BY_EMOJI = [
+  ['✅', 'done'],
+  ['🟡', 'in-progress'],
+  ['⬜', 'planned'],
+];
+
+function statusFromEmoji(text) {
+  let best = { status: 'unknown', at: Infinity };
+  for (const [emoji, status] of STATUS_BY_EMOJI) {
+    const at = text.indexOf(emoji);
+    if (at !== -1 && at < best.at) best = { status, at };
+  }
+  return best.status;
+}
+
+function occurrences(text, sub) {
+  return text.split(sub).length - 1;
+}
+
+function bulletLines(block) {
+  return block
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('- '))
+    .map((l) => l.slice(2).replace(/\*\*/g, '').trim());
 }
 
 // ---- Foundation: release rules + commit classification -----------------

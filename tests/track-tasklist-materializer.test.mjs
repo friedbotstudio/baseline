@@ -202,7 +202,7 @@ describe('materializeTaskList — requires_commit_consent condition (AC-003)', (
 });
 
 describe('materializeTaskList — freeform track (live workflows.jsonl)', () => {
-  it('test_when_freeform_track_materialized_then_three_task_chain_with_consent_gate', async () => {
+  it('test_when_freeform_track_materialized_then_four_task_chain_with_consent_gate', async () => {
     const livePath = path.join(REPO_ROOT, '.claude/workflows.jsonl');
     const validation = await validator.validateWorkflowsJsonl(livePath);
     assert.equal(validation.ok, true, `live workflows.jsonl must validate: ${JSON.stringify(validation.errors)}`);
@@ -210,14 +210,17 @@ describe('materializeTaskList — freeform track (live workflows.jsonl)', () => 
     assert.ok(freeform, 'live workflows.jsonl must declare freeform track');
     assert.deepEqual(freeform.invariants, ['commits'], 'freeform invariants must be exactly [commits]');
     const tasks = materializer.materializeTaskList(freeform, { slug: 'sample' });
-    assert.equal(tasks.length, 3, 'freeform DAG: memory-flush → grant-commit → commit');
-    assert.equal(tasks[0].subject, 'Run /memory-flush for sample');
+    assert.equal(tasks.length, 4, 'freeform DAG: roadmap-sync → memory-flush → grant-commit → commit');
+    assert.equal(tasks[0].subject, 'Run /roadmap-sync for sample');
     assert.equal(tasks[0].needs_user, false);
     assert.deepEqual(tasks[0].blockedBy, []);
-    assert.equal(tasks[1].subject, 'Wait for /grant-commit');
-    assert.equal(tasks[1].needs_user, true, 'grant-commit is the consent gate');
+    assert.equal(tasks[1].subject, 'Run /memory-flush for sample');
+    assert.equal(tasks[1].needs_user, false);
     assert.deepEqual(tasks[1].blockedBy, [1]);
-    assert.equal(tasks[2].subject, 'Run /commit for sample');
+    assert.equal(tasks[2].subject, 'Wait for /grant-commit');
+    assert.equal(tasks[2].needs_user, true, 'grant-commit is the consent gate');
     assert.deepEqual(tasks[2].blockedBy, [2]);
+    assert.equal(tasks[3].subject, 'Run /commit for sample');
+    assert.deepEqual(tasks[3].blockedBy, [3]);
   });
 });

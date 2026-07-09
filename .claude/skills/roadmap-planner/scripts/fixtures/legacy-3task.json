@@ -1,0 +1,8 @@
+{
+  "buckets": ["platform", "solution", "web", "app"],
+  "tasks": [
+    { "id": "E3-P5", "epic": "E3", "bucket": "platform", "category": "Interface", "title": "Metadata REST read edge", "deps": [], "order": 41 },
+    { "id": "E3-P6", "epic": "E3", "bucket": "platform", "category": "Interface", "title": "Published API contract (OpenAPI 3.0)", "deps": ["E3-P5"], "order": 42 },
+    { "id": "E3-W1", "epic": "E3", "bucket": "web", "category": "Interface", "title": "Generate web client SDK + render product form", "deps": ["E3-P6"], "order": 44 }
+  ]
+}

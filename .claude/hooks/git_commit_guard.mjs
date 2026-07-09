@@ -48,6 +48,7 @@ import {
   CONSENT_MARKER_PUSH_REL,
 } from './lib/common.mjs';
 import { evaluateClosure } from './lib/closure-check.mjs';
+import { parseCommitConsentToken, decideCommitConsent, resolveWorkflow } from './lib/consent-decision.mjs';
 
 const HOOK = 'git_commit_guard';
 
@@ -133,12 +134,11 @@ function topologyDecision({ model, branch, releaseBranches, isPrimary }) {
   const releaseSet = (Array.isArray(releaseBranches) && releaseBranches.length) ? releaseBranches : ['main'];
   const inRelease = matchAnyGlob(branch, releaseSet);
   if (model === 'direct-to-main') {
-    if (inRelease) return { block: false, reason: null, remediation: null };
-    return {
-      block: true,
-      reason: 'commit belongs on a release branch under the direct-to-main model',
-      remediation: `git checkout ${releaseSet[0]} && git merge --ff-only ${branch}`,
-    };
+    // Permissive: direct-to-main GRANTS the permission to commit straight to a
+    // release branch (no PR required). It does not force commits onto the release
+    // line — feature branches are equally fine. Only PR-based models (github-flow)
+    // restrict, by blocking direct commits to the release branch.
+    return { block: false, reason: null, remediation: null };
   }
   if (model === 'github-flow') {
     if (inRelease) {
@@ -177,6 +177,34 @@ function validateConsentToken(file, ttlKey, defaultTtl, gateLabel, cmdHint) {
     emitBlock(`${gateLabel}: consent expired (${age}s old, TTL ${ttl}s). Ask the user to re-run \`${cmdHint}\`.`);
   }
   logLine(HOOK, `ALLOWED age=${age}s file=${file}`);
+}
+
+// Workflow-scoped commit consent with a time-window fallback (generalizes ADR-0033).
+// Slug-scope inside an active workflow (one grant per landing, cross-workflow denied);
+// fall back to the pure time window when no workflow.json is present (ad-hoc, still
+// human-granted); fail closed when a workflow context is present but broken.
+function checkCommitConsent() {
+  const file = `${STATE_DIR}/commit_consent`;
+  let ttl = projectGet('.consent.commit_ttl_seconds');
+  if (typeof ttl !== 'number' || !Number.isFinite(ttl)) ttl = 900;
+  if (!existsSync(file)) {
+    logLine(HOOK, 'BLOCKED no commit_consent token');
+    emitBlock('Git Commit Guard: no consent granted. The user must run `/grant-commit` before a commit is allowed on a protected branch.');
+  }
+  let token;
+  try { token = parseCommitConsentToken(readFileSync(file, 'utf8')); }
+  catch {
+    logLine(HOOK, 'BLOCKED consent token unreadable');
+    emitBlock('Git Commit Guard: consent token unreadable. Ask the user to re-run `/grant-commit`.');
+  }
+  const workflow = resolveWorkflow(CLAUDE_PROJECT_ROOT);
+  const now = Math.floor(Date.now() / 1000);
+  const decision = decideCommitConsent({ token, workflow, now, ttl });
+  if (!decision.allow) {
+    logLine(HOOK, `BLOCKED consent (${decision.mode}): ${decision.reason}`);
+    emitBlock(`Git Commit Guard: ${decision.reason}. ${workflow.present ? 'Run `/grant-commit` inside the active workflow' : 'Run `/grant-commit`'} before committing on a protected branch.`);
+  }
+  logLine(HOOK, `ALLOWED consent (${decision.mode}): ${decision.reason}`);
 }
 
 function gitCapture(args) {
@@ -273,7 +301,7 @@ function handleBash(cmd) {
 
   // Protected — require the matching consent token.
   if (isCommit) {
-    validateConsentToken(`${STATE_DIR}/commit_consent`, '.consent.commit_ttl_seconds', 900, 'Git Commit Guard', '/grant-commit');
+    checkCommitConsent();
   } else {
     validateConsentToken(`${STATE_DIR}/push_consent`, '.consent.push_ttl_seconds', 300, 'Git Commit Guard', '/grant-push');
   }
@@ -290,9 +318,11 @@ function handleWrite(payload) {
   blockMarkerSelfWrite(rel, CONSENT_MARKER_COMMIT_REL, 'Git Commit Guard', '/grant-commit');
   blockMarkerSelfWrite(rel, CONSENT_MARKER_PUSH_REL, 'Git Commit Guard', '/grant-push');
 
-  // Gate writes to the consent state files on a fresh marker.
+  // Gate writes to the consent state files on a fresh marker. Inside a workflow the
+  // marker is slug-checked against the live workflow (so a stale grant from another
+  // workflow can't authorize this token write); outside one, the marker is epoch-only.
   if (rel === '.claude/state/commit_consent') {
-    validateConsentMarker(CONSENT_MARKER_COMMIT, 'Git Commit Guard', '/grant-commit');
+    validateConsentMarker(CONSENT_MARKER_COMMIT, 'Git Commit Guard', '/grant-commit', resolveWorkflow(CLAUDE_PROJECT_ROOT).slug);
   } else if (rel === '.claude/state/push_consent') {
     validateConsentMarker(CONSENT_MARKER_PUSH, 'Git Commit Guard', '/grant-push');
   }

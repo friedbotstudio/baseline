@@ -43,11 +43,11 @@ On every new session, before any work, you SHALL:
 
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
-   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 48 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 52 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
    You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
-4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. The hook emits a **debt-mode nag** only when `_pending.md` has unflushed candidates AND no active workflow on disk (i.e., `.claude/state/workflow.json` is absent) — those candidates are debt from a prior workflow that didn't end-flush. During an active workflow, **Phase 10.6** (memory-flush, between archive and grant-commit) handles flushing automatically; the session-start nag stays silent. You SHALL run `/memory-flush` when the debt-mode nag fires, before starting new work.
+4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. The hook emits a **debt-mode nag** only when `_pending.md` has unflushed candidates AND no active workflow on disk (i.e., `.claude/state/workflow.json` is absent) — those candidates are debt from a prior workflow that didn't end-flush. During an active workflow, **Phase 10.7** (memory-flush) handles flushing automatically; the session-start nag stays silent. You SHALL run `/memory-flush` when the debt-mode nag fires, before starting new work.
 5. **Git-repo check.** Run `git rev-parse --is-inside-work-tree 2>/dev/null` at the project root. If non-zero (not a git repo), surface this once per session and tell the user that gate C and the `commit` phase will be auto-excepted; the workflow ends after `/archive`. This is a sanctioned operating mode — Article IV phase 11 and Article VII are git-conditional.
 6. Once per session is sufficient. You SHALL NOT repeat the greeting on every prompt.
 
@@ -71,7 +71,8 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | 9 | Integrate | `/integrate` | binding verify verdict |
 | 10 | Document | `/document` | docs |
 | 10.5 | Archive | `/archive` | bundle at `docs/archive/<date>/<slug>/` |
-| 10.6 | Memory flush | `/memory-flush` | curated canonical memory + reset `_pending.md` |
+| 10.6 | Roadmap sync | `/roadmap-sync` | roadmap tracker synced to landed work (fail-open) |
+| 10.7 | Memory flush | `/memory-flush` | curated canonical memory + reset `_pending.md` |
 | 11 | **Grant commit** (gate C) + commit | user runs **`/grant-commit`**, then `/commit` (skill) | commit |
 
 **Mandatory rules:**
@@ -91,7 +92,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - Bugfix → `/triage` selects `spec` or `tdd`.
 - Quickfix → `/triage` selects `tdd`.
 - Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (doc edits, governance count bumps, vendored-skill updates, config tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). It skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `verify` / `simplify` / `integrate` / `document` by what the diff touches. `archive`, `/grant-commit` + `/commit` remain mandatory. `verify` is conditional: skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs; any code/config change runs it regardless). Work needing a failing test routes to `tdd` or higher.
-- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `memory-flush` → `/grant-commit` → `/commit`. All 26 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
+- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `roadmap-sync` → `memory-flush` → `/grant-commit` → `/commit`. All 26 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
 - Epic / Epic-child → a multi-subtask feature runs `epic` once (discovery + sliced spec + one approval); each slice then runs an `epic-child` inheriting that discovery via `track_guard`. seed.md §18.9.
 
 **Swarm vs solo at Phase 6.** When the approved spec has fewer than `project.json → swarm.min_tasks_worth_swarming` (default 3) independent components **OR** the project is not a git repository, run `/tdd` solo. Otherwise route through `/swarm-plan` → `/approve-swarm` → `/swarm-dispatch`. On a non-git tree the swarm phases are excepted at triage time, so this always resolves to solo, and a user "use swarm" override SHALL be refused with the reason `swarm requires git`.
@@ -302,6 +303,6 @@ Cryptographic attestation, signed lock files, and per-skill merkle hashes are no
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 48 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 52 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 48 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 52 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).

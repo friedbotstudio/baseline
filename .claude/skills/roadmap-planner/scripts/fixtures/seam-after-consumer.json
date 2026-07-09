@@ -1,0 +1,8 @@
+{
+  "buckets": ["platform", "solution", "web", "app"],
+  "tasks": [
+    { "id": "E1-foundations", "epic": "E1", "bucket": "platform", "category": "Infrastructure", "title": "Foundations & catalogue skeleton", "deps": [], "order": 1 },
+    { "id": "E11-sales", "epic": "E11", "bucket": "platform", "category": "Business Logic", "title": "Sales / order-to-cash", "deps": ["E1-foundations"], "seamDeps": ["E16-observability-seam"], "order": 44 },
+    { "id": "E16-observability-seam", "epic": "E16", "bucket": "platform", "category": "Infrastructure", "title": "Observability seam/contract (inherited default)", "deps": [], "order": 60 }
+  ]
+}

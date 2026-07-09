@@ -328,7 +328,13 @@
     },
     "org_mode": {
       "enabled": false
+    },
+    "power_mode": {
+      "enabled": false
     }
+  },
+  "roadmap": {
+    "path": "docs/roadmap-execution-plan.md"
   },
   "ci_posture": {
     "enabled": true

@@ -17,7 +17,7 @@ describe('closure-obligation governance amendment (AC-006)', () => {
   it('test_when_seed_read_then_closure_obligation_documented', () => {
     const seed = read('docs/init/seed.md');
     assert.match(seed, /Atomic closure obligation/);
-    assert.match(seed, /Four additional \.mjs helpers/);
+    assert.match(seed, /Five additional \.mjs helpers/);
   });
 
   it('test_when_claude_md_read_then_guard_row_cites_closure', () => {
@@ -26,7 +26,7 @@ describe('closure-obligation governance amendment (AC-006)', () => {
 
   it('test_when_mirrors_read_then_amendment_present_in_templates', () => {
     assert.match(read('src/seed.template.md'), /Atomic closure obligation/);
-    assert.match(read('src/seed.template.md'), /Four additional \.mjs helpers/);
+    assert.match(read('src/seed.template.md'), /Five additional \.mjs helpers/);
     assert.match(read('src/CLAUDE.template.md'), CLAUSE);
   });
 

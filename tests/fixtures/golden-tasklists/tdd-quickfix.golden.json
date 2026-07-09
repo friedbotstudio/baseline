@@ -1,6 +1,6 @@
 {
   "track_id": "tdd-quickfix",
-  "description": "Expected materialized TaskList for this repo's tdd-quickfix track. cli-copy-review is inserted between memory-flush and grant-commit per the dogfood retrofit.",
+  "description": "Canonical TaskList for the tdd-quickfix track (post roadmap-sync amendment).",
   "tasks": [
     {
       "ord": 1,
@@ -74,10 +74,10 @@
     },
     {
       "ord": 7,
-      "subject": "Run /memory-flush for <slug>",
-      "activeForm": "Running memory-flush",
+      "subject": "Run /roadmap-sync for <slug>",
+      "activeForm": "Running roadmap-sync",
       "metadata": {
-        "phase": "memory-flush"
+        "phase": "roadmap-sync"
       },
       "needs_user": false,
       "blockedBy": [
@@ -86,10 +86,10 @@
     },
     {
       "ord": 8,
-      "subject": "Run /cli-copy-review for <slug>",
-      "activeForm": "Reviewing CLI copy",
+      "subject": "Run /memory-flush for <slug>",
+      "activeForm": "Running memory-flush",
       "metadata": {
-        "phase": "cli-copy-review"
+        "phase": "memory-flush"
       },
       "needs_user": false,
       "blockedBy": [
@@ -98,6 +98,18 @@
     },
     {
       "ord": 9,
+      "subject": "Run /cli-copy-review for <slug>",
+      "activeForm": "Reviewing CLI copy",
+      "metadata": {
+        "phase": "cli-copy-review"
+      },
+      "needs_user": false,
+      "blockedBy": [
+        8
+      ]
+    },
+    {
+      "ord": 10,
       "subject": "Wait for /grant-commit",
       "activeForm": "Awaiting commit consent",
       "metadata": {
@@ -106,11 +118,11 @@
       },
       "needs_user": true,
       "blockedBy": [
-        8
+        9
       ]
     },
     {
-      "ord": 10,
+      "ord": 11,
       "subject": "Run /commit for <slug>",
       "activeForm": "Running commit",
       "metadata": {
@@ -118,7 +130,7 @@
       },
       "needs_user": false,
       "blockedBy": [
-        9
+        10
       ]
     }
   ]

@@ -56,9 +56,9 @@ describe('counts — 46→48 reconciled everywhere (AC-009)', () => {
     '.claude/CONSTITUTION.md',
   ];
   for (const rel of COUNT_SURFACES) {
-    it(`test_when_counts_reconciled_then_48_skills_in_${rel.replace(/[^\w]/g, '_')}`, () => {
+    it(`test_when_counts_reconciled_then_52_skills_in_${rel.replace(/[^\w]/g, '_')}`, () => {
       const text = read(rel);
-      assert.ok(text.includes('48 skills'), `${rel} must read "48 skills"`);
+      assert.ok(text.includes('52 skills'), `${rel} must read "52 skills"`);
       assert.ok(!text.includes('46 skills'), `${rel} must no longer read "46 skills"`);
     });
   }

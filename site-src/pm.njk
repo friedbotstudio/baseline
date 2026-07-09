@@ -5,7 +5,7 @@ pageTitle: "PM Mode · baseline"
 title: PM Mode
 titlePrimary: PM Mode
 titleAccent: "."
-description: "The baseline runs product management inside the session: requirement capture, planning, sprint gating, cycle recaps, and a roadmap planner on the way."
+description: "The baseline runs product management inside the session: requirement capture, planning, sprint gating, cycle recaps, roadmap planning, and batch-sprint power mode."
 eyebrow: Feature
 lead: "Requirement capture, planning, sprint gating, and cycle recaps run inside the session, with the same enforcement the code side gets."
 active: pm
@@ -14,11 +14,11 @@ toc:
   - { id: claim,    label: "The claim" }
   - { id: toolkit,  label: "The shipped toolkit" }
   - { id: loop,     label: "One planning loop" }
-  - { id: next,     label: "Next: roadmap planner and power mode" }
+  - { id: roadmap,  label: "Roadmap-driven delivery" }
   - { id: run,      label: "Run it" }
 ---
 
-{# PM Mode category page (site-epic-currency design row 4). Shipped toolkit is the body; the L1/L2 slices of the erp-portables epic appear under the spec'd treatment and flip to shipped copy when they land. #}
+{# PM Mode category page. Roadmap planner, sprint selection, power mode, and roadmap-sync shipped in the roadmap-power port (ported from ../erp, generalized). #}
 
 <section class="section">
   <div class="lede">
@@ -69,26 +69,29 @@ toc:
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ IV</p>
-      <h2 id="next">next: roadmap planner and power mode</h2>
+      <h2 id="roadmap">roadmap-driven delivery</h2>
     </div>
-    <p>Two additions are approved in the current epic's spec and land as its final slices. They are described here as what they are: specified, gated, and not yet shipped.</p>
+    <p>Three capabilities turn a decomposed roadmap into shipped work. All are live today; power mode is opt-in and off by default.</p>
   </div>
 
   <div class="concepts is-row">
     <div class="concept">
-      <p class="num">next · 01 <span class="track-chip track-chip-soon">sprint-planner<span class="chip-soon-tag">spec'd</span></span></p>
+      <p class="num">01 <span class="track-chip">roadmap-planner</span></p>
       <h3>Roadmap planner</h3>
-      <p>Where <code>sprint-plan</code> decomposes a fresh vision, the roadmap planner selects from work you already decomposed. It reads whatever the project actually has, in order of preference: an explicit tasks file, approved epic slices with dependency edges, or flat backlog entries. When edges exist, a ported graph engine proves the selection: cycle detection, dangling-dependency checks, producer-after-consumer ordering violations, and a deterministic topological order. When no edges exist it degrades honestly, marking the proposal <code>ordering: status-only</code> rather than claiming a proof it did not run.</p>
-      <p>The output is a proposal artifact and nothing else. The human confirms or edits the task-set before <code>/triage</code> routes it, usually into power mode.</p>
+      <p>Proves a roadmap's task <em>order</em> by re-deriving it from the vision and spec, then diffing that derivation against the existing plan. A deterministic graph engine finds cycles, dangling dependencies, and producer-after-consumer ordering violations, then emits a proposed order plus a delta report. It never blindly overwrites a hand-crafted roadmap. Two-lens WSJF scoring sequences the legal orders without crossing a hard dependency edge.</p>
     </div>
     <div class="concept">
-      <p class="num">next · 02 <span class="track-chip track-chip-soon">power<span class="chip-soon-tag">spec'd</span></span></p>
+      <p class="num">02 <span class="track-chip">sprint-planner</span></p>
+      <h3>Sprint selection</h3>
+      <p>Where <code>sprint-plan</code> decomposes a fresh vision, <code>sprint-planner</code> selects the next ready sprint from work you already decomposed. It reads the roadmap's machine-readable status, computes per-task readiness (ready when every dependency is done), orders with the planner's graph engine, and proposes a cohesive three-to-four ticket batch, excluding unready tasks and naming each unmet prerequisite. It proposes only. You confirm before <code>/triage</code> routes it, usually into power mode.</p>
+    </div>
+    <div class="concept">
+      <p class="num">03 <span class="track-chip">power</span></p>
       <h3>Power mode</h3>
-      <p>A batch-sprint track that delivers three or four related, spec-committed tickets in one cycle. The mechanical phases run once for the whole batch. The judgment phase does not: security review iterates per ticket, and a single ticket's blocker yields the batch exactly as it would a single-ticket workflow. Amortization applies to ceremony, never to judgment.</p>
-      <p>At the end, the batch lands as ordered Conventional Commits, build and config first, then implementation, tests, docs, with the closing workflow state on the final commit. The closure-atomicity guard already enforces that ordering today. Opt-in via <code>velocity.power_mode.enabled</code>, off by default.</p>
+      <p>A batch-sprint track that delivers three or four related, spec-committed tickets in one cycle. The mechanical phases run once for the whole batch; judgment does not. Security review iterates per ticket, and a single ticket's blocker yields the batch exactly as a single-ticket workflow would. The batch lands as ordered Conventional Commits (build and config first, then implementation, tests, docs) with the closing workflow state on the final commit, enforced by the closure-atomicity guard. Opt-in via <code>velocity.power_mode.enabled</code>, off by default; requires git.</p>
     </div>
   </div>
-  <p>Both are bound by acceptance criteria in the approved epic spec, and this page's spec'd tags flip to shipped copy in the release that lands them.</p>
+  <p>Closing the loop, <code>roadmap-sync</code> runs as Phase 10.6 on every committing track. It flips the tasks a workflow just landed from ⬜ to ✅ in the project's roadmap and promotes their epic headings. It is fail-open: no roadmap or no matching task means a clean no-op, and it never blocks a commit.</p>
 </section>
 
 <section class="section">

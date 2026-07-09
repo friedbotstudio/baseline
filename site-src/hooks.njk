@@ -28,7 +28,7 @@ toc:
     </div>
     <p>The baseline ships {{ baseline.hooks.total }} hooks wired into Claude Code's PreToolUse, PostToolUse, UserPromptSubmit, and lifecycle events. They form the part of the constitution that cannot be overridden by memory or prompt text alone.</p>
   </div>
-  <p>A hook runs outside Claude's tool boundary. When a hook blocks a write, Claude never executes the tool call. This matters because Claude cannot forge a consent marker (written by <code>consent_gate_grant</code> on the UserPromptSubmit path) by invoking a tool: the block happens before Claude gets the chance. Memory is helpful, prompts are helpful, hooks are load-bearing.</p>
+  <p>A hook runs outside Claude's tool boundary. When a hook blocks a write, Claude never executes the tool call. This matters because Claude cannot forge a consent marker (written by <code>consent_gate_grant</code> on the UserPromptSubmit path) by invoking a tool: the block happens before Claude gets the chance.</p>
 </section>
 
 <section class="section">

@@ -209,5 +209,24 @@ toc:
   </div>
   <ul>
     <li><code>chore</code>. Stripped-down workflow for tasks with no failing-test-driven code change: documentation edits, governance count bumps, formatting, dependency bumps. Skips scenario and implement; runs edits directly. Archive, grant-commit, and commit always run. Verify runs by default, but a pure-docs chore can skip it when the project marks its test suite behavior-only (project.json test.kind), so documentation work is not blocked by a code test that cannot apply to it, while real code changes still get verified.</li>
+    <li><code>power</code>. Batch-sprint track: delivers three or four related, spec-committed tickets in one cycle. Mechanical phases run once for the batch while <code>security</code> iterates per ticket over <code>workflow.json.tickets[]</code>; the commit phase splits the batch into ordered Conventional Commits, closure last. Opt-in via <code>velocity.power_mode.enabled</code>, off by default; requires git. See <a href="{{ '/pm/' | rel }}">PM Mode</a>.</li>
+  </ul>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ XIII</p>
+      <h2 id="sprint">Sprint &amp; roadmap ({{ baseline.skills.byCategory.sprint }} + {{ baseline.skills.byCategory.roadmap }})</h2>
+    </div>
+    <p>Plan a delivery order, select the next ready sprint, and keep the roadmap tracker honest. Detailed on the <a href="{{ '/pm/' | rel }}">PM Mode</a> page.</p>
+  </div>
+  <ul>
+    <li><code>sprint-plan</code>. Decomposes an MVP vision into a manifest where every feature carries done-criteria (a done-record, edge tests, a wiring test), validated by <code>validateManifest</code>.</li>
+    <li><code>sprint-oracle</code>. Refuses to call a sprint done until every feature is provably complete across all three dimensions. Mechanical, exit-code-driven, fails loud with a per-feature gap list.</li>
+    <li><code>sprint-planner</code>. Selects the next dependency-ready sprint from an already-decomposed roadmap: computes per-task readiness, orders with the graph engine, proposes a cohesive batch and names each excluded task's unmet prerequisite. Proposes only; the human confirms before <code>/triage</code>.</li>
+    <li><code>org-dispatch</code>. Multi-session org-team engine (Article X): a flat pod of peer sessions claims lane-tagged slices of an approved spec over the MCP broker. Opt-in via <code>velocity.org_mode.enabled</code>.</li>
+    <li><code>roadmap-planner</code>. Proves a roadmap's task order by re-deriving it from the vision/spec and diffing against the existing plan: cycle detection, dangling-dependency and producer-after-consumer checks, deterministic topological order, two-lens WSJF scoring. Emits a proposal plus a delta report; never blindly overwrites a hand-crafted roadmap.</li>
+    <li><code>roadmap-sync</code>. Phase 10.6. Flips the tasks a workflow just landed from ⬜ to ✅ in the project's roadmap and promotes their epic headings. Fail-open: no roadmap or no matching task is a clean no-op, and it never blocks a commit.</li>
   </ul>
 </section>

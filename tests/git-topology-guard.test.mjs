@@ -7,7 +7,7 @@
 // both are copied into each sandbox.
 //
 // Coverage map (one or more tests per criterion):
-//   AC-001 model resolution; AC-002 direct-to-main blocks off-release;
+//   AC-001 model resolution; AC-002 direct-to-main is permissive (any branch);
 //   AC-003 direct-to-main passes on-release; AC-004 github-flow blocks default;
 //   AC-005 github-flow passes feature branch; AC-006 ask passes (no prompt);
 //   AC-007 reserved gitflow/trunk -> ask; AC-008 worktree carve-out;
@@ -29,6 +29,7 @@ const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
 const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
+const DECISION = join(REPO_ROOT, '.claude/hooks/lib/consent-decision.mjs');
 
 const SANDBOXES = [];
 
@@ -41,6 +42,7 @@ function buildSandbox(projectJson) {
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
   cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
+  cpSync(DECISION, join(root, '.claude/hooks/lib/consent-decision.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   spawnSync('git', ['init', '-q', '-b', 'main', root], { stdio: 'ignore' });
@@ -75,6 +77,7 @@ function addWorktree(root, branch, projectJson) {
   mkdirSync(join(wt, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(wt, '.claude/hooks/lib/common.mjs'));
   cpSync(CLOSURE, join(wt, '.claude/hooks/lib/closure-check.mjs'));
+  cpSync(DECISION, join(wt, '.claude/hooks/lib/consent-decision.mjs'));
   cpSync(GUARD, join(wt, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(wt, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   SANDBOXES.push(wt);
@@ -109,20 +112,19 @@ after(() => {
   }
 });
 
-describe('§Behavior #2 — direct-to-main enforcement', () => {
-  it('test_when_direct_to_main_on_feature_branch_primary_tree_then_block', () => {
+describe('§Behavior #2 — direct-to-main is permissive (grants direct-to-main, restricts nothing)', () => {
+  it('test_when_direct_to_main_on_feature_branch_primary_tree_then_pass', () => {
     const root = buildSandbox({ consent: {}, git: { workflow_model: 'direct-to-main', release_branches: ['main'], protected_branches: [], branch_pattern: null } });
     setBranch(root, 'feat/x');
     const r = runGuard(root, commit);
-    assert.equal(r.decision, 'deny', `expected topology deny; got ${r.decision} reason=${r.reason}`);
-    assert.match(r.reason, /merge --ff-only feat\/x/, 'remediation should name git merge --ff-only <branch>');
+    assert.equal(r.decision, 'allow', `direct-to-main permits feature-branch commits (it grants a permission, it does not force onto the release line); got ${r.decision} reason=${r.reason}`);
   });
 
   it('test_when_direct_to_main_on_release_branch_main_then_pass', () => {
     const root = buildSandbox({ consent: {}, git: { workflow_model: 'direct-to-main', release_branches: ['main'], protected_branches: [], branch_pattern: null } });
     setBranch(root, 'main');
     const r = runGuard(root, commit);
-    assert.equal(r.decision, 'allow', `expected topology pass on release branch; got ${r.decision} reason=${r.reason}`);
+    assert.equal(r.decision, 'allow', `expected pass on release branch (direct commit to main allowed, no PR); got ${r.decision} reason=${r.reason}`);
   });
 
   it('test_when_direct_to_main_on_next_in_release_list_then_pass', () => {
@@ -132,11 +134,11 @@ describe('§Behavior #2 — direct-to-main enforcement', () => {
     assert.equal(r.decision, 'allow', `expected pass on next (in release list); got ${r.decision} reason=${r.reason}`);
   });
 
-  it('test_when_direct_to_main_release_branches_absent_then_defaults_to_main', () => {
+  it('test_when_direct_to_main_release_branches_absent_on_feature_branch_then_pass', () => {
     const root = buildSandbox({ consent: {}, git: { workflow_model: 'direct-to-main', protected_branches: [], branch_pattern: null } });
     setBranch(root, 'feat/y');
     const r = runGuard(root, commit);
-    assert.equal(r.decision, 'deny', `expected deny (default release set [main], feat/y not in it); got ${r.decision} reason=${r.reason}`);
+    assert.equal(r.decision, 'allow', `direct-to-main permits any branch regardless of the release set; got ${r.decision} reason=${r.reason}`);
   });
 });
 
@@ -185,22 +187,24 @@ describe('§Behavior #4 — ask: guard passes (no prompt), reserved values resol
 });
 
 describe('§Behavior #5 — swarm-worktree carve-out', () => {
-  it('test_when_direct_to_main_inside_linked_worktree_then_carveout_pass', () => {
-    const cfg = { consent: {}, git: { workflow_model: 'direct-to-main', release_branches: ['main'], protected_branches: [], branch_pattern: null } };
+  // github-flow with the worktree's own branch in the release set: that config WOULD
+  // block on the primary tree (github-flow blocks release-branch commits), so a pass
+  // inside the linked worktree genuinely proves the carve-out (topology skipped when
+  // not the primary tree), not merely a permissive model.
+  it('test_when_blocking_config_inside_linked_worktree_then_carveout_pass', () => {
+    const cfg = { consent: {}, git: { workflow_model: 'github-flow', release_branches: ['feat/*'], protected_branches: [], branch_pattern: null } };
     const root = buildSandbox(cfg);
-    const wt = addWorktree(root, 'feat/wt', cfg);
-    // Same config + feat/wt would BLOCK on the primary tree, but inside the
-    // linked worktree the carve-out must let it through.
+    const wt = addWorktree(root, 'feat/wt', cfg); // feat/wt matches the release glob → a "release" branch
     const r = runGuard(wt, commit, wt);
     assert.equal(r.decision, 'allow', `expected carve-out pass inside linked worktree; got ${r.decision} reason=${r.reason}`);
   });
 
   it('test_when_same_config_on_primary_tree_then_blocks', () => {
-    // Control: proves the worktree pass above is the carve-out, not config.
-    const root = buildSandbox({ consent: {}, git: { workflow_model: 'direct-to-main', release_branches: ['main'], protected_branches: [], branch_pattern: null } });
+    // Control: proves the worktree pass above is the carve-out, not the config.
+    const root = buildSandbox({ consent: {}, git: { workflow_model: 'github-flow', release_branches: ['feat/*'], protected_branches: [], branch_pattern: null } });
     setBranch(root, 'feat/wt');
     const r = runGuard(root, commit);
-    assert.equal(r.decision, 'deny', `primary tree on feat/wt should block; got ${r.decision} reason=${r.reason}`);
+    assert.equal(r.decision, 'deny', `primary tree on a release-matching branch under github-flow should block; got ${r.decision} reason=${r.reason}`);
   });
 });
 

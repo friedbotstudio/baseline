@@ -44,12 +44,12 @@ function sectionOf(text, heading) {
 // review, cli-copy-review); the pristine template ships without them.
 const PINNED_NODE_IDS = {
   '.claude/workflows.jsonl': {
-    'intake-full': ['intake', 'scout', 'research', 'spec', 'spec-shippability-review', 'approve-spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-flush', 'cli-copy-review', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'spec-shippability-review', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-flush', 'grant-commit', 'commit'],
+    'intake-full': ['intake', 'scout', 'research', 'spec', 'spec-shippability-review', 'approve-spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'cli-copy-review', 'grant-commit', 'commit'],
+    'spec-entry': ['spec', 'spec-shippability-review', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
   },
   'src/.claude/workflows.template.jsonl': {
-    'intake-full': ['intake', 'scout', 'research', 'spec', 'approve-spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-flush', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-flush', 'grant-commit', 'commit'],
+    'intake-full': ['intake', 'scout', 'research', 'spec', 'approve-spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
+    'spec-entry': ['spec', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
   },
 };
 

@@ -1,6 +1,6 @@
 {
   "track_id": "intake-full",
-  "description": "Expected materialized TaskList for this repo's intake-full track. Selector expands to tdd-worker-chain (the unconditional default alternate). spec-shippability-review (dev-only) is inserted between spec and approve-spec to block dev-tree-reference spec drafts before approval. cli-copy-review is inserted between memory-flush and grant-commit per the dogfood retrofit.",
+  "description": "Canonical TaskList for the intake-full track (post roadmap-sync amendment).",
   "tasks": [
     {
       "ord": 1,
@@ -147,10 +147,10 @@
     },
     {
       "ord": 13,
-      "subject": "Run /memory-flush for <slug>",
-      "activeForm": "Running memory-flush",
+      "subject": "Run /roadmap-sync for <slug>",
+      "activeForm": "Running roadmap-sync",
       "metadata": {
-        "phase": "memory-flush"
+        "phase": "roadmap-sync"
       },
       "needs_user": false,
       "blockedBy": [
@@ -159,10 +159,10 @@
     },
     {
       "ord": 14,
-      "subject": "Run /cli-copy-review for <slug>",
-      "activeForm": "Reviewing CLI copy",
+      "subject": "Run /memory-flush for <slug>",
+      "activeForm": "Running memory-flush",
       "metadata": {
-        "phase": "cli-copy-review"
+        "phase": "memory-flush"
       },
       "needs_user": false,
       "blockedBy": [
@@ -171,6 +171,18 @@
     },
     {
       "ord": 15,
+      "subject": "Run /cli-copy-review for <slug>",
+      "activeForm": "Reviewing CLI copy",
+      "metadata": {
+        "phase": "cli-copy-review"
+      },
+      "needs_user": false,
+      "blockedBy": [
+        14
+      ]
+    },
+    {
+      "ord": 16,
       "subject": "Wait for /grant-commit",
       "activeForm": "Awaiting commit consent",
       "metadata": {
@@ -179,11 +191,11 @@
       },
       "needs_user": true,
       "blockedBy": [
-        14
+        15
       ]
     },
     {
-      "ord": 16,
+      "ord": 17,
       "subject": "Run /commit for <slug>",
       "activeForm": "Running commit",
       "metadata": {
@@ -191,7 +203,7 @@
       },
       "needs_user": false,
       "blockedBy": [
-        15
+        16
       ]
     }
   ]

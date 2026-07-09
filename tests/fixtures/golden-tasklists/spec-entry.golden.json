@@ -1,6 +1,6 @@
 {
   "track_id": "spec-entry",
-  "description": "Canonical TaskList for the spec-entry track (entry_phase=spec). Skips intake/scout/research; starts at spec; spec-shippability-review (dev-only) gates approve-spec to block dev-tree-reference spec drafts.",
+  "description": "Canonical TaskList for the spec-entry track (post roadmap-sync amendment).",
   "tasks": [
     {
       "ord": 1,
@@ -111,10 +111,10 @@
     },
     {
       "ord": 10,
-      "subject": "Run /memory-flush for <slug>",
-      "activeForm": "Running memory-flush",
+      "subject": "Run /roadmap-sync for <slug>",
+      "activeForm": "Running roadmap-sync",
       "metadata": {
-        "phase": "memory-flush"
+        "phase": "roadmap-sync"
       },
       "needs_user": false,
       "blockedBy": [
@@ -123,6 +123,18 @@
     },
     {
       "ord": 11,
+      "subject": "Run /memory-flush for <slug>",
+      "activeForm": "Running memory-flush",
+      "metadata": {
+        "phase": "memory-flush"
+      },
+      "needs_user": false,
+      "blockedBy": [
+        10
+      ]
+    },
+    {
+      "ord": 12,
       "subject": "Wait for /grant-commit",
       "activeForm": "Awaiting commit consent",
       "metadata": {
@@ -131,11 +143,11 @@
       },
       "needs_user": true,
       "blockedBy": [
-        10
+        11
       ]
     },
     {
-      "ord": 12,
+      "ord": 13,
       "subject": "Run /commit for <slug>",
       "activeForm": "Running commit",
       "metadata": {
@@ -143,7 +155,7 @@
       },
       "needs_user": false,
       "blockedBy": [
-        11
+        12
       ]
     }
   ]

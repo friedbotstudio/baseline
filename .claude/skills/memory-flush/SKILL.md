@@ -4,9 +4,9 @@ owner: baseline
 description: Review the auto-extracted candidates in `.claude/memory/_pending.md` and commit keepers to the canonical memory files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`, `backlog.md`). Invoke at session start when the SessionStart hook reports pending candidates, or any time `_pending.md` has accumulated entries you want to curate. Reset the pending body after flushing.
 ---
 
-# When invoked as Phase 10.6
+# When invoked as a workflow phase (Phase 10.7)
 
-This skill runs as **Phase 10.6** of every workflow track (intake / spec / tdd / chore), between `/archive` (Phase 10.5) and `/grant-commit` (Phase 11). The harness loop reads `.claude/memory/_pending.md` body, runs Step 0 canonical sweeps unconditionally, and on **empty pending** (zero `## CANDIDATE:` blocks) short-circuits the **fast-path**: Steps 1–5 are skipped, Step 6 emits a one-line "no pending candidates" report, and the skill returns success. This keeps the no-op cost bounded at ≤ 3 sweep.mjs invocations per Phase 10.6 invocation.
+This skill runs as **Phase 10.7** of every committing workflow track (intake / spec / tdd / chore), between `/roadmap-sync` (Phase 10.6) and `/grant-commit` (Phase 11). The harness loop reads `.claude/memory/_pending.md` body, runs Step 0 canonical sweeps unconditionally, and on **empty pending** (zero `## CANDIDATE:` blocks) short-circuits the **fast-path**: Steps 1–5 are skipped, Step 6 emits a one-line "no pending candidates" report, and the skill returns success. This keeps the no-op cost bounded at ≤ 3 sweep.mjs invocations per Phase 10.7 invocation.
 
 The skill is also user-invokable outside the workflow (ad-hoc curation). When invoked ad-hoc and `_pending.md` is non-empty, the full Steps 1–5 flow runs identically. The fast-path activates per-invocation based on `_pending.md` body state, not on workflow context.
 

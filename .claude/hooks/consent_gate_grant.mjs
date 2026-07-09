@@ -36,6 +36,7 @@ import {
   CONSENT_MARKER_COMMIT,
   CONSENT_MARKER_PUSH,
 } from './lib/common.mjs';
+import { buildGrantCommitMarkerLines, resolveWorkflow } from './lib/consent-decision.mjs';
 
 const HOOK = 'consent_gate_grant';
 
@@ -81,8 +82,12 @@ async function main() {
   m = firstLine.match(/^\/grant-commit(\s.*)?$/);
   if (m) {
     const note = (m[1] || '').trim();
-    if (writeMarkerAtomic(CONSENT_MARKER_COMMIT, String(now), note)) {
-      logLine(HOOK, `wrote commit_consent_grant note=${note}`);
+    // Source the workflow slug from workflow.json (never a user argument). Inside a
+    // workflow the marker is slug-first; ad-hoc (no workflow) it is epoch-first.
+    const slug = resolveWorkflow(CLAUDE_PROJECT_ROOT).slug;
+    const lines = buildGrantCommitMarkerLines(slug, now, note);
+    if (writeMarkerAtomic(CONSENT_MARKER_COMMIT, ...lines)) {
+      logLine(HOOK, `wrote commit_consent_grant slug=${slug || 'none'} note=${note}`);
     } else {
       logLine(HOOK, `FAILED write commit_consent_grant`);
     }
