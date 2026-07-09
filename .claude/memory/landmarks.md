@@ -1,7 +1,7 @@
 ---
 owners: [scout]
 category: codebase landmarks
-size-cap: 500
+size-cap: 700
 key: path:line
 verifies-against: git
 ---
@@ -34,8 +34,8 @@ Each entry's stable key is `path:line`.
 ## .claude/skills/audit-baseline/audit.mjs:1
 
 - Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence, and per-file memory-shape canonical preamble via the `isValidPreamble(text)` helper (strict opener `^# `, full preamble must include a closing `---` separator; `_pending` and `_resume` get the same shape check). Skill-ownership drift uses `loadManifest()` which tries `<root>/.claude/manifest.json` first (consumer projects) and falls back to `<root>/obj/template/.claude/manifest.json` (dev repo) — keep both paths in mind when reasoning about why the audit found or didn't find the manifest. **Consumer-mode fork (audit.mjs:415, audit.mjs:704):** when `<root>/.claude/manifest.json` is present AND `<root>/src/` is absent, the audit sets `SKIP_SRC = true`, marks `src templates: directory` PASS with reason "consumer install ... — src/ checks skipped", and bypasses every per-template assertion plus the `src/CLAUDE.template.md` Article X.2 mirror check. The §4.3 skills names check passes an empty set as `additions` (NOT `add_skills`) because the disk set is `disk_baseline_skills` (filtered to `owner: baseline`); project additions are out-of-scope per CLAUDE.md Article XI #5. Hooks/agents/commands DO accept additions there because their disk sets are unfiltered. Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.
-- Verified-at: cd062af
-- Last-touched: 2026-06-21
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - Caveat: the script's `EXPECTED_*` count constants are load-bearing — any chore that adds/removes a hook, skill, or command bumps the counts here AND in CLAUDE.md/seed.md/README.md. The `isValidPreamble` helper allows preamble-only files (empty body after the closing separator) so a freshly-emptied `_pending.md` still PASSes; opener-only files without a closing separator FAIL (regression trap). When the manifest is missing from BOTH lookup paths (e.g. fresh clone before `npm run build`), the audit emits a WARN-level "skill ownership: manifest" line and falls back to frontmatter scanning — drift detection is degraded but not failing. **Editing audit.mjs in flight breaks the manifest hash check until `npm run build` Stage 3 regenerates `obj/template/.claude/manifest.json`** — the dogfood flow is: edit, `npm run build`, verify PASS, commit. Stage 4 of build re-runs the audit AFTER the manifest refresh so the build is self-validating.
 
 ## .claude/hooks/consent_gate_grant.mjs:1
@@ -415,30 +415,30 @@ Each entry's stable key is `path:line`.
 
 - Role: Foundation — pure deterministic route classifier for `/memory-flush` (Tier 3, shipped in `memory-capture-tier2-tier3`). Exports `suggestRoutes(candidates)` returning one `{key, suggested_bucket, weight, evidence}` per pending candidate. `classify` is first-match-wins over four anchored regexes in priority order: PATH_RE → `landmark`, trailing `?` → `open-question`, FUTURE_RE (`TODO|backlog|follow-up|later|next we|defer`) → `backlog`, DECISION_RE (`decided to|the plan/approach/fix is|going to|chose|will use`) → `decision`, else `backlog`. `salience` returns 0.1 for chatter/short (<25 chars, no cue), 0.5 for backlog, 0.7 otherwise. PURE: no filesystem/network/model call. Per Article IX.3 the output only SUGGESTS an accept/override default — promotion to canonical stays human-only at `/memory-flush` Step 2.
 - Companion: `.claude/skills/memory-flush/SKILL.md:1` (Step 2 optional route-suggestion aid), `.claude/hooks/lib/memory_stop.mjs:1` (writes the capture-time `route`/`weight` hints this refines), `tests/memory-flush-routing.test.mjs:1`.
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 
 ## .claude/skills/code-browser/SKILL.md:1
 
 - Role: The navigation skill, rewritten (`code-browser-primary-navigation`, 2026-06-04) so the language-agnostic **universal walk** (entry → imports → IO boundary) is the PRIMARY, framework-independent path and the JS/TS `walk.mjs`/`discover.mjs` are an OPTIONAL accelerator (not a precondition). The frontmatter `description:` is the auto-invoke trigger — now language-agnostic (frontend or backend) and names the `Explore` agent alongside grep. Grep carve-outs preserved: pure full-text search + direct type/util definition lookups stay grep's domain (not navigation). Bound by CLAUDE.md Article X.5.
 - Companion: CLAUDE.md Article X.5 (the binding rule), `docs/init/seed.md §4.3` + `.claude/CONSTITUTION.md` Appendix B (deframed narration + mirrors), `.claude/skills/code-browser/walk.mjs` + `discover.mjs` (the optional JS/TS accelerator — UNCHANGED, byte-identical), `.claude/skills/scout/SKILL.md:28` (sole workflow invocation site), `tests/code-browser-primary-navigation.test.mjs`. Decision: `decisions.md → navigation-routing-code-browser-primary-2026-06-04`.
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - caveat: Per-language fast-path adapters (Python/Go/Rust) are DEFERRED — `walk.mjs` resolves only `.ts/.js/.tsx/.jsx`, not `.mjs`, so on non-JS/TS repos code-browser uses the manual universal walk. "Primary" is doctrine (binding prose), not a structural hook; no test gates the model's actual tool choice.
 
 ## scripts/build-lock-dir.mjs:1
 
 - Role: Foundation helper that derives the build-mutex lock dir for `scripts/build-template.sh`. Takes `argv[2]` = build target dir, prints `${TMPDIR:-/tmp}/create-baseline-build.<sha256(target)[:16]>.lock.d`. Keying the mkdir-mutex on the TARGET (instead of the prior single global `create-baseline-build.lock.d`) lets isolated tmpdir builds (`tests/helpers/clone-and-build.mjs`) run concurrently while same-target builds (npm pack prepack + a live-tree build) still serialize, so the original `obj/template` rebuild race stays fixed. Measured: 3 concurrent isolated builds ~2s per-target vs ~8s global.
 - Companion: `scripts/build-template.sh:29` (the LOCK_DIR call site), `tests/build-lock-dir.test.mjs` (4 property tests: distinct→distinct, same→stable, under-TMPDIR/.lock.d, live-target-stable), `docs/testing.md` ("The build lock is keyed per target"). Cross-ref landmine `live-objtemplate-rebuild-races-parallel-test-readers`.
-- Verified-at: 8d11fb0
-- Last-touched: 2026-06-20
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 
 ## .claude/hooks/lib/closure-check.mjs
 
 - Path: `.claude/hooks/lib/closure-check.mjs`
 - Role: Foundation module — pure backlog-closure stamp reader + staged-tree obligation evaluator. Exports `unsatisfiedKeys(backlogText, keys)` and `evaluateClosure({stagedPaths, readStaged})`; no git, no I/O (callers inject staged content). Single source of truth (spec D3) imported by BOTH `git_commit_guard.mjs` (the atomic-closure hard-block leg) and `.claude/skills/commit/closure-precommit-check.mjs` (the `/commit` SOP preflight + `Closes <key>` reconciliation).
-- Verified-at: b667aa8
-- Last-touched: 2026-06-21
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - caveat: MUST stay shipped in `obj/template/.claude/manifest.json` — if dropped, `git_commit_guard`'s import crashes and the guard fails OPEN (consent bypass). Defended by `audit-baseline` + `tests/closure-amendment-governance.test.mjs`. See landmine `guard-new-lib-dep-breaks-sandbox-copy-tests`. Behavior documented in seed.md §4.1 + CLAUDE.md Art VIII + annex; RCA `docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md`.
 
 ## .claude/hooks/lib/timing.mjs
@@ -446,8 +446,8 @@ Each entry's stable key is `path:line`.
 - Path: `.claude/hooks/lib/timing.mjs`
 - Role: Foundation module for per-phase workflow timing + token capture (velocity Lever 0). Pure functions over `.claude/state/`: `stampFromWorkflow({rootDir, now})` appends `{phase,event:"completed",ts}` JSONL lines to `.claude/state/timing/<slug>.jsonl` for every phase newly present in `workflow.json → completed[]`, ALSO diffs `workflow.json → tdd_ticks[]` into `{phase:"tdd:<tick>",event:"sub"}` rows (sub-tick stamping, `tdd-subtick-stamping`), and captures cumulative output/input/cache-read tokens from the session transcript anchored on a `run-start` baseline (entries timestamped at/before `workflow.created_at`) (`phase-token-instrumentation`). Idempotent; `{appended:[]}` on absent/malformed workflow.json, never throws. `renderTable({rootDir, slug})` joins stamps + consent-token mtimes + token deltas into a markdown table with Model(ms)/Human-wait(ms) AND per-phase output/input/cache-read token columns; `tdd:<tick>` sub-rows nest under the `tdd` rollup (Option A; sum-of-subs == rollup), gated by `project.json → artifacts.subtick_timing.enabled`. Gate phases excluded as rows; approve-spec wait folds into first post-spec phase; negatives clamp to 0; missing → `n/a`. CLI: `node .claude/hooks/lib/timing.mjs render <slug> [bundleDir]` writes `timing.md`.
 - Companion: `.claude/hooks/phase_timer.mjs` (the hook that calls `stampFromWorkflow`, incl. its Bash leg), `.claude/skills/archive/SKILL.md` Step 2 (invokes the render CLI before `archive.sh` moves the approval token), `.claude/skills/tdd/SKILL.md` + `harness/SKILL.md` (worker ticks append to `tdd_ticks[]`).
-- Verified-at: b667aa8
-- Last-touched: 2026-06-21
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`. Token deltas only fire when phase-state writes go through tracked tools (Write/Edit) OR Bash (via phase_timer's Bash leg) — a pure-fs write that bypasses both captures no timing.
 
 ## .claude/hooks/phase_timer.mjs
@@ -455,8 +455,8 @@ Each entry's stable key is `path:line`.
 - Path: `.claude/hooks/phase_timer.mjs`
 - Role: PostToolUse observe-only hook (the 25th hook) with two legs. Write|Edit|MultiEdit leg: no-ops unless `basename(tool_input.file_path) === 'workflow.json'`, then calls `stampFromWorkflow`. **Bash leg** (`phase-timer-bash-trigger`): on `tool_name === 'Bash'` it skips the basename check and unconditionally calls the idempotent `stampFromWorkflow`, so Bash-driven `workflow.json` mutations (the manual-harness `>`/node-fs/jq path) also stamp — closing the gap where Write-only matching silently lost timing for human/Bash-driven runs. Try/catch swallowed; never blocks (PostToolUse has no deny path), never mutates the edited file. Wired in `settings.json` + `src/settings.template.json` (a Write/Edit/MultiEdit matcher AND a Bash matcher) beside `lint_runner`/`test_runner`.
 - Companion: `.claude/hooks/lib/timing.mjs` (logic), `docs/init/seed.md §4.1` + `CLAUDE.md` Article VIII (governance rows).
-- Verified-at: b667aa8
-- Last-touched: 2026-06-21
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - caveat: fires on EVERY Write/Edit/MultiEdit AND every Bash call in the repo; the basename guard (Write leg) and idempotent `stampFromWorkflow` (both legs) keep the no-op cheap. Covers manual/Bash-driven phase runs too, not just `/harness`.
 
 ## .claude/skills/audit-baseline/expected-baseline.mjs
@@ -464,8 +464,8 @@ Each entry's stable key is `path:line`.
 - Path: `.claude/skills/audit-baseline/expected-baseline.mjs`
 - Role: SINGLE SOURCE OF TRUTH for the baseline's declared rosters. Exports `EXPECTED_HOOKS`, `EXPECTED_AGENTS`, `EXPECTED_COMMANDS`, `EXPECTED_MEMORY_FILES`, `CANONICAL_MEMORY_FILES` (the non-`_` subset), `EXPECTED_MCP_SERVERS`, `EXPECTED_TRACKS`. `audit.mjs` imports the name rosters (extracted out of it); six governance tests import them so a count assertion is `<roster>.size`, never a literal. Adding a hook/command/agent/mcp-server is a ONE-LINE roster edit that re-aligns audit + the whole suite. Skills count stays sourced from `derive-counts.mjs → SKILL_CATEGORIES` (sum); disk counts come from `deriveCounts()`.
 - Companion: `.claude/skills/audit-baseline/audit.mjs`, `.claude/skills/audit-baseline/derive-counts.mjs` (disk deriver), tests: `derive-counts`, `epic-close-governance`, `epic-approval-guard`, `git-topology-guard`, `gitignore-governance-cascade`, `whatsnew-counts`.
-- Verified-at: 64d8a55
-- Last-touched: 2026-06-21
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
 - caveat: the roster is the *declaration*; `deriveCounts()` reads disk. Tests assert disk === roster (a real drift tripwire, not tautological). Prose count literals (CLAUDE.md/seed/README/CONSTITUTION) stay hand-maintained but are audit-checked against disk, so they track the roster transitively.
 
 ## .claude/skills/harness/checker-fanout.mjs
@@ -498,3 +498,26 @@ Each entry's stable key is `path:line`.
 - Role: hook #26 (added 2026-07-03, erp-portables slice B). PreToolUse(Edit|Write|MultiEdit) guard blocking CREATION of `.claude/state/workflow.json` when `project.json → git.workflow_model` is `github-flow` and the current branch matches `git.release_branches` — so a workflow cannot start on `main` under PR-to-main discipline (Art. IV work-start + Art. VII topology). Early-warning at work-start only; `git_commit_guard` is the enforcing backstop at commit time (and catches Bash-driven writes this hook does not see). Composes the topology primitives single-sourced in `lib/common.mjs` (`resolveWorkflowModel` / `matchAnyGlob` / `isPrimaryWorkTree` / `currentBranch`) so the creation-gate cannot drift from the commit-gate. Fail-open on anything ambiguous: not-a-creation (file exists), configured:false, non-github-flow model, linked worktree, non-git, detached HEAD, or any read error — never bricks editing. Tests: `tests/branch-guard.test.mjs`.
 - Verified-at: cb390e5
 - Last-touched: 2026-07-04
+
+## .claude/hooks/lib/consent-decision.mjs
+
+- Role: Foundation — the commit-consent decision, split out of the hooks so it is import-safe (no `main()`) and unit-testable. Four exports: `parseCommitConsentToken(text)` (accepts both on-disk token shapes — slug-mode `line1=slug, line2=epoch`, and epoch-only `line1=epoch` for ad-hoc/legacy tokens), `decideCommitConsent({token, workflow, now, ttl})`, `buildGrantCommitMarkerLines(slug, now, note)`, `resolveWorkflow(rootDir)`. Resolves three workflow states: **absent** (no `.claude/state/workflow.json`) → classic 900s time-window fallback; **present+slug** → slug-scoped match, so ONE `/grant-commit` authorizes every commit in that workflow's landing and only that workflow; **present+broken** (unreadable / unparseable / no slug) → fail closed.
+- Companion: `.claude/hooks/git_commit_guard.mjs` + `.claude/hooks/consent_gate_grant.mjs` (the two importers — the guard reads the decision, the UserPromptSubmit hook writes the marker outside Claude's tool boundary), `.claude/hooks/lib/common.mjs` (`canonicalSlug`). Tests: `tests/consent-decision.test.mjs`, `tests/branch-aware-git-policy.test.mjs`, `tests/git-topology-guard.test.mjs`.
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
+- Caveat: generalizes the ERP's ADR-0033, which bound consent to the workflow slug and **failed closed when no workflow was present**. That only stays usable when feature branches are left unprotected, so the slug check never fires on ad-hoc commits; on a project protecting every branch it forbids every ad-hoc commit. The absent→time-window fallback is the fix — do not restore fail-closed-on-absent. Empty slug (`''`) can never satisfy a slug match; `decideCommitConsent` guards it explicitly.
+
+## .claude/skills/power/SKILL.md
+
+- Role: the `power` batch-sprint track (defined in `.claude/workflows.jsonl`), landed `e90bfdc`. Delivers a sprint of related, spec-committed tickets in ONE cycle, reusing the standard phase skills. Hosts exactly the two behaviours that make it a *batch* pipeline: (1) **per-ticket iteration** — `security` runs once PER TICKET over `workflow.json → tickets[]` while the mechanical phases run once for the batch; (2) **commit split** — at the commit phase, group the batch's tree into ordered Conventional Commits via `commit-split.mjs`, closure last. Invoked from within a `power`-track workflow, never standalone.
+- Companion: `.claude/skills/power/commit-split.mjs` (the split actuator), `.claude/skills/sprint-planner/SKILL.md` (proposes the ticket set the track consumes), `.claude/workflows.jsonl` (track DAG). Opt-in via `project.json → velocity.power_mode.enabled`; requires git.
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
+
+## .claude/skills/power/commit-split.mjs
+
+- Role: Foundation — plans an ordered series of Conventional Commits from a dirty working tree for the power track's amortized commit phase. Single export `planCommits(entries)` over the dirty-tree array `[{path, status}]`. Composes `.claude/skills/commit-planner/inventory.mjs → groupDirtyTree` for single-concern grouping (**reuse, not reimplement**) and adds only the power-specific concern: ordering. `TYPE_MAP` ranks groupDirtyTree's `{chore, src, test, docs}` types as build/config(0) → implementation(1) → tests(2) → docs(3), mapping `src` to a mechanical `feat` placeholder that main context refines to feat/fix at commit time.
+- Companion: `.claude/skills/commit-planner/inventory.mjs` (the grouping it composes on), `.claude/hooks/git_commit_guard.mjs` (the closure-atomicity guard it must satisfy). Tests: `.claude/skills/power/tests/commit-split.test.mjs`.
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09
+- Caveat: `isClosurePath` forces `workflow.json` + `backlog.md` onto the FINAL commit. This is not cosmetic — `git_commit_guard` hard-blocks a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp, so a closure split across commits is rejected. Keep closure last.

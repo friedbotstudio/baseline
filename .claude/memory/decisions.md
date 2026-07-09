@@ -250,3 +250,14 @@ Each entry's stable key is a short slug (e.g., `subagents-vs-skills`, `worktree-
 - Source: docs/handoff/context7-outcome-mandate.md (ERP consumer session, 2026-07-08).
 - verified-at: a027d2e
 - last-touched: 2026-07-08
+
+## freeze-machine-churn-2026-07-09
+
+- Decision: **Phase 0 of the disease-cure roadmap.** Do not start a governance / tooling / roadmap-planner workflow unless a *product* workflow is provably blocked by its absence. "Provably blocked" means a named product workflow cannot proceed without the tooling change — not that the tooling is imperfect, not that a better abstraction is visible. This is a standing policy, not a build; it has no code, no test, and no enforcement hook. It binds session judgment at `/triage` time.
+- Rationale: measured on this repo over 8 days, ~42% of output tokens went into building and re-tuning the harness itself (roadmap-planner was rebuilt 3× in one week) and moved the product nowhere. It is the single biggest reclaimable pool identified in the diagnosis, and it is reclaimable by decision alone — no engineering required. Self-improving tooling is the failure mode a self-improving harness is most prone to: every rebuild feels load-bearing from inside the rebuild.
+- Rejected alternative: an enforcement hook that blocks governance-track workflows — rejected because the judgment ("is a product workflow provably blocked?") is exactly the kind an oracle cannot make, and a mechanical block would either be trivially bypassed or would wall off legitimate unblocking work. Per the thought-compiler §2.2 principle, LLM-judgment without a mechanical oracle is advisory; encoding this as a gate would manufacture false confidence. It stays a recorded decision that a session must read and honor.
+- How to apply: at `/triage`, when the request's target is the harness itself (`.claude/**`, `seed.md`, `CLAUDE.md`, skills, hooks), name the product workflow it unblocks before routing. If none can be named, the work is churn — surface this decision and ask the user to confirm before proceeding. The three change orders on the critical path (CO-A brainstorm-critic, CO-B spec quality floor, CO-C quality-oracle) are the *sanctioned* exception: they are the cure program itself, and the freeze exists to protect their calendar, not to block them.
+- Scope note: this decision does not expire on its own. It is lifted when the cure program (CO-A → CO-B → CO-C) has shipped and the input→enforcement loop is trusted, or by explicit user direction.
+- Source: `docs/handoff/baseline-system-redesign-roadmap.md` §4 Phase 0 (ERP consumer session, 2026-07-08); recorded ad-hoc 2026-07-09.
+- verified-at: 0e5cc8f
+- last-touched: 2026-07-09

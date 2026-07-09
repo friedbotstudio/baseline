@@ -160,7 +160,7 @@ shipped change (context7) read as still-pending — keep them separate.
 
 | CO | Cure | Half | Brief | Shipped |
 |---|---|---|---|---|
-| Phase 0 | Freeze machine-churn | policy | — (standing policy) | ⬜ record in `decisions.md` |
+| Phase 0 | Freeze machine-churn | policy | — (standing policy) | ✅ `decisions.md → freeze-machine-churn-2026-07-09` |
 | CO-A | Brainstorm-critic (Ledger #0002) | INPUT | ✅ `brainstorm-critic.md` | ⬜ **(keystone; execute first)** |
 | CO-B | Spec quality floor | INPUT | ✅ `spec-quality-floor.md` | ⬜ |
 | CO-C | Quality-oracle with teeth | ENFORCE | ✅ `quality-oracle.md` | ⬜ (depends on CO-B) |
