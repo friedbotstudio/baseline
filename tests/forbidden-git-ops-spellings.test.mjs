@@ -176,26 +176,6 @@ describe('forbidden-op matching reads the executable shape, not commit prose', (
     assert.equal(guardReason(cmd), '', 'a heredoc fed to cat is data, not commands');
   });
 
-  it('test_when_data_sink_heredoc_mentions_git_commit_then_not_consent_gated', () => {
-    // Subcommand classification must read the executable shape too: prose that
-    // mentions `$(git commit ...)` in a doc heredoc is not a commit, and must not
-    // be gated on a fresh /grant-commit token.
-    const cmd = [
-      "cat >> notes.md <<'ENTRY'",
-      'the shape `git commit -m "$(git restore x)"` is denied',
-      'ENTRY',
-    ].join('\n');
-    assert.doesNotMatch(guardReason(cmd), /consent/i, 'a doc heredoc is not a commit invocation');
-  });
-
-  it('test_when_shell_executor_heredoc_commits_then_still_consent_gated', () => {
-    // SECURITY counterpart: `bash <<'EOF'` + `git commit` really commits, so the
-    // consent policy must still see it. (Reason is consent- or topology-shaped,
-    // never empty.)
-    const cmd = ["bash <<'EOF'", 'git commit -m x', 'EOF'].join('\n');
-    assert.notEqual(guardReason(cmd), '', 'a shell heredoc that commits must stay classified');
-  });
-
   it('test_when_shell_executor_heredoc_carries_forbidden_op_then_blocked', () => {
     // SECURITY: `bash <<'EOF'` executes its body as a script. Quoted delimiter
     // suppresses expansion, but the shell still RUNS the lines.
@@ -217,6 +197,64 @@ describe('forbidden-op matching reads the executable shape, not commit prose', (
   it('test_when_real_forbidden_op_then_still_blocked', () => {
     assert.equal(blockedAsForbiddenOp('git restore src/x.js'), true);
     assert.equal(blockedAsForbiddenOp('git clean -fd'), true);
+  });
+});
+
+// Subcommand classification must read the executable shape too, or a doc heredoc
+// whose prose mentions a backticked `$(git commit …)` is classified as a real
+// commit and gated on a fresh /grant-commit token.
+//
+// Asserted on the PURE helpers, not on the guard's decision: whether a `git
+// commit` command is allowed depends on consent freshness, so an end-to-end
+// assertion here would be green for 900s after a grant and red in CI. That is
+// the exact trap this file's own first draft fell into -- twice.
+describe('executable-shape derivation drives subcommand classification', () => {
+  const imp = () => import(join(REPO_ROOT, '.claude/hooks/lib/common.mjs'));
+
+  it('test_when_data_sink_heredoc_mentions_git_commit_then_not_classified_commit', async () => {
+    const { gitSubcommandInvoked, stripQuotedHeredocBodies } = await imp();
+    const cmd = [
+      "cat >> notes.md <<'ENTRY'",
+      'the shape `git commit -m "$(git restore x)"` is denied',
+      'ENTRY',
+    ].join('\n');
+    assert.equal(gitSubcommandInvoked(cmd, 'commit'), true, 'raw string DOES look like a commit (the bug)');
+    assert.equal(
+      gitSubcommandInvoked(stripQuotedHeredocBodies(cmd), 'commit'),
+      false,
+      'the executable shape is not a commit — a cat heredoc body is data'
+    );
+  });
+
+  it('test_when_shell_executor_heredoc_commits_then_still_classified_commit', async () => {
+    const { gitSubcommandInvoked, stripQuotedHeredocBodies } = await imp();
+    // SECURITY: `bash <<'EOF'` runs its body. The strip must not hide it.
+    const cmd = ["bash <<'EOF'", 'git commit -m x', 'EOF'].join('\n');
+    assert.equal(
+      gitSubcommandInvoked(stripQuotedHeredocBodies(cmd), 'commit'),
+      true,
+      'a heredoc fed to a shell is a script; the commit must stay classified'
+    );
+  });
+
+  it('test_when_unquoted_heredoc_then_body_preserved', async () => {
+    const { stripQuotedHeredocBodies } = await imp();
+    const cmd = ['cat <<EOF', '$(git commit -m x)', 'EOF'].join('\n');
+    assert.match(stripQuotedHeredocBodies(cmd), /git commit/, 'unquoted heredocs expand; body preserved');
+  });
+
+  it('test_when_guard_reads_raw_cmd_then_it_is_a_regression', () => {
+    const guardSrc = readFileSync(GUARD, 'utf8');
+    assert.match(
+      guardSrc,
+      /const execCmd = stripQuotedHeredocBodies\(cmd\)/,
+      'handleBash must derive the executable shape once'
+    );
+    assert.doesNotMatch(
+      guardSrc,
+      /gitSubcommandInvoked\(cmd,/,
+      'classification must read execCmd, never the raw cmd'
+    );
   });
 });
 
