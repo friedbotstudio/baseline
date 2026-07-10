@@ -49,6 +49,16 @@ Before writing `harness_state`, do the marker op FIRST:
 
 THEN write `harness_state`. The marker is the session-scoped "in the loop" signal; partial-write resilience requires marker-first ordering so a crash between steps leaves the conservative state on disk.
 
+### Yield notifier (CO-D)
+
+Whenever the harness writes `harness_state` with `state: "yielded"` — at **any** of the three yield exits (the consent-gate yield in loop step 4, the phase-skill-failure yield, and the integrate-needs-spec-change surface) — it SHALL, immediately after that write, run:
+
+```
+node .claude/skills/harness/notify.mjs emit --slug <slug>
+```
+
+This pings the human that their attention is needed (a consent gate or a failure), batched into one message naming the workflow and what to do — an action-first body (`<slug> needs your attention: /approve-spec`) under a clean `Claude Code` title. It fires **only** on `yielded` — never on a `state: "continue"` refresh or a `state: "done"` completion (those need no human action). It is **best-effort and non-blocking**: it always exits 0, even when no notifier is present, so it can never stall the loop. Delivery is **OS-agnostic**, degrading through a probed chain: on macOS the optional `terminal-notifier` (clickable — a click focuses the terminal running Claude Code, via `-activate` on the `$TERM_PROGRAM` bundle id) when it is on `PATH`, then the platform's native notifier (`osascript` on macOS, `notify-send` on Linux, a PowerShell balloon on Windows), then a universal terminal fallback (BEL + a one-line stderr banner) on any other platform or when nothing native exists. `terminal-notifier` is probed like every channel and **never required** — no dependency is added and the notifier is fully functional without it (just without the click affordance; Linux/Windows click-to-focus is deferred). Gated by `project.json → velocity.notifier.enabled` (default on; set false to silence, e.g. in CI). `notify.mjs` is a baseline-owned, manifest-hashed helper.
+
 **State-write discipline (binding — see `.claude/CONSTITUTION.md` §2 "State-write discipline").** `.harness_active`, `harness_state`, and `harness/<slug>.log` are **Tier 2 workflow state** — not consent paths, not guard-blocked. The marker *refresh* (`echo "<slug>" > .claude/state/.harness_active`) uses a shell **builtin** redirect and is PATH-independent; the marker *delete* (`rm -f`) is the sole sanctioned external-binary exception (there is no builtin delete). Prefer the **Write tool** for the `harness_state` JSON. Never use `tee` or `sed -i`, and resolve any paths with Read/Glob, never `dirname`/`basename`.
 
 ## Preflight (once per Skill(harness) invocation, before entering the loop)
@@ -78,6 +88,7 @@ Inside each iteration:
 4. **If `task.metadata.needs_user == true`** (consent-gate placeholder), **EXIT LOOP with YIELD**:
    - Marker FIRST: `rm -f .claude/state/.harness_active`.
    - Write `harness_state` with `{state: "yielded", slug, reason: "yielded at /<gate>"}` — exactly three fields.
+   - **Emit the attention notification (CO-D):** immediately after the `yielded` write, run `node .claude/skills/harness/notify.mjs emit --slug <slug>`. Best-effort — it never blocks and always exits 0 (even with no notifier). See "Yield notifier" below.
    - Break out of the loop; the terminal message names the consent command for the user to run.
    - **Gate-A open-questions consolidation.** When the gate being yielded at is `approve-spec` (the `/approve-spec` consent task), first run `node .claude/skills/harness/consolidate-open-questions.mjs --slug <slug>` and include its stdout in the yield terminal message, above the `/approve-spec` instruction. The helper extracts the `## Open questions` bullets from `docs/intake/<slug>.md`, `docs/research/<slug>.md`, and `docs/specs/<slug>.md`, dedupes them across phases (a question restated downstream collapses to one line tagged with every phase it appeared in), and buckets them spec-first so the reviewer settles the still-open items before approving. Zero questions → it prints a single "No open questions found" line; surface that too. This readout is advisory context for the human; it never gates or auto-approves.
    - **Gate-C no-yield carve-out (AC-003).** This yield step only fires when a `needs_user` task exists; under a github-flow autonomous feature landing the gate-C task was omitted at seed time. Full rule: see the gate-C carve-out bullet under "Phase ordering" below.

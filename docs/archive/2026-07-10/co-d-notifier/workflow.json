@@ -1,0 +1,16 @@
+{
+  "request": "CO-D Notifier — from the approved disease-cure roadmap change-order docs/handoff/velocity-notifier-and-gate-collapse.md (§CO-D). Emit one batched notification at the harness yield path (harness_state: yielded) for consent-gate yields (/approve-spec, /approve-swarm, /grant-commit) and failure / integrate-needs-spec-change yields; none on ordinary phase transitions. Delivery via PushNotification tool or OS notification; dependency-light (U6).",
+  "slug": "co-d-notifier",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/handoff/velocity-notifier-and-gate-collapse.md §CO-D — an approved disease-cure roadmap change-order with problem/outcome/design-direction/acceptance-criteria already settled; execution, not fresh design of the what/why.",
+  "track_reason": "spec-entry over the leaner tdd-quickfix: this is a Class-A change to baseline-owned/manifest-hashed harness+consent machinery with one load-bearing, underivable design fork (deterministic hook-emitted OS notification vs model-emitted PushNotification at the harness yield exit) that must be captured in a spec and reviewed at gate A, not decided silently in tdd. intake/scout/research excepted because the CO-D brief is a self-contained intake.",
+  "skip_brainstorm": true,
+  "exceptions": ["intake", "brd", "scout", "research"],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783672920,
+  "updated_at": 1783672920
+}

@@ -258,6 +258,9 @@
     },
     "org_mode": {
       "enabled": false
+    },
+    "notifier": {
+      "enabled": true
     }
   },
   "ci_posture": {

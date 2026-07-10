@@ -331,6 +331,9 @@
     },
     "power_mode": {
       "enabled": true
+    },
+    "notifier": {
+      "enabled": true
     }
   },
   "roadmap": {
