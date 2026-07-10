@@ -23,6 +23,7 @@ Steps:
    - Line 2: epoch timestamp (run `date +%s`)
    - Line 3: absolute path to the spec file
    - Line 4: git short SHA of the spec file at this moment (if in a git repo; run `git log -1 --format=%h -- "<resolved-path>"`, otherwise `N/A`)
+   - Line 5: the spec **content hash** — `computeSpecContentHash` of the spec bytes from `.claude/hooks/lib/spec-content-hash.mjs`. Compute it in Bash (read-only): `node -e "import('./.claude/hooks/lib/spec-content-hash.mjs').then(m=>import('node:fs').then(fs=>console.log(m.computeSpecContentHash(fs.readFileSync('<resolved-path>')))))"`. This line is meaningful even when Line 4 is `N/A` (an untracked first-time spec has no git SHA but always has content) — it is what lets the harness resume detect a post-approval amendment.
 4. Confirm to the user: "Approved spec `<slug>`. Approval token written to `.claude/state/spec_approvals/<slug>.approval`. Downstream phases that depend on this spec may now proceed."
 
 Do NOT mark the spec itself as "Approved" inside the markdown — the Spec Approval Guard hook blocks that. The approval token is the authoritative record.
