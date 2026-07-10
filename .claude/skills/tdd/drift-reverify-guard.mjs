@@ -23,7 +23,11 @@ export function decideVerdict(storedFp, currentFp) {
 }
 
 export function main(argv, deps = {}) {
-  const [sub, slug] = argv;
+  // Accept both `<sub> <slug>` (positional, back-compat) and `<sub> --slug <slug>`
+  // (the form tdd/SKILL.md + harness/SKILL.md document). Without this, the flag form
+  // is swallowed as the slug and writes a shared `--slug.driftfp` across workflows.
+  const sub = argv[0];
+  const slug = argv[1] === '--slug' ? argv[2] : argv[1];
   const rootDir = deps.rootDir || process.cwd();
   const stateDir = deps.stateDir || path.join(rootDir, '.claude/state/tdd');
   const treeState = deps.treeState || (() => collectTreeState(rootDir));
