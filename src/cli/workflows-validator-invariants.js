@@ -5,7 +5,7 @@
 // Named-error shape:
 //   { kind: 'invariant_iN', track_id?, node_id?, message, ...details }
 
-import { isKnownPredicate } from './workflows-validator-predicates.js';
+import { isKnownPredicate, validatePredicateParams } from './workflows-validator-predicates.js';
 
 // ---------- I1 ----------
 
@@ -367,38 +367,50 @@ function describeAlternate(alt) {
 
 // ---------- I11 ----------
 
+// A predicate resolves iff its name is in the closed v1 vocabulary AND its
+// params are well-formed. `site` names where it was declared, for the message.
+function predicateErrors(pred, { track_id, node_id, site }) {
+  const located = node_id === undefined ? { track_id } : { track_id, node_id };
+  if (!isKnownPredicate(pred.name)) {
+    return [{
+      kind: 'invariant_i11',
+      ...located,
+      message: `Track '${track_id}' ${site} uses unknown predicate '${pred.name}'. Not in v1 vocabulary.`,
+    }];
+  }
+  const malformed = validatePredicateParams(pred);
+  if (malformed) {
+    return [{
+      kind: 'invariant_i11',
+      ...located,
+      message: `Track '${track_id}' ${site} declares a malformed predicate '${pred.name}': ${malformed}`,
+    }];
+  }
+  return [];
+}
+
 export function checkI11_predicateNamesResolve(tracks) {
   const errors = [];
   for (const t of tracks) {
     for (const pred of t.preconditions || []) {
-      if (!isKnownPredicate(pred.name)) {
-        errors.push({
-          kind: 'invariant_i11',
-          track_id: t.track_id,
-          message: `Track '${t.track_id}' precondition uses unknown predicate '${pred.name}'. Not in v1 vocabulary.`,
-        });
-      }
+      errors.push(...predicateErrors(pred, { track_id: t.track_id, site: 'precondition' }));
     }
     for (const node of t.nodes) {
-      if (node.condition && !isKnownPredicate(node.condition.name)) {
-        errors.push({
-          kind: 'invariant_i11',
+      if (node.condition) {
+        errors.push(...predicateErrors(node.condition, {
           track_id: t.track_id,
           node_id: node.id,
-          message: `Track '${t.track_id}' node '${node.id}' condition uses unknown predicate '${node.condition.name}'. Not in v1 vocabulary.`,
-        });
+          site: `node '${node.id}' condition`,
+        }));
       }
       if (!Array.isArray(node.alternates)) continue;
       for (const alt of node.alternates) {
         for (const pred of alt.preconditions || []) {
-          if (!isKnownPredicate(pred.name)) {
-            errors.push({
-              kind: 'invariant_i11',
-              track_id: t.track_id,
-              node_id: node.id,
-              message: `Track '${t.track_id}' node '${node.id}' alternate uses unknown predicate '${pred.name}'. Not in v1 vocabulary.`,
-            });
-          }
+          errors.push(...predicateErrors(pred, {
+            track_id: t.track_id,
+            node_id: node.id,
+            site: `node '${node.id}' alternate`,
+          }));
         }
       }
     }

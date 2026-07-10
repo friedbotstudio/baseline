@@ -23,9 +23,17 @@
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": { "enum": ["requires_git", "requires_user_override", "requires_min_components", "requires_phase_completed", "requires_skill_present", "requires_commit_consent"] },
-        "argument": { "type": "string" }
-      }
+        "name": { "enum": ["requires_git", "requires_user_override", "requires_min_components", "requires_phase_completed", "requires_skill_present", "requires_commit_consent", "requires_config_flag"] },
+        "argument": { "type": "string" },
+        "path": { "type": "string", "minLength": 1 },
+        "equals": { "type": ["string", "number", "boolean", "null"] }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["name"], "properties": { "name": { "const": "requires_config_flag" } } },
+          "then": { "required": ["name", "path", "equals"] }
+        }
+      ]
     },
     "Node": {
       "type": "object",

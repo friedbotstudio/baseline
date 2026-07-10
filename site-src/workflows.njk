@@ -97,6 +97,8 @@ toc:
       <tr><td class="phase">requires_min_components</td><td><code>&lt;int&gt;</code></td><td>The approved spec has at least N C4 Components.</td></tr>
       <tr><td class="phase">requires_phase_completed</td><td><code>&lt;phase&gt;</code></td><td>The named phase appears in <code>workflow.json -&gt; completed</code>.</td></tr>
       <tr><td class="phase">requires_skill_present</td><td><code>&lt;skill_id&gt;</code></td><td>The named skill exists in <code>EXPECTED_SKILLS</code> plus <code>additions.skills</code>.</td></tr>
+      <tr><td class="phase">requires_commit_consent</td><td><span class="muted">(none)</span></td><td>Commit consent is required for this workflow: <code>NOT isAutonomousFeatureLanding()</code>. False only under a github-flow autonomous feature landing.</td></tr>
+      <tr><td class="phase">requires_config_flag</td><td><code>{path, equals}</code></td><td>The dot-path resolves in <code>project.json</code> and strictly equals <code>equals</code>; absent, null, or type-mismatched resolves false (fail-safe). Lets a track declare a <code>velocity.*</code> opt-in flag structurally.</td></tr>
     </tbody>
   </table>
   <p>Adding a new predicate is a constitutional change. Update <code>seed.md §18.4</code>, the predicate validator (<code>src/cli/workflows-validator-predicates.js</code>), and the corresponding <code>seed.template.md</code> mirror.</p>

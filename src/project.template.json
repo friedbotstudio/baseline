@@ -252,6 +252,12 @@
     },
     "sprint_mode": {
       "enabled": false
+    },
+    "power_mode": {
+      "enabled": false
+    },
+    "org_mode": {
+      "enabled": false
     }
   },
   "ci_posture": {

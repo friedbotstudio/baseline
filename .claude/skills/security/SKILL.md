@@ -18,6 +18,16 @@ Per `workflow.json → exceptions`, security may be skipped for low-risk changes
 
 Review the current branch's changes (git diff vs. base branch) and any files the user names explicitly. Do **not** review the full repo history.
 
+## Per-ticket iteration on the `power` track
+
+When `.claude/state/workflow.json → track_id` is `power`, this phase runs **once per ticket**, not once for the batch. Read `workflow.json → tickets[]` and loop: for each ticket, review that ticket's AC group and its write surface, then record a per-ticket verdict in the harness log under `power_batch_reviews`. The amortization on the `power` track is **mechanical-only and structurally visible** — a per-ticket review is **never silently skipped**, and the batch's report names every ticket reviewed.
+
+If any ticket raises a **BLOCKER**, yield the batch for that ticket exactly as a single-ticket workflow would; the remaining tickets are not reviewed until it is resolved.
+
+If `tickets[]` is **empty or missing** on a `power` workflow, that is an error, not a pass: **yield** and tell the user the batch was never populated (`sprint-planner` proposes the task-set and writes `tickets[]`; the human confirms before `/triage` routes here). Reviewing zero tickets and reporting clean would silently drop the phase.
+
+This is a static DAG with in-skill iteration: the TaskList materializer cannot expand a runtime-sized list, so the loop lives here. No runtime node fan-out, no subagent — Article II is untouched. On every other track this section does not apply and the review runs once.
+
 Focus areas, in order:
 
 1. **OWASP Top 10 (2021)** — A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable & Outdated Components, A07 Identification & Authentication Failures, A08 Software & Data Integrity Failures, A09 Logging & Monitoring Failures, A10 SSRF.

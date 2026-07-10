@@ -1,0 +1,36 @@
+{
+  "request": "Complete the `power` workflow track and generalize its opt-in fence: add a `requires_config_flag` predicate (9th member of the seed.md §18.4 closed set), wire power's two defining behaviours into the skills that actually execute (triage selection, per-ticket security, commit batch-split), and ship `velocity.power_mode.enabled` + `velocity.org_mode.enabled` to consumers via src/project.template.json.",
+  "slug": "power-track-completion",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/init/seed.md:767 already sanctions the power track and names `velocity.power_mode.enabled` as its opt-in; the prior design is ERP ADR-0034 (Accepted + ratified 2026-07-04, ../erp/docs/adr/0034-power-workflow-track.md) with its archived spec bundle at ../erp/docs/archive/2026-07-04/harness-power-mode/. Genesis sanctions the track; only the constitution (CLAUDE.md: 0 mentions of `power`) and the implementation lag.",
+  "track_reason": "spec-entry over the leaner tdd-quickfix/chore: the change amends genesis (seed.md §18.4 closed predicate set) + the constitution (CLAUDE.md Article IV) + a JSON schema, and adds a new predicate contract — a Class-A change requiring a written spec and gate A. spec-entry over the heavier epic: the user requires ONE cycle; epic amortizes discovery across multiple child landings, which contradicts the ask.",
+  "skip_brainstorm": true,
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "tickets": [],
+  "created_at": 1783626615,
+  "updated_at": 1783663163,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
