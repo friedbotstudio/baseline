@@ -24,6 +24,35 @@ export function composeNotification(harnessState) {
   return { title: 'Claude Code', body: `${slug} needs your attention: ${core}` };
 }
 
+// --- stop-mode decision (pure) ---
+//
+// on_stop policy: pings on a genuine session-idle Stop, not only at a yield.
+//   'yielded' (default) — no stop-mode notifications; the yield path is unchanged.
+//   'idle'             — notify when the session truly hands control back.
+//   'always'           — notify on every real stop.
+// The idle case is the inverse of harness_continuation's "will I re-fire?": a loop
+// that is alive (state=continue + marker) or a mid-continuation stop is NOT idle,
+// and a yielded stop was already announced by the emit path.
+export function resolveOnStop(config) {
+  const v = config?.velocity?.notifier?.on_stop;
+  return typeof v === 'string' ? v : 'yielded';
+}
+
+export function stopModeShouldNotify({ onStop, stopHookActive, state, markerExists }) {
+  if (onStop === 'always') return true;
+  if (onStop !== 'idle') return false;
+  if (stopHookActive) return false;
+  if (state === 'continue' && markerExists) return false;
+  if (state === 'yielded') return false;
+  return true;
+}
+
+export function composeStopNotification(harnessState) {
+  const slug = harnessState?.slug;
+  const body = slug ? `${slug}: Claude is idle - your turn` : 'Claude is idle - your turn';
+  return { title: 'Claude Code', body };
+}
+
 // --- dispatch selection (pure) ---
 
 const TERMINAL_BUNDLE_IDS = {
@@ -156,6 +185,57 @@ export function emit(argv, opts = {}) {
   }
 }
 
+export function emitStop(argv, opts = {}) {
+  try {
+    const rootDir = opts.rootDir || process.cwd();
+    let config;
+    try {
+      config = readJson(join(rootDir, '.claude/project.json'));
+    } catch {
+      return 0;
+    }
+    let state;
+    try {
+      state = readJson(join(rootDir, '.claude/state/harness_state'));
+    } catch {
+      state = undefined;
+    }
+    const slug = state?.slug || 'session';
+    if (config?.velocity?.notifier?.enabled === false) {
+      logLine(rootDir, slug, 'stop skipped disabled');
+      return 0;
+    }
+    const decision = stopModeShouldNotify({
+      onStop: resolveOnStop(config),
+      stopHookActive: opts.payload?.stop_hook_active === true,
+      state: state?.state,
+      markerExists: existsSync(join(rootDir, '.claude/state/.harness_active')),
+    });
+    if (!decision) {
+      logLine(rootDir, slug, `stop silent ${state?.state ?? 'no-state'}`);
+      return 0;
+    }
+    const dispatch = chooseDispatch(osPlatform(), probeAvail(), { termProgram: process.env.TERM_PROGRAM });
+    const result = deliver(composeStopNotification(state), dispatch);
+    logLine(rootDir, slug, `stop notified ${result.channel}`);
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+function readStdinPayload() {
+  try {
+    return JSON.parse(readFileSync(0, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  process.exit(emit(process.argv.slice(2)));
+  const argv = process.argv.slice(2);
+  if (argv[0] === 'stop') {
+    process.exit(emitStop(argv, { payload: readStdinPayload() }));
+  }
+  process.exit(emit(argv));
 }

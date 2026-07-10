@@ -72,7 +72,8 @@
       {
         "hooks": [
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/memory_stop.mjs" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/harness_continuation.mjs" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/harness_continuation.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/skills/harness/notify.mjs stop" }
         ]
       }
     ],

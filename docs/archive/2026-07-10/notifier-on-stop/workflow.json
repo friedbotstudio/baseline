@@ -1,0 +1,23 @@
+{
+  "request": "Add a project.json option to notify the human as soon as Claude stops (session goes idle), not only at consent-gate/failure yields. Extend velocity.notifier with an on_stop policy (yielded|idle|always); wire notify.mjs as a Stop-event command; suppress during harness_continuation loop turns.",
+  "slug": "notifier-on-stop",
+  "track_id": "tdd-quickfix",
+  "novelty": "novel",
+  "novelty_evidence": "velocity.* opt-in flag shape is a pattern precedent (rightsize, drift_reverify_skip, checker_fanout in project.json). But the Stop-event dispatch path has NO precedent: settings.json Stop array contains only memory_stop.mjs and harness_continuation.mjs, both hooks under .claude/hooks/; no .claude/skills/ helper is wired to any event. Searched settings.json, derive-counts.mjs:114, audit.mjs:585-599. Framing complete (actor: human; trigger: session idle; desired state: notification); the one load-bearing fork (trigger semantics) was resolved to on_stop=idle before triage.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783698207,
+  "updated_at": 1783698207
+}

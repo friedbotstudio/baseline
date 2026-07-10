@@ -260,7 +260,8 @@
       "enabled": false
     },
     "notifier": {
-      "enabled": true
+      "enabled": true,
+      "on_stop": "idle"
     }
   },
   "ci_posture": {

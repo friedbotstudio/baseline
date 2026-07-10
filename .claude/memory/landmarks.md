@@ -521,3 +521,18 @@ Each entry's stable key is `path:line`.
 - Verified-at: 0e5cc8f
 - Last-touched: 2026-07-09
 - Caveat: `isClosurePath` forces `workflow.json` + `backlog.md` onto the FINAL commit. This is not cosmetic — `git_commit_guard` hard-blocks a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp, so a closure split across commits is rejected. Keep closure last.
+
+## .claude/skills/harness/notify.mjs
+
+- Role: Foundation — the CO-D yield notifier. Pings the human when the harness needs attention. Pure decision core (`shouldNotify(state, config)`, `composeNotification`, `chooseDispatch`, `bundleIdFor`) separated from the `deliver`/`probeAvail` edge. Delivery is OS-agnostic and degrades through a probed chain: macOS `terminal-notifier` (clickable — `-activate <bundle-id>` resolved from `$TERM_PROGRAM`) → the platform native notifier (`osascript` / `notify-send` / PowerShell balloon) → a universal terminal fallback (BEL + one-line stderr banner). Stdlib only (U6); never throws, always exits 0, so it can never stall the harness loop.
+- Companion: `.claude/skills/harness/SKILL.md` (invokes it via Bash immediately after the `yielded` write, step 91), `tests/harness-notify.test.mjs`. Gated by `project.json → velocity.notifier.enabled` (default on; set false to silence in CI). Baseline-owned and manifest-hashed.
+- Verified-at: HEAD
+- Last-touched: 2026-07-10
+- Caveat: two invocation modes. **emit-mode** (`emit --slug`, harness-invoked at a `yielded` write) pings on attention-needed only — `shouldNotify` returns false for any `state` other than `"yielded"`. **stop-mode** (`stop`, wired as a 3rd `Stop` hook command since notifier-on-stop) reads the Stop payload from stdin and honours `project.json → velocity.notifier.on_stop` (`yielded`|`idle`|`always`): `idle` pings on genuine session-idle — the inverse of `harness_continuation`'s re-fire (silent when `stop_hook_active`, or `state:"continue"`+marker, or already `yielded`; pings on `done`/missing-state/continue-without-marker). Read-time default `yielded`; shipped template ships `idle`. `stopModeShouldNotify`/`resolveOnStop`/`composeStopNotification`/`emitStop` are the new exports. `notify.mjs` lives under `.claude/skills/`, not `.claude/hooks/`, so the Stop wiring added no hook and triggered no hook-count cascade (`derive-counts.mjs:114` counts `.claude/hooks/*.mjs`).
+
+## .claude/hooks/lib/spec-content-hash.mjs
+
+- Role: Foundation — content-addressed identity for an approved spec, so gate A detects a post-approval amendment even for an untracked (first-time) spec whose git SHA is `N/A`. Single concern: `computeSpecContentHash(bytes)` → sha256 hex over a string or Buffer, throwing on any other type so a caller never silently hashes a coerced value. Pure and stdlib-only (`node:crypto`), so it runs identically in the `/approve-spec` command SOP and in the harness resume path.
+- Companion: `.claude/commands/approve-spec.md` (records the hash in the approval token), `.claude/skills/harness/SKILL.md` (recomputes on resume; mismatch → re-yield at gate A), `tests/spec-content-hash.test.mjs`, `tests/gate-a-content-reyield.test.mjs`.
+- Verified-at: 212dbd0
+- Last-touched: 2026-07-10

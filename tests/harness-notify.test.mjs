@@ -5,6 +5,10 @@
 //
 // RED until /implement creates shouldNotify / composeNotification / chooseDispatch /
 // deliver / emit.
+//
+// on_stop extension (notifier-on-stop): a Stop-event mode that pings on genuine
+// session-idle, not only at yields. RED until /implement adds stopModeShouldNotify /
+// resolveOnStop / composeStopNotification / emitStop. Emit-mode stays byte-identical.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -203,6 +207,142 @@ describe('emit', () => {
     const root = makeRoot({ state: { state: 'continue', slug: 'co-d-notifier', reason: 'spec done; next: tdd' } });
     const code = fn('emit')(['emit', '--slug', 'co-d-notifier'], { rootDir: root });
     assert.equal(code, 0, 'ordinary transition → exit 0, no notification');
+  });
+});
+
+// ── on_stop extension (notifier-on-stop) ──────────────────────────────────
+
+function readLog(root, slug) {
+  const p = path.join(root, '.claude/state/harness', `${slug}.log`);
+  return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+}
+
+describe('stopModeShouldNotify (idle-stop truth table)', () => {
+  const f = () => fn('stopModeShouldNotify');
+  it('test_when_onstop_always_then_notifies_on_any_stop', () => {
+    // 'always' pings on every real stop regardless of loop/marker/stop_hook_active.
+    assert.equal(f()({ onStop: 'always', stopHookActive: true, state: 'continue', markerExists: true }), true);
+    assert.equal(f()({ onStop: 'always', stopHookActive: false, state: 'done', markerExists: false }), true);
+  });
+  it('test_when_onstop_yielded_then_never_notifies_on_stop', () => {
+    // default-preserving policy: no stop-mode notifications even when genuinely idle.
+    assert.equal(f()({ onStop: 'yielded', stopHookActive: false, state: 'done', markerExists: false }), false);
+  });
+  it('test_when_onstop_unknown_then_never_notifies_on_stop', () => {
+    // any non-idle/non-always value is treated as "no stop notifications" (fail-quiet).
+    assert.equal(f()({ onStop: 'bogus', stopHookActive: false, state: 'done', markerExists: false }), false);
+  });
+  it('test_when_onstop_idle_and_stophookactive_then_silent', () => {
+    // mid-continuation: a stop_hook_active stop is not idle.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: true, state: 'done', markerExists: false }), false);
+  });
+  it('test_when_onstop_idle_and_loop_alive_then_silent', () => {
+    // harness loop alive (state=continue AND marker present) — inverse of continuation Path A.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: false, state: 'continue', markerExists: true }), false);
+  });
+  it('test_when_onstop_idle_and_state_yielded_then_silent', () => {
+    // already notified at the yield via emit-mode; the gate-resume window too.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: false, state: 'yielded', markerExists: false }), false);
+  });
+  it('test_when_onstop_idle_and_state_done_then_notifies', () => {
+    // workflow complete → genuine idle → ping.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: false, state: 'done', markerExists: false }), true);
+  });
+  it('test_when_onstop_idle_and_no_state_then_notifies', () => {
+    // plain chat turn end (no harness_state) → idle → ping.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: false, state: undefined, markerExists: false }), true);
+  });
+  it('test_when_onstop_idle_and_continue_without_marker_then_notifies', () => {
+    // state=continue but marker gone → continuation would NOT re-fire → idle/interrupted → ping.
+    assert.equal(f()({ onStop: 'idle', stopHookActive: false, state: 'continue', markerExists: false }), true);
+  });
+});
+
+describe('resolveOnStop', () => {
+  it('test_when_on_stop_key_absent_then_resolveonstop_returns_yielded', () => {
+    // read-time default preserves today's behavior for un-upgraded configs.
+    assert.equal(fn('resolveOnStop')({ velocity: { notifier: { enabled: true } } }), 'yielded');
+    assert.equal(fn('resolveOnStop')(undefined), 'yielded');
+    assert.equal(fn('resolveOnStop')({}), 'yielded');
+  });
+  it('test_when_on_stop_set_then_resolveonstop_returns_it', () => {
+    assert.equal(fn('resolveOnStop')({ velocity: { notifier: { on_stop: 'idle' } } }), 'idle');
+    assert.equal(fn('resolveOnStop')({ velocity: { notifier: { on_stop: 'always' } } }), 'always');
+    assert.equal(fn('resolveOnStop')({ velocity: { notifier: { on_stop: 'yielded' } } }), 'yielded');
+  });
+});
+
+describe('composeStopNotification', () => {
+  it('test_when_slug_present_then_stop_body_names_slug', () => {
+    const msg = fn('composeStopNotification')({ slug: 'notifier-on-stop', state: 'done' });
+    assert.equal(msg.title, 'Claude Code', 'clean product title, no slug in title');
+    assert.ok(msg.body.includes('notifier-on-stop'), 'body names the slug');
+    assert.ok(/idle/i.test(msg.body), 'body communicates idle/your-turn');
+  });
+  it('test_when_slug_absent_then_stop_body_generic', () => {
+    const msg = fn('composeStopNotification')({});
+    assert.equal(msg.title, 'Claude Code');
+    assert.equal(typeof msg.body, 'string');
+    assert.ok(msg.body.length > 0, 'generic idle body present');
+    assert.ok(!msg.body.includes('undefined'), 'no leaked undefined slug');
+  });
+});
+
+describe('emitStop (stop-mode orchestration)', () => {
+  it('test_when_notifier_disabled_then_stop_mode_short_circuits', () => {
+    const root = makeRoot({
+      state: { state: 'done', slug: 'x' },
+      config: { velocity: { notifier: { enabled: false, on_stop: 'idle' } } },
+    });
+    const { result, captured } = captureStderr(() =>
+      fn('emitStop')(['stop'], { rootDir: root, payload: { stop_hook_active: false } })
+    );
+    assert.equal(result, 0, 'always exits 0');
+    assert.equal(captured, '', 'disabled → no terminal fallback banner');
+    assert.ok(!readLog(root, 'x').includes('notified'), 'disabled → never dispatched');
+  });
+  it('test_when_stop_mode_idle_and_done_then_delivers', () => {
+    const root = makeRoot({
+      state: { state: 'done', slug: 'x' },
+      config: { velocity: { notifier: { enabled: true, on_stop: 'idle' } } },
+    });
+    // Delivery goes through the OS boundary (osascript/notify-send/terminal); channel varies
+    // by platform, but a genuine idle-stop MUST attempt delivery and log it. Never throws.
+    const code = captureStderr(() =>
+      fn('emitStop')(['stop'], { rootDir: root, payload: { stop_hook_active: false } })
+    ).result;
+    assert.equal(code, 0);
+    assert.ok(/notified/.test(readLog(root, 'x')), 'idle stop under on_stop=idle attempts delivery');
+  });
+  it('test_when_stop_mode_loop_alive_then_silent', () => {
+    // state=continue + marker present → harness loop alive → no notification.
+    const root = makeRoot({
+      state: { state: 'continue', slug: 'x' },
+      config: { velocity: { notifier: { enabled: true, on_stop: 'idle' } } },
+    });
+    fs.writeFileSync(path.join(root, '.claude/state/.harness_active'), 'x\n');
+    const { result, captured } = captureStderr(() =>
+      fn('emitStop')(['stop'], { rootDir: root, payload: { stop_hook_active: false } })
+    );
+    assert.equal(result, 0);
+    assert.equal(captured, '', 'loop-alive → no terminal banner');
+    assert.ok(!readLog(root, 'x').includes('notified'), 'loop-alive → never dispatched');
+  });
+});
+
+describe('emit-mode unchanged (regression)', () => {
+  it('test_when_emit_mode_unchanged_then_yield_path_still_notifies', () => {
+    // adding on_stop to the config must not perturb the yield path.
+    assert.equal(
+      fn('shouldNotify')('yielded', { velocity: { notifier: { enabled: true, on_stop: 'idle' } } }),
+      true,
+      'yield-path shouldNotify is independent of on_stop',
+    );
+    const root = makeRoot({
+      state: { state: 'yielded', slug: 'co-d-notifier', reason: 'yielded at /grant-commit' },
+      config: { velocity: { notifier: { enabled: true, on_stop: 'idle' } } },
+    });
+    assert.equal(fn('emit')(['emit', '--slug', 'co-d-notifier'], { rootDir: root }), 0, 'emit still exits 0');
   });
 });
 
