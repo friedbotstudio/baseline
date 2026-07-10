@@ -1,0 +1,23 @@
+{
+  "request": "Two notifier improvements on the same surface. A: notify when the session blocks on the human (AskUserQuestion / plan approval / permission prompt / idle input) — the moment the yield+stop modes miss. B: presence-aware suppression — when velocity.notifier.presence==aware, suppress the idle ping if the terminal is frontmost AND HID idle <= present_idle_seconds. macOS-first (ioreg HIDIdleTime + lsappinfo frontmost), fail-open elsewhere.",
+  "slug": "notifier-attention-and-presence",
+  "track_id": "tdd-quickfix",
+  "novelty": "novel",
+  "novelty_evidence": "Pattern-copies the Stop-command wiring from commit 7dba960 (notifier-on-stop) for the new event wiring, but two surfaces are new: (1) the input-wait trigger needs the Claude Code Notification hook event (settings.json has NO Notification hook today; PreToolUse matchers are Bash and Write-family only), and (2) the macOS presence probe (ioreg HIDIdleTime + lsappinfo frontmost) has no in-repo precedent. Exact hook seam for A being confirmed via claude-code-guide.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "approve-spec",
+    "review"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "grant-commit"],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783703676,
+  "updated_at": 1783703676
+}

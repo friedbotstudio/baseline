@@ -261,7 +261,10 @@
     },
     "notifier": {
       "enabled": true,
-      "on_stop": "idle"
+      "on_stop": "idle",
+      "attention": true,
+      "presence": "always",
+      "present_idle_seconds": 60
     }
   },
   "ci_posture": {

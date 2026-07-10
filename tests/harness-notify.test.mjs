@@ -346,6 +346,177 @@ describe('emit-mode unchanged (regression)', () => {
   });
 });
 
+// ── attention mode + presence-aware suppression (notifier-attention-and-presence) ──
+
+const ITERM = 'com.googlecode.iterm2';
+
+// Run a thunk with TERM_PROGRAM forced, restored after — the terminal bundle id
+// is derived from $TERM_PROGRAM (bundleIdFor), and tests must not depend on the
+// real terminal the suite happens to run in.
+function withTermProgram(value, thunk) {
+  const original = process.env.TERM_PROGRAM;
+  process.env.TERM_PROGRAM = value;
+  try {
+    return thunk();
+  } finally {
+    if (original === undefined) delete process.env.TERM_PROGRAM;
+    else process.env.TERM_PROGRAM = original;
+  }
+}
+
+// Injected presence probe — tests never shell out to ioreg/lsappinfo.
+const probeFor = (frontmostBundleId, idleSeconds) => () => ({ frontmostBundleId, idleSeconds });
+const watchingProbe = probeFor(ITERM, 0);
+const awayProbe = probeFor('org.mozilla.firefox', 0);
+
+describe('presenceSuppresses (is the user watching the terminal?)', () => {
+  const f = () => fn('presenceSuppresses');
+  const base = { presence: 'aware', idleSeconds: 0, frontmostBundleId: ITERM, terminalBundleId: ITERM, thresholdSeconds: 60 };
+  it('test_when_presence_aware_and_frontmost_is_terminal_and_active_then_suppresses', () => {
+    assert.equal(f()(base), true);
+  });
+  it('test_when_presence_always_then_never_suppresses', () => {
+    assert.equal(f()({ ...base, presence: 'always' }), false);
+  });
+  it('test_when_frontmost_differs_from_terminal_then_no_suppress', () => {
+    assert.equal(f()({ ...base, frontmostBundleId: 'org.mozilla.firefox' }), false);
+  });
+  it('test_when_idle_exceeds_threshold_then_no_suppress', () => {
+    assert.equal(f()({ ...base, idleSeconds: 120 }), false);
+  });
+  it('test_when_frontmost_null_then_no_suppress', () => {
+    assert.equal(f()({ ...base, frontmostBundleId: null }), false);
+  });
+  it('test_when_idle_null_then_no_suppress', () => {
+    assert.equal(f()({ ...base, idleSeconds: null }), false);
+  });
+  it('test_when_terminal_null_then_no_suppress', () => {
+    assert.equal(f()({ ...base, terminalBundleId: null }), false);
+  });
+});
+
+describe('resolvePresence / resolvePresentIdleSeconds / resolveAttention', () => {
+  it('test_when_presence_key_absent_then_resolves_always', () => {
+    assert.equal(fn('resolvePresence')({ velocity: { notifier: {} } }), 'always');
+    assert.equal(fn('resolvePresence')(undefined), 'always');
+    assert.equal(fn('resolvePresence')({ velocity: { notifier: { presence: 'aware' } } }), 'aware');
+  });
+  it('test_when_present_idle_seconds_absent_then_60', () => {
+    assert.equal(fn('resolvePresentIdleSeconds')({}), 60);
+    assert.equal(fn('resolvePresentIdleSeconds')({ velocity: { notifier: { present_idle_seconds: 30 } } }), 30);
+  });
+  it('test_when_attention_absent_then_true_else_passthrough', () => {
+    assert.equal(fn('resolveAttention')({}), true);
+    assert.equal(fn('resolveAttention')({ velocity: { notifier: { attention: false } } }), false);
+  });
+});
+
+describe('composeAttentionNotification', () => {
+  it('test_when_notification_payload_has_message_then_body_is_message', () => {
+    const msg = fn('composeAttentionNotification')({ notification_type: 'permission_prompt', message: 'Allow Bash command: npm test?' });
+    assert.equal(msg.title, 'Claude Code');
+    assert.equal(msg.body, 'Allow Bash command: npm test?');
+  });
+  it('test_when_askuserquestion_payload_then_body_names_header', () => {
+    const msg = fn('composeAttentionNotification')({ tool_name: 'AskUserQuestion', tool_input: { questions: [{ header: 'Scope', question: 'Fold both?' }] } });
+    assert.equal(msg.title, 'Claude Code');
+    assert.ok(msg.body.includes('Scope'), 'names the question header');
+  });
+  it('test_when_empty_payload_then_generic_body_no_undefined', () => {
+    const msg = fn('composeAttentionNotification')({});
+    assert.equal(msg.title, 'Claude Code');
+    assert.ok(msg.body.length > 0, 'generic body present');
+    assert.ok(!msg.body.includes('undefined'), 'no leaked undefined');
+  });
+});
+
+describe('emitAttention (input-wait notification)', () => {
+  it('test_when_attention_disabled_master_then_no_deliver', () => {
+    const root = makeRoot({ config: { velocity: { notifier: { enabled: false, attention: true } } } });
+    const { result, captured } = captureStderr(() =>
+      fn('emitAttention')(['attention'], { rootDir: root, payload: { message: 'x' }, probe: awayProbe })
+    );
+    assert.equal(result, 0);
+    assert.equal(captured, '', 'disabled → no terminal banner');
+    assert.ok(!readLog(root, 'attention').includes('notified'), 'disabled → never dispatched');
+  });
+  it('test_when_attention_toggle_off_then_no_deliver', () => {
+    const root = makeRoot({ config: { velocity: { notifier: { enabled: true, attention: false } } } });
+    const { result } = captureStderr(() =>
+      fn('emitAttention')(['attention'], { rootDir: root, payload: { message: 'x' }, probe: awayProbe })
+    );
+    assert.equal(result, 0);
+    assert.ok(!readLog(root, 'attention').includes('notified'), 'attention:false → never dispatched');
+  });
+  it('test_when_attention_watching_then_suppressed', () => {
+    const root = makeRoot({ config: { velocity: { notifier: { enabled: true, attention: true, presence: 'aware', present_idle_seconds: 60 } } } });
+    withTermProgram('iTerm.app', () => {
+      const { result, captured } = captureStderr(() =>
+        fn('emitAttention')(['attention'], { rootDir: root, payload: { message: 'x' }, probe: watchingProbe })
+      );
+      assert.equal(result, 0);
+      assert.equal(captured, '', 'watching → no banner');
+      const log = readLog(root, 'attention');
+      assert.ok(!log.includes('notified'), 'watching → suppressed, never dispatched');
+      assert.ok(log.includes('suppressed'), 'logs the presence suppression');
+    });
+  });
+  it('test_when_attention_away_then_delivered', () => {
+    const root = makeRoot({ config: { velocity: { notifier: { enabled: true, attention: true, presence: 'aware', present_idle_seconds: 60 } } } });
+    withTermProgram('iTerm.app', () => {
+      const code = captureStderr(() =>
+        fn('emitAttention')(['attention'], { rootDir: root, payload: { message: 'x' }, probe: awayProbe })
+      ).result;
+      assert.equal(code, 0);
+      assert.ok(/notified/.test(readLog(root, 'attention')), 'away → delivered');
+    });
+  });
+  it('test_when_attention_presence_always_then_delivered_regardless', () => {
+    const root = makeRoot({ config: { velocity: { notifier: { enabled: true, attention: true } } } });
+    withTermProgram('iTerm.app', () => {
+      const code = captureStderr(() =>
+        fn('emitAttention')(['attention'], { rootDir: root, payload: { message: 'x' }, probe: watchingProbe })
+      ).result;
+      assert.equal(code, 0);
+      assert.ok(/notified/.test(readLog(root, 'attention')), 'presence=always ignores probe → delivered');
+    });
+  });
+});
+
+describe('emitStop presence gate', () => {
+  it('test_when_stop_mode_watching_then_suppressed', () => {
+    const root = makeRoot({
+      state: { state: 'done', slug: 'x' },
+      config: { velocity: { notifier: { enabled: true, on_stop: 'idle', presence: 'aware', present_idle_seconds: 60 } } },
+    });
+    withTermProgram('iTerm.app', () => {
+      const { result, captured } = captureStderr(() =>
+        fn('emitStop')(['stop'], { rootDir: root, payload: { stop_hook_active: false }, probe: watchingProbe })
+      );
+      assert.equal(result, 0);
+      assert.equal(captured, '', 'watching → no banner');
+      const log = readLog(root, 'x');
+      assert.ok(!log.includes('notified'), 'watching → stop suppressed');
+      assert.ok(log.includes('suppressed'), 'logs the presence suppression');
+    });
+  });
+});
+
+describe('emit-mode not presence-gated (regression)', () => {
+  it('test_when_emit_mode_unchanged_then_yield_still_notifies_and_not_presence_gated', () => {
+    assert.equal(
+      fn('shouldNotify')('yielded', { velocity: { notifier: { enabled: true, presence: 'aware' } } }),
+      true,
+      'yield-path shouldNotify ignores presence',
+    );
+    const root = makeRoot({
+      state: { state: 'yielded', slug: 'co-d-notifier', reason: 'yielded at /grant-commit' },
+      config: { velocity: { notifier: { enabled: true, presence: 'aware' } } },
+    });
+    assert.equal(fn('emit')(['emit', '--slug', 'co-d-notifier'], { rootDir: root }), 0, 'emit still exits 0, not presence-gated');
+  });
+});
+
 describe('dependency-light (U6, AC-003)', () => {
   // AC-003
   it('test_when_no_new_package_dependency', () => {

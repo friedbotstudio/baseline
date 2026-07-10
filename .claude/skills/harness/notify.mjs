@@ -53,6 +53,44 @@ export function composeStopNotification(harnessState) {
   return { title: 'Claude Code', body };
 }
 
+// --- attention-mode + presence (pure) ---
+//
+// Attention mode pings when the session is BLOCKED on the human: an AskUserQuestion
+// prompt (PreToolUse), a permission dialog or idle-input (the Notification event).
+// Presence-aware suppression keeps all idle/attention pings silent while the user is
+// actually watching the terminal — fail-open, so any unknown signal notifies.
+export function resolveAttention(config) {
+  return config?.velocity?.notifier?.attention !== false;
+}
+
+export function resolvePresence(config) {
+  const v = config?.velocity?.notifier?.presence;
+  return typeof v === 'string' ? v : 'always';
+}
+
+export function resolvePresentIdleSeconds(config) {
+  const v = Number(config?.velocity?.notifier?.present_idle_seconds);
+  return Number.isFinite(v) ? v : 60;
+}
+
+export function presenceSuppresses({ presence, idleSeconds, frontmostBundleId, terminalBundleId, thresholdSeconds }) {
+  if (presence !== 'aware') return false;
+  if (typeof frontmostBundleId !== 'string' || typeof terminalBundleId !== 'string') return false;
+  if (frontmostBundleId !== terminalBundleId) return false;
+  if (typeof idleSeconds !== 'number') return false;
+  return idleSeconds <= thresholdSeconds;
+}
+
+export function composeAttentionNotification(payload) {
+  const message = payload?.message;
+  const question = payload?.tool_input?.questions?.[0];
+  let body;
+  if (typeof message === 'string' && message.length > 0) body = message;
+  else if (question) body = `Claude is asking: ${question.header || question.question}`;
+  else body = 'Claude is waiting for your input';
+  return { title: 'Claude Code', body };
+}
+
 // --- dispatch selection (pure) ---
 
 const TERMINAL_BUNDLE_IDS = {
@@ -146,6 +184,53 @@ function probeAvail() {
   };
 }
 
+// --- presence probe (Foundation, macOS-first; nulls elsewhere) ---
+
+function macIdleSeconds() {
+  const r = spawnSync('ioreg', ['-c', 'IOHIDSystem'], { encoding: 'utf8', timeout: 5000 });
+  if (r.error || r.status !== 0 || typeof r.stdout !== 'string') return null;
+  let ns = null;
+  const re = /"HIDIdleTime"\s*=\s*(\d+)/g;
+  let m;
+  while ((m = re.exec(r.stdout)) !== null) ns = Number(m[1]);
+  return ns !== null && Number.isFinite(ns) ? ns / 1e9 : null;
+}
+
+function macFrontmostBundleId() {
+  const front = spawnSync('lsappinfo', ['front'], { encoding: 'utf8', timeout: 5000 });
+  if (front.error || front.status !== 0) return null;
+  const asn = String(front.stdout || '').trim();
+  if (!asn) return null;
+  const info = spawnSync('lsappinfo', ['info', '-only', 'bundleID', asn], { encoding: 'utf8', timeout: 5000 });
+  if (info.error || info.status !== 0) return null;
+  const m = /"CFBundleIdentifier"\s*=\s*"([^"]+)"/.exec(String(info.stdout || ''));
+  return m ? m[1] : null;
+}
+
+export function probePresence(platform) {
+  try {
+    if (platform !== 'darwin') return { idleSeconds: null, frontmostBundleId: null };
+    return { idleSeconds: macIdleSeconds(), frontmostBundleId: macFrontmostBundleId() };
+  } catch {
+    return { idleSeconds: null, frontmostBundleId: null };
+  }
+}
+
+// Presence gate shared by the idle-stop and attention paths: suppress only when the
+// config opts into 'aware' AND the probe proves the user is watching the terminal.
+function isSuppressedByPresence(config, opts) {
+  if (resolvePresence(config) !== 'aware') return false;
+  const probe = opts.probe || probePresence;
+  const p = probe(osPlatform());
+  return presenceSuppresses({
+    presence: 'aware',
+    idleSeconds: p.idleSeconds,
+    frontmostBundleId: p.frontmostBundleId,
+    terminalBundleId: bundleIdFor(process.env.TERM_PROGRAM),
+    thresholdSeconds: resolvePresentIdleSeconds(config),
+  });
+}
+
 // --- orchestration entry ---
 
 function readJson(path) {
@@ -215,9 +300,44 @@ export function emitStop(argv, opts = {}) {
       logLine(rootDir, slug, `stop silent ${state?.state ?? 'no-state'}`);
       return 0;
     }
+    if (isSuppressedByPresence(config, opts)) {
+      logLine(rootDir, slug, 'stop suppressed present');
+      return 0;
+    }
     const dispatch = chooseDispatch(osPlatform(), probeAvail(), { termProgram: process.env.TERM_PROGRAM });
     const result = deliver(composeStopNotification(state), dispatch);
     logLine(rootDir, slug, `stop notified ${result.channel}`);
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function emitAttention(argv, opts = {}) {
+  try {
+    const rootDir = opts.rootDir || process.cwd();
+    let config;
+    try {
+      config = readJson(join(rootDir, '.claude/project.json'));
+    } catch {
+      return 0;
+    }
+    const slug = opts.payload?.session_id || 'attention';
+    if (config?.velocity?.notifier?.enabled === false) {
+      logLine(rootDir, slug, 'attention skipped disabled');
+      return 0;
+    }
+    if (!resolveAttention(config)) {
+      logLine(rootDir, slug, 'attention skipped off');
+      return 0;
+    }
+    if (isSuppressedByPresence(config, opts)) {
+      logLine(rootDir, slug, 'attention suppressed present');
+      return 0;
+    }
+    const dispatch = chooseDispatch(osPlatform(), probeAvail(), { termProgram: process.env.TERM_PROGRAM });
+    const result = deliver(composeAttentionNotification(opts.payload), dispatch);
+    logLine(rootDir, slug, `attention notified ${result.channel}`);
     return 0;
   } catch {
     return 0;
@@ -236,6 +356,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const argv = process.argv.slice(2);
   if (argv[0] === 'stop') {
     process.exit(emitStop(argv, { payload: readStdinPayload() }));
+  }
+  if (argv[0] === 'attention') {
+    process.exit(emitAttention(argv, { payload: readStdinPayload() }));
   }
   process.exit(emit(argv));
 }

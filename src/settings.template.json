@@ -4,6 +4,12 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/skills/harness/notify.mjs attention" }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/destructive_cmd_guard.mjs" },
@@ -74,6 +80,20 @@
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/memory_stop.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/harness_continuation.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/skills/harness/notify.mjs stop" }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/skills/harness/notify.mjs attention" }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/skills/harness/notify.mjs attention" }
         ]
       }
     ],
