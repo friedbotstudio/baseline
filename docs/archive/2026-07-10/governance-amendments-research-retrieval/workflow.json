@@ -1,0 +1,35 @@
+{
+  "request": "Bundle three captured change-orders into one spec-entry workflow: (1) YAGNI purpose reframe (CLAUDE.md VI.4 + seed.md §2.4 + src/*.template.md mirrors); (2) read-before-write VI.7 (CLAUDE.md Article VI + mirror); (3) research retrieve-first (teach the research skill to retrieve prior research/ADRs/decisions from docs/archive/** + memory and consume the scout report before deriving the delta). Manifest regen; Class-A governance surface.",
+  "slug": "governance-amendments-research-retrieval",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Three captured change-order briefs: docs/handoff/yagni-purpose-reframe.md, docs/handoff/read-before-overwrite-convention.md, docs/handoff/research-retrieve-first.md; tracked in docs/handoff/baseline-system-redesign-roadmap.md status ledger (CO rows: YAGNI, read-before-write VI.7, research retrieve-first).",
+  "track_reason": "research retrieve-first needs archive-RAG design + testable ACs (spec-entry); user chose to bundle the two turnkey governance amendments under the same spec as structurally-verified ACs rather than run them as a separate chore.",
+  "skip_brainstorm": true,
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783714098,
+  "updated_at": 1783718980,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

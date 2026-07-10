@@ -70,9 +70,12 @@ Assumptions the baseline is allowed to make:
 
 ### §2.4 YAGNI
 
+- **Purpose.** YAGNI exists to prevent over-engineering, premature refactoring, and stub/scaffold code written before it is needed — not to stop feature delivery. Capability an approved spec commits to is demand, not speculation, and is built in full in its slice. YAGNI constrains *how* you build; it never decides *whether* you deliver spec-committed scope.
 - Reuse libraries for what already exists. Do not re-implement what a dependency provides.
 - No parameters, flags, or configuration options "for future use."
 - Do not build abstractions for hypothetical future requirements. Abstract only on the third concrete use case.
+- Do not refactor pre-emptively — restructure when a concrete third use forces it, not in anticipation.
+- Do not write stub, placeholder, or scaffold code ahead of a concrete need (the YAGNI face of the no-stubs rule).
 - If no test exercises a line of code, that line should not exist.
 - Two-sided faithful scope: YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope. An AC-table row that defers spec-committed scope carries a reason tag from the closed list `dependency|risk|cost|human-directed` (`deferred: <reason>` in the Criterion cell); `spec-traceability-review` reports an untagged or YAGNI-tagged deferral as a Critical BLOCKER at gate A.
 

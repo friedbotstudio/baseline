@@ -28,6 +28,7 @@ For any library you intend to cite, verify its API against current documentation
 
 # Method
 
+0. **Retrieve prior art before deriving.** Run `node .claude/skills/research/retrieve.mjs --slug <slug> --terms "<intake topics + scout touched modules>"`. It scans the archive (`docs/archive/**/research.md`, `spec.md`) and the decision corpus (`decisions.md`, `libraries.md`) for term overlap and returns ranked `hits` with a `path` + `matchedTerms` per source. For every hit you reuse, cite its `path`; consume `docs/scout/<slug>.md` when present; then derive only the genuine **delta** not already covered. Empty archive → no hits → derive fresh as below.
 1. **Identify libraries and frameworks** the solution would likely touch.
 2. **Verify each library API** against current docs (context7 default, above).
 3. **For each candidate**, evaluate against:
@@ -45,6 +46,9 @@ Write the memo to `docs/research/<slug>.md`. Format:
 
 ```
 # Pattern Research — <task>
+
+## Prior art (retrieved)
+<Reused prior findings from `retrieve.mjs`, each cited to its source path (e.g. `docs/archive/<date>/<slug>/research.md`). State the delta: which parts are already answered upstream vs. newly derived below. Empty when the archive had no relevant hits.>
 
 ## Candidate A: <short name>
 - **Summary**: <1–2 sentences>

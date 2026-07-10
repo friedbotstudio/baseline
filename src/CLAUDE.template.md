@@ -140,7 +140,10 @@ The following bind every code change.
 - Every mock SHALL carry a `# MOCK: <reason>` comment.
 
 ### VI.4 YAGNI
+- **Purpose.** YAGNI exists to prevent **over-engineering, premature refactoring, and stub/scaffold code written before it is needed** — NOT to gate feature delivery. A capability the approved spec commits to is *demand*, not speculation, and SHALL be built in full, in its slice. YAGNI narrows *how* you build; it never decides *whether* you deliver spec-committed scope.
 - You SHALL NOT add params, flags, or abstractions for hypothetical future use.
+- You SHALL NOT refactor pre-emptively — restructure at the point a concrete third use forces it, not in anticipation of one.
+- You SHALL NOT write stub, placeholder, or scaffold code ahead of a concrete need (this is the YAGNI face of VI.1 — no stubs, ever).
 - Reuse libraries for what they already do.
 - Abstract at the third concrete use case, not before.
 - Code without a test exercising it SHALL NOT exist.
@@ -154,6 +157,9 @@ The following bind every code change.
 - Every code-generation step SHALL invoke the `code-structure` skill.
 - It enforces the Orchestration / Domain / Foundation layer model, consistent abstraction levels, and reuse-before-create.
 - Applies to every language. Mappings ship inside the skill.
+
+### VI.7 Read before overwrite
+- Before overwriting an existing file (Write / truncating edit), you SHALL Read it in-session first. The Write tool refuses to blind-overwrite an unread file; Read-first makes the operation reliable and prevents the recurring "File has not been read yet" failure. (Partial edits via Edit already require a prior Read.)
 
 ## Article VII — Git rules
 
@@ -253,25 +259,25 @@ Reserved for project-owner amendments. Rules below the boundary line bind alongs
 
 ### XI.1 Copy register and skill overrides
 
-The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes; the hero-metric template; glassmorphism-as-default, gradient text, side-stripe borders > 1px, modal-first, identical card grids) bind **only on user-facing copy** — rendered marketing/product prose (`site-src/**`, the docs site). They do **NOT** bind internal governance, project source docs, memory bodies, or inline code/data samples, where the constitutional voice uses em dashes deliberately. This override scopes the bans; it does not delete them. Other shared design laws (color, theme, typography, motion, accessibility) remain in force everywhere Claude generates UI. Future scope decisions get a scope-table row without re-amending the constitution. Full scope table + examples: `.claude/CONSTITUTION.md §5.1` (annex).
+The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes, hero-metric template, glassmorphism, gradient text, heavy side-stripes, modal-first, identical card grids) bind **only on user-facing copy** (`site-src/**`, the docs site) — NOT internal governance, source docs, memory bodies, or code samples, where the constitutional voice uses em dashes deliberately. This scopes the bans; it does not delete them. Other design laws (color, theme, typography, motion, accessibility) stay in force everywhere Claude generates UI. Full scope table: `.claude/CONSTITUTION.md §5.1` (annex).
 
 ---
 
 ### XI.2 Design-task routing
 
-Every UI design task inside a workflow phase SHALL route through `design-ui`, which SHALL invoke `impeccable` for the design move; `design-ui` SHALL NOT write product code (that is written inside `impeccable`). Design / development / copy are separate concerns and SHALL NOT substitute for one another (copy is governed by Article XI.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (enforced by `spec_design_calls_guard`, Art. VIII, and `/spec-lint`); `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` per row. Bypassing `design-ui` inside a workflow phase violates this Article. Full rule table: `.claude/CONSTITUTION.md §5.2` (annex).
+Every UI design task inside a workflow phase SHALL route through `design-ui`, which invokes `impeccable` for the design move; `design-ui` SHALL NOT write product code. Design / development / copy are separate concerns (copy → XI.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (enforced by `spec_design_calls_guard`, Art. VIII, and `/spec-lint`); `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` per row. Full rule table: `.claude/CONSTITUTION.md §5.2` (annex).
 
 ---
 
 ### XI.3 Entry-phase brainstorm (PM mode)
 
-Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `.claude/state/workflow.json → skip_brainstorm` is `true` (defaults `false`). `/triage` Step 0 writes the flag **explicitly** on every workflow — `true` for spec-derived/complete-framing requests, `false` only when genuinely ambiguous AND answers would change the build; the read-time default is unchanged (absent → run). Brainstorm is **derivation-first**: Stage 1 derives every derivable field from context; only underivable, build-changing gaps probe (Stage 2 cap **2**). It writes `docs/brief/<slug>.md`, which the entry skill reads as primary input. Stage 2 SHALL NOT propose solutions — structurally enforced by `.claude/skills/brainstorm/discipline.mjs → scanTurn`. `chore` and `freeform` tracks have no entry seam, so brainstorm is silent there. `Skill(brainstorm)` runs in main context per Article II. Full rule table (caps, idempotency, opt-out heuristic): `.claude/CONSTITUTION.md §5.3` (annex).
+Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `workflow.json → skip_brainstorm` is `true` (defaults `false`; absent → run). `/triage` Step 0 writes the flag **explicitly** — `true` for spec-derived/complete-framing, `false` only when genuinely ambiguous AND answers would change the build. Brainstorm is **derivation-first** (Stage 1 derives every derivable field; only underivable build-changing gaps probe, Stage 2 cap **2**), writes `docs/brief/<slug>.md` as the entry skill's primary input, and SHALL NOT propose solutions (enforced by `discipline.mjs → scanTurn`). `chore`/`freeform` have no entry seam. Runs in main context per Article II. Full rule table: `.claude/CONSTITUTION.md §5.3` (annex).
 
 ---
 
 ### XI.4 `/spec` codesign mode (Engineer mode)
 
-`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `.claude/state/workflow.json → codesign_mode` is `true` (opt-in; defaults `false`). It surfaces load-bearing technical decision points with Claude's recommendation + rationale and captures the engineer's response (approve / suggest alternative / discuss tradeoff) via `AskUserQuestion`; the engineer's verbatim rationale becomes canonical when it overrides Claude, rendered into the spec's `## Decisions` section as a `>` blockquote. Codesign is never auto-set (Art. II — `/triage` only *suggests*); revisit cap 3 per decision point. Full rule table: `.claude/CONSTITUTION.md §5.4` (annex).
+`/spec` Step 1.5 SHALL run a codesign decision-capture flow when `workflow.json → codesign_mode` is `true` (opt-in; defaults `false`). It surfaces load-bearing decision points with Claude's recommendation + rationale and captures the engineer's response via `AskUserQuestion`; the engineer's verbatim rationale becomes canonical when it overrides Claude, rendered into the spec's `## Decisions` section as a `>` blockquote. Never auto-set (Art. II — `/triage` only *suggests*); revisit cap 3 per decision point. Full rule table: `.claude/CONSTITUTION.md §5.4` (annex).
 
 ---
 

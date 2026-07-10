@@ -164,11 +164,12 @@ shipped change (context7) read as still-pending — keep them separate.
 | CO-A | Brainstorm-critic (Ledger #0002) | INPUT | ✅ `brainstorm-critic.md` | ⬜ **(keystone; execute first)** |
 | CO-B | Spec quality floor | INPUT | ✅ `spec-quality-floor.md` | ⬜ |
 | CO-C | Quality-oracle with teeth | ENFORCE | ✅ `quality-oracle.md` | ⬜ (depends on CO-B) |
-| CO-D | Notifier | velocity | ✅ `velocity-notifier-and-gate-collapse.md` | ⬜ |
+| CO-D | Notifier | velocity | ✅ `velocity-notifier-and-gate-collapse.md` | ✅ `212dbd0`+`7dba960`+`4cd74e1` (CO-D yield/emit + on_stop idle + input-wait & presence-aware suppression) |
 | CO-E | Gate-collapse | velocity | ✅ same doc | ⬜ (depends on CO-A, CO-D) |
 | — | context7 outcome-mandate | periphery | ✅ archived → `archive/2026-07-08/context7-outcome-mandate/change-order.md` | ✅ `2c3007e` |
-| — | read-before-write (VI.7) | periphery | ✅ `read-before-overwrite-convention.md` | ⬜ (dropped from `2c3007e`) |
-| — | research retrieve-first | periphery | ✅ `research-retrieve-first.md` | ⬜ |
+| — | read-before-write (VI.7) | periphery | ✅ `read-before-overwrite-convention.md` | ✅ `governance-amendments-research-retrieval` |
+| — | research retrieve-first | periphery | ✅ `research-retrieve-first.md` | ✅ `governance-amendments-research-retrieval` (`retrieve.mjs` + research SKILL wiring) |
+| — | YAGNI purpose reframe | governance | ✅ `yagni-purpose-reframe.md` | ✅ `governance-amendments-research-retrieval` |
 
 ## 7. Out of scope (explicitly)
 

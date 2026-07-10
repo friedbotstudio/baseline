@@ -176,48 +176,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 70d9047
 - last-touched: 2026-07-04
 
-## gate-a-approval-token-binds-path-not-content-untracked-spec-b1f2
-
-- Intent: harden gate A so a post-approval spec amendment is mechanically detected.
-- Problem: `/approve-spec` writes `.claude/state/spec_approvals/<slug>.approval` whose line 4 is the spec's git short SHA — but for any UNTRACKED (first-time) spec, `git log -1 -- <path>` returns nothing, so line 4 is `N/A`. Every first spec is untracked at approval, so this is the common case, not an edge. The token therefore binds a PATH, not content: nothing mechanical detects that the spec was amended after consent. In `power-track-completion` (2026-07-09) the spec was amended FOUR times after approval; each re-approval was forced ONLY by the model manually revoking `approve-spec` from `workflow.json → completed[]`. A model that skipped that manual revocation would have proceeded on a spec the human approved in a different form — a silent consent-integrity gap.
-- Proposed fix: bind the token to a content hash (`sha256` of the spec bytes) rather than a git SHA, so it is meaningful for untracked files; on resume, the harness compares the token's content-hash to the on-disk spec and re-yields at gate A on mismatch. Alternatively stamp the spec mtime and compare. Either makes post-approval amendment a mechanical re-yield instead of a manual-discipline dependency.
-- status: picked-up
-- raised-on: 2026-07-09
-- raised-in-context: power-track-completion
-- source: assistant-deferral
-> verbatim (assistant, 2026-07-09): "gate A binds a PATH, not content. The approval token's line-4 SHA is N/A for any untracked (first-time) spec, so nothing mechanically detects a post-approval spec amendment."
-- estimated-effort: small (content-hash the token + a harness resume comparison + a test)
-- verified-at: 6ae2955
-- last-touched: 2026-07-09
-- superseded-at: 2026-07-10
-## drift-reverify-guard-takes-positional-slug-but-docs-say-dash-dash-slug-c3a7
-
-- Intent: fix the arg-parsing / doc mismatch in `drift-reverify-guard.mjs` so its fingerprint file is per-slug.
-- Problem: `.claude/skills/tdd/drift-reverify-guard.mjs` parses its slug POSITIONALLY (`const [sub, slug] = argv`), but both `tdd/SKILL.md` and `harness/SKILL.md` document the invocation as `capture --slug <slug>` / `check --slug <slug>`. Following the docs makes `--slug` the slug value, so the guard writes/reads `.claude/state/tdd/--slug.driftfp` — a single shared file across EVERY workflow, defeating the per-workflow provably-unchanged check (Lever 4b-ii). Hit live in `power-track-completion` (2026-07-09): the `--slug`-form capture produced `--slug.driftfp`; only re-running with a bare positional slug produced the correct `power-track-completion.driftfp`. Its sibling `simplify/reverify-guard.mjs` is ALSO positional; `drift_check.mjs` genuinely takes `--slug`, which is how the inconsistency hid.
-- Proposed fix: either accept `--slug` in the guard (align code to docs) OR correct both SKILL.md files to the positional form (align docs to code). Aligning code-to-docs is safer (flags are self-documenting). Add a test that `capture <slug>` and `capture --slug <slug>` write the same path, or that a `--slug`-named fingerprint file is never created.
-- status: picked-up
-- raised-on: 2026-07-09
-- raised-in-context: power-track-completion
-- source: assistant-deferral
-> verbatim (assistant, 2026-07-09): "drift-reverify-guard.mjs takes a POSITIONAL slug, but tdd/SKILL.md and harness/SKILL.md both document `capture --slug <slug>`. The flag is consumed as the slug → every workflow writes/reads one shared `--slug.driftfp`."
-- estimated-effort: tiny (arg-parse alignment + one test)
-- verified-at: 6ae2955
-- last-touched: 2026-07-09
-- superseded-at: 2026-07-10
-## docsite-predicate-vocabulary-table-has-no-completeness-test-d4e8
-
-- Intent: add a test asserting the docsite predicate table equals `V1_PREDICATES`.
-- Problem: `site-src/workflows.njk` §III "Predicate vocabulary (v1)" is a hand-maintained HTML table claiming to enumerate the closed predicate set, but NOTHING tests it against the source of truth (`src/cli/workflows-validator-predicates.js → V1_PREDICATES`). It silently drifted: it was missing `requires_commit_consent` for a full release cycle (added by the gate-C work but never mirrored to the docsite), and `power-track-completion` (2026-07-09) found it still five-of-seven — the document phase added both `requires_commit_consent` and `requires_config_flag`. The `build-template.sh` docsite audit checks "workflows.njk lists every selectable TRACK" (track names) but not predicate coverage, so predicate drift passes the build.
-- Proposed fix: a test that parses the njk table's predicate column and asserts set-equality with `V1_PREDICATES` (import from `src/cli/`), failing when a predicate is added without the docsite row. Mirrors the existing track-coverage docsite audit.
-- status: picked-up
-- raised-on: 2026-07-09
-- raised-in-context: power-track-completion
-- source: assistant-deferral
-> verbatim (assistant, 2026-07-09): "docsite predicate-vocabulary table has NO completeness test, so it silently drifted (was missing requires_commit_consent for a full release cycle; this workflow added it + requires_config_flag)."
-- estimated-effort: tiny (one parse-and-compare test)
-- verified-at: 6ae2955
-- last-touched: 2026-07-09
-- superseded-at: 2026-07-10
 ## generators-stamp-derived-header-vs-byte-equality-contracts-e9c1
 
 - Intent: make the generators emit a DERIVED header on each generated file so a hand-edit is visibly wrong — the root-cause fix for the derived-artifact trap (three classes: src/{seed,CLAUDE}.template.md, .claude/skills/{triage,harness}/*.js, obj/template/**).
@@ -230,4 +188,46 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > verbatim (assistant, 2026-07-10): "T4's DERIVED header works cleanly for the vendored JS mirrors but collides with the byte-equality contracts on the CLAUDE.md/seed.md constitution mirrors (full-copy and parity-enforced; the live files are the sources and cannot honestly carry a DO NOT EDIT header)."
 - estimated-effort: small-medium (generator edits + test-contract updates; the design choice is the hard part, not the code)
 - verified-at: 6ae2955
+- last-touched: 2026-07-10
+
+---
+
+## memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a
+
+> verbatim (user, 2026-07-10):
+> "the pattern keeps repeating you said; proof that landmines exist but possibly not honoured; we may have to rethink our memory system; mark it in backlog; we will redesign the memory system"
+
+- Intent: redesign the memory system so a captured lesson becomes an ACTIVE constraint at the moment of the relevant decision, not a passive archive that only helps if a phase happens to read it.
+- Problem (the proof): the drift_check process/outcome-AC landmine was written at the end of `power-track-completion` (as AC-007) AND explicitly reinforced during `harden-power-track-debt`'s memory-flush — yet the SAME anti-pattern (outcome-ACs with no diff line, wedging drift_check) recurred WITHIN this workflow as AC-011/AC-012, caught only when drift_check wedged again. The lesson was captured, acknowledged, and re-recorded, and still did not prevent the next occurrence one workflow later. Two structural failures underneath: (1) **passive archive, not active guard** — a landmine in `landmines.md` only fires if the relevant phase reads it at the relevant moment (scout reads landmarks; NOTHING surfaced the outcome-AC landmine at spec-authoring time, which is exactly where it would have prevented the mistake); (2) **no escalation of recurrence** — the enforcement funnel already exists (`landmine → advisory hook → hard gate`, the `retrospective`/`checker-graduation` machinery) but a landmine that recurred in CONSECUTIVE workflows never graduated. A recurring landmine is by definition a graduation candidate the system failed to escalate.
+- Design directions (resolve before implementing; do NOT overbuild — this is a redesign brief, not a spec): (a) **decision-point injection** — phase skills proactively query landmines scoped to their phase (spec-authoring loads spec-authoring landmines) and surface the verbatim before the relevant write, the way `process_lifecycle_guard` already does for Bash; (b) **recurrence-driven auto-graduation** — track a hit-count per landmine; a landmine that fires N times across distinct workflows auto-promotes to a mechanical advisory/hard check (e.g. a spec-lint rule that flags an outcome-AC in the AC table, which would have caught AC-007/011/012 mechanically instead of via drift_check wedge); (c) **the specific mechanical check this case wants** — an AC-table linter that classifies each AC as behavioural (has a resolvable diff surface) vs process/outcome (no diff line) and warns at spec time, so drift_check never wedges on an outcome-AC again. Relates to the v1 oracle-bound-checker epic [[baseline-v1-thought-compiler-agent-team-plan-mode-9d4c]] (the graduation funnel is the same north star) and [[promote-review-skills-to-oracle-bound-checkers-d186]].
+- status: open
+- raised-on: 2026-07-10
+- raised-in-context: harden-power-track-debt (post-cycle retrospective)
+- source: user-instruction
+- estimated-effort: large (memory-system redesign; needs its own intake→spec→approve cycle — do NOT quickfix)
+- verified-at: 0ed9deb
+- last-touched: 2026-07-10
+
+---
+
+## release-model-in-project-json-drives-standup-recommendation-a4f2
+
+> verbatim (user, 2026-07-10):
+> "this a good point to also plan (backlog) standup recommendation logic; similar to git-model, we can have release-model that can help user decide if half-baked features can be pushed out or not. To do this we need to know (from project.json) the following: - ci/cd model (example: github-actions, jenkins, vercel, none etc) - release-branch (example: main) - release-trigger (example: on-push, on-tag, manual etc) - release-cycle (example: sprint-based, continuous, manual etc) this is all I can think of at this point; but this structure alongwith update in upgrade in standup skill will improve it 10 folds"
+
+- Intent: add a declared `release` model block to `project.json` (mirroring the existing `git.workflow_model` / `git.release_branches` / `git.protected_branches` precedent) and teach the `standup` skill to read it, so the "recommended next pickup" logic becomes release-model-aware instead of guessing. The load-bearing question standup must answer — "can this pile of unreleased commits be pushed out, or does a half-baked feature on the disc make that unsafe?" — is currently un-answerable because standup has no declared release policy; it even had to HEDGE ("if semantic-release fires on push, push == release") for lack of one.
+- Proposed `project.json → release` knobs (user-named four + one crux knob I'd add):
+  - `cicd_model`: `github-actions | jenkins | vercel | circleci | none` — who performs the release.
+  - `release_branch`: e.g. `main` (likely derivable from `git.release_branches[0]`; keep as an explicit override so the two can't silently disagree).
+  - `release_trigger`: `on-push | on-tag | manual` — this is what resolves the standup hedge: on `on-push`, a push IS a release, so an unpushed pile is a pending release; on `on-tag`/`manual`, push and release are separate acts.
+  - `release_cycle`: `continuous | sprint-based | manual`.
+  - `consumer_upgrade_cadence`: `frequent | rare` (MY addition — this is the actual variable behind the "coherent disc" argument). The CD analogy only bites when consumers upgrade RARELY and the upgrade path is slow (`npx` → `upgrade-project`); that is what turns a half-wired shipped-dark feature from harmless dead code into a months-long liability. Without this knob standup can't distinguish "ship often, fix forward" (continuous + frequent) from "each release is a pressing, block on coherence" (on-tag + rare).
+- Payoff (the recommendation logic this unlocks): standup's rec becomes a function of the model, the way `git.workflow_model` overrides Claude's generic branching instincts. On `continuous`/`on-push`/`frequent` → recommend pushing early and often; an unpushed pile is the risk. On `on-tag`/`sprint-based`/`rare` (the baseline's own posture) → a release is a CD pressing: recommend GATING the release on a completeness/coherence audit and REFUSE to recommend cutting while any feature in the unreleased set is half-wired-on-the-disc (shipped-dark but opt-in-broken — e.g. the sprint/org MCP epic whose server isn't in the shipped `.mcp.json` and whose SDK isn't consumer-delivered). This is the release-side twin of the release-readiness audit idea (coherent-disc doctrine): the model tells standup WHICH regime it's in, and the audit is what it gates on in the slow-cadence regime.
+- Design notes (resolve at spec time; do NOT overbuild): standup's `gather.mjs` already reads `.releaserc.json` for the semver bump — the new `release` block complements it (policy vs. mechanism), does not replace it. Keep the recommendation itself in main context per Article II — the helper gathers `release` config + unreleased-set state; the "push / don't push / finish-X-first" judgment is reasoned in main context, not emitted by the helper. Consider a `release.completeness_gate: {enabled, half_wired_blocks_release}` sub-block so the coherent-disc rule is itself configurable rather than hard-coded. Relates to the coherent-disc release-readiness audit discussed in the same session (not yet a backlog key — the audit is a per-release action, this is the standing policy that triggers it).
+- status: open
+- raised-on: 2026-07-10
+- raised-in-context: post-`harden-power-track-debt` standup — the "can we push v0.20.0 with half-baked sprint/org?" discussion
+- source: user-instruction
+- estimated-effort: medium (project.json schema + template + init-project recommender touch + standup gather/rec upgrade + tests)
+- verified-at: 0ed9deb
 - last-touched: 2026-07-10
