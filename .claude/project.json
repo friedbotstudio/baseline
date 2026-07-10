@@ -330,7 +330,7 @@
       "enabled": false
     },
     "power_mode": {
-      "enabled": false
+      "enabled": true
     }
   },
   "roadmap": {
