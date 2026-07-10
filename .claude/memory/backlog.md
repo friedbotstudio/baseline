@@ -181,7 +181,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - Intent: harden gate A so a post-approval spec amendment is mechanically detected.
 - Problem: `/approve-spec` writes `.claude/state/spec_approvals/<slug>.approval` whose line 4 is the spec's git short SHA — but for any UNTRACKED (first-time) spec, `git log -1 -- <path>` returns nothing, so line 4 is `N/A`. Every first spec is untracked at approval, so this is the common case, not an edge. The token therefore binds a PATH, not content: nothing mechanical detects that the spec was amended after consent. In `power-track-completion` (2026-07-09) the spec was amended FOUR times after approval; each re-approval was forced ONLY by the model manually revoking `approve-spec` from `workflow.json → completed[]`. A model that skipped that manual revocation would have proceeded on a spec the human approved in a different form — a silent consent-integrity gap.
 - Proposed fix: bind the token to a content hash (`sha256` of the spec bytes) rather than a git SHA, so it is meaningful for untracked files; on resume, the harness compares the token's content-hash to the on-disk spec and re-yields at gate A on mismatch. Alternatively stamp the spec mtime and compare. Either makes post-approval amendment a mechanical re-yield instead of a manual-discipline dependency.
-- status: open
+- status: picked-up
 - raised-on: 2026-07-09
 - raised-in-context: power-track-completion
 - source: assistant-deferral
@@ -189,13 +189,13 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: small (content-hash the token + a harness resume comparison + a test)
 - verified-at: 6ae2955
 - last-touched: 2026-07-09
-
+- superseded-at: 2026-07-10
 ## drift-reverify-guard-takes-positional-slug-but-docs-say-dash-dash-slug-c3a7
 
 - Intent: fix the arg-parsing / doc mismatch in `drift-reverify-guard.mjs` so its fingerprint file is per-slug.
 - Problem: `.claude/skills/tdd/drift-reverify-guard.mjs` parses its slug POSITIONALLY (`const [sub, slug] = argv`), but both `tdd/SKILL.md` and `harness/SKILL.md` document the invocation as `capture --slug <slug>` / `check --slug <slug>`. Following the docs makes `--slug` the slug value, so the guard writes/reads `.claude/state/tdd/--slug.driftfp` — a single shared file across EVERY workflow, defeating the per-workflow provably-unchanged check (Lever 4b-ii). Hit live in `power-track-completion` (2026-07-09): the `--slug`-form capture produced `--slug.driftfp`; only re-running with a bare positional slug produced the correct `power-track-completion.driftfp`. Its sibling `simplify/reverify-guard.mjs` is ALSO positional; `drift_check.mjs` genuinely takes `--slug`, which is how the inconsistency hid.
 - Proposed fix: either accept `--slug` in the guard (align code to docs) OR correct both SKILL.md files to the positional form (align docs to code). Aligning code-to-docs is safer (flags are self-documenting). Add a test that `capture <slug>` and `capture --slug <slug>` write the same path, or that a `--slug`-named fingerprint file is never created.
-- status: open
+- status: picked-up
 - raised-on: 2026-07-09
 - raised-in-context: power-track-completion
 - source: assistant-deferral
@@ -203,13 +203,13 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: tiny (arg-parse alignment + one test)
 - verified-at: 6ae2955
 - last-touched: 2026-07-09
-
+- superseded-at: 2026-07-10
 ## docsite-predicate-vocabulary-table-has-no-completeness-test-d4e8
 
 - Intent: add a test asserting the docsite predicate table equals `V1_PREDICATES`.
 - Problem: `site-src/workflows.njk` §III "Predicate vocabulary (v1)" is a hand-maintained HTML table claiming to enumerate the closed predicate set, but NOTHING tests it against the source of truth (`src/cli/workflows-validator-predicates.js → V1_PREDICATES`). It silently drifted: it was missing `requires_commit_consent` for a full release cycle (added by the gate-C work but never mirrored to the docsite), and `power-track-completion` (2026-07-09) found it still five-of-seven — the document phase added both `requires_commit_consent` and `requires_config_flag`. The `build-template.sh` docsite audit checks "workflows.njk lists every selectable TRACK" (track names) but not predicate coverage, so predicate drift passes the build.
 - Proposed fix: a test that parses the njk table's predicate column and asserts set-equality with `V1_PREDICATES` (import from `src/cli/`), failing when a predicate is added without the docsite row. Mirrors the existing track-coverage docsite audit.
-- status: open
+- status: picked-up
 - raised-on: 2026-07-09
 - raised-in-context: power-track-completion
 - source: assistant-deferral
@@ -217,3 +217,17 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: tiny (one parse-and-compare test)
 - verified-at: 6ae2955
 - last-touched: 2026-07-09
+- superseded-at: 2026-07-10
+## generators-stamp-derived-header-vs-byte-equality-contracts-e9c1
+
+- Intent: make the generators emit a DERIVED header on each generated file so a hand-edit is visibly wrong — the root-cause fix for the derived-artifact trap (three classes: src/{seed,CLAUDE}.template.md, .claude/skills/{triage,harness}/*.js, obj/template/**).
+- Problem: the naive "generator prepends a header" works cleanly for the vendored JS mirrors (Stage 0b `cp` → prepend a `// DERIVED` line; update tests/vendored-mirror-bytes.test.mjs to expect header+body). It COLLIDES with the constitution markdown mirrors: `CLAUDE.md` ↔ `src/CLAUDE.template.md` is a FULL byte-for-byte copy enforced by BOTH `audit-baseline` AND a test; `seed-template-parity.test.mjs` requires the template's pre-§16 body and §17-tail be byte-identical to the LIVE `seed.md`. A header on the template but not the live file breaks every one of those, and the live files are the SOURCES — they cannot honestly carry a "DO NOT EDIT" header. Surfaced live in `harden-power-track-debt` (2026-07-10) as ticket T4; descoped by human decision at the tdd decision point.
+- Proposed design options (resolve before implementing): (a) header on JS mirrors only + a stripped-header parity update for seed, DROP the CLAUDE.md full-copy header (rely on the existing [[constitutional-amendment-tripwires-headroom-seedmirror-python3ledger]] landmine + `sync-constitution-mirror --check`); (b) full header everywhere + update `audit-baseline`'s byte-equal check AND the parity test to strip the header — bigger blast radius on the audit that gates every workflow; (c) a sidecar marker (a sibling `.DERIVED` file per generated file) that carries no byte-equality risk. Option (a) or (c) is likely cleanest; (b) touches the audit and is risky.
+- status: open
+- raised-on: 2026-07-10
+- raised-in-context: harden-power-track-debt (descoped ticket T4)
+- source: assistant-deferral
+> verbatim (assistant, 2026-07-10): "T4's DERIVED header works cleanly for the vendored JS mirrors but collides with the byte-equality contracts on the CLAUDE.md/seed.md constitution mirrors (full-copy and parity-enforced; the live files are the sources and cannot honestly carry a DO NOT EDIT header)."
+- estimated-effort: small-medium (generator edits + test-contract updates; the design choice is the hard part, not the code)
+- verified-at: 6ae2955
+- last-touched: 2026-07-10

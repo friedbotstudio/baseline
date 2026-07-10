@@ -1,0 +1,119 @@
+{
+  "request": "harden-power-track-debt — a power batch-sprint of the four loose ends the power-track-completion workflow surfaced: gate-A binds content not path (consent integrity), drift-reverify-guard positional-slug vs docs, docsite predicate-table completeness test, and generators stamp a DERIVED header (root-cause fix for the derived-artifact trap).",
+  "slug": "harden-power-track-debt",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Four captured backlog entries (gate-a-approval-token-binds-path-not-content-untracked-spec-b1f2, drift-reverify-guard-takes-positional-slug-but-docs-say-dash-dash-slug-c3a7, docsite-predicate-vocabulary-table-has-no-completeness-test-d4e8) plus the DERIVED-header structural fix from the power-track-completion retrospective. The power track itself shipped in 66a11f4; this is its first real exercise (introduction-workflow pattern).",
+  "track_reason": "power over freeform/epic: the four tickets share the coherent theme 'debt surfaced by power-track-completion', warrant per-ticket security (T1 gate-A is consent machinery, T4 touches build tooling + test contracts), and the human explicitly chose to dogfood the newly-shipped power track. epic was rejected because it fragments into 4 separate gate-C landings and does not exercise the power track.",
+  "freeze_exception": "Phase 0 freeze (decisions.md → freeze-machine-churn-2026-07-09) applies (harness-tooling, no named product workflow blocked). Proceeding under the freeze's 'lifted by explicit user direction' clause: the user directed this on 2026-07-10 as sanctioned VELOCITY work. Rationale to canonicalize at memory-flush: these four harden the exact friction that made power-track-completion ~5x the code's worth (gate-A: 4 re-approvals; derived-artifact trap: 3 spec amendments) and will slow every CO-A/B/C sprint.",
+  "skip_brainstorm": true,
+  "exceptions": [],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "gate-a-approval-token-binds-path-not-content-untracked-spec-b1f2",
+    "drift-reverify-guard-takes-positional-slug-but-docs-say-dash-dash-slug-c3a7",
+    "docsite-predicate-vocabulary-table-has-no-completeness-test-d4e8"
+  ],
+  "tickets": [
+    {
+      "id": "T1",
+      "title": "gate-A binds content, not path",
+      "backlog_key": "gate-a-approval-token-binds-path-not-content-untracked-spec-b1f2",
+      "class": "A",
+      "surface": "consent-machinery",
+      "acs": [
+        "the /approve-spec token carries a content hash (sha256 of spec bytes) for untracked specs, not only the git SHA",
+        "harness resume compares the token's content hash to the on-disk spec and re-yields at gate A on mismatch",
+        "a spec unchanged since approval proceeds without re-yield"
+      ],
+      "write_surface": [
+        ".claude/hooks/spec_approval_guard.mjs",
+        ".claude/commands/approve-spec.md",
+        ".claude/skills/harness/SKILL.md",
+        "src/cli/** if a shared helper is added"
+      ],
+      "done_record": "a test drives approve→amend→resume and asserts the re-yield; approve→resume-unchanged asserts proceed"
+    },
+    {
+      "id": "T2",
+      "title": "drift-reverify-guard positional-slug vs docs",
+      "backlog_key": "drift-reverify-guard-takes-positional-slug-but-docs-say-dash-dash-slug-c3a7",
+      "class": "B",
+      "surface": "tooling-doc-mismatch",
+      "acs": [
+        "drift-reverify-guard.mjs accepts both `capture <slug>` and `capture --slug <slug>` (and check) resolving the SAME fingerprint path",
+        "no `--slug.driftfp` file is ever created",
+        "positional back-compat preserved"
+      ],
+      "write_surface": [
+        ".claude/skills/tdd/drift-reverify-guard.mjs",
+        ".claude/skills/tdd/drift-reverify-guard.mjs (mirror via build)"
+      ],
+      "done_record": "a test asserts capture <slug> and capture --slug <slug> write the identical path"
+    },
+    {
+      "id": "T3",
+      "title": "docsite predicate-table completeness test",
+      "backlog_key": "docsite-predicate-vocabulary-table-has-no-completeness-test-d4e8",
+      "class": "B",
+      "surface": "test-coverage",
+      "acs": [
+        "a test parses site-src/workflows.njk §III predicate table and asserts set-equality with V1_PREDICATES from src/cli/workflows-validator-predicates.js",
+        "the test FAILS when a predicate is added to V1_PREDICATES without the njk row (and vice-versa)",
+        "the test PASSES on the current corrected 7-row table"
+      ],
+      "write_surface": [
+        "tests/docsite-predicate-table-completeness.test.mjs"
+      ],
+      "done_record": "the new test is red against a synthetic drift and green on the live table"
+    }
+  ],
+  "created_at": 1783664062,
+  "updated_at": 1783670818,
+  "deferred_tickets": [
+    {
+      "id": "T4",
+      "title": "generators stamp a DERIVED header",
+      "reason": "human-directed",
+      "note": "header collides with CLAUDE.md/seed.md byte-equality contracts; needs design pass; own backlog ticket"
+    }
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": [
+    {
+      "ticket": "T1",
+      "verdict": "LOW",
+      "surface": "consent-machinery"
+    },
+    {
+      "ticket": "T2",
+      "verdict": "CLEAN",
+      "surface": "tdd-tooling"
+    },
+    {
+      "ticket": "T3",
+      "verdict": "CLEAN",
+      "surface": "test-only"
+    }
+  ]
+}
