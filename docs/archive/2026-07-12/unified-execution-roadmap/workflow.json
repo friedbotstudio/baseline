@@ -1,0 +1,31 @@
+{
+  "request": "Create docs/roadmap-execution-plan.md — the execution roadmap project.json declares but which does not exist — as ONE unified plan covering the disease-cure change-orders (docs/handoff/) and the live v1 thought-compiler epic, in the machine-readable format standup/gather.mjs and roadmap-sync/sync.mjs parse.",
+  "slug": "unified-execution-roadmap",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Derives wholly from existing artifacts: docs/handoff/baseline-system-redesign-roadmap.md (prose spine, §6 status ledger), .claude/memory/backlog.md (v1 epic baseline-v1-thought-compiler-agent-team-plan-mode-9d4c + 7 children), and project.json → roadmap.path which already declares docs/roadmap-execution-plan.md. No new surface — the declared path is simply absent on disk.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783866219,
+  "updated_at": 1783874446
+}

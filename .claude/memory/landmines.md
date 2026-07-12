@@ -377,3 +377,51 @@ Each entry's stable key is `path:line` or a short slug.
 - verified-at: b6fba83
 - last-touched: 2026-07-12
 - caveat: the same run reproduced the OTHER known measurement gap — inter-turn/`AskUserQuestion` idle is invisible to the timing model (only consent-gate tokens count as `human-wait`), so wall-clock time the human spent away silently inflates whichever phase is open. Here `document` rendered 3,502,729 ms (58 min) of "model time" that was mostly the user being away. Any phase showing an implausibly large Model(ms) with Human-wait 0 should be treated as unusable, not as a lever target.
+
+---
+
+## phase-timer-collapses-phases-appended-in-one-workflow-json-write
+
+- Path: `.claude/hooks/phase_timer.mjs` + `.claude/hooks/lib/timing.mjs → stampFromWorkflow` (stamps on `workflow.json → completed[]` growth) → rendered into `<bundle>/timing.md`.
+- Trap: the stamper treats **each write** to `completed[]` as ONE phase transition. Appending several phases in a single write collapses them: only the last gets a stamp, and the others render as **0 ms**, their real cost absorbed into the neighbouring span. Live 2026-07-12 (`unified-execution-roadmap`, chore track): the run appended `["chore","verify","simplify"]` in one `node -e` write, and `timing.md` rendered `chore 505402ms / verify 0ms / simplify 0ms` — verify and simplify each did real work (a full audit run, a cleanup edit + re-verify) and both read as free.
+- Why it bites the chore track hardest: `chore` runs `verify`/`simplify`/`integrate`/`document` as *internal conditional phases*, so it is natural to batch the `completed[]` append at the end of the skill — which is exactly the shape that triggers the collapse. Spec/tdd tracks append one phase per harness loop iteration and mostly dodge it.
+- Mitigation: append **one phase per write** to `completed[]`. When a skill finishes several conditional phases, write after each, not once at the end.
+- Blast radius: a chore-track `timing.md` is unusable for the cross-track lever ranking — it under-reports whichever phases were batched and over-reports the one they collapsed into. Same failure class as the DATA-POINT-3 gap (silently-wrong sample > missing sample).
+- Companion: [[baseline-velocity-levers-after-lever0-timing-v0lv]] (the consumer this poisons). Distinct from [[triage-created-at-written-from-recall-poisons-first-phase-timing]]: that one anchors phase 1 to a fictional origin; this one drops stamps for phases that really ran.
+- verified-at: 3160e0c
+- last-touched: 2026-07-12
+
+---
+
+## chore-track-integrate-and-simplify-prereqs-are-structurally-unsatisfiable
+
+- Path: `.claude/skills/integrate/SKILL.md` (Prereq) + `.claude/skills/simplify/SKILL.md` (Prereq) + `.claude/skills/chore/SKILL.md` (Phase shape → conditional phases) + `.claude/workflows.jsonl` (the `chore` track DAG) + `.claude/skills/triage/SKILL.md` (the chore decision rule).
+- Trap: both review skills declare prereqs that a `chore` track can NEVER satisfy. `integrate` requires `simplify` in `completed` AND (`security` in `completed` OR in `exceptions`) — but the chore DAG has **no security node**, and chore's own conditional list is `verify / simplify / integrate / document` with security absent, so `security` lands in neither set. `simplify` requires `tdd` in `completed` — but `tdd` is always a chore *exception* and never completes. Meanwhile `/triage`'s chore rule says to "leave `simplify`, `security`, `integrate`, `document`, `archive` and `commit` in the phase list", which contradicts chore's own conditional list. Verified live 2026-07-12 (`unified-execution-roadmap`): a chore whose diff legitimately fired the `integrate` trigger could not satisfy `integrate`'s stated prereq.
+- Mitigation: on a `chore` track, read both prereqs as **track-scoped** — the binding clause is `last_test_result` line 1 == `PASS`, not the phase-membership clause, which is written for the spec/tdd pipeline. Do **NOT** "fix" this by adding `security` (or `tdd`) to `workflow.json → exceptions` mid-flight to force the prereq green: Article IV reserves the `exceptions` array for `/triage` and the post-tdd right-size gate, and a phase skill mutating it is exactly the silent-relaxation the constitution forbids.
+- The real fix (not yet done): reconcile the three documents — either give chore an explicit `security` conditional trigger, or scope the two prereqs by track. This is a contract inconsistency between shipped skills, not a code bug.
+- verified-at: 3160e0c
+- last-touched: 2026-07-12
+
+---
+
+## memory-stop-extractor-recursive-noise-loop-on-the-fix-is-prose
+
+- Path: `.claude/hooks/memory_stop.mjs` (the auto-extractor) → `.claude/memory/_pending.md` → `/memory-flush` Step 2.
+- Trap: the extractor fires on the **literal phrase** "the fix is…" (and similar report-shaped prose) anywhere in a turn, with no check for whether the text is a real deferral. Two compounding failure modes: (1) it quotes **CLAUDE.md's own integrate decision tree** ("The fix is mechanical (implementation mismatch, edge case missed, off-by-one)") back as a user-sourced backlog candidate; (2) worse, it extracts **`/memory-flush`'s own report output** — so a flush that says "discarded 7 candidates that were memory_stop firing on 'the fix is…'" becomes next session's candidates. The system generates debt by describing the debt it generated.
+- Evidence (2026-07-12, `unified-execution-roadmap` flush): of **16** carried-over candidates, **zero** were promotable. Eight were verbatim quotations of prior flush reports (`six-were-the-extractor-firing-on-the-literal-2f31`, `discarded-5-all-memory-stop-firing-on-the-0d9f`, `seven-are-the-same-the-fix-is-extractor-05a1`, `of-the-10-pending-one-is-a-duplicate-1ca0`, `discarded-9-…-94d5`, `but-two-of-those-are-real-and-i-445e`, and two more). The remainder were duplicates of entries already canonical (`-9f4f`, `-8b21`, `checker-fanout.mjs`, `actions/checkout@v6.0.3`).
+- Mitigation (until the extractor is fixed): at Step 2, discard on sight any candidate whose `Intent:` is (a) a quotation of a prior `/memory-flush` report, (b) a quotation of CLAUDE.md / a SKILL.md contract, or (c) already a canonical entry's stable key. Do not re-promote; check `backlog.md` for the key first.
+- The real fix (not yet done): the extractor needs a provenance filter — never extract from Claude's own report output, and never treat instructional text pasted into a user turn (skill bodies arrive that way) as `source: user-instruction`. This is direct, live evidence for [[memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a]] — the memory system's *capture* half is as broken as its *honour* half.
+- verified-at: 3160e0c
+- last-touched: 2026-07-12
+
+---
+
+## roadmap-execution-plan-format-contract-stray-emoji-silently-inflates-tallies
+
+- Path: `docs/roadmap-execution-plan.md` (the artifact) ← parsed by `.claude/skills/standup/gather.mjs` (`parseEpicHeading`, `countTaskStatuses`) and `.claude/skills/roadmap-sync/sync.mjs` (`EPIC_HEADING`, `TASK_LINE`, `auditRoadmap`); path declared at `project.json → roadmap.path`.
+- The contract: epic headings are `## Epic N — Title  <emoji>  (tag)` (em-dash, exactly ONE status emoji). Task lines are `- ⬜ A1. Text` — status emoji, task ID, a **period**, then a space (`TASK_LINE = /^\s*-\s+(⬜|🟡|✅)\s+(\S+?)\.\s/u`). Task IDs are **epic-scoped** and may repeat across epics; `workflow.json → roadmap_tasks[]` references them as `E<num>-<taskId>` (e.g. `E1-A1`), which `parseToken` splits on the dash. Non-`## Epic` headings are ignored by the parser, except `## Progress`, which is parsed into bullets.
+- Trap: `countTaskStatuses` counts **raw emoji occurrences in an epic's BODY**. A single ⬜/🟡/✅ used decoratively in an epic's prose blurb silently inflates that epic's task tally — no error, no anomaly, just a wrong count in `standup`. Keep epic prose emoji-free. `auditRoadmap`'s only malformed-line signal is two *adjacent* status emojis, so it will NOT catch a stray emoji sitting in a sentence.
+- Mitigation: after any edit to the roadmap (including a `prose`/`humanizer` pass over its blurbs), round-trip BOTH parsers before committing — `auditRoadmap` must return zero anomalies AND `standup gather` must return the expected per-epic tallies. A tally change with zero anomalies means an emoji leaked into prose or a task line was reshaped.
+- Note: `resolveRoadmapPath(cfg, repoRoot)` takes the raw path **string** from `project.json` as `cfg`, not the repo root — passing an absolute path returns `null` by design (it rejects absolute and repo-escaping paths).
+- verified-at: 3160e0c
+- last-touched: 2026-07-12

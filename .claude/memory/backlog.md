@@ -99,23 +99,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## durable-plan-slug-path-traversal-hardening-7c4d
-
-> verbatim (assistant, 2026-06-22):
-> "MEDIUM (CWE-22): plan-store.planPath joins an unvalidated slug into .claude/state/plan/<slug>.json — add a kebab-case slug guard (reject `..` / path separators) before any path is constructed, and reuse it in the checker-fanout/evidence-ledger projection writers. Plus LOW: wrap checker-fanout persistVerdict's mirrorVerdictToPlan call in try/catch so a durable-plan write hiccup never fails-open the live verdict path."
-
-- source: assistant-deferral
-- status: picked-up
-- raised-on: 2026-06-22
-- raised-in-context: durable-plan-schema (-424f) /security review
-- estimated-effort: small
-- parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
-- verified-at: 765d100
-- last-touched: 2026-06-22
-- caveat: No current exploit path — `slug` is developer-controlled (derived by `/triage`), so this is defense-in-depth, not a live vuln. But tier=`regulated` and the durable plan is meant to be a broadly-used v1 primitive a future caller could feed a less-trusted slug. Guard contract: reject any slug not matching `/^[a-z0-9][a-z0-9-]*$/`, throw before path construction; shared across `plan-store` + the two projection writers. Full findings (1 MEDIUM + 2 LOW): `docs/archive/2026-06-22/durable-plan-schema/security.md`.
-
----
-- superseded-at: 2026-07-12
 ## sprint-channel-own-package-sdk-delivery-ac005-slice-c
 
 > verbatim (assistant-deferral, slice-B gate, 2026-06-23; user concurred): "publish the server as its own package, keep it in the same github repo... and we install sdk when user installs baseline (similar to plantuml)" → resolved to the own-package/npx form.

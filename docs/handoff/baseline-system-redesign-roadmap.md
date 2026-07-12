@@ -1,5 +1,13 @@
 # Baseline System Redesign — the disease-cure program
 
+> **Where status is tracked.** This document is the **rationale** — the diagnosis, the argument, and
+> the per-CO requirement briefs. It is **not** the status tracker. The live, machine-readable plan is
+> `docs/roadmap-execution-plan.md`, which `standup` / `sprint-planner` / `roadmap-sync` read and write.
+> It unifies these change-orders with the v1 thought-compiler epic (Ledger #0002: *"the roadmaps
+> thought to be parallel converge at classification"* — CO-C and the oracle-bound-checker backlog
+> children are one line item there, not two). The §6 ledger below is kept as the origin record;
+> when it and the execution roadmap disagree, **the execution roadmap governs**.
+
 > **What this is.** The executable roadmap that turns the already-approved vision
 > (`office/docs/vision/`: Ledger #0001 Vision V2, Ledger #0002 Governance Sufficiency Model,
 > the v1 thought-compiler) into **sequenced baseline change-orders**. It is not a fresh design —
