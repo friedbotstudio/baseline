@@ -27,6 +27,29 @@ brew install gitleaks   # other platforms: https://github.com/gitleaks/gitleaks#
 | `scripts/ci/apply-branch-protection.mjs` | Applies that config via `gh api` — after asserting every required context was observed green on the live branch head. Refuses placeholder configs. |
 | `.github/workflows/auto-merge.yml` | Repo-local (not shipped). Runs a PR-triggered `pre-publish-checks` twin (release.yml is push-only, so PRs need one) and enables `gh pr merge --auto --squash` for classifier-approved PRs. |
 
+## Auto-merge trust model
+
+The two jobs in `auto-merge.yml` sit on opposite sides of a trust boundary, and each one's checkout ref is a deliberate choice.
+
+| Job | Privileges | Checks out | Why |
+|---|---|---|---|
+| `classify-and-enable` | `contents: write`, `pull-requests: write` | base SHA (`github.event.pull_request.base.sha`) | It decides whether a PR may merge. It must never run code the PR supplied. |
+| `pre-publish-checks` | `contents: read` | PR merge ref (unpinned) | Its whole job is to validate the PR's own content. Pinning it to base would validate the wrong tree. |
+
+The classify job pins its checkout to the base SHA. Without the pin it resolves the PR merge ref, so a PR that edits `scripts/ci/low-risk-classifier.mjs` is classified by its own code and can wave itself through. This is `actions/checkout`'s documented "Safe Pull Request Checkout" pattern. The pin is safe because the changed-path list comes from `gh pr diff --name-only` (the GitHub API), never from the working tree — so checking out base changes *which classifier runs* without changing *which diff is classified*. `tests/auto-merge-workflow.test.mjs` locks both halves; do not "simplify" either one away.
+
+`pre-publish-checks` runs `npm ci` on PR-controlled content, which executes PR-controlled install scripts. That is accepted and contained: the job holds only `contents: read`, and per-job tokens mean its runner cannot reach the classify job's write token. Its safety comes from privilege isolation, not its checkout ref.
+
+### The standing assumption — do not break this
+
+Under `pull_request`, GitHub executes the workflow file from the PR merge ref. A PR can therefore rewrite `auto-merge.yml` itself, and the base-SHA pin cannot protect the file it lives in. The only thing stopping a fork from rewriting the workflow and merging itself is that GitHub caps `GITHUB_TOKEN` to read-only for fork pull requests, so a fork's `gh pr merge --auto` returns 403.
+
+> Keep the repository setting **"Send write tokens to workflows from fork pull requests"** OFF (GitHub's default). Enabling it turns a LOW residual into a CRITICAL: any fork could rewrite `auto-merge.yml` and merge itself into `main` with no review.
+
+Do not "fix" this with `pull_request_target` — that grants fork PRs a privileged token and makes the exposure strictly worse.
+
+Full analysis: `docs/security/auto-merge-classify-base-sha-2026-07-12.md`.
+
 ## Applying branch protection
 
 Prerequisites: `gh` authenticated with admin on the repo; a green run on the branch head.

@@ -1,0 +1,40 @@
+{
+  "request": "Pin the auto-merge classify job's checkout to the PR base SHA, so a PR cannot be classified by its own edited copy of the low-risk classifier.",
+  "slug": "auto-merge-classify-base-sha",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Backlog entry auto-merge-classify-checkout-base-sha-hardening-6836 (status: open, raised 2026-07-04) names the fix and its test surface verbatim; the underlying MEDIUM finding is written up at docs/archive/2026-07-04/erp-portables-slice-j/security.md. The defect is confirmed on disk: .github/workflows/auto-merge.yml:63 checks out with no ref:, so the classify-and-enable job resolves scripts/ci/low-risk-classifier.mjs from the PR merge ref.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "auto-merge-classify-checkout-base-sha-hardening-6836"
+  ],
+  "created_at": 1783855200,
+  "updated_at": 1783859995
+}

@@ -55,8 +55,8 @@ Each entry's stable key is `path:line`.
 ## src/CLAUDE.template.md:1
 
 - Role: pristine ship-time template for the in-session constitution (`CLAUDE.md`). Per Article XI, this file SHALL remain byte-equal to `CLAUDE.md` for the Article XI block; `audit-baseline` enforces `CLAUDE.md missing Article XI citation` on drift. Article XI carries the manifest-path contract: shipped manifest at `obj/template/.claude/manifest.json`, consumer install at `<target>/.claude/manifest.json`, runtime hash table separately at `<target>/.claude/.baseline-manifest.json`.
-- Verified-at: 8e6f904
-- Last-touched: 2026-06-23
+- Verified-at: b6fba83
+- Last-touched: 2026-07-12
 - Caveat: touch this and `CLAUDE.md` in the same commit. The byte-mirror test (`tests/template-drift.test.mjs`) flips to failure when CLAUDE.md and src/CLAUDE.template.md diverge. The audit hashes every file under tracked skill paths against `manifest.files`, but the constitution mirror is verified via citation-presence checks, not hash equality — that's why the byte-equal obligation lives in this caveat rather than in a hash entry. Pre-existing drift between the two files (e.g., Phase 11.5 changelog row missing from one side) is OUT of scope for the splash workflow but breaks the `tests/template-drift.test.mjs` invariant; fix in its own chore.
 
 ## .claude/skills/triage/SKILL.md:1
@@ -536,3 +536,11 @@ Each entry's stable key is `path:line`.
 - Companion: `.claude/commands/approve-spec.md` (records the hash in the approval token), `.claude/skills/harness/SKILL.md` (recomputes on resume; mismatch → re-yield at gate A), `tests/spec-content-hash.test.mjs`, `tests/gate-a-content-reyield.test.mjs`.
 - Verified-at: 212dbd0
 - Last-touched: 2026-07-10
+
+## .claude/skills/research/retrieve.mjs:82
+
+- Role: Foundation — deterministic, stdlib-only prior-art retriever backing `/research` Step 0 (retrieve-before-derive). `retrieve({root, slug, terms})` scans the local decision corpus — archived `research.md` + `spec.md` under `docs/archive/**`, plus `.claude/memory/decisions.md` and `libraries.md` — and returns ranked `hits` (`path`, `score`, `matchedTerms`, `excerpt`) so research reuses what was already reasoned instead of re-deriving it. Ranking is a pure function of (corpus, terms); every hit is inspectable via `matchedTerms`. No third-party dependency (U6).
+- Companion: `.claude/skills/research/SKILL.md:31` (Step 0 invokes the CLI; `## Prior art (retrieved)` section at :50 is where hits get cited). Shipped as `.mjs` per the shipped-helper rule (no new Python under `.claude/skills/`).
+- Verified-at: b6fba83
+- Last-touched: 2026-07-12
+- Caveat: fail-open by construction — every filesystem read is try/caught to null, an unreadable/missing corpus path is skipped, and `main()` swallows any throw and prints an empty `{terms, corpusScanned, hits}`. So an empty result means "no hits OR the corpus was unreachable"; it never distinguishes the two and never fails the research phase. Matching is naive substring containment on lowercased content (not stemmed, not tokenized), so terms shorter than ~4 chars over-match.
