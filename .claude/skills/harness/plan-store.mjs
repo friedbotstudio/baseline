@@ -9,7 +9,25 @@ import { resolveCheckerThreshold, DEFAULT_THRESHOLD } from '../../hooks/lib/tier
 
 const SCHEMA_VERSION = 1;
 
+// Same shape as consolidate-open-questions.mjs — one slug shape in the repo, not two.
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+// Reject, never repair (CWE-22). Normalizing a hostile slug — the way canonicalSlug
+// strips path segments — would MASK the traversal and silently write the plan somewhere
+// the caller never asked for. Throwing is the only safe answer. Callers reach this
+// through planPath, so every read and write in this module is guarded by construction.
+export function assertSafeSlug(slug) {
+  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
+    throw new Error(
+      `plan-store: refusing to build a path from an unsafe slug ${JSON.stringify(slug)} `
+      + `(must match ${SLUG_RE})`,
+    );
+  }
+  return slug;
+}
+
 function planPath(slug, rootDir) {
+  assertSafeSlug(slug);
   return join(rootDir ?? process.cwd(), '.claude', 'state', 'plan', `${slug}.json`);
 }
 

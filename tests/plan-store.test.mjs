@@ -456,3 +456,101 @@ describe('plan-store (AC-001, AC-002, AC-005, AC-006)', () => {
     }
   });
 });
+
+// Slug guard (CWE-22) — docs/archive/2026-06-22/durable-plan-schema/security.md.
+// planPath joins the slug straight into .claude/state/plan/<slug>.json, so a slug
+// carrying `..` or a separator escapes the state dir. The slug is developer-controlled
+// today (derived by /triage), so this is defense-in-depth — but the plan object is meant
+// to become a broadly-used v1 primitive that a less-trusted caller could reach.
+//
+// Contract: REJECT, never repair. A hostile slug throws before any path is constructed.
+// Silently normalizing it (the way canonicalSlug would) is worse than rejecting: it would
+// mask the traversal and write the plan somewhere the caller never asked for.
+const HOSTILE_SLUGS = [
+  '../../evil',
+  'a/b',
+  '/abs',
+  '..',
+  '.',
+  '',
+  'UPPER',
+  'has space',
+  '-leading-dash',
+  'trailing/',
+];
+
+describe('plan-store — slug guard (CWE-22 path traversal)', () => {
+  it('test_when_slug_is_kebab_case_then_plan_round_trips', async () => {
+    const { createPlan, readPlan } = await import(SUT);
+    const dir = mkdtempSync(path.join(tmpdir(), 'plan-store-guard-'));
+    try {
+      await createPlan({
+        slug: 'durable-plan-slug-guard',
+        goal: 'Guard must not break the happy path',
+        tasklist: makeSampleTasklist(),
+        tier: 'internal-tool',
+        rootDir: dir,
+        ts: '2026-01-01T00:00:00.000Z',
+      });
+
+      const filePath = path.join(dir, '.claude', 'state', 'plan', 'durable-plan-slug-guard.json');
+      assert.ok(existsSync(filePath), 'a real /triage-shaped slug must still write its plan file');
+
+      const roundTripped = readPlan('durable-plan-slug-guard', dir);
+      assert.ok(roundTripped, 'a real slug must still read back');
+      assert.equal(roundTripped.slug, 'durable-plan-slug-guard');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('test_when_slug_contains_traversal_then_create_plan_throws_before_writing', async () => {
+    const { createPlan } = await import(SUT);
+    const dir = mkdtempSync(path.join(tmpdir(), 'plan-store-guard-'));
+    try {
+      await assert.rejects(
+        () => createPlan({
+          slug: '../../evil',
+          goal: 'traversal',
+          tasklist: makeSampleTasklist(),
+          tier: 'internal-tool',
+          rootDir: dir,
+          ts: '2026-01-01T00:00:00.000Z',
+        }),
+        /slug/i,
+        'a slug carrying `..` must be rejected, and the error must name the slug',
+      );
+
+      // The write must not have happened ANYWHERE — not at the escaped path, and not
+      // at a silently-normalized one inside the state dir.
+      assert.ok(
+        !existsSync(path.join(dir, 'evil.json')),
+        'traversal must not write outside .claude/state/plan/',
+      );
+      assert.ok(
+        !existsSync(path.join(dir, '.claude', 'state', 'plan', 'evil.json')),
+        'the slug must be REJECTED, not normalized into a safe-looking path',
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('test_when_slug_has_path_separator_or_is_absolute_then_read_plan_throws', async () => {
+    const { readPlan } = await import(SUT);
+    const dir = mkdtempSync(path.join(tmpdir(), 'plan-store-guard-'));
+    try {
+      for (const slug of HOSTILE_SLUGS) {
+        assert.throws(
+          () => readPlan(slug, dir),
+          /slug/i,
+          `readPlan(${JSON.stringify(slug)}) must THROW, not return null — a rejected slug is an `
+          + 'error, not an absent plan. Returning null would make a traversal attempt '
+          + 'indistinguishable from "no plan on disk".',
+        );
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

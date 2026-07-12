@@ -1,0 +1,40 @@
+{
+  "request": "Harden durable-plan slug path handling: reject a non-kebab-case slug before any path is constructed (plan-store.planPath, checker-fanout.persistVerdict), and make the durable-plan mirror unable to fail-open the live gate-A verdict path.",
+  "slug": "durable-plan-slug-guard",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Backlog entry durable-plan-slug-path-traversal-hardening-7c4d (status: open, raised 2026-06-22, estimated-effort: small) prescribes the guard contract verbatim; findings at docs/archive/2026-06-22/durable-plan-schema/security.md (MEDIUM CWE-22 + LOW). Both defects confirmed on disk: plan-store.mjs:12-13 joins an unvalidated slug into .claude/state/plan/<slug>.json; checker-fanout.mjs:57 builds .claude/state/checker-fanout/<slug>.json the same way; checker-fanout.mjs:61 calls mirrorVerdictToPlan outside any try/catch.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "spec",
+    "review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "durable-plan-slug-path-traversal-hardening-7c4d"
+  ],
+  "created_at": 1783860628,
+  "updated_at": 1783860628
+}

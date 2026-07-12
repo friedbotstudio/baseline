@@ -105,7 +105,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "MEDIUM (CWE-22): plan-store.planPath joins an unvalidated slug into .claude/state/plan/<slug>.json — add a kebab-case slug guard (reject `..` / path separators) before any path is constructed, and reuse it in the checker-fanout/evidence-ledger projection writers. Plus LOW: wrap checker-fanout persistVerdict's mirrorVerdictToPlan call in try/catch so a durable-plan write hiccup never fails-open the live verdict path."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-22
 - raised-in-context: durable-plan-schema (-424f) /security review
 - estimated-effort: small
@@ -115,7 +115,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: No current exploit path — `slug` is developer-controlled (derived by `/triage`), so this is defense-in-depth, not a live vuln. But tier=`regulated` and the durable plan is meant to be a broadly-used v1 primitive a future caller could feed a less-trusted slug. Guard contract: reject any slug not matching `/^[a-z0-9][a-z0-9-]*$/`, throw before path construction; shared across `plan-store` + the two projection writers. Full findings (1 MEDIUM + 2 LOW): `docs/archive/2026-06-22/durable-plan-schema/security.md`.
 
 ---
-
+- superseded-at: 2026-07-12
 ## sprint-channel-own-package-sdk-delivery-ac005-slice-c
 
 > verbatim (assistant-deferral, slice-B gate, 2026-06-23; user concurred): "publish the server as its own package, keep it in the same github repo... and we install sdk when user installs baseline (similar to plantuml)" → resolved to the own-package/npx form.
@@ -163,19 +163,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 3d3cda7
 - last-touched: 2026-06-23
 
-## auto-merge-classify-checkout-base-sha-hardening-6836
-
-> verbatim (assistant-deferral, 2026-07-04, slice-j security review): "Not exploitable under current settings, and the fix is one line (`ref: ${{ github.event.pull_request.base.sha }}` on the classify job's checkout) — say the word and I'll land it as a follow-up."
-
-- Intent: harden `.github/workflows/auto-merge.yml` — the `classify-and-enable` job checks out the PR merge ref, so a PR editing `scripts/ci/low-risk-classifier.mjs` is classified by its own code. Pin the classify job's checkout to the base SHA so the NEVER-list always comes from the target branch. Documented as the MEDIUM in `docs/archive/2026-07-04/erp-portables-slice-j/security.md`.
-- status: picked-up
-- raised-on: 2026-07-04
-- raised-in-context: erp-portables-slice-j
-- source: assistant-deferral
-- estimated-effort: tiny (one workflow line + a structural test assertion)
-- verified-at: 70d9047
-- last-touched: 2026-07-04
-- superseded-at: 2026-07-12
 ## generators-stamp-derived-header-vs-byte-equality-contracts-e9c1
 
 - Intent: make the generators emit a DERIVED header on each generated file so a hand-edit is visibly wrong — the root-cause fix for the derived-artifact trap (three classes: src/{seed,CLAUDE}.template.md, .claude/skills/{triage,harness}/*.js, obj/template/**).
@@ -231,3 +218,40 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - estimated-effort: medium (project.json schema + template + init-project recommender touch + standup gather/rec upgrade + tests)
 - verified-at: 0ed9deb
 - last-touched: 2026-07-10
+
+---
+
+## durable-plan-slug-guard-length-cap-low-8b21
+
+> verbatim (assistant, 2026-07-12): "LOW: `assertSafeSlug` has no length bound. `'a'.repeat(5000)` is accepted (verified) — it cannot escape `.claude/state/plan/`, so this is not a traversal; the write just fails later with an unhandled ENAMETOOLONG instead of a clean rejection. The fix is one character: `/^[a-z0-9][a-z0-9-]{0,63}$/`."
+
+- Intent: bound the slug quantifier in `.claude/skills/harness/plan-store.mjs` (`SLUG_RE`) so an over-long slug is refused by the same clean, named error as every other malformed slug, instead of crashing at `writeFileSync` with a low-level `ENAMETOOLONG`.
+- Why it was NOT fixed in its own workflow: found during `durable-plan-slug-guard`'s `/security` phase, which is **read-only by contract**. Folding a code change into a review phase would ship an untested edit past the very phase that exists to catch that. It gets its own failing test.
+- Not exploitable: cannot escape the state directory; the slug is `/triage`-derived today. Pure robustness.
+- status: open
+- raised-on: 2026-07-12
+- raised-in-context: durable-plan-slug-guard (`/security` finding)
+- source: assistant-deferral
+- estimated-effort: tiny (one regex quantifier + one scenario row)
+- verified-at: e51a03d
+- last-touched: 2026-07-12
+- caveat: full analysis in `docs/archive/2026-07-12/durable-plan-slug-guard/security.md`. Related: [[slug-path-guards-must-reject-not-normalize-and-three-regex-traps]].
+
+---
+
+## hoist-single-slug-validator-at-third-use-9f4f
+
+> verbatim (assistant, 2026-07-12): "Follow-up chore: hoist a single slug validator once a third caller appears."
+
+- Intent: consolidate the duplicated kebab-slug regex. `/^[a-z0-9][a-z0-9-]*$/` now has TWO in-repo definitions — `.claude/skills/harness/plan-store.mjs` (`SLUG_RE`, exported as `assertSafeSlug`) and `.claude/skills/harness/consolidate-open-questions.mjs:110` (`SLUG_RE`, local).
+- Why NOT extracted now: Art. VI.4 abstracts at the **third** concrete use, not the second, and folding a refactor into a security fix widens its blast radius. Raised as `/simplify`'s `flagged` row in `durable-plan-slug-guard`.
+- The design call to settle when it fires (do NOT assume one function fits both): the two uses differ in **layer** (path guard vs CLI-arg validation) and **failure mode** (throw vs stderr + process exit). The shared thing may be the predicate, with each caller choosing how to fail.
+- Third-use candidate already identified: `.claude/hooks/spec_approval_guard.mjs:72` builds `.claude/state/checker-fanout/<slug>.json` from `expectedSlug`, derived via `canonicalSlug` — a **normalizer, not a validator**. Routing that site through the real guard would be the natural third use AND close the noted Windows-backslash gap in the same move.
+- status: open
+- raised-on: 2026-07-12
+- raised-in-context: durable-plan-slug-guard (`/simplify` flagged row)
+- source: assistant-deferral
+- estimated-effort: small (the design call is the work, not the code)
+- verified-at: e51a03d
+- last-touched: 2026-07-12
+- caveat: the load-bearing rule is REJECT, never normalize — see [[slug-path-guards-must-reject-not-normalize-and-three-regex-traps]]. Do NOT "consolidate" by making every site use `canonicalSlug`; that would mask traversals repo-wide.

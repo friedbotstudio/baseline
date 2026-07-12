@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
 import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
-import { readPlan, setVerdictArtifact } from './plan-store.mjs';
+import { readPlan, setVerdictArtifact, assertSafeSlug } from './plan-store.mjs';
 
 /** Merge per-checker verdicts into one deterministic, order-independent result. */
 export function mergeVerdicts(verdicts) {
@@ -57,8 +57,16 @@ function persistVerdict(rootDir, slug, merged) {
   const out = join(rootDir, '.claude/state/checker-fanout', `${slug}.json`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(merged, null, 2)}\n`);
-  // Durable plan mirror (projection above stays canonical for spec_approval_guard).
-  mirrorVerdictToPlan(rootDir, slug, merged);
+  // The projection above is canonical for spec_approval_guard; the durable-plan mirror is
+  // best-effort. A failed mirror write must never take gate A's verdict down with it, so it
+  // is isolated here — but reported, so a persistently broken mirror stays visible.
+  try {
+    mirrorVerdictToPlan(rootDir, slug, merged);
+  } catch (err) {
+    process.stderr.write(
+      `checker-fanout: durable-plan mirror failed for "${slug}" (verdict projection is intact): ${err.message}\n`,
+    );
+  }
 }
 
 function readOptional(readFile, p) {
@@ -84,6 +92,10 @@ async function runOne(registry, name, ctx) {
  */
 export async function runCheckerFanout({ slug, rootDir, enabled, checkers, registry, readFile }) {
   if (!enabled) return { skipped: true, reason: 'velocity.checker_fanout disabled' };
+  // Guard at the entry, not just at the write: the ctx below builds docs/specs/<slug>.md and
+  // docs/intake/<slug>.md from the raw slug, so a traversal would read arbitrary files into
+  // the oracles before any path was ever persisted.
+  assertSafeSlug(slug);
   const reg = registry || DEFAULT_CHECKER_REGISTRY;
   const reader = readFile || ((p) => readFileSync(p, 'utf8'));
   const ctx = {
