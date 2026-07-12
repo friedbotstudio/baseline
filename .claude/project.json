@@ -334,7 +334,7 @@
     },
     "notifier": {
       "enabled": true,
-      "on_stop": "idle",
+      "on_stop": "yielded",
       "attention": true,
       "presence": "aware",
       "present_idle_seconds": 60
