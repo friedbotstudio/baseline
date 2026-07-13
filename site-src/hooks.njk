@@ -122,5 +122,5 @@ toc:
     <p>Disabling, modifying, or bypassing a hook requires explicit user approval and a corresponding amendment in <code>seed.md</code> (the genesis prompt). The order of precedence is <code>seed.md</code> &gt; <code>CLAUDE.md</code> &gt; implementation.</p>
   </div>
   <p>Hooks are the implementation layer: they cannot be loosened by a memory entry or a CLAUDE.md amendment alone.</p>
-  <p>For a one-shot exception inside a workflow, use the <code>exceptions</code> array in <code>.claude/state/workflow.json</code>, written only by <code>/triage</code>. Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
+  <p>For a one-shot exception inside a workflow, use the <code>exceptions</code> array in <code>.claude/state/workflow.json</code>. <code>/triage</code> derives it from the chosen track's DAG: a phase with no node in the track is unreachable, so it is excepted automatically. Consent gates are never excepted, whatever the track looks like. A track may also declare <code>internal_phases</code> for conditionals its own skill runs without a DAG node, and that skill resolves each one at runtime into <code>completed</code> or <code>exceptions</code> with a recorded reason. Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
 </section>

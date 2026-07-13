@@ -425,3 +425,27 @@ Each entry's stable key is `path:line` or a short slug.
 - Note: `resolveRoadmapPath(cfg, repoRoot)` takes the raw path **string** from `project.json` as `cfg`, not the repo root — passing an absolute path returns `null` by design (it rejects absolute and repo-escaping paths).
 - verified-at: 3160e0c
 - last-touched: 2026-07-12
+
+---
+
+## editing-a-stage-0b-mirror-is-silently-reverted-by-npm-run-build
+
+- Path: `scripts/build-template.sh` Stage 0b (lines ~66-90, `sync_vendored_mirror`) → the generated mirrors under `.claude/skills/triage/` (`workflows-validator.js`, `workflows-validator-invariants.js`, `workflows-validator-predicates.js`, `track-tasklist-materializer.js`, `workflow-migrator.js`). The SOURCES live in `src/cli/`.
+- Trap: those `.claude/` files are **build artifacts**, not sources. Editing one lands, then the next `npm run build` **silently copies over it** from `src/cli/`. The edit does not error — it evaporates. Live 2026-07-13 (`extractor-noise-and-prereq-drift`): a one-line change to `KNOWN_TRACK_FIELDS` in `.claude/skills/triage/workflows-validator.js` made its test go green, then the mandatory post-hook-edit `npm run build` reverted it and the test went red again. The failure mode is maximally confusing: the test passes, then fails, with no edit in between.
+- Compounding: editing ANY `.claude/hooks/**` or `.claude/skills/**` file REQUIRES `npm run build` (landmine [[baseline-skill-edit-needs-manifest-rebuild]]), so the very step that keeps the manifest honest is the step that destroys a mirror edit. The two landmines interlock.
+- Mitigation: before editing anything under `.claude/skills/*/*.js`, check whether a same-named file exists in `src/cli/`. If it does, **edit `src/cli/` and let the build propagate**. `diff -q src/cli/<f> .claude/skills/triage/<f>` returning "identical" is the tell. Confirm the edit SURVIVED a build (`grep` the mirror after `npm run build`) — do not assume.
+- Note the asymmetry: `SKILL.md` files are NOT mirrors and are edited in place. Only the vendored `.js` helpers are synced. Related backlog: [[generators-stamp-derived-header-vs-byte-equality-contracts-e9c1]] — a DERIVED header on generated files is the root-cause fix, and this incident is fresh evidence for it.
+- verified-at: 1414f27
+- last-touched: 2026-07-13
+
+---
+
+## a-green-suite-does-not-prove-a-fix-closed-the-hole-it-opened
+
+- Path: `.claude/skills/security/SKILL.md` (read-only by contract; fixes route through `/tdd`) + the phase ordering in `.claude/workflows.jsonl`.
+- Trap: when `/security` raises a finding and the fix lands, the **fix's own tests passing is not evidence the fix is safe**. A remediation can close the reported hole and open a new one in the same edit, and neither the new tests nor the full suite will notice — they assert what the fix was *meant* to do, not what it *also* did.
+- Live 2026-07-13 (`extractor-noise-and-prereq-drift`, T1): `/security` reported that `stripSkillEnvelope` discarded whole blocks (a real deferral was lost beside a pasted SOP marker). The fix returned the text at/below any `ARGUMENTS:` marker. **Its tests passed. All 1618 tests passed.** But an `ARGUMENTS:` line planted BEFORE the SOP marker made `argsAt = 0`, so `slice(0)` returned the whole block — contract prose included — **re-opening the exact leak the module exists to close**. Only an adversarial re-review caught it, by asking "did the remediation introduce a new hole?" instead of "are the tests green?".
+- Mitigation: after any security-driven fix, **re-run `/security` against the fix**, not just the test suite. Revoke `security` from `workflow.json → completed` so the phase genuinely re-runs — a verdict issued BEFORE the fix is evidence about code that no longer exists. Attack the remediation specifically: feed it the inverse of its own assumption (here: what if the marker order is reversed?).
+- Corollary for `power`-track batches: `security` runs per ticket, so a fix to one ticket's finding must re-open that ticket's review, not just append to the report.
+- verified-at: 1414f27
+- last-touched: 2026-07-13

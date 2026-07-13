@@ -238,3 +238,51 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: e51a03d
 - last-touched: 2026-07-12
 - caveat: the load-bearing rule is REJECT, never normalize — see [[slug-path-guards-must-reject-not-normalize-and-three-regex-traps]]. Do NOT "consolidate" by making every site use `canonicalSlug`; that would mask traversals repo-wide.
+
+---
+
+## derive-exceptions-throw-on-node-missing-metadata-phase-low-3e71
+
+> verbatim (assistant, 2026-07-13, `/security` T2 LOW): "A node missing `metadata.phase` is silently skipped, so its phase is treated as undeclared and therefore unreachable → excepted. Cannot bypass a consent gate (the deny-list still applies), but it can silently skip a non-gate phase."
+
+- Intent: make `deriveExceptions` throw a named error on a track node lacking `metadata.phase`, instead of silently treating it as absent (which over-excepts). The workflows validator already rejects malformed tracks; this would make the two agree.
+- Not exploitable: `.claude/workflows.jsonl` is a trusted, in-repo, developer-authored file — not attacker input. Consent gates stay protected by CONSENT_DENY_LIST regardless. Pure robustness.
+- status: open
+- raised-on: 2026-07-13
+- raised-in-context: extractor-noise-and-prereq-drift (`/security` T2 LOW)
+- source: assistant-deferral
+- estimated-effort: tiny
+- verified-at: 1414f27
+- last-touched: 2026-07-13
+- caveat: full analysis in `docs/security/extractor-noise-and-prereq-drift-2026-07-13.md`.
+
+## split-memory-stop-lib-440-lines-8c3d
+
+> verbatim (assistant, 2026-07-13, `/simplify` flagged row): "`.claude/hooks/lib/memory_stop.mjs` is ~440 lines, far past the ~80-line guideline — but it was ALREADY 386 lines before this change; the smell predates the diff."
+
+- Intent: split `.claude/hooks/lib/memory_stop.mjs` along layer lines. The block-classification predicates (`filterNoise`, `isFlushReport`, `isSelfReferential`, `stripSkillEnvelope`) are a cohesive unit and are the natural seam.
+- Why NOT done in its workflow: code-structure Principle 7 puts module-size restructuring in `/simplify`, not initial composition — and splitting mid-workflow would have ballooned an already 1425-line diff. The size smell predates the change that surfaced it.
+- status: open
+- raised-on: 2026-07-13
+- raised-in-context: extractor-noise-and-prereq-drift (`/simplify` flagged)
+- source: assistant-deferral
+- estimated-effort: small
+- verified-at: 1414f27
+- last-touched: 2026-07-13
+
+## skill-arguments-mined-as-user-instruction-d10-residual-4a19
+
+> verbatim (assistant, 2026-07-13, observed live in `_pending.md` immediately after the T1 fix landed): "10 of the 20 pending candidates are tagged `Source: user-instruction`, and they are my own `Skill()` arguments — test fixtures and briefs, quoted into skill args, arriving in the transcript as `role: user`."
+
+- Intent: stop `memory_stop` mis-attributing **Claude's own `Skill()` arguments** as `source: user-instruction`. This is the residual of D10 (`extractor-noise-and-prereq-drift`): `stripSkillEnvelope` deliberately KEEPS the `ARGUMENTS:` section, because a human's genuine deferral typed into `/triage "…"` lands there. Correct for a human-typed invocation — but when CLAUDE passes the arguments (every model-invoked skill), that same rule mines Claude's own briefs, test fixtures, and quoted examples and stamps them with the human's provenance.
+- Evidence (live, post-fix): `_pending.md` re-accumulated 20 candidates in one workflow. The flush-report recursion and the contract-prose-as-user-instruction classes were GONE (T1 worked). But entries like `we-should-also-stage-the-rollout-behind-a-0592` and `build-a-fixture-whose-head-is-re-invocation-2754` are verbatim quotations of MY OWN skill args, tagged `Role: user`.
+- Why it matters beyond noise: Article IX.6 makes `source: user-instruction` entries carry a **verbatim blockquote treated as canonical** — "when verbatim and interpretation conflict, verbatim wins". Mis-attributing Claude's text as the human's corrupts the provenance substrate that the Governance Sufficiency Model (Ledger #0002 D4) is built on. This is a correctness problem, not a tidiness one.
+- Approach (resolve at spec time): the transcript likely distinguishes a human-typed slash command from a model `Skill()` invocation (the re-invocation preamble is one tell; `<command-name>` wrappers are another). Mine `ARGUMENTS:` only when the invocation was human-originated. Do NOT simply drop all ARGUMENTS — that re-breaks D10 and loses real human deferrals.
+- status: open
+- raised-on: 2026-07-13
+- raised-in-context: extractor-noise-and-prereq-drift (observed at gate C, post-fix)
+- source: assistant-deferral
+- estimated-effort: small-medium (the detection signal is the hard part, not the filter)
+- verified-at: 1414f27
+- last-touched: 2026-07-13
+- caveat: related [[memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a]] — same root system. The `"the fix is"` cue firing on ordinary assistant prose is a SEPARATE, deliberate trade (D1: the cue has real recall; several such candidates ARE genuine decisions). Do not conflate the two.

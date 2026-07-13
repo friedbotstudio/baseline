@@ -1,0 +1,102 @@
+{
+  "request": "Fix two harness contract defects found during unified-execution-roadmap: (T1) the memory_stop extractor is in a recursive noise loop, re-ingesting its own /memory-flush reports and firing on the literal phrase \"the fix is…\" in contract prose; (T2) integrate and simplify declare prereqs that are structurally unsatisfiable on the chore track.",
+  "slug": "extractor-noise-and-prereq-drift",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Both tickets derive from landmines committed in 1414f27: .claude/memory/landmines.md -> memory-stop-extractor-recursive-noise-loop-on-the-fix-is-prose (T1) and chore-track-integrate-and-simplify-prereqs-are-structurally-unsatisfiable (T2). Evidence on disk, with live repro: _pending.md re-accumulated 9 candidates within one session of being flushed to zero.",
+  "track_reason": "Human chose power over two lighter workflows with the real tradeoff disclosed (power costs 2 gates + a spec vs 2 gates + no spec). Buys: one written spec covering both fixes, security run PER TICKET (T1 edits a hook), and a single grant-commit landing an ordered two-commit split.",
+  "skip_brainstorm": true,
+  "tickets": [
+    {
+      "id": "T1",
+      "slug": "memory-stop-noise-filter",
+      "title": "Stop the memory_stop extractor ingesting its own reports and contract prose",
+      "surface": [
+        ".claude/hooks/lib/memory_stop.mjs",
+        ".claude/hooks/lib/common.mjs",
+        "tests/memory-capture-noise-filter.test.mjs"
+      ],
+      "needs_failing_test": true,
+      "notes": "DECISION_CUE_RE line 100 (`the\\s+(?:fix|plan|approach)\\s+is\\b`) is unanchored and fires anywhere. Two failure modes: (a) skill/SKILL.md + CLAUDE.md contract text arrives as role:user, so instructional prose is tagged source:user-instruction; (b) Claude own /memory-flush report output is re-extracted as new candidates. Extends the EXISTING NOISE_PREFIXES mechanism — not greenfield. Hook edit => npm run build manifest rebuild (landmine: baseline-skill-edit-needs-manifest-rebuild). Art. VIII: user approval given; NO seed.md amendment needed — the §4.1 contract (\"intent lines -> backlog\") is unchanged, precedent 97b3e6d."
+    },
+    {
+      "id": "T2",
+      "slug": "chore-track-prereq-reconciliation",
+      "title": "Reconcile integrate/simplify prereqs that no chore track can satisfy",
+      "surface": [
+        ".claude/skills/integrate/SKILL.md",
+        ".claude/skills/simplify/SKILL.md",
+        ".claude/skills/chore/SKILL.md",
+        ".claude/skills/triage/SKILL.md"
+      ],
+      "needs_failing_test": false,
+      "notes": "integrate requires security in completed|exceptions; simplify requires tdd in completed. The chore DAG has NO security node and tdd is always a chore exception, so both are unreachable. triage SOP contradicts chore SKILL on whether security is in the chore phase list. ACs MUST be diff-referenceable — do NOT put a process/outcome AC in the table (landmine: it wedges drift_check; has bitten twice)."
+    },
+    {
+      "id": "T3",
+      "slug": "chore-sensitive-glob-security-trigger",
+      "title": "chore runs security when the diff touches a sensitive glob; internal_phases makes the chore conditional set machine-readable",
+      "surface": [
+        ".claude/workflows.jsonl",
+        ".claude/skills/chore/SKILL.md",
+        ".claude/skills/chore/sensitive-surface.mjs",
+        "tests/chore-sensitive-security.test.mjs"
+      ],
+      "needs_failing_test": true,
+      "notes": "Added by human decision at spec review (D11, resolves Q3). Without it, D3 would except `security` on chore while the chore skill runs it — exceptions claiming skipped while the phase executes. `internal_phases[]` on the track declaration is the fix: deriveExceptions subtracts it. Same drift class as T2 one level down (nothing on disk declares what a track may run internally, so the triage SOP and chore SKILL guess and contradict). rightsize-gate already refuses to skip security; chore now matches."
+    }
+  ],
+  "roadmap_tasks": [
+    "E6-T6",
+    "E6-T7"
+  ],
+  "exceptions": [
+    "intake",
+    "brd",
+    "scout",
+    "research",
+    "review"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "roadmap-sync",
+    "memory-flush",
+    "archive"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1783875854,
+  "updated_at": 1783940583,
+  "triage_correction": "exceptions[] was written empty at triage; the power DAG has no intake/brd/scout/research/review nodes, so track_guard would block the spec write. Corrected before any phase ran. Same defect family as ticket T2 (a skill prereq demanding phases the track DAG cannot produce) — see spec Decisions.",
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": [
+    {
+      "ticket": "T1",
+      "verdict": "CLEAN",
+      "note": "2 MEDIUM remediated; re-review found+fixed a hole in the fix itself (D16)"
+    },
+    {
+      "ticket": "T2",
+      "verdict": "CLEAN",
+      "note": "consent-gate deny-list attacked directly and held"
+    },
+    {
+      "ticket": "T3",
+      "verdict": "CLEAN",
+      "note": "1 MEDIUM remediated: porcelain parser replaced with -z paths"
+    }
+  ]
+}

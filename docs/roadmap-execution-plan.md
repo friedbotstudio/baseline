@@ -82,7 +82,7 @@ Peer sessions coordinating on one body of work (Article X). Opt-in, off by defau
 - ⬜ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
 - ⬜ S4. Sprint-mode dogfood config — register the channel server in `.mcp.json` (triggers a three-to-four MCP-count cascade across the governance surfaces) and flip the flag. Depends on S2, or consumers get a broken server.
 
-## Epic 6 — Debt and hardening  ⬜  (debt)
+## Epic 6 — Debt and hardening  🟡  (debt)
 
 Carried debt. Nothing on the critical path waits for it, so pick items up between features.
 
@@ -91,3 +91,5 @@ Carried debt. Nothing on the critical path waits for it, so pick items up betwee
 - ⬜ T3. Make generators stamp a derived header so a hand-edit is visibly wrong. Backlog `-e9c1`. The design call is the work: a header collides with the byte-equality contracts on the constitution mirrors, whose live files are the sources and cannot honestly carry a do-not-edit banner.
 - ⬜ T4. Memory-system redesign — make a captured lesson an ACTIVE constraint at the moment of the relevant decision, not a passive archive that only helps if a phase happens to read it. Backlog `-7f3a`; needs its own intake-to-approve cycle, do not quickfix.
 - ⬜ T5. Declare a release model in `project.json` (ci/cd model, release branch, trigger, cycle, consumer upgrade cadence) and teach `standup` to read it, so the "can this unreleased pile ship?" question becomes answerable from policy rather than guessed. Backlog `-a4f2`.
+- ✅ T6. Stop the `memory_stop` extractor re-ingesting its own flush reports and mining SKILL.md contract prose. The suppression already existed but was anchored to a 64-character head window, which any re-invocation preamble defeats.
+- ✅ T7. Derive a workflow's `exceptions` from the chosen track's DAG, so no phase skill can declare a prereq its own track is structurally unable to satisfy. Consent gates are never excepted; a track's `internal_phases` are resolved at runtime by the skill that owns them.
