@@ -16,7 +16,18 @@ const REQUIRED_TRACK_FIELDS = [
   'selector_hints', 'preconditions', 'invariants', 'nodes',
 ];
 
-const KNOWN_TRACK_FIELDS = new Set([...REQUIRED_TRACK_FIELDS]);
+// Declared, not required. `internal_phases` names the phases a track's own skill may
+// run WITHOUT a DAG node (chore's conditional verify/simplify/security/integrate/
+// document). Absent means []: every pre-existing track keeps today's behaviour.
+//
+// It exists because nothing on disk previously declared what a track could run
+// internally, so `/triage`'s SOP and `chore/SKILL.md` each guessed — and disagreed.
+// `deriveExceptions` subtracts these at derivation time: at triage the diff does not
+// exist yet, so a conditional cannot be pre-judged. The track's skill resolves each
+// one at runtime into `completed` (it ran) or `exceptions` (its trigger did not fire).
+const OPTIONAL_TRACK_FIELDS = ['internal_phases'];
+
+const KNOWN_TRACK_FIELDS = new Set([...REQUIRED_TRACK_FIELDS, ...OPTIONAL_TRACK_FIELDS]);
 
 export async function validateWorkflowsJsonl(filePath) {
   const projectRoot = await findProjectRoot(filePath);

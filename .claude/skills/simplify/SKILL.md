@@ -8,7 +8,9 @@ description: Workflow Phase 7 — Mechanical cleanup pass over the branch diff, 
 
 # Prereq
 
-`tdd` in `completed` AND `.claude/state/last_test_result` line 1 is `PASS`.
+`tdd` in `completed` **OR** in `exceptions` — AND `.claude/state/last_test_result` line 1 is `PASS`.
+
+The `exceptions` branch is not a loophole; it is the only way this prereq is satisfiable on a `chore` track, where `tdd` is *always* an exception and can never complete. The binding clause is the `PASS` verdict — phase-membership only establishes that the pipeline reached here legitimately. Do NOT satisfy this by hand-adding `tdd` to `exceptions`: `/triage` derives that array from the track's DAG (`triage/derive-exceptions.mjs`).
 
 # Note on shadowing
 
