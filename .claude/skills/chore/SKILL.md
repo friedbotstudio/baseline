@@ -46,6 +46,19 @@ The classification rule is: *if there is no failing test that should exist for t
 3. **`memory-flush`** — Phase 10.6. Empty pending is fine (fast-path runs Step 0 sweeps and short-circuits). `/commit`'s prereq requires `memory-flush` in `completed`.
 4. **`/grant-commit` then `/commit`** — user-required consent + commit. Same as every other workflow.
 
+### Resolving the track's `internal_phases[]` (MANDATORY — read before the triggers)
+
+The `chore` track declares `internal_phases: ["verify", "simplify", "security", "integrate", "document"]` in `.claude/workflows.jsonl`. Those are the phases this skill may run **without a DAG node**. `/triage`'s `deriveExceptions` deliberately does **not** except them: at triage time the diff does not exist, so a conditional cannot be pre-judged.
+
+That makes **you** the resolver. By the end of this skill, every phase in `internal_phases[]` SHALL sit in exactly ONE of:
+
+- **`completed`** — its trigger fired and the phase ran; or
+- **`exceptions`** — its trigger did not fire, plus an `auto_skipped[]` provenance row: `{phase, reason, oracle: "chore-conditional"}`.
+
+**No internal phase may be left in neither set.** That limbo state is not cosmetic: `integrate`'s prereq requires `security` in `completed` OR `exceptions`, so an unresolved `security` makes `integrate` structurally unrunnable — and it fails on the *common* case (a chore with no sensitive surface), while a chore that happens to touch `.claude/hooks/**` passes. Resolve every one, every time.
+
+Writing a runtime-skipped conditional into `exceptions` is **recording a decision this track was already authorised to make** (Art. IV sanctions chore's conditional routing), not a new bypass power. The `auto_skipped[]` row is what makes it auditable.
+
 ### Conditional phases (required when triggers apply, optional otherwise)
 
 5. **`verify`** — run the project test command and stamp `.claude/state/last_test_result` (the verdict is binding; `verify_pass_guard` reads this file). **Skipped only** when **both** hold:
@@ -65,6 +78,16 @@ The classification rule is: *if there is no failing test that should exist for t
    - The diff alters MCP server declarations or runtime config that affects how the harness behaves.
    - The diff could plausibly break unrelated downstream phases (e.g. editing an audit script's `EXPECTED_*` set).
    Otherwise the `verify` stamp (when verify ran) is sufficient — note the skip in the summary.
+
+7.5. **`security`** — required when the diff intersects `project.json → security.sensitive_globs` (`.claude/hooks/**`, `.claude/commands/**`, `src/cli/**`, `bin/**`, `**/auth/**`, `**/*.env*`). Decide it mechanically, not by eye:
+
+   ```
+   node .claude/skills/chore/sensitive-surface.mjs
+   ```
+
+   It prints `{sensitive, matched}` and always exits 0 (advisory — a helper that can block a commit will eventually block the wrong one). `sensitive: true` → run `Skill(security)` and append `security` to `completed`. `sensitive: false` → skip it, append `security` to `exceptions`, and record the `auto_skipped[]` row.
+
+   Chore previously had no security node and no security trigger, so a chore touching `.claude/hooks/**` shipped with **no security review by construction** — while the `rightsize-gate` was deliberately built to never skip security. This trigger closes that gap. A sensitive-surface chore is not a bypass lane.
 
 8. **`document`** — required when **any** of:
    - User-facing prose changes — `README.md`, `CLAUDE.md` prose, `docs/init/seed.md` prose, skill `SKILL.md` `description:` lines, public-facing reference docs.
