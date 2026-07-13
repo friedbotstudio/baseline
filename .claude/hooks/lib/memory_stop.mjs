@@ -10,7 +10,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { NOISE_PREFIXES } from './common.mjs';
+import { NOISE_PREFIXES, SKILL_SOP_MARKER, isBoilerplate } from './common.mjs';
 
 const SRC_PREFIXES = ['src/', 'lib/', 'app/', 'pkg/', 'internal/', 'cmd/', '.claude/hooks/', '.claude/skills/'];
 const SKIP_PREFIXES = [
@@ -144,6 +144,69 @@ function filterNoise(text) {
   return NOISE_PREFIXES.some((p) => head.startsWith(p));
 }
 
+// --- Capture precision: three predicates that keep the extractor off its own tail.
+//
+// Before these, 16 of 16 candidates at one flush were unpromotable: the extractor
+// was re-ingesting its OWN /memory-flush reports and mining SKILL.md contract prose.
+// All three fail SAFE to "drop" (a missed candidate is cheap — the human re-raises
+// it; a false one taxes every future flush) and none may throw: this runs inside a
+// Stop hook that must never crash a turn.
+
+// A rendered /memory-flush report: its header, or one of its section rows.
+const FLUSH_REPORT_RE = /^(?:memory-flush\s+—\s+\d{4}-\d{2}-\d{2}|(?:Promoted|Discarded|Closed|Deferred)\s+\(\d+)/m;
+
+// The vocabulary of candidate EXTRACTION — deliberately NOT "memory_stop" or
+// "flush report". Keying on the subsystem's name would suppress the sentence
+// "memory_stop is in a recursive noise loop", which is precisely the bug report
+// that created this ticket. A filter that eats its own bug reports is the failure
+// mode one level above the one being fixed.
+//
+// `staged` was REMOVED here (D15b): it is ordinary English in a software project
+// ("stage the rollout", "the migration is staged") and it silently dropped real
+// deferrals that even carried an explicit "add this to backlog" marker. The drop-bias
+// in D6 assumed the drop was rare; `stage`/`staged` is not. The three remaining terms
+// are domain-specific and already carry the recursion signal.
+const SELF_REFERENTIAL_RE = /\b(?:candidates?|extractors?|_pending)\b/i;
+
+// Where a skill invocation stops being contract text and starts being human intent.
+const ARGUMENTS_MARKER = 'ARGUMENTS:';
+
+export function isFlushReport(text) {
+  if (typeof text !== 'string' || !text.trim()) return false;
+  return FLUSH_REPORT_RE.test(text);
+}
+
+// Sentence-scoped by contract: one self-referential sentence must not suppress the
+// whole block it sits in.
+export function isSelfReferential(sentence) {
+  if (typeof sentence !== 'string' || !sentence.trim()) return false;
+  return SELF_REFERENTIAL_RE.test(sentence);
+}
+
+// SURGICAL, never all-or-nothing (D15a). A skill invocation arrives as ONE user
+// message holding both the SKILL.md contract body and an ARGUMENTS: section — and
+// when the human types `/triage "…we should also bound the slug length later"`, that
+// deferral lands in ARGUMENTS. Dropping the whole block would lose it.
+//
+// The no-ARGUMENTS branch keeps the text PRECEDING the SOP marker rather than
+// returning ''. Without that, a user who pastes a doc containing the marker beside a
+// genuine deferral loses the deferral silently — reproduced during /security, with no
+// error and no audit trail. For a pure envelope the marker sits at index 0, so
+// slice(0, 0) === '' and the original contract still holds.
+export function stripSkillEnvelope(text) {
+  if (typeof text !== 'string' || !text.trim()) return '';
+  if (!isBoilerplate(text)) return text;
+  const sopAt = text.indexOf(SKILL_SOP_MARKER);
+  // Boilerplate with no SOP marker is a wrapper tag (<system-reminder> etc). Nothing to salvage.
+  if (sopAt === -1) return '';
+  // The ARGUMENTS: marker must FOLLOW the SOP body. Honouring any occurrence lets an
+  // `ARGUMENTS:` line planted BEFORE the marker return the whole block — contract prose
+  // included — which re-opens the exact leak this module exists to close. Caught by the
+  // security re-review of this fix, not by the fix's own tests.
+  const argsAt = text.indexOf(ARGUMENTS_MARKER, sopAt);
+  return argsAt !== -1 ? text.slice(argsAt) : text.slice(0, sopAt);
+}
+
 function matchesIntent(line, patterns) {
   for (const pat of patterns) {
     if (pat.test(line)) return true;
@@ -263,9 +326,13 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
       if (role === 'user' || role === 'assistant') {
         const patterns = role === 'user' ? USER_INTENT_PATTERNS : ASSISTANT_INTENT_PATTERNS;
         const sourceValue = role === 'user' ? 'user-instruction' : 'assistant-deferral';
-        for (const text of extractTextBlocks(content)) {
-          if (filterNoise(text)) continue;
+        for (const rawText of extractTextBlocks(content)) {
+          if (filterNoise(rawText)) continue;
+          if (isFlushReport(rawText)) continue;
+          const text = stripSkillEnvelope(rawText);
+          if (!text) continue;
           for (const matchedLine of iterIntentMatches(text, patterns)) {
+            if (isSelfReferential(matchedLine)) continue;
             const [key] = deriveKey(matchedLine);
             if (!key) continue;
             const dedupKey = `${key}::${sourceValue}`;

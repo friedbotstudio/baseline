@@ -867,15 +867,26 @@ export function sweepLeakedGrantMarkers(stateDir, opts = {}) {
 // resume_writer, and shelve_capture all import this so the filter cannot drift
 // between them.
 export const NOISE_PREFIXES = ['<system-reminder>', '<command-name>', '<local-command-'];
-const SKILL_SOP_MARKER = 'Base directory for this skill:';
+export const SKILL_SOP_MARKER = 'Base directory for this skill:';
 
-// True iff the head of `text` is injected boilerplate (a wrapper tag or a skill
-// SOP body), so the capture path can drop it before it consumes a cue slot.
+// Bounded scan window for the SOP marker. The marker is NOT head-anchored: on a
+// re-invocation the runtime prepends "(Re-invocation of /x — the skill
+// instructions were previously loaded; …)", which pushes the marker past any
+// short head window. A 64-char head check therefore missed EVERY re-invoked skill
+// body and mined the whole SOP — that is how CLAUDE.md's own integrate decision
+// tree ("The fix is mechanical …") was staged as `source: user-instruction` in two
+// separate sessions. The window is capped rather than unbounded so a pathological
+// multi-MB block cannot turn the scan into a hot loop (CWE-1333).
+const SOP_SCAN_WINDOW = 4096;
+
+// True iff `text` is injected boilerplate — a wrapper tag at the head, or a skill
+// SOP body whose marker may sit behind a re-invocation preamble. The capture path
+// drops it before it consumes a cue slot.
 export function isBoilerplate(text) {
   if (typeof text !== 'string') return false;
-  const head = text.replace(/^\s+/, '').slice(0, 64);
-  if (head.startsWith(SKILL_SOP_MARKER)) return true;
-  return NOISE_PREFIXES.some((p) => head.startsWith(p));
+  const trimmed = text.replace(/^\s+/, '');
+  if (trimmed.slice(0, SOP_SCAN_WINDOW).includes(SKILL_SOP_MARKER)) return true;
+  return NOISE_PREFIXES.some((p) => trimmed.startsWith(p));
 }
 
 // --- Git workflow-topology helpers ----------------------------------------
