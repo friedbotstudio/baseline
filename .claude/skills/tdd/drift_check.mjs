@@ -23,10 +23,11 @@
 // Special case: spec file missing at the named slug → print "no spec; skipped"
 // to stdout, exit 0, no report file written (supports chore-track workflows).
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, realpathSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { pathToFileURL } from 'node:url';
 
 // Spec/archive prose is excluded from the scored diff (backlog a1b2). An AC id
 // resolves only when it appears in an IMPLEMENTATION or TEST added-line — never
@@ -42,6 +43,14 @@ function isExcludedDiffPath(relPath) {
 }
 
 const AC_ROW_RE = /^\|\s*(AC-\d+)\s*\|/gm;
+
+// Extract the unique AC ids declared in a spec's AC table. Shared with the
+// ac-conformance checker (C5) so the two read the same rows.
+export function extractAcIds(specText) {
+  const ids = [];
+  for (const m of String(specText).matchAll(AC_ROW_RE)) ids.push(m[1]);
+  return [...new Set(ids)];
+}
 const DESIGN_CALLS_SECTION_RE = /^##\s+Design calls\s*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
 const DESIGN_ROW_RE = /^\|\s*([^|]+?)\s*\|/gm;
 const NONE_BODY_RE = /^[\s\-]*\*?\(?none\)?\*?[\s\-]*$/i;
@@ -199,4 +208,15 @@ function main(argv) {
   return unresolved === 0 ? 0 : 1;
 }
 
-process.exit(main(process.argv.slice(2)));
+// Run the CLI only when executed as a script — importing extractAcIds (the
+// ac-conformance checker, C5) must not fire main(). realpath both sides so a
+// symlinked invocation path (macOS /tmp -> /private/tmp) still matches.
+function isRunAsScript() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(new URL(import.meta.url).pathname);
+  } catch {
+    return import.meta.url === pathToFileURL(process.argv[1]).href;
+  }
+}
+if (isRunAsScript()) process.exit(main(process.argv.slice(2)));

@@ -62,7 +62,7 @@ and lets it fail the build instead of filing an advisory.
 - ✅ C2. Promote review skills to oracle-bound checkers. Backlog `-d186`. Landed: `spec-diagram-review` and `spec-traceability-review` oracles, plus the parallel `checker-fanout.mjs` runner with deterministic merge. Open: refit `security`, `simplify`, and `code-structure`; the deferred diagram checks (class-to-DDL, AC-to-sequence, Container-to-Component).
 - ✅ C3. Maker/checker RALPH protocol. Backlog `-4c43`. Landed: the bounded one-maker/one-checker round-trip (`maker-checker.mjs`, append-only `evidence-ledger.mjs`, fail-closed `graduation-gate.mjs`). Open: the multi-round loop, the stop rule, and arbitration. Ceiling-hit-below-floor is a RED state that yields to a human — never a silent downgrade to advisory.
 - ✅ C4. Design-judge — the first quality oracle WITH TEETH. Playwright captures the rendered screen; the judge scores it against the spec's reference target from B1; below threshold FAILS `verify`. HARD-DEPENDS on B1 for the rubric, and on nothing else — CO-A improves the specs it reads but does not block it.
-- ⬜ C5. Prove the framework is general — ride at least one non-UI oracle (mutation score for TDD, or AC-conformance as the merge oracle) on the same checker interface, so it is not a one-off UI hack.
+- ✅ C5. Prove the framework is general — ride at least one non-UI oracle (mutation score for TDD, or AC-conformance as the merge oracle) on the same checker interface, so it is not a one-off UI hack.
 - ⬜ C6. Gate taxonomy — the safe-versus-ask-a-human classifier, built BEFORE any autonomy. Backlog `-9008`; deliberately coarse, fragment when closer.
 
 ## Epic 4 — Velocity: reclaim the calendar  🟡  (velocity)

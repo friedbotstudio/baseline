@@ -110,22 +110,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 3d3cda7
 - last-touched: 2026-06-23
 
-## generators-stamp-derived-header-vs-byte-equality-contracts-e9c1
-
-- Intent: make the generators emit a DERIVED header on each generated file so a hand-edit is visibly wrong — the root-cause fix for the derived-artifact trap (three classes: src/{seed,CLAUDE}.template.md, .claude/skills/{triage,harness}/*.js, obj/template/**).
-- Problem: the naive "generator prepends a header" works cleanly for the vendored JS mirrors (Stage 0b `cp` → prepend a `// DERIVED` line; update tests/vendored-mirror-bytes.test.mjs to expect header+body). It COLLIDES with the constitution markdown mirrors: `CLAUDE.md` ↔ `src/CLAUDE.template.md` is a FULL byte-for-byte copy enforced by BOTH `audit-baseline` AND a test; `seed-template-parity.test.mjs` requires the template's pre-§16 body and §17-tail be byte-identical to the LIVE `seed.md`. A header on the template but not the live file breaks every one of those, and the live files are the SOURCES — they cannot honestly carry a "DO NOT EDIT" header. Surfaced live in `harden-power-track-debt` (2026-07-10) as ticket T4; descoped by human decision at the tdd decision point.
-- Proposed design options (resolve before implementing): (a) header on JS mirrors only + a stripped-header parity update for seed, DROP the CLAUDE.md full-copy header (rely on the existing [[constitutional-amendment-tripwires-headroom-seedmirror-python3ledger]] landmine + `sync-constitution-mirror --check`); (b) full header everywhere + update `audit-baseline`'s byte-equal check AND the parity test to strip the header — bigger blast radius on the audit that gates every workflow; (c) a sidecar marker (a sibling `.DERIVED` file per generated file) that carries no byte-equality risk. Option (a) or (c) is likely cleanest; (b) touches the audit and is risky.
-- status: picked-up
-- raised-on: 2026-07-10
-- raised-in-context: harden-power-track-debt (descoped ticket T4)
-- source: assistant-deferral
-> verbatim (assistant, 2026-07-10): "T4's DERIVED header works cleanly for the vendored JS mirrors but collides with the byte-equality contracts on the CLAUDE.md/seed.md constitution mirrors (full-copy and parity-enforced; the live files are the sources and cannot honestly carry a DO NOT EDIT header)."
-- estimated-effort: small-medium (generator edits + test-contract updates; the design choice is the hard part, not the code)
-- verified-at: 6ae2955
-- last-touched: 2026-07-10
-
----
-- superseded-at: 2026-07-15
 ## memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a
 
 > verbatim (user, 2026-07-10):
@@ -144,48 +128,6 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 
 ---
 
-## release-model-in-project-json-drives-standup-recommendation-a4f2
-
-> verbatim (user, 2026-07-10):
-> "this a good point to also plan (backlog) standup recommendation logic; similar to git-model, we can have release-model that can help user decide if half-baked features can be pushed out or not. To do this we need to know (from project.json) the following: - ci/cd model (example: github-actions, jenkins, vercel, none etc) - release-branch (example: main) - release-trigger (example: on-push, on-tag, manual etc) - release-cycle (example: sprint-based, continuous, manual etc) this is all I can think of at this point; but this structure alongwith update in upgrade in standup skill will improve it 10 folds"
-
-- Intent: add a declared `release` model block to `project.json` (mirroring the existing `git.workflow_model` / `git.release_branches` / `git.protected_branches` precedent) and teach the `standup` skill to read it, so the "recommended next pickup" logic becomes release-model-aware instead of guessing. The load-bearing question standup must answer — "can this pile of unreleased commits be pushed out, or does a half-baked feature on the disc make that unsafe?" — is currently un-answerable because standup has no declared release policy; it even had to HEDGE ("if semantic-release fires on push, push == release") for lack of one.
-- Proposed `project.json → release` knobs (user-named four + one crux knob I'd add):
-  - `cicd_model`: `github-actions | jenkins | vercel | circleci | none` — who performs the release.
-  - `release_branch`: e.g. `main` (likely derivable from `git.release_branches[0]`; keep as an explicit override so the two can't silently disagree).
-  - `release_trigger`: `on-push | on-tag | manual` — this is what resolves the standup hedge: on `on-push`, a push IS a release, so an unpushed pile is a pending release; on `on-tag`/`manual`, push and release are separate acts.
-  - `release_cycle`: `continuous | sprint-based | manual`.
-  - `consumer_upgrade_cadence`: `frequent | rare` (MY addition — this is the actual variable behind the "coherent disc" argument). The CD analogy only bites when consumers upgrade RARELY and the upgrade path is slow (`npx` → `upgrade-project`); that is what turns a half-wired shipped-dark feature from harmless dead code into a months-long liability. Without this knob standup can't distinguish "ship often, fix forward" (continuous + frequent) from "each release is a pressing, block on coherence" (on-tag + rare).
-- Payoff (the recommendation logic this unlocks): standup's rec becomes a function of the model, the way `git.workflow_model` overrides Claude's generic branching instincts. On `continuous`/`on-push`/`frequent` → recommend pushing early and often; an unpushed pile is the risk. On `on-tag`/`sprint-based`/`rare` (the baseline's own posture) → a release is a CD pressing: recommend GATING the release on a completeness/coherence audit and REFUSE to recommend cutting while any feature in the unreleased set is half-wired-on-the-disc (shipped-dark but opt-in-broken — e.g. the sprint/org MCP epic whose server isn't in the shipped `.mcp.json` and whose SDK isn't consumer-delivered). This is the release-side twin of the release-readiness audit idea (coherent-disc doctrine): the model tells standup WHICH regime it's in, and the audit is what it gates on in the slow-cadence regime.
-- Design notes (resolve at spec time; do NOT overbuild): standup's `gather.mjs` already reads `.releaserc.json` for the semver bump — the new `release` block complements it (policy vs. mechanism), does not replace it. Keep the recommendation itself in main context per Article II — the helper gathers `release` config + unreleased-set state; the "push / don't push / finish-X-first" judgment is reasoned in main context, not emitted by the helper. Consider a `release.completeness_gate: {enabled, half_wired_blocks_release}` sub-block so the coherent-disc rule is itself configurable rather than hard-coded. Relates to the coherent-disc release-readiness audit discussed in the same session (not yet a backlog key — the audit is a per-release action, this is the standing policy that triggers it).
-- status: picked-up
-- raised-on: 2026-07-10
-- raised-in-context: post-`harden-power-track-debt` standup — the "can we push v0.20.0 with half-baked sprint/org?" discussion
-- source: user-instruction
-- estimated-effort: medium (project.json schema + template + init-project recommender touch + standup gather/rec upgrade + tests)
-- verified-at: 0ed9deb
-- last-touched: 2026-07-10
-
----
-- superseded-at: 2026-07-15
-## durable-plan-slug-guard-length-cap-low-8b21
-
-> verbatim (assistant, 2026-07-12): "LOW: `assertSafeSlug` has no length bound. `'a'.repeat(5000)` is accepted (verified) — it cannot escape `.claude/state/plan/`, so this is not a traversal; the write just fails later with an unhandled ENAMETOOLONG instead of a clean rejection. The fix is one character: `/^[a-z0-9][a-z0-9-]{0,63}$/`."
-
-- Intent: bound the slug quantifier in `.claude/skills/harness/plan-store.mjs` (`SLUG_RE`) so an over-long slug is refused by the same clean, named error as every other malformed slug, instead of crashing at `writeFileSync` with a low-level `ENAMETOOLONG`.
-- Why it was NOT fixed in its own workflow: found during `durable-plan-slug-guard`'s `/security` phase, which is **read-only by contract**. Folding a code change into a review phase would ship an untested edit past the very phase that exists to catch that. It gets its own failing test.
-- Not exploitable: cannot escape the state directory; the slug is `/triage`-derived today. Pure robustness.
-- status: picked-up
-- raised-on: 2026-07-12
-- raised-in-context: durable-plan-slug-guard (`/security` finding)
-- source: assistant-deferral
-- estimated-effort: tiny (one regex quantifier + one scenario row)
-- verified-at: e51a03d
-- last-touched: 2026-07-12
-- caveat: full analysis in `docs/archive/2026-07-12/durable-plan-slug-guard/security.md`. Related: [[slug-path-guards-must-reject-not-normalize-and-three-regex-traps]].
-
----
-- superseded-at: 2026-07-15
 ## hoist-single-slug-validator-at-third-use-9f4f
 
 > verbatim (assistant, 2026-07-12): "Follow-up chore: hoist a single slug validator once a third caller appears."

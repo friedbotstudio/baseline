@@ -360,6 +360,12 @@
       "attention": true,
       "presence": "aware",
       "present_idle_seconds": 60
+    },
+    "mutation_oracle": {
+      "enabled": false
+    },
+    "ac_conformance": {
+      "enabled": false
     }
   },
   "roadmap": {

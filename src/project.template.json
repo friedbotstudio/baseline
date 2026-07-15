@@ -197,7 +197,9 @@
   },
   "git": {
     "workflow_model": "ask",
-    "release_branches": ["main"],
+    "release_branches": [
+      "main"
+    ],
     "protected_branches": null,
     "branch_pattern": null
   },
@@ -276,6 +278,12 @@
       "attention": true,
       "presence": "always",
       "present_idle_seconds": 60
+    },
+    "mutation_oracle": {
+      "enabled": false
+    },
+    "ac_conformance": {
+      "enabled": false
     }
   },
   "ci_posture": {

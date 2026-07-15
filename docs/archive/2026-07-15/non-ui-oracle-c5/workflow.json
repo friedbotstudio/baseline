@@ -1,0 +1,48 @@
+{
+  "request": "Prove the enforcement oracle framework is general by riding at least one non-UI oracle on the same checker interface (mutation score for TDD, or AC-conformance as the merge oracle), so it is not a one-off UI hack. Roadmap Epic 3 C5; extends the landed C2/C3/C4 machinery (checker-fanout.mjs, maker-checker.mjs, evidence-ledger.mjs). Solo.",
+  "slug": "non-ui-oracle-c5",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md Epic 3 task C5 (line 65). Extends landed machinery: checker-fanout.mjs, maker-checker.mjs, evidence-ledger.mjs; scripts/mutation-oracle.mjs already exists (advisory-only, shipped 6c85282) as a graduation candidate.",
+  "track_reason": "spec-entry (not intake-full): the checker interface just landed and mutation-oracle.mjs already exists, so discovery is bounded and mapped inline in main context (Article II); the spec + gate A + tdd guardrails cover the integration risk.",
+  "skip_brainstorm": true,
+  "codesign_mode": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "roadmap_tasks": [
+    "E3-C5"
+  ],
+  "created_at": 1784131608,
+  "updated_at": 1784131608,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
