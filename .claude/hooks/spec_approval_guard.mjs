@@ -27,7 +27,9 @@ import {
   blockMarkerSelfWrite,
   validateConsentMarker,
   logLine,
+  projectGet,
 } from './lib/common.mjs';
+import { verifyApprovalAnchor } from './lib/approval-anchor.mjs';
 
 const payload = await readPayload();
 
@@ -85,6 +87,28 @@ BLOCKER findings:
 ${summary}
 
 Full report: .claude/state/checker-fanout/${expectedSlug}.json`);
+    }
+  }
+
+  // A4 provenance-anchor gate (opt-in via governance.approval_provenance.enabled,
+  // default false → today's behavior). When enabled, the /approve-spec token must
+  // resolve to an approval-provenance entry in the slug's evidence ledger.
+  // Fail-safe: any unverifiable anchor BLOCKs. This ADDS to the fresh-marker
+  // consent already validated above; it never replaces it. Scope: this
+  // spec_approvals branch only — swarm/commit consent paths are untouched.
+  if (projectGet('governance.approval_provenance.enabled') === true) {
+    let tokenContent = '';
+    if (tool === 'Write') tokenContent = payloadGet(payload, '.tool_input.content') || '';
+    else if (tool === 'Edit') tokenContent = payloadGet(payload, '.tool_input.new_string') || '';
+    else if (tool === 'MultiEdit') {
+      const edits = payloadGet(payload, '.tool_input.edits') || [];
+      tokenContent = edits.map((e) => e.new_string || '').join('\n');
+    }
+    const ledgerPath = join(CLAUDE_DOTDIR, 'state', 'evidence-ledger', `${expectedSlug}.json`);
+    const anchor = verifyApprovalAnchor({ slug: expectedSlug, tokenLines: tokenContent.split(/\r?\n/), ledgerPath });
+    if (!anchor.ok) {
+      logLine('spec_approval_guard', `BLOCKED approval for '${expectedSlug}': provenance anchor ${anchor.reason}`);
+      emitBlock(`Spec Approval Guard: the /approve-spec token for '${expectedSlug}' has no valid provenance anchor (${anchor.reason}). Under governance.approval_provenance.enabled the token must carry a 'ledger_ref:' line resolving to an approval-provenance entry in .claude/state/evidence-ledger/${expectedSlug}.json. Regenerate the token through the provenance flow, then re-run /approve-spec.`);
     }
   }
   emitAllow();

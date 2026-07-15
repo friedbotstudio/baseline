@@ -37,3 +37,23 @@ export function recordRoundTripOnPlan({ slug, rootDir, ledgerPath, roundTrip }) 
   const plan = readPlan(slug, rootDir);
   return plan ? appendRoundTripArtifact(plan, roundTrip) : null;
 }
+
+/**
+ * A4 — append an approval-provenance entry for a spec's /approve-spec grant and
+ * return { ledger, entry }. The entry id is deterministic (`ap-<slug>-<n>`, n =
+ * the round_trips length at append time) so deriveApprovalToken can anchor the
+ * token to it. Append-only, same as every other ledger write.
+ */
+export function appendApprovalProvenance(ledgerPath, { slug, class: cls, evidence_verdict, spec_hash } = {}) {
+  const before = readLedger(ledgerPath);
+  const entry = {
+    kind: 'approval-provenance',
+    id: `ap-${slug}-${before.round_trips.length}`,
+    slug,
+    class: cls,
+    evidence_verdict,
+    spec_hash,
+  };
+  const ledger = appendRoundTrip(ledgerPath, entry);
+  return { ledger, entry };
+}
