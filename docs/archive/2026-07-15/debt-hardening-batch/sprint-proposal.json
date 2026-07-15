@@ -1,0 +1,66 @@
+{
+  "sprint": "debt-hardening-batch",
+  "track": "power",
+  "generated_from": "docs/roadmap-execution-plan.md (Epic 6 — Debt and hardening)",
+  "cohesion": "All three are open slices of Epic 6 (carried debt); none blocks the other; each has real spec content (T3/T5 carry genuine design calls), which is why they warrant a batch spec rather than quickfixes.",
+  "confirmed_by_human": "option-2 selection over C5-solo",
+  "capacity": 4,
+  "features": [
+    {
+      "id": "T1",
+      "roadmap": "T1",
+      "backlog_key": "durable-plan-slug-guard-length-cap-low-8b21",
+      "title": "Bound the slug quantifier in plan-store.mjs — refuse over-long slug with a named error, not an ENAMETOOLONG crash at write time",
+      "surface": ".claude/skills/harness/plan-store.mjs (SLUG_RE / assertSafeSlug)",
+      "done_record": "assertSafeSlug rejects an over-length slug with a clean named error BEFORE any path construction",
+      "edge_tests": [
+        "slug exceeding max length -> named length error (never reaches fs / ENAMETOOLONG)",
+        "slug at exact max length -> accepted",
+        "existing SLUG_RE charset/traversal rejections still hold (REJECT never normalize)"
+      ],
+      "wiring_test": "plan-store write path invokes assertSafeSlug and surfaces the named error to the caller",
+      "design_call": null
+    },
+    {
+      "id": "T3",
+      "roadmap": "T3",
+      "backlog_key": "generators-stamp-derived-header-vs-byte-equality-contracts-e9c1",
+      "title": "Generators stamp a derived 'do-not-edit' header so a hand-edit is visibly wrong",
+      "surface": "generator scripts + src/*.template.md mirrors",
+      "done_record": "generated files carry a derived header that makes a hand-edit detectable, WITHOUT breaking the byte-equality contract on the constitution mirrors (whose live files are the sources)",
+      "edge_tests": [
+        "a hand-edited generated file is detectable as drifted via the header",
+        "constitution mirrors do NOT carry a false do-not-edit banner (their live file IS the source)",
+        "audit-baseline still passes byte-equality on the mirrors"
+      ],
+      "wiring_test": "generator emits the header; audit detects a stripped/edited header",
+      "design_call": "The header collides with the byte-equality contracts on the constitution mirrors. The load-bearing spec decision is WHICH generated files get the header and HOW the mirror exception is expressed — this is the work, not a mechanical stamp."
+    },
+    {
+      "id": "T5",
+      "roadmap": "T5",
+      "backlog_key": "release-model-in-project-json-drives-standup-recommendation-a4f2",
+      "title": "Declare a release model in project.json (cicd/branch/trigger/cycle/consumer-cadence) and teach standup to read it",
+      "surface": "project.json + src/project.template.json + standup/gather.mjs + init-project recommender",
+      "done_record": "project.json declares a `release` block; standup's gather surfaces it and the main-context recommendation becomes release-model-aware (answers 'can this unreleased pile ship?')",
+      "edge_tests": [
+        "standup reads the release block and selects the right regime (continuous/on-push vs on-tag/rare)",
+        "missing release block -> standup degrades gracefully, names the gap (never throws)",
+        "on-tag/rare regime -> recommendation gates on completeness (refuses to recommend cutting while a feature is half-wired)"
+      ],
+      "wiring_test": "standup gather.mjs surfaces release config; the recommendation consumer reads it in main context (Article II — helper gathers, main context decides)",
+      "design_call": "Config schema design (five knobs, user-specified verbatim in backlog -a4f2) + the completeness_gate sub-block; keep the recommendation judgment in main context per Article II."
+    }
+  ],
+  "excluded": [
+    {
+      "id": "T2",
+      "reason": "Conditional on a THIRD caller of the slug validator appearing (Art. VI.4 abstracts at third use). Roadmap: REJECT-never-normalize, do NOT consolidate via canonicalSlug. Not a clean batch member until the third use exists."
+    },
+    {
+      "id": "T4",
+      "reason": "Memory-system redesign — roadmap says it needs its own intake-to-approve cycle, do not fold into a batch."
+    }
+  ],
+  "notes": "Power runs the spec phase itself (one amortized batch spec, epic sliced-spec shape, ONE approve-spec gate). security runs per-ticket. commit splits into ordered Conventional Commits, closure last, under one workflow-scoped /grant-commit. Next: /triage routes this to the power track and materializes workflow.json -> tickets[]."
+}
