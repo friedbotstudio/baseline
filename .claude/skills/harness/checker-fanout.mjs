@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
 import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
+import { runSecurityOracle } from '../security/oracle.mjs';
+import { runSimplifyOracle } from '../simplify/oracle.mjs';
+import { runCodeStructureOracle } from '../code-structure/oracle.mjs';
 import { readPlan, setVerdictArtifact, assertSafeSlug } from './plan-store.mjs';
 
 /** Merge per-checker verdicts into one deterministic, order-independent result. */
@@ -32,15 +35,30 @@ export function assertFanoutAllowed({ mode, amendmentPresent }) {
   }
 }
 
-// The extension point: checker name -> adapter(ctx) -> { findings }. spec-lint and
-// spec-shippability adapters are deferred (-d186); add them here when they graduate.
+// The extension point: checker name -> { phase, run(ctx) -> { findings } }. Each entry
+// carries a `phase` tag — the spec-review subset runs before approve-spec (the gate-A
+// projection), the code-review subset runs at the integrate boundary (a parallel
+// projection). spec-lint / spec-shippability adapters are deferred (-d186).
 export const DEFAULT_CHECKER_REGISTRY = {
-  'spec-diagram': (ctx) => runDiagramOracle(ctx.specContent),
-  'spec-traceability': (ctx) => (ctx.intakeContent == null
-    ? { findings: [] }
-    : runTraceabilityOracle({ spec: ctx.specContent, intake: ctx.intakeContent })),
-  'spec-rollout': (ctx) => runRolloutOracle({ specContent: ctx.specContent }),
+  'spec-diagram': { phase: 'spec-review', run: (ctx) => runDiagramOracle(ctx.specContent) },
+  'spec-traceability': {
+    phase: 'spec-review',
+    run: (ctx) => (ctx.intakeContent == null
+      ? { findings: [] }
+      : runTraceabilityOracle({ spec: ctx.specContent, intake: ctx.intakeContent })),
+  },
+  'spec-rollout': { phase: 'spec-review', run: (ctx) => runRolloutOracle({ specContent: ctx.specContent }) },
+  security: { phase: 'code-review', run: (ctx) => runSecurityOracle({ securityReport: ctx.securityReport }) },
+  simplify: { phase: 'code-review', run: (ctx) => runSimplifyOracle({ simplifyTable: ctx.simplifyTable }) },
+  'code-structure': { phase: 'code-review', run: (ctx) => runCodeStructureOracle({ changedFiles: ctx.changedFiles || [] }) },
 };
+
+function entryRun(entry) {
+  return typeof entry === 'function' ? entry : entry.run;
+}
+function entryPhase(entry) {
+  return entry.phase || 'spec-review';
+}
 
 /**
  * Migration (AC-008): mirror a merged verdict into the durable plan object when one
@@ -52,11 +70,18 @@ export function mirrorVerdictToPlan(rootDir, slug, merged) {
   return plan ? setVerdictArtifact(plan, slug, merged) : null;
 }
 
-/** Persist the merged verdict so spec_approval_guard can read it at gate A. */
-function persistVerdict(rootDir, slug, merged) {
-  const out = join(rootDir, '.claude/state/checker-fanout', `${slug}.json`);
+/**
+ * Persist the merged verdict. The spec-review phase writes the CANONICAL gate-A projection
+ * at .claude/state/checker-fanout/<slug>.json (read by spec_approval_guard). The code-review
+ * phase writes a SEPARATE projection at .claude/state/checker-fanout-code/<slug>.json — it is
+ * never allowed to touch the gate-A path. The durable-plan mirror rides the gate-A path only.
+ */
+function persistVerdict(rootDir, slug, merged, phase) {
+  const dir = phase === 'code-review' ? 'checker-fanout-code' : 'checker-fanout';
+  const out = join(rootDir, '.claude/state', dir, `${slug}.json`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(merged, null, 2)}\n`);
+  if (phase === 'code-review') return;
   // The projection above is canonical for spec_approval_guard; the durable-plan mirror is
   // best-effort. A failed mirror write must never take gate A's verdict down with it, so it
   // is isolated here — but reported, so a persistently broken mirror stays visible.
@@ -80,7 +105,7 @@ function readOptional(readFile, p) {
 async function runOne(registry, name, ctx) {
   const adapter = registry[name];
   if (!adapter) return { checker: name, findings: [] };
-  const { findings } = await adapter(ctx);
+  const { findings } = await entryRun(adapter)(ctx);
   return { checker: name, findings };
 }
 
@@ -90,7 +115,7 @@ async function runOne(registry, name, ctx) {
  * caller falls back to the existing per-skill review. Fail-safe: a checker whose required
  * input is absent contributes an empty verdict rather than throwing.
  */
-export async function runCheckerFanout({ slug, rootDir, enabled, checkers, registry, readFile }) {
+export async function runCheckerFanout({ slug, rootDir, enabled, phase, ctx: extraCtx, checkers, registry, readFile }) {
   if (!enabled) return { skipped: true, reason: 'velocity.checker_fanout disabled' };
   // Guard at the entry, not just at the write: the ctx below builds docs/specs/<slug>.md and
   // docs/intake/<slug>.md from the raw slug, so a traversal would read arbitrary files into
@@ -98,16 +123,24 @@ export async function runCheckerFanout({ slug, rootDir, enabled, checkers, regis
   assertSafeSlug(slug);
   const reg = registry || DEFAULT_CHECKER_REGISTRY;
   const reader = readFile || ((p) => readFileSync(p, 'utf8'));
+  const effectivePhase = phase || 'spec-review';
+  const specPath = join(rootDir, `docs/specs/${slug}.md`);
+  // Spec-review needs the spec (gate-A oracles read it); code-review scores the diff, so a
+  // missing spec is not an error there.
+  const specContent = effectivePhase === 'code-review' ? readOptional(reader, specPath) : reader(specPath);
   const ctx = {
     slug,
     rootDir,
-    specContent: reader(join(rootDir, `docs/specs/${slug}.md`)),
+    specContent,
     intakeContent: readOptional(reader, join(rootDir, `docs/intake/${slug}.md`)),
+    ...(extraCtx || {}),
   };
-  const names = checkers && checkers.length ? checkers : Object.keys(reg);
+  const names = checkers && checkers.length
+    ? checkers
+    : Object.keys(reg).filter((n) => entryPhase(reg[n]) === effectivePhase);
   const verdicts = await Promise.all(names.map((name) => runOne(reg, name, ctx)));
   const merged = mergeVerdicts(verdicts);
-  persistVerdict(rootDir, slug, merged);
+  persistVerdict(rootDir, slug, merged, effectivePhase);
   return merged;
 }
 

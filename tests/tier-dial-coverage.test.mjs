@@ -16,7 +16,7 @@ const DIAL = join(REPO_ROOT, '.claude/hooks/lib/tier-dial.mjs');
 const load = () => import(DIAL);
 
 const TIERS = ['internal-tool', 'customer-data', 'regulated'];
-const EXPECTED = ['brainstorm', 'spec', 'tdd', 'security', 'review', 'ac-conformance', 'spec-rollout'];
+const EXPECTED = ['brainstorm', 'spec', 'tdd', 'security', 'review', 'ac-conformance', 'spec-rollout', 'code-structure', 'design-judge'];
 
 // The single documented token every wired consumer carries, naming the accessor
 // as its floor/ceiling source. The coverage test scans for this exact substring.
@@ -29,6 +29,8 @@ const REPRESENTATIVES = {
   review: '.claude/skills/simplify/SKILL.md',
   'ac-conformance': '.claude/skills/integrate/SKILL.md',
   'spec-rollout': '.claude/skills/spec-rollout-enforceability-review/oracle.mjs',
+  'code-structure': '.claude/skills/code-structure/oracle.mjs',
+  'design-judge': '.claude/skills/harness/design-judge.mjs',
 };
 
 describe('tier-dial coverage (all checkers wired)', () => {

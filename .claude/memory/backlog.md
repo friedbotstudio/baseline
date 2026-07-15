@@ -35,7 +35,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 > "Promote existing review skills to oracle-bound checkers — refit spec-lint / spec-diagram-review / security / simplify / code-structure to emit the proof-obligation contract: artifact → block, assertion → advisory → backlog."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-05
 - raised-in-context: v1 thought-compiler design discussion (no active workflow)
 - estimated-effort: large
@@ -46,14 +46,14 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: The checkers already exist on disk — this is re-wiring, not greenfield. Every finding carries a proof obligation: concrete artifact → can block; bare assertion → advisory, labeled low-confidence, logged to backlog with its proof. Maps brainstorm/spec/tdd/security/review/AC-conformance onto shipped skills (vision doc Part 5.3). Detail: Part 5.7 piece 4. **PARTIAL 2026-06-22 (`checker-graduation-fanout`):** `spec-diagram-review/oracle.mjs` (DFS acyclicity) + `spec-traceability-review/oracle.mjs` (dropped-upstream-AC) shipped oracle-bound (artifact+tier-dial `mandatory` ⇒ BLOCKER, else ADVISORY); `spec-lint`+`spec-shippability` were already mechanical. STILL OPEN: refit `security`/`simplify`/`code-structure`, and the deferred diagram checks (class↔DDL, AC↔seq, Container↔Component — relief-valve ADVISORY this pass).
 
 ---
-
+- superseded-at: 2026-07-15
 ## maker-checker-ralph-protocol-stop-rule-arbitration-4c43
 
 > verbatim (assistant, 2026-06-05):
 > "Maker/checker RALPH protocol + stop rule + arbitration — floor→advisory, dry-rounds→stop, ceiling-below-floor→yield, plus the oracle-over-judgment precedence ordering."
 
 - source: assistant-deferral
-- status: open
+- status: picked-up
 - raised-on: 2026-06-05
 - raised-in-context: v1 thought-compiler design discussion (no active workflow)
 - estimated-effort: large
@@ -64,7 +64,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: The loop itself. Load-bearing rule: ceiling-below-floor is a RED state (yield to human), never silently downgraded to advisory — otherwise it recreates the verify_pass_guard PASS-when-FAIL failure. Arbitration: oracle-bound findings outrank judgment always; two oracle-bound conflicts mean the SPEC is wrong → existing needs-spec-change yield. Maker is nearly free (reuse implement skill). Detail: vision doc Part 5.4–5.5, piece 5. **PARTIAL 2026-06-22 (`checker-graduation-fanout`):** the BOUNDED one-maker/one-checker round-trip shipped — `harness/maker-checker.mjs` (`assertBounded`), `harness/evidence-ledger.mjs` (append-only), `harness/graduation-gate.mjs` (fail-CLOSED counts-only evaluator). STILL OPEN: the multi-round RALPH loop, stop-rule iteration, arbitration — depends on `-424f` durable plan schema.
 
 ---
-
+- superseded-at: 2026-07-15
 ## gate-taxonomy-then-debugging-skill-then-v2-9008
 
 > verbatim (assistant, 2026-06-05):

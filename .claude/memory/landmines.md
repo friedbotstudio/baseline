@@ -460,3 +460,25 @@ Each entry's stable key is `path:line` or a short slug.
 - Mitigation (author side): never write a literal `` `## <SectionName>` `` in spec prose — drop the `##` (say "the Acceptance-criteria table"). Mitigation (code side, if ever hardened): anchor the opening `##` with `^` under the `m` flag. Until then, treat a section-matcher FAIL on an obviously-correct spec as a prose-hijack first, a real defect second.
 - verified-at: 32b83c2
 - last-touched: 2026-07-15
+
+---
+
+## global-word-run-with-required-suffix-regex-is-quadratic-redos
+
+- Path: spec/diff oracle regexes over author-controlled content, e.g. `.claude/skills/spec-diagram-review/oracle.mjs` (`checkClassDDL`) and any `content.matchAll(/…(\w+)\s*:…/g)` scanning a whole document.
+- Trap: a **global** (`/g`) regex whose body is `(\w+)` (or `\w+`, `[^x]*`) followed by a **required suffix** (`\s*:`, `<<…>>`, a delimiter) is **O(n²)** on a long run of the character class with the suffix absent. The engine matches the word-run at position 0 (O(n)), fails the suffix, then **restarts at position 1** and re-matches the run (O(n)), … n times → n². Measured live 2026-07-15 (`enforcement-oracle-framework`, C4 security review): a 50k-word-char class field made `checkClassDDL` take **~2.4 s** (CWE-1333). Input was author-authored spec content (dev-time, self-inflicted), so MEDIUM not HIGH — but a governance checker runs on every spec.
+- Mitigation: **line-scope + `^`-anchor** the scan. Split on `\r?\n` and match `^\s*…(\w+)\s*:…` per line — the `^` pins a single start position per line, so there is no cross-position backtracking; total cost is O(n). This is the same family as [[spec-lint-and-guard-section-regexes-are-not-line-anchored]] (both diagram-oracle regexes; that one is prose-hijack, this one is ReDoS) — the shared fix is *line-scope the regex, don't scan the whole document globally*.
+- Reflex: when adding a regex that scans author-controlled document content, stress it with a 50k-char adversarial input in the `/security` phase (ReDoS probe) before landing; `<4ms` is fine, seconds is a finding.
+- verified-at: 32b83c2
+- last-touched: 2026-07-15
+
+---
+
+## checker-fanout-code-review-projection-must-never-touch-the-gate-A-path
+
+- Path: `.claude/skills/harness/checker-fanout.mjs` (`persistVerdict` — `dir = phase === 'code-review' ? 'checker-fanout-code' : 'checker-fanout'`) and the reader `.claude/hooks/spec_approval_guard.mjs:72`.
+- Trap: the fan-out writes **two** verdict projections by phase. The **spec-review** phase writes the CANONICAL gate-A projection `.claude/state/checker-fanout/<slug>.json`, which `spec_approval_guard.mjs:72` reads to allow/deny the `/approve-spec` token. The **code-review** phase (integrate, D8a) writes a SEPARATE `.claude/state/checker-fanout-code/<slug>.json`. If a future edit "simplifies" `persistVerdict` to share one path, or a new code-review checker's BLOCKER lands in the gate-A file, a code-time finding would **silently block gate A** (or a spec-time verdict would be overwritten by a later code-review run) — a cross-file regression invisible in the fan-out's own tests. `persistVerdict` also `return`s BEFORE the durable-plan mirror on the code-review branch (the mirror rides gate-A only).
+- Mitigation: keep the two projection dirs phase-separated; never route code-review output through the `checker-fanout/` dir. The parity is guarded by `tests/eof-checker-interface.test.mjs` (`test_when_code_review_fanout_runs_then_writes_parallel_projection` asserts the gate-A file is NOT written). When editing `persistVerdict`, run that test + `tests/spec-rollout-integration.test.mjs` (gate-A projection shape).
+- Live 2026-07-15 (`enforcement-oracle-framework`, C2/D8a): the split was introduced deliberately so the code-review gate at integrate cannot regress the gate-A CLEAN/BLOCKED contract. Verified in the C4 `/security` review.
+- verified-at: 32b83c2
+- last-touched: 2026-07-15

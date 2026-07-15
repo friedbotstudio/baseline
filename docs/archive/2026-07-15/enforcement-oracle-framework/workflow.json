@@ -1,0 +1,52 @@
+{
+  "request": "Combine roadmap C2 + C3 + C4 into one monolithic workflow — the enforcement oracle framework. C2 remainder: refit security/simplify/code-structure review skills as oracle-bound checkers on the checker-fanout interface + deferred diagram checks (class-to-DDL, AC-to-sequence, Container-to-Component). C3 remainder: maker/checker RALPH multi-round loop, stop rule, arbitration (ceiling-hit-below-floor is RED → yields to human). C4: design-judge with teeth — Playwright captures the rendered screen, judge scores against the spec's B1 reference target, below threshold FAILS verify. All on the shared checker interface.",
+  "slug": "enforcement-oracle-framework",
+  "track_id": "intake-full",
+  "novelty": "spec-derived",
+  "novelty_evidence": "roadmap-execution-plan.md Epic 3 tasks C2, C3, C4. Existing machinery to build on: checker-fanout.mjs, maker-checker.mjs, evidence-ledger.mjs, graduation-gate.mjs; B1 (reference-target rubric) just landed in f1faf75.",
+  "track_reason": "Heavier than spec-entry: large cross-component architecture spanning .claude/hooks + .claude/skills (sensitive globs), a new Playwright integration, substantial partially-landed machinery to scout, and an underivable judge scoring model to research. Full design upfront (scout + research) warranted.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "org-dispatch",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "roadmap_tasks": [
+    "E3-C2",
+    "E3-C3",
+    "E3-C4"
+  ],
+  "source_backlog_keys": [
+    "promote-review-skills-to-oracle-bound-checkers-d186",
+    "maker-checker-ralph-protocol-stop-rule-arbitration-4c43"
+  ],
+  "created_at": 1784101154,
+  "updated_at": 1784107451,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

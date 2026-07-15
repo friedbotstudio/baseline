@@ -323,6 +323,17 @@
     "durable_plan": {
       "enabled": true
     },
+    "code_review": {
+      "enabled": true,
+      "checkers": [
+        "security",
+        "simplify",
+        "code-structure"
+      ]
+    },
+    "design_judge": {
+      "enabled": false
+    },
     "sprint_mode": {
       "enabled": true
     },

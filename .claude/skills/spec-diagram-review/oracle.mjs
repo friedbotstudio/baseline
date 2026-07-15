@@ -70,6 +70,78 @@ function findCycle(edges) {
   return null;
 }
 
+function blocksFor(content, includeMarker) {
+  const re = new RegExp(`!include\\s+<${includeMarker}>([\\s\\S]*?)@enduml`, 'g');
+  return [...content.matchAll(re)].map((m) => m[1]).join('\n');
+}
+
+// (a) A class field marked <<new>>/<<changed>> must have a matching column in the
+// ```sql Migration DDL``` block, or the class diagram and the migration have drifted.
+function checkClassDDL(content, mandatory) {
+  const ddl = (/```sql([\s\S]*?)```/i.exec(content) || [null, ''])[1];
+  const out = [];
+  // Line-scoped and ^-anchored so the field scan is O(n), never O(n^2): a global
+  // `(\w+)\s*:` over the whole spec backtracks across every position on a long
+  // word-run with no colon (ReDoS, CWE-1333). Class fields are one per line.
+  for (const line of content.split(/\r?\n/)) {
+    const m = /^\s*\+?\s*(\w+)\s*:[^\n]*<<(new|changed)>>/.exec(line);
+    if (!m) continue;
+    const field = m[1];
+    if (!new RegExp(`\\b${field}\\b`, 'i').test(ddl)) {
+      out.push(normalizeFinding({
+        check: 'class_ddl_consistency', file: null, line: null,
+        evidence: `field ${field} <<${m[2]}>> has no matching column in the Migration DDL`,
+        message: `Class field ${field} is marked <<${m[2]}>> but the Migration DDL has no matching ALTER/ADD.`,
+        suggested_fix: `Add a DDL statement for ${field}, or drop the <<${m[2]}>> stereotype.`,
+        artifact: { kind: 'class-ddl', field },
+      }, { mandatory }));
+    }
+  }
+  return out;
+}
+
+// (b) Every AC row's §Behavior #N must resolve to a titled sequence.
+function checkAcSequence(content, mandatory) {
+  const titles = new Set();
+  for (const t of content.matchAll(/title\s+Behavior\s*#(\d+)/gim)) titles.add(Number(t[1]));
+  for (const t of content.matchAll(/^###\s+Behavior\s*#(\d+)/gim)) titles.add(Number(t[1]));
+  const section = (/^##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(content) || [null, ''])[1];
+  const out = [];
+  for (const r of section.matchAll(/\|\s*(AC-\d+)\s*\|[^\n]*?§?Behavior\s*#(\d+)/g)) {
+    const n = Number(r[2]);
+    if (!titles.has(n)) {
+      out.push(normalizeFinding({
+        check: 'ac_sequence_consistency', file: null, line: null,
+        evidence: `${r[1]} -> §Behavior #${n} has no titled sequence`,
+        message: `AC ${r[1]} references §Behavior #${n} but no sequence titled "Behavior #${n}" exists.`,
+        suggested_fix: `Add a sequence diagram titled "Behavior #${n}".`,
+        artifact: { kind: 'ac-sequence', ac: r[1], behavior: n },
+      }, { mandatory }));
+    }
+  }
+  return out;
+}
+
+// (c) Every Container in the C4_Container diagram must have a matching Component boundary.
+function checkContainerComponent(content, mandatory) {
+  const containerBlock = blocksFor(content, 'C4/C4_Container');
+  const componentBlock = blocksFor(content, 'C4/C4_Component');
+  const boundaries = new Set([...componentBlock.matchAll(/Container_Boundary\(\s*(\w+)/g)].map((m) => m[1]));
+  const out = [];
+  for (const c of containerBlock.matchAll(/\bContainer(?:Db|Queue)?\(\s*(\w+)/g)) {
+    if (!boundaries.has(c[1])) {
+      out.push(normalizeFinding({
+        check: 'container_component_consistency', file: null, line: null,
+        evidence: `Container ${c[1]} has no matching C4_Component boundary`,
+        message: `Container ${c[1]} appears in C4_Container but no C4_Component boundary of that name exists.`,
+        suggested_fix: `Add a Container_Boundary(${c[1]}, ...) component diagram, or confirm it is unchanged.`,
+        artifact: { kind: 'container-component', container: c[1] },
+      }, { mandatory }));
+    }
+  }
+  return out;
+}
+
 export function runDiagramOracle(content, deps = {}) {
   const tierDial = deps.tierDial || resolveCheckerThreshold;
   const { mandatory } = tierDial(CHECKER);
@@ -87,6 +159,10 @@ export function runDiagramOracle(content, deps = {}) {
       artifact: { kind: 'cycle', locus: cycle.join('->') },
     }, { mandatory }));
   }
+
+  findings.push(...checkClassDDL(content, mandatory));
+  findings.push(...checkAcSequence(content, mandatory));
+  findings.push(...checkContainerComponent(content, mandatory));
 
   return { findings };
 }

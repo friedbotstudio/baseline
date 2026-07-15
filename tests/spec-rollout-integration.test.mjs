@@ -35,7 +35,11 @@ describe('checker-fanout — spec-rollout registration + verdict persistence', (
       Object.prototype.hasOwnProperty.call(DEFAULT_CHECKER_REGISTRY, 'spec-rollout'),
       'DEFAULT_CHECKER_REGISTRY must register a spec-rollout adapter',
     );
-    assert.equal(typeof DEFAULT_CHECKER_REGISTRY['spec-rollout'], 'function');
+    // A registry entry is a phase-tagged { phase, run } object (or a legacy bare function);
+    // either way its run must be callable.
+    const entry = DEFAULT_CHECKER_REGISTRY['spec-rollout'];
+    const run = typeof entry === 'function' ? entry : entry.run;
+    assert.equal(typeof run, 'function');
   });
 
   it('test_when_fanout_runs_then_merged_verdict_persisted', async () => {
