@@ -18,6 +18,7 @@ import {
   EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
   EXPECTED_MCP_SERVERS, DEFAULT_MCP_SERVERS,
 } from './expected-baseline.mjs';
+import { EXEMPT_RELPATHS, hasDerivedHeader } from '../../hooks/lib/derived-header.mjs';
 
 // True only when run as a script (`node audit.mjs`), false when imported by a
 // test. Guards the top-level audit run + process.exit so importing the exported
@@ -367,6 +368,24 @@ function checkClaudeSizeCap() {
   }
 }
 checkClaudeSizeCap();
+
+// The constitution mirrors are byte-equal to a human-edited live source, so they
+// must NOT carry the derived-header banner (a header would break that equality and
+// dishonestly banner a source humans edit). This enforces the Slice-T3 exemption
+// with a clearer message than a raw byte-diff would give.
+function checkMirrorsUnstamped() {
+  for (const rel of EXEMPT_RELPATHS) {
+    const text = readText(rel);
+    if (!text) continue; // obj/template outputs exist only after a build
+    if (hasDerivedHeader(text)) {
+      add(`derived-header exemption: ${rel}`, 'FAIL',
+        'a constitution mirror must not carry a derived-header banner — byte-equality with its live source is the guard');
+    } else {
+      add(`derived-header exemption: ${rel}`, 'PASS', 'no derived header (byte-equality guarded)');
+    }
+  }
+}
+checkMirrorsUnstamped();
 
 // ---------- memory directory ----------
 const memDir = join(ROOT, '.claude', 'memory');
