@@ -115,7 +115,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - Intent: make the generators emit a DERIVED header on each generated file so a hand-edit is visibly wrong — the root-cause fix for the derived-artifact trap (three classes: src/{seed,CLAUDE}.template.md, .claude/skills/{triage,harness}/*.js, obj/template/**).
 - Problem: the naive "generator prepends a header" works cleanly for the vendored JS mirrors (Stage 0b `cp` → prepend a `// DERIVED` line; update tests/vendored-mirror-bytes.test.mjs to expect header+body). It COLLIDES with the constitution markdown mirrors: `CLAUDE.md` ↔ `src/CLAUDE.template.md` is a FULL byte-for-byte copy enforced by BOTH `audit-baseline` AND a test; `seed-template-parity.test.mjs` requires the template's pre-§16 body and §17-tail be byte-identical to the LIVE `seed.md`. A header on the template but not the live file breaks every one of those, and the live files are the SOURCES — they cannot honestly carry a "DO NOT EDIT" header. Surfaced live in `harden-power-track-debt` (2026-07-10) as ticket T4; descoped by human decision at the tdd decision point.
 - Proposed design options (resolve before implementing): (a) header on JS mirrors only + a stripped-header parity update for seed, DROP the CLAUDE.md full-copy header (rely on the existing [[constitutional-amendment-tripwires-headroom-seedmirror-python3ledger]] landmine + `sync-constitution-mirror --check`); (b) full header everywhere + update `audit-baseline`'s byte-equal check AND the parity test to strip the header — bigger blast radius on the audit that gates every workflow; (c) a sidecar marker (a sibling `.DERIVED` file per generated file) that carries no byte-equality risk. Option (a) or (c) is likely cleanest; (b) touches the audit and is risky.
-- status: open
+- status: picked-up
 - raised-on: 2026-07-10
 - raised-in-context: harden-power-track-debt (descoped ticket T4)
 - source: assistant-deferral
@@ -125,7 +125,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - last-touched: 2026-07-10
 
 ---
-
+- superseded-at: 2026-07-15
 ## memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a
 
 > verbatim (user, 2026-07-10):
@@ -158,7 +158,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
   - `consumer_upgrade_cadence`: `frequent | rare` (MY addition — this is the actual variable behind the "coherent disc" argument). The CD analogy only bites when consumers upgrade RARELY and the upgrade path is slow (`npx` → `upgrade-project`); that is what turns a half-wired shipped-dark feature from harmless dead code into a months-long liability. Without this knob standup can't distinguish "ship often, fix forward" (continuous + frequent) from "each release is a pressing, block on coherence" (on-tag + rare).
 - Payoff (the recommendation logic this unlocks): standup's rec becomes a function of the model, the way `git.workflow_model` overrides Claude's generic branching instincts. On `continuous`/`on-push`/`frequent` → recommend pushing early and often; an unpushed pile is the risk. On `on-tag`/`sprint-based`/`rare` (the baseline's own posture) → a release is a CD pressing: recommend GATING the release on a completeness/coherence audit and REFUSE to recommend cutting while any feature in the unreleased set is half-wired-on-the-disc (shipped-dark but opt-in-broken — e.g. the sprint/org MCP epic whose server isn't in the shipped `.mcp.json` and whose SDK isn't consumer-delivered). This is the release-side twin of the release-readiness audit idea (coherent-disc doctrine): the model tells standup WHICH regime it's in, and the audit is what it gates on in the slow-cadence regime.
 - Design notes (resolve at spec time; do NOT overbuild): standup's `gather.mjs` already reads `.releaserc.json` for the semver bump — the new `release` block complements it (policy vs. mechanism), does not replace it. Keep the recommendation itself in main context per Article II — the helper gathers `release` config + unreleased-set state; the "push / don't push / finish-X-first" judgment is reasoned in main context, not emitted by the helper. Consider a `release.completeness_gate: {enabled, half_wired_blocks_release}` sub-block so the coherent-disc rule is itself configurable rather than hard-coded. Relates to the coherent-disc release-readiness audit discussed in the same session (not yet a backlog key — the audit is a per-release action, this is the standing policy that triggers it).
-- status: open
+- status: picked-up
 - raised-on: 2026-07-10
 - raised-in-context: post-`harden-power-track-debt` standup — the "can we push v0.20.0 with half-baked sprint/org?" discussion
 - source: user-instruction
@@ -167,7 +167,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - last-touched: 2026-07-10
 
 ---
-
+- superseded-at: 2026-07-15
 ## durable-plan-slug-guard-length-cap-low-8b21
 
 > verbatim (assistant, 2026-07-12): "LOW: `assertSafeSlug` has no length bound. `'a'.repeat(5000)` is accepted (verified) — it cannot escape `.claude/state/plan/`, so this is not a traversal; the write just fails later with an unhandled ENAMETOOLONG instead of a clean rejection. The fix is one character: `/^[a-z0-9][a-z0-9-]{0,63}$/`."
@@ -175,7 +175,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - Intent: bound the slug quantifier in `.claude/skills/harness/plan-store.mjs` (`SLUG_RE`) so an over-long slug is refused by the same clean, named error as every other malformed slug, instead of crashing at `writeFileSync` with a low-level `ENAMETOOLONG`.
 - Why it was NOT fixed in its own workflow: found during `durable-plan-slug-guard`'s `/security` phase, which is **read-only by contract**. Folding a code change into a review phase would ship an untested edit past the very phase that exists to catch that. It gets its own failing test.
 - Not exploitable: cannot escape the state directory; the slug is `/triage`-derived today. Pure robustness.
-- status: open
+- status: picked-up
 - raised-on: 2026-07-12
 - raised-in-context: durable-plan-slug-guard (`/security` finding)
 - source: assistant-deferral
@@ -185,7 +185,7 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - caveat: full analysis in `docs/archive/2026-07-12/durable-plan-slug-guard/security.md`. Related: [[slug-path-guards-must-reject-not-normalize-and-three-regex-traps]].
 
 ---
-
+- superseded-at: 2026-07-15
 ## hoist-single-slug-validator-at-third-use-9f4f
 
 > verbatim (assistant, 2026-07-12): "Follow-up chore: hoist a single slug validator once a third caller appears."
@@ -250,3 +250,17 @@ Future-work intent captured automatically by `memory_stop.mjs`. Curated into thi
 - verified-at: 1414f27
 - last-touched: 2026-07-13
 - caveat: related [[memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a]] — same root system. The `"the fix is"` cue firing on ordinary assistant prose is a SEPARATE, deliberate trade (D1: the cue has real recall; several such candidates ARE genuine decisions). Do not conflate the two.
+
+## annotate-test-files-with-covered-acs-c2a1
+
+> verbatim (assistant, 2026-07-15):
+> "That's a genuine (if minor) traceability gap, and the right fix is to annotate each test file with the ACs it covers."
+
+- Intent: Annotate each test file with the acceptance-criteria IDs it covers, so per-test-file AC traceability is explicit in the file rather than inferred through a landmark. Surfaced in `input-half-governance-class`, whose five A1–A5 suites (`governance-class-classifier`, `evidence-ladder`, `discipline-mc-probe`, `approval-provenance`, `skip-brainstorm-class`) map to ACs only via landmark `governance-class-input-half-A1-A5`, not in the test files.
+- status: open
+- raised-on: 2026-07-15
+- raised-in-context: input-half-governance-class
+- source: assistant-deferral
+- estimated-effort: low
+- verified-at: e9f6961
+- last-touched: 2026-07-15
