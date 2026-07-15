@@ -132,9 +132,7 @@
       "Bash(git add -A:*)",
       "Bash(git add .:*)",
       "Edit(.env)",
-      "Edit(.env.*)",
-      "Write(.env)",
-      "Write(.env.*)"
+      "Edit(.env.*)"
     ]
   }
 }

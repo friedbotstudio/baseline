@@ -1,0 +1,57 @@
+{
+  "request": "Remove the inert Write(.env) / Write(.env.*) deny rules from .claude/settings.json (redundant with Edit(...) rules; they trigger a harness dead-rule warning). Config tweak, no project code changes.",
+  "slug": "drop-inert-env-write-rules",
+  "track_id": "chore",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "Edit(.env)/Edit(.env.*) deny rules at .claude/settings.json:134-135 already cover all file-editing tools; the Write(...) variants are inert per the harness dead-rule warning. Removing them aligns to the existing Edit(...) rule pattern.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd",
+    "security",
+    "simplify",
+    "integrate",
+    "document"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "roadmap-sync",
+    "archive",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784094670,
+  "updated_at": 1784094938,
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "diff does not intersect security.sensitive_globs (sensitive-surface.mjs => sensitive:false)",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "simplify",
+      "reason": "diff is 2 removed lines in 1 file; no refactor/duplication trigger",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "integrate",
+      "reason": "settings.json permissions.deny rule, not hook wiring / test surface; removing inert rules is zero behavioral change",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no user-facing prose, count/inventory, new convention, or src/ template touched",
+      "oracle": "chore-conditional"
+    }
+  ]
+}
