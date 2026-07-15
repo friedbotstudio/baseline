@@ -1,0 +1,23 @@
+{
+  "request": "Implement Epic 2 input half — Governance Class classifier A1 through A5 — as a power batch-sprint. Build order A1 → A2/A3/A4/A5.",
+  "slug": "input-half-governance-class",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Roadmap Epic 2 tasks A1-A5 (docs/roadmap-execution-plan.md:48-53); A1 extends already-landed machinery hooks/lib/tier-dial.mjs (decisions.md tier-dial-oracle-floors-2026-06-16). Proposal + done-criteria at .claude/state/sprint/input-half-governance-class/proposal.json.",
+  "track_reason": "User-confirmed power batch of related spec-derived roadmap tickets; velocity.power_mode.enabled=true and git repo satisfy the track preconditions.",
+  "skip_brainstorm": true,
+  "exceptions": ["chore", "cli-copy-review", "intake", "org-dispatch", "research", "scout", "swarm-dispatch", "swarm-plan"],
+  "tickets": [
+    { "id": "A1", "title": "Governance Class classifier extending the tier dial", "done_record": "Blast-radius → Class floor inside hooks/lib/tier-dial.mjs; read by checker fan-out; raise-only, never lower below floor.", "surface": ".claude/hooks/lib/tier-dial.mjs" },
+    { "id": "A2", "title": "Evidence-shape ladder keyed by Class", "done_record": "Class → evidence shape ladder (D authorize / C understanding / B +reasoning / A +alternatives,tradeoffs,confidence); shape only, never duration/word-count/authorship (D3).", "surface": "evidence-shape ladder + gate-A spec review" },
+    { "id": "A3", "title": "discipline.mjs forbids multiple-choice on load-bearing probes", "done_record": "scanTurn extended to forbid multiple-choice on load-bearing probes in addition to the solution-proposing ban.", "surface": ".claude/skills/brainstorm/discipline.mjs" },
+    { "id": "A4", "title": "approve-spec marker generated FROM a provenance-anchored ledger entry", "done_record": "/approve-spec marker generated from an evidence-ledger entry; scope /approve-spec ONLY; /grant-commit + /approve-swarm unchanged. Retrofit, not greenfield.", "surface": "consent_gate_grant + spec_approval_guard + evidence-ledger" },
+    { "id": "A5", "title": "Class-drive skip_brainstorm", "done_record": "workflow.json skip_brainstorm derived from Class: D skips; A/B cannot.", "surface": "triage flag-parser resolveSkipBrainstorm" }
+  ],
+  "roadmap_tasks": ["E2-A1", "E2-A2", "E2-A3", "E2-A4", "E2-A5"],
+  "completed": ["spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784115730,
+  "updated_at": 1784116050
+}
