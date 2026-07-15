@@ -39,7 +39,7 @@ Standing policy and the periphery amendments. All landed; kept here for the reco
 - ✅ F4. Research retrieve-first — `research/retrieve.mjs` grounds the memo in fetched docs rather than training-data recall.
 - ✅ F5. YAGNI positive-purpose reframe (Article VI.4) — YAGNI gates speculation beyond the approved spec; it never authorizes deferring spec-committed scope.
 
-## Epic 2 — Input half: the bar gets set  ⬜  (input)
+## Epic 2 — Input half: the bar gets set  🟡  (input)
 
 Thin human input yields a thin spec, and a thin spec passes every downstream gate. This epic makes
 authorization mean demonstrated understanding plus risk acceptance (Decision Ledger #0002), then
@@ -50,7 +50,7 @@ encodes that bar in the spec artifact so the enforcement half has something real
 - ⬜ A3. `discipline.mjs` — extend `scanTurn` to forbid multiple-choice on load-bearing probes, in addition to the existing ban on proposing solutions. A click is the weakest provenance rung; open questions are what upgrade it to a cognition trace.
 - ⬜ A4. Retrofit the `/approve-spec` marker to be GENERATED FROM a provenance-anchored ledger entry, not written alongside one. Scope is the `/approve-spec` gate ONLY — `/grant-commit` and `/approve-swarm` stay direct authorization (Ledger #0002: "Alpha is a retrofit, not a greenfield").
 - ⬜ A5. Class-drive `workflow.json → skip_brainstorm` — Class D skips; Class A and B cannot.
-- ⬜ B1. Spec quality floor — upgrade `spec_design_calls_guard`, `/spec-lint`, and the `/spec` template from "a Design calls section is populated" to "a reference target and quality acceptance criteria are present" for any spec whose `write_set` intersects `tdd.ui_globs`. The reference target IS the rubric C4 scores against; this is the hand-off point between input and enforcement.
+- ✅ B1. Spec quality floor — upgrade `spec_design_calls_guard`, `/spec-lint`, and the `/spec` template from "a Design calls section is populated" to "a reference target and quality acceptance criteria are present" for any spec whose `write_set` intersects `tdd.ui_globs`. The reference target IS the rubric C4 scores against; this is the hand-off point between input and enforcement.
 
 ## Epic 3 — Enforcement half: the bar gets enforced  🟡  (enforce)
 

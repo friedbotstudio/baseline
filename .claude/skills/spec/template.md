@@ -212,11 +212,16 @@ Every entry must be confirmed against current docs — no training-data recall f
 
 When this spec's `write_set` intersects `project.json → tdd.ui_globs`, every UI surface needs a design call here. `/tdd` Step 6 reads each row, serializes it to a `task_brief`, and invokes `Skill(design-ui, task_brief)` once per row. design-ui then routes through `impeccable` for the actual design work.
 
-If the write_set has no UI files, leave the section body as `*(none)*` — the required heading must still be present per `project.json → artifacts.required_sections.spec`. `spec_design_calls_guard` only fires (denies the write) when both conditions hold: write_set intersects ui_globs AND the section body is missing or empty.
+Every UI-surface row MUST declare two load-bearing cells (roadmap B1 quality floor):
 
-| Slug | Intent | Target files | Write set | Register | References |
-|---|---|---|---|---|---|
-| settings-page | build a settings page that doesn't feel like a SaaS template | `app/settings/page.tsx` | `app/settings/**` | inherit | — |
+- **Reference target** — the concrete rubric anchor the rendered surface is scored against: a URL, a committed mock/screenshot path (`docs/design/*.png`), a design-system component id, or a Figma frame. This is what the C4 design-judge captures-and-compares against, so it must be resolvable — not "make it look good".
+- **Quality criteria** — one or more measurable, scoreable acceptance bars for the surface (layout-fidelity tolerance, contrast level, responsive breakpoints, motion budget, CLS ceiling). Each must be an observable property a judge can score, semicolon-separated.
+
+If the write_set has no UI files, leave the section body as `*(none)*` — the required heading must still be present per `project.json → artifacts.required_sections.spec`. `spec_design_calls_guard` only fires (denies the write) when `write_set` intersects `tdd.ui_globs`; when it fires, every row needs a populated Reference target and Quality criteria (the shared `hooks/lib/design-calls.mjs` rule, applied identically by the guard and `/spec-lint`).
+
+| Slug | Intent | Target files | Write set | Register | Reference target | Quality criteria |
+|---|---|---|---|---|---|---|
+| settings-page | build a settings page that doesn't feel like a SaaS template | `app/settings/page.tsx` | `app/settings/**` | inherit | `https://ref.figma.com/settings-v3` (or `docs/design/settings.png`) | layout matches reference ±5% spacing; text contrast ≥ WCAG AA; responsive at 360/768/1280; no CLS > 0.1 |
 
 For specs with no UI surface:
 

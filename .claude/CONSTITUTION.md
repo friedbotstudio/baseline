@@ -250,7 +250,7 @@ Design / development / copy are separate concerns: design lives behind `design-u
 
 | Rule | Binding |
 |---|---|
-| A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section, one row per design surface. | `spec_design_calls_guard` (Art. VIII) at the Write boundary; `/spec-lint` at preflight. |
+| A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a `## Design calls` section, one row per design surface, each row carrying a Reference target (the C4 design-judge rubric) and Quality criteria (roadmap B1 quality floor). | `spec_design_calls_guard` (Art. VIII) at the Write boundary; `/spec-lint` at preflight. Shared rule lib: `.claude/hooks/lib/design-calls.mjs`. |
 | `/tdd` Step 6 SHALL invoke `Skill(design-ui, task_brief)` once per `## Design calls` row before Step 7 (verify). | `tdd` skill SOP. |
 | `design-ui` SHALL NOT write product code. Its only writes are the state file at `.claude/state/design/<slug>.json`, snapshots under `docs/design/<slug>.*.md`, and memory candidates. The product-code writes happen inside `impeccable` invocations. | `design-ui` SKILL.md. |
 | `design-ui` SHALL classify incoming intents at Stage 0 (design / development / copy). A misrouted intent returns one of two terminal states: `final_state: "not_a_design_task"` (single-lane misroute) with `correct_lane`, OR `final_state: "mixed_brief"` (multi-lane misroute) with a structured `lane_split` array. Neither writes code. | `design-ui` Stage 0 + `references/design-vs-development.md`. |

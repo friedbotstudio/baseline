@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
+import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -173,15 +174,15 @@ function checkDesignCalls(spec, pj) {
     return ['SKIP', `no UI files in write_set (${writeSetPaths.size} paths checked)`];
   }
 
-  const dcMatch = spec.match(/^##\s+Design\s+calls\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/im);
-  if (!dcMatch) {
-    return ['FAIL', `write_set has UI files (${uiHits.sort().join(', ')}) but no \`## Design calls\` section`];
+  // Validate via the shared lib — the same rule the write-boundary guard applies.
+  const section = parseDesignCalls(spec);
+  if (section.isNone || section.rows.length === 0) {
+    return ['FAIL', `write_set has UI files (${uiHits.sort().join(', ')}) but no populated \`## Design calls\` section`];
   }
-  const body = dcMatch[1].trim();
-  const hasTableRow = /^\|[^|\n]+\|[^|\n]+\|/m.test(body);
-  const isNoneMarker = /^\s*-?\s*\*?\(?none\)?\*?\s*$/im.test(body);
-  if (!hasTableRow || isNoneMarker) {
-    return ['FAIL', `write_set has UI files (${uiHits.sort().join(', ')}) but Design calls section is empty / \`*(none)*\``];
+  const defects = findRowDefects(section);
+  if (defects.length) {
+    const detail = defects.map(d => `row '${d.slug}' missing ${d.missing.join(', ')}`).join('; ');
+    return ['FAIL', `Design calls incomplete: ${detail}`];
   }
   return ['PASS', `${uiHits.length} UI path(s) match design_calls rows`];
 }

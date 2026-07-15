@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // Spec Design Calls Guard — PreToolUse(Write|Edit|MultiEdit)
 //
-// When a spec's write_set intersects `project.json → tdd.ui_globs`, the spec
-// MUST declare a `## Design calls` section with at least one populated row.
+// When a spec's write_set intersects `project.json → tdd.ui_globs`, every
+// `## Design calls` row MUST declare a populated Reference target (the C4
+// design-judge rubric) and Quality criteria (roadmap B1 quality floor). The
+// rule lives in the shared lib/design-calls.mjs so spec-lint applies it too.
 //
 // Conditional firing:
 //   - SKIP (allow): tdd.ui_globs empty or missing.
 //   - SKIP (allow): write_set ∩ ui_globs is empty (no UI files in the spec).
-//   - DENY: write_set has UI files AND no `## Design calls` section / empty body.
-//   - ALLOW: write_set has UI files AND `## Design calls` has a populated row.
+//   - DENY: write_set has UI files AND (no populated `## Design calls` section
+//           OR any row missing Reference target / Quality criteria).
+//   - ALLOW: write_set has UI files AND every row carries both fields.
 
 import { basename, relative } from 'node:path';
 import {
@@ -20,6 +23,7 @@ import {
   emitBlock,
   computeProposedContent,
 } from './lib/common.mjs';
+import { parseDesignCalls, findRowDefects } from './lib/design-calls.mjs';
 
 const payload = await readPayload();
 
@@ -89,26 +93,29 @@ for (const line of content.split(/\r?\n/)) {
 const uiHits = [...writeSetPaths].filter((p) => matchesAnyGlob(p, uiGlobs));
 if (uiHits.length === 0) emitAllow();
 
-// Find the `## Design calls` section and verify it has a populated row.
-const dc = /^##\s+Design\s+calls\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(content);
-const body = dc ? dc[1].trim() : '';
+// Validate the `## Design calls` section via the shared lib (single source of
+// the quality-floor rule, shared with spec-lint so they never diverge).
+const section = parseDesignCalls(content);
+const sorted = [...uiHits].sort();
 
-function isPopulated(text) {
-  const rows = text.split(/\r?\n/).filter((ln) => /^\s*\|/.test(ln) && !/^\s*\|[\s:-]+\|/.test(ln));
-  if (rows.length < 2) return false;
-  return rows.slice(1).some((r) => {
-    const cleaned = r.replace(/^\s*\|/, '').replace(/\|\s*$/, '').trim();
-    return !/^-?\s*\*?\(?none\)?\*?\s*$/i.test(cleaned);
-  });
+if (section.isNone || section.rows.length === 0) {
+  emitBlock([
+    `Spec Design Calls Guard: '${rel}' has UI files in its write_set but lacks a populated \`## Design calls\` section.`,
+    `  UI files detected: ${sorted.join(', ')}`,
+    '  The `## Design calls` section is required when the spec\'s write_set intersects `project.json → tdd.ui_globs`.',
+    '  Each row needs a populated Reference target (the C4 design-judge rubric) and Quality criteria.',
+    '  See `.claude/skills/spec/template.md` for the canonical Design calls table shape.',
+    '  See CLAUDE.md Article X.2 for the routing rule.',
+  ].join('\n'));
 }
 
-if (dc && isPopulated(body)) emitAllow();
+const defects = findRowDefects(section);
+if (defects.length === 0) emitAllow();
 
-const sorted = [...uiHits].sort();
 emitBlock([
-  `Spec Design Calls Guard: '${rel}' has UI files in its write_set but lacks a populated \`## Design calls\` section.`,
+  `Spec Design Calls Guard: '${rel}' has UI files in its write_set but its \`## Design calls\` rows are incomplete.`,
   `  UI files detected: ${sorted.join(', ')}`,
-  '  The `## Design calls` section is required when the spec\'s write_set intersects `project.json → tdd.ui_globs`.',
+  ...defects.map((d) => `  row '${d.slug}' missing: ${d.missing.join(', ')}`),
+  '  Every UI-surface row needs a populated Reference target (the C4 design-judge rubric) and Quality criteria.',
   '  See `.claude/skills/spec/template.md` for the canonical Design calls table shape.',
-  '  See CLAUDE.md Article X.2 for the routing rule.',
 ].join('\n'));

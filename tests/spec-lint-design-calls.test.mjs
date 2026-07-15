@@ -82,7 +82,7 @@ A -> A : x
   ].join('\n\n');
 
   const designCallsSection = includeDesignCalls
-    ? `\n## Design calls\n\n| Slug | Intent | Target files | Write set | Register | References |\n|---|---|---|---|---|---|\n| fixture-call | build a fixture surface | ${writeSetPath} | ${writeSetPath} | inherit | — |\n`
+    ? `\n## Design calls\n\n| Slug | Intent | Target files | Write set | Register | Reference target | Quality criteria |\n|---|---|---|---|---|---|---|\n| fixture-call | build a fixture surface | ${writeSetPath} | ${writeSetPath} | inherit | https://ref.example/fixture.png | contrast >= AA; layout matches ref +-5% |\n`
     : '';
 
   return `# Spec — fixture

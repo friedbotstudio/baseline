@@ -1,0 +1,45 @@
+{
+  "request": "Spec quality floor (roadmap B1): upgrade spec_design_calls_guard, /spec-lint, and the /spec template so any spec whose write_set intersects tdd.ui_globs must declare a reference target AND quality acceptance criteria, not merely a populated 'Design calls' section. The reference target is the rubric the C4 design-judge scores rendered UI against.",
+  "slug": "spec-quality-floor",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "roadmap-execution-plan.md Epic 2 B1 (head of critical path); upgrades spec_design_calls_guard.mjs, spec-lint/lint.mjs, spec/template.md. spec-entry selector hint: 'spec-derived feature from a roadmap or backlog entry'.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784096586,
+  "updated_at": 1784100112,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "roadmap_tasks": [
+    "E2-B1"
+  ]
+}

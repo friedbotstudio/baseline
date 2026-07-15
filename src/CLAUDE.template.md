@@ -210,7 +210,7 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `artifact_template_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV | Block artifact writes missing required `##` sections |
 | `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true. |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
-| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. XI.2 | Block UI-touching specs missing a populated `## Design calls` section |
+| `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. XI.2 | Block UI specs whose `## Design calls` rows lack a Reference target/Quality criteria |
 | `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |
 | `tdd_order_guard` | PreToolUse / Write | Art. VI.4 | Require test before new source file |
 | `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
@@ -265,7 +265,7 @@ The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dash
 
 ### XI.2 Design-task routing
 
-Every UI design task inside a workflow phase SHALL route through `design-ui`, which invokes `impeccable` for the design move; `design-ui` SHALL NOT write product code. Design / development / copy are separate concerns (copy → XI.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a populated `## Design calls` section (enforced by `spec_design_calls_guard`, Art. VIII, and `/spec-lint`); `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` per row. Full rule table: `.claude/CONSTITUTION.md §5.2` (annex).
+Every UI design task inside a workflow phase SHALL route through `design-ui`, which invokes `impeccable` for the design move; `design-ui` SHALL NOT write product code. Design / development / copy are separate concerns (copy → XI.1 + the `prose` skill). A spec whose `write_set` intersects `project.json → tdd.ui_globs` SHALL declare a `## Design calls` section whose rows each carry a Reference target and Quality criteria (enforced by `spec_design_calls_guard`, Art. VIII, and `/spec-lint`); `/tdd` Step 6 invokes `Skill(design-ui, task_brief)` per row. Full rule table: `.claude/CONSTITUTION.md §5.2` (annex).
 
 ---
 
