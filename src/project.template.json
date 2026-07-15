@@ -201,6 +201,17 @@
     "protected_branches": null,
     "branch_pattern": null
   },
+  "release": {
+    "cicd_model": "none",
+    "release_branch": "main",
+    "release_trigger": "manual",
+    "release_cycle": "manual",
+    "consumer_upgrade_cadence": "rare",
+    "completeness_gate": {
+      "enabled": false,
+      "half_wired_blocks_release": false
+    }
+  },
   "swarm": {
     "max_parallel": 4,
     "granularity": "component",

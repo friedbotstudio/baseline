@@ -30,6 +30,15 @@ It prints a JSON `StandupRecap` (`release`, `backlog`, `pendingQuestions`, `degr
 
 Per CLAUDE.md Article II, decisions live in main context. The helper only **gathers** the mechanical recap; it does not pick what to build next. After reading the helper's JSON, the recommendation — the single suggested next pickup and its one-line rationale (smallest unblocker first) — is reasoned out **in main context**, not emitted by the helper. The session-start surface (the `memory_session_start` hook) shows only the compact mechanical recap plus a pointer back to `/standup`; the full judgment recommendation is on-demand here.
 
+### Release-model-aware recommendation (AC-303)
+
+When `gatherSync` surfaces a `releaseModel` (from `project.json → release`), the "can this unreleased pile ship?" judgment becomes **regime-aware** — the model tells main context which regime it is in, the way `git.workflow_model` overrides generic branching instincts:
+
+- **`release_trigger: on-push` / `release_cycle: continuous` / `consumer_upgrade_cadence: frequent`** → recommend **pushing early and often**; an unpushed pile is the risk. Fix-forward is cheap.
+- **`release_trigger: on-tag`|manual / `release_cycle: sprint-based`|manual / `consumer_upgrade_cadence: rare`** → a release is a CD pressing: recommend **gating the cut on a completeness/coherence audit**. When `release.completeness_gate.half_wired_blocks_release` is true, do **not** recommend cutting while any feature in the unreleased set is half-wired-on-the-disc (shipped-dark but opt-in-broken).
+
+A `no-release-model` marker in `degraded` means no policy is declared — fall back to the pre-model behavior (report the semver bump from `.releaserc` and let the human decide). The judgment stays in main context (Article II); `collectReleaseModel` only surfaces the config.
+
 ## Constraints
 
 - **Read-only.** Reads git, `.releaserc.json`, `CHANGELOG.md`, and the memory files. Writes nothing.

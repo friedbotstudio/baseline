@@ -255,6 +255,17 @@
     "protected_branches": null,
     "branch_pattern": null
   },
+  "release": {
+    "cicd_model": "github-actions",
+    "release_branch": "main",
+    "release_trigger": "on-push",
+    "release_cycle": "continuous",
+    "consumer_upgrade_cadence": "rare",
+    "completeness_gate": {
+      "enabled": true,
+      "half_wired_blocks_release": true
+    }
+  },
   "swarm": {
     "max_parallel": 4,
     "granularity": "component",

@@ -20,10 +20,11 @@ export function gatherSync({ rootDir, now } = {}) {
   void now; // accepted for caller symmetry; never read — keeps the core clock-free.
   const degraded = [];
   const release = collectRelease(rootDir, degraded);
+  const releaseModel = collectReleaseModel(rootDir, degraded);
   const backlog = collectBacklog(rootDir, degraded);
   const pendingQuestions = collectPendingQuestions(rootDir, degraded);
   const roadmap = collectRoadmap(rootDir, degraded);
-  return { release, backlog, pendingQuestions, roadmap, degraded };
+  return { release, releaseModel, backlog, pendingQuestions, roadmap, degraded };
 }
 
 // Async façade for callers that await (the CLI, tests, on-demand /standup).
@@ -31,6 +32,27 @@ export function gatherSync({ rootDir, now } = {}) {
 // an async signature through buildIndex (and its tests).
 export async function gather(opts = {}) {
   return gatherSync(opts);
+}
+
+// ---- Domain: release model (policy) ------------------------------------
+// The declared release POLICY (project.json → release), distinct from the release
+// MECHANISM in collectRelease (git tags + .releaserc rules). Lenient read mirroring
+// roadmapPathFor: any absence — no config, no `release` key, malformed json — yields
+// null + a `no-release-model` degraded marker, never a throw. The regime-aware
+// recommendation is reasoned in main context (/standup SKILL, Article II); this only
+// surfaces the config.
+export function collectReleaseModel(rootDir, degraded) {
+  const raw = readFileSafe(join(rootDir, '.claude/project.json'));
+  if (raw) {
+    try {
+      const release = JSON.parse(raw).release;
+      if (release && typeof release === 'object') return release;
+    } catch {
+      /* fall through to degraded */
+    }
+  }
+  degraded.push('no-release-model');
+  return null;
 }
 
 // ---- Domain: release ---------------------------------------------------
