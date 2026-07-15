@@ -26,8 +26,16 @@ export function validateNoveltyRecord({ novelty, novelty_evidence, track_id, lea
   return { valid: true, reason: null };
 }
 
-export function resolveSkipBrainstorm({ novelty, complete_framing, no_brainstorm_flag } = {}) {
+export function resolveSkipBrainstorm({ novelty, complete_framing, no_brainstorm_flag, governanceClass } = {}) {
+  // A5 (roadmap Epic 2) — the Governance Class is a hard floor on rigor. Class A
+  // and B can NEVER skip brainstorm, and that floor overrides even an explicit
+  // --no-brainstorm (mirrors A1's raise-only rule: a convenience flag cannot
+  // lower a top-class change below its floor). Checked FIRST so nothing beneath
+  // it can re-enable the skip.
+  if (governanceClass === 'A' || governanceClass === 'B') return false;
   if (no_brainstorm_flag === true) return true;
+  // Class D always skips; Class C / undefined fall through to novelty (unchanged).
+  if (governanceClass === 'D') return true;
   if (novelty === 'spec-derived' || novelty === 'pattern-copy') return true;
   if (novelty === 'novel') return complete_framing === true;
   return false;
