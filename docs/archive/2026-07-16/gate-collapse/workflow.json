@@ -1,0 +1,47 @@
+{
+  "request": "D3 gate-collapse (CO-E) — fold the three human consent gates into two higher-signal ones: approve-direction (intake + reference target) and approve-landing (commit), preserving the provenance-anchored, forge-proof consent property. Class-A consent-flow restructuring; amends Article IV gate sequence + requires seed.md amendment. Depends on A4 (provenance-anchored approve-spec) and D1 (notifier), both landed.",
+  "slug": "gate-collapse",
+  "track_id": "intake-full",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/handoff/velocity-notifier-and-gate-collapse.md CO-E section (outcome + 4 ACs + constraints); roadmap Epic 4 D3 / handoff CO-E ledger row (line 185, unblocked — both deps landed).",
+  "track_reason": "Class-A consent-flow restructuring amending Article IV (gate sequence) and requiring a seed.md amendment first (Art. I.4 precedence) — the highest-blast-radius machinery in the system; the full discovery pipeline is warranted despite spec-derived novelty.",
+  "skip_brainstorm": false,
+  "exceptions": [
+    "chore",
+    "org-dispatch",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-spec",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784190635,
+  "updated_at": 1784206837,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "roadmap_tasks": [
+    "E4-D3"
+  ]
+}
