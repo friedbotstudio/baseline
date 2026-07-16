@@ -227,13 +227,13 @@ const ACTIVE_FORM_OVERRIDES = Object.freeze({
 });
 
 const CONSENT_GATE_SUBJECTS = Object.freeze({
-  'approve-spec': 'Wait for /approve-spec <path>',
+  'approve-direction': 'Wait for /approve-direction <path>',
   'grant-commit': 'Wait for /grant-commit',
   'approve-swarm': 'Wait for /approve-swarm <slug>',
 });
 
 const CONSENT_GATE_ACTIVE_FORMS = Object.freeze({
-  'approve-spec': 'Awaiting spec approval',
+  'approve-direction': 'Awaiting direction approval',
   'grant-commit': 'Awaiting commit consent',
   'approve-swarm': 'Awaiting swarm approval',
 });

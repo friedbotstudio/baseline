@@ -13,7 +13,7 @@
 const CONSENT_PATTERNS = [
   /_consent\b/,
   /\.approval$/,
-  /spec_approval_guard/,
+  /direction_approval_guard/,
   /swarm_approval_guard/,
   /epic_approval_guard/,
   /consent_gate_grant/,

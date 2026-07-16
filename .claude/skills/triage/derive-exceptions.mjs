@@ -19,12 +19,12 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Excepting `approve-spec` would let track_guard authorise tdd artifact writes with
-// NO approval token on disk. Nothing in workflows.jsonl requires a track to declare
-// an approve-spec node, so a lean or malformed track would silently reach that state.
-// Fail CLOSED: a missing gate node is a malformed track, never a licence to skip the
-// gate.
-export const CONSENT_DENY_LIST = Object.freeze(['approve-spec', 'approve-swarm', 'grant-commit', 'commit']);
+// Excepting `approve-direction` would let track_guard authorise tdd artifact writes
+// with NO approval token on disk. Nothing in workflows.jsonl requires a track to
+// declare an approve-direction node, so a lean or malformed track would silently
+// reach that state. Fail CLOSED: a missing gate node is a malformed track, never a
+// licence to skip the gate.
+export const CONSENT_DENY_LIST = Object.freeze(['approve-direction', 'approve-swarm', 'grant-commit', 'commit']);
 
 export function deriveExceptions(trackNodes, allPhases, internalPhases = [], authored = []) {
   if (!Array.isArray(trackNodes)) {

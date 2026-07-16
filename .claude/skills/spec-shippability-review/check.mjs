@@ -15,8 +15,9 @@ import { collectShellFences, runDevTreeAndUnshippedChecks } from './analyzer.mjs
 
 // AC-007 — backward-compat for per-spec report shape. After the analyzer.mjs
 // extraction, this module still emits the same { slug, spec_path, verdict,
-// generated_at, findings[] } shape so spec_approval_guard.sh continues to read
-// per-slug reports unchanged. The aggregate scan-shipped-skills.mjs writes to
+// generated_at, findings[] } shape so pre-implementation-gate continues to read
+// per-slug reports unchanged (the BLOCKED cross-check moved there — gate-collapse D-6).
+// The aggregate scan-shipped-skills.mjs writes to
 // a different key (shipped-skills.json) and does not collide.
 
 const WRITE_SET_LINE_RE = /^[\s|*-]*([./][\w./-]+\.(?:py|mjs|js|sh|md|json))\s*(?:\||$)/gm;

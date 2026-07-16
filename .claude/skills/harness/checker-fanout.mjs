@@ -38,9 +38,10 @@ export function assertFanoutAllowed({ mode, amendmentPresent }) {
 }
 
 // The extension point: checker name -> { phase, run(ctx) -> { findings } }. Each entry
-// carries a `phase` tag — the spec-review subset runs before approve-spec (the gate-A
-// projection), the code-review subset runs at the integrate boundary (a parallel
-// projection). spec-lint / spec-shippability adapters are deferred (-d186).
+// carries a `phase` tag — the spec-review subset runs after the spec and before
+// implementation (its verdict is read by pre-implementation-gate — gate-collapse D-6),
+// the code-review subset runs at the integrate boundary (a parallel projection).
+// spec-lint / spec-shippability adapters are deferred (-d186).
 export const DEFAULT_CHECKER_REGISTRY = {
   'spec-diagram': { phase: 'spec-review', run: (ctx) => runDiagramOracle(ctx.specContent) },
   'spec-traceability': {
@@ -76,10 +77,11 @@ export function mirrorVerdictToPlan(rootDir, slug, merged) {
 }
 
 /**
- * Persist the merged verdict. The spec-review phase writes the CANONICAL gate-A projection
- * at .claude/state/checker-fanout/<slug>.json (read by spec_approval_guard). The code-review
+ * Persist the merged verdict. The spec-review phase writes the CANONICAL projection
+ * at .claude/state/checker-fanout/<slug>.json (read by pre-implementation-gate.mjs, which
+ * gates implementation entry on a BLOCKED verdict — gate-collapse D-6). The code-review
  * phase writes a SEPARATE projection at .claude/state/checker-fanout-code/<slug>.json — it is
- * never allowed to touch the gate-A path. The durable-plan mirror rides the gate-A path only.
+ * never allowed to touch the spec-review path. The durable-plan mirror rides that path only.
  */
 function persistVerdict(rootDir, slug, merged, phase) {
   const dir = phase === 'code-review' ? 'checker-fanout-code' : 'checker-fanout';
@@ -87,8 +89,8 @@ function persistVerdict(rootDir, slug, merged, phase) {
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(merged, null, 2)}\n`);
   if (phase === 'code-review') return;
-  // The projection above is canonical for spec_approval_guard; the durable-plan mirror is
-  // best-effort. A failed mirror write must never take gate A's verdict down with it, so it
+  // The projection above is canonical for pre-implementation-gate; the durable-plan mirror is
+  // best-effort. A failed mirror write must never take the spec-review verdict down with it, so it
   // is isolated here — but reported, so a persistently broken mirror stays visible.
   try {
     mirrorVerdictToPlan(rootDir, slug, merged);
