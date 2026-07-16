@@ -1,10 +1,10 @@
-// A4 (roadmap Epic 2) — derive the /approve-spec token FROM a provenance-anchored
+// A4 (roadmap Epic 2) — derive the /approve-direction token FROM a provenance-anchored
 // evidence-ledger entry, rather than writing a bare token alongside one.
 //
 // The consent marker (written outside Claude by consent_gate_grant) remains the
 // sole source of human consent; this ADDS a provenance anchor so the token
 // attests which Governance Class, evidence verdict, and spec content it was
-// granted against. Scope: the /approve-spec gate only.
+// granted against. Scope: the /approve-direction gate only.
 //
 // verifyApprovalAnchor lives in the hook lib so the guard and this skill share
 // one implementation; it is re-exported here for the harness-side approve-spec

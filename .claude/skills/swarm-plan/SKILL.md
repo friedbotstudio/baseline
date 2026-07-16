@@ -6,7 +6,7 @@ description: Decompose an approved spec into a dependency-ordered swarm plan —
 
 # swarm-plan — Phase 5.5: decompose for parallel execution
 
-Invoked after `/approve-spec` and before `/tdd` on any spec that has ≥3 independent components worth parallelizing (per `project.json → swarm.min_tasks_worth_swarming`). For smaller specs, skip swarm and go straight to `/tdd` solo.
+Invoked after `/approve-direction` and before `/tdd` on any spec that has ≥3 independent components worth parallelizing (per `project.json → swarm.min_tasks_worth_swarming`). For smaller specs, skip swarm and go straight to `/tdd` solo.
 
 **Post-§18 amendment.** Beyond the canonical `.claude/state/swarm/<slug>.json` plan, swarm-plan ALSO emits a runtime sub-track overlay at `.claude/state/swarm/<slug>.jsonl` (JSONL) when the chosen workflow track contains a selector node whose `swarm-implementation` alternate is chosen. The overlay's single line is a transient Track record with `selectable: false`, `track_id: "swarm-runtime-<slug>"`, and `nodes[]` enumerating the swarm-worker dispatches as `can_parallel: true` peers. The harness reloads runtime overlays from `.claude/state/swarm/*.jsonl` at the same time it reads `.claude/workflows.jsonl`, so the runtime Track set is the union. The overlay is deleted by `/archive` along with the rest of the workflow's swarm state.
 

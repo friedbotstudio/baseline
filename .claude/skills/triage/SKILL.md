@@ -66,7 +66,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
 
    Two things are **never** excepted:
 
-   - **`CONSENT_DENY_LIST`** = `approve-spec`, `approve-swarm`, `grant-commit`, `commit`. Fail-closed. Nothing in `workflows.jsonl` *requires* a track to declare an `approve-spec` node, so a naive derivation would auto-except **gate A** — and `track_guard` would then authorise `tdd` artifact writes with no approval token on disk. A missing gate node means the track is malformed, never that the gate may be skipped.
+   - **`CONSENT_DENY_LIST`** = `approve-direction`, `approve-swarm`, `grant-commit`, `commit`. Fail-closed. Nothing in `workflows.jsonl` *requires* a track to declare an `approve-direction` node, so a naive derivation would auto-except **gate A** — and `track_guard` would then authorise `tdd` artifact writes with no approval token on disk. A missing gate node means the track is malformed, never that the gate may be skipped.
    - **A track's `internal_phases[]`** — conditionals the track's own skill resolves at runtime into `completed` (it ran) or `exceptions` (its trigger did not fire). At triage time the diff does not exist yet, so derivation cannot pre-judge them.
 
    The `track_id` value is the `track_id` field of the Track you picked in step 5c above (one of `intake-full`, `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, OR a project-declared selectable Track from `.claude/workflows.jsonl`). The legacy pre-§18 field `entry_phase` is NOT written — downstream skills (intake / tdd / chore / harness) read `track_id` directly. Pre-§18 workflow.json files (those that still carry `entry_phase`) are auto-migrated by harness preflight Step 3a via the shipped `.claude/skills/harness/workflow-migrator.js` mirror (synced from `src/cli/workflow-migrator.js` at build time by `scripts/build-template.sh` Stage 0b).
@@ -94,7 +94,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
 
    **Reference: canonical track shapes.** The selectable tracks (chore, tdd-quickfix, spec-entry, intake-full, freeform) and the two sub-tracks are declared authoritatively in `.claude/workflows.jsonl` — one Track per line, each with its node DAG (`nodes[]` with `id`, `depends_on`, `metadata.phase`, `needs_user`). That file is the single source of the canonical track shapes; read it directly rather than relying on a prose copy here (the prior duplicated templates were removed in WF-5 to prevent drift). The materializer (`track-tasklist-materializer.js`) renders the same DAGs into the TaskList. Non-git projects: `commit`-bearing tracks auto-except `grant-commit`, `commit` (and intake-full's swarm branch) per the Non-git note above.
 
-   For every task: `subject` is imperative ("Run /scout for <slug>" / "Wait for /approve-spec <path>"); `description` names the phase + the slug; `metadata.phase` carries the phase name; consent-gate tasks set `metadata.needs_user: true`. Wire `addBlockedBy` so each task blocks until its predecessor completes — this surfaces the workflow's true dependency graph and prevents `/harness` from racing past a gate.
+   For every task: `subject` is imperative ("Run /scout for <slug>" / "Wait for /approve-direction <path>"); `description` names the phase + the slug; `metadata.phase` carries the phase name; consent-gate tasks set `metadata.needs_user: true`. Wire `addBlockedBy` so each task blocks until its predecessor completes — this surfaces the workflow's true dependency graph and prevents `/harness` from racing past a gate.
 
 6. Tell the user the next concrete step to run: e.g. `/intake`, `/spec`, `/tdd`, `/chore`, or `/harness` to autopilot.
 
@@ -109,7 +109,7 @@ After writing `workflow.json` (track_id `epic`) and seeding the TaskList, **prop
 1. Decompose the feature into separable slices (each a future child, each owning a disjoint set of acceptance criteria). Aim for ≥ `project.json → epic.min_slices`. Present the proposed slice list via `AskUserQuestion` (the user may merge/split). Do **not** design solutions — slices are scoping units, not implementations.
 2. For each slice, assess `risk[]` from its scope using the seed §18.9 escalation table — `security` (auth / IO boundary / untrusted-input parsing / a path under `project.json → security.sensitive_globs`), `simplify` (spans > 1 layer or > `simplify.min_files` files), `document` (public API / CLI / `docs/**` change). Record the flags; they drive each child's review escalation later.
 3. Write `.claude/state/epic/<slug>.json` with `epic`, the three discovery artifact paths (`spec`/`scout`/`research` at `docs/.../<slug>.md`), `slices[]` (`{id, title, acs, risk}`), `approved: false`, `children: []`, and timestamps. The file is gitignored runtime state.
-4. The epic's `/approve-spec` (gate A) covers **all** slices — there is no per-slice approval. The `approved` flag flips to `true` when the epic's `approve-spec` phase completes (the harness does this post-gate; never set it yourself ahead of the real consent).
+4. The epic's `/approve-direction` (gate A) covers **all** slices — there is no per-slice approval. The `approved` flag flips to `true` when the epic's `approve-direction` phase completes (the harness does this post-gate; never set it yourself ahead of the real consent).
 
 `/spec`, on an `epic` track, reads `slices[]` and writes one `## Slice <id>` section per slice (see the spec skill).
 
@@ -118,7 +118,7 @@ After writing `workflow.json` (track_id `epic`) and seeding the TaskList, **prop
 Only selectable when an `.claude/state/epic/*.json` with `approved: true` is active. For the matched open slice:
 
 1. Write `workflow.json` (track_id `epic-child`) with `epic: "<epic-slug>"`, `slice: "<id>"`, and `pinned_artifacts: {scout, research, spec}` — the spec pin carries the `#slice-<id>` fragment (e.g. `docs/specs/<epic>.md#slice-A`).
-2. Set `exceptions` to the inherited discovery phases (`intake`, `scout`, `research`, `spec`, `approve-spec`) **plus** `simplify` / `security` / `document` **unless** the slice's `risk[]` escalates one — an escalated phase is left OUT of `exceptions` (so it runs) and the reason is recorded in `completed_notes`. `track_guard` will refuse every write until the named epic is `approved: true` and the pins resolve, so a child can never skip discovery without a real approved epic behind it.
+2. Set `exceptions` to the inherited discovery phases (`intake`, `scout`, `research`, `spec`, `approve-direction`) **plus** `simplify` / `security` / `document` **unless** the slice's `risk[]` escalates one — an escalated phase is left OUT of `exceptions` (so it runs) and the reason is recorded in `completed_notes`. `track_guard` will refuse every write until the named epic is `approved: true` and the pins resolve, so a child can never skip discovery without a real approved epic behind it.
 3. Append `{slice, slug, status: "open"}` to the epic state's `children[]`.
 
 `/tdd`, on an `epic-child` track, reads the pinned spec's `## Slice <id>` section as its behavior contract — it does **not** re-run any discovery phase.

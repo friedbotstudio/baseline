@@ -88,7 +88,7 @@ Return `{ final_state: "complete", brief_path }`.
 The state file at `.claude/state/brainstorm/<slug>.json` is OPTIONAL scratch state for resuming mid-dialogue across sessions. Not archived — only the brief survives.
 
 **Forbidden writes**:
-- `docs/specs/**` — spec_approval_guard blocks; specs are written by `/spec`.
+- `docs/specs/**` — direction_approval_guard blocks; specs are written by `/spec`.
 - Product code — this skill never writes code, only the brief.
 - `.claude/state/workflow.json` — the entry skill, not brainstorm, manages workflow state.
 

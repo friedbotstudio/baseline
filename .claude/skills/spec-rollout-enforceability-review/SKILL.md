@@ -1,7 +1,7 @@
 ---
 name: spec-rollout-enforceability-review
 owner: baseline
-description: Oracle-bound spec-review check that every structured Rollout prerequisite binds to an enforcement-type acceptance criterion. A prerequisite whose `enforced-by` is missing, dangling, or points at a non-enforcement AC is a BLOCKER (hard-blocks `/approve-spec` via the checker fan-out verdict); a prerequisite left in free prose is ADVISORY. Read-only. Runs in the spec-review fan-out before `/approve-spec`.
+description: Oracle-bound spec-review check that every structured Rollout prerequisite binds to an enforcement-type acceptance criterion. A prerequisite whose `enforced-by` is missing, dangling, or points at a non-enforcement AC is a BLOCKER (hard-blocks implementation entry via the checker fan-out verdict); a prerequisite left in free prose is ADVISORY. Read-only. Runs in the spec-review fan-out before implementation.
 ---
 
 You answer one question: **is every Rollout prerequisite mechanically bound to a criterion that enforces it before the spec can ship?**
@@ -31,7 +31,7 @@ BLOCKER severity is gated by the tier dial (`mandatory`) AND the presence of a c
 
 # How it blocks
 
-The check is one adapter in the spec-review checker fan-out. The fan-out merges every checker's verdict and persists it; the spec-approval guard reads that merged verdict and refuses the approval token while it is `BLOCKED`. There is no bespoke gate — a rollout BLOCKER blocks `/approve-spec` through the same channel as the other spec-review checkers.
+The check is one adapter in the spec-review checker fan-out. The fan-out merges every checker's verdict and persists it; the spec-approval guard reads that merged verdict and refuses the approval token while it is `BLOCKED`. There is no bespoke gate — a rollout BLOCKER blocks `/approve-direction` through the same channel as the other spec-review checkers.
 
 # What it does not do
 

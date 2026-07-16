@@ -196,7 +196,7 @@ eleventyComputed:
     <figure class="figure">
       <svg class="diagram-svg arch-bento" viewBox="0 0 1000 1200" preserveAspectRatio="xMinYMin slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title" aria-describedby="workflow-diag-desc">
         <title id="workflow-diag-title">intake-full workflow track: eleven phases with three consent gates and a paired ship at the end.</title>
-        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-spec, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. The /grant-commit gate is branch-aware: under github-flow, an autonomous feature landing on a non-protected branch omits it and the commit pushes and opens a pull request. Runtime gate /grant-push fires at git push time under Article VII.</desc>
+        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-direction, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. The /grant-commit gate is branch-aware: under github-flow, an autonomous feature landing on a non-protected branch omits it and the commit pushes and opens a pull request. Runtime gate /grant-push fires at git push time under Article VII.</desc>
 
         {# DESKTOP BENTO (v2: two-hero side-by-side) — visible above 768px.
            Spec hero left dominant (580x230); TDD tall right anchor (330x440).
@@ -212,9 +212,9 @@ eleventyComputed:
             <text class="cell-title cell-title-xl" x="48" y="118">spec</text>
             <text class="cell-sub" x="48" y="152">Diagram-driven source of truth.</text>
             <text class="cell-sub" x="48" y="172">Every AC traces to a sequence; every component to a write_set.</text>
-            <text class="cell-sub" x="48" y="192">Spec-lint and diagram-review gate the draft before /approve-spec.</text>
+            <text class="cell-sub" x="48" y="192">Spec-lint and diagram-review gate the draft before /approve-direction.</text>
             <text class="cell-foot" x="48" y="240">docs/specs/&lt;slug&gt;.md</text>
-            <text class="cell-foot-r" x="592" y="240" text-anchor="end">next: /approve-spec → tdd</text>
+            <text class="cell-foot-r" x="592" y="240" text-anchor="end">next: /approve-direction → tdd</text>
           </g>
 
           {# TDD — tall execution arm on the right. 330x475 (bottom y=505 matches left column tail-row bottom).
@@ -282,7 +282,7 @@ eleventyComputed:
             <text class="gate-tag" x="535" y="298" text-anchor="middle">USER-TYPED</text>
             <rect class="node-gate" x="520" y="305" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 526,321 L 533,328 L 546,313" fill="none"/>
-            <text class="gate-cmd" x="535" y="350" text-anchor="middle">/approve-spec</text>
+            <text class="gate-cmd" x="535" y="350" text-anchor="middle">/approve-direction</text>
           </g>
 
           {# Row 2: mid strip — y=360..420, h=60 #}
@@ -382,7 +382,7 @@ eleventyComputed:
             <text class="gate-tag" x="180" y="240" text-anchor="middle">USER-TYPED</text>
             <rect class="node-gate" x="165" y="246" width="30" height="30" rx="5"/>
             <path class="gate-glyph" d="M 171,262 L 178,269 L 191,254" fill="none"/>
-            <text class="gate-cmd" x="180" y="294" text-anchor="middle">/approve-spec</text>
+            <text class="gate-cmd" x="180" y="294" text-anchor="middle">/approve-direction</text>
           </g>
 
           {# Spec — hero treatment at mobile too: taller cell + eyebrow + sub #}
@@ -392,7 +392,7 @@ eleventyComputed:
             <text class="num cell-ord" x="318" y="333" text-anchor="end">04</text>
             <text class="cell-title" x="42" y="368">spec</text>
             <text class="cell-sub" x="42" y="392">Diagram-driven source of truth.</text>
-            <text class="cell-foot" x="42" y="412">→ /approve-spec</text>
+            <text class="cell-foot" x="42" y="412">→ /approve-direction</text>
           </g>
 
           {# TDD — tall treatment at mobile: taller cell + dashed open-frame stroke #}
@@ -465,7 +465,7 @@ eleventyComputed:
           </g>
         </g>
       </svg>
-      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-spec</code> and <code>/grant-commit</code>. The <code>/grant-commit</code> square carries a BRANCH-AWARE tag: under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the gate and the commit pushes and opens a pull request. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), <code>epic-child</code> (inherits the epic's discovery), and <code>org</code> (a flat pod of peer sessions over the broker, off by default). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
+      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-direction</code> and <code>/grant-commit</code>. The <code>/grant-commit</code> square carries a BRANCH-AWARE tag: under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the gate and the commit pushes and opens a pull request. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), <code>epic-child</code> (inherits the epic's discovery), and <code>org</code> (a flat pod of peer sessions over the broker, off by default). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
     </figure>
   </section>
 

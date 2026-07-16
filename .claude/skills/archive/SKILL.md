@@ -21,7 +21,7 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
    ```
    node .claude/hooks/lib/timing.mjs render <slug>
    ```
-   It reads the `phase_timer` stamps at `.claude/state/timing/<slug>.jsonl` plus consent-token mtimes (`spec_approvals/<slug>.approval`, `commit_consent`) and writes a per-phase model-time-vs-human-wait table to `<bundle>/timing.md`. The table is *born in the bundle* (it creates the bundle dir). It must run before Step 3 because `archive.sh` moves `spec_approvals/<slug>.approval` into the bundle — render it first or the approve-spec gate's human-wait reads `n/a`. Best-effort — a missing/sparse timing log yields a header-only table, never an error.
+   It reads the `phase_timer` stamps at `.claude/state/timing/<slug>.jsonl` plus consent-token mtimes (`spec_approvals/<slug>.approval`, `commit_consent`) and writes a per-phase model-time-vs-human-wait table to `<bundle>/timing.md`. The table is *born in the bundle* (it creates the bundle dir). It must run before Step 3 because `archive.sh` moves `spec_approvals/<slug>.approval` into the bundle — render it first or the approve-direction gate's human-wait reads `n/a`. Best-effort — a missing/sparse timing log yields a header-only table, never an error.
 
 3. Run the archive script (move-only; it never touches the already-rendered `timing.md`):
    ```

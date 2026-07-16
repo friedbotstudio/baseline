@@ -36,7 +36,7 @@ You are drafting an **intake document** — the earliest structured artifact in 
 - **Non-goals are not optional.** Every intake names at least one explicit non-goal. If the user says "everything is in scope," push back: the lack of non-goals is how scope creep starts.
 - **Stakeholders must be concrete.** "Product", "Engineering", "Design" are roles. Name the specific person or team on the hook for each.
 - **No stubs, no TODOs** (seed.md § Always Production Code). Unknown content goes in **Open questions**, not as placeholder prose.
-- **Do not self-approve**; intake does not need approval in this workflow, but don't add "Status: Approved" lines — that's a spec-only concept and the spec_approval_guard will block it.
+- **Do not self-approve**; intake does not need approval in this workflow, but don't add "Status: Approved" lines — that's a spec-only concept and the direction_approval_guard will block it.
 
 ## What downstream phases expect
 

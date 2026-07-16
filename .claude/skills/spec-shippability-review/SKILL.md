@@ -1,6 +1,6 @@
 ---
 name: spec-shippability-review
-description: Dev-only check that a drafted spec for THIS baseline repo won't ship dev-tree references to consumer installs. Catches three failure modes — shipped SKILL.md prose that references paths under `src/`, `tests/`, `scripts/`, `obj/` as runtime invocations (in ```bash fences``` OR `inline backticks`, plus shipped `.mjs`/`.js`/`.sh`/`.py` helper-file imports); new Python helpers added under `.claude/skills/<slug>/` (shipped helpers must be `.sh` or `.mjs`/`.js` going forward); and imports of modules that aren't in `obj/template/.claude/manifest.json` (consumer won't have the file). The aggregate scanner (`scan-shipped-skills.mjs`) walks only baseline-owned skill dirs (via `owner: baseline` frontmatter) at top level — `references/` and other subdirs are documentation, not runtime. BLOCKER findings hard-block `/approve-spec`; ADVISORY surfaces but doesn't block. Read-only — surfaces a punch list; maintainer edits the spec and re-runs until CLEAN.
+description: Dev-only check that a drafted spec for THIS baseline repo won't ship dev-tree references to consumer installs. Catches three failure modes — shipped SKILL.md prose that references paths under `src/`, `tests/`, `scripts/`, `obj/` as runtime invocations (in ```bash fences``` OR `inline backticks`, plus shipped `.mjs`/`.js`/`.sh`/`.py` helper-file imports); new Python helpers added under `.claude/skills/<slug>/` (shipped helpers must be `.sh` or `.mjs`/`.js` going forward); and imports of modules that aren't in `obj/template/.claude/manifest.json` (consumer won't have the file). The aggregate scanner (`scan-shipped-skills.mjs`) walks only baseline-owned skill dirs (via `owner: baseline` frontmatter) at top level — `references/` and other subdirs are documentation, not runtime. BLOCKER findings hard-block implementation entry; ADVISORY surfaces but doesn't block. Read-only — surfaces a punch list; maintainer edits the spec and re-runs until CLEAN.
 ---
 
 <!-- DEV-ONLY SKILL — this file lives in `.claude/skills/spec-shippability-review/`
@@ -17,7 +17,7 @@ This skill is **dev-only** — it lives in the baseline dev tree and is pruned f
 
 ## When to use
 
-- The harness runs this as a workflow phase between `/spec` and `/approve-spec` (the node is wired into `intake-full` and `spec-entry` tracks in `.claude/workflows.jsonl`; `tdd-quickfix` and `chore` skip it because they have no spec phase).
+- The harness runs this as a workflow phase between `/spec` and `/approve-direction` (the node is wired into `intake-full` and `spec-entry` tracks in `.claude/workflows.jsonl`; `tdd-quickfix` and `chore` skip it because they have no spec phase).
 - Ad-hoc: `/spec-shippability-review <slug>` when iterating on a spec draft.
 - `scripts/build-template.sh` invokes the aggregate `scan-shipped-skills.mjs` entry point at Stage 1.6 (after Stage 1.5 prunes dev-only skills, before Stage 3 stamps the manifest). This re-validates the actual shipped `SKILL.md` content at every build so a baseline-owned skill that references dev-tree paths or unshipped modules cannot reach npm — even if it slipped past the per-spec check earlier.
 
@@ -36,12 +36,12 @@ This skill is **dev-only** — it lives in the baseline dev tree and is pruned f
    - `1` — NEEDS_REVIEW (one or more ADVISORY findings, no BLOCKER)
    - `2` — BLOCKED (one or more BLOCKER findings)
 
-2. **Surface the punch list** to the user verbatim. The helper prints to stdout in a human-readable format (file:line citations + suggested fix per finding). The same content is in the JSON state file for `spec_approval_guard` to consume.
+2. **Surface the punch list** to the user verbatim. The helper prints to stdout in a human-readable format (file:line citations + suggested fix per finding). The same content is in the JSON state file for `direction_approval_guard` to consume.
 
 3. **Verdict-based next-action**:
-   - **CLEAN** → tell the user: "Shippability review CLEAN. Run `/approve-spec docs/specs/<slug>.md` when ready."
-   - **NEEDS_REVIEW** → tell the user: "N ADVISORY finding(s). Review and address or accept; ADVISORY does not block `/approve-spec`. Re-run `/spec-shippability-review <slug>` after edits to confirm."
-   - **BLOCKED** → tell the user: "N BLOCKER finding(s). `/approve-spec` will be refused by `spec_approval_guard` until these are fixed. Edit the spec and re-run."
+   - **CLEAN** → tell the user: "Shippability review CLEAN. Run `/approve-direction docs/specs/<slug>.md` when ready."
+   - **NEEDS_REVIEW** → tell the user: "N ADVISORY finding(s). Review and address or accept; ADVISORY does not block `/approve-direction`. Re-run `/spec-shippability-review <slug>` after edits to confirm."
+   - **BLOCKED** → tell the user: "N BLOCKER finding(s). implementation entry will be refused by the pre-implementation checkpoint until these are fixed. Edit the spec and re-run."
 
 ## The three checks
 
@@ -76,7 +76,7 @@ Suggested fix in the punch list: "Add the file to a baseline-owned skill directo
 
 Note: C3 is a stricter superset of C1. C1 catches the obvious `src/...` case; C3 catches the subtler case of a `.claude/`-prefixed path that exists in the dev tree but isn't shipped (e.g., a helper in a skill that lacks `owner: baseline`).
 
-## Punch-list shape (the contract `spec_approval_guard` reads)
+## Punch-list shape (the contract `direction_approval_guard` reads)
 
 `.claude/state/spec-shippability/<slug>.json`:
 
@@ -100,7 +100,7 @@ Note: C3 is a stricter superset of C1. C1 catches the obvious `src/...` case; C3
 }
 ```
 
-`spec_approval_guard.sh` reads `verdict`. If `BLOCKED`, it denies the approval-token write with an error message that includes the count of findings and the first three messages.
+`direction_approval_guard.sh` reads `verdict`. If `BLOCKED`, it denies the approval-token write with an error message that includes the count of findings and the first three messages.
 
 ## Constraints
 

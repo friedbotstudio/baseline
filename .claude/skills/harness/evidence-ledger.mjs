@@ -39,7 +39,7 @@ export function recordRoundTripOnPlan({ slug, rootDir, ledgerPath, roundTrip }) 
 }
 
 /**
- * A4 — append an approval-provenance entry for a spec's /approve-spec grant and
+ * A4 — append an approval-provenance entry for a spec's /approve-direction grant and
  * return { ledger, entry }. The entry id is deterministic (`ap-<slug>-<n>`, n =
  * the round_trips length at append time) so deriveApprovalToken can anchor the
  * token to it. Append-only, same as every other ledger write.

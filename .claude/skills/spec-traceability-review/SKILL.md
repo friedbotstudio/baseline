@@ -1,7 +1,7 @@
 ---
 name: spec-traceability-review
 owner: baseline
-description: Traceability review — every spec AC must trace to a resolvable upstream AC in the intake (and BRD if present), and no upstream AC is silently dropped. Read-only. Run alongside `spec-diagram-review` before `/approve-spec`.
+description: Traceability review — every spec AC must trace to a resolvable upstream AC in the intake (and BRD if present), and no upstream AC is silently dropped. Read-only. Run alongside `spec-diagram-review` before implementation.
 ---
 
 You answer one question: **can every acceptance criterion in the spec be traced to an upstream requirement, and is every upstream requirement accounted for?**

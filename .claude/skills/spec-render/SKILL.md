@@ -1,7 +1,7 @@
 ---
 name: spec-render
 owner: baseline
-description: Extract every PlantUML block from docs/specs/<slug>.md and render each to SVG under docs/specs/_rendered/<slug>/, with an index.md listing them in order. Run this before /approve-spec so the reviewer sees pictures instead of raw PlantUML.
+description: Extract every PlantUML block from docs/specs/<slug>.md and render each to SVG under docs/specs/_rendered/<slug>/, with an index.md listing them in order. Run this before /approve-direction so the reviewer sees pictures instead of raw PlantUML.
 disable-model-invocation: true
 ---
 

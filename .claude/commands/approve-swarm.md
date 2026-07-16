@@ -23,4 +23,4 @@ Steps:
    - Line 4: task count + wave count from the plan (e.g., `tasks=7 waves=3`)
 5. Confirm to the user: "Swarm plan approved for `<slug>`. Run `/swarm-dispatch <slug>` to begin parallel execution. Tasks declared at plan time are the ONLY files each wave may write to — the boundary guard enforces this."
 
-Do NOT mark the plan file itself as approved in any status field — the approval token is the authoritative record (mirrors /approve-spec).
+Do NOT mark the plan file itself as approved in any status field — the approval token is the authoritative record (mirrors /approve-direction).

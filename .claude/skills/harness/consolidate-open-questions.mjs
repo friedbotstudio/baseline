@@ -1,6 +1,6 @@
 // Gate-A open-questions consolidator.
 //
-// At the /approve-spec yield the harness shows a reviewer the open questions
+// At the /approve-direction yield the harness shows a reviewer the open questions
 // they must settle before approving. Those questions are scattered across the
 // intake, research, and spec artifacts (each under a `## Open questions`
 // section) and frequently restate the same question as it travels downstream.

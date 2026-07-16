@@ -30,7 +30,7 @@ Calls `audit.mjs`. Output is a compact pass/fail table with a final verdict. Exi
 ## When to run
 
 - **End of `/init-project`** — Step 8. A fresh baseline should pass.
-- **Before `/approve-spec`** — confirm the baseline hasn't drifted.
+- **Before `/approve-direction`** — confirm the baseline hasn't drifted.
 - **In CI** — fail the build on drift.
 - **On demand** — when something feels off, when adding a component, or after a long gap in baseline maintenance.
 

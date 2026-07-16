@@ -1,7 +1,7 @@
 ---
 name: spec-diagram-review
 owner: baseline
-description: Cross-consistency review of a drafted spec's diagrams. Verifies that C4 components appear in the dependency graph, class-diagram changes have matching DDL, every AC resolves to a concrete sequence, and the dependency graph is acyclic. Read-only. Run after `/spec-lint` passes and before `/approve-spec`.
+description: Cross-consistency review of a drafted spec's diagrams. Verifies that C4 components appear in the dependency graph, class-diagram changes have matching DDL, every AC resolves to a concrete sequence, and the dependency graph is acyclic. Read-only. Run after `/spec-lint` passes and before implementation.
 ---
 
 You are auditing whether the diagrams inside `docs/specs/<slug>.md` tell a **consistent** story. The hooks and `/spec-lint` already guarantee each diagram parses and required kinds are present — your job is to catch *semantic* drift between diagrams.

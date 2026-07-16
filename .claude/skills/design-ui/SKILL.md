@@ -160,7 +160,7 @@ You write exactly these file kinds. Anything else is impeccable's territory.
 - Product code (`app/**`, `site-src/**`, `components/**`, `src/**`, `**/*.tsx`, `**/*.jsx`, `**/*.vue`, `**/*.svelte`, `**/*.css`, `**/*.njk`) — these flow through impeccable's writing subcommands.
 - `DESIGN.md` and `PRODUCT.md` — these flow through `impeccable teach` and `impeccable document`.
 - `.claude/skills/impeccable/**` — vendored, untouchable per Article IX.
-- `docs/specs/**` — `spec_approval_guard` blocks; specs are written by `Skill(spec)`.
+- `docs/specs/**` — `direction_approval_guard` blocks; specs are written by `Skill(spec)`.
 - Anywhere outside the thin-glue contract above.
 
 ## Where you plug into the workflow

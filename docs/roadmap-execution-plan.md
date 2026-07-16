@@ -75,7 +75,7 @@ Peripheral to the center of the plan, and the cheapest wins on the board.
 
 - ✅ D1. Notifier — ping the human at consent-gate and failure yields, batched, gates-only, with presence-aware suppression and idle-stop pings. Attention is a governed resource.
 - 🟡 D2. Velocity levers umbrella. Backlog `-v0lv`. Landed: Lever 0 (per-phase timing and token instrumentation), Lever 1 (parallel checker fan-out), Lever 2 (right-size gate), Lever 4 (artifact compression, terse verdicts, re-verify skip). Open: cross-track lever ranking. Lever 3 (model tiering) is architecturally constrained — main-context phases run at the session model, and Article II keeps judgment in main context.
-- ⬜ D3. Gate-collapse — fold three human gates into two higher-signal ones: approve-direction (intake plus the reference target) and approve-landing (commit). Depends on A4 (a collapsed gate is only safe when the single approval carries real evidence) and D1 (fewer gates only helps if the human is told when each fires).
+- ✅ D3. Gate-collapse — fold three human gates into two higher-signal ones: approve-direction (intake plus the reference target) and approve-landing (commit). Depends on A4 (a collapsed gate is only safe when the single approval carries real evidence) and D1 (fewer gates only helps if the human is told when each fires).
 
 ## Epic 5 — Multi-session coordination  🟡  (org)
 

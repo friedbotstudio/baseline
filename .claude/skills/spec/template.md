@@ -13,8 +13,8 @@ Guard-enforced invariants:
         sequence, class, dependency_graph.
   - Every ```plantuml``` fence must parse (plantuml_syntax_guard).
 
-Approval: NEVER add "Status: Approved" — spec_approval_guard blocks it.
-Approval is a token written by /approve-spec.
+Approval: NEVER add "Status: Approved" — direction_approval_guard blocks it.
+Approval is a token written by /approve-direction.
 -->
 
 ## Context
@@ -261,7 +261,7 @@ Scenarios by category. The `scenario` skill (invoked from `/tdd` or `/swarm-disp
 
 ### Prerequisites
 
-Structured preconditions that must hold for this rollout. One row per prerequisite; each `enforced-by` MUST point to an enforcement-type AC (a Kind of `preflight` / `smoke` / `error-mapping`). `spec-rollout-enforceability-review` BLOCKs `/approve-spec` on a missing, dangling, or non-enforcement binding; a prerequisite left in free prose below is ADVISORY. If this rollout has no preconditions, keep the heading and write `- *(none)*` instead of a table.
+Structured preconditions that must hold for this rollout. One row per prerequisite; each `enforced-by` MUST point to an enforcement-type AC (a Kind of `preflight` / `smoke` / `error-mapping`). `spec-rollout-enforceability-review` BLOCKs implementation entry (via the pre-implementation checkpoint) on a missing, dangling, or non-enforcement binding; a prerequisite left in free prose below is ADVISORY. If this rollout has no preconditions, keep the heading and write `- *(none)*` instead of a table.
 
 | # | Prerequisite | enforced-by |
 |---|---|---|
