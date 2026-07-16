@@ -1,13 +1,13 @@
-// A4 (roadmap Epic 2) — provenance-anchor verification for the /approve-spec
-// token. Stdlib-only hook lib so spec_approval_guard can import it without
+// A4 (roadmap Epic 2) — provenance-anchor verification for the /approve-direction
+// token. Stdlib-only hook lib so direction_approval_guard can import it without
 // reaching into skill code (and so the skill-side approval-provenance.mjs can
 // re-export the same logic — one implementation, no drift).
 //
-// The /approve-spec token's provenance anchor is a `ledger_ref: <id>` line that
-// must resolve to an append-only evidence-ledger entry of kind
+// The /approve-direction token's provenance anchor is a `ledger_ref: <id>` line
+// that must resolve to an append-only evidence-ledger entry of kind
 // 'approval-provenance' for the same slug. A missing, empty, or dangling anchor
-// is unverifiable → the guard BLOCKs (fail-safe). Scope: the /approve-spec gate
-// only; /approve-swarm and /grant-commit are untouched.
+// is unverifiable → the guard BLOCKs (fail-safe). Scope: the /approve-direction
+// gate only; /approve-swarm and /grant-commit are untouched.
 
 import { existsSync, readFileSync } from 'node:fs';
 

@@ -38,7 +38,7 @@ let ws;
 try { ws = JSON.parse(readFileSync(workflowState, 'utf8')); } catch { emitAllow(); }
 
 // Epic-child inherited-satisfaction gate (seed §18.9). An epic-child inherits the
-// epic's discovery (intake/scout/research/spec/approve-spec); that skip is honored
+// epic's discovery (intake/approve-direction/scout/research/spec); that skip is honored
 // ONLY when the named epic is real, approved, and its pinned artifacts resolve.
 // A forged or dangling child is blocked at the write boundary for everything except
 // .claude/state recovery writes (so /triage can repair workflow.json / epic state).
@@ -48,9 +48,9 @@ function epicInheritanceSatisfied(state) {
   const epicState = join(STATE_DIR, 'epic', `${epic}.json`);
   if (!existsSync(epicState)) return false;
   try { JSON.parse(readFileSync(epicState, 'utf8')); } catch { return false; }
-  // Authorization is DERIVED from the unforgeable spec-approval token, not the
+  // Authorization is DERIVED from the unforgeable direction-approval token, not the
   // epic-state `approved` boolean: a Bash cd-relative write can forge the flag,
-  // but cannot mint the token (spec_approval_guard blocks self-writes). The
+  // but cannot mint the token (direction_approval_guard blocks self-writes). The
   // epic-state file is read only to reject a missing or corrupt epic.
   const approvalToken = join(STATE_DIR, 'spec_approvals', `${epic}.approval`);
   if (!existsSync(approvalToken)) return false;

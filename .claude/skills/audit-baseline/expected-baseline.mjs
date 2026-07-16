@@ -12,7 +12,7 @@
 
 export const EXPECTED_HOOKS = new Set([
   'setup_guard', 'destructive_cmd_guard', 'git_commit_guard', 'env_guard',
-  'spec_approval_guard', 'swarm_approval_guard', 'epic_approval_guard', 'verify_pass_guard',
+  'direction_approval_guard', 'swarm_approval_guard', 'epic_approval_guard', 'verify_pass_guard',
   'track_guard', 'branch_guard', 'artifact_template_guard', 'plantuml_syntax_guard',
   'spec_diagram_presence_guard', 'spec_design_calls_guard',
   'swarm_boundary_guard', 'tdd_order_guard',
@@ -27,7 +27,7 @@ export const EXPECTED_HOOKS = new Set([
 export const EXPECTED_AGENTS = new Set(['swarm-worker']);
 
 export const EXPECTED_COMMANDS = new Set([
-  'approve-spec', 'approve-swarm', 'grant-commit', 'grant-push',
+  'approve-direction', 'approve-swarm', 'grant-commit', 'grant-push',
   'init-project', 'init-project-doctor',
 ]);
 

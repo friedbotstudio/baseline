@@ -3,12 +3,12 @@
 //
 // JS port of consent_gate_grant.sh, adding a fourth arm for /grant-push.
 //
-// When the user types one of /approve-spec, /approve-swarm, /grant-commit,
+// When the user types one of /approve-direction, /approve-swarm, /grant-commit,
 // /grant-push, this hook fires BEFORE Claude is invoked. It writes a
 // short-lived consent marker at .claude/state/.<gate>_grant.
 //
 // The marker is what makes the corresponding approval-token write succeed:
-// the gate-specific PreToolUse guard (spec_approval_guard, swarm_approval_guard,
+// the gate-specific PreToolUse guard (direction_approval_guard, swarm_approval_guard,
 // git_commit_guard) reads the marker and allows Claude's write only if a
 // fresh, slug-matched marker is on disk.
 //
@@ -31,7 +31,7 @@ import {
   writeMarkerAtomic,
   logLine,
   CLAUDE_PROJECT_ROOT,
-  CONSENT_MARKER_SPEC,
+  CONSENT_MARKER_DIRECTION,
   CONSENT_MARKER_SWARM,
   CONSENT_MARKER_COMMIT,
   CONSENT_MARKER_PUSH,
@@ -45,25 +45,29 @@ async function main() {
   const payload = await readPayload();
   const prompt = payloadGet(payload, '.prompt');
   if (typeof prompt !== 'string' || prompt.length === 0) return;
-  if (!/\/(approve-spec|approve-swarm|grant-commit|grant-push)/.test(prompt)) return;
+  if (!/\/(approve-direction|approve-swarm|grant-commit|grant-push)/.test(prompt)) return;
 
   const firstLine = prompt.split(/\r?\n/)[0].trim();
   const now = Math.floor(Date.now() / 1000);
 
   let m;
 
-  m = firstLine.match(/^\/approve-spec\s+(\S+)/);
+  // Gate-collapse (D3/CO-E): the direction gate replaces the old /approve-spec
+  // gate and fires at intake. The arg resolves to the intake doc (the direction
+  // is authorized from the intake + CO-A evidence); a bare slug defaults to
+  // docs/intake/<slug>.md, a path is honored verbatim.
+  m = firstLine.match(/^\/approve-direction\s+(\S+)/);
   if (m) {
     const arg = m[1];
     const slug = canonicalSlug(arg);
     let absPath;
     if (arg.startsWith('/')) absPath = arg;
     else if (arg.includes('/')) absPath = join(CLAUDE_PROJECT_ROOT, arg);
-    else absPath = join(CLAUDE_PROJECT_ROOT, 'docs', 'specs', `${slug}.md`);
-    if (writeMarkerAtomic(CONSENT_MARKER_SPEC, slug, String(now), absPath)) {
-      logLine(HOOK, `wrote spec_approval_grant slug=${slug} path=${absPath}`);
+    else absPath = join(CLAUDE_PROJECT_ROOT, 'docs', 'intake', `${slug}.md`);
+    if (writeMarkerAtomic(CONSENT_MARKER_DIRECTION, slug, String(now), absPath)) {
+      logLine(HOOK, `wrote direction_approval_grant slug=${slug} path=${absPath}`);
     } else {
-      logLine(HOOK, `FAILED write spec_approval_grant slug=${slug}`);
+      logLine(HOOK, `FAILED write direction_approval_grant slug=${slug}`);
     }
     return;
   }

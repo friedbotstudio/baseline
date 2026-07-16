@@ -26,11 +26,11 @@ try { mkdirSync(LOG_DIR, { recursive: true }); } catch {}
 // Consent-gate marker file paths — written ONLY by consent_gate_grant.mjs
 // (UserPromptSubmit), read by the gate guards. Hooks reference these constants
 // rather than literal paths so a rename is one-line.
-export const CONSENT_MARKER_SPEC   = join(STATE_DIR, '.spec_approval_grant');
+export const CONSENT_MARKER_DIRECTION = join(STATE_DIR, '.direction_approval_grant');
 export const CONSENT_MARKER_SWARM  = join(STATE_DIR, '.swarm_approval_grant');
 export const CONSENT_MARKER_COMMIT = join(STATE_DIR, '.commit_consent_grant');
 export const CONSENT_MARKER_PUSH   = join(STATE_DIR, '.push_consent_grant');
-export const CONSENT_MARKER_SPEC_REL   = '.claude/state/.spec_approval_grant';
+export const CONSENT_MARKER_DIRECTION_REL = '.claude/state/.direction_approval_grant';
 export const CONSENT_MARKER_SWARM_REL  = '.claude/state/.swarm_approval_grant';
 export const CONSENT_MARKER_COMMIT_REL = '.claude/state/.commit_consent_grant';
 export const CONSENT_MARKER_PUSH_REL   = '.claude/state/.push_consent_grant';

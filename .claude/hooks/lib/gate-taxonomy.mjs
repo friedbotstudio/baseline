@@ -57,7 +57,7 @@ export function classifyOperation(op) {
 // category, proving the taxonomy spans the real enforcement surface without
 // changing any enforcement.
 export const CONSENT_POINT_MAP = Object.freeze({
-  spec_approval_guard: CONSENT_ADJACENT,
+  direction_approval_guard: CONSENT_ADJACENT,
   swarm_approval_guard: CONSENT_ADJACENT,
   'git_commit_guard.commit_consent': CONSENT_ADJACENT,
   'git_commit_guard.push_consent': CONSENT_ADJACENT,

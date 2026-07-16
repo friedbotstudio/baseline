@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Swarm Approval Guard — PreToolUse(Write|Edit|MultiEdit)
 //
-// Symmetric to spec_approval_guard for gate B (/approve-swarm). Two modes:
+// Symmetric to direction_approval_guard for gate B (/approve-swarm). Two modes:
 //
 //   1. Approval artifacts (.claude/state/swarm_approvals/<slug>.approval) —
 //      writable only when a fresh slug-matched marker at
