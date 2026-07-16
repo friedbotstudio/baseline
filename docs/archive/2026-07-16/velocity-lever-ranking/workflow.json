@@ -1,0 +1,49 @@
+{
+  "request": "D2 — cross-track velocity lever ranking. Synthesize the accumulated timing/token data points (DP1-DP8 in backlog -v0lv) into a track-type-aware ranked velocity strategy: which lever matters for which track-type (quickfix = model-bound; intake-full-with-findings = decision-latency-bound), which levers landed, which remain, and which are cheaply-buildable (Lever 3 model-tiering flagged architecturally constrained by Article II; 4b-ii-B wants v1 oracle machinery; a rebuild-tax lever surfaced). User chose full discovery.",
+  "slug": "velocity-lever-ranking",
+  "track_id": "intake-full",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog key baseline-velocity-levers-after-lever0-timing-v0lv (8 timing data points DP1-DP8 + lever inventory); roadmap Epic 4 D2 line.",
+  "track_reason": "User-directed full discovery. Though the source data (DP1-DP8) already exists, the concrete deliverable is open-ended (a ranking that may drive a lever build), and the user chose the full intake-full pipeline over the leaner chore/spec-entry options at triage.",
+  "skip_brainstorm": false,
+  "exceptions": [
+    "chore",
+    "org-dispatch",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "baseline-velocity-levers-after-lever0-timing-v0lv"
+  ],
+  "created_at": 1784236294,
+  "updated_at": 1784238665,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "roadmap_tasks": [
+    "E4-D2"
+  ]
+}

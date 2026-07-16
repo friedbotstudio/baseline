@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --manifest-only (rebuild-tax lever, D2): run only Stages 1/1.5/2/3 (copy →
+# prune → overlay → manifest) and SKIP 0a (memory-seed), 0b (mirror-sync),
+# 1.6 (prose-scan), 2.6 (CI artifacts), and 4 (audit). This re-stamps the
+# manifest cheaply mid-workflow without the full audit pipeline; the
+# authoritative full build + audit still gates at integrate. See
+# scripts/manifest-refresh.mjs and docs/specs/velocity-lever-ranking.md.
+MANIFEST_ONLY=""
+for arg in "$@"; do
+  case "$arg" in
+    --manifest-only) MANIFEST_ONLY=1 ;;
+  esac
+done
+
 # Build the npm-shipped `template/` directory.
 #
 # Purpose: ship exactly the baseline product (constitution + enforcement layer +
@@ -42,6 +55,7 @@ while ! mkdir "$LOCK_DIR" 2>/dev/null; do
 done
 trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT
 
+if [ -z "$MANIFEST_ONLY" ]; then  # --manifest-only skips Stages 0a/0b
 # Stage 0a — seed runtime memory placeholders in the dev repo if missing.
 # .claude/memory/_pending.md and _resume.md are runtime-managed (written by
 # memory_stop and memory_pre_compact / memory_session_start respectively) and
@@ -105,6 +119,8 @@ fi
 rm -rf "$TEMPLATE_DIR"
 mkdir -p "$TEMPLATE_DIR/.claude" "$TEMPLATE_DIR/docs/init"
 
+fi  # end skip-when-manifest-only (Stages 0a/0b)
+
 # Stage 1 — bulk-copy .claude/ verbatim.
 # Excluded:
 #   state/                  — runtime state, regenerated per session
@@ -164,6 +180,7 @@ for skill_md in "$TEMPLATE_DIR"/.claude/skills/*/SKILL.md; do
   fi
 done
 
+if [ -z "$MANIFEST_ONLY" ]; then  # --manifest-only skips Stage 1.6 (advisory prose scan)
 # Stage 1.6 — scan shipped SKILL.md prose for dev-tree refs + unshipped imports.
 #
 # Closes the v0.8.1-class failure mode: a baseline-owned SKILL.md that contains
@@ -190,6 +207,8 @@ if [ -f "$SCANNER" ]; then
   fi
 fi
 
+fi  # end skip-when-manifest-only (Stage 1.6)
+
 # Stage 2 — overlay pristine templates from src/.
 cp "$PKG_ROOT/src/CLAUDE.template.md"      "$TEMPLATE_DIR/CLAUDE.md"
 cp "$PKG_ROOT/src/seed.template.md"        "$TEMPLATE_DIR/docs/init/seed.md"
@@ -214,6 +233,7 @@ for src_file in "$PKG_ROOT/src/memory/"*.template.md; do
   cp "$src_file" "$TEMPLATE_DIR/.claude/memory/${base}.md"
 done
 
+if [ -z "$MANIFEST_ONLY" ]; then  # --manifest-only skips Stage 2.6 (CI posture artifacts)
 # Stage 2.6 — CI posture artifacts (slice J2; default-on, CLI opt-out via
 # --no-ci-posture). The repo-local .githooks hook and scripts/ci helpers are
 # template-ready (no repo-hardcoded paths), so they ship verbatim. The
@@ -236,9 +256,12 @@ if [ -f "$PKG_ROOT/src/branch-protection.template.json" ]; then
   cp "$PKG_ROOT/src/branch-protection.template.json" "$TEMPLATE_DIR/.github/branch-protection/main.json"
 fi
 
+fi  # end skip-when-manifest-only (Stage 2.6)
+
 # Stage 3 — build the sha256 manifest.
 node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
 
+if [ -z "$MANIFEST_ONLY" ]; then  # --manifest-only skips Stage 4 (audit deferred to integrate)
 # Stage 4 — gate on audit-baseline AFTER the manifest is fresh so a polluted
 # src/ template can't reach npm. Reordered from Stage 0 (pre-2026-05-18) because
 # audit-baseline's skill-ownership hash check reads manifest.owners.skills and
@@ -259,4 +282,9 @@ if [ -f "$AUDIT_SCRIPT" ]; then
     echo "build aborted: audit-baseline reported failures (see above)" >&2
     exit 1
   fi
+fi
+fi  # end skip-when-manifest-only (Stage 4)
+
+if [ -n "$MANIFEST_ONLY" ]; then
+  echo "manifest-only: rebuilt template + re-stamped manifest; skipped audit (deferred to integrate)" >&2
 fi

@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "bash scripts/build-template.sh",
+    "manifest:refresh": "node scripts/manifest-refresh.mjs",
     "prepack": "bash scripts/build-template.sh",
     "sync:constitution": "node scripts/sync-constitution-mirror.mjs --write",
     "test": "node --test --test-reporter=spec tests/*.test.mjs",
