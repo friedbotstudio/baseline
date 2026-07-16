@@ -20,6 +20,10 @@ the roll-up of its body.
 
 ## Progress
 
+- **Status (2026-07-16):** the center loop is **closed** — Epic 2 (input half) and Epic 3 (enforcement
+  half, C1–C6) are both ✅. C6 gate taxonomy landed as `5cc959a`. Remaining open work lives in Epic 4
+  (D2 in-progress, D3/CO-E planned), Epic 5 (S2/S3/S4), and Epic 6 (T2, T4). The bullets below are the
+  original planning rationale, kept as the build-order record.
 - Epics 2 and 3 form one loop, and that loop is the center of the plan. The bar a human sets upstream
   (Epic 2) is the rubric a machine oracle enforces downstream (Epic 3). Epics 4, 5, and 6 sit around it.
 - Critical path: B1 (spec quality floor), then C4 (design-judge). C4 hard-depends on B1 for its rubric
