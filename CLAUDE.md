@@ -58,10 +58,10 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | # | Phase | Invocation | Output |
 |---|---|---|---|
 | 1 | Intake | `/intake` (optionally `/brd`) | `docs/intake/<slug>.md` |
+| 1a | **Approve direction** (gate A) | user runs **`/approve-direction`** | approval token |
 | 2 | Scout | `/scout` | `docs/scout/<slug>.md` |
 | 3 | Research | `/research` | `docs/research/<slug>.md` |
-| 4 | Spec | `/spec` (+ `/spec-lint`, `/spec-render`, reviews) | `docs/specs/<slug>.md` |
-| 5 | **Approve spec** (gate A) | user runs **`/approve-spec <path>`** | approval token |
+| 4 | Spec | `/spec` (+ `/spec-lint`, reviews) | `docs/specs/<slug>.md` |
 | 6 | TDD (solo) | `/tdd` | code |
 | 6a | TDD (swarm) | `/swarm-plan` | `.claude/state/swarm/<slug>.json` |
 | 6b | **Approve swarm** (gate B) | user runs **`/approve-swarm <slug>`** | approval token |
@@ -83,7 +83,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, never as a non-git fallback. See Article VII.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
 - **Gate C is branch-conditional (seed.md §18.4, §11).** Commits-tracks annotate `grant-commit` with `condition: {"name": "requires_commit_consent"}`; materialization resolves it via `isAutonomousFeatureLanding()` (fail-safe false). Only a github-flow autonomous feature landing omits the gate — `/commit` then pushes + opens a PR, yielding on any failure (Art. VII); everywhere else gate C yields as above, `git_commit_guard` the commit-time backstop.
-- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`spec_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
+- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`direction_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
 **Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`). **Step 0 — leanest-safe-track triage (seed.md §5):** `/triage` classifies novelty FIRST — `pattern-copy | spec-derived | novel | ambiguous` — with cited evidence, recorded as `workflow.json → novelty` (+ `novelty_evidence`); the DEFAULT is the leanest track whose guardrails cover the risk, and a heavier pick requires a named `track_reason`. Step 0 also writes `skip_brainstorm` explicitly on every workflow (XI.3). Helpers: `flag-parser.mjs → validateNoveltyRecord / resolveSkipBrainstorm`.
@@ -201,7 +201,7 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware consent; hard-block forbidden flags; gate consent writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex) |
 | `gitignore_leak_guard` | PreToolUse / Bash | Art. VII | Hard-block a commit staging a must-ignore path; fail-closed. |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
-| `spec_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow spec-approval token write only on fresh marker; block self-approval + marker writes |
+| `direction_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow direction-approval token write only on fresh marker; block self-approval + marker writes |
 | `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Allow swarm-approval write only on fresh marker; block marker writes |
 | `epic_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV (§18.9) | Allow an epic-state `approved: true` flip only when the matching `spec_approvals/<slug>.approval` token exists; other writes pass. (annex) |
 | `verify_pass_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. V, VI | Block writing PASS to verify artifacts when truth source says FAIL |
