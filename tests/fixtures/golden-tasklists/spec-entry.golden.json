@@ -10,6 +10,7 @@
         "phase": "spec"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": []
     },
     {
@@ -20,19 +21,21 @@
         "phase": "spec-shippability-review"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         1
       ]
     },
     {
       "ord": 3,
-      "subject": "Wait for /approve-spec <path>",
-      "activeForm": "Awaiting spec approval",
+      "subject": "Wait for /approve-direction <path>",
+      "activeForm": "Awaiting direction approval",
       "metadata": {
-        "phase": "approve-spec",
+        "phase": "approve-direction",
         "needs_user": true
       },
       "needs_user": true,
+      "can_parallel": false,
       "blockedBy": [
         2
       ]
@@ -45,6 +48,7 @@
         "phase": "tdd"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         3
       ]
@@ -57,6 +61,7 @@
         "phase": "simplify"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         4
       ]
@@ -69,6 +74,7 @@
         "phase": "security"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         5
       ]
@@ -81,6 +87,7 @@
         "phase": "integrate"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         6
       ]
@@ -93,6 +100,7 @@
         "phase": "document"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         7
       ]
@@ -105,6 +113,7 @@
         "phase": "archive"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         8
       ]
@@ -117,6 +126,7 @@
         "phase": "roadmap-sync"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         9
       ]
@@ -129,6 +139,7 @@
         "phase": "memory-flush"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         10
       ]
@@ -142,6 +153,7 @@
         "needs_user": true
       },
       "needs_user": true,
+      "can_parallel": false,
       "blockedBy": [
         11
       ]
@@ -154,6 +166,7 @@
         "phase": "commit"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         12
       ]

@@ -30,7 +30,7 @@ import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseli
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const EPIC_GUARD = join(REPO_ROOT, '.claude/hooks/epic_approval_guard.mjs');
-const SPEC_GUARD = join(REPO_ROOT, '.claude/hooks/spec_approval_guard.mjs');
+const SPEC_GUARD = join(REPO_ROOT, '.claude/hooks/direction_approval_guard.mjs');
 const TRACK_GUARD = join(REPO_ROOT, '.claude/hooks/track_guard.mjs');
 const LIB_DIR = join(REPO_ROOT, '.claude/hooks/lib');
 
@@ -96,13 +96,13 @@ describe('epic_approval_guard — write-time gate against the persistent approva
     assert.equal(runGuard(root, 'epic_approval_guard.mjs', writeEpic(root, 'demo-epic', epic(true))).denied, false);
   });
 
-  it('AC-003: forged approval token (no consent marker) is denied by spec_approval_guard', () => {
+  it('AC-003: forged approval token (no consent marker) is denied by direction_approval_guard', () => {
     const root = buildSandbox({ epicSlug: 'demo-epic', guards: [SPEC_GUARD] });
     const forge = {
       tool_name: 'Write',
       tool_input: { file_path: join(root, '.claude/state/spec_approvals/demo-epic.approval'), content: 'APPROVED\n1\n' },
     };
-    assert.equal(runGuard(root, 'spec_approval_guard.mjs', forge).denied, true);
+    assert.equal(runGuard(root, 'direction_approval_guard.mjs', forge).denied, true);
   });
 
   it('AC-004: allows a non-approved epic-state write (children[] append, approved stays false)', () => {

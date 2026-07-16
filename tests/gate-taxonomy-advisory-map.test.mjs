@@ -12,7 +12,7 @@ const MOD = join(REPO_ROOT, '.claude/hooks/lib/gate-taxonomy.mjs');
 
 // Every live consent point named in AC-005 must appear in the map.
 const LIVE_CONSENT_POINTS = [
-  'spec_approval_guard',
+  'direction_approval_guard',
   'swarm_approval_guard',
   'git_commit_guard.commit_consent',
   'git_commit_guard.push_consent',

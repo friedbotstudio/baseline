@@ -10,65 +10,71 @@
         "phase": "intake"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": []
     },
     {
       "ord": 2,
-      "subject": "Run /scout for <slug>",
-      "activeForm": "Running scout",
+      "subject": "Wait for /approve-direction <path>",
+      "activeForm": "Awaiting direction approval",
       "metadata": {
-        "phase": "scout"
+        "phase": "approve-direction",
+        "needs_user": true
       },
-      "needs_user": false,
+      "needs_user": true,
+      "can_parallel": false,
       "blockedBy": [
         1
       ]
     },
     {
       "ord": 3,
-      "subject": "Run /research for <slug>",
-      "activeForm": "Running research",
+      "subject": "Run /scout for <slug>",
+      "activeForm": "Running scout",
       "metadata": {
-        "phase": "research"
+        "phase": "scout"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         2
       ]
     },
     {
       "ord": 4,
-      "subject": "Run /spec for <slug>",
-      "activeForm": "Running spec",
+      "subject": "Run /research for <slug>",
+      "activeForm": "Running research",
       "metadata": {
-        "phase": "spec"
+        "phase": "research"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         3
       ]
     },
     {
       "ord": 5,
-      "subject": "Run /spec-shippability-review for <slug>",
-      "activeForm": "Reviewing spec shippability",
+      "subject": "Run /spec for <slug>",
+      "activeForm": "Running spec",
       "metadata": {
-        "phase": "spec-shippability-review"
+        "phase": "spec"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         4
       ]
     },
     {
       "ord": 6,
-      "subject": "Wait for /approve-spec <path>",
-      "activeForm": "Awaiting spec approval",
+      "subject": "Run /spec-shippability-review for <slug>",
+      "activeForm": "Reviewing spec shippability",
       "metadata": {
-        "phase": "approve-spec",
-        "needs_user": true
+        "phase": "spec-shippability-review"
       },
-      "needs_user": true,
+      "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         5
       ]
@@ -81,6 +87,7 @@
         "phase": "tdd"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         6
       ]
@@ -93,6 +100,7 @@
         "phase": "simplify"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         7
       ]
@@ -105,6 +113,7 @@
         "phase": "security"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         8
       ]
@@ -117,6 +126,7 @@
         "phase": "integrate"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         9
       ]
@@ -129,6 +139,7 @@
         "phase": "document"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         10
       ]
@@ -141,6 +152,7 @@
         "phase": "archive"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         11
       ]
@@ -153,6 +165,7 @@
         "phase": "roadmap-sync"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         12
       ]
@@ -165,6 +178,7 @@
         "phase": "memory-flush"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         13
       ]
@@ -177,6 +191,7 @@
         "phase": "cli-copy-review"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         14
       ]
@@ -190,6 +205,7 @@
         "needs_user": true
       },
       "needs_user": true,
+      "can_parallel": false,
       "blockedBy": [
         15
       ]
@@ -202,6 +218,7 @@
         "phase": "commit"
       },
       "needs_user": false,
+      "can_parallel": false,
       "blockedBy": [
         16
       ]

@@ -44,7 +44,7 @@ const REQUIRED_ARTICLE_HEADINGS = [
   '## Article V', '## Article VI', '## Article VII', '## Article VIII',
   '## Article IX', '## Article X', '## Article XI',
 ];
-const REQUIRED_BINDING_MARKERS = ['No stubs', 'YAGNI', 'Current docs', 'swarm-worker', 'approve-spec', 'grant-commit', '§17'];
+const REQUIRED_BINDING_MARKERS = ['No stubs', 'YAGNI', 'Current docs', 'swarm-worker', 'approve-direction', 'grant-commit', '§17'];
 
 function descriptionField(skillMd) {
   // frontmatter `description:` may span until the next top-level key or `---`.

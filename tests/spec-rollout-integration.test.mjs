@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_CHECKER_REGISTRY, runCheckerFanout } from '../.claude/skills/harness/checker-fanout.mjs';
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SPEC_GUARD = join(REPO_ROOT, '.claude/hooks/spec_approval_guard.mjs');
+const SPEC_GUARD = join(REPO_ROOT, '.claude/hooks/direction_approval_guard.mjs');
 const LIB_DIR = join(REPO_ROOT, '.claude/hooks/lib');
 const SLUG = 'demo-slug';
 const SANDBOXES = [];
@@ -61,30 +61,32 @@ describe('checker-fanout — spec-rollout registration + verdict persistence', (
   });
 });
 
-// --- spec_approval_guard fan-out verdict read-path ---------------------------
+// --- fan-out verdict read-path (RELOCATED by gate-collapse D3/CO-E, D-6) ------
+// The BLOCKED fan-out cross-check formerly lived in the approval guard at
+// token-write. With the direction gate firing at intake (before the checker
+// fan-out has run), that check moved to the harness pre-implementation-gate.
+// The spec-rollout AC-007 intent — a BLOCKED rollout-enforceability verdict must
+// stop the build — is preserved, now enforced downstream at implementation entry.
 
-function buildGuardSandbox({ verdict }) {
+function buildGuardSandbox() {
   const root = tmpRoot('specg-');
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/spec_approvals'), { recursive: true });
   mkdirSync(join(root, '.claude/state/checker-fanout'), { recursive: true });
-  cpSync(SPEC_GUARD, join(root, '.claude/hooks/spec_approval_guard.mjs'));
+  cpSync(SPEC_GUARD, join(root, '.claude/hooks/direction_approval_guard.mjs'));
   cpSync(LIB_DIR, join(root, '.claude/hooks/lib'), { recursive: true });
   writeFileSync(
     join(root, '.claude/project.json'),
     JSON.stringify({ configured: true, consent: { gate_marker_ttl_seconds: 120 } }, null, 2),
   );
-  // Fresh, slug-matched consent marker: line 1 = slug, line 2 = epoch.
+  // Fresh, slug-matched direction consent marker: line 1 = slug, line 2 = epoch.
   const now = Math.floor(Date.now() / 1000);
-  writeFileSync(join(root, '.claude/state/.spec_approval_grant'), `${SLUG}\n${now}\n`);
-  if (verdict) {
-    writeFileSync(
-      join(root, '.claude/state/checker-fanout', `${SLUG}.json`),
-      JSON.stringify({ verdict, findings: verdict === 'BLOCKED'
-        ? [{ checker: 'spec-rollout', check: 'missing_enforced_by', severity: 'BLOCKER', message: 'unbound prerequisite' }]
-        : [] }),
-    );
-  }
+  writeFileSync(join(root, '.claude/state/.direction_approval_grant'), `${SLUG}\n${now}\n`);
+  // A BLOCKED fan-out verdict on disk — the direction guard must IGNORE it now.
+  writeFileSync(
+    join(root, '.claude/state/checker-fanout', `${SLUG}.json`),
+    JSON.stringify({ verdict: 'BLOCKED', findings: [{ checker: 'spec-rollout', check: 'missing_enforced_by', severity: 'BLOCKER', message: 'unbound prerequisite' }] }),
+  );
   return root;
 }
 
@@ -93,10 +95,10 @@ function runGuard(root) {
     tool_name: 'Write',
     tool_input: {
       file_path: join(root, '.claude/state/spec_approvals', `${SLUG}.approval`),
-      content: 'APPROVED\n1700000000\n/abs/spec.md\nN/A\n',
+      content: 'APPROVED\n1700000000\n/abs/intake.md\nN/A\n',
     },
   };
-  const res = spawnSync('node', [join(root, '.claude/hooks/spec_approval_guard.mjs')], {
+  const res = spawnSync('node', [join(root, '.claude/hooks/direction_approval_guard.mjs')], {
     input: JSON.stringify(payload),
     env: { ...process.env, CLAUDE_PROJECT_DIR: root },
     encoding: 'utf8',
@@ -104,17 +106,21 @@ function runGuard(root) {
   return { denied: res.stdout.includes('"permissionDecision":"deny"'), stdout: res.stdout };
 }
 
-describe('spec_approval_guard — fan-out verdict gate (AC-007)', () => {
-  it('test_when_guard_reads_blocked_fanout_verdict_then_deny', () => {
-    const root = buildGuardSandbox({ verdict: 'BLOCKED' });
+describe('direction_approval_guard — fan-out check relocated (gate-collapse D-6)', () => {
+  it('test_when_direction_guard_sees_blocked_fanout_then_allows_relocated', () => {
+    // The token is written at intake; the fan-out verdict is not the guard's
+    // concern anymore (moved to pre-implementation-gate). Guard ALLOWS.
+    const root = buildGuardSandbox();
     const { denied } = runGuard(root);
-    assert.ok(denied, 'a BLOCKED fan-out verdict must deny the approval token write');
+    assert.equal(denied, false, 'direction guard no longer blocks on the fan-out verdict (relocated to pre-implementation-gate)');
   });
 
-  it('test_when_guard_fanout_verdict_absent_then_allow', () => {
-    const root = buildGuardSandbox({ verdict: null }); // no verdict file
-    const { denied } = runGuard(root);
-    assert.equal(denied, false, 'absent fan-out verdict is fail-safe: ALLOW');
+  it('test_when_pre_implementation_gate_reads_blocked_fanout_then_not_ready', async () => {
+    // The relocated enforcement point preserves spec-rollout AC-007.
+    const root = buildGuardSandbox();
+    const { checkImplementationReady } = await import(join(REPO_ROOT, '.claude/skills/harness/pre-implementation-gate.mjs'));
+    const r = checkImplementationReady({ slug: SLUG, rootDir: root });
+    assert.equal(r.ready, false, 'BLOCKED fan-out verdict stops implementation at the pre-implementation gate');
   });
 });
 

@@ -15,14 +15,14 @@ const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
 const read = (rel) => readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
-describe('approve-spec command writes a content-hash token line', () => {
-  // AC-001
-  it('test_when_approve_spec_command_read_then_it_writes_a_content_hash_line', () => {
-    const cmd = read('.claude/commands/approve-spec.md');
+describe('approve-direction command writes a content-hash token line', () => {
+  // AC-001 (gate-collapse D3/CO-E: /approve-spec renamed to /approve-direction)
+  it('test_when_approve_direction_command_read_then_it_writes_a_content_hash_line', () => {
+    const cmd = read('.claude/commands/approve-direction.md');
     assert.match(cmd, /computeSpecContentHash|content[- ]hash|content_sha256/i,
-      'approve-spec must document computing the spec content hash');
+      'approve-direction must document computing the artifact content hash');
     assert.match(cmd, /spec-content-hash\.mjs/,
-      'approve-spec must name the helper module');
+      'approve-direction must name the helper module');
   });
 });
 
