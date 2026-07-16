@@ -1,0 +1,17 @@
+{
+  "request": "Build C6 — the gate taxonomy: a deliberately-coarse 'safe vs ask-a-human' classifier anchored in Articles IV/VII, built before any autonomy. Generalizes the Article XI.12 decision-economy category list (consent-adjacent scope, irreversible/destructive ops, policy flips, contradictory requirements) into a reusable classifier labelling an operation 'safe, just do it' vs 'critical, ask a human'. Roadmap Epic 3 C6; backlog -9008; vision grounding docs/vision/baseline-v1-thought-compiler.md §2.4 + Part 5.7 piece 8.",
+  "slug": "gate-taxonomy",
+  "track_id": "intake-full",
+  "novelty": "novel",
+  "novelty_evidence": "Grepped docs/, .claude/memory/, office/ for 'safe-vs-ask' / 'gate taxonomy' / 'ask-a-human classifier': every hit is direction-only (vision §2.4, roadmap Epic 3 C6, backlog -9008, archived maker-checker briefs). No mechanical classifier exists on disk — XI.12 defines only a prose category list in the annex plus the consent-gate hooks. Roadmap explicitly defers the design ('deliberately coarse, fragment when closer'; 'deserves its own intake→spec→approve cycle').",
+  "track_reason": "Novel governance surface at the consent/autonomy boundary; scope ('how coarse', what it gates, where it wires in) is unpinned. Vision §2.4 mandates a full intake→spec→approve cycle, and scout+research are needed to map the existing XI.12 category list and consent-gate machinery C6 must generalize before the spec commits.",
+  "skip_brainstorm": false,
+  "exceptions": ["chore", "org-dispatch", "swarm-dispatch", "swarm-plan", "tdd"],
+  "completed": ["intake", "scout", "research", "spec", "spec-shippability-review", "approve-spec", "tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "cli-copy-review"],
+  "skipped_alternates": ["cli-copy-review:no-cli-surface"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "roadmap_tasks": ["E3-C6"],
+  "source_backlog_keys": [],
+  "created_at": 1784147220,
+  "updated_at": 1784183700
+}

@@ -52,7 +52,7 @@ encodes that bar in the spec artifact so the enforcement half has something real
 - ✅ A5. Class-drive `workflow.json → skip_brainstorm` — Class D skips; Class A and B cannot.
 - ✅ B1. Spec quality floor — upgrade `spec_design_calls_guard`, `/spec-lint`, and the `/spec` template from "a Design calls section is populated" to "a reference target and quality acceptance criteria are present" for any spec whose `write_set` intersects `tdd.ui_globs`. The reference target IS the rubric C4 scores against; this is the hand-off point between input and enforcement.
 
-## Epic 3 — Enforcement half: the bar gets enforced  🟡  (enforce)
+## Epic 3 — Enforcement half: the bar gets enforced  ✅  (enforce)
 
 A checker only self-corrects when it stands on a mechanical oracle. Two LLMs left to converse will
 agree on a hallucination. This epic gives the pipeline an oracle for quality rather than conformance,
@@ -63,7 +63,7 @@ and lets it fail the build instead of filing an advisory.
 - ✅ C3. Maker/checker RALPH protocol. Backlog `-4c43`. Landed: the bounded one-maker/one-checker round-trip (`maker-checker.mjs`, append-only `evidence-ledger.mjs`, fail-closed `graduation-gate.mjs`). Open: the multi-round loop, the stop rule, and arbitration. Ceiling-hit-below-floor is a RED state that yields to a human — never a silent downgrade to advisory.
 - ✅ C4. Design-judge — the first quality oracle WITH TEETH. Playwright captures the rendered screen; the judge scores it against the spec's reference target from B1; below threshold FAILS `verify`. HARD-DEPENDS on B1 for the rubric, and on nothing else — CO-A improves the specs it reads but does not block it.
 - ✅ C5. Prove the framework is general — ride at least one non-UI oracle (mutation score for TDD, or AC-conformance as the merge oracle) on the same checker interface, so it is not a one-off UI hack.
-- ⬜ C6. Gate taxonomy — the safe-versus-ask-a-human classifier, built BEFORE any autonomy. Backlog `-9008`; deliberately coarse, fragment when closer.
+- ✅ C6. Gate taxonomy — the safe-versus-ask-a-human classifier, built BEFORE any autonomy. Backlog `-9008`; deliberately coarse, fragment when closer.
 
 ## Epic 4 — Velocity: reclaim the calendar  🟡  (velocity)
 

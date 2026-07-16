@@ -143,7 +143,7 @@ single gate carries real evidence).
 
 ### Periphery — already captured (quality/reuse, not the center)
 - **context7 outcome-mandate** ✅ **shipped** (`2c3007e`) → brief archived at `docs/archive/2026-07-08/context7-outcome-mandate/change-order.md`.
-- **read-before-write (VI.7)** ⬜ was §8 of the context7 brief; **dropped from `2c3007e`**, re-captured as `docs/handoff/read-before-overwrite-convention.md`.
+- **read-before-write (VI.7)** ✅ **shipped** (`c58b30d`) — was §8 of the context7 brief, dropped from `2c3007e`, re-captured as `docs/handoff/read-before-overwrite-convention.md`, then landed.
 - **research retrieve-first** ✅ captured → `docs/handoff/research-retrieve-first.md`.
 
 ## 5. Dependency graph / build order
@@ -151,14 +151,15 @@ single gate carries real evidence).
 ```
 Phase 0 freeze (now, policy)
         │
-Phase 1 INPUT:   CO-A brainstorm-critic ──┐   CO-B spec-floor ✅
-                                          │        │  (reference target = the rubric)
-Phase 2 ENFORCE: CO-C quality-oracle ◄────┴────────┘  (depends on CO-B; consumes CO-A's better specs)
+Phase 1 INPUT:   CO-A brainstorm-critic ✅ ──┐   CO-B spec-floor ✅
+                                             │        │  (reference target = the rubric)
+Phase 2 ENFORCE: CO-C quality-oracle 🟡 ◄────┴────────┘  (C1–C5 landed, C6 open; consumes CO-A's better specs)
         │
-Phase 3 VELOCITY: CO-D notifier → CO-E gate-collapse (CO-E also needs CO-A)
+Phase 3 VELOCITY: CO-D notifier ✅ → CO-E gate-collapse ⬜ (CO-E also needs CO-A — both deps landed, now unblocked)
 ```
-Critical path is **CO-A → CO-B → CO-C** (set the bar → encode it → enforce it). CO-D is parallelizable and
-should land early for the calendar win. Periphery (context7, research) is independent.
+Critical path is **CO-A → CO-B → CO-C** (set the bar → encode it → enforce it) — **now closed through
+C5**; only C6 (gate taxonomy) remains on the enforcement half. CO-D landed early for the calendar win as
+planned. Periphery (context7, research, VI.7) is all shipped.
 
 ## 6. Status ledger
 
@@ -166,14 +167,20 @@ should land early for the calendar win. Periphery (context7, research) is indepe
 captured and pickup-ready; *Shipped* = the change has landed on `main`. Conflating them once let a
 shipped change (context7) read as still-pending — keep them separate.
 
+> **Reconciled 2026-07-16 against `main` (HEAD `c9d8f0e`).** The center of the program — the
+> input→enforcement loop (CO-A + CO-B + CO-C) — has landed. CO-A and CO-B are done; CO-C is done
+> through C5 with only C6 (gate taxonomy) open. Live per-task status governs in
+> `docs/roadmap-execution-plan.md` (Epic 2 = input half, Epic 3 = enforcement half). Update this
+> column when a CO lands; it had drifted a full loop behind reality before this sync.
+
 | CO | Cure | Half | Brief | Shipped |
 |---|---|---|---|---|
 | Phase 0 | Freeze machine-churn | policy | — (standing policy) | ✅ `decisions.md → freeze-machine-churn-2026-07-09` |
-| CO-A | Brainstorm-critic (Ledger #0002) | INPUT | ✅ `brainstorm-critic.md` | ⬜ **(keystone; execute first)** |
-| CO-B | Spec quality floor | INPUT | ✅ `spec-quality-floor.md` | ⬜ |
-| CO-C | Quality-oracle with teeth | ENFORCE | ✅ `quality-oracle.md` | ⬜ (depends on CO-B) |
-| CO-D | Notifier | velocity | ✅ `velocity-notifier-and-gate-collapse.md` | ✅ `212dbd0`+`7dba960`+`4cd74e1` (CO-D yield/emit + on_stop idle + input-wait & presence-aware suppression) |
-| CO-E | Gate-collapse | velocity | ✅ same doc | ⬜ (depends on CO-A, CO-D) |
+| CO-A | Brainstorm-critic (Ledger #0002) | INPUT | ✅ `brainstorm-critic.md` | ✅ `dab27e8`·`3002e53`·`8364f84`·`faebe46` — A1–A5 as Epic 2 (Governance Class classifier + evidence-shape ladder + multiple-choice ban + provenance-anchored `/approve-spec` + Class-driven `skip_brainstorm`); closed `e9f6961` |
+| CO-B | Spec quality floor | INPUT | ✅ `spec-quality-floor.md` | ✅ `f1faf75` — B1, reference-target + quality ACs on UI specs |
+| CO-C | Quality-oracle with teeth | ENFORCE | ✅ `quality-oracle.md` | 🟡 `9542a7f` (C2–C4: checker framework, maker/checker RALPH, design-judge) · `c9d8f0e` (C5 mutation-score + AC-conformance). **Open: C6 gate taxonomy** (Epic 3) |
+| CO-D | Notifier | velocity | ✅ `velocity-notifier-and-gate-collapse.md` | ✅ `212dbd0`·`7dba960`·`4cd74e1`·`b6fba83` (CO-D yield/emit + on_stop idle + input-wait & presence-aware suppression + idle-ping fix) |
+| CO-E | Gate-collapse | velocity | ✅ same doc | ⬜ **unblocked** — both deps (CO-A, CO-D) landed; tracked as Epic 4 D3 |
 | — | context7 outcome-mandate | periphery | ✅ archived → `archive/2026-07-08/context7-outcome-mandate/change-order.md` | ✅ `2c3007e` |
 | — | read-before-write (VI.7) | periphery | ✅ `read-before-overwrite-convention.md` | ✅ `governance-amendments-research-retrieval` |
 | — | research retrieve-first | periphery | ✅ `research-retrieve-first.md` | ✅ `governance-amendments-research-retrieval` (`retrieve.mjs` + research SKILL wiring) |
