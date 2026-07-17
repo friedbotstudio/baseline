@@ -147,6 +147,13 @@ rsync -a \
   --exclude='memory/_pending.md' \
   --exclude='memory/_resume.md' \
   --exclude='memory/_thread.md' \
+  --exclude='memory/landmarks/' \
+  --exclude='memory/libraries/' \
+  --exclude='memory/decisions/' \
+  --exclude='memory/landmines/' \
+  --exclude='memory/conventions/' \
+  --exclude='memory/pending-questions/' \
+  --exclude='memory/backlog/' \
   --exclude='skill-memory/' \
   --exclude='agent-memory/' \
   --exclude='workflows.jsonl' \

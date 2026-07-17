@@ -4,6 +4,29 @@
 // (SOP preflight). Pure: no git, no I/O — callers inject staged content.
 
 const BACKLOG_REL = '.claude/memory/backlog.md';
+const BACKLOG_DIR = '.claude/memory/backlog/';
+
+function isStampedFrontmatter(text) {
+  return /^status:\s*picked-up\s*$/m.test(String(text || '')) && /^superseded-at:\s*\S/m.test(String(text || ''));
+}
+
+function frontmatterKey(text) {
+  const m = /^key:\s*(.+)$/m.exec(String(text || ''));
+  return m ? m[1].trim() : null;
+}
+
+// Sharded store: a staged `backlog/<slug>.md` whose frontmatter `key:` matches and
+// carries the `status: picked-up` + `superseded-at:` stamp satisfies the obligation.
+function stagedShardedStamps(stagedPaths, readStaged) {
+  const byKey = {};
+  for (const path of stagedPaths) {
+    if (!path.startsWith(BACKLOG_DIR) || !path.endsWith('.md')) continue;
+    const text = readStaged(path) || '';
+    const key = frontmatterKey(text);
+    if (key) byKey[key] = text;
+  }
+  return byKey;
+}
 
 function entryBlock(backlogText, key) {
   const blocks = String(backlogText || '').split(/^## /m);
@@ -46,16 +69,25 @@ export function evaluateClosure({ stagedPaths, readStaged }) {
   const keys = stagedWorkflowKeys(stagedPaths, readStaged);
   if (keys.length === 0) return { block: false, unsatisfied: [], reason: null };
 
-  const backlogStaged = stagedPaths.includes(BACKLOG_REL);
-  const unsatisfied = backlogStaged
-    ? unsatisfiedKeys(readStaged(BACKLOG_REL) || '', keys)
-    : [...keys];
+  const flatStaged = stagedPaths.includes(BACKLOG_REL);
+  const flatText = flatStaged ? (readStaged(BACKLOG_REL) || '') : '';
+  const sharded = stagedShardedStamps(stagedPaths, readStaged);
+
+  const unsatisfied = keys.filter((key) => {
+    if (sharded[key] && isStampedFrontmatter(sharded[key])) return false;
+    if (flatStaged) {
+      const block = entryBlock(flatText, key);
+      if (block && isStamped(block)) return false;
+    }
+    return true;
+  });
 
   if (unsatisfied.length === 0) return { block: false, unsatisfied: [], reason: null };
 
-  const detail = backlogStaged
-    ? `stamp them picked-up + superseded-at`
-    : `stage ${BACKLOG_REL} in this same commit`;
+  const anyStagedBacklog = flatStaged || Object.keys(sharded).length > 0;
+  const detail = anyStagedBacklog
+    ? `stamp them picked-up + superseded-at (flat \`backlog.md\` block, or sharded \`backlog/<key>.md\` frontmatter)`
+    : `stage the backlog entry (flat \`${BACKLOG_REL}\` or sharded \`${BACKLOG_DIR}<key>.md\`) in this same commit`;
   return {
     block: true,
     unsatisfied,

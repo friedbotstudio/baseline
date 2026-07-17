@@ -1,0 +1,51 @@
+{
+  "request": "Complete memory-system redesign. Replace the seven-fixed-file / 500-line-capped model with an Obsidian-style one-fact-per-file store plus a network-graph index for traversal: the index gives cheap upfront context, and per-fact files let the store hold huge information without any single file growing to ~10000 lines. SUBSUMES backlog -7f3a / roadmap T4 — 'a captured lesson becomes an ACTIVE constraint at the decision point' stays a first-class requirement (the graph's scoped traversal is the mechanism that surfaces the right landmine at spec-authoring/decision time). Governance-touching: Article IX enumerates the seven canonical files, so this requires a seed.md amendment first (Art I.4), then CLAUDE.md/README/src-template mirrors/audit manifest, and rebinds the memory hook fleet (memory_stop, memory_session_start, memory_pre_compact, /memory-flush). Includes migration/backfill of the ~191 existing entries preserving source/verbatim provenance. Discovery cycle decides the design AND whether it re-triages to an epic.",
+  "slug": "memory-decision-point-redesign",
+  "track_id": "intake-full",
+  "novelty": "novel",
+  "novelty_evidence": "backlog -7f3a + roadmap T4 (redesign brief, explicitly 'needs its own intake->spec->approve cycle'); WIDENED by direct user instruction 2026-07-17 to a full Obsidian one-fact-per-file + network-graph-index storage redesign. No in-repo spec/pattern precedent for a graph-indexed memory store; nearest reference is Claude Code's own session-memory model (one fact per file + MEMORY.md index + [[wikilinks]]).",
+  "scope_note": "Widened from narrow T4 activation fix to full storage-model redesign per user decision (AskUserQuestion, 2026-07-17). Verbatim to preserve into the brief: 'A system like obsidian and a network-graph approach for index traversal. The graph index makes it easy on context upfront, and obsidian approach gives a powerful way to store huge information without relying on one single file holding ~10000 lines.'",
+  "skip_brainstorm": false,
+  "exceptions": [
+    "chore",
+    "org-dispatch",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a"
+  ],
+  "created_at": 1784239819,
+  "updated_at": 1784272655,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "roadmap_tasks": [
+    "E6-T4"
+  ],
+  "activation": "wired+activated: hooks live, 191-entry store migrated to sharded, governance amended, T4 done"
+}

@@ -20,11 +20,67 @@ import {
   emitInfo,
   logLine,
 } from './lib/common.mjs';
+import { surfaceScopedMemory } from './lib/scoped-memory.mjs';
+
+// Phase-artifact prefixes → the workflow phase whose scoped memory should surface
+// before the write. This is the decision-point-injection leg (roadmap T4): a Write
+// to docs/specs/** surfaces every fact tagged `scope: spec` verbatim before the
+// spec is authored. Presence-based — `surfaceScopedMemory` reads the sharded
+// category dirs and returns [] when the store is not migrated, so this no-ops on a
+// flat-file store and never blocks.
+const PHASE_BY_PREFIX = [
+  ['docs/specs/', 'spec'],
+  ['docs/intake/', 'intake'],
+  ['docs/scout/', 'scout'],
+  ['docs/research/', 'research'],
+  ['docs/security/', 'security'],
+];
+
+function phaseForPath(filePath) {
+  const norm = String(filePath).replace(/\\/g, '/');
+  for (const [prefix, phase] of PHASE_BY_PREFIX) {
+    if (norm.includes(prefix)) return phase;
+  }
+  return null;
+}
+
+function surfacePhaseScopedMemory(filePath) {
+  const phase = filePath ? phaseForPath(filePath) : null;
+  if (!phase) emitAllow();
+  const rootDir = join(CLAUDE_DOTDIR, '..');
+  const hits = surfaceScopedMemory(phase, { rootDir });
+  if (!hits.length) emitAllow();
+  // Small result sets show full verbatim (targeted surfacing); larger sets show a
+  // bounded index of `category/key — hook` so a spec write is not buried under
+  // dozens of full entries — Claude reads the specific fact file before writing.
+  const VERBATIM_LIMIT = 3;
+  const INDEX_CAP = 15;
+  let body;
+  if (hits.length <= VERBATIM_LIMIT) {
+    body = hits
+      .map((h) => `--- ${h.category}/${h.key} ---\n> ${h.verbatim.split('\n').join('\n> ')}\n\n${h.interpretation}`.trimEnd())
+      .join('\n\n');
+  } else {
+    const clip = (s) => (s.length > 90 ? `${s.slice(0, 87)}…` : s);
+    const shown = hits.slice(0, INDEX_CAP)
+      .map((h) => `- ${h.category}/${h.key} — ${clip(h.hook)}`)
+      .join('\n');
+    const more = hits.length > INDEX_CAP ? `\n…and ${hits.length - INDEX_CAP} more.` : '';
+    body = `${hits.length} facts scoped to \`${phase}\` (read the specific fact file before writing):\n${shown}${more}`;
+  }
+  emitInfo(`process_lifecycle_guard — phase-scoped memory surfaced for \`${phase}\`:
+
+${body}
+
+CLAUDE.md Article IX clause 7: treat the surfaced lesson(s) as binding for this write; prefer verbatim over interpretation when they conflict.`);
+  logLine('process_lifecycle_guard', `surfaced ${hits.length} scoped fact(s) for phase ${phase}: ${filePath}`);
+  emitAllow();
+}
 
 const payload = await readPayload();
 
 const cmd = payloadGet(payload, '.tool_input.command');
-if (!cmd) emitAllow();
+if (!cmd) surfacePhaseScopedMemory(payloadGet(payload, '.tool_input.file_path'));
 
 // Trigger detection. Patterns chosen to match the dev-server-ownership and
 // lsof-port-kill-takes-firefox-with-it surfaces. Whole-word matches.

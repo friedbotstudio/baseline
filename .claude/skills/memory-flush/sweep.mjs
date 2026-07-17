@@ -22,6 +22,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './shape.mjs';
 
 const CANONICAL_FILES = [
   'landmarks', 'libraries', 'decisions',
@@ -65,13 +66,28 @@ function filePath(memdir, name) {
   return join(memdir, `${name}.md`);
 }
 
+// Shape-aware read/write: a sharded category is presented as one synthetic flat
+// text so every mode's block-level logic is unchanged. The key->filename map from
+// the read is cached so writeback updates entries in place (and removes fact files
+// for deleted entries).
+const _shardMeta = new Map();
+
 function readFile(memdir, name) {
+  if (categoryIsSharded(memdir, name)) {
+    const { text, keyToFile } = readShardedAsFlat(memdir, name);
+    _shardMeta.set(`${memdir}::${name}`, keyToFile);
+    return text;
+  }
   const p = filePath(memdir, name);
   if (!existsSync(p)) return '';
   return readFileSync(p, 'utf8');
 }
 
 function writeFile(memdir, name, text) {
+  if (categoryIsSharded(memdir, name)) {
+    writeShardedFromFlat(memdir, name, text, _shardMeta.get(`${memdir}::${name}`) || {});
+    return;
+  }
   writeFileSync(filePath(memdir, name), text, 'utf8');
 }
 

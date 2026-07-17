@@ -11,6 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { readMostRecentMarkdown, readWorkingThread } from './thread_store.mjs';
 import { gatherSync } from '../../skills/standup/gather.mjs';
+import { parseFrontmatter } from './frontmatter-parser.mjs';
 
 const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
 const PENDING_FILE = 'pending-questions';
@@ -122,6 +123,31 @@ function isStale(block, name, head, root) {
   return days !== null && days >= STALE_DAYS;
 }
 
+// Presence-based sharded read: when `<memDir>/<name>` is a directory (post
+// migration), each `.md` is one fact. Reconstruct a bulleted pseudo-block from
+// its frontmatter so the exact `isStale` predicate applies unchanged.
+function readShardedCategory(dir, name, head, root) {
+  const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+  let stale = 0;
+  const staleRecords = [];
+  for (const f of files) {
+    let fm;
+    try {
+      fm = parseFrontmatter(readFileSync(join(dir, f), 'utf8')).frontmatter;
+    } catch {
+      continue;
+    }
+    const pseudoBlock = Object.entries(fm)
+      .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? v.join(',') : v}`)
+      .join('\n');
+    if (isStale(pseudoBlock, name, head, root)) {
+      stale++;
+      staleRecords.push([name, fm.key || f.replace(/\.md$/, ''), fm['last-touched'] || '']);
+    }
+  }
+  return { n: files.length, stale, staleRecords };
+}
+
 function stripFrontmatter(text) {
   // #13: parse line-anchored `^---$` delimiters instead of substring
   // `indexOf('---')`. The previous substring search matched a `---`
@@ -166,6 +192,15 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   const overCapRecords = []; // [name, lines, cap]
 
   for (const name of CANONICAL) {
+    const dir = join(memDir, name);
+    if (existsSync(dir) && statSync(dir).isDirectory()) {
+      const c = readShardedCategory(dir, name, head, projectRoot);
+      totalEntries += c.n;
+      totalStale += c.stale;
+      staleRecords.push(...c.staleRecords);
+      rows.push([name, c.n, c.stale, 'sharded']);
+      continue;
+    }
     const p = join(memDir, `${name}.md`);
     let text;
     try {

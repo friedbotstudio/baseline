@@ -114,7 +114,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── agents/                 # 1 subagent: swarm-worker (rendered from src/agents/swarm-worker.template.md)
 │   ├── commands/               # 5 consent/bootstrap gates (user-only — structurally)
 │   ├── skills/                 # 52 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (7) + audit (1) + alt tracks (2) + maintenance (2) + sprint (4) + roadmap (2)
-│   ├── memory/                 # project memory: 7 canonical files + _pending.md + _resume.md + _thread.md (all gitignored body) + README.md
+│   ├── memory/                 # project memory: 7 canonical categories (flat <name>.md OR sharded <category>/<key>.md when memory.sharded_store activated) + _pending.md + _resume.md + _thread.md (all gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
 ├── src/                        # pristine ship-time templates (overlay source for `npx @friedbotstudio/create-baseline`)
 │   ├── CLAUDE.template.md

@@ -1,0 +1,12 @@
+---
+key: .claude/hooks/lib/timing.mjs
+category: landmarks
+scope: [scout]
+caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`. Token deltas only fire when phase-state writes go through tracked tools (Write/Edit) OR Bash (via phase_timer's Bash leg) — a pure-fs write that bypasses both captures no timing.
+---
+
+- Path: `.claude/hooks/lib/timing.mjs`
+- Role: Foundation module for per-phase workflow timing + token capture (velocity Lever 0). Pure functions over `.claude/state/`: `stampFromWorkflow({rootDir, now})` appends `{phase,event:"completed",ts}` JSONL lines to `.claude/state/timing/<slug>.jsonl` for every phase newly present in `workflow.json → completed[]`, ALSO diffs `workflow.json → tdd_ticks[]` into `{phase:"tdd:<tick>",event:"sub"}` rows (sub-tick stamping, `tdd-subtick-stamping`), and captures cumulative output/input/cache-read tokens from the session transcript anchored on a `run-start` baseline (entries timestamped at/before `workflow.created_at`) (`phase-token-instrumentation`). Idempotent; `{appended:[]}` on absent/malformed workflow.json, never throws. `renderTable({rootDir, slug})` joins stamps + consent-token mtimes + token deltas into a markdown table with Model(ms)/Human-wait(ms) AND per-phase output/input/cache-read token columns; `tdd:<tick>` sub-rows nest under the `tdd` rollup (Option A; sum-of-subs == rollup), gated by `project.json → artifacts.subtick_timing.enabled`. Gate phases excluded as rows; approve-spec wait folds into first post-spec phase; negatives clamp to 0; missing → `n/a`. CLI: `node .claude/hooks/lib/timing.mjs render <slug> [bundleDir]` writes `timing.md`.
+- Companion: `.claude/hooks/phase_timer.mjs` (the hook that calls `stampFromWorkflow`, incl. its Bash leg), `.claude/skills/archive/SKILL.md` Step 2 (invokes the render CLI before `archive.sh` moves the approval token), `.claude/skills/tdd/SKILL.md` + `harness/SKILL.md` (worker ticks append to `tdd_ticks[]`).
+- Verified-at: 0e5cc8f
+- Last-touched: 2026-07-09

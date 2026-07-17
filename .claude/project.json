@@ -241,7 +241,12 @@
     "push_ttl_seconds": 300
   },
   "memory": {
-    "thread_transform_ttl_seconds": 86400
+    "thread_transform_ttl_seconds": 86400,
+    "sharded_store": {
+      "enabled": true,
+      "activated_at": "2026-07-17",
+      "rollback": "node .claude/skills/memory-index/migrate.mjs --reverse"
+    }
   },
   "plantuml": {
     "strict_syntax_check": false

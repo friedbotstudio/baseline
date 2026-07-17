@@ -19,6 +19,7 @@ import {
   EXPECTED_MCP_SERVERS, DEFAULT_MCP_SERVERS,
 } from './expected-baseline.mjs';
 import { EXEMPT_RELPATHS, hasDerivedHeader } from '../../hooks/lib/derived-header.mjs';
+import { checkMemoryShape } from './memory-shape.mjs';
 
 // True only when run as a script (`node audit.mjs`), false when imported by a
 // test. Guards the top-level audit run + process.exit so importing the exported
@@ -393,36 +394,58 @@ if (!existsSync(memDir) || !statSync(memDir).isDirectory()) {
   add('memory directory exists', 'FAIL', 'missing .claude/memory/');
 } else {
   add('memory directory exists', 'PASS', '');
-  const diskMemory = new Set(
-    listDir('.claude/memory')
-      .filter(n => n.endsWith('.md') && n !== 'README.md')
-      .map(n => n.replace(/\.md$/, ''))
-  );
-  const missing = [...EXPECTED_MEMORY_FILES].filter(x => !diskMemory.has(x)).sort();
-  const unexpected = [...diskMemory].filter(x => !EXPECTED_MEMORY_FILES.has(x)).sort();
-  if (missing.length || unexpected.length) {
-    const bits = [];
-    if (missing.length) bits.push(`missing: ${JSON.stringify(missing)}`);
-    if (unexpected.length) bits.push(`unexpected: ${JSON.stringify(unexpected)}`);
-    add('memory files present', 'FAIL', bits.join('; '));
+  // Presence-based: a migrated store keeps each canonical category as a DIRECTORY
+  // of one-fact-per-file entries; the classic store keeps seven flat files. Detect
+  // the shape and validate accordingly — the two are byte-distinct on disk, so the
+  // audit never has to guess.
+  const memShape = checkMemoryShape(memDir);
+  const sharded = memShape.categories > 0;
+  if (sharded) {
+    if (memShape.ok) {
+      add('memory files present', 'PASS',
+        `sharded: ${memShape.categories} category dirs, ${memShape.trails} continuity trails`);
+    } else {
+      add('memory files present', 'FAIL',
+        `sharded store incomplete — missing category dirs: ${JSON.stringify(memShape.missing)}`);
+    }
+    for (const name of ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog']) {
+      const dir = join(memDir, name);
+      const ok = existsSync(dir) && statSync(dir).isDirectory();
+      const n = ok ? listDir(`.claude/memory/${name}`).filter(f => f.endsWith('.md')).length : 0;
+      add(`memory shape: ${name}/`, ok ? 'PASS' : 'FAIL', ok ? `${n} fact file(s)` : 'missing category dir');
+    }
   } else {
-    add('memory files present', 'PASS', `${diskMemory.size} files`);
-  }
-  for (const name of [...EXPECTED_MEMORY_FILES].sort()) {
-    const p = join(memDir, `${name}.md`);
-    if (!existsSync(p)) continue;
-    const text = readFileSync(p, 'utf8');
-    // _pending and _thread are freeform runtime trails (no YAML preamble);
-    // their structure is the skeleton, not a frontmatter'd entry file.
-    if (name === '_pending' || name === '_thread') { add(`memory shape: ${name}.md`, 'PASS', ''); continue; }
-    const [ok, reason] = isValidPreamble(text);
-    if (!ok) { add(`memory shape: ${name}.md`, 'FAIL', reason); continue; }
-    const splitOnce = text.split('---');
-    const body = splitOnce.length >= 3 ? splitOnce.slice(2).join('---') : text;
-    const bodyNoFence = body.replace(/^```[\s\S]*?^```\s*$/gm, '');
-    const entryCount = (bodyNoFence.match(/^##\s+\S/gm) || []).length;
-    add(`memory shape: ${name}.md`, 'PASS',
-      entryCount > 0 ? `${entryCount} entries` : 'empty (preamble-only)');
+    const diskMemory = new Set(
+      listDir('.claude/memory')
+        .filter(n => n.endsWith('.md') && n !== 'README.md')
+        .map(n => n.replace(/\.md$/, ''))
+    );
+    const missing = [...EXPECTED_MEMORY_FILES].filter(x => !diskMemory.has(x)).sort();
+    const unexpected = [...diskMemory].filter(x => !EXPECTED_MEMORY_FILES.has(x)).sort();
+    if (missing.length || unexpected.length) {
+      const bits = [];
+      if (missing.length) bits.push(`missing: ${JSON.stringify(missing)}`);
+      if (unexpected.length) bits.push(`unexpected: ${JSON.stringify(unexpected)}`);
+      add('memory files present', 'FAIL', bits.join('; '));
+    } else {
+      add('memory files present', 'PASS', `${diskMemory.size} files`);
+    }
+    for (const name of [...EXPECTED_MEMORY_FILES].sort()) {
+      const p = join(memDir, `${name}.md`);
+      if (!existsSync(p)) continue;
+      const text = readFileSync(p, 'utf8');
+      // _pending and _thread are freeform runtime trails (no YAML preamble);
+      // their structure is the skeleton, not a frontmatter'd entry file.
+      if (name === '_pending' || name === '_thread') { add(`memory shape: ${name}.md`, 'PASS', ''); continue; }
+      const [ok, reason] = isValidPreamble(text);
+      if (!ok) { add(`memory shape: ${name}.md`, 'FAIL', reason); continue; }
+      const splitOnce = text.split('---');
+      const body = splitOnce.length >= 3 ? splitOnce.slice(2).join('---') : text;
+      const bodyNoFence = body.replace(/^```[\s\S]*?^```\s*$/gm, '');
+      const entryCount = (bodyNoFence.match(/^##\s+\S/gm) || []).length;
+      add(`memory shape: ${name}.md`, 'PASS',
+        entryCount > 0 ? `${entryCount} entries` : 'empty (preamble-only)');
+    }
   }
   add('memory README',
     existsSync(join(memDir, 'README.md')) ? 'PASS' : 'FAIL',

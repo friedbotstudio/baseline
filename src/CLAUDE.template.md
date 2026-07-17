@@ -227,7 +227,7 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 
 The memory system at `.claude/memory/` accumulates project facts across sessions. You SHALL:
 
-1. Treat the seven canonical files (`landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `pending-questions.md`, `backlog.md`) as long-term project memory. Each entry has a stable key per the schema in `.claude/memory/README.md`.
+1. Treat the seven canonical categories (`landmarks`, `libraries`, `decisions`, `landmines`, `conventions`, `pending-questions`, `backlog`), flat or sharded, as long-term project memory. Each entry has a stable key per the schema in `.claude/memory/README.md`.
 2. **Re-verify before citing.** Every skill that cites a memory entry SHALL re-verify it (file exists, symbol still at named line, library version still pinned). Failed verification → you SHALL correct or delete the entry in the same run before proceeding.
 3. Treat `_pending.md` as the auto-extraction inbox (written by `memory_stop`). Promote candidates to canonical files only via `/memory-flush`. You SHALL NOT write directly into canonical memory files outside the natural byproduct of phase skills.
 4. Treat `_resume.md` as the cross-session continuity snapshot (refreshed every turn-end and before compaction). It is **session memory**, not project memory.

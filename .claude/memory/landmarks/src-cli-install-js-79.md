@@ -1,0 +1,10 @@
+---
+key: src/cli/install.js:79
+category: landmarks
+scope: [scout]
+---
+
+- Role: `freshInstall(templateDir, target)` — bulk `cp -r templateDir target` with a filter that skips `SPECIAL_MERGE` paths (`.mcp.json` → deep-merge) and `COPY_EXCLUDE` paths; then applies `NEVER_TOUCH` (preserve user's `.claude/project.json` if present) and `SPECIAL_MERGE`; then `materializeNpmrc(target)` writes `<target>/.npmrc` from `src/.npmrc.template`; finally writes `<target>/.claude/.baseline-manifest.json` as the runtime hash table. `forceInstall` parallels the shape but with `force: true` and `skipNeverTouch: true`. The shipped sha256 manifest at `obj/template/.claude/manifest.json` (with `owners.skills`) is delivered to `<target>/.claude/manifest.json` by the recursive cp itself — no special-case step — because it lives inside the `.claude/` subtree of the template; `COPY_EXCLUDE` is empty since path-level exclusion is no longer needed.
+- Verified-at: 8e6f904
+- Last-touched: 2026-06-23
+- Caveat: `materializeNpmrc` reads `NPMRC_TEMPLATE_PATH` (resolved relative to `import.meta.url` → package root → `src/.npmrc.template`) — it's a no-op when the template path doesn't exist (fixture / dev tree without the file) AND when `target/.npmrc` already exists (never overwrite operator config). This indirection exists because npm pack mechanically drops top-level `.npmrc` files from published tarballs (see landmines.md → `npm-pack-excludes-dotnpmrc`), so the bytes ship under a non-excluded basename in `src/` and are materialized at install time. The runtime `<target>/.claude/.baseline-manifest.json` and the shipped `<target>/.claude/manifest.json` are two distinct files: shipped is frozen at release time and carries `owners.skills`; runtime is built from `buildManifestFromDir(target, listFiles(target))` post-install and is hash-only. `writeBaselineManifest` excludes `.claude/.baseline-manifest.json` from its own hash table to avoid the self-reference, but DOES hash `.claude/manifest.json` so `upgrade`'s threeWayMerge tracks it as a normal file.

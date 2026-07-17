@@ -115,7 +115,8 @@ export function deriveCounts(root) {
   const commands = listFiles(join(claude, 'commands')).filter((n) => n.endsWith('.md')).length;
   const subagents = listFiles(join(claude, 'agents')).filter((n) => n.endsWith('.md')).length;
   const memoryFiles = CANONICAL_MEMORY
-    .filter((name) => existsSync(join(claude, 'memory', `${name}.md`))).length;
+    .filter((name) => existsSync(join(claude, 'memory', `${name}.md`))
+      || existsSync(join(claude, 'memory', name))).length;
   return {
     skills,
     hooks,

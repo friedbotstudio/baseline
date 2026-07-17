@@ -70,9 +70,20 @@ Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or
 
 **Memory accelerates triage; it never authorizes a skip.** Every skill that *cites* a memory entry must first re-verify it (file exists, symbol still at named line, library version still pinned). On verification failure, the skill **corrects or deletes the entry in the same run** before proceeding. Drift self-heals because every read is also a check.
 
+## Storage shape (flat vs sharded)
+
+Each canonical category is stored in one of two shapes, detected **presence-based** on disk (the memory hooks and `audit-baseline` adapt automatically — no flag is consulted at read time):
+
+- **Flat** (default; what a fresh install ships): one file `<name>.md` holding many `## <key>` entry blocks, capped by `size-cap:`.
+- **Sharded** (activated via `memory.sharded_store` + a migration): a directory `<category>/` of one-fact-per-file entries `<category>/<key>.md`. Each fact file carries frontmatter (`key:` = the original stable key verbatim, `category:`, `scope:`, plus the entry's fields) and the entry body/verbatim. No per-file line cap — growth never forces a destructive prune.
+
+**Scope + decision-point surfacing.** A sharded fact's `scope:` lists the workflow phases at which it should surface as an *active constraint*. `process_lifecycle_guard` (on a Write/Edit to a phase artifact, e.g. `docs/specs/**` → phase `spec`) calls `.claude/hooks/lib/scoped-memory.mjs → surfaceScopedMemory(phase)` and emits the matching facts (verbatim for ≤3, a bounded index otherwise) **before** the write — so a captured lesson (e.g. the outcome-AC landmine) constrains the moment it is relevant rather than sitting in a passive archive.
+
+**Migration is lossless and reversible.** `node .claude/skills/memory-index/migrate.mjs --forward|--reverse --root .claude/memory` explodes the flat files into per-fact dirs (proving file-count == block-count before removing any source) and back. The **filename** is a CWE-22-safe slug of the heading; the **key** is the heading verbatim, so `path:line` / `lib@version` stable keys survive. The session-start index is built from frontmatter only (`.claude/skills/memory-index/build-index.mjs`), keeping the upfront context cheap.
+
 ## Bounding rules
 
-- Each canonical file has `size-cap: <N>` in frontmatter (default 500 lines). When a skill writes and exceeds, it must prune the oldest unverified entries in the same write. Working-set discipline.
+- In the **flat** shape, each canonical file has `size-cap: <N>` in frontmatter (default 500 lines). When a skill writes and exceeds, it must prune the oldest unverified entries in the same write. Working-set discipline. The **sharded** shape has no per-file cap (one fact per file).
 - Decay: entries unverified for ≥30 commits (git) OR ≥30 days since `last-touched:` (non-git fallback) are marked `stale`. The next phase that touches them either re-verifies or deletes.
 
 ## Closure fields

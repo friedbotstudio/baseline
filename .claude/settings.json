@@ -34,7 +34,8 @@
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/plantuml_syntax_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_diagram_presence_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/swarm_boundary_guard.mjs" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_design_calls_guard.mjs" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_design_calls_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/process_lifecycle_guard.mjs" }
         ]
       },
       {

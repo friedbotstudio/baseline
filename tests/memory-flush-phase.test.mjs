@@ -343,8 +343,20 @@ describe('AC-002 — memory-flush SOP documents empty-pending fast-path', () => 
 
 describe('AC-013 — Q-001 carries resolved-at field after the workflow lands', () => {
   it('test_when_pending_questions_q001_then_carries_resolved_at_or_is_absent', async () => {
-    const content = await readRepoFile('.claude/memory/pending-questions.md');
-    const q001Match = content.match(/##\s+Q-001[\s\S]*?(?=\n##\s+Q-\d{3}|\n##\s+\w|$)/);
+    // Shape-aware: the store may be flat (`pending-questions.md`) or sharded
+    // (`pending-questions/<slug>.md`). Gather from whichever is on disk.
+    const fsSync = await import('node:fs');
+    const flat = path.join(REPO_ROOT, '.claude/memory/pending-questions.md');
+    const dir = path.join(REPO_ROOT, '.claude/memory/pending-questions');
+    let content = '';
+    if (fsSync.existsSync(flat)) {
+      content = await readRepoFile('.claude/memory/pending-questions.md');
+    } else if (fsSync.existsSync(dir)) {
+      for (const f of fsSync.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
+        content += fsSync.readFileSync(path.join(dir, f), 'utf8') + '\n';
+      }
+    }
+    const q001Match = content.match(/(?:##\s+Q-001|key:\s*Q-001)[\s\S]*?(?=\n##\s+Q-\d{3}|\n##\s+\w|$)/);
     if (!q001Match) {
       // Q-001 was auto-closed by sweep.py — also valid per AC-013.
       return;
