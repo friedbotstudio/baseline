@@ -219,7 +219,7 @@
     "granularity": "component",
     "min_tasks_worth_swarming": 3,
     "isolation": "shared",
-    "refuse_dirty_tree": true,
+    "refuse_dirty_tree": false,
     "exempt_path_prefixes": [
       ".claude/",
       ".git/",
@@ -262,6 +262,17 @@
     },
     "durable_plan": {
       "enabled": true
+    },
+    "code_review": {
+      "enabled": true,
+      "checkers": [
+        "security",
+        "simplify",
+        "code-structure"
+      ]
+    },
+    "design_judge": {
+      "enabled": false
     },
     "sprint_mode": {
       "enabled": false

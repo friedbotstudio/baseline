@@ -46,7 +46,9 @@ Calls `audit.mjs`. Output is a compact pass/fail table with a final verdict. Exi
 
 ## Maintenance
 
-Expected name sets live in `audit.mjs` (see the `EXPECTED_*` constants). Adding a new hook, agent, skill, or command means updating both `audit.mjs` and `seed.md`. The audit catches the drift; fix the implementation, not the audit.
+Expected name sets live in `expected-baseline.mjs` (the `EXPECTED_*` constants). Adding a new hook, agent, skill, or command means updating both `expected-baseline.mjs` and `seed.md`. The audit catches the drift; fix the implementation, not the audit.
+
+`audit.mjs` is a thin orchestrator: it builds the shared audit context in `checks/context.mjs`, then runs one check module per concern from `checks/*.mjs` (each returns `[name, status, detail]` rows) and prints the table. To add a check, write a new `checks/<concern>.mjs` exporting `run(ctx)` and list it in the orchestrator's `CHECKS` array; pure surface helpers shared across checks live in `checks/surface-helpers.mjs`.
 
 ## Output format
 
