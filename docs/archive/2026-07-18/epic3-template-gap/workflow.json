@@ -1,0 +1,44 @@
+{
+  "request": "Fix the Epic 3 template gap: mirror code_review (enabled:true) and design_judge (explicit false) from live .claude/project.json into src/project.template.json, fix swarm.refuse_dirty_tree true->false in the template to match live (closes Q-007), and add a live<->template velocity/swarm parity check to audit-baseline plus a driving test tests/template-velocity-parity.test.mjs.",
+  "slug": "epic3-template-gap",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "approved plan .config/plans/let-us-fix-epic-adaptive-creek.md; roadmap Epic 3 (docs/roadmap-execution-plan.md); landmine swarm-refuse-dirty-tree-blocks-mid-workflow; pending-question Q-007",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [
+    "chore",
+    "spec-entry"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1752796800,
+  "updated_at": 1752796800,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}
