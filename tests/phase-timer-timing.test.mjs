@@ -86,16 +86,27 @@ describe('AC-001 — durable stamp when completed[] grows', () => {
   it('test_when_completed_grows_then_one_stamp_appended', async () => {
     const { stampFromWorkflow } = await importTiming();
     withRoot((root) => {
+      // created_at 1000s == 1_000_000ms; now() is ms and must sit AFTER it, else
+      // phase-1 spans a negative interval. The original fixture used now()=5_000
+      // (before created_at) — harmless while the baseline row carried now(),
+      // load-bearing now that it carries created_at*1000.
       writeWorkflow(root, { slug: 'demo', completed: ['intake'], created_at: 1000 });
-      const out = stampFromWorkflow({ rootDir: root, now: () => 5_000 });
+      const out = stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
       assert.deepEqual(out.appended, ['intake']);
       // First stamp for a slug also writes a run-start baseline anchoring
       // phase-1's token delta (phase-token-instrumentation). No transcriptPath
       // here, so the baseline carries no token fields.
       const stamps = readStamps(root, 'demo');
       assert.equal(stamps.length, 2);
-      assert.deepEqual(stamps[0], { phase: 'run-start', event: 'baseline', ts: 5_000 });
-      assert.deepEqual(stamps[1], { phase: 'intake', event: 'completed', ts: 5_000 });
+      // Field-wise, not deepEqual: rows carry additive provenance fields
+      // (batch_id / batch_size / wait_ms) that an exact-match assertion would
+      // reject on every future extension.
+      assert.equal(stamps[0].phase, 'run-start');
+      assert.equal(stamps[0].event, 'baseline');
+      assert.equal(stamps[0].ts, 1_000_000, 'baseline anchors at created_at*1000, not now()');
+      assert.equal(stamps[1].phase, 'intake');
+      assert.equal(stamps[1].event, 'completed');
+      assert.equal(stamps[1].ts, 5_000_000);
     });
   });
 
@@ -242,6 +253,117 @@ describe('AC-005 — sparse / edge inputs render safely', () => {
       const md = renderTable({ rootDir: root, slug: 'demo' });
       // model = 3_000_000 - created_at*1000 (1_000_000); no gate -> human 0
       assert.match(md, rowRe('intake', 2_000_000, 0));
+    });
+  });
+});
+
+// ---- timing-instrument-repair — JSONL fidelity -----------------------------
+//
+// The JSONL must be self-describing: post-hoc analysis reads it AFTER /commit
+// has archived workflow.json away, so anything the renderer derives live from
+// workflow.json is unavailable to a later reader.
+
+function writeRawWorkflow(root, obj) {
+  writeFileSync(statePath(root, 'workflow.json'), JSON.stringify(obj));
+}
+
+describe('defect-1 — run-start baseline anchors at created_at', () => {
+  it('test_when_workflow_has_created_at_then_baseline_row_ts_equals_created_at_ms', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['intake'], created_at: 1_700_000 });
+      stampFromWorkflow({ rootDir: root, now: () => 1_700_500_000 });
+      const baseline = readStamps(root, 'demo').find((s) => s.event === 'baseline');
+      assert.equal(baseline.ts, 1_700_000_000, 'created_at(s) * 1000, not the injected now()');
+    });
+  });
+
+  it('test_when_created_at_is_absent_or_non_finite_then_baseline_row_ts_falls_back_to_now', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    const variants = [
+      ['absent', { slug: 'demo', completed: ['intake'] }],
+      ['null', { slug: 'demo', completed: ['intake'], created_at: null }],
+      ['string', { slug: 'demo', completed: ['intake'], created_at: 'nope' }],
+    ];
+    for (const [label, wf] of variants) {
+      withRoot((root) => {
+        writeRawWorkflow(root, wf);
+        stampFromWorkflow({ rootDir: root, now: () => 4_242_000 });
+        const baseline = readStamps(root, 'demo').find((s) => s.event === 'baseline');
+        assert.equal(baseline.ts, 4_242_000, `created_at ${label} -> falls back to now()`);
+      });
+    }
+  });
+});
+
+describe('defect-3 — gate roster and stored wait_ms', () => {
+  it('test_when_approve_direction_is_stamped_then_it_is_treated_as_a_gate', async () => {
+    const { renderTable } = await importTiming();
+    for (const gate of ['approve-direction', 'approve-spec']) {
+      withRoot((root) => {
+        writeWorkflow(root, { slug: 'demo', completed: ['spec', gate, 'tdd'], created_at: 1000 });
+        seedStamps(root, 'demo', [
+          { phase: 'spec', ts: 5_000_000 },
+          { phase: gate, ts: 7_000_000 },
+          { phase: 'tdd', ts: 9_000_000 },
+        ]);
+        const md = renderTable({ rootDir: root, slug: 'demo' });
+        assert.doesNotMatch(md, new RegExp(`\\|\\s*${gate}\\s*\\|`), `${gate} is a gate, not a phase row`);
+      });
+    }
+  });
+
+  it('test_when_a_gate_row_is_stamped_then_wait_ms_is_the_gap_since_the_previous_stamp', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['spec'], created_at: 1000 });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      writeWorkflow(root, { slug: 'demo', completed: ['spec', 'approve-direction'], created_at: 1000 });
+      stampFromWorkflow({ rootDir: root, now: () => 8_000_000 });
+      const gate = readStamps(root, 'demo').find((s) => s.phase === 'approve-direction');
+      assert.equal(gate.wait_ms, 3_000_000, 'gate wait = own ts - previous stamp ts');
+    });
+  });
+
+  it('test_when_a_non_gate_row_is_stamped_then_wait_ms_is_zero', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['spec'], created_at: 1000 });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      writeWorkflow(root, { slug: 'demo', completed: ['spec', 'tdd'], created_at: 1000 });
+      stampFromWorkflow({ rootDir: root, now: () => 8_000_000 });
+      const work = readStamps(root, 'demo').find((s) => s.phase === 'tdd');
+      assert.equal(work.wait_ms, 0, 'non-gate phases carry no human wait');
+    });
+  });
+});
+
+describe('regression — additive fields do not disturb existing consumers', () => {
+  it('test_when_stamps_predate_the_new_fields_then_render_table_still_renders', async () => {
+    const { renderTable } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['spec', 'tdd'], created_at: 1000 });
+      // seedStamps writes the pre-change row shape: no batch_id/batch_size/wait_ms.
+      seedStamps(root, 'demo', [{ phase: 'spec', ts: 5_000_000 }, { phase: 'tdd', ts: 9_000_000 }]);
+      let md;
+      assert.doesNotThrow(() => { md = renderTable({ rootDir: root, slug: 'demo' }); });
+      assert.match(md, rowRe('spec', 4_000_000, 0), 'legacy rows still render');
+    });
+  });
+
+  it('test_when_workflow_json_is_present_then_render_table_run_start_anchor_is_unchanged', async () => {
+    const { renderTable } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['intake'], created_at: 1000 });
+      // Baseline ts is deliberately WRONG. renderTable derives runStart from
+      // workflow.json, so correcting the baseline row must not shift the render.
+      mkdirSync(dirname(jsonlPath(root, 'demo')), { recursive: true });
+      writeFileSync(jsonlPath(root, 'demo'), [
+        JSON.stringify({ phase: 'run-start', event: 'baseline', ts: 999_999_999 }),
+        JSON.stringify({ phase: 'intake', event: 'completed', ts: 3_000_000 }),
+      ].join('\n') + '\n');
+      const md = renderTable({ rootDir: root, slug: 'demo' });
+      assert.match(md, rowRe('intake', 2_000_000, 0), 'anchored at created_at*1000 regardless of baseline.ts');
     });
   });
 });

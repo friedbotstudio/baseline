@@ -1,0 +1,33 @@
+{
+  "request": "Fix the phase-timing instrument in .claude/hooks/lib/timing.mjs: (1) anchor the run-start baseline row at wf.created_at * 1000 instead of now(), so phase 1 stops reporting zero elapsed; (2) mark batch-stamped rows with batch_id + batch_size so consumers distinguish 'nothing happened' from 'not observed'; (3) add approve-direction to GATE_PHASES, resolve the approval-token path for the renamed gate, and store wait_ms per row so consent-gate wait is a field rather than an inference.",
+  "slug": "timing-instrument-repair",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Defect 2 is documented in landmines.md → phase-timer-collapses-phases-appended-in-one-workflow-json-write. Defect 3 traces to commit b887f74 (D3/CO-E gate rename approve-spec → approve-direction) which never propagated to lib/timing.mjs GATE_PHASES or approvalTokenPath. Defect 1 read directly from lib/timing.mjs → stampFromWorkflow, which pushes the baseline row with ts = now() while using createdMs only for the token anchor. Measured on .claude/state/timing/: 55 of 55 instrumented runs show run-start.ts == first-phase.ts (zero-duration phase 1); 105 of 729 stamped rows (14.4%) are batch-collapsed, concentrated in tdd (78%) and tdd:finalize (85%).",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "cli-copy-review"],
+  "auto_skipped": [
+    {
+      "phase": "cli-copy-review",
+      "reason": "no CLI surface in diff (src/cli/**, bin/cli.js untouched)",
+      "oracle": "main-context",
+      "measured": { "cli_files_touched": 0 }
+    }
+  ],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784375149,
+  "updated_at": 1784375149
+}

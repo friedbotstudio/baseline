@@ -204,6 +204,50 @@ describe('stampFromWorkflow idempotency with tokens', () => {
   });
 });
 
+// ---- 6. batch provenance (timing-instrument-repair, defect-2) ---------------
+//
+// One stampFromWorkflow call reads the clock and the transcript ONCE and spreads
+// both across every row it emits. Rows in the same batch therefore show zero
+// deltas against each other — which is indistinguishable, in the data, from a
+// phase that genuinely cost nothing. batch_id + batch_size make the difference
+// legible: "observed together" vs "observed alone".
+
+describe('stampFromWorkflow batch provenance', () => {
+  it('test_when_one_call_stamps_multiple_phases_then_rows_share_batch_id_and_batch_size', () => {
+    const root = tmpRoot();
+    writeWorkflow(root, { slug: 'b1', completed: ['tdd'] });
+    stampFromWorkflow({ rootDir: root, now: FIXED_NOW });
+
+    // Three phases land in a single workflow.json write -> one stamping call.
+    writeWorkflow(root, { slug: 'b1', completed: ['tdd', 'simplify', 'security', 'integrate'] });
+    stampFromWorkflow({ rootDir: root, now: () => 1782000009999 });
+
+    const batched = readTiming(root, 'b1').filter((s) =>
+      ['simplify', 'security', 'integrate'].includes(s.phase));
+    assert.equal(batched.length, 3, 'all three phases stamped');
+
+    const ids = new Set(batched.map((s) => s.batch_id));
+    assert.equal(ids.size, 1, 'every row in one call shares a batch_id');
+    assert.ok([...ids][0], 'batch_id is a non-empty value');
+    for (const row of batched) {
+      assert.equal(row.batch_size, 3, `${row.phase} records how many rows shared its observation`);
+    }
+  });
+
+  it('test_when_one_call_stamps_a_single_phase_then_batch_size_is_one', () => {
+    const root = tmpRoot();
+    writeWorkflow(root, { slug: 'b2', completed: ['tdd'] });
+    stampFromWorkflow({ rootDir: root, now: FIXED_NOW });
+
+    writeWorkflow(root, { slug: 'b2', completed: ['tdd', 'simplify'] });
+    stampFromWorkflow({ rootDir: root, now: () => 1782000005000 });
+
+    const solo = readTiming(root, 'b2').find((s) => s.phase === 'simplify');
+    assert.equal(solo.batch_size, 1, 'a singleton says so explicitly rather than by absence');
+    assert.ok(solo.batch_id, 'singletons still carry a batch_id');
+  });
+});
+
 // ---- 5. never-throw degradation --------------------------------------------
 
 describe('stampFromWorkflow + renderTable token robustness', () => {

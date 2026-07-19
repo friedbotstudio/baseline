@@ -2,9 +2,12 @@
 key: phase-timer-collapses-phases-appended-in-one-workflow-json-write
 category: landmines
 scope: [scout, spec, tdd, security, integrate]
-verified-at: 3160e0c
-last-touched: 2026-07-12
+verified-at: f36b142
+last-touched: 2026-07-19
 ---
+
+- **Status 2026-07-19 (PARTIALLY RESOLVED, `timing-instrument-repair`)**: the DATA is now honest, the RENDER is not. `stampFromWorkflow` stamps every row emitted by one call with a shared `batch_id` and `batch_size`, so a batched row is distinguishable from a phase that genuinely cost nothing. But `renderTable` does **not** read those fields yet, so `timing.md` still prints `0 / 0` for collapsed rows — observed live in `docs/archive/2026-07-19/timing-instrument-repair/timing.md` (`tdd:verify` and `tdd:finalize`, both members of a `batch_size: 3` group). Until the renderer consumes them ([[render-consume-batch-and-wait-fields-7c31]]), read the JSONL directly rather than trusting the rendered table. The mitigation below (one phase per write) still applies and is still the cleanest fix at the source.
+- **Forward-only caveat**: the `run-start` baseline row is written **once per slug**, on the first stamp. The same landing corrected its `ts` to `created_at * 1000`, but the 55 timing files that predate the fix keep their zero-duration phase 1 permanently — they are not retroactively repaired, and any cross-era comparison of phase-1 cost is invalid.
 
 - Path: `.claude/hooks/phase_timer.mjs` + `.claude/hooks/lib/timing.mjs → stampFromWorkflow` (stamps on `workflow.json → completed[]` growth) → rendered into `<bundle>/timing.md`.
 - Trap: the stamper treats **each write** to `completed[]` as ONE phase transition. Appending several phases in a single write collapses them: only the last gets a stamp, and the others render as **0 ms**, their real cost absorbed into the neighbouring span. Live 2026-07-12 (`unified-execution-roadmap`, chore track): the run appended `["chore","verify","simplify"]` in one `node -e` write, and `timing.md` rendered `chore 505402ms / verify 0ms / simplify 0ms` — verify and simplify each did real work (a full audit run, a cleanup edit + re-verify) and both read as free.

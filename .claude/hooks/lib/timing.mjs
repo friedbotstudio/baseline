@@ -15,7 +15,22 @@
 // following work phase's human-wait, never shown as their own rows. The first stamp
 // for a slug also writes a `run-start` baseline row anchoring phase-1's token delta:
 // its token counts cover only transcript entries timestamped at/before created_at,
-// so phase-1 reflects in-workflow work, not the whole pre-workflow session.
+// so phase-1 reflects in-workflow work, not the whole pre-workflow session. That
+// baseline row carries `ts = created_at * 1000` (falling back to now() when
+// created_at is absent or non-finite), so the JSONL stays self-describing for a
+// reader that no longer has workflow.json — /commit archives it, and renderTable's
+// own runStart derivation is unavailable post-archive.
+//
+// Every phase row additionally carries:
+//   batch_id / batch_size — one stampFromWorkflow call reads the clock and the
+//     transcript ONCE and spreads both across every row it emits, so rows in a
+//     batch show zero deltas against each other. These fields distinguish "observed
+//     together" from "genuinely cost nothing". The baseline row is an anchor, not an
+//     observation, and is excluded from batch_size.
+//   wait_ms — on a gate phase, the gap since the previous stamp (human wait, since
+//     no model work happens while a gate is pending); 0 on every other phase, absent
+//     on the baseline. Summing wait_ms over a file yields total human wait with no
+//     double-count.
 
 import {
   existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync, statSync,
@@ -23,7 +38,11 @@ import {
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const GATE_PHASES = new Set(['approve-spec', 'approve-swarm', 'grant-commit']);
+// `approve-direction` is the post-gate-collapse (D3/CO-E) name for the gate that
+// used to be `approve-spec`; both are listed so pre-rename workflows still read
+// correctly. The token path is unchanged — the gate still writes
+// .claude/state/spec_approvals/<slug>.approval.
+const GATE_PHASES = new Set(['approve-direction', 'approve-spec', 'approve-swarm', 'grant-commit']);
 
 // ---- paths -----------------------------------------------------------------
 
@@ -105,6 +124,14 @@ function sumTranscriptTokens(transcriptPath, beforeMs) {
   return seen ? { out_tokens: out, in_tokens: inp, cache_tokens: cache } : null;
 }
 
+// The stamp a gate's wait is measured against: the last row already on disk, or
+// the run-start baseline when this call is the first for the slug. Every row in
+// one call shares a timestamp, so the gap is identical across the batch.
+function lastObservedTs(existing, pendingRows) {
+  const prior = existing.length > 0 ? existing[existing.length - 1] : pendingRows[0];
+  return prior && Number.isFinite(prior.ts) ? prior.ts : 0;
+}
+
 // ---- stamp -----------------------------------------------------------------
 
 export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, subtickEnabled = true } = {}) {
@@ -124,18 +151,30 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, sub
 
   const currentTokens = sumTranscriptTokens(transcriptPath) ?? {};
   const ts = now();
+  const createdMs = Number.isFinite(wf.created_at) ? wf.created_at * 1000 : undefined;
 
   const rows = [];
   if (existing.length === 0) {
-    const createdMs = Number.isFinite(wf.created_at) ? wf.created_at * 1000 : undefined;
     const baselineTokens = sumTranscriptTokens(transcriptPath, createdMs) ?? {};
-    rows.push({ phase: 'run-start', event: 'baseline', ts, ...baselineTokens });
+    rows.push({ phase: 'run-start', event: 'baseline', ts: createdMs ?? ts, ...baselineTokens });
   }
-  for (const phase of freshSub) {
-    rows.push({ phase, event: 'sub', ts, ...currentTokens });
-  }
-  for (const phase of freshCompleted) {
-    rows.push({ phase, event: 'completed', ts, ...currentTokens });
+
+  const observed = [
+    ...freshSub.map((phase) => [phase, 'sub']),
+    ...freshCompleted.map((phase) => [phase, 'completed']),
+  ];
+  const batchId = `${ts}-${existing.length}`;
+  const priorTs = lastObservedTs(existing, rows);
+  for (const [phase, event] of observed) {
+    rows.push({
+      phase,
+      event,
+      ts,
+      ...currentTokens,
+      wait_ms: GATE_PHASES.has(phase) ? Math.max(0, ts - priorTs) : 0,
+      batch_id: batchId,
+      batch_size: observed.length,
+    });
   }
 
   const p = timingPath(rootDir, slug);
