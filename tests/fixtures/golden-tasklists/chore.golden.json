@@ -1,6 +1,6 @@
 {
   "track_id": "chore",
-  "description": "Canonical TaskList for the chore track (post roadmap-sync amendment).",
+  "description": "Canonical TaskList for the chore track (post roadmap-sync amendment; post archive amendment — seed.md §14/§285/§373 require archive on every committing track, and the chore DAG shipped without it).",
   "tasks": [
     {
       "ord": 1,
@@ -14,10 +14,10 @@
     },
     {
       "ord": 2,
-      "subject": "Run /roadmap-sync for <slug>",
-      "activeForm": "Running roadmap-sync",
+      "subject": "Run /archive for <slug>",
+      "activeForm": "Running archive",
       "metadata": {
-        "phase": "roadmap-sync"
+        "phase": "archive"
       },
       "needs_user": false,
       "blockedBy": [
@@ -26,10 +26,10 @@
     },
     {
       "ord": 3,
-      "subject": "Run /memory-flush for <slug>",
-      "activeForm": "Running memory-flush",
+      "subject": "Run /roadmap-sync for <slug>",
+      "activeForm": "Running roadmap-sync",
       "metadata": {
-        "phase": "memory-flush"
+        "phase": "roadmap-sync"
       },
       "needs_user": false,
       "blockedBy": [
@@ -38,6 +38,18 @@
     },
     {
       "ord": 4,
+      "subject": "Run /memory-flush for <slug>",
+      "activeForm": "Running memory-flush",
+      "metadata": {
+        "phase": "memory-flush"
+      },
+      "needs_user": false,
+      "blockedBy": [
+        3
+      ]
+    },
+    {
+      "ord": 5,
       "subject": "Wait for /grant-commit",
       "activeForm": "Awaiting commit consent",
       "metadata": {
@@ -46,11 +58,11 @@
       },
       "needs_user": true,
       "blockedBy": [
-        3
+        4
       ]
     },
     {
-      "ord": 5,
+      "ord": 6,
       "subject": "Run /commit for <slug>",
       "activeForm": "Running commit",
       "metadata": {
@@ -58,7 +70,7 @@
       },
       "needs_user": false,
       "blockedBy": [
-        4
+        5
       ]
     }
   ]

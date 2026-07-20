@@ -1,0 +1,33 @@
+{
+  "request": "Add the mandatory archive node to the chore track DAG in .claude/workflows.jsonl and src/.claude/workflows.template.jsonl, update the chore golden tasklist fixture, and add an invariant test asserting every committing track declares an archive phase.",
+  "slug": "chore-archive-node",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "seed.md states the requirement in three places — §14 ('runs archive mandatorily'), §285 ('archive and /grant-commit + /commit always run'), §373 ('archive / /grant-commit / /commit always run') — and CLAUDE.md Art. IV plus chore/SKILL.md agree. The chore DAG in both .claude/workflows.jsonl and src/.claude/workflows.template.jsonl declares no archive node, so deriveExceptions auto-excepts archive on every chore workflow (verified: derive-exceptions.mjs chore returns archive in the exceptions array). Scoped all 11 tracks: chore is the only genuine defect — freeform excepts archive by design per CLAUDE.md, epic is discovery-only, the two sub-tracks are not standalone.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush", "cli-copy-review"],
+  "auto_skipped": [
+    {
+      "phase": "cli-copy-review",
+      "reason": "no CLI surface in diff (src/cli/**, bin/cli.js untouched)",
+      "oracle": "main-context",
+      "measured": { "cli_files_touched": 0 }
+    }
+  ],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1784446017,
+  "updated_at": 1784446017
+}
