@@ -2,13 +2,14 @@
 key: repair-shard-migration-field-lifting-and-stale-readers-b4e1
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-07-18
 raised-in-context: (no active workflow — /standup + /memory-flush)
 source: assistant-deferral
 estimated-effort: medium
 verified-at: f36b142
 last-touched: 2026-07-18
+superseded-at: 2026-07-20
 ---
 
 > verbatim (assistant, 2026-07-18):

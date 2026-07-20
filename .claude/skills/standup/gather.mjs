@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { resolveCategory } from '../memory-index/lift-fields.mjs';
 
 // ---- Orchestration -----------------------------------------------------
 
@@ -114,15 +115,17 @@ function emptyRelease() {
 // ---- Domain: backlog ---------------------------------------------------
 
 function collectBacklog(rootDir, degraded) {
-  const raw = readFileSafe(join(rootDir, '.claude/memory/backlog.md'));
-  if (raw === null) {
+  const { entries: facts, source, degraded: shapeDegraded } = resolveCategory(
+    join(rootDir, '.claude/memory'), 'backlog');
+  if (source === 'absent') {
     degraded.push('no-backlog');
     return { open: [], pickedUp: [], dropped: [] };
   }
-  const entries = parseEntries(raw).map(({ key, block }) => ({
-    key,
-    status: field(block, /^-?\s*status:\s*(\S+)/m),
-    parent: field(block, /^-?\s*parent:\s*(\S+)/m),
+  degraded.push(...shapeDegraded);
+  const entries = facts.map((fact) => ({
+    key: fact.key,
+    status: fact.fields.status,
+    parent: fact.fields.parent,
     children: [],
   }));
   nestChildren(entries);
@@ -149,17 +152,19 @@ function bucketByStatus(entries) {
 // ---- Domain: pending questions -----------------------------------------
 
 function collectPendingQuestions(rootDir, degraded) {
-  const raw = readFileSafe(join(rootDir, '.claude/memory/pending-questions.md'));
-  if (raw === null) {
+  const { entries, source, degraded: shapeDegraded } = resolveCategory(
+    join(rootDir, '.claude/memory'), 'pending-questions');
+  if (source === 'absent') {
     degraded.push('no-pending-questions');
     return [];
   }
-  return parseEntries(raw)
-    .filter(({ key }) => /^Q-\d+/.test(key))
-    .map(({ key, block }) => ({
-      id: key,
-      question: (field(block, /^-?\s*Question:\s*(.+)$/m) || '').trim(),
-      blocker: (field(block, /^-?\s*Blocker(?: for)?:\s*(.+)$/m) || '').trim(),
+  degraded.push(...shapeDegraded);
+  return entries
+    .filter((entry) => /Q-\d+/.test(entry.key))
+    .map((entry) => ({
+      id: entry.key,
+      question: (field(entry.body, /^-?\s*Question:\s*(.+)$/m) || '').trim(),
+      blocker: (field(entry.body, /^-?\s*Blocker(?: for)?:\s*(.+)$/m) || '').trim(),
     }));
 }
 

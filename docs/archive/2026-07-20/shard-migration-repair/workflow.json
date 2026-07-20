@@ -1,0 +1,45 @@
+{
+  "request": "Repair the T4 sharded-store migration fallout (backlog -b4e1) in three parts — case-insensitive field lifting in migrate.mjs plus a re-lift pass over the migrated corpus, a per-entry frontmatter field-set fidelity assertion, and a reader audit for flat-file assumptions (known blind: standup/gather.mjs) — plus a folded-in stale-doc correction marking CO-E gate-collapse shipped in docs/handoff/baseline-system-redesign-roadmap.md §5/§6.",
+  "slug": "shard-migration-repair",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": ".claude/memory/backlog/repair-shard-migration-field-lifting-and-stale-readers-b4e1.md specifies all three code parts with named files and line numbers (migrate.mjs:81, gather.mjs:117,152) plus the sequencing constraint; roadmap Epic 6 carries it as debt. Part 4 folded in this session, verified against commits d0166c3 and c3e1e3e and .claude/memory/decisions/gate-collapse-approve-direction-at-intake-2026-07-16.md.",
+  "track_reason": "One step heavier than the leanest tdd-quickfix: Part 2's fidelity assertion carries a real design question (what constitutes a frontmatter field-set match, and the assertion's behaviour on a legitimate schema difference), and Part 1 re-lifts ~127 live memory entries — both warrant a written contract before code. User-confirmed via AskUserQuestion.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "repair-shard-migration-field-lifting-and-stale-readers-b4e1"
+  ],
+  "created_at": 1784505600,
+  "updated_at": 1784505600
+}

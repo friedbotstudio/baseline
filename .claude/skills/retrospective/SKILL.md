@@ -15,7 +15,7 @@ The baseline's enforcement funnel has three rungs: a **landmine** (a remembered 
 Gather in main context (Article II — no subagent judgment):
 
 - The cycle window: since the last release tag, the epic's first commit, or a user-named range.
-- `.claude/memory/landmines.md` + `decisions.md` — what is already recorded.
+- The `landmines` and `decisions` categories under `.claude/memory/` — what is already recorded. Read them shape-agnostically: a sharded store keeps one fact per file under `<category>/`, a flat one keeps `## key` blocks in `<category>.md`.
 - Friction evidence inside the window: guard-trip messages in `.claude/state/logs/` (hook log lines), `docs/rca/*.md` postmortems, integrate-failure yields in `.claude/state/harness/*.log`, and user corrections you can cite verbatim from the session or `_resume.md`.
 
 # Method

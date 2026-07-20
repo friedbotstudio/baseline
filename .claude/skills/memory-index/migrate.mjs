@@ -10,6 +10,7 @@ import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '../../hooks/lib/frontmatter-parser.mjs';
+import { liftFields, emitFrontmatter, LIFTABLE_FIELDS, parseFieldBullet, splitBodyLines } from './lift-fields.mjs';
 
 const CANONICAL_CATEGORIES = [
   'landmarks', 'libraries', 'decisions', 'landmines',
@@ -75,13 +76,7 @@ function emitScalar(value) {
 }
 
 function toFactFile(heading, category, blockBody) {
-  const fields = [];
-  const bodyLines = [];
-  for (const line of blockBody.split('\n')) {
-    const field = /^-\s+([a-z][a-z-]*):\s+(.+)$/.exec(line.trim());
-    if (field && field[1] !== 'key' && field[1] !== 'category' && field[1] !== 'scope') fields.push([field[1], field[2]]);
-    else if (!field) bodyLines.push(line);
-  }
+  const { fields, bodyLines } = liftFields(blockBody, {});
   const preamble = [
     `key: ${heading}`,
     `category: ${category}`,
@@ -109,11 +104,47 @@ function splitBlocks(text, category, usedSlugs) {
     });
 }
 
-export function verifyMigrationFidelity(perCategory) {
+// Three sides, not one. The original count-only check passed a migration that
+// stranded every stamp — both counts were right while the data was wrong. Each
+// side names a distinct way a lift can be lossy:
+//
+//   residual-metadata — an allowlisted bullet left behind in a body (the old bug)
+//   dropped-prose     — a non-allowlisted line lost from a body (over-lifting, the
+//                       new bug the fix itself could introduce)
+//   clobbered-field   — a lift overwrote a pre-existing frontmatter key
+//
+// clobbered-field is the one both original sides were blind to: they were body-side,
+// so a frontmatter overwrite left the body correct and dropped nothing.
+export function verifyMigrationFidelity(perCategory, perEntry = {}) {
   for (const [category, { blocks, files }] of Object.entries(perCategory)) {
     if (blocks !== files) {
       throw new MigrationFidelityError(`fidelity mismatch in ${category}: ${blocks} blocks vs ${files} files`);
     }
+  }
+  for (const [category, entries] of Object.entries(perEntry)) {
+    for (const entry of entries || []) {
+      assertEntrySides(category, entry);
+    }
+  }
+}
+
+function assertEntrySides(category, entry) {
+  const { entryKey, residualMetadata = [], droppedProse = [], clobberedFields = [] } = entry;
+  if (residualMetadata.length) {
+    throw new MigrationFidelityError(
+      `fidelity violation [residual-metadata] in ${category}/${entryKey}: `
+      + `allowlisted bullet left in the body: ${residualMetadata.join(' | ')}`);
+  }
+  if (droppedProse.length) {
+    throw new MigrationFidelityError(
+      `fidelity violation [dropped-prose] in ${category}/${entryKey}: `
+      + `body line lost: ${droppedProse.join(' | ')}`);
+  }
+  if (clobberedFields.length) {
+    const detail = clobberedFields.map((c) => `${c.field} (${c.from} -> ${c.to})`).join(' | ');
+    throw new MigrationFidelityError(
+      `fidelity violation [clobbered-field] in ${category}/${entryKey}: `
+      + `pre-existing frontmatter overwritten: ${detail}`);
   }
 }
 
@@ -160,21 +191,107 @@ export function migrateReverse(memRoot) {
   }
 }
 
+function shardFilesIn(memRoot, category) {
+  const dir = join(memRoot, category);
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  return readdirSync(dir).filter((f) => f.endsWith('.md')).sort().map((f) => join(dir, f));
+}
+
+// What the lift left behind, for the three fidelity sides. Computed from the real
+// before/after rather than asserted by construction — a check that trusts the code
+// it checks is the count-only check all over again.
+function auditLift(entryKey, originalBody, result, originalFrontmatter, mergedFrontmatter) {
+  const kept = new Set(result.bodyLines);
+  return {
+    entryKey,
+    residualMetadata: result.bodyLines.filter((line) => {
+      const bullet = parseFieldBullet(line);
+      return bullet && LIFTABLE_FIELDS.has(bullet.name.toLowerCase());
+    }),
+    droppedProse: splitBodyLines(originalBody).filter((line) => {
+      if (kept.has(line)) return false;
+      const bullet = parseFieldBullet(line);
+      return !bullet || !LIFTABLE_FIELDS.has(bullet.name.toLowerCase());
+    }),
+    clobberedFields: Object.keys(originalFrontmatter)
+      .filter((k) => mergedFrontmatter[k] !== originalFrontmatter[k])
+      .map((k) => ({ field: k, from: originalFrontmatter[k], to: mergedFrontmatter[k] })),
+  };
+}
+
+// One-shot repair over an ALREADY-migrated store: move every stranded allowlisted
+// bullet from the body into frontmatter. Nothing is written until every entry has
+// passed the three-sided assertion — the pass touches ~127 tracked files and is
+// never trusted on inspection.
+export function reliftShards(memRoot) {
+  const perCategory = {};
+  const perEntry = {};
+  const pendingWrites = [];
+  const collisions = [];
+  let scanned = 0;
+  let relifted = 0;
+  let unchanged = 0;
+
+  for (const category of CANONICAL_CATEGORIES) {
+    const files = shardFilesIn(memRoot, category);
+    if (!files.length) continue;
+    perCategory[category] = { blocks: files.length, files: files.length };
+    perEntry[category] = [];
+
+    for (const abs of files) {
+      scanned += 1;
+      const { frontmatter, body } = parseFrontmatter(readFileSync(abs, 'utf8'));
+      const entryKey = frontmatter.key || abs;
+      const result = liftFields(body, frontmatter);
+
+      if (result.collisions.length) {
+        for (const c of result.collisions) collisions.push({ entryKey, ...c });
+        continue;
+      }
+      if (!result.fields.length) {
+        unchanged += 1;
+        continue;
+      }
+
+      const merged = { ...frontmatter };
+      for (const [name, value] of result.fields) merged[name] = value;
+      perEntry[category].push(auditLift(entryKey, body, result, frontmatter, merged));
+      relifted += result.fields.length;
+      pendingWrites.push([abs, `---\n${emitFrontmatter(merged)}\n---\n\n${result.bodyLines.join('\n').trim()}\n`]);
+    }
+  }
+
+  verifyMigrationFidelity(perCategory, perEntry);
+  for (const [abs, content] of pendingWrites) writeFileSync(abs, content);
+  return { scanned, relifted, unchanged, refused: collisions.length, collisions };
+}
+
 function main(argv) {
   const rootFlag = argv.indexOf('--root');
   const memRoot = rootFlag !== -1 ? argv[rootFlag + 1] : join(process.cwd(), '.claude/memory');
   if (argv.includes('--reverse')) {
     migrateReverse(memRoot);
     process.stdout.write('reverse migration complete\n');
-    return;
+    return 0;
+  }
+  if (argv.includes('--relift')) {
+    const report = reliftShards(memRoot);
+    process.stdout.write(`${JSON.stringify(report)}\n`);
+    for (const c of report.collisions) {
+      process.stderr.write(
+        `collision: ${c.entryKey} field "${c.field}" — frontmatter=${JSON.stringify(c.frontmatterValue)} `
+        + `body=${JSON.stringify(c.bodyValue)} (human must resolve; entry left untouched)\n`);
+    }
+    return report.refused > 0 ? 1 : 0;
   }
   const report = migrateForward(memRoot);
   process.stdout.write(`${JSON.stringify(report)}\n`);
+  return 0;
 }
 
 if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
-    main(process.argv.slice(2));
+    process.exit(main(process.argv.slice(2)));
   } catch (err) {
     process.stderr.write(`migrate: ${err.message}\n`);
     process.exit(1);

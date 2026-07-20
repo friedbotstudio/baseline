@@ -41,12 +41,31 @@ function relForward(root, absFile) {
 
 // ─── Foundation: corpus discovery ───
 
+// The decision corpus is shape-agnostic: a sharded category contributes one file
+// per fact, a flat one contributes the single file. The previous
+// `.filter(existsSync)` on a flat-only path silently yielded nothing once the
+// store was sharded, so /research Step 0 retrieved zero prior art and derived
+// fresh while believing it had searched.
+function memoryCorpusFiles(root) {
+  const memRoot = path.join(root, '.claude', 'memory');
+  const files = [];
+  for (const category of ['decisions', 'libraries']) {
+    const dir = path.join(memRoot, category);
+    if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
+      for (const name of fs.readdirSync(dir).filter((f) => f.endsWith('.md')).sort()) {
+        files.push(path.join(dir, name));
+      }
+      continue;
+    }
+    const flat = path.join(memRoot, `${category}.md`);
+    if (fs.existsSync(flat)) files.push(flat);
+  }
+  return files;
+}
+
 function corpusFiles(root) {
   const archived = walkForNames(path.join(root, 'docs', 'archive'), new Set(['research.md', 'spec.md']), []);
-  const memory = ['decisions.md', 'libraries.md']
-    .map((name) => path.join(root, '.claude', 'memory', name))
-    .filter((abs) => fs.existsSync(abs));
-  return [...archived, ...memory];
+  return [...archived, ...memoryCorpusFiles(root)];
 }
 
 // ─── Domain: scoring + ranking ───

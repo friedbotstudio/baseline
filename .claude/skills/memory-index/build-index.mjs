@@ -3,10 +3,10 @@
 // stays cheap (AC-002). Edges come from the `links:` list, so a [[category/key]]
 // reference is a navigable graph edge (AC-008).
 
-import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseFrontmatter, asArray } from '../../hooks/lib/frontmatter-parser.mjs';
+import { asArray } from '../../hooks/lib/frontmatter-parser.mjs';
+import { resolveCategory } from './lift-fields.mjs';
 
 const CANONICAL_CATEGORIES = [
   'landmarks', 'libraries', 'decisions', 'landmines',
@@ -26,17 +26,18 @@ function firstHook(body) {
   return '';
 }
 
+// Dual-mode: build-template.sh ships consumers a FLAT store, so a shard-only
+// reader is silently inert on every fresh install until the project migrates.
 function readCategory(memRoot, category) {
-  const dir = join(memRoot, category);
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) return { entries: [], edges: [] };
+  const { entries: facts, source } = resolveCategory(memRoot, category);
+  if (source === 'absent') return { entries: [], edges: [] };
   const entries = [];
   const edges = [];
-  for (const file of readdirSync(dir)) {
-    if (!file.endsWith('.md')) continue;
-    const { frontmatter, body } = parseFrontmatter(readFileSync(join(dir, file), 'utf8'));
-    const key = frontmatter.key || file.replace(/\.md$/, '');
-    entries.push({ key, category, hook: firstHook(body), scope: asArray(frontmatter.scope), links: asArray(frontmatter.links) });
-    for (const link of asArray(frontmatter.links)) edges.push({ from: `${category}/${key}`, to: link });
+  for (const fact of facts) {
+    const key = fact.key;
+    const links = asArray(fact.fields.links);
+    entries.push({ key, category, hook: firstHook(fact.body), scope: asArray(fact.fields.scope), links });
+    for (const link of links) edges.push({ from: `${category}/${key}`, to: link });
   }
   return { entries, edges };
 }

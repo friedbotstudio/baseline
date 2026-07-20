@@ -11,22 +11,24 @@
 // Used by any skill that needs to append a new question — avoids manual
 // numbering collisions when two skills write in the same session.
 
-import { readFileSync, existsSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { resolveCategory } from '../memory-index/lift-fields.mjs';
 
-const HEADING_RE = /^##\s+Q-(\d+)\b/gm;
+const ID_RE = /Q-(\d+)\b/;
 
+// The id lives in the entry KEY, not the filename: a shard is stored under a
+// CWE-22-safe lowercase slug (`q-002-...`), so reading the filename would miss the
+// match and silently restart numbering at Q-001 — the exact collision this
+// allocator exists to prevent.
 function nextId(memdir) {
-  const path = join(memdir, 'pending-questions.md');
-  if (!existsSync(path)) return 1;
-  let text;
-  try { text = readFileSync(path, 'utf8'); } catch { return 1; }
+  const { entries } = resolveCategory(memdir, 'pending-questions');
   let max = 0;
-  let m;
-  while ((m = HEADING_RE.exec(text)) !== null) {
-    const n = parseInt(m[1], 10);
+  for (const entry of entries) {
+    const match = ID_RE.exec(entry.key);
+    if (!match) continue;
+    const n = parseInt(match[1], 10);
     if (Number.isFinite(n) && n > max) max = n;
   }
   return max + 1;

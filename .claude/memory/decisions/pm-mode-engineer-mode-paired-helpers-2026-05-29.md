@@ -4,6 +4,8 @@ category: decisions
 scope: [spec]
 source: user-instruction
 decision: Entry phases (`/intake`, `/spec`, `/tdd`) gain a **PM-mode brainstorm helper** at Step 0.5 that captures requirements via Socratic dialogue before any template-fill — and `/spec` separately gains an **Engineer-mode codesign** internal mode at Step 1.5 that proposes technical approaches and captures engineer verbatim rationale when overridden. The two are paired but independent: brainstorm is unconditional (opt-out via `workflow.json → skip_brainstorm`), codesign is opt-in via `workflow.json → codesign_mode`. Both ship in the same commit but serve different stages of the question-to-code path.
+verified-at: 3c74ba8
+last-touched: 2026-06-20
 ---
 
 - verbatim:
@@ -16,6 +18,4 @@ decision: Entry phases (`/intake`, `/spec`, `/tdd`) gain a **PM-mode brainstorm 
   - **Inline codesign mid-`/spec` drafting** — breaks the "draft each diagram first" invariant in `spec/SKILL.md:31`; harder to compose with `spec_diagram_presence_guard`.
   - **Auto-modify `workflow.json` from `/research` when codesign recommended** — violates Article II "decisions live in main context"; user remains the decider via subsequent `/triage --codesign` or manual edit.
 - How to apply: when adding a new entry-point phase, gate it through `Skill(brainstorm)` at Step 0.5 with `workflow-defaults.mjs → withDefaults` for read-time defaults. When a spec author needs engineer collaboration on technical approach, set `codesign_mode: true` in `workflow.json` and `/spec` Step 1.5 fires. When `/integrate` fails with `needs spec change` AND `codesign_mode: true`, `harness/codesign-reentry.mjs` writes `revisit_context` for the next `/spec` invocation to revisit a named decision (cap 3 revisits per decision).
-- Source: archived bundle at `docs/archive/2026-05-29/brainstorm-and-codesign/` (spec, security, intake, scout, research, spec.approved).
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20
+- Archive: archived bundle at `docs/archive/2026-05-29/brainstorm-and-codesign/` (spec, security, intake, scout, research, spec.approved).

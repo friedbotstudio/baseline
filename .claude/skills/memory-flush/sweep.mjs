@@ -20,9 +20,34 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './shape.mjs';
+import { strandedFieldBullets } from '../memory-index/lift-fields.mjs';
+
+export class UnrepairedCorpusError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'UnrepairedCorpusError';
+  }
+}
+
+// Precondition for EVERY mode. While allowlisted stamps sit stranded in bodies,
+// the frontmatter-only session-start reader and the body-aware sweep disagree
+// about what is stale (measured 46 vs 156), so curating against the larger set
+// churns entries without fixing the invisibility. Two of the modes fire
+// automatically — stamp-closure from /commit Step 2.7, auto-close from
+// /memory-flush Step 0 — so this cannot live in prose; it has to refuse here.
+export function assertRelifted(memdir) {
+  const stranded = strandedFieldBullets(memdir);
+  if (!stranded.length) return;
+  const sample = stranded.slice(0, 3).map((s) => `${s.category}/${s.entryKey}: ${s.line}`).join(' | ');
+  throw new UnrepairedCorpusError(
+    `sweep refused: precondition failed — ${stranded.length} allowlisted field bullet(s) are still stranded in entry bodies. `
+    + `Run \`node .claude/skills/memory-index/migrate.mjs --relift --root ${memdir}\` first. `
+    + `Sweeping now would curate against a stale-set the other readers cannot see. Sample: ${sample}`);
+}
 
 const CANONICAL_FILES = [
   'landmarks', 'libraries', 'decisions',
@@ -487,6 +512,13 @@ function main(argv) {
   }
 
   const memdir = resolve(values['memory-dir']);
+  try {
+    assertRelifted(memdir);
+  } catch (err) {
+    if (!(err instanceof UnrepairedCorpusError)) throw err;
+    process.stderr.write(`${err.message}\n`);
+    return 1;
+  }
   let report;
   if (values.mode === 'stamp-closure') {
     report = modeStampClosure(memdir, values['backlog-keys'] || '');
@@ -509,4 +541,9 @@ function main(argv) {
   return 0;
 }
 
-process.exit(main(process.argv.slice(2)));
+// CLI entry only when executed directly. Without this guard, importing the module
+// (to reach assertRelifted) runs main() against the importer's argv and exits the
+// process — the same guard migrate.mjs uses.
+if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
+  process.exit(main(process.argv.slice(2)));
+}

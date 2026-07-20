@@ -18,8 +18,18 @@ const TYPE_MAP = {
   docs: { rank: 3, conventional: 'docs' },
 };
 
+// A sharded backlog entry is `.claude/memory/backlog/<slug>.md`, which does NOT
+// end with `backlog.md` — matching only the flat name let a closure shard be
+// grouped as ordinary work and lose its last position, which git_commit_guard then
+// hard-blocks (it forbids a closure split across commits).
+// Anchored, not substring: repo paths are root-relative, so a path that merely
+// CONTAINS the fragment (an archived bundle, a doc whose name embeds it) is not a
+// closure entry and must not be reordered into the closure commit.
+// Security review 2026-07-20, CWE-625.
 function isClosurePath(path) {
-  return path.endsWith('workflow.json') || path.endsWith('backlog.md');
+  return path.endsWith('workflow.json')
+    || path === '.claude/memory/backlog.md'
+    || path.startsWith('.claude/memory/backlog/');
 }
 
 // planCommits(entries): `entries` is the dirty-tree array [{path, status}] — the same

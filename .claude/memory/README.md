@@ -54,6 +54,26 @@ The verbatim is not a summary, not a paraphrase, and not in Claude's voice. It i
 
 The **stable key** is the entry's primary key for deduplication. New entries with the same key replace; different keys append. The verbatim block is intentionally a markdown blockquote (`> ...`) so it survives plain-text grep and renders distinctly when the file is read.
 
+### Which bullets become frontmatter (`LIFTABLE_FIELDS`)
+
+When a flat entry is sharded, exactly seven body bullets move into the fact file's frontmatter. Matching is case-insensitive on the **name**, so `- Verified-at:` and `- verified-at:` both lift.
+
+| Field | Read by | Purpose |
+|---|---|---|
+| `verified-at` | `memory_session_start.mjs → isStale()`, `sweep.mjs` | Art. IX.5 decay predicate |
+| `last-touched` | `memory_session_start.mjs → isStale()`, `sweep.mjs` | decay, non-git fallback |
+| `status` | `closure-check.mjs`, `sweep.mjs` | backlog closure state |
+| `superseded-at` | `closure-check.mjs`, `sweep.mjs` | closure stamp (six categories) |
+| `resolved-at` | `sweep.mjs` | closure stamp (`pending-questions` only) |
+| `source` | `/memory-flush` verbatim gate | provenance (Art. IX.6) |
+| `raised-on` | `sweep.mjs → modeBacklogDecay` | backlog decay |
+
+`key`, `category`, and `scope` are **structural** — the emitted preamble owns them, so a body bullet of those names is dropped rather than lifted.
+
+Every other `- Name: value` bullet stays in the body verbatim, including names that some entries happen to carry in frontmatter (`caveat` appears in 25 frontmatters and 59 bodies; `why`, `decision`, `convention`, and `reference` are split similarly). That placement is cosmetic — nothing reads those names — so it is left alone.
+
+**Extension rule.** A name is liftable if and only if a named mechanical consumer reads it. Adding one to the list requires naming that consumer in the same commit. `estimated-effort` and `raised-in-context` were proposed and removed under this rule (no mechanical reader anywhere); `links` was removed too (it has a reader in `build-index.mjs`, but zero corpus entries carry it). A field with no reader stays in the body, which is the harmless direction — the allowlist fails safe.
+
 Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or refines an instruction across turns — each new clarification gets its own `> verbatim (user, <ISO date>):` block; older blocks are kept for provenance.
 
 | File | Stable key |
@@ -81,6 +101,12 @@ Each canonical category is stored in one of two shapes, detected **presence-base
 
 **Migration is lossless and reversible.** `node .claude/skills/memory-index/migrate.mjs --forward|--reverse --root .claude/memory` explodes the flat files into per-fact dirs (proving file-count == block-count before removing any source) and back. The **filename** is a CWE-22-safe slug of the heading; the **key** is the heading verbatim, so `path:line` / `lib@version` stable keys survive. The session-start index is built from frontmatter only (`.claude/skills/memory-index/build-index.mjs`), keeping the upfront context cheap.
 
+**Repairing a sharded store — `--relift`.** `node .claude/skills/memory-index/migrate.mjs --relift --root .claude/memory` moves any stranded `LIFTABLE_FIELDS` bullet from an entry body into its frontmatter. Idempotent: a second run reports `relifted: 0`. The report is `{scanned, relifted, unchanged, refused, collisions}`, and the exit code is 1 when `refused > 0`.
+
+An entry is **refused** when a body bullet's name is liftable and the frontmatter already carries that key with a *different* value. The entry is left byte-identical and the collision is reported for a human to resolve; equal values dedup silently. This is REJECT-never-normalize — two different meanings sharing one name cannot be told apart mechanically, and guessing would destroy one of them.
+
+**Sweeps are gated on a repaired store.** `sweep.mjs` refuses *every* mode while any allowlisted bullet is still stranded — including `stamp-closure` (fired automatically by `/commit`) and `auto-close` (fired by `/memory-flush`). The remedy is the `--relift` command above, and the error names it. The guard exists because an unrepaired store makes its two readers disagree: the session-start index reads frontmatter only, while `sweep.mjs` reads frontmatter *and* body, so they report different stale counts. Curating against the larger set while every other surface believes the smaller one churns entries without fixing the invisibility.
+
 ## Bounding rules
 
 - In the **flat** shape, each canonical file has `size-cap: <N>` in frontmatter (default 500 lines). When a skill writes and exceeds, it must prune the oldest unverified entries in the same write. Working-set discipline. The **sharded** shape has no per-file cap (one fact per file).
@@ -95,7 +121,7 @@ Two equivalent closure forms cause `/memory-flush` Step 0a to delete the entry b
 | File | Field | Semantics |
 |---|---|---|
 | `pending-questions.md` | `resolved-at: <ISO date>` | The question has been answered; entry is closed. |
-| `landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `backlog.md` | `superseded-at: <ISO date>` | The fact (or, for `backlog.md`, the open intent) is no longer current; entry is closed. On `backlog.md` the body `status:` field (`picked-up` / `dropped`) disambiguates which transition triggered the close. |
+| `landmarks.md`, `libraries.md`, `decisions.md`, `landmines.md`, `conventions.md`, `backlog.md` | `superseded-at: <ISO date>` | The fact (or, for `backlog.md`, the open intent) is no longer current; entry is closed. On the `backlog` category the `status:` field (`picked-up` / `dropped`) disambiguates which transition triggered the close — in frontmatter on a sharded store, as a body bullet on a flat one. |
 
 ### Form B — heading suffix (human-friendly, scannable on render)
 

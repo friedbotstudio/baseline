@@ -8,6 +8,7 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../../hooks/lib/frontmatter-parser.mjs';
+import { parseFieldBullet } from '../memory-index/lift-fields.mjs';
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -36,10 +37,17 @@ function blockToFact(block, category) {
   const key = headingIdx >= 0 ? lines[headingIdx].replace(/^##\s+/, '').trim() : '';
   const fields = [];
   const bodyLines = [];
+  // Policy note (deliberately NOT the migrate/relift allowlist): this reads back
+  // the bullets factToBlock emitted from frontmatter, so every one must return to
+  // frontmatter or a sweep round-trip would silently demote fields to body text.
+  // Frontmatter keys are always lowercase; author prose (`- Trap:`, `- Path:`) is
+  // capitalized and stays in the body. The regex itself is the shared one — see
+  // lift-fields.mjs, which owns the single definition.
   for (const line of lines.slice(headingIdx + 1)) {
-    const m = /^-\s+([a-z][a-z-]*):\s+(.+)$/.exec(line.trim());
-    if (m && m[1] !== 'key' && m[1] !== 'category') fields.push([m[1], m[2]]);
-    else if (!m) bodyLines.push(line);
+    const bullet = parseFieldBullet(line);
+    const isEmittedField = bullet && bullet.name === bullet.name.toLowerCase();
+    if (isEmittedField && bullet.name !== 'key' && bullet.name !== 'category') fields.push([bullet.name, bullet.value]);
+    else if (!isEmittedField) bodyLines.push(line);
   }
   const preamble = [`key: ${key}`, `category: ${category}`, ...fields.map(([k, v]) => `${k}: ${v}`)];
   return { key, content: `---\n${preamble.join('\n')}\n---\n\n${bodyLines.join('\n').trim()}\n` };

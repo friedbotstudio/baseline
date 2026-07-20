@@ -2,6 +2,8 @@
 key: swarm-cleanup-deletes-irreplaceable-assets
 category: landmines
 scope: [scout, spec, tdd, security, integrate]
+verified-at: 3c74ba8
+last-touched: 2026-06-20
 ---
 
 - Path: any swarm task that deletes files without preserving a copy first
@@ -9,5 +11,3 @@ scope: [scout, spec, tdd, security, integrate]
 - Mitigation: swarm-plan tasks that delete files SHALL include a "preserve-to-archive" step that copies the deleted bytes to `docs/archive/_pre-delete/<slug>/<original-relpath>` (or equivalent) BEFORE `rm`. This applies in particular to: any file containing visual/design ground truth, any file >500 lines authored by hand, any file the workflow's own components were meant to replace. Cleanup is a real action; treat it like a destructive git operation.
 - Mitigation (workflow-level): the `archive` skill (Phase 10.5) runs AFTER cleanup, so it cannot rescue what cleanup deleted. Either move cleanup into the archive bundle's first step, or have swarm-plan emit cleanup tasks that explicitly write to the archive dir before `rm`.
 - Recovery surface (when this DOES bite): `/private/tmp/claude-502/<user-encoded-path>/<session-uuid>/tasks/*.output` JSONL transcripts contain every Read tool_use and tool_result. Match `tool_use(id)` → `tool_result(tool_use_id)` and stitch lines by the `<line>\t<content>` format from the result text. ~77% recovery is realistic if workers had the file in their read_set; 0% if no worker read it.
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20

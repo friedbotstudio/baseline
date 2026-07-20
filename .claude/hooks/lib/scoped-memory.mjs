@@ -4,9 +4,9 @@
 // phase and the scope is declared per fact (frontmatter `scope:`). Delivers
 // AC-003 (a captured lesson becomes an active constraint at the decision point).
 
-import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseFrontmatter, asArray } from './frontmatter-parser.mjs';
+import { asArray } from './frontmatter-parser.mjs';
+import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
 
 const CANONICAL_CATEGORIES = [
   'landmarks', 'libraries', 'decisions', 'landmines',
@@ -39,31 +39,33 @@ function firstHook(body) {
   return '';
 }
 
-function scopedFactsIn(dir, category, phase) {
+function scopedFactsIn(entries, category, phase) {
   const hits = [];
-  for (const file of readdirSync(dir)) {
-    if (!file.endsWith('.md')) continue;
-    const { frontmatter, body } = parseFrontmatter(readFileSync(join(dir, file), 'utf8'));
-    if (!asArray(frontmatter.scope).includes(phase)) continue;
+  for (const entry of entries) {
+    if (!asArray(entry.fields.scope).includes(phase)) continue;
     hits.push({
-      key: frontmatter.key || file.replace(/\.md$/, ''),
+      key: entry.key,
       category,
-      verbatim: extractVerbatim(body),
-      interpretation: extractInterpretation(body),
-      hook: firstHook(body),
+      verbatim: extractVerbatim(entry.body),
+      interpretation: extractInterpretation(entry.body),
+      hook: firstHook(entry.body),
     });
   }
   return hits;
 }
 
+// Dual-mode: build-template.sh ships consumers a FLAT store, so a shard-only
+// reader silently surfaces nothing on a fresh install — the decision-point
+// surfacing feature would appear to work while never firing. resolveCategory
+// normalizes both shapes; the hit shape (verbatim + interpretation + hook) is
+// unchanged, because Art. IX.7 requires the VERBATIM be surfaced, not a summary.
 export function surfaceScopedMemory(phase, { rootDir } = {}) {
   if (!phase || !rootDir) return [];
   const memRoot = join(rootDir, '.claude/memory');
   const hits = [];
   for (const category of CANONICAL_CATEGORIES) {
-    const dir = join(memRoot, category);
-    if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
-    hits.push(...scopedFactsIn(dir, category, phase));
+    const { entries } = resolveCategory(memRoot, category);
+    hits.push(...scopedFactsIn(entries, category, phase));
   }
   return hits;
 }

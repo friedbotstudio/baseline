@@ -155,12 +155,12 @@ Phase 1 INPUT:   CO-A brainstorm-critic ✅ ──┐   CO-B spec-floor ✅
                                              │        │  (reference target = the rubric)
 Phase 2 ENFORCE: CO-C quality-oracle ✅ ◄────┴────────┘  (C1–C6 landed; consumes CO-A's better specs)
         │
-Phase 3 VELOCITY: CO-D notifier ✅ → CO-E gate-collapse ⬜ (CO-E also needs CO-A — both deps landed, now unblocked)
+Phase 3 VELOCITY: CO-D notifier ✅ → CO-E gate-collapse ✅ (landed 2026-07-16 on top of CO-A + CO-D)
 ```
 Critical path is **CO-A → CO-B → CO-C** (set the bar → encode it → enforce it) — **fully closed** (C1–C6);
 the enforcement half is complete and the input→enforcement loop is done. CO-D landed early for the
-calendar win as planned. Periphery (context7, research, VI.7) is all shipped. The only remaining CO is
-**CO-E** (gate-collapse), now dependency-unblocked.
+calendar win as planned. CO-E followed it. Periphery (context7, research, VI.7) is all shipped.
+**Every change-order in this program has now landed** — the cure program is complete.
 
 ## 6. Status ledger
 
@@ -182,7 +182,7 @@ shipped change (context7) read as still-pending — keep them separate.
 | CO-B | Spec quality floor | INPUT | ✅ `spec-quality-floor.md` | ✅ `f1faf75` — B1, reference-target + quality ACs on UI specs |
 | CO-C | Quality-oracle with teeth | ENFORCE | ✅ `quality-oracle.md` | ✅ `9542a7f` (C2–C4: checker framework, maker/checker RALPH, design-judge) · `c9d8f0e` (C5 mutation-score + AC-conformance) · `5cc959a` (C6 gate taxonomy). Epic 3 complete (C1–C6) |
 | CO-D | Notifier | velocity | ✅ `velocity-notifier-and-gate-collapse.md` | ✅ `212dbd0`·`7dba960`·`4cd74e1`·`b6fba83` (CO-D yield/emit + on_stop idle + input-wait & presence-aware suppression + idle-ping fix) |
-| CO-E | Gate-collapse | velocity | ✅ same doc | ⬜ **unblocked** — both deps (CO-A, CO-D) landed; tracked as Epic 4 D3 |
+| CO-E | Gate-collapse | velocity | ✅ same doc | ✅ `d0166c3` (gate-collapse suite + fixtures) · `c3e1e3e` (decision promoted + bundle archived to `docs/archive/2026-07-16/gate-collapse/`). Landed 2026-07-16 as Epic 4 D3. **Shipped shape revises this CO's own AC2**: `/approve-spec` was renamed `/approve-direction` and MOVED to intake (gate A fires after `/intake`, before scout); the spec is machine-reviewed, never human-eyeballed, so the human gate carries CO-A evidence only and the CO-B reference target is machine-enforced at spec time. 3→2 ships ON; the further 2→1 single-auth collapse is gated behind `governance.class.enabled` (default off, fail-safe). |
 | — | context7 outcome-mandate | periphery | ✅ archived → `archive/2026-07-08/context7-outcome-mandate/change-order.md` | ✅ `2c3007e` |
 | — | read-before-write (VI.7) | periphery | ✅ `read-before-overwrite-convention.md` | ✅ `governance-amendments-research-retrieval` |
 | — | research retrieve-first | periphery | ✅ `research-retrieve-first.md` | ✅ `governance-amendments-research-retrieval` (`retrieve.mjs` + research SKILL wiring) |

@@ -2,6 +2,9 @@
 key: tier1-merge-option-design-picks
 category: decisions
 scope: [spec]
+source: archived bundle at `docs/archive/2026-05-22/tier1-merge-option/` (intake, scout, research, spec, security, spec.approved).
+verified-at: 3c74ba8
+last-touched: 2026-06-20
 ---
 
 - Decision: the tier-1 upgrade prompt's fourth option is **Merge** (replacing the prior "Show diff"). When the user picks Merge, the CLI stages the INCOMING bytes BASE-less via `writeStageBaseless` under `.claude/state/upgrade/<ts>/`; reconciliation defers to `/upgrade-project` in Claude Code. Four design picks shipped together:
@@ -17,6 +20,3 @@ scope: [spec]
   - **Two parallel SKILL.md procedure sections** (D4-B): constraints duplication causes drift.
   - **In-tree `<rel>.upgrade` sidecar** (rejected at intake AskUserQuestion): pollutes the project tree; staged location keeps state under `.claude/state/`.
   - **project.json field for pending-merge tracking** (rejected at intake): drift risk vs filesystem truth.
-- Source: archived bundle at `docs/archive/2026-05-22/tier1-merge-option/` (intake, scout, research, spec, security, spec.approved).
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20

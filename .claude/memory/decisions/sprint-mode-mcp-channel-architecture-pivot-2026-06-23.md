@@ -4,6 +4,7 @@ category: decisions
 scope: [spec]
 verified-at: be0b767
 last-touched: 2026-06-23
+source: user-instruction. Approved spec + epic state `.claude/state/epic/mvp-sprint-parallel-cycles.json`; gate-A approval 2026-06-23. Children claim `-4c43` (RALPH, Slice C) and `-9360` (charter, Slice E).
 ---
 
 > verbatim (user, AskUserQuestion + gate-A free answers, 2026-06-23):
@@ -17,4 +18,3 @@ last-touched: 2026-06-23
 - Rationale: a baseline-owned, portable (`.mcp.json`) substrate over an experimental first-party feature; keep the constitution's spine via a fenced charter exception rather than rewriting §4.2. The separate-workspace-per-branch-PR path also sidesteps [[multi-wave-worktree-is-an-agent-tool-constraint]] (each workspace commits independently).
 - Rejected: native Agent Teams (peer decision-makers break §4.2 harder); worktree subagent waves (no mid-flight coordination, wave-barrier not pipeline); custom MCP as full orchestrator (MCP can't spawn sessions).
 - Reference: Agent Teams docs https://code.claude.com/docs/en/agent-teams ; multi-agent coordination patterns https://claude.com/blog/multi-agent-coordination-patterns ; community message-bus MCPs (claude-peers-mcp, Interagent).
-- Source: user-instruction. Approved spec + epic state `.claude/state/epic/mvp-sprint-parallel-cycles.json`; gate-A approval 2026-06-23. Children claim `-4c43` (RALPH, Slice C) and `-9360` (charter, Slice E).

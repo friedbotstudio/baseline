@@ -4,6 +4,8 @@ category: landmines
 scope: [scout, spec, tdd, security, integrate]
 source: user-instruction (2026-05-11T19:45Z, mid-workflow on slug `design-ui-orchestrator` at Gate A)
 verbatim: > before we move, mark this error in approval flow; we will revisit and fix this later
+verified-at: 3c74ba8
+last-touched: 2026-06-20
 ---
 
 - Path: `.claude/hooks/consent_gate_grant.sh` (marker writer) + `.claude/hooks/spec_approval_guard.sh` (validator) + `.claude/commands/approve-spec.md` (filename-derivation rule)
@@ -17,5 +19,3 @@ verbatim: > before we move, mark this error in approval flow; we will revisit an
   - **D** (belt-and-suspenders): all three. Matches "Claude cannot forge consent, but a typo shouldn't break the gate."
 - Why it matters: the gate is structurally correct (Claude cannot forge), but the rough edge undermines confidence — a user thinks "I approved twice and the system still rejected me" when the second rejection was a TTL race, not a logic failure. Article IV gate language ("structurally un-invokable") implies the gate fires only on real violations.
 - Affects archive too: `.claude/skills/archive/archive.sh` looks for `<slug>.md.approval` in the spec_approvals dir; an approval token written under the workaround name (`<slug>.approval`) won't move into the bundle. Observed on `design-ui-orchestrator` archive 2026-05-12 — 5 artifacts archived, spec approval token left behind.
-- Verified-at: 3c74ba8
-- Last-touched: 2026-06-20

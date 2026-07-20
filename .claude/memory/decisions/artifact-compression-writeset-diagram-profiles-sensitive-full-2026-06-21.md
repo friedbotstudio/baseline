@@ -4,6 +4,7 @@ category: decisions
 scope: [spec]
 verified-at: 77b58ad
 last-touched: 2026-06-21
+source: archived bundle `docs/archive/2026-06-21/spec-tdd-artifact-compression/` (spec, security, brief). Backlog `-v0lv` Lever 4.
 ---
 
 > verbatim (user, gate-A + security review, 2026-06-21):
@@ -13,4 +14,3 @@ last-touched: 2026-06-21
 - Rationale: token-efficiency (`docs/references/token-efficiency.md`) — spec+tdd are ~77% of output tokens; the dropped C4 top-levels are near-boilerplate for an internal change while the kept diagrams carry the review-relevant detail. Default-on chosen over opt-out-parity-default because the maintainer wanted the win immediately; the resolver fails OPEN to full on any error and the kill-switch (`enabled:false`) is regression-tested byte-identical, so the risk is bounded.
 - Rejected alternatives: (a) force-full on ALL sensitive_globs incl. hooks would gut the feature for the dominant baseline case (hooks) — instead hooks excluded from `when` + sensitive guard as defense-in-depth; (b) rewriting `artifact_template_guard` for write_set-gated required SECTIONS — deferred (no existing test, smaller payoff); (c) opt-out-parity default-off — overridden by the maintainer.
 - How to apply: profile config lives in `project.json → artifacts.diagram_profiles`; the resolver is self-contained (glob/extract helpers copied from `spec_design_calls_guard`, NOT imported — hook-lib self-containment is intentional). NOTE: this narrowed spec AC-004 (which listed `.claude/hooks` as reducing) — the security narrowing is recorded in the archived security report, not via a spec re-approval.
-- Source: archived bundle `docs/archive/2026-06-21/spec-tdd-artifact-compression/` (spec, security, brief). Backlog `-v0lv` Lever 4.
