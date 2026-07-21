@@ -20,6 +20,11 @@ the roll-up of its body.
 
 ## Progress
 
+- **Status (2026-07-21):** Epics 1–4 are all ✅. Epic 5 S2 landed as `0312ffa` — the SDK-to-consumer
+  path delivered via esbuild build-time bundling (`build-template.sh` Stage 1.7), superseding the
+  own-package/`npx` plan, which unblocks S4. Remaining open work: Epic 5 (S3 stale-lock recovery, S4
+  dogfood config) and Epic 6 (T2, T8, T9). Nothing open sits on the center-loop critical path — that
+  loop (Epics 2 + 3) closed 2026-07-16.
 - **Status (2026-07-16):** the center loop is **closed** — Epic 2 (input half) and Epic 3 (enforcement
   half, C1–C6) are both ✅. C6 gate taxonomy landed as `5cc959a`. Remaining open work lives in Epic 4
   (D2 in-progress, D3/CO-E planned), Epic 5 (S2/S3/S4), and Epic 6 (T2, T4). The bullets below are the
