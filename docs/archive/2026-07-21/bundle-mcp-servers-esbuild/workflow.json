@@ -1,0 +1,49 @@
+{
+  "request": "Bundle the first-party MCP servers (sprint-channel, sprint-pool) into self-contained single-file artifacts via esbuild at build time, shipped in obj/template so consumers get a working server without @modelcontextprotocol/sdk as a runtime dep; register via repo-relative node command in .mcp.json. Supersedes backlog S2's own-npm-package plan.",
+  "slug": "bundle-mcp-servers-esbuild",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Delivers backlog key sprint-channel-own-package-sdk-delivery-ac005-slice-c (roadmap Epic 5 S2). Goal (SDK reaches consumer, baseline stays zero-runtime-dep) is on record; approach pivots from own-package/npx to esbuild single-file bundle.",
+  "track_reason": "Heavier than tdd-quickfix because it supersedes S2's recorded own-package design approach and changes shipped artifacts + build pipeline; the pivot needs capture in a reviewable spec and gate-A ratification, plus a security pass on the inlined third-party SDK.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [
+    "intake-full",
+    "tdd-quickfix"
+  ],
+  "source_backlog_keys": [
+    "sprint-channel-own-package-sdk-delivery-ac005-slice-c"
+  ],
+  "created_at": 1784617264,
+  "updated_at": 1784626914,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

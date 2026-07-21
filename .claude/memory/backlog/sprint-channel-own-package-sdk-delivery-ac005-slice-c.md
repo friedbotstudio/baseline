@@ -2,7 +2,7 @@
 key: sprint-channel-own-package-sdk-delivery-ac005-slice-c
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-06-23
 raised-in-context: sprint-channel-mcp
 source: assistant-deferral
@@ -10,6 +10,7 @@ estimated-effort: medium (monorepo publish wiring is the real cost, not the serv
 parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
 verified-at: 80aeeca
 last-touched: 2026-06-23
+superseded-at: 2026-07-21
 ---
 
 > verbatim (assistant-deferral, slice-B gate, 2026-06-23; user concurred): "publish the server as its own package, keep it in the same github repo... and we install sdk when user installs baseline (similar to plantuml)" → resolved to the own-package/npx form.

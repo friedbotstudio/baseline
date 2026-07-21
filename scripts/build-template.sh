@@ -265,6 +265,17 @@ fi
 
 fi  # end skip-when-manifest-only (Stage 2.6)
 
+# Stage 1.7 — bundle the first-party MCP servers into self-contained artifacts.
+# Each shipped server.mjs imports @modelcontextprotocol/sdk + zod, which are
+# devDependencies and never reach a consumer install. esbuild inlines them so
+# the shipped server runs with production deps only (baseline stays
+# zero-runtime-dep). Runs UNCONDITIONALLY (outside the manifest-only guards)
+# because Stage 3 must hash the bundled output even under --manifest-only.
+# Ordered after the copy/overlay stages and before Stage 3 so the manifest sees
+# the bundle. See scripts/bundle-mcp-servers.mjs and
+# docs/specs/bundle-mcp-servers-esbuild.md.
+node "$SCRIPT_DIR/bundle-mcp-servers.mjs" "$TEMPLATE_DIR"
+
 # Stage 3 — build the sha256 manifest.
 node "$SCRIPT_DIR/build-manifest.mjs" "$TEMPLATE_DIR"
 

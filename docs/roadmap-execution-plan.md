@@ -82,9 +82,9 @@ Peripheral to the center of the plan, and the cheapest wins on the board.
 Peer sessions coordinating on one body of work (Article X). Opt-in, off by default, requires git.
 
 - ✅ S1. Sprint completeness oracle, the MCP coordination channel core, the dispatch engine, and the org-team charter with broker-pool coordination.
-- ⬜ S2. Deliver the channel server as its own npm package so the MCP SDK reaches consumer installs via `npx`, keeping the baseline zero-runtime-dep. Blocks the dogfood.
+- ✅ S2. Deliver the SDK-to-consumer path so the MCP SDK reaches consumer installs while the baseline stays zero-runtime-dep — landed via **esbuild build-time bundling** (`scripts/bundle-mcp-servers.mjs` + `build-template.sh` Stage 1.7), which inlines the SDK + zod into self-contained shipped `server.mjs` artifacts. This **supersedes** the original own-package/`npx` mechanism (first-party servers are compiled, not published). Backlog `sprint-channel-own-package-sdk-delivery-ac005-slice-c`. Unblocks the dogfood.
 - ⬜ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
-- ⬜ S4. Sprint-mode dogfood config — register the channel server in `.mcp.json` (triggers a three-to-four MCP-count cascade across the governance surfaces) and flip the flag. Depends on S2, or consumers get a broken server.
+- ⬜ S4. Sprint-mode dogfood config — register the channel servers (`sprint-channel`, `sprint-pool`) in `.mcp.json` (triggers a three-to-five MCP-count cascade across the governance surfaces) and flip the flag. The SDK-to-consumer path is now provided by S2's bundle, so consumers no longer get a broken server.
 
 ## Epic 6 — Debt and hardening  🟡  (debt)
 
