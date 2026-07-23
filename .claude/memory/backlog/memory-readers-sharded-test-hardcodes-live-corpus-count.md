@@ -2,13 +2,14 @@
 key: memory-readers-sharded-test-hardcodes-live-corpus-count
 category: backlog
 scope: [tests, standup, memory]
-status: open
+status: picked-up
 raised-on: 2026-07-23
 raised-in-context: rightsize-gate-fix
 source: assistant-deferral
 estimated-effort: tiny
 verified-at: faa3ca9
 last-touched: 2026-07-23
+superseded-at: 2026-07-23
 ---
 
 > verbatim (assistant, 2026-07-23):

@@ -1,0 +1,61 @@
+{
+  "request": "Fix tests/memory-readers-sharded.test.mjs so it stops hardcoding a mutable live-corpus count. The backlog-derived test asserts a literal 16 backlog shards (and 1 pending question) against copyLiveCorpus, which drifts every time the backlog changes. Replace the magic numbers with counts derived from the copied fixture (count the .md files actually present), keeping the real assertions (gather returns ALL shards, parent-nesting intact, Q-002 matched). Test-only; no production code changes.",
+  "slug": "memory-readers-sharded-test-fix",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog key memory-readers-sharded-test-hardcodes-live-corpus-count (filed 2026-07-23 during rightsize-gate-fix); names the file, the defect (hardcoded 16 vs live count), and the fix (derive from fixture)",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd",
+    "simplify",
+    "integrate",
+    "security",
+    "document"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "memory-readers-sharded-test-hardcodes-live-corpus-count"
+  ],
+  "created_at": 1784837659,
+  "updated_at": 1784838181,
+  "rightsize_base": [],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "1 file, ~6 lines, no refactor/duplication",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "integrate",
+      "reason": "test-assertion fix only; no test command/fixture/wiring/config change; full suite green via verify",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs -> sensitive:false (no security.sensitive_globs intersection)",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no user-facing prose/count/convention/src-template change",
+      "oracle": "chore-conditional"
+    }
+  ]
+}

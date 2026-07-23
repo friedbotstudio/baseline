@@ -22,7 +22,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { rmSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { rmSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -103,9 +103,10 @@ describe('standup gather — sharded backlog and questions (AC-008, AC-009)', ()
     try {
       const recap = gather.gatherSync({ rootDir: root });
       const total = recap.backlog.open.length + recap.backlog.pickedUp.length + recap.backlog.dropped.length;
-      assert.equal(total, 16, 'all 16 real backlog shards are returned');
+      const expected = readdirSync(join(memDir, 'backlog')).filter((f) => f.endsWith('.md')).length;
+      assert.equal(total, expected, `all ${expected} real backlog shards are returned`);
       assert.ok(!recap.degraded.includes('no-backlog'),
-        'degraded must not claim the backlog is missing when 16 shards exist');
+        'degraded must not claim the backlog is missing when shards exist');
 
       const nested = recap.backlog.open.filter((e) => Array.isArray(e.children) && e.children.length > 0);
       assert.ok(nested.length >= 1,
@@ -118,10 +119,11 @@ describe('standup gather — sharded backlog and questions (AC-008, AC-009)', ()
   it('test_when_sharded_pending_questions_then_gather_returns_question', async () => {
     const gather = await tryImport(GATHER_REL);
     assert.ok(gather?.gatherSync, `${GATHER_REL} must export gatherSync`);
-    const { root } = copyLiveCorpus('gather-questions-');
+    const { root, memDir } = copyLiveCorpus('gather-questions-');
     try {
       const recap = gather.gatherSync({ rootDir: root });
-      assert.equal(recap.pendingQuestions.length, 1, 'the single real pending-questions shard is returned');
+      const expected = readdirSync(join(memDir, 'pending-questions')).filter((f) => f.endsWith('.md')).length;
+      assert.equal(recap.pendingQuestions.length, expected, `all ${expected} real pending-questions shard(s) returned`);
       assert.match(recap.pendingQuestions[0].id ?? recap.pendingQuestions[0].key ?? '', /Q-002/);
       assert.ok(!recap.degraded.includes('no-pending-questions'));
     } finally {
