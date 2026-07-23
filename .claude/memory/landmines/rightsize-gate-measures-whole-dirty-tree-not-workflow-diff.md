@@ -2,9 +2,12 @@
 key: rightsize-gate-measures-whole-dirty-tree-not-workflow-diff
 category: landmines
 scope: [tdd, chore, integrate]
-verified-at: 40057f8
-last-touched: 2026-07-20
+verified-at: faa3ca9
+last-touched: 2026-07-23
+superseded-at: 2026-07-23
 ---
+
+- **RESOLVED 2026-07-23 (workflow `rightsize-gate-fix`).** Both defects fixed in `.claude/skills/harness/rightsize-gate.mjs`: `check` now excludes `tdd.test_globs` rows (D1) and `workflow.json → rightsize_base[]` rows (D2, the first-arm dirty-path snapshot), and it reads `project.json` from disk (previously the CLI path used config DEFAULTS, so `test_globs` was `[]` and D1 was inert). The reusable lesson lives on in [[cli-mjs-invoked-bare-uses-config-defaults-unless-it-reads-project-json]]. Kept for one flush cycle for traceability; Step 0a auto-closes it via `superseded-at`.
 
 - **CORRECTION 2026-07-20 — this entry's title under-describes the defect, and the dirty-tree cause is only half of it.** Re-run on a **clean** tree (`chore-archive-node`, immediately after commit `40057f8`) the gate STILL refused to skip: `{"skip":[],"keep":["simplify","security","document"],"measured":{"files":4,"lines":129}}`. Of those 129 lines, **2** were the behavior change (one JSONL node per file); the rest were the test proving it and the fixture. The gate counts **test lines** toward a threshold meant to gauge change *risk*, so writing a thorough test makes the gate MORE conservative — backwards, and self-defeating under TDD discipline where every change ships with tests.
 - **It has never fired.** Swept every `workflow.json` in `docs/archive/**`: not one records a `rightsize-gate` entry in `auto_skipped[]`. `velocity.rightsize.max_lines` is 80; a TDD-disciplined change essentially never lands under 80 total lines. Velocity Lever 2 has been inert since it shipped, which is why nobody noticed either bug — an oracle that always says "keep everything" is indistinguishable from no oracle at all.

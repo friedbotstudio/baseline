@@ -11,6 +11,7 @@
 // goes live the next spec-track workflow; this module is the mechanical oracle.
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,6 +85,45 @@ function pathsMatching(touched, globs) {
   return touched.filter((p) => matchesAnyGlob(p, globs));
 }
 
+// D1 + D2: a measured row survives only when it is neither a test/fixture file
+// (test lines gauge no change risk) nor a path that was already dirty when the
+// workflow began (pre-existing cruft the workflow did not produce). Empty
+// testGlobs AND empty basePaths => identity, preserving the whole-tree measure.
+export function filterRows(rows, { testGlobs = [], basePaths = [] } = {}) {
+  const excluded = new Set(basePaths);
+  return rows.filter((r) => !excluded.has(r.path) && !matchesAnyGlob(r.path, testGlobs));
+}
+
+// D2: the workflow's own diff is separated from pre-existing dirt by a start-of-
+// workflow snapshot of the dirty/untracked path set. `git status --porcelain`
+// lines are `XY <path>`; a rename renders as `old -> new` — the new path is the
+// one now on disk.
+export function parsePorcelain(text) {
+  const paths = [];
+  for (const line of String(text || '').split('\n')) {
+    if (!line.trim()) continue;
+    let p = line.slice(3).trim();
+    if (p.includes(' -> ')) p = p.split(' -> ').pop().trim();
+    if (p) paths.push(p);
+  }
+  return paths;
+}
+
+export function captureBaseline({ rootDir, exec }) {
+  try {
+    return parsePorcelain(exec('git', ['-C', rootDir, 'status', '--porcelain']));
+  } catch {
+    return [];
+  }
+}
+
+// Idempotent: a workflow already carrying rightsize_base (a resume) is returned
+// untouched, so the baseline is fixed at the workflow's first arm.
+export function applyBaseline(workflow, paths) {
+  if (Array.isArray(workflow?.rightsize_base)) return workflow;
+  return { ...workflow, rightsize_base: paths };
+}
+
 export function decideSkip({ measure, config, securityRunning }) {
   if (!config.enabled) {
     return { skip: [], keep: [...CANDIDATE_PHASES], advisories: [] };
@@ -112,17 +152,18 @@ export function decideSkip({ measure, config, securityRunning }) {
   return { skip, keep, advisories };
 }
 
-function configFromProject(project) {
+export function configFromProject(project) {
   return {
     enabled: project?.velocity?.rightsize?.enabled ?? true,
     min_files: project?.simplify?.min_files ?? 4,
     max_lines: project?.velocity?.rightsize?.max_lines ?? 80,
     doc_globs: project?.velocity?.rightsize?.doc_globs ?? DEFAULT_DOC_GLOBS,
     sensitive_globs: project?.security?.sensitive_globs ?? [],
+    test_globs: project?.tdd?.test_globs ?? [],
   };
 }
 
-function collectMeasure(rootDir, exec) {
+function collectMeasure(rootDir, exec, { testGlobs = [], basePaths = [] } = {}) {
   const tracked = exec('git', ['-C', rootDir, 'diff', 'HEAD', '--numstat']);
   let combined = tracked;
   const listed = exec('git', ['-C', rootDir, 'ls-files', '--others', '--exclude-standard']);
@@ -138,7 +179,8 @@ function collectMeasure(rootDir, exec) {
     }
     if (d) combined += (combined.endsWith('\n') || !combined ? '' : '\n') + d;
   }
-  return measureDiff(parseNumstat(combined));
+  const rows = filterRows(parseNumstat(combined), { testGlobs, basePaths });
+  return measureDiff(rows);
 }
 
 export async function main(argv, deps = {}) {
@@ -148,19 +190,64 @@ export async function main(argv, deps = {}) {
   };
   try {
     const [sub] = argv;
-    if (sub !== 'check') return failOpen();
     const rootDir = deps.rootDir || process.cwd();
     const exec = deps.exec || ((cmd, args) =>
       execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
-    const config = configFromProject(deps.project);
-    const securityRunning = !((deps.workflow?.exceptions) || []).includes('security');
 
-    const measure = collectMeasure(rootDir, exec);
+    if (sub === 'baseline') return runBaseline(rootDir, exec, deps);
+    if (sub !== 'check') return failOpen();
+
+    const config = configFromProject(deps.project ?? readProject(rootDir));
+    const securityRunning = !((deps.workflow?.exceptions) || []).includes('security');
+    const basePaths = readWorkflow(rootDir, deps).rightsize_base ?? [];
+
+    const measure = collectMeasure(rootDir, exec, { testGlobs: config.test_globs, basePaths });
     const decision = decideSkip({ measure, config, securityRunning });
     process.stdout.write(JSON.stringify({ ...decision, measured: measure }) + '\n');
     return 0;
   } catch {
     return failOpen();
+  }
+}
+
+function workflowPath(rootDir) {
+  return path.join(rootDir, '.claude', 'state', 'workflow.json');
+}
+
+// The CLI `check` run injects no project; the real config (test_globs, thresholds,
+// doc/sensitive globs) lives on disk. Absent/unreadable => {} => configFromProject
+// defaults, preserving fail-open behavior.
+function readProject(rootDir) {
+  try {
+    return JSON.parse(readFileSync(path.join(rootDir, '.claude', 'project.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+// The injected workflow (tests) short-circuits the disk read.
+function readWorkflow(rootDir, deps) {
+  if (deps.workflow) return deps.workflow;
+  try {
+    return JSON.parse(readFileSync(workflowPath(rootDir), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+// D2 first-arm capture: record the start-of-workflow dirty/untracked path set
+// into workflow.json → rightsize_base, but only when the field is absent. Any
+// failure is swallowed — the gate stays fail-open.
+function runBaseline(rootDir, exec, deps) {
+  try {
+    const workflow = readWorkflow(rootDir, deps);
+    const applied = applyBaseline(workflow, captureBaseline({ rootDir, exec }));
+    if (applied !== workflow && !deps.workflow) {
+      writeFileSync(workflowPath(rootDir), JSON.stringify(applied, null, 2) + '\n');
+    }
+    return 0;
+  } catch {
+    return 0;
   }
 }
 

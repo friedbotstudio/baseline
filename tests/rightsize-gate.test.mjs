@@ -18,7 +18,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -186,5 +187,166 @@ describe('AC-011 — Article IV amendment landed + mirror-consistent + under cap
     // seed.md (governing) carries the full rule per Article I.4 precedence.
     const seed = readFileSync(path.join(REPO_ROOT, 'docs/init/seed.md'), 'utf8');
     assert.match(seed, /Right-size gate \(second sanctioned skip mechanism/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rightsize-gate-fix — D1 (exclude test lines) + D2 (scope to workflow diff)
+// New exports under test: configFromProject, filterRows, parsePorcelain,
+// captureBaseline, applyBaseline, and main's `baseline` subcommand.
+//
+// Coverage map (rightsize-gate-fix spec):
+//   AC-001 (test lines excluded)        — test_globs / filterRows / measure blocks below
+//   AC-003 (baseline capture, idempotent) — parsePorcelain / captureBaseline / applyBaseline
+//   AC-004 (baseline paths excluded)     — filterRows-with-basePaths block
+//   AC-005 (fail-safe whole-tree + fail-open) — identity + main-baseline blocks
+//   AC-002 (security never in skip) and AC-006 (skip subset of {simplify,document})
+//     are the pre-existing invariant tests above (test_when_any_diff_then_security_never_in_skip,
+//     test_when_allowlist_then_subset_of_simplify_document) — kept green, not duplicated.
+// ---------------------------------------------------------------------------
+
+const TEST_GLOBS = ['tests/**', 'test/**', '**/*.test.*', '**/*.spec.*'];
+const CONFIG_T = { ...CONFIG, test_globs: TEST_GLOBS };
+
+describe('rightsize-gate-fix D1 — test lines excluded from measurement', () => {
+  it('test_when_test_globs_configured_then_test_rows_excluded', () => {
+    const rows = [
+      { added: 2, deleted: 0, path: 'src/x.mjs' },
+      { added: 100, deleted: 0, path: 'tests/x.test.mjs' },
+    ];
+    const kept = gate.filterRows(rows, { testGlobs: TEST_GLOBS, basePaths: [] });
+    const m = gate.measureDiff(kept);
+    assert.equal(m.files, 1);
+    assert.equal(m.lines, 2);
+    assert.deepEqual(m.touched, ['src/x.mjs']);
+  });
+
+  it('test_when_only_test_files_then_measure_zero_and_micro', () => {
+    const rows = [
+      { added: 60, deleted: 0, path: 'tests/a.test.mjs' },
+      { added: 40, deleted: 0, path: 'tests/b.test.mjs' },
+    ];
+    const kept = gate.filterRows(rows, { testGlobs: TEST_GLOBS, basePaths: [] });
+    const measure = gate.measureDiff(kept);
+    assert.equal(measure.files, 0);
+    assert.equal(measure.lines, 0);
+    const out = gate.decideSkip({ measure, config: CONFIG_T, securityRunning: true });
+    assert.deepEqual([...out.skip].sort(), ['document', 'simplify']);
+    assert.ok(!out.skip.includes('security'));
+  });
+
+  it('test_when_test_glob_also_doc_glob_then_dropped_before_doc_check', () => {
+    const rows = [{ added: 10, deleted: 0, path: 'tests/x.test.md' }];
+    const kept = gate.filterRows(rows, { testGlobs: TEST_GLOBS, basePaths: [] });
+    assert.deepEqual(kept, []);
+    const out = gate.decideSkip({ measure: gate.measureDiff(kept), config: CONFIG_T, securityRunning: true });
+    // the test-doc file was dropped, so `document` is skipped, not spuriously kept.
+    assert.ok(out.skip.includes('document'));
+  });
+
+  it('test_when_configFromProject_then_test_globs_read_or_default_empty', () => {
+    assert.deepEqual(gate.configFromProject({ tdd: { test_globs: ['tests/**'] } }).test_globs, ['tests/**']);
+    assert.deepEqual(gate.configFromProject({}).test_globs, []);
+    assert.deepEqual(gate.configFromProject(undefined).test_globs, []);
+  });
+});
+
+describe('rightsize-gate-fix D2 — baseline capture + exclusion', () => {
+  it('test_when_porcelain_then_parsePorcelain_returns_paths', () => {
+    const porcelain = ' M b.mjs\n?? a.md\nA  c.mjs\nR  old -> new\n';
+    assert.deepEqual(gate.parsePorcelain(porcelain), ['b.mjs', 'a.md', 'c.mjs', 'new']);
+  });
+
+  it('test_when_captureBaseline_then_returns_dirty_untracked_paths', () => {
+    const exec = (cmd, args) => {
+      assert.equal(cmd, 'git');
+      assert.ok(args.includes('status') && args.includes('--porcelain'));
+      return ' M b.mjs\n?? a.md\n';
+    };
+    assert.deepEqual(gate.captureBaseline({ rootDir: '/repo', exec }), ['b.mjs', 'a.md']);
+  });
+
+  it('test_when_captureBaseline_exec_throws_then_empty', () => {
+    const exec = () => { throw new Error('git boom'); };
+    assert.deepEqual(gate.captureBaseline({ rootDir: '/repo', exec }), []);
+  });
+
+  it('test_when_applyBaseline_field_absent_then_set_else_noop', () => {
+    const fresh = gate.applyBaseline({ slug: 's' }, ['a.md', 'b.mjs']);
+    assert.deepEqual(fresh.rightsize_base, ['a.md', 'b.mjs']);
+    const existing = gate.applyBaseline({ slug: 's', rightsize_base: ['x'] }, ['a.md']);
+    assert.deepEqual(existing.rightsize_base, ['x']);
+  });
+
+  it('test_when_rightsize_base_set_then_filterRows_excludes_those_paths', () => {
+    const rows = [
+      { added: 5, deleted: 0, path: 'src/x.mjs' },
+      { added: 200, deleted: 0, path: 'old-shard.md' },
+      { added: 90, deleted: 0, path: 'x.test.mjs' },
+    ];
+    const kept = gate.filterRows(rows, { testGlobs: TEST_GLOBS, basePaths: ['old-shard.md'] });
+    const m = gate.measureDiff(kept);
+    assert.deepEqual(m.touched, ['src/x.mjs']);
+    assert.equal(m.lines, 5);
+  });
+});
+
+describe('rightsize-gate-fix — fail-safe (whole-tree preserved)', () => {
+  it('test_when_no_base_and_no_test_globs_then_whole_tree_measure', () => {
+    const rows = [
+      { added: 5, deleted: 1, path: 'src/x.mjs' },
+      { added: 100, deleted: 0, path: 'tests/x.test.mjs' },
+    ];
+    assert.deepEqual(gate.filterRows(rows, { testGlobs: [], basePaths: [] }), rows);
+  });
+
+  it('test_when_main_baseline_exec_throws_then_exit_0', async () => {
+    const exec = () => { throw new Error('git boom'); };
+    const code = await gate.main(['baseline', '--slug', 's'], {
+      rootDir: '/nonexistent',
+      exec,
+      project: CONFIG_T,
+      workflow: { exceptions: [] },
+    });
+    assert.equal(code, 0);
+  });
+});
+
+describe('rightsize-gate-fix — check loads project.json from disk (end-to-end D1)', () => {
+  // The CLI `check` path receives no injected project; test_globs must come from
+  // the on-disk .claude/project.json, else D1 is inert in production.
+  it('test_when_check_no_injected_project_then_test_globs_from_disk_exclude_test_rows', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'rsg-'));
+    try {
+      mkdirSync(path.join(root, '.claude', 'state'), { recursive: true });
+      writeFileSync(path.join(root, '.claude', 'project.json'), JSON.stringify({
+        tdd: { test_globs: ['tests/**', '**/*.test.*'] },
+        velocity: { rightsize: { enabled: true, max_lines: 80 } },
+        simplify: { min_files: 4 },
+      }));
+      writeFileSync(path.join(root, '.claude', 'state', 'workflow.json'), JSON.stringify({ slug: 's', exceptions: [] }));
+      const exec = (cmd, args) => {
+        if (args.includes('--numstat') && args.includes('HEAD')) return '2\t0\tsrc/x.mjs\n100\t0\ttests/x.test.mjs\n';
+        if (args.includes('ls-files')) return '';
+        return '';
+      };
+      let out = '';
+      const orig = process.stdout.write;
+      process.stdout.write = (s) => { out += s; return true; };
+      let code;
+      try {
+        // NOTE: no `project` in deps — it must be read from disk at rootDir.
+        code = await gate.main(['check', '--slug', 's'], { rootDir: root, exec });
+      } finally {
+        process.stdout.write = orig;
+      }
+      assert.equal(code, 0);
+      const result = JSON.parse(out);
+      assert.deepEqual(result.measured.touched, ['src/x.mjs']);
+      assert.equal(result.measured.lines, 2);
+      assert.ok(result.skip.includes('simplify'));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

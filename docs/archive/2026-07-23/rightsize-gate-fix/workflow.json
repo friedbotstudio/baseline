@@ -1,0 +1,46 @@
+{
+  "request": "Fix the right-size gate (.claude/skills/harness/rightsize-gate.mjs) so velocity Lever 2 can fire. Two required defects: (1) it counts test/fixture lines toward max_lines — exclude project.json → tdd.test_globs; (2) it measures the whole dirty tree instead of the workflow's own diff — scope to the workflow diff. Additive-only; never skips security (Art. IV, seed.md §5).",
+  "slug": "rightsize-gate-fix",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog key rightsize-gate-counts-test-lines-and-never-fires-4b7e + detail landmine rightsize-gate-measures-whole-dirty-tree-not-workflow-diff (both name the files, the two defects, and the additive-only/never-skip-security constraint)",
+  "track_reason": "Defect 2 carries a load-bearing contract decision — the definition and git base-ref source for 'the workflow's own diff', which governs which ceremony phases the gate auto-skips — so it needs a written spec + gate-A approval, heavier than tdd-quickfix's known-failing-case fast path.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "rightsize-gate-counts-test-lines-and-never-fires-4b7e"
+  ],
+  "created_at": 1784635991,
+  "updated_at": 1784798415,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

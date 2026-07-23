@@ -2,13 +2,14 @@
 key: rightsize-gate-counts-test-lines-and-never-fires-4b7e
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-07-20
 raised-in-context: chore-archive-node
 source: assistant-deferral
 estimated-effort: small
 verified-at: 40057f8
 last-touched: 2026-07-20
+superseded-at: 2026-07-23
 ---
 
 > verbatim (assistant, 2026-07-20):
