@@ -2,7 +2,7 @@
 key: sprint-mode-dogfood-config-mcp-register-and-flag-flip
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-06-23
 raised-in-context: sprint-dispatch
 source: assistant-deferral
@@ -10,6 +10,7 @@ estimated-effort: small (config + a 3→4 count cascade)
 parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
 verified-at: 3d3cda7
 last-touched: 2026-06-23
+superseded-at: 2026-07-24
 ---
 
 > verbatim (assistant-deferral + user direction, 2026-06-23): user — "after C we will configure this session for dogfooding"; "in next session we will have a companion session to help". The dogfood-config is the explicit next step.

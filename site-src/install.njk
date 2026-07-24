@@ -91,7 +91,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
     <tbody>
       <tr><td class="phase">.claude/</td><td><a href="{{ '/hooks/' | rel }}">{{ baseline.hooks.total }} hooks</a>, <a href="{{ '/skills/' | rel }}">{{ baseline.skills.total }} skills</a>, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, <a href="{{ '/memory/' | rel }}">memory schemas</a>, <code>project.json</code>, <code>settings.json</code>.</td></tr>
       <tr><td class="phase">CLAUDE.md</td><td>In-session constitution. Binds Claude's behavior in this repository.</td></tr>
-      <tr><td class="phase">.mcp.json</td><td>The three baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>.</td></tr>
+      <tr><td class="phase">.mcp.json</td><td>The four baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>, <code>sprint-channel</code>.</td></tr>
       <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
       <tr><td class="phase">.githooks/, scripts/ci/, .github/branch-protection/</td><td>The CI/secrets posture, delivered by default: a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, a low-risk auto-merge classifier, and branch protection as a fill-in config with a subset-asserting applier. Skip the whole set with <code>--no-ci-posture</code>.</td></tr>
       <tr><td class="phase">.claude/bin/LICENSE, NOTICE</td><td>Apache 2.0 license + provenance for the side-fetched PlantUML jar.</td></tr>
@@ -99,7 +99,7 @@ $ npx @friedbotstudio/create-baseline ./my-project
       <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by the <code>upgrade</code> subcommand to do a three-way reconcile on the next install.</td></tr>
     </tbody>
   </table>
-  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the three baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
+  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the four baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
   <p>The CLI itself ships one pinned runtime dependency, <code>@clack/prompts</code>, which supplies the prompt primitives behind the branded TTY flows. Everything else it needs is Node stdlib and the contents of the npm tarball; the dependency stays in the CLI and never lands in your project.</p>
 </section>
 

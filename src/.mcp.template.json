@@ -19,6 +19,10 @@
         "--browser", "chrome",
         "--isolated"
       ]
+    },
+    "sprint-channel": {
+      "command": "node",
+      "args": [".claude/mcp/sprint-channel/server.mjs"]
     }
   }
 }

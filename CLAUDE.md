@@ -311,4 +311,4 @@ You SHALL:
 
 Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 52 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 52 skills, `.claude/commands/` (6 commands), 7 memory files, 3 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 52 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).

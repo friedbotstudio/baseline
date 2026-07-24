@@ -37,7 +37,7 @@ The recommender reads the project manifest (package.json / pyproject.toml / go.m
 Assumptions the baseline is allowed to make:
 
 - **Unix/Linux or macOS.** Windows is not a target.
-- **`node` ≥ 18.17 on PATH.** Every hook AND every skill helper runs as a Node ESM script (`.mjs`); no `bash` or `jq` at hook runtime. `npx` is also required for the three MCP servers (`context7`, `plantuml`, `playwright`).
+- **`node` ≥ 18.17 on PATH.** Every hook AND every skill helper runs as a Node ESM script (`.mjs`); no `bash` or `jq` at hook runtime. `npx` is also required for the MCP servers (`context7`, `plantuml`, `playwright`; `sprint-channel` runs on `node`).
 - **`plantuml` CLI on PATH** (optional). `/spec-render` refuses without it. The PlantUML syntax guard is **advisory by default** (no JVM); it invokes the CLI — and runs in guide mode when the CLI/jar is absent — only when `project.json → plantuml.strict_syntax_check` is enabled.
 - **Git repository.** Required for swarm worktree isolation mode; the baseline falls back to `shared` mode on non-git projects.
 - **Claude Code installed and authenticated.**
@@ -299,7 +299,7 @@ Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly on
 
 **Adding a seventh command requires answering yes to both:** "does a human need to press this?" and "is 'user-only via frontmatter flag' too weak a guarantee?" Otherwise make it a skill.
 
-### §4.5 MCP servers (3)
+### §4.5 MCP servers (4)
 
 All declared in `.mcp.json` at the repo root so the capability travels with the project:
 

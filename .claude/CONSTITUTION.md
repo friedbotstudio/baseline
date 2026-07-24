@@ -157,7 +157,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
 | `.claude/settings.json` | hook wiring + permissions |
 | `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
-| `.mcp.json` | three baseline MCP servers: `context7`, `plantuml`, `playwright` |
+| `.mcp.json` | four baseline MCP servers: `context7`, `plantuml`, `playwright`, `sprint-channel` |
 | `.githooks/` | git pre-commit hook (gitleaks gate). Shipped when `ci_posture.enabled`; activated by the human via `git config core.hooksPath .githooks` |
 | `scripts/ci/` | CI posture helpers: `require-gitleaks.sh`, `low-risk-classifier.mjs`, `apply-branch-protection.mjs` |
 | `.github/branch-protection/` | branch-protection config-as-code (`main.json`; consumers receive the placeholder fill-in variant) |

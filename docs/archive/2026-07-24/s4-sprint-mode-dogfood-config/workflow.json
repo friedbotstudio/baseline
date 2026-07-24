@@ -1,0 +1,48 @@
+{
+  "request": "Register the first-party MCP servers sprint-channel and sprint-pool in .mcp.json (and src/.mcp.template.json), triggering a 3→5 MCP-server-count cascade across governance surfaces (EXPECTED_MCP_SERVERS, CLAUDE.md:314, seed.md:40/:302, README.md:69, CONSTITUTION.md:160, and the byte-equal src/ mirrors), then npm run build + audit-baseline green. velocity.sprint_mode.enabled already true. S4 sprint-mode dogfood config, roadmap Epic 5, closing Epic 5.",
+  "slug": "s4-sprint-mode-dogfood-config",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md:97 (Epic 5 task S4); backlog key sprint-mode-dogfood-config-mcp-register-and-flag-flip (.claude/memory/backlog/). Framing complete: actor=maintainer, trigger=register servers, desired=servers in .mcp.json + counts reconciled + audit green.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd",
+    "security"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "sprint-mode-dogfood-config-mcp-register-and-flag-flip"
+  ],
+  "roadmap_tasks": [
+    "E5-S4"
+  ],
+  "created_at": 1784885400,
+  "updated_at": 1784926805,
+  "rightsize_base": [],
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs → {sensitive:false}; diff touches no security.sensitive_globs path",
+      "oracle": "chore-conditional"
+    }
+  ]
+}

@@ -87,14 +87,14 @@ Peripheral to the center of the plan, and the cheapest wins on the board.
 - ✅ D2. Velocity levers umbrella. Backlog `-v0lv`. Landed: Lever 0 (per-phase timing and token instrumentation), Lever 1 (parallel checker fan-out), Lever 2 (right-size gate), Lever 4 (artifact compression, terse verdicts, re-verify skip). Open: cross-track lever ranking. Lever 3 (model tiering) is architecturally constrained — main-context phases run at the session model, and Article II keeps judgment in main context.
 - ✅ D3. Gate-collapse — fold three human gates into two higher-signal ones: approve-direction (intake plus the reference target) and approve-landing (commit). Depends on A4 (a collapsed gate is only safe when the single approval carries real evidence) and D1 (fewer gates only helps if the human is told when each fires).
 
-## Epic 5 — Multi-session coordination  🟡  (org)
+## Epic 5 — Multi-session coordination  ✅  (org)
 
 Peer sessions coordinating on one body of work (Article X). Opt-in, off by default, requires git.
 
 - ✅ S1. Sprint completeness oracle, the MCP coordination channel core, the dispatch engine, and the org-team charter with broker-pool coordination.
 - ✅ S2. Deliver the SDK-to-consumer path so the MCP SDK reaches consumer installs while the baseline stays zero-runtime-dep — landed via **esbuild build-time bundling** (`scripts/bundle-mcp-servers.mjs` + `build-template.sh` Stage 1.7), which inlines the SDK + zod into self-contained shipped `server.mjs` artifacts. This **supersedes** the original own-package/`npx` mechanism (first-party servers are compiled, not published). Backlog `sprint-channel-own-package-sdk-delivery-ac005-slice-c`. Unblocks the dogfood.
 - ✅ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
-- ⬜ S4. Sprint-mode dogfood config — register the channel servers (`sprint-channel`, `sprint-pool`) in `.mcp.json` (triggers a three-to-five MCP-count cascade across the governance surfaces) and flip the flag. The SDK-to-consumer path is now provided by S2's bundle, so consumers no longer get a broken server.
+- ✅ S4. Sprint-mode dogfood config — register the `sprint-channel` stdio server in `.mcp.json` + `src/.mcp.template.json` (a three-to-four MCP-count cascade across the governance surfaces). `sprint-pool` stays a dev-launched channel server (broker over `--dangerously-load-development-channels`), not a shipped stdio entry; `velocity.sprint_mode.enabled` is already on. The SDK-to-consumer path is provided by S2's bundle, so consumers no longer get a broken server.
 
 ## Epic 6 — Debt and hardening  🟡  (debt)
 
