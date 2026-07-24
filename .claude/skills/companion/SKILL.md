@@ -18,7 +18,7 @@ A session peer is a **recipe-executor, not a decision-maker**. When acting as a 
 - Execute the claimed task's recipe **within its declared `write_set`** only.
 - On any **un-decidable fork** — a design, scope, abstraction, or naming choice the recipe does not settle — call `yield_fork(sprint_id, peer_id, task_id, fork_desc)` and **stop work on that task**. You do NOT guess, and you do NOT make the call yourself. The lead arbitrates in main context and re-dispatches.
 - On a **write-set clash** with another peer's path, call `raise_conflict(...)` and let the lead arbitrate.
-- Never send a free-form directive over the channel — the only messages are the mechanical ones the 7 tools expose.
+- Never send a free-form directive over the channel — the only messages are the mechanical ones the channel's tools expose.
 
 This is the sandbox fence that keeps the lead the sole decision locus. Breaking it defeats the whole point of the prototype.
 
@@ -47,16 +47,20 @@ Parse the argument string. The first token is the subcommand (`on` | `off` | `st
    - On a successful claim, **execute that task's recipe** within its `write_set`. The recipe comes from the task definition and any `send_message` the lead addressed to this peer (read the mailbox). Apply `code-structure` discipline; all 25 PreToolUse hooks fire on your writes exactly as normal.
    - On completion call `signal_done({ sprint_id, peer_id, task_id })`; report the `unblocked` list it returns.
    - On an un-decidable fork → `yield_fork(...)` and stop that task (see the contract above).
-   - Repeat until no claimable task remains, then report "no claimable tasks; idle" and stop (the session stays registered as active so the lead can dispatch more).
-6. Report what you claimed, finished, and yielded.
+   - When no claimable task remains, **do not stop — enter watch mode** so a lead re-dispatch is picked up with no human turn. Start the watcher in the background and end the turn: run `node .claude/skills/companion/watch.mjs <sprint_id> <peer_id>` with `run_in_background`. It blocks (polling `tasks.json`) until a task becomes claimable by this peer, then exits so the session is re-invoked.
+6. **Watch-mode re-invocation.** When the background watcher exits, the session is re-invoked with its JSON output. Act on the exit:
+   - `{"wake":true,"task_id":…}` (exit 0) — a task became claimable. Re-enter the claim loop (step 5): claim it, execute within its `write_set`, `signal_done` (or `yield_fork` if it is *still* under-specified). Then **re-arm** the watcher (`run_in_background` again) and end the turn.
+   - `{"wake":false,"reason":"companion inactive"}` (exit 2) — `/companion off` ran. Do **not** re-arm; report the peer stopped.
+   - `{"wake":false,"reason":"heartbeat"}` (exit 3) — no work within the cap window. Just re-arm the watcher and end the turn (this only keeps each turn bounded; it is not idle-stop).
+7. Report what you claimed, finished, and yielded across the cycle. The watcher makes the peer **hands-off**: once it is armed, every subsequent lead re-dispatch is auto-claimed with no `/companion` re-run.
 
 ### `/companion off [sprint_id]`
 
 1. Resolve the marker: the given `<sprint_id>`, or the single active marker under `.claude/state/companion/` if only one exists (otherwise ask which).
-2. Stop the claim loop. Do not claim anything further.
+2. Stop the claim loop. Do not claim anything further. A background watcher (if armed) reads the marker's `active` flag each tick and exits `2` on the next poll, so it self-stops once step 3 flips the flag — do not re-arm it after that.
 3. Mark the peer inactive: set `"active": false` in the marker.
-4. **Honest limitation:** the channel has **no deregister/leave tool** (`register_peer` only adds/updates a peer record). So `off` cannot remove this peer from `sprint.peers[]` on the channel — it can only stop this session from working and flag the local marker inactive. The lead may still see the peer listed. *(Adding a `leave_peer` / `deregister_peer` tool to the channel is the clean fix — surface it as a backlog item if the dogfood confirms it matters. This is exactly the kind of gap the prototype is meant to expose.)*
-5. Report: peer marked inactive locally; note the deregister limitation.
+4. **Deregister on the channel.** Call the `leave_peer` MCP tool with `{ sprint_id, peer_id }` — it removes this peer from `sprint.peers[]` and returns `{ ok: true, removed: <bool> }` (idempotent; `removed: false` if it was already gone). This is the real deregister; the lead no longer sees a departed peer listed.
+5. Report: peer deregistered from the channel (removed from `sprint.peers[]`) and marked inactive locally. The background watcher (if armed) self-stops on its next tick once the marker flips.
 
 ### `/companion status`
 
@@ -65,7 +69,7 @@ Read any markers under `.claude/state/companion/`. For each, report `sprint_id`,
 ## Constraints
 
 - **Bounded execution only** — re-read the Article II contract above. A companion never makes a design decision; it yields.
-- **No channel deregister exists yet** — `off` is best-effort local (mark-inactive + stop). Don't claim it removed the peer from the channel.
+- **`off` deregisters via `leave_peer`** — it removes the peer from `sprint.peers[]` on the channel and marks the local marker inactive. (Earlier prototype builds lacked a leave tool and could only mark-inactive; the `leave_peer` tool closed that gap.)
 - **This skill is not baseline-owned** — it carries no `owner: baseline`, is excluded from `audit-baseline`, and is not shipped to consumers. It is prototype tooling for the sprint-mode dogfood and may be reworked or removed once the §II.B charter (slice E) settles the real pattern.
 
 ## Channel-pool mode (push-dispatch, no polling)

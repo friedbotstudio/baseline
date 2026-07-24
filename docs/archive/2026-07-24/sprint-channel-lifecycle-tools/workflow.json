@@ -1,0 +1,53 @@
+{
+  "request": "Fix two dogfood-surfaced gaps in the shipped sprint-channel MCP server by porting sprint-pool's lifecycle tools: (1) release_task — reset a claimed/yielded task to pending, clear claimed_by, optionally update brief, resolve the open yield (kills the hand-edit-tasks.json re-dispatch gap); (2) leave_peer — remove a peer from sprint.peers[] (real deregister). Wire /companion off to call leave_peer. Rebuild the bundle.",
+  "slug": "sprint-channel-lifecycle-tools",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": ".claude/mcp/sprint-pool/handlers.mjs already exports releaseTask (line 53) and leavePeer (line 43); this ports the same two tools to .claude/mcp/sprint-channel/handlers.mjs + server.mjs. Surfaced by the 2026-07-25 sprint-mode dogfood (yield_fork doesn't release the claim; no leave/deregister).",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "simplify",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "roadmap_tasks": [],
+  "created_at": 1784930000,
+  "updated_at": 1784930485,
+  "rightsize_base": [
+    ".claude/mcp/sprint-channel/handlers.mjs",
+    ".claude/mcp/sprint-channel/server.mjs",
+    ".claude/skills/companion/SKILL.md",
+    "tests/sprint-channel.test.mjs",
+    ".claude/skills/companion/watch.mjs"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "rightsize: clean pattern-copy port, no structural cleanup surface",
+      "oracle": "rightsize-gate"
+    },
+    {
+      "phase": "document",
+      "reason": "rightsize: doc surfaces (companion SKILL off/contract, 7-tools ref) updated inline during tdd",
+      "oracle": "rightsize-gate"
+    }
+  ]
+}

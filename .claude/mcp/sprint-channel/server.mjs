@@ -48,6 +48,12 @@ const TOOLS = [
   ['yield_fork', 'Yield an un-decidable fork to the lead (RALPH stop-rule)',
     { sprint_id: z.string(), peer_id: z.string(), task_id: z.string(), fork_desc: z.string() },
     (channelRootPath, a) => handlers.yieldFork({ channelRoot: channelRootPath, ...a })],
+  ['release_task', 'Lead re-dispatch: reset a claimed/yielded task to pending (optionally with a new brief) and resolve its open yield',
+    { sprint_id: z.string(), task_id: z.string(), brief: z.string().optional() },
+    (channelRootPath, a) => handlers.releaseTask({ channelRoot: channelRootPath, ...a })],
+  ['leave_peer', 'Deregister a peer from the sprint channel (removes it from peers[])',
+    { sprint_id: z.string(), peer_id: z.string() },
+    (channelRootPath, a) => handlers.leavePeer({ channelRoot: channelRootPath, ...a })],
 ];
 
 export function buildServer() {

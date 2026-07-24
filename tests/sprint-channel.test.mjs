@@ -215,3 +215,88 @@ test('test_when_lock_free_then_acquired_runs_fn_and_releases', () => {
     assert.equal(existsSync(lockDirOf(ch.root, 'task-T1')), false, 'lock dir removed on release');
   } finally { ch.cleanup(); }
 });
+
+// --- Lifecycle tools ported from sprint-pool: release_task + leave_peer ---
+// Namespace import so the file loads while these handlers are absent (RED at call time).
+import * as chan from '../.claude/mcp/sprint-channel/handlers.mjs';
+
+const openYield = (task_id, peer_id = 'pA') => ({ task_id, peer_id, fork_desc: 'unspecified design', plan_version: 1, status: 'open' });
+
+test('test_when_release_task_then_pending_and_yield_resolved', () => {
+  const ch = mkChannel({ tasks: [task('T1', { status: 'claimed', claimed_by: 'pA' })], yields: [openYield('T1')] });
+  try {
+    const r = chan.releaseTask({ channelRoot: ch.root, task_id: 'T1' });
+    assert.equal(r.released, true);
+    const t = readJson(ch.root, 'tasks.json').find((x) => x.id === 'T1');
+    assert.equal(t.status, 'pending', 'released task returns to pending');
+    assert.equal(t.claimed_by, null, 'claim is cleared');
+    assert.equal(readJson(ch.root, 'yields.json').find((y) => y.task_id === 'T1').status, 'resolved', 'open yield resolved');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_release_task_with_new_brief_then_brief_updated', () => {
+  const ch = mkChannel({ tasks: [task('T1', { status: 'claimed', claimed_by: 'pA', brief: 'old' })] });
+  try {
+    chan.releaseTask({ channelRoot: ch.root, task_id: 'T1', brief: 'now fully specified' });
+    assert.equal(readJson(ch.root, 'tasks.json').find((x) => x.id === 'T1').brief, 'now fully specified', 're-dispatch updates the brief in one call');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_release_done_task_then_rejected', () => {
+  const ch = mkChannel({ tasks: [task('T1', { status: 'done', claimed_by: 'pA' })] });
+  try {
+    const r = chan.releaseTask({ channelRoot: ch.root, task_id: 'T1' });
+    assert.equal(r.released, false, 'a done task is never resurrected');
+    assert.match(String(r.reason), /done/i);
+    assert.equal(readJson(ch.root, 'tasks.json').find((x) => x.id === 'T1').status, 'done', 'stays done');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_released_task_is_reclaimable', () => {
+  const ch = mkChannel({ tasks: [task('T1', { status: 'claimed', claimed_by: 'pA' })], yields: [openYield('T1')] });
+  try {
+    chan.releaseTask({ channelRoot: ch.root, task_id: 'T1' });
+    const claim = claimTask({ channelRoot: ch.root, sprint_id: 's1', peer_id: 'pB', task_id: 'T1' });
+    assert.equal(claim.claimed, true, 'a released task can be re-claimed by another peer — no hand-edit needed');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_release_task_with_traversal_id_then_rejected', () => {
+  const ch = mkChannel({ tasks: [task('T1')] });
+  try {
+    const r = chan.releaseTask({ channelRoot: ch.root, task_id: '../../etc/x' });
+    assert.equal(r.released, false);
+    assert.match(String(r.error), /invalid/i);
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_leave_peer_then_removed_from_peers', () => {
+  const ch = mkChannel({ peers: [{ peer_id: 'pA' }, { peer_id: 'pB' }] });
+  try {
+    const r = chan.leavePeer({ channelRoot: ch.root, peer_id: 'pA' });
+    assert.equal(r.ok, true);
+    assert.equal(r.removed, true);
+    const peers = readJson(ch.root, 'sprint.json').peers;
+    assert.equal(peers.length, 1);
+    assert.equal(peers[0].peer_id, 'pB', 'only the other peer remains');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_leave_peer_absent_then_idempotent', () => {
+  const ch = mkChannel({ peers: [{ peer_id: 'pA' }] });
+  try {
+    const r = chan.leavePeer({ channelRoot: ch.root, peer_id: 'pZ' });
+    assert.equal(r.ok, true);
+    assert.equal(r.removed, false, 'leaving an absent peer is a no-op, not an error');
+    assert.equal(readJson(ch.root, 'sprint.json').peers.length, 1);
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_leave_peer_with_traversal_id_then_rejected', () => {
+  const ch = mkChannel({ peers: [{ peer_id: 'pA' }] });
+  try {
+    const r = chan.leavePeer({ channelRoot: ch.root, peer_id: '../evil' });
+    assert.equal(r.ok, false);
+    assert.match(String(r.error), /invalid/i);
+  } finally { ch.cleanup(); }
+});

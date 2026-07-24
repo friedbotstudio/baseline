@@ -103,3 +103,39 @@ export function yieldFork({ channelRoot, peer_id, task_id, fork_desc }) {
   writeYields(channelRoot, yields);
   return { recorded: true, plan_version };
 }
+
+// Lead-side re-dispatch. Resets a claimed/yielded task to pending, clears the
+// claim, optionally swaps in a settled brief, and resolves the open yield — the
+// clean path a yield needs, replacing hand-edits of tasks.json. A `done` task is
+// never resurrected. Locked so a concurrent claim/release cannot interleave.
+export function releaseTask({ channelRoot, task_id, brief }) {
+  if (!isSafeId(task_id)) return { released: false, error: 'invalid task_id' };
+  const lock = withLock(channelRoot, `release-${task_id}`, () => {
+    const tasks = readTasks(channelRoot);
+    const target = findTask(tasks, task_id);
+    if (!target) return { released: false, reason: 'unknown task' };
+    if (target.status === 'done') return { released: false, reason: 'task is done' };
+    target.status = 'pending';
+    target.claimed_by = null;
+    if (brief !== undefined) target.brief = brief;
+    writeTasks(channelRoot, tasks);
+    const yields = readYields(channelRoot);
+    const openYield = yields.find((y) => y.task_id === task_id && y.status === 'open');
+    if (openYield) { openYield.status = 'resolved'; writeYields(channelRoot, yields); }
+    return { released: true };
+  });
+  if (!lock.acquired) return { released: false, reason: 'release lock held by a concurrent call' };
+  return lock.result;
+}
+
+// Deregister a peer: remove it from sprint.peers[] so a departed peer is no
+// longer listed (registerPeer only adds/updates). Idempotent — leaving an absent
+// peer reports removed:false rather than erroring.
+export function leavePeer({ channelRoot, peer_id }) {
+  if (!isSafeId(peer_id)) return { ok: false, error: 'invalid peer_id' };
+  const sprint = readSprint(channelRoot);
+  const before = (sprint.peers || []).length;
+  sprint.peers = (sprint.peers || []).filter((p) => p.peer_id !== peer_id);
+  writeSprint(channelRoot, sprint);
+  return { ok: true, removed: sprint.peers.length < before };
+}
