@@ -1,0 +1,66 @@
+{
+  "request": "Add stale-lock TTL recovery to sprint-channel/lib/lock.mjs — a lock holder that dies mid-task currently leaks the mkdir-based lock dir permanently, making the task unclaimable. On EEXIST, check the lock dir's age and reclaim it past a TTL, handling the reclaim race between concurrent callers. Roadmap task S3, Epic 5.",
+  "slug": "s3-stale-lock-ttl-recovery",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md:96 (Epic 5 task S3); target file .claude/mcp/sprint-channel/lib/lock.mjs:8 (withLock mkdir primitive, no age check on EEXIST); consumer handlers.mjs:59 (claim_task lock). Framing complete: actor=lock holder, trigger=dies mid-task, desired=reclaim past TTL.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "simplify",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "roadmap_tasks": [
+    "E5-S3"
+  ],
+  "created_at": 1753344000,
+  "updated_at": 1784883737,
+  "rightsize_base": [
+    "docs/roadmap-execution-plan.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "rightsize: 1 file / 53 lines, single Foundation module",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 53
+      }
+    },
+    {
+      "phase": "document",
+      "reason": "rightsize: no public API/CLI/docs surface touched",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 53
+      }
+    }
+  ]
+}

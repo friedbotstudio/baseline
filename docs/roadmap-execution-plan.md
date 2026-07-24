@@ -20,6 +20,11 @@ the roll-up of its body.
 
 ## Progress
 
+- **Status (2026-07-24):** HEAD is `b6233f5`. No roadmap line-item moved since the 2026-07-21 snapshot —
+  the two commits landed since (`f84e4ba` right-size gate scoped to the workflow diff and excluding test
+  lines; `b6233f5` sharded-reader test counts derived from the fixture) both harden already-✅ work
+  (Epic 4 D2 Lever 2 and Epic 6 T4). Open work is unchanged: Epic 5 (S3 stale-lock recovery, S4 dogfood
+  config) and Epic 6 (T2, T8, T9). All five re-verified open on disk this date.
 - **Status (2026-07-21):** Epics 1–4 are all ✅. Epic 5 S2 landed as `0312ffa` — the SDK-to-consumer
   path delivered via esbuild build-time bundling (`build-template.sh` Stage 1.7), superseding the
   own-package/`npx` plan, which unblocks S4. Remaining open work: Epic 5 (S3 stale-lock recovery, S4
@@ -88,7 +93,7 @@ Peer sessions coordinating on one body of work (Article X). Opt-in, off by defau
 
 - ✅ S1. Sprint completeness oracle, the MCP coordination channel core, the dispatch engine, and the org-team charter with broker-pool coordination.
 - ✅ S2. Deliver the SDK-to-consumer path so the MCP SDK reaches consumer installs while the baseline stays zero-runtime-dep — landed via **esbuild build-time bundling** (`scripts/bundle-mcp-servers.mjs` + `build-template.sh` Stage 1.7), which inlines the SDK + zod into self-contained shipped `server.mjs` artifacts. This **supersedes** the original own-package/`npx` mechanism (first-party servers are compiled, not published). Backlog `sprint-channel-own-package-sdk-delivery-ac005-slice-c`. Unblocks the dogfood.
-- ⬜ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
+- ✅ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
 - ⬜ S4. Sprint-mode dogfood config — register the channel servers (`sprint-channel`, `sprint-pool`) in `.mcp.json` (triggers a three-to-five MCP-count cascade across the governance surfaces) and flip the flag. The SDK-to-consumer path is now provided by S2's bundle, so consumers no longer get a broken server.
 
 ## Epic 6 — Debt and hardening  🟡  (debt)

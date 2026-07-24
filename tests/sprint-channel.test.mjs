@@ -150,3 +150,68 @@ test('test_when_register_peer_with_invalid_id_then_rejected', () => {
     assert.equal((readJson(ch.root, 'sprint.json').peers || []).length, 0, 'invalid peer not persisted');
   } finally { ch.cleanup(); }
 });
+
+// --- S3: stale-lock TTL recovery in the mkdir lock primitive (lib/lock.mjs) ---
+// Namespace import so the file still LOADS while reclaimStaleLock/DEFAULT_LOCK_TTL_MS
+// are absent — the new-behaviour tests then fail RED at call time, not at module load.
+import { mkdirSync, utimesSync } from 'node:fs';
+import * as lock from '../.claude/mcp/sprint-channel/lib/lock.mjs';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+function mkLockRoot() {
+  const root = mkdtempSync(join(tmpdir(), 'sprint-lock-'));
+  return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+const lockDirOf = (root, key) => join(root, `.lock-${key}`);
+const backdate = (dir) => { const t = new Date(Date.now() - DAY_MS); utimesSync(dir, t, t); };
+
+test('test_when_lock_holder_died_then_stale_lock_reclaimed_and_fn_runs', () => {
+  const ch = mkLockRoot();
+  try {
+    const dir = lockDirOf(ch.root, 'task-T1');
+    mkdirSync(dir);           // a dead holder left this lock dir behind
+    backdate(dir);            // its mtime is far older than any TTL
+    let ran = false;
+    const r = lock.withLock(ch.root, 'task-T1', () => { ran = true; return 'ok'; });
+    assert.equal(r.acquired, true, 'a stale lock is reclaimed');
+    assert.equal(ran, true, 'fn runs after the stale lock is reclaimed');
+    assert.equal(r.result, 'ok');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_lock_is_fresh_then_respected_and_fn_skipped', () => {
+  const ch = mkLockRoot();
+  try {
+    const dir = lockDirOf(ch.root, 'task-T1');
+    mkdirSync(dir);           // a live holder — current mtime, well within any TTL
+    let ran = false;
+    const r = lock.withLock(ch.root, 'task-T1', () => { ran = true; });
+    assert.equal(r.acquired, false, 'a fresh lock is never reclaimed');
+    assert.equal(ran, false, 'fn does not run while a live holder holds the lock');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_two_callers_reclaim_same_stale_lock_then_exactly_one_wins', () => {
+  const ch = mkLockRoot();
+  try {
+    const dir = lockDirOf(ch.root, 'task-T1');
+    mkdirSync(dir);
+    backdate(dir);
+    const results = [lock.reclaimStaleLock(dir), lock.reclaimStaleLock(dir)];
+    assert.equal(results.filter((won) => won === true).length, 1, 'exactly one caller wins the atomic steal');
+  } finally { ch.cleanup(); }
+});
+
+test('test_when_lock_free_then_acquired_runs_fn_and_releases', () => {
+  const ch = mkLockRoot();
+  try {
+    assert.equal(typeof lock.DEFAULT_LOCK_TTL_MS, 'number', 'a default TTL is exported');
+    assert.ok(lock.DEFAULT_LOCK_TTL_MS > 0, 'the default TTL is positive');
+    let ran = false;
+    const r = lock.withLock(ch.root, 'task-T1', () => { ran = true; return 42; });
+    assert.equal(r.acquired, true);
+    assert.equal(ran, true);
+    assert.equal(r.result, 42);
+    assert.equal(existsSync(lockDirOf(ch.root, 'task-T1')), false, 'lock dir removed on release');
+  } finally { ch.cleanup(); }
+});
