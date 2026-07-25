@@ -7,8 +7,9 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveCheckerThreshold } from '../../../hooks/lib/tier-dial.mjs';
 import { extractAcIds } from '../../tdd/drift_check.mjs';
-
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+// Predicate form (T2 hoist): this checker is fail-open by contract, so an unsafe
+// slug degrades to an empty finding set rather than throwing into the fan-out.
+import { isSafeSlug } from '../../../hooks/lib/slug.mjs';
 
 function readProjectJson(rootDir) {
   try { return JSON.parse(readFileSync(join(rootDir, '.claude/project.json'), 'utf8')); }
@@ -36,7 +37,7 @@ export const acConformanceAdapter = {
   phase: 'code-review',
   async run(ctx) {
     if (!isEnabled(ctx.rootDir)) return { findings: [] };
-    if (!SLUG_RE.test(ctx.slug || '')) return { findings: [] };
+    if (!isSafeSlug(ctx.slug || '')) return { findings: [] };
     const specPath = join(ctx.rootDir, 'docs/specs', `${ctx.slug}.md`);
     if (!existsSync(specPath)) return { findings: [] };
     const acIds = extractAcIds(readFileSync(specPath, 'utf8'));

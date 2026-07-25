@@ -213,14 +213,20 @@ function checkCommitConsent() {
     logLine(HOOK, 'BLOCKED consent token unreadable');
     emitBlock('Git Commit Guard: consent token unreadable. Ask the user to re-run `/grant-commit`.');
   }
-  const workflow = resolveWorkflow(CLAUDE_PROJECT_ROOT);
+  // Workflow-scoped grants get their own, longer TTL: /commit archives workflow.json
+  // before the commit runs, so the token is resolved against the archived bundle and a
+  // long landing must not expire mid-flight (backlog -7af6). The ad-hoc window above
+  // keeps its own short `ttl` — a grant with no slug to bind to is bounded by clock alone.
+  let workflowTtl = projectGet('.consent.workflow_ttl_seconds');
+  if (typeof workflowTtl !== 'number' || !Number.isFinite(workflowTtl)) workflowTtl = 14400;
+  const workflow = resolveWorkflow(CLAUDE_PROJECT_ROOT, token && token.slug);
   const now = Math.floor(Date.now() / 1000);
-  const decision = decideCommitConsent({ token, workflow, now, ttl });
+  const decision = decideCommitConsent({ token, workflow, now, ttl, workflowTtl });
   if (!decision.allow) {
     logLine(HOOK, `BLOCKED consent (${decision.mode}): ${decision.reason}`);
     emitBlock(`Git Commit Guard: ${decision.reason}. ${workflow.present ? 'Run `/grant-commit` inside the active workflow' : 'Run `/grant-commit`'} before committing on a protected branch.`);
   }
-  logLine(HOOK, `ALLOWED consent (${decision.mode}): ${decision.reason}`);
+  logLine(HOOK, `ALLOWED consent (${decision.mode}): ${decision.reason}${workflow.source ? ` source=${workflow.source}` : ''}`);
 }
 
 function gitCapture(args) {

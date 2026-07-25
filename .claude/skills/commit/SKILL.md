@@ -1,7 +1,7 @@
 ---
 name: commit
 owner: baseline
-description: Workflow Phase 11 — Commit Preparation and Execution. Stages and commits the work. Requires `/grant-commit` first (Git Commit Guard enforces a 5-min consent window).
+description: Workflow Phase 11 — Commit Preparation and Execution. Stages and commits the work. Requires `/grant-commit` first (Git Commit Guard enforces a 15-min ad-hoc consent window; inside a workflow the grant is slug-scoped and one grant covers the whole landing).
 argument-hint: "[optional commit message; otherwise drafted from the spec/intake]"
 ---
 

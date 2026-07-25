@@ -30,6 +30,10 @@ const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
 const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
 const DECISION = join(REPO_ROOT, '.claude/hooks/lib/consent-decision.mjs');
+// consent-decision.mjs imports ./slug.mjs; without it the spawned guard dies with
+// ERR_MODULE_NOT_FOUND and its empty stdout is read as ALLOW — a fail-open that
+// silently passes every deny assertion below.
+const SLUG = join(REPO_ROOT, '.claude/hooks/lib/slug.mjs');
 
 const SANDBOXES = [];
 
@@ -43,6 +47,7 @@ function buildSandbox(projectJson) {
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
   cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(DECISION, join(root, '.claude/hooks/lib/consent-decision.mjs'));
+  cpSync(SLUG, join(root, '.claude/hooks/lib/slug.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   spawnSync('git', ['init', '-q', '-b', 'main', root], { stdio: 'ignore' });
@@ -78,6 +83,7 @@ function addWorktree(root, branch, projectJson) {
   cpSync(LIB, join(wt, '.claude/hooks/lib/common.mjs'));
   cpSync(CLOSURE, join(wt, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(DECISION, join(wt, '.claude/hooks/lib/consent-decision.mjs'));
+  cpSync(SLUG, join(wt, '.claude/hooks/lib/slug.mjs'));
   cpSync(GUARD, join(wt, '.claude/hooks/git_commit_guard.mjs'));
   writeFileSync(join(wt, '.claude/project.json'), JSON.stringify(projectJson, null, 2));
   SANDBOXES.push(wt);

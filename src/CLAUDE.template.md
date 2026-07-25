@@ -170,7 +170,7 @@ The following bind every code change.
 - `git.protected_branches` — glob list. `null` (default) means every branch is protected. Set e.g. `["main", "release/*"]` to limit consent enforcement to those branches.
 - `git.branch_pattern` — regex. `null` (default) means no naming check. Set e.g. `"^(feat|fix|chore|docs)/[a-z0-9-]+$"` to require conformant branch names on commit.
 
-On a **protected branch**, commits require fresh `commit_consent` (`/grant-commit`, 5-min TTL) and pushes fresh `push_consent` (`/grant-push`, 5-min TTL), each gated on the user having asked for the op in their current request. Non-protected branches proceed without consent. `git_commit_guard` (Art. VIII) enforces.
+On a **protected branch**, commits require fresh `commit_consent` (`/grant-commit`, 15-min TTL) and pushes fresh `push_consent` (`/grant-push`, 5-min TTL), each gated on the user having asked for the op in their current request. Non-protected branches proceed without consent. `git_commit_guard` (Art. VIII) enforces.
 
 **Branch topology (full rules: annex + seed.md Art. VII).** `git.workflow_model` + `git.release_branches` declare where commits may land; `git_commit_guard` enforces on the primary tree only (swarm worktrees exempt). **Binding precedence:** a non-`ask` model **overrides Claude's generic branching instincts and the harness default** — branch only as it prescribes; under `ask`, yield to the user.
 

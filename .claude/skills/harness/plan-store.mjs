@@ -6,36 +6,17 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { resolveCheckerThreshold, DEFAULT_THRESHOLD } from '../../hooks/lib/tier-dial.mjs';
+import { assertSafeSlug as assertSlug } from '../../hooks/lib/slug.mjs';
 
 const SCHEMA_VERSION = 1;
 
-// Same shape as consolidate-open-questions.mjs — one slug shape in the repo, not two.
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
-
-// NAME_MAX is 255 bytes on the common filesystems and the plan filename is
-// `<slug>.json`; 200 leaves headroom for the suffix while staying a sane
-// workflow-slug length. Bounding here — before planPath reaches writeFileSync —
-// turns a raw ENAMETOOLONG syscall crash into a named, caller-legible error.
-const MAX_SLUG_LEN = 200;
-
-// Reject, never repair (CWE-22). Normalizing a hostile slug — the way canonicalSlug
-// strips path segments — would MASK the traversal and silently write the plan somewhere
-// the caller never asked for. Throwing is the only safe answer. Callers reach this
-// through planPath, so every read and write in this module is guarded by construction.
+// Re-exported label-bound (T2 hoist). The predicate and the length bound now live in
+// hooks/lib/slug.mjs; this wrapper keeps the `plan-store:` error prefix and this
+// import path stable for checker-fanout, pre-implementation-gate, approval-provenance
+// and tests/plan-store-slug-length.test.mjs. Callers reach it through planPath, so
+// every read and write in this module stays guarded by construction.
 export function assertSafeSlug(slug) {
-  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
-    throw new Error(
-      `plan-store: refusing to build a path from an unsafe slug ${JSON.stringify(slug)} `
-      + `(must match ${SLUG_RE})`,
-    );
-  }
-  if (slug.length > MAX_SLUG_LEN) {
-    throw new Error(
-      `plan-store: refusing to build a path from an over-long slug `
-      + `(length ${slug.length} > ${MAX_SLUG_LEN})`,
-    );
-  }
-  return slug;
+  return assertSlug(slug, 'plan-store');
 }
 
 function planPath(slug, rootDir) {

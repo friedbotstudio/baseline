@@ -2,13 +2,14 @@
 key: timing-path-builders-lack-assert-safe-slug-a8d2
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-07-19
 raised-in-context: timing-instrument-repair
 source: assistant-deferral
 estimated-effort: tiny
 verified-at: f36b142
 last-touched: 2026-07-19
+superseded-at: 2026-07-25
 ---
 
 > verbatim (assistant, 2026-07-19, `/security` LOW finding):

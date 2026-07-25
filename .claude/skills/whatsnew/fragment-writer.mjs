@@ -7,6 +7,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { KEEPACHANGELOG_SECTIONS } from './classifier.mjs';
+import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 
 const VALID_CATEGORIES = new Set(KEEPACHANGELOG_SECTIONS);
 
@@ -39,15 +40,6 @@ function normalizeEntry(entry, index) {
   return normalized;
 }
 
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
-
-function requireSafeSlug(slug) {
-  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
-    throw new Error(`whatsnew fragment: slug must match ${SLUG_RE} (got ${JSON.stringify(slug)})`);
-  }
-  return slug;
-}
-
 function buildFragment(slug, entries, now) {
   if (!Array.isArray(entries) || entries.length === 0) {
     throw new Error('whatsnew fragment: entries must be a non-empty array');
@@ -64,7 +56,7 @@ function fragmentPath(repoRoot, slug) {
 }
 
 export async function writeFragment({ repoRoot, slug, entries, now }) {
-  requireSafeSlug(slug);
+  assertSafeSlug(slug, 'whatsnew fragment');
   const fragment = buildFragment(slug, entries, now);
   const path = fragmentPath(repoRoot, slug);
   await mkdir(dirname(path), { recursive: true });

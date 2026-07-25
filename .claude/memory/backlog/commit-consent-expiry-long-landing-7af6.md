@@ -2,13 +2,14 @@
 key: commit-consent-expiry-long-landing-7af6
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-07-17
 raised-in-context: memory-decision-point-redesign
 source: assistant-deferral
 estimated-effort: medium
 verified-at: e8d1480
 last-touched: 2026-07-17
+superseded-at: 2026-07-25
 ---
 
 > verbatim (assistant, 2026-07-17):

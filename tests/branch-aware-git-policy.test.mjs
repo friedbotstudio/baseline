@@ -21,6 +21,10 @@ const GRANT = join(REPO_ROOT, '.claude/hooks/consent_gate_grant.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
 const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
 const DECISION = join(REPO_ROOT, '.claude/hooks/lib/consent-decision.mjs');
+// consent-decision.mjs imports ./slug.mjs; without it the spawned guard dies with
+// ERR_MODULE_NOT_FOUND and its empty stdout is read as ALLOW — a fail-open that
+// silently passes every deny assertion below.
+const SLUG = join(REPO_ROOT, '.claude/hooks/lib/slug.mjs');
 
 // Build a temp CLAUDE_PROJECT_DIR with copies of the hooks + a writable
 // project.json + state dir. Returns the temp path.
@@ -31,6 +35,7 @@ function buildSandbox(projectJson) {
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
   cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(DECISION, join(root, '.claude/hooks/lib/consent-decision.mjs'));
+  cpSync(SLUG, join(root, '.claude/hooks/lib/slug.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   cpSync(GRANT, join(root, '.claude/hooks/consent_gate_grant.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));

@@ -16,9 +16,10 @@
 // under the classic human-consented time window. Split out of the hooks so it is
 // import-safe (no main()) and unit-testable.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { canonicalSlug } from './common.mjs';
+import { isSafeSlug } from './slug.mjs';
 
 // Parse a commit_consent token. Two on-disk shapes are accepted:
 //   slug-mode:   line1 = workflow slug, line2 = epoch   (written inside a workflow)
@@ -40,7 +41,16 @@ export function parseCommitConsentToken(text) {
 //   workflow: { present: bool, slug: string, readable: bool } from resolveWorkflow()
 // Every deny path fails closed; the time-window branch still requires a fresh,
 // human-granted token epoch.
-export function decideCommitConsent({ token, workflow, now, ttl }) {
+// `workflowTtl` bounds the SLUG-scoped branch only; `ttl` still bounds the ad-hoc
+// time window. They are separate because the two branches derive their authority
+// differently: an ad-hoc grant is bounded only by wall-clock, so its window must stay
+// short, while a workflow grant is additionally bounded by the slug it names — one
+// landing, and only that landing. A landing legitimately outruns 900s (backlog -7af6
+// recorded a ~54-minute one); the ad-hoc window must not stretch to accommodate it.
+// Defaults to `ttl` when omitted, so every existing caller keeps today's behavior and
+// the 14400s value lives in the hook's config read, not in this pure function.
+export function decideCommitConsent({ token, workflow, now, ttl, workflowTtl }) {
+  const slugTtl = Number.isFinite(workflowTtl) ? workflowTtl : ttl;
   // 1. No workflow context -> time-window fallback (ad-hoc, human-consented).
   if (!workflow || !workflow.present) {
     if (!token || token.epoch == null || !Number.isFinite(token.epoch)) {
@@ -62,7 +72,7 @@ export function decideCommitConsent({ token, workflow, now, ttl }) {
   if (token.epoch == null || !Number.isFinite(token.epoch)) return { allow: false, mode: 'slug', reason: 'consent token has no valid epoch' };
   if (token.slug !== live) return { allow: false, mode: 'slug', reason: `consent was granted for workflow '${token.slug}', not '${live}'` };
   const age = now - token.epoch;
-  if (age > ttl) return { allow: false, mode: 'slug', reason: `consent expired (${age}s old, TTL ${ttl}s)` };
+  if (age > slugTtl) return { allow: false, mode: 'slug', reason: `consent expired (${age}s old, TTL ${slugTtl}s)` };
   return { allow: true, mode: 'slug', reason: `workflow-scoped consent for '${live}' (${age}s old)` };
 }
 
@@ -78,13 +88,50 @@ export function buildGrantCommitMarkerLines(slug, now, note) {
 // IO adapter: resolve the live workflow context. Distinguishes a genuinely-absent
 // workflow (ENOENT -> fallback) from a present-but-broken one (-> fail closed), which
 // is the split the ERP's single catch conflated.
-export function resolveWorkflow(rootDir) {
+// Find docs/archive/<date>/<slug>/workflow.json for exactly the slug the consent token
+// names. /commit archives workflow.json BEFORE running git commit, so between those two
+// steps the live file is gone and workflow scope would otherwise evaporate mid-landing
+// (backlog -7af6). Scoping the search to the token's own slug is what keeps this safe:
+// it can only revive the workflow the human already granted, never borrow authority
+// from a neighbouring bundle. The slug is validated before any path is composed
+// (CWE-22) — REJECT, never normalize.
+function findArchivedWorkflow(rootDir, slug) {
+  if (!isSafeSlug(slug)) return null;
+  const archiveRoot = join(rootDir, 'docs', 'archive');
+  let dates;
+  try {
+    dates = readdirSync(archiveRoot, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  for (const date of dates) {
+    if (!date.isDirectory()) continue;
+    const candidate = join(archiveRoot, date.name, slug, 'workflow.json');
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+// `tokenSlug` is optional: called with one argument this behaves exactly as before,
+// so no un-updated caller changes behavior. The `source` field is added ONLY on the
+// archive branch — the live and absent shapes stay three-key, which existing callers
+// and tests compare with a strict deepEqual.
+export function resolveWorkflow(rootDir, tokenSlug) {
   const path = join(rootDir, '.claude', 'state', 'workflow.json');
   let raw;
   try {
     raw = readFileSync(path, 'utf8');
   } catch (e) {
-    if (e && e.code === 'ENOENT') return { present: false, slug: '', readable: true }; // no workflow -> fallback
+    if (e && e.code === 'ENOENT') {
+      const archived = findArchivedWorkflow(rootDir, tokenSlug);
+      if (archived) {
+        try {
+          const slug = canonicalSlug(JSON.parse(readFileSync(archived, 'utf8')).slug || '');
+          if (slug) return { present: true, slug, readable: true, source: 'archive' };
+        } catch { /* unparseable bundle -> fall through to the fallback below */ }
+      }
+      return { present: false, slug: '', readable: true }; // no workflow -> fallback
+    }
     return { present: true, slug: '', readable: false }; // unreadable (EACCES/EISDIR/...) -> fail closed
   }
   try {

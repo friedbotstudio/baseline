@@ -37,6 +37,7 @@ import {
 } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertSafeSlug, isSafeSlug } from './slug.mjs';
 
 // `approve-direction` is the post-gate-collapse (D3/CO-E) name for the gate that
 // used to be `approve-spec`; both are listed so pre-rename workflows still read
@@ -47,9 +48,14 @@ const GATE_PHASES = new Set(['approve-direction', 'approve-spec', 'approve-swarm
 // ---- paths -----------------------------------------------------------------
 
 const workflowPath = (rootDir) => join(rootDir, '.claude', 'state', 'workflow.json');
-const timingPath = (rootDir, slug) => join(rootDir, '.claude', 'state', 'timing', `${slug}.jsonl`);
-const approvalTokenPath = (rootDir, slug) =>
-  join(rootDir, '.claude', 'state', 'spec_approvals', `${slug}.approval`);
+// Both builders validate before composing (backlog -a8d2). stampFromWorkflow reaches
+// appendFileSync, so an unguarded traversing wf.slug would append JSONL outside
+// .claude/state/timing/. REJECT, never normalize — routing through the slug normalizer
+// in common.mjs would mask the traversal by silently redirecting the write.
+export const timingPath = (rootDir, slug) =>
+  join(rootDir, '.claude', 'state', 'timing', `${assertSafeSlug(slug, 'timing')}.jsonl`);
+export const approvalTokenPath = (rootDir, slug) =>
+  join(rootDir, '.claude', 'state', 'spec_approvals', `${assertSafeSlug(slug, 'timing')}.approval`);
 
 // ---- readers (every reader degrades to a safe empty value) -----------------
 
@@ -138,8 +144,12 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, sub
   const wf = readWorkflow(rootDir);
   if (!wf || !Array.isArray(wf.completed)) return { appended: [] };
 
+  // Guard BEFORE readStamps — it composes timingPath outside its try, so an unsafe
+  // slug would throw past this function's documented "never throws" contract. The
+  // predicate form (not assertSafeSlug) is what keeps that contract intact: a hostile
+  // slug is a skipped stamp, never a crashed phase_timer hook.
   const slug = wf.slug;
-  if (!slug) return { appended: [] };
+  if (!isSafeSlug(slug)) return { appended: [] };
 
   const existing = readStamps(rootDir, slug);
   const stamped = new Set(existing.map((s) => s.phase));

@@ -14,6 +14,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { isSafeSlug, SLUG_RE } from '../../hooks/lib/slug.mjs';
 
 // --- Foundation: parsing primitives ------------------------------------------
 
@@ -104,10 +105,11 @@ export function consolidateOpenQuestions({ intake, research, spec } = {}) {
 
 const ARTIFACT_SUBDIRS = { intake: 'intake', research: 'research', spec: 'specs' };
 
-// Same slug shape the rest of the harness enforces (seed-tasklist.mjs). Rejecting
-// anything else at the CLI boundary keeps a crafted `--slug` from traversing out
-// of docs/{intake,research,specs}/ into an arbitrary `.md` file (CWE-22).
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+// Slug shape is owned by hooks/lib/slug.mjs (T2 hoist). Rejecting anything else at
+// the CLI boundary keeps a crafted `--slug` from traversing out of
+// docs/{intake,research,specs}/ into an arbitrary `.md` file (CWE-22). This is a CLI,
+// so it owes its caller stderr + a non-zero exit, not a thrown Error — hence the
+// predicate rather than the throwing form.
 
 function readArtifact(dir, sub, slug) {
   try {
@@ -144,7 +146,7 @@ function main(argv) {
     process.stderr.write('consolidate-open-questions: --slug is required\n');
     return 2;
   }
-  if (!SLUG_RE.test(slug)) {
+  if (!isSafeSlug(slug)) {
     process.stderr.write(`consolidate-open-questions: invalid --slug '${slug}' (must match ${SLUG_RE})\n`);
     return 2;
   }

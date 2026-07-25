@@ -292,7 +292,7 @@ Files at `.claude/commands/<name>.md`. Commands differ from skills in exactly on
 |---|---|
 | `approve-direction` | Human approval of a spec draft. Accepts a bare slug, a filename, or a full path; canonicalizes via `lib/common.mjs → canonicalSlug` and writes `.claude/state/spec_approvals/<slug>.approval`. Only sanctioned path — `direction_approval_guard` blocks all other routes. |
 | `approve-swarm` | Human approval of a swarm plan. Writes `.claude/state/swarm_approvals/<slug>.approval`. Required before `swarm-dispatch` runs. |
-| `grant-commit` | Opens a 5-minute consent window for `git commit` on a protected branch. Writes `.claude/state/commit_consent`. Enforced by `git_commit_guard`. |
+| `grant-commit` | Opens a 15-minute ad-hoc consent window for `git commit` on a protected branch; inside a workflow the grant is slug-scoped instead, so one grant covers the whole landing. Writes `.claude/state/commit_consent`. Enforced by `git_commit_guard`. |
 | `grant-push` | Opens a 5-minute consent window for `git push` on a protected branch. Writes `.claude/state/push_consent`. Enforced by `git_commit_guard`. Not a workflow-phase gate — a runtime consent for the branch-aware policy (§11). |
 | `init-project` | One-time bootstrap. Detects stack, proposes `.claude/project.json` (test cmd, lint cmd, TDD globs, destructive patterns, artifact required sections, swarm config). Flips `configured: true`. |
 | `init-project-doctor` | Detects baseline drift — missing/invalid `.claude/workflows.jsonl`, schema/invariant violations, four-way Article IV / §18 mirror drift, and (advisory) shipped-tooling files placed outside `.claude/`. Interactive: presents each violation via `AskUserQuestion` and applies the named fix on confirmation. |
@@ -393,7 +393,7 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 | `/init-project` | Once per repo, before any work | Flips `configured: true`; silences the `setup_guard` advisory and lets `test_runner` / `lint_runner` move out of guide mode |
 | `/approve-direction <path>` | Early, at intake (gate A) | Writes approval token (direction: intake + CO-A evidence); spec + implementation proceed under machine review |
 | `/approve-swarm <slug>` | After `/swarm-plan` produces a plan | Writes approval token; `swarm-dispatch` may run |
-| `/grant-commit` | Before `/commit` (approve-landing, gate C) | Writes 5-min consent token; `git_commit_guard` allows next commit on a protected branch |
+| `/grant-commit` | Before `/commit` (approve-landing, gate C) | Writes consent token (15-min ad-hoc window; slug-scoped inside a workflow); `git_commit_guard` allows the commit on a protected branch |
 | `/grant-push` | Before `git push` on a protected branch | Writes 5-min consent token; `git_commit_guard` allows next push on a protected branch (non-protected branches need no consent) |
 
 Harness yields at each gate. User re-invokes `/harness` to resume.
@@ -602,7 +602,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 - `artifacts.required_sections.{intake,brd,spec,rca}` — the canonical section lists.
 - `artifacts.required_diagrams.spec` — the six kinds (§4.7).
 - `swarm.max_parallel`, `swarm.isolation: "auto"`, `swarm.min_tasks_worth_swarming: 3`, `swarm.refuse_dirty_tree: true`, `swarm.exempt_path_prefixes`, `swarm.enforced_path_prefixes`.
-- `consent.commit_ttl_seconds: 300`.
+- `consent.commit_ttl_seconds: 900` (the ad-hoc, no-workflow time window) and `consent.workflow_ttl_seconds: 14400` (the slug-scoped window: one `/grant-commit` covers a whole workflow landing, including the stretch after `/commit` archives `workflow.json`).
 - `additions.{agents,skills,hooks,mcp_servers,swarm_worker_skills}` — names of every project-adopted addition the recommender emitted (just identifiers, no `command`/`why`/`tokens` payload). `additions.agents` stays empty in this baseline — the recommender does not propose new subagent types. `additions.swarm_worker_skills` lists stack-specific skills the `swarm-worker` template should preload via the `{{SKILLS}}` token at re-render time. `audit.mjs` reads this manifest and unions each set with the baseline `EXPECTED_*` sets when checking names; counts are reframed as `"<total> = <baseline> + <project>"` so legitimate additions don't fail drift detection. Default state is five empty arrays.
 - Flip `configured: true`.
 

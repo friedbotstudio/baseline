@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { validateWorkflowsJsonl } from './workflows-validator.js';
 import { materializeTaskList } from './track-tasklist-materializer.js';
 import { isAutonomousFeatureLanding } from '../../hooks/lib/common.mjs';
+import { isSafeSlug, SLUG_RE } from '../../hooks/lib/slug.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = resolve(dirname(__filename), '../../..');
@@ -54,13 +55,12 @@ async function runValidate() {
   process.exit(0);
 }
 
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
-
 async function runMaterialize(trackId, slug, excludedNodeIds) {
   // CWE-78: the slug flows into task subjects and state-file paths downstream;
   // constrain it to a safe charset before use so a crafted slug (shell
   // metacharacters, path traversal, mixed case/underscores) can't slip through.
-  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
+  // Predicate form (T2 hoist) — this is a CLI, so it owes stderr + a non-zero exit.
+  if (!isSafeSlug(slug)) {
     process.stderr.write(`invalid slug '${slug}': must match ${SLUG_RE} (lowercase letters, digits, hyphens; first char alphanumeric)\n`);
     process.exit(2);
   }

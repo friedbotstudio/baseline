@@ -1,0 +1,54 @@
+{
+  "request": "Epic 6 batch: hoist a single slug validator across the five duplicate SLUG_RE definitions (roadmap T2, backlog -9f4f), route timing.mjs path builders through it (backlog -a8d2), and fix the consent-expiry edge where /commit archives workflow.json before committing so workflow-scoped consent drops to the 900s time window (roadmap T9, backlog -7af6). Rule throughout: REJECT, never normalize.",
+  "slug": "slug-guard-hoist-and-consent-expiry",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "roadmap T2 (docs/roadmap-execution-plan.md:104) + T9 (:111); backlog keys hoist-single-slug-validator-at-third-use-9f4f, timing-path-builders-lack-assert-safe-slug-a8d2, commit-consent-expiry-long-landing-7af6",
+  "track_reason": "Heavier than the leanest tdd-quickfix by deliberate choice. Both backlog entries name the DESIGN CALL as the work, not the code: (1) how the shared slug predicate splits from five distinct failure modes (throw / stderr+exit / silent-empty), which the -9f4f entry warns must not collapse into one function; (2) which of the three candidate resolutions closes the archived-slug consent lookup. tdd-quickfix has no spec seam to record either, and additionally excepts spec-shippability-review, which this diff needs because plan-store.mjs is a shipped skill helper under .claude/skills/harness/.",
+  "skip_brainstorm": true,
+  "roadmap_tasks": [
+    "E6-T2",
+    "E6-T9"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "source_backlog_keys": [
+    "hoist-single-slug-validator-at-third-use-9f4f",
+    "timing-path-builders-lack-assert-safe-slug-a8d2",
+    "commit-consent-expiry-long-landing-7af6"
+  ],
+  "created_at": 1784931392,
+  "updated_at": 1784931392,
+  "rightsize_base": [
+    ".claude/memory/backlog/hoist-single-slug-validator-at-third-use-9f4f.md"
+  ]
+}
