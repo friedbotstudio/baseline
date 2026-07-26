@@ -141,7 +141,15 @@ describe('standup site — discoverability', () => {
       nav.sidebar.some((g) => Array.isArray(g.items) && g.items.some((i) => i.href === '/standup/')),
       'a sidebar group must include /standup/',
     );
-    assert.match(readSrc('site-src/_includes/footer.njk'), /\/standup\//, 'footer must link /standup/');
+    // The footer now derives its Docs column by looping nav.primary rather than
+    // hard-coding a list, so the literal '/standup/' no longer appears in the
+    // template source. Assert the rendered output instead: the intent (standup
+    // reachable from the footer of any page) is unchanged and now cannot drift
+    // out of sync with the topnav, which is what the hard-coded list allowed.
+    const renderedFooter = readBuilt('standup/index.html');
+    const footerAt = renderedFooter.indexOf('<footer');
+    assert.ok(footerAt !== -1, 'built page must contain a footer');
+    assert.match(renderedFooter.slice(footerAt), /standup\//, 'rendered footer must link /standup/');
     assert.match(readSrc('site-src/skills/core.njk'), /standup/, 'skills catalog must name standup');
   });
 });

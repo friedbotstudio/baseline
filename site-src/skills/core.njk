@@ -18,11 +18,13 @@ toc:
   - { id: spec,          label: "Spec helpers" }
   - { id: orchestration, label: "Orchestration" }
   - { id: memory,        label: "Memory" }
+  - { id: navigation,    label: "Navigation" }
   - { id: phasehelpers,  label: "Phase helpers" }
   - { id: generators,    label: "Generators" }
   - { id: globals,       label: "Shared globals" }
   - { id: audit,         label: "Audit" }
   - { id: alt,           label: "Alternate tracks" }
+  - { id: sprint,        label: "Sprint & roadmap" }
 ---
 
 <section class="section">
@@ -76,7 +78,7 @@ toc:
     <li><code>implement</code>. Writes production code that turns scenarios green. Invokes <code>code-structure</code>; verifies any third-party API against current docs (<code>context7</code> is the default source).</li>
     <li><code>verify</code>. Mechanical worker. Runs the test command and stamps the official PASS or FAIL verdict.</li>
     <li><code>prose</code>. Drafts or revises English prose for any brief. Always invokes <code>humanizer</code>; conditionally <code>copywriting</code>, <code>documentation</code>, or <code>technical-tutorials</code>.</li>
-    <li><code>design-ui</code>. Orchestrates <code>impeccable</code> for UI design tasks: classifies intent, picks an impeccable recipe, runs it under a 3-iteration loop cap, persists state at <code>.claude/state/design/&lt;slug&gt;.json</code>. Writes no product code itself. Per Article X.2, every design task in a workflow phase routes through this skill.</li>
+    <li><code>design-ui</code>. Orchestrates <code>impeccable</code> for UI design tasks: classifies intent, picks an impeccable recipe, runs it under a 3-iteration loop cap, persists state at <code>.claude/state/design/&lt;slug&gt;.json</code>. Writes no product code itself. Per Article XI.2, every design task in a workflow phase routes through this skill.</li>
   </ul>
 </section>
 
@@ -107,7 +109,7 @@ toc:
   </div>
   <ul>
     <li><code>harness</code>. Graph executor. Loads the chosen track, walks the DAG, resolves selector nodes by evaluating preconditions in declaration order, expands sub-tracks inline, dispatches <code>can_parallel</code> clusters concurrently, and yields at consent gates. Runs the one-shot pre-§18 <code>workflow.json</code> migrator at preflight.</li>
-    <li><code>swarm-plan</code>. Decomposes an approved spec into a dependency-ordered runtime sub-track that the harness reloads as an overlay on the canonical <code>workflows.jsonl</code>. Output lives at <code>.claude/state/swarm/&lt;slug&gt;.jsonl</code>.</li>
+    <li><code>swarm-plan</code>. Decomposes an approved spec into a dependency-ordered runtime sub-track that the harness reloads as an overlay on the canonical <code>workflows.jsonl</code>. Output lives at <code>.claude/state/swarm/&lt;slug&gt;.json</code>.</li>
     <li><code>swarm-dispatch</code>. Executes a swarm plan wave by wave with worktree isolation.</li>
   </ul>
 </section>

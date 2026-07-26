@@ -1,0 +1,55 @@
+{# MCP hero symbol: three fetched, one carried.
+   Four server slots sit on one rail. Three are dashed with an arrow arriving
+   from outside the frame, because they are fetched on demand and live beyond the
+   install. The fourth is filled and sits inside a solid boundary with no inbound
+   arrow at all: it is first-party and bundled, so it travels with the install and
+   carries no runtime dependency of its own. The bracket around the three marks
+   the replaceable set; the documentation requirement names an outcome, so the
+   default satisfier among them can be swapped or removed. Vocabulary: filled =
+   ships with you, dashed = fetched when needed, accent = the boundary of the
+   install. Styled inline with the shared design tokens; no bespoke stylesheet. #}
+<svg class="hero-symbol-svg mcp-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mcp-title">
+  <title id="mcp-title">Four server slots on one rail. Three are dashed with arrows arriving from outside the install boundary because they are fetched on demand; the fourth is filled and sits inside the boundary because it is first-party and ships bundled.</title>
+  <defs>
+    <marker id="mcp-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--charcoal)"/>
+    </marker>
+  </defs>
+
+  <text x="180" y="34" text-anchor="middle" style="font-family: var(--mono); font-size: 11px; fill: var(--muted); letter-spacing: .04em;">fetched on demand</text>
+
+  {# Inbound arrows: these three come from outside. #}
+  <line x1="60"  y1="48" x2="60"  y2="86" stroke="var(--charcoal)" stroke-width="1.25" marker-end="url(#mcp-arr)"/>
+  <line x1="140" y1="48" x2="140" y2="86" stroke="var(--charcoal)" stroke-width="1.25" marker-end="url(#mcp-arr)"/>
+  <line x1="220" y1="48" x2="220" y2="86" stroke="var(--charcoal)" stroke-width="1.25" marker-end="url(#mcp-arr)"/>
+
+  {# The install boundary: accent, and the bundled server sits inside it. #}
+  <rect x="24" y="90" width="312" height="96" fill="none" stroke="var(--accent)" stroke-width="1.5" rx="4"/>
+  <text x="336" y="204" text-anchor="end" style="font-family: var(--mono); font-size: 11px; fill: var(--accent); letter-spacing: .04em;">the install</text>
+
+  {# Three fetched servers. #}
+  <rect x="30"  y="110" width="60" height="56" rx="3" fill="var(--paper)" stroke="var(--charcoal)" stroke-width="1.25" stroke-dasharray="4 3"/>
+  <text x="60"  y="142" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--muted); letter-spacing: .03em;">context7</text>
+
+  <rect x="110" y="110" width="60" height="56" rx="3" fill="var(--paper)" stroke="var(--charcoal)" stroke-width="1.25" stroke-dasharray="4 3"/>
+  <text x="140" y="142" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--muted); letter-spacing: .03em;">plantuml</text>
+
+  <rect x="190" y="110" width="60" height="56" rx="3" fill="var(--paper)" stroke="var(--charcoal)" stroke-width="1.25" stroke-dasharray="4 3"/>
+  <text x="220" y="142" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--muted); letter-spacing: .03em;">playwright</text>
+
+  {# The bundled one: filled, no inbound arrow, self-contained. #}
+  <rect x="270" y="110" width="60" height="56" rx="3" fill="var(--ink)"/>
+  <text x="300" y="136" text-anchor="middle" style="font-family: var(--mono); font-size: 9.5px; fill: var(--paper); letter-spacing: .03em;">sprint</text>
+  <text x="300" y="150" text-anchor="middle" style="font-family: var(--mono); font-size: 9.5px; fill: var(--paper); letter-spacing: .03em;">channel</text>
+
+  {# Replaceable bracket under the three. #}
+  <path d="M30 224 L30 232 L250 232 L250 224" fill="none" stroke="var(--charcoal)" stroke-width="1.25"/>
+  <text x="140" y="252" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--muted); letter-spacing: .04em;">replaceable</text>
+
+  <path d="M270 224 L270 232 L330 232 L330 224" fill="none" stroke="var(--ink)" stroke-width="1.25"/>
+  <text x="300" y="252" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--ink); letter-spacing: .04em;">bundled</text>
+
+  <text x="180" y="292" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--muted); letter-spacing: .04em;">the docs requirement names an outcome, not a vendor</text>
+
+  <text x="180" y="344" text-anchor="middle" style="font-family: var(--mono); font-size: 13px; fill: var(--muted); letter-spacing: .04em;">three fetched · one carried</text>
+</svg>

@@ -111,3 +111,10 @@ __pycache__/
 .claude/skills/code-browser/cache/
 .claude/skills/code-browser/conventions.json
 .claude/skills/code-browser/conventions.md
+
+# impeccable skill: per-repo local state. Holds the design-hook cache, the
+# local hook config, the live-mode inject config, and the append-only live
+# session journal (.impeccable/live/sessions/*.jsonl) that records every
+# element picked, variant delivered, and accept/discard. Machine-local
+# recovery state for an interactive session, not source.
+.impeccable/

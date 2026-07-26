@@ -5,18 +5,18 @@ pageTitle: "Memory · baseline"
 title: Memory
 titlePrimary: Memory
 titleAccent: "."
-description: "The memory system at .claude/memory/ accumulates project facts across sessions. Seven canonical files hold long-term knowledge; three underscore files handle staging, continuity, and a durable local thread trail."
+description: "Seven canonical categories hold long-term project knowledge; three more files handle staging, session continuity, and a durable local thread trail. Every cited entry is re-verified before it is trusted."
 eyebrow: Reference
-lead: "The memory system at <code>.claude/memory/</code> accumulates project facts across sessions. Seven canonical files hold long-term knowledge; three underscore files handle staging, continuity, and a durable local thread trail."
-active: memory
+lead: "Memory is what stops the next session relearning what this one already established. Seven canonical categories hold long-term project knowledge, and three more files handle staging, continuity, and a durable local thread."
+active: ""
 sidebarActive: memory
 heroSymbol: memory
 toc:
   - { id: shape,     label: "The shape" }
-  - { id: what,      label: "What memory is" }
+  - { id: kinds,     label: "Three kinds of memory" }
   - { id: lifecycle, label: "The lifecycle" }
   - { id: reverify,  label: "Re-verification" }
-  - { id: prune,     label: "Pruning and staleness" }
+  - { id: decay,     label: "Decay and closure" }
   - { id: schema,    label: "Entry schema" }
 ---
 
@@ -26,34 +26,37 @@ toc:
       <p class="section-num">§ I</p>
       <h2 id="shape">The shape</h2>
     </div>
-    <p>Memory lives at <code>.claude/memory/</code>. Seven canonical files hold long-term project knowledge. Three underscore files sit alongside them, all gitignored. Two are transient: a staging inbox (<code>_pending.md</code>) and a per-turn continuity snapshot (<code>_resume.md</code>). The third, <code>_thread.md</code>, is durable: a local conversation-thread trail that survives <code>/memory-flush</code> and <code>/clear</code>.</p>
+    <p>Two layouts exist, and which one you have depends on whether the sharded store has been activated.</p>
   </div>
+  <p>A fresh install ships the <strong>flat</strong> shape: one file per category, holding many entries, capped by a <code>size-cap:</code> in its frontmatter. Activating <code>memory.sharded_store</code> migrates each of those files into a <strong>sharded</strong> directory of one fact per file. Skills detect the shape from what is on disk rather than by reading the flag, so both are read correctly and the migration is reversible.</p>
+  <p>The rest of this page describes the sharded shape, and calls out the flat shape where behaviour differs.</p>
   <table>
-  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
-  <tbody>
-    <tr><td class="phase">landmarks.md</td><td>Files, modules, and symbols worth remembering across sessions, with stable line references.</td></tr>
-    <tr><td class="phase">libraries.md</td><td>Pinned versions and gotchas for third-party libraries used in the project.</td></tr>
-    <tr><td class="phase">decisions.md</td><td>Architectural choices and the reasoning behind them, recorded close to the moment they were made.</td></tr>
-    <tr><td class="phase">landmines.md</td><td>Patterns that look right but fail in this codebase. Each entry names the trap and the safe alternative.</td></tr>
-    <tr><td class="phase">conventions.md</td><td>Project-specific style or structure rules that diverge from common defaults.</td></tr>
-    <tr><td class="phase">pending-questions.md</td><td>Open questions for the user. Skill outputs append here when something needs human resolution.</td></tr>
-    <tr><td class="phase">backlog.md</td><td>Future-work intent captured automatically from user prompts and assistant text. Stale-exempt; closed via <code>superseded-at:</code> when an item is picked up or dropped.</td></tr>
-    <tr><td class="phase">_pending.md</td><td>Auto-extraction inbox. The <code>memory_stop</code> hook appends candidates each turn-end. Curate via <code>/memory-flush</code>.</td></tr>
-    <tr><td class="phase">_resume.md</td><td>Session-continuity snapshot. Refreshed every turn-end and before context compaction.</td></tr>
-    <tr><td class="phase">_thread.md</td><td>Durable local conversation-thread trail. Claude Code, never the human, shelves the active thread on a topic switch and transforms it back at resume. Survives <code>/memory-flush</code> and <code>/clear</code>. Gitignored and model-internal.</td></tr>
-  </tbody>
-</table>
+    <thead><tr><th>Category</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">landmarks</td><td>Where things are. A symbol, a file, a line worth finding again.</td></tr>
+      <tr><td class="phase">libraries</td><td>Third-party dependencies and the version a decision was pinned to.</td></tr>
+      <tr><td class="phase">decisions</td><td>A choice made, its rationale, and what was rejected.</td></tr>
+      <tr><td class="phase">landmines</td><td>Something that broke, and how not to break it again.</td></tr>
+      <tr><td class="phase">conventions</td><td>How this project does a recurring thing.</td></tr>
+      <tr><td class="phase">pending-questions</td><td>Open questions carrying an id, waiting on a human.</td></tr>
+      <tr><td class="phase">backlog</td><td>Deferred work with a stable key, closed by a commit that names it.</td></tr>
+    </tbody>
+  </table>
+  <p>One fact per file means there is no per-file size cap in the sharded shape. A fact never has to be evicted to make room for another one. The 500-line cap belongs to the flat shape, where every fact in a category shares a file and a write that overflows has to prune the oldest unverified entries to fit.</p>
+  <p>The seven category files are committed. The three files in the next section are not: staging, continuity, and the thread trail are all gitignored, so nothing half-formed and nothing session-local reaches your teammates.</p>
 </section>
 
 <section class="section">
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ II</p>
-      <h2 id="what">What memory is, and isn't</h2>
+      <h2 id="kinds">Three kinds of memory</h2>
     </div>
-    <p>Memory is for facts that survive the session and that cannot be recovered cheaply by reading the codebase. Library pin reasons, the locations of long-lived hot paths, decisions whose rationale is not obvious from the diff.</p>
+    <p>They differ in what they hold and in how long they last.</p>
   </div>
-  <p>Memory is not a place to record code patterns or conventions that the code itself already shows. The session-start hook injects a one-page index of memory plus a short resume snapshot into your additional context. Files are read on demand by the relevant skill. The scout skill reads landmarks; research reads libraries; integrate reads landmines. Every cited entry is re-verified before use.</p>
+  <p><strong>Project memory</strong> is the seven categories. It accumulates, it is cited, and it is re-verified before use.</p>
+  <p><strong>Session memory</strong> is <code>_resume.md</code>, rewritten at the end of every turn and before any compaction. It records what the session was doing, not what the project knows. Reading it is how a fresh session picks up mid-thought.</p>
+  <p><strong>The thread trail</strong> is <code>_thread.md</code>. It is local, gitignored, and deliberately outside the flush reset path, so a shelved thread survives both a memory flush and a <code>/clear</code>. Claude shelves and resumes it internally; no skill or command exposes it.</p>
 </section>
 
 <section class="section">
@@ -62,135 +65,11 @@ toc:
       <p class="section-num">§ III</p>
       <h2 id="lifecycle">The lifecycle</h2>
     </div>
-    <p>Memory accumulates in a deliberately small loop. Each step is owned by a single hook or skill, and each touches exactly one canonical surface.</p>
+    <p>Nothing enters project memory without passing through a staging inbox first.</p>
   </div>
-
-  <figure class="figure plate-flow" aria-labelledby="memflow-cap">
-    <svg class="diagram-svg memflow-svg" viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="memflow-cap">
-      <defs>
-        <marker id="mf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow"/>
-        </marker>
-        <marker id="mf-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow-acc"/>
-        </marker>
-      </defs>
-
-      {# Three streams: memory_stop emits three candidate kinds into _pending. #}
-      <path class="mf-conn" d="M 132,68 C 175,62 205,72 222,76" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 132,82 C 175,82 205,82 222,82" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 132,96 C 175,102 205,92 222,88" marker-end="url(#mf-arr)"/>
-      <text class="mf-edge" x="177" y="56" text-anchor="middle">edit → landmark</text>
-      <text class="mf-edge" x="177" y="116" text-anchor="middle">context7 → library</text>
-      <text class="mf-edge" x="177" y="130" text-anchor="middle">text → backlog</text>
-
-      {# Forward path: _pending → /memory-flush → canonical → cite #}
-      <path class="mf-conn" d="M 306,82 C 350,74 390,90 404,82" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 496,82 C 540,74 580,90 594,82" marker-end="url(#mf-arr)"/>
-      <path class="mf-conn" d="M 680,114 C 686,140 686,170 680,196" marker-end="url(#mf-arr)"/>
-
-      {# Re-verify: ok → loop back to canonical (dashed accent; applies to the six decay-managed files). #}
-      <path class="mf-conn-ok" d="M 600,200 C 540,205 540,150 580,114" marker-end="url(#mf-arr-acc)"/>
-      <text class="mf-edge" x="540" y="170" text-anchor="middle">re-verify ok</text>
-
-      {# Re-verify: fail → exit (correct or delete). #}
-      <path class="mf-conn-fail" d="M 685,228 L 700,250"/>
-      <text class="mf-edge mf-edge-fail" x="700" y="244" text-anchor="end">correct · delete</text>
-
-      {# Nodes — rounded plate frames, 1.5px ink hairlines. #}
-      <g class="mf-node">
-        <rect x="48" y="58" width="84" height="44" rx="6"/>
-        <text class="mf-title" x="90" y="78" text-anchor="middle">turn end</text>
-        <text class="mf-sub" x="90" y="93" text-anchor="middle">memory_stop</text>
-      </g>
-      <g class="mf-node">
-        <rect x="222" y="58" width="84" height="44" rx="6"/>
-        <text class="mf-title" x="264" y="78" text-anchor="middle">staging</text>
-        <text class="mf-sub" x="264" y="93" text-anchor="middle">_pending.md</text>
-      </g>
-      <g class="mf-node">
-        <rect x="404" y="58" width="92" height="44" rx="6"/>
-        <text class="mf-title" x="450" y="78" text-anchor="middle">curate</text>
-        <text class="mf-sub" x="450" y="93" text-anchor="middle">/memory-flush</text>
-      </g>
-      <g class="mf-node mf-node-canonical">
-        <rect x="594" y="58" width="92" height="56" rx="6"/>
-        <text class="mf-title" x="640" y="76" text-anchor="middle">canonical</text>
-        <text class="mf-sub" x="640" y="91" text-anchor="middle">6 decay</text>
-        <text class="mf-sub" x="640" y="105" text-anchor="middle">+ 1 exempt</text>
-      </g>
-      <g class="mf-node">
-        <rect x="594" y="194" width="92" height="44" rx="6"/>
-        <text class="mf-title" x="640" y="214" text-anchor="middle">cite</text>
-        <text class="mf-sub" x="640" y="229" text-anchor="middle">re-verify on use</text>
-      </g>
-
-      {# Phase tags above the forward path. #}
-      <text class="mf-step" x="177" y="38" text-anchor="middle">01 · auto-extract</text>
-      <text class="mf-step" x="356" y="38" text-anchor="middle">02 · review</text>
-      <text class="mf-step" x="540" y="38" text-anchor="middle">03 · promote</text>
-      <text class="mf-step" x="640" y="160" text-anchor="middle">04 · cite</text>
-    </svg>
-    <figcaption id="memflow-cap" class="plate-caption"><strong>The loop.</strong> Three signals (file edits, context7 queries, salient sentence-level intent text in user prompts or assistant responses) stream into <code>_pending.md</code> at every turn end. <code>/memory-flush</code> promotes keepers to the seven canonical files: six participate in re-verification on every cite (failed verifications correct or delete in the same run), and one (<code>backlog.md</code>) carries intent that does not decay.</figcaption>
-  </figure>
-
-  <figure class="figure plate-flow" aria-labelledby="backlog-states-cap">
-    <svg class="diagram-svg memflow-svg" viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="backlog-states-cap">
-      <defs>
-        <marker id="bs-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" class="mf-arrow"/>
-        </marker>
-      </defs>
-
-      {# open → picked-up #}
-      <path class="mf-conn" d="M 184,86 C 240,72 300,52 360,46" marker-end="url(#bs-arr)"/>
-      <text class="mf-edge" x="272" y="56" text-anchor="middle">picked-up</text>
-
-      {# open → dropped #}
-      <path class="mf-conn" d="M 184,108 C 240,124 300,144 360,150" marker-end="url(#bs-arr)"/>
-      <text class="mf-edge" x="272" y="146" text-anchor="middle">dropped</text>
-
-      {# picked-up → auto-close #}
-      <path class="mf-conn" d="M 444,46 C 500,52 552,72 580,86" marker-end="url(#bs-arr)"/>
-      <text class="mf-edge" x="512" y="56" text-anchor="middle">superseded-at</text>
-
-      {# dropped → auto-close #}
-      <path class="mf-conn" d="M 444,150 C 500,144 552,124 580,108" marker-end="url(#bs-arr)"/>
-      <text class="mf-edge" x="512" y="146" text-anchor="middle">superseded-at</text>
-
-      {# Nodes. #}
-      <g class="mf-node">
-        <rect x="100" y="76" width="84" height="44" rx="6"/>
-        <text class="mf-title" x="142" y="96" text-anchor="middle">open</text>
-        <text class="mf-sub" x="142" y="111" text-anchor="middle">new entry</text>
-      </g>
-      <g class="mf-node">
-        <rect x="360" y="24" width="84" height="44" rx="6"/>
-        <text class="mf-title" x="402" y="44" text-anchor="middle">picked-up</text>
-        <text class="mf-sub" x="402" y="59" text-anchor="middle">into a workflow</text>
-      </g>
-      <g class="mf-node">
-        <rect x="360" y="128" width="84" height="44" rx="6"/>
-        <text class="mf-title" x="402" y="148" text-anchor="middle">dropped</text>
-        <text class="mf-sub" x="402" y="163" text-anchor="middle">decided against</text>
-      </g>
-      <g class="mf-node mf-node-canonical">
-        <rect x="580" y="76" width="100" height="44" rx="6"/>
-        <text class="mf-title" x="630" y="96" text-anchor="middle">auto-close</text>
-        <text class="mf-sub" x="630" y="111" text-anchor="middle">next /memory-flush</text>
-      </g>
-    </svg>
-    <figcaption id="backlog-states-cap" class="plate-caption"><strong>Backlog entries.</strong> A new item lands as <code>status: open</code>. Two terminal transitions exist. An entry becomes <code>picked-up</code> automatically when a workflow's <code>/commit</code> step runs against a <code>workflow.json</code> that names the entry in <code>source_backlog_keys</code>; the commit step invokes <code>sweep.mjs stamp-closure</code> on the named entries. An entry becomes <code>dropped</code> through a manual edit when the team decides not to pursue it. Both transitions write <code>superseded-at: &lt;ISO date&gt;</code>; the next <code>/memory-flush</code> Step 0a sweep deletes the block. The body <code>status:</code> field disambiguates which transition fired at the moment of close; the full record persists in git history.</figcaption>
-  </figure>
-
-  <ol>
-    <li>The <code>memory_stop</code> hook runs at the end of each Claude turn and emits three kinds of candidates into <code>_pending.md</code>: file-edit events become landmark candidates, <code>context7</code> queries become library candidates, and salient intent text becomes backlog candidates. Intent capture is sentence-level: line-start triggers plus a small set of high-precision decision and approach phrasings (in user prompts or assistant responses), each staged with a suggested <code>route</code> and a <code>weight</code> the curator can accept or override.</li>
-    <li>At session start, the index lists the <code>_pending.md</code> row alongside the canonical files. <code>backlog.md</code> is stale-exempt; it never shows up in the stale count regardless of <code>verified-at</code> age.</li>
-    <li><code>/memory-flush</code> runs at workflow Phase 10.6 (between <code>/archive</code> and <code>/grant-commit</code>); the session-start nag fires only on candidates carried over from a prior incomplete workflow.</li>
-    <li><code>/memory-flush</code> reviews each candidate, promotes keepers to the appropriate canonical file (landmark, library, backlog, decision, and so on), drops the rest, and clears <code>_pending.md</code>.</li>
-    <li>Skills that consume memory (scout, research, integrate, simplify) re-verify each entry on cite. For the six decay-managed files, failed verification corrects or deletes the entry in the same run.</li>
-    <li>Backlog entries do not participate in decay. They close instead through an explicit status transition: <code>picked-up</code> when an item enters a workflow as an intake, or <code>dropped</code> when the team decides against pursuing it. Both write <code>superseded-at:</code>; the next <code>/memory-flush</code> Step 0a sweep deletes the block.</li>
-  </ol>
+  <p>The <code>memory_stop</code> hook runs at the end of every turn and writes candidates into <code>_pending.md</code>. That file is an inbox, not memory. Nothing in it counts until a curation step promotes it.</p>
+  <p><code>/memory-flush</code> runs at Phase 10.7 of every committing track, between the roadmap sync and the commit gate. It reviews the candidates, promotes the keepers into canonical files, and resets the pending body.</p>
+  <p>Writing straight into a canonical file, outside the natural byproduct of a phase skill, is not allowed. The inbox exists so that memory accrues deliberately rather than as a side effect of a long conversation.</p>
 </section>
 
 <section class="section">
@@ -199,27 +78,28 @@ toc:
       <p class="section-num">§ IV</p>
       <h2 id="reverify">Re-verification before citation</h2>
     </div>
-    <p>Every skill that cites a memory entry re-verifies it. Verification means: the file still exists, the symbol is still at the named line, the library version is still pinned.</p>
+    <p>Every skill that cites a memory entry re-verifies it first.</p>
   </div>
-  <p>A landmark that says <code>src/auth/session.ts:42 — token rotation</code> is checked: file present, line still relevant. If the line moved, the skill updates the entry. If the symbol is gone, the skill deletes the entry.</p>
-  <p>This is the discipline that keeps memory load-bearing rather than misleading. A stale entry that says <code>X exists</code> can be worse than no entry at all because it leads to confident wrong recommendations. Re-verification catches drift early.</p>
+  <p>The file still exists, the symbol is still at the named line, the version is still pinned. A failed check is corrected or deleted in the same run, before the citing work continues.</p>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>This is the rule that keeps the store from becoming confidently wrong.</strong>
+      <p>A memory that is never checked is worse than no memory, because it is trusted.</p>
+    </div>
+  </div>
 </section>
 
 <section class="section">
   <div class="lede">
     <div class="lede-head">
       <p class="section-num">§ V</p>
-      <h2 id="prune">Pruning and staleness</h2>
+      <h2 id="decay">Decay and closure</h2>
     </div>
-    <p>The size cap is 500 entries per canonical file. When a write exceeds the cap, the same write prunes the oldest unverified entries. Entries unverified for thirty commits or ninety days are stale; the next phase that touches them either re-verifies or deletes.</p>
+    <p>An entry unverified for 30 commits, or 30 days on a project without git, is marked stale.</p>
   </div>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">i</span>
-    <div class="body">
-      <strong>Memory accelerates triage. It never authorizes a skip.</strong>
-      <p>An entry can suggest where to look or which library to consult, but it cannot waive a phase, an approval gate, or a verify verdict. Workflow ordering is enforced by hooks, not by memory.</p>
-    </div>
-  </div>
+  <p>The session-start hook counts them and reports the total; the next phase that touches one either re-verifies or removes it.</p>
+  <p>Closure is a different signal. A backlog entry closed by a commit that named its key carries a closure stamp, and closure short-circuits decay: a closed entry is not stale, it is finished.</p>
 </section>
 
 <section class="section">
@@ -228,12 +108,18 @@ toc:
       <p class="section-num">§ VI</p>
       <h2 id="schema">Entry schema</h2>
     </div>
-    <p>Canonical files share a small, line-oriented schema. Each entry has a stable key, a one-line claim, a verification target (file path or symbol), and a last-verified marker. The schema lives in <code>.claude/memory/README.md</code>.</p>
+    <p>Frontmatter carries the structured fields, the body carries the fact.</p>
   </div>
-  <pre><code><span class="tok-com"># landmarks.md</span>
-<span class="tok-key">id</span>: lm-2026-04-12-001
-<span class="tok-key">claim</span>: token rotation runs on every refresh
-<span class="tok-key">target</span>: src/auth/session.ts:42 (rotateOnRefresh)
-<span class="tok-key">added</span>: 2026-04-12
-<span class="tok-key">verified</span>: 2026-04-29  <span class="tok-com"># self-healing rule: re-verify on every cite</span></code></pre>
+  <p><code>key</code>, <code>category</code>, <code>source</code>, <code>verified-at</code>, and <code>last-touched</code> are common to every category. The rest are category-specific: the backlog entry below carries <code>status</code> and <code>raised-on</code> because backlog items are opened and closed, which a landmark never is.</p>
+  <pre><code><span class="tok-com">---</span>
+<span class="tok-key">key</span>: commit-consent-token-is-never-consumed-after-use
+<span class="tok-key">category</span>: backlog
+<span class="tok-key">scope</span>: [security, spec, tdd]
+<span class="tok-key">status</span>: open
+<span class="tok-key">raised-on</span>: 2026-07-25
+<span class="tok-key">source</span>: user-instruction
+<span class="tok-key">verified-at</span>: ea618e9
+<span class="tok-key">last-touched</span>: 2026-07-25
+<span class="tok-com">---</span></code></pre>
+  <p>Entries sourced from a user instruction or user feedback must quote the user's actual words. When that quote and Claude's interpretation of it disagree, the quote wins and the conflict is surfaced rather than resolved silently. A flush rejects any promotion that should carry a quote and does not.</p>
 </section>

@@ -29,7 +29,7 @@ toc:
         <span class="icon" aria-hidden="true">!</span>
         <div class="body">
           <strong>Experimental, and local for now.</strong>
-          <p>Org mode is opt-in, off by default, and requires git. Today the coordination channel runs inside the baseline's own repo through a dev launcher; it is not yet a consumer-installable feature, since the MCP coordination server ships separately. These steps are the local dogfood: run them in this repo.</p>
+          <p>Org mode is opt-in, off by default, and requires git. Today the coordination channel runs inside the baseline's own repo through a dev launcher; the coordination server itself ships bundled with the install, so it needs no runtime dependency of its own. These steps are the local dogfood: run them in this repo.</p>
         </div>
       </div>
       <ul>
@@ -99,7 +99,7 @@ toc:
       <p class="section-num">§ IV</p>
       <h2 id="teardown">Teardown and limits</h2>
     </div>
-    <p>Set <code>org_mode.enabled</code> back to <code>false</code> to restore the default solo and swarm behavior; the <code>org</code> track is then no longer offered. One honest limit: there is no peer deregister tool yet, so <code>/companion off</code> only marks a peer inactive locally, and the lead may still list it.</p>
+    <p>Set <code>org_mode.enabled</code> back to <code>false</code> to restore the default solo and swarm behavior; the <code>org</code> track is then no longer offered. The channel exposes <code>leave_peer</code> to deregister a peer and <code>release_task</code> to return a claimed or yielded lane to the pool, and the lead may still list it.</p>
   </div>
 
   <h3 id="trouble">If something stalls</h3>

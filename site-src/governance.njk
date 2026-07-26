@@ -1,0 +1,134 @@
+---
+layout: docs.njk
+permalink: /governance/index.html
+pageTitle: "Governance · baseline"
+title: Governance
+titlePrimary: Governance
+titleAccent: "."
+description: "The precedence chain, what makes the baseline's rules law rather than style, how to amend one, and the audit that stops the set from quietly going out of date."
+eyebrow: Reference
+lead: "Rules that are written down decay. Rules that are checked do not. This is how the baseline's rules are structured, how you change one, and what keeps the set honest."
+active: governance
+sidebarActive: governance
+heroSymbol: governance
+toc:
+  - { id: precedence,  label: "The precedence chain" }
+  - { id: law,         label: "Law, not style guide" }
+  - { id: budget,      label: "The byte budget" }
+  - { id: amend,       label: "Changing a rule" }
+  - { id: audit,       label: "What the audit checks" }
+  - { id: nooptout,    label: "No opt-out" }
+  - { id: provenance,  label: "Skill provenance" }
+  - { id: class,       label: "Governance class" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="precedence">The precedence chain</h2>
+    </div>
+    <p>Four layers, and the order between them is load-bearing.</p>
+  </div>
+  <p>The genesis prompt at <code>docs/init/seed.md</code> governs the constitution at <code>CLAUDE.md</code>, which governs the annex, which governs the implementation on disk. The chain exists so that a disagreement has a defined resolution instead of a debate.</p>
+  <p>A conflict between any two adjacent layers resolves differently depending on which pair it is, and the difference is the interesting part.</p>
+  <p>Below the constitution, the resolution is automatic. Disk can be measured against a written rule, so disk loses and gets corrected, and no one has to be consulted about it.</p>
+  <p>Above the constitution, there is no automatic answer. Two written rules contradicting each other is not a measurement problem, so Claude halts and reports it instead of picking a winner. The chain deliberately declines to resolve that case, because resolving it would mean a model choosing which rule governs it.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="law">What makes it law rather than a style guide</h2>
+    </div>
+    <p>Twelve articles, numbered in roman, with dotted clauses beneath them.</p>
+  </div>
+  <p>Forty-two <code>SHALL</code> constructions, twenty of them <code>SHALL NOT</code>, and three <code>SHALL NEVER</code>. An imperative that can be read two ways is an imperative a model can drift through.</p>
+  <p>Article XI is reserved space for project amendments. Its numbering is deliberately non-contiguous, because a retired clause number is never reused, so a citation in an old commit message still points where it pointed.</p>
+  <p>Rules can be waived, but only through a recorded exception written at triage time and scoped to a single workflow. There is no ambient way to turn a rule off.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="budget">The constitution has a byte budget</h2>
+    </div>
+    <p><code>CLAUDE.md</code> is capped at 40,000 characters, enforced over both the live file and its shipped mirror.</p>
+  </div>
+  <p>The cap exists because this file is loaded into every session. A constitution nobody can afford to read is not binding in practice, so elaboration moves into an annex and the always-loaded file keeps only the clauses that bind.</p>
+  <p>The budget makes amendments cost something, which turns out to be useful. One recent amendment added a binding rule and ended up leaving the file about a thousand characters smaller, because paying for the addition meant finding duplicated detail to relocate first. Adding a rule does not have to cost budget when the always-loaded file is carrying explanation it does not need to.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="amend">Changing a rule</h2>
+    </div>
+    <p>Editing the implementation first is the common mistake. The chain runs the other way.</p>
+  </div>
+  <p>Start at the genesis prompt, because it governs everything below it. Propagate the binding clause into the constitution, keeping it terse. Put the elaboration in the annex. Mirror both templates, since the shipped copies are byte-compared against the live ones. Then change the code, update the roster the audit reads, and rebuild.</p>
+  <p>The audit fails until every layer agrees, so a half-finished amendment cannot ship. Governance files also sit on a never-auto-merge list, which means a change here always gets a human review.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="audit">What the audit actually checks</h2>
+    </div>
+    <p>Sixteen check modules, any one of which failing takes the exit code non-zero.</p>
+  </div>
+  <p>Three of them are worth describing, because they cover the three ways governance usually rots.</p>
+  <p>Content drift is caught by re-hashing. Every file in every baseline-owned skill, 305 of them, is hashed and compared against the shipped manifest, so an edited skill is caught even when nothing about its name or location changed.</p>
+  <p>Claim drift is caught by reading the prose. Numbers asserted in the constitution, the genesis prompt, and the README are extracted and compared against what is on disk, with a heuristic that separates a binding headline claim from an incidental mention so only the former can fail the build.</p>
+  <p>Public drift is caught by reading this website. The hook table on the hooks page has to name all {{ baseline.hooks.total }}, which means a new hook cannot ship while its public documentation is still stale. The page you are reading is inside the same net.</p>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>Silence is the signal.</strong>
+      <p>The hash check emits nothing when everything matches, and produces rows only where something moved, so you are never asked to scan a wall of green to find out that nothing happened.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="nooptout">No opt-out</h2>
+    </div>
+    <p>There is no environment variable that disables the audit, and no configuration key that turns it off.</p>
+  </div>
+  <p>Nine separate test files assert that it exits zero, so removing the build gate would still leave the suite red.</p>
+  <p>One flag exists and is narrower than it sounds. During a build, the manifest is stamped and then immediately verified against the same source, which is tautological, so that single re-hash is skipped. Every other check still runs, and a test asserts that the same tampering caught without the flag is still caught with it.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VII</p>
+      <h2 id="provenance">Skill provenance</h2>
+    </div>
+    <p>A skill is baseline-owned when its frontmatter says so.</p>
+  </div>
+  <p>The shipped manifest records the same set, and the audit requires both sides to agree.</p>
+  <p>Skills you write yourself need no annotation at all. Absence is the default, which is what makes installing into a repository that already has its own skills a non-event: they are excluded from the count, the roster check, and the hash check, and nothing touches them.</p>
+  <p>There is a pleasing recursion here worth naming. The article that mandates drift detection is itself drift-detected, and deleting the clause that says there is no opt-out is a failing condition.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VIII</p>
+      <h2 id="class">Governance class</h2>
+    </div>
+    <p>This one is off by default. <span class="track-chip track-chip-soon">opt-in<span class="chip-soon-tag">off</span></span></p>
+  </div>
+  <p>When it is enabled, it grades a change from D up to A by blast radius rather than by anyone's judgment.</p>
+  <p>Touching a consent path forces the top class. Touching a hook or a governance document floors at the second. Spanning several layers or many files raises by one more. The classifier can raise a class and never lower it.</p>
+  <p>The class then decides how much evidence an approval needs, from a single rung at D to six at A. The check is presence-based, so a rung counts when it holds anything real. Length, authorship, and how long it took never affect the verdict, which means evidence written by Claude is never penalised for being written by Claude.</p>
+  <p>Every branch that is not an affirmative low-class result resolves toward more governance rather than less.</p>
+</section>

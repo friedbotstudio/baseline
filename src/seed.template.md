@@ -11,7 +11,7 @@
 
 **Mandatory binding language.** Each numbered section (§) below specifies a binding requirement for the baseline. Implementations SHALL conform; `CLAUDE.md` Articles SHALL reference the corresponding §; project amendments (per `CLAUDE.md` Art. X) SHALL NOT contradict any § here.
 
-The baseline turns soft engineering rules (no unauthorized commits, no stubs, no mocks of internal code, no self-approved specs) into structural guarantees enforced by write-boundary hooks. Eleven workflow phases plus one stripped-down chore track (skips TDD; runs archive mandatorily and verify conditionally — a pure-docs chore skips verify when `test.kind` is `behavior` — with simplify/integrate/document conditional), twenty write/run-boundary guards plus four lifecycle hooks plus one input-boundary hook (twenty-five hook scripts total — all `.mjs` after the JS port completed; per-hook startup ~5× faster than the original bash + python3 chain), fifty-two skills, one subagent, and four consent gates. Decisions live in main context; the lone subagent (`swarm-worker`) executes pre-decided recipes in parallel worktrees during `/swarm-dispatch`. Every artifact is archived; every third-party API is looked up against live docs. Project memory accumulates across sessions in `.claude/memory/` — auto-extracted by a Stop hook, curated in main context via `/memory-flush`, self-healing via re-verification.
+The baseline turns soft engineering rules (no unauthorized commits, no stubs, no mocks of internal code, no self-approved specs) into structural guarantees enforced by write-boundary hooks. Eleven workflow phases plus one stripped-down chore track (skips TDD; runs archive mandatorily and verify conditionally — a pure-docs chore skips verify when `test.kind` is `behavior` — with simplify/integrate/document conditional), twenty-one write/run-boundary guards plus four lifecycle hooks plus one input-boundary hook (twenty-six hook scripts total — all `.mjs` after the JS port completed; per-hook startup ~5× faster than the original bash + python3 chain), fifty-two skills, one subagent, and four consent gates. Decisions live in main context; the lone subagent (`swarm-worker`) executes pre-decided recipes in parallel worktrees during `/swarm-dispatch`. Every artifact is archived; every third-party API is looked up against live docs. Project memory accumulates across sessions in `.claude/memory/` — auto-extracted by a Stop hook, curated in main context via `/memory-flush`, self-healing via re-verification.
 
 ---
 
@@ -104,7 +104,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 
 ```
 <repo-root>/
-├── .mcp.json                   # project-level MCP servers (context7, plantuml)
+├── .mcp.json                   # project-level MCP servers (context7, plantuml, playwright, sprint-channel)
 ├── CLAUDE.md                   # in-session constitution; loaded every session
 ├── .claude/
 │   ├── settings.json           # hook wiring + permissions
@@ -238,7 +238,7 @@ Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, pl
 - `memory-flush` — Phase 10.7. Curates `_pending.md` candidates with full workflow context (or fast-paths on empty pending while still running canonical Step 0 sweeps). Canonical memory writes ship in the same commit as the work that motivated them.
 - `commit` — Phase 11. First step archives `workflow.json`; then stages named paths and commits.
 
-**Phase workers (5)** — execute pre-decided recipes; each mandatorily invokes a sub-skill. Caller (a phase skill) provides explicit inputs; the worker executes without picking architecture, register, or scope:
+**Phase workers (5)** — execute pre-decided recipes; four mandatorily invoke a sub-skill. Caller (a phase skill) provides explicit inputs; the worker executes without picking architecture, register, or scope:
 
 - `scenario` — writes failing tests from a recipe (mandatorily `code-structure`). Used by `/tdd` Step 2 and by `swarm-worker` Step 1.
 - `implement` — writes production code that turns failing tests green inside an explicit `write_set` (mandatorily `code-structure`; `context7` MCP for any third-party API). Used by `/tdd` Step 3 and by `swarm-worker` Step 3.
@@ -257,8 +257,8 @@ Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, pl
 **Orchestration (3)**:
 
 - `harness` — user + model invokable. A single `Skill(harness)` invocation loops internally through every non-gated phase boundary in one user turn, exiting cleanly on consent gate, phase-skill failure, integrate-failure-needs-spec-change, or workflow done. The `harness_continuation` Stop hook (§4.1) is a safety net that re-fires harness only when the loop exited mid-flow. Logs every transition to `.claude/state/harness/<slug>.log`.
-- `swarm-plan` — decomposes an approved spec into per-component tasks with explicit `write_set` and `depends_on`. `validate.sh` verifies acyclicity and assigns waves with pairwise-disjoint `write_set`s. Output: `.claude/state/swarm/<slug>.json`.
-- `swarm-dispatch` — runs the plan wave by wave. Main context decides each task's scenario recipe + implementation contract before dispatch; each wave spawns `swarm-worker` agents in parallel inside isolated worktrees; `swarm_merge.sh` audits the returned diff ⊆ task `write_set` and applies to main with `git apply`. Any audit fail preserves the worktree.
+- `swarm-plan` — decomposes an approved spec into per-component tasks with explicit `write_set` and `depends_on`. `validate.mjs` verifies acyclicity and assigns waves with pairwise-disjoint `write_set`s. Output: `.claude/state/swarm/<slug>.json`.
+- `swarm-dispatch` — runs the plan wave by wave. Main context decides each task's scenario recipe + implementation contract before dispatch; each wave spawns `swarm-worker` agents in parallel inside isolated worktrees; `swarm_merge.mjs` audits the returned diff ⊆ task `write_set` and applies to main with `git apply`. Any audit fail preserves the worktree.
 
 **Navigation (1)** — the default mechanism for code-navigation questions in **any language** (frontend or backend). Auto-invocable on description match; the baseline prefers it over the `Explore` agent and global grep when a question is structural ("where does X come from", "what API populates Y", "what wraps Z", "which file renders feature F", "what page uses /api/foo"):
 
@@ -280,9 +280,35 @@ Each vendored shared global ships with its own `LICENSE` + `NOTICE` alongside th
 
 - `audit-baseline` — verifies hooks/agents/skills/commands names + counts, settings.json wiring, project.json key presence, .mcp.json servers, helper script presence, vendored license files, and cross-doc count claims. Run on demand, by `/init-project` Step 8, or in CI. Read-only; auto-invocable.
 
-**Alternate tracks (1)** — stripped-down workflows routed via `/triage` when the request needs no TDD:
+**Alternate tracks (2)** — stripped-down workflows routed via `/triage` when the request needs no TDD (`chore`) or amortizes ceremony over a ticket batch (`power`, opt-in, off by default):
 
 - `chore` — for tasks with no failing-test-driven code change (documentation, governance counts, vendored-skill content updates, configuration, formatting, typo fixes, dependency bumps, skill consolidations). Skips `/scenario` and `/implement` — there is nothing to drive with a failing test. Runs the edits directly, then conditionally invokes `verify` and `simplify` / `integrate` / `document` based on what the diff touches (each has explicit triggers in the chore skill body). `archive` and `/grant-commit` + `/commit` always run. `verify` is conditional: it is **skipped only** when the diff is pure-docs/prose **and** `project.json → test.kind` is `behavior` (a code-only suite that cannot exercise documentation); any code/config/script change runs verify regardless of `test.kind`, and an absent or invalid `test.kind` resolves to `structural` (verify runs — the conservative default). Chore is a stripped-down pipeline, **not** a bypass — silent skips of triggered conditional phases are forbidden; the end-of-chore summary documents every skip rationale. Tasks that need a real failing test route to `/tdd` or higher instead.
+
+**Memory (1)**:
+- `memory-flush` — Phase 10.7. Curate the auto-extracted candidates in `_pending.md` into the canonical files, then reset the pending body. Rejects any promotion that lacks a required `verbatim:` (Art. IX.6).
+
+**Phase helpers (1)**:
+- `brainstorm` — Step 0.5 of every entry phase (Art. XI.3). Derivation-first requirement capture; only underivable, build-changing gaps become probes (Stage 2 cap 2). Writes `docs/brief/<slug>.md`. Never proposes solutions — enforced by `discipline.mjs`.
+
+**Generators (4)** — on-demand, never workflow phases:
+- `whatsnew` — keepachangelog-style fragments at `.claude/state/whatsnew/<slug>.json`; never writes `CHANGELOG.md` (semantic-release owns it). Replaced the former Phase 11.5 `changelog` skill.
+- `standup` — read-only release + backlog recap with a next-pickup recommendation.
+- `commit-planner` — split a dirty tree into single-concern Conventional Commits; read-only until the plan is approved.
+- `retrospective` — convert a cycle's recurring friction into landmine entries plus graduation candidates up the enforcement funnel.
+
+**Maintenance (2)**:
+- `gitignore` — generate or repair `.gitignore`, composing the baseline must-ignore set with optional gitignore.io enrichment; merges add-only.
+- `upgrade-project` — reconcile the files `create-baseline upgrade` staged for semantic merge; three-way delta reasoning in main context.
+
+**Roadmap (2)**:
+- `roadmap-planner` — re-derive the execution roadmap from the spec corpus by first principles and diff it against the existing plan to prove task ORDER.
+- `roadmap-sync` — Phase 10.6. Flip landed `roadmap_tasks[]` from ⬜ to ✅ and promote their epic headings. Fail-open; every committing track except `epic`.
+
+**Sprint (4)** — sprint-mode skills; not workflow phases:
+- `sprint-plan` — decompose an MVP vision into a manifest where every feature carries done-criteria.
+- `sprint-oracle` — mechanical, exit-code-driven completeness gate over that manifest.
+- `sprint-planner` — propose the next dependency-ready sprint from the already-decomposed roadmap. Proposes only; the human confirms.
+- `org-dispatch` — the org-team execution engine (Art. X); opt-in via `velocity.org_mode.enabled`, requires git.
 
 ### §4.4 Commands (6) — structurally user-only
 
@@ -306,6 +332,7 @@ All declared in `.mcp.json` at the repo root so the capability travels with the 
 - **`context7`** — `npx -y @upstash/context7-mcp`. Live library documentation lookup. The **default satisfier** for §2.5 (replaceable / removable at will — §2.5 mandates the current-docs outcome, not this specific tool).
 - **`plantuml`** — `npx -y plantuml-mcp-server`. Diagram rendering and syntax validation. Used by the spec skill and by `/spec-render` as a fallback when the local CLI is absent.
 - **`playwright`** — `npx -y @playwright/mcp@latest`. Microsoft-official browser automation MCP (Apache 2.0). Drives Chromium / WebKit / Firefox via stdio. The `design-ui` skill uses it for cross-engine visual verification (screenshots per breakpoint, accessibility-tree snapshots, reserved-accent grep over the rendered DOM). The `integrate` skill uses it conditionally for cross-engine smoke when the diff touches the rendered UI. First run downloads ~300 MB of browser binaries — cost is paid once per project. Skills check `.mcp.json` for the server's presence before invoking; a project that drops the declaration silently disables those steps without breaking either skill.
+- **`sprint-channel`** — `node .claude/mcp/sprint-channel/server.mjs`. The one **first-party** server: a file-locked, race-safe coordination channel exposing nine tools (`register_peer`, `send_message`, `broadcast`, `claim_task`, `signal_done`, `raise_conflict`, `yield_fork`, `release_task`, `leave_peer`) over `.claude/state/sprint/<sprint_id>/`. Backs the org-team model (Article X) and sprint-mode dogfooding. Unlike the other three it is **not** fetched by `npx` — `scripts/bundle-mcp-servers.mjs` (build Stage 1.7) inlines `@modelcontextprotocol/sdk` and `zod` with esbuild so the shipped artifact is self-contained and the baseline stays zero-runtime-dep. The sibling `sprint-pool` server is bundled too but deliberately **not registered** here: it is a channel/broker server launched via `--dangerously-load-development-channels`, not a stdio server, so a `.mcp.json` entry would ship a broken registration.
 
 ### §4.6 State files (`.claude/state/`)
 
@@ -318,8 +345,8 @@ Runtime-only; gitignore or keep out of commits per project policy.
 | `push_consent` | `/grant-push` | `git_commit_guard` |
 | `spec_approvals/<slug>.approval` | `/approve-direction` | `tdd`, `swarm-plan`, `/harness` |
 | `swarm_approvals/<slug>.approval` | `/approve-swarm` | `swarm-dispatch`, `/harness` |
-| `swarm/<slug>.json` | `swarm-plan` | `swarm-dispatch`, `swarm_merge.sh` |
-| `swarm/active_wave.json` | `swarm-dispatch` | `swarm_boundary_guard`, `swarm_merge.sh` |
+| `swarm/<slug>.json` | `swarm-plan` | `swarm-dispatch`, `swarm_merge.mjs` |
+| `swarm/active_wave.json` | `swarm-dispatch` | `swarm_boundary_guard`, `swarm_merge.mjs` |
 | `last_test_result` | `verify` skill | `verify_pass_guard`, `simplify`, `integrate` |
 | `harness/<slug>.log` | `/harness` | human audit |
 
@@ -386,7 +413,7 @@ Phases are fixed ordering; `/triage` picks the entry and may mark phases as exce
 
 **Four consent gates + one bootstrap + one doctor.** All are slash commands, not skills. Commands live in `.claude/commands/`; Claude cannot invoke them via the Skill tool. The guarantee is structural (file location), not flag-based. Three of the four gates are workflow-phase gates (A: `/approve-direction`, B: `/approve-swarm`, C: `/grant-commit`); the fourth (`/grant-push`) is a Bash-time consent for the branch-aware push policy in §11. The bootstrap is `/init-project`; the doctor is `/init-project doctor` (drift detector + repairer for `.claude/workflows.jsonl` + the §18 / Article IV four-way mirror; see §18.7).
 
-**Gate-collapse (D3/CO-E).** The former human spec gate (`/approve-direction`, after `/spec`) is replaced by `/approve-direction`, which fires EARLY at intake and carries the CO-A evidence (demonstrated understanding + risk acceptance). A standard solo workflow now presents exactly **two** human touchpoints — **approve-direction** (intake) and **approve-landing** (`/grant-commit`) — never three. The spec between them is machine-reviewed (spec-traceability binding spec ACs to the approved intake ACs, checker fan-out, shippability, `spec_design_calls_guard`, drift-check), never human-eyeballed; a BLOCKED machine verdict yields at the pre-implementation checkpoint (`pre-implementation-gate.mjs`), not at a consent gate. The 3→2 collapse ships ON by default; a further 2→1 single-authorization collapse for low-Class work activates only when `governance.class.enabled` is true (default off → two gates). The direction token still lands at `spec_approvals/<slug>.approval` so `epic_approval_guard`/`track_guard` keep their forge-proof root. `/approve-swarm` and `/grant-push` are unchanged.
+**Gate-collapse (D3/CO-E).** The former human spec gate (`/approve-spec`, after `/spec`) is replaced by `/approve-direction`, which fires EARLY at intake and carries the CO-A evidence (demonstrated understanding + risk acceptance). A standard solo workflow now presents exactly **two** human touchpoints — **approve-direction** (intake) and **approve-landing** (`/grant-commit`) — never three. The spec between them is machine-reviewed (spec-traceability binding spec ACs to the approved intake ACs, checker fan-out, shippability, `spec_design_calls_guard`, drift-check), never human-eyeballed; a BLOCKED machine verdict yields at the pre-implementation checkpoint (`pre-implementation-gate.mjs`), not at a consent gate. The 3→2 collapse ships ON by default; a further 2→1 single-authorization collapse for low-Class work activates only when `governance.class.enabled` is true (default off → two gates). The direction token still lands at `spec_approvals/<slug>.approval` so `epic_approval_guard`/`track_guard` keep their forge-proof root. `/approve-swarm` and `/grant-push` are unchanged.
 
 | Gate | When it fires | Unlocks |
 |---|---|---|
@@ -408,7 +435,7 @@ Harness yields at each gate. User re-invokes `/harness` to resume.
 
 - **Pillar 1+2: intake analysis + track selection** — `/triage` → `/intake` (→ `/brd` if stakeholder-heavy) → `/scout` → `/research` → `/spec` → **yield at `/approve-direction`**.
 - **Pillar 3: implementation** — decide swarm vs solo; if swarm, `/swarm-plan` → **yield at `/approve-swarm`** → `/swarm-dispatch`. If solo, `/tdd`.
-- **Pillar 4: tying open ends** — `/simplify` → `/security` (unless in exceptions) → `/integrate` → `/document` → `/archive` → **yield at `/grant-commit`** → `/commit`.
+- **Pillar 4: tying open ends** — `/simplify` → `/security` (unless in exceptions) → `/integrate` → `/document` → `/archive` → `/roadmap-sync` → `/memory-flush` → **yield at `/grant-commit`** → `/commit`.
 
 **Internal loop atomicity.** A single `Skill(harness)` invocation loops through every non-gated phase boundary until it hits one of four exit conditions: consent gate, phase-skill failure, integrate-failure-needs-spec-change, or workflow done. Inside the loop each iteration is one `Skill(<phase>)` call plus a marker+state refresh; the model emits a terminal message only when the loop exits. `.claude/state/harness_state` is `continue` while the loop is in flight, and is rewritten to `yielded`/`done` on clean exit. The user types nothing between non-gated phases.
 
@@ -427,14 +454,14 @@ Harness yields at each gate. User re-invokes `/harness` to resume.
 
 For specs with ≥ 3 independent components. Three pieces plus a merge script:
 
-1. **`/swarm-plan <slug>`** — decomposes the approved spec. Each task declares `write_set` (exact file paths), `depends_on`, `acs`. `validate.sh` checks acyclicity + required fields, then assigns **waves** greedily so that `write_set`s within any wave are pairwise disjoint. Output: `.claude/state/swarm/<slug>.json`.
+1. **`/swarm-plan <slug>`** — decomposes the approved spec. Each task declares `write_set` (exact file paths), `depends_on`, `acs`. `validate.mjs` checks acyclicity + required fields, then assigns **waves** greedily so that `write_set`s within any wave are pairwise disjoint. Output: `.claude/state/swarm/<slug>.json`.
 2. **`/approve-swarm <slug>`** — command. Writes approval token.
 3. **`/swarm-dispatch <slug>`** — runs waves sequentially. For each wave:
    - **Main context decides each task's recipe** (scenario list + implementation contract) before dispatch. Once the wave is in flight the recipes cannot be changed.
    - Writes `active_wave.json` with `baseline_ref: <git HEAD>` and the wave's write_sets.
    - Issues N parallel `Agent` calls, one per task, all with `subagent_type: "swarm-worker"`, `isolation: "worktree"`, and `run_in_background: true`. All in a single message.
    - Each `swarm-worker` invokes `Skill(scenario)` with the recipe, then `Skill(implement)` with the contract. It makes no design decisions — it executes the recipe and reports JSON status.
-   - On completion, `swarm_merge.sh <plan> <task-id> <worktree-path>` for each task:
+   - On completion, `swarm_merge.mjs <plan> <task-id> <worktree-path>` for each task:
      - `git -C <worktree> diff <baseline_ref>` lists changed files.
      - Asserts changed files ⊆ `task.write_set` (audit).
      - `git apply` the patch onto main.
@@ -464,7 +491,7 @@ Two skills iterate safely while drafting:
 - `/spec-lint <slug>` — preflight (syntax + presence + AC-to-sequence traceability).
 - `/spec-render <slug>` — renders every fence to SVG for human review.
 
-Two read-only skills review before `/approve-direction` (run in main context — no subagent indirection):
+Three read-only spec-review skills run before implementation (in main context — no subagent indirection; a fourth, `spec-shippability-review`, is project-owned and runs in the same fan-out):
 
 - `spec-diagram-review` — cross-consistency (C4 ↔ dependency graph ↔ class diagram ↔ DDL).
 - `spec-traceability-review` — every spec AC traces to a real upstream AC.
@@ -582,7 +609,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 
 **Step 1:** Initialize the directory structure (§3).
 
-**Step 2:** Write `.mcp.json` with `context7` and `plantuml` declarations.
+**Step 2:** Write `.mcp.json` with the four server declarations (`context7`, `plantuml`, `playwright`, `sprint-channel`).
 
 **Step 3:** Write `.claude/hooks/lib/common.mjs` (shared helpers, Node ESM), then the 26 hook scripts (§4.1) as `.mjs` files — 21 write/run-boundary guards plus 4 lifecycle hooks (`memory_session_start`, `memory_stop`, `memory_pre_compact`, `harness_continuation`) plus 1 input-boundary hook (`consent_gate_grant` on `UserPromptSubmit`). Three additional .mjs helpers (`lib/memory_stop.mjs`, `lib/memory_session_start.mjs`, `lib/resume_writer.mjs`) hold the transcript-walk + memory-index + continuity-snapshot logic that the lifecycle hooks import. Each top-level .mjs is `chmod +x`. Wire into `.claude/settings.json` at the appropriate event (`PreToolUse` / `PostToolUse` / `SessionStart` / `Stop` / `PreCompact` / `UserPromptSubmit`) and matcher (`Bash` / `Write|Edit|MultiEdit|NotebookEdit` / `Write` / `manual|auto`); each hook is wired as `node $CLAUDE_PROJECT_DIR/.claude/hooks/<name>.mjs`.
 
@@ -590,7 +617,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 
 **Step 5:** Write `.claude/skills/` for the 52 skills (§4.3) — 42 workflow/worker/orchestration/memory/alt-track/sprint/roadmap skills you author (the +12 over 29 are the `brainstorm` phase helper, the `standup` generator, the `commit-planner` + `retrospective` cycle generators, the `gitignore` setup skill, the `sprint-plan` + `sprint-oracle` + `org-dispatch` sprint/org skills, the `sprint-planner` next-sprint selector, the `power` batch-sprint track skill, and the `roadmap-planner` + `roadmap-sync` roadmap skills) plus 7 shared globals plus 1 navigation skill plus 1 audit skill plus 2 maintenance skills. The breakdown: artifact drafting (4) + workflow phases (10) + phase workers (5: `scenario`, `implement`, `verify`, `prose`, `design-ui`) + spec helpers (5: `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review`, `spec-rollout-enforceability-review`) + orchestration (3: `harness`, `swarm-plan`, `swarm-dispatch`) + memory (1: `memory-flush`) + navigation (1: `code-browser`) + generators (4: `whatsnew`, `standup`, `commit-planner`, `retrospective`) + shared globals (7: `claude-automation-recommender`, `code-structure`, `humanizer`, `documentation`, `technical-tutorials`, `copywriting`, `impeccable`) + drift defender (1: `audit-baseline`) + alternate tracks (2: `chore`, `power`) + maintenance (2: `upgrade-project`, `gitignore`) + sprint/org (4: `sprint-plan`, `sprint-oracle`, `sprint-planner`, `org-dispatch`) + roadmap (2: `roadmap-planner`, `roadmap-sync`). The vendored `claude-automation-recommender` (Apache 2.0, from `claude-code-setup`), the writing/quality globals, and the design global ship unchanged with their licenses intact. Artifact skills (intake, brd, spec, rca) each ship a `template.md`. Helper scripts: swarm-plan gets `validate.mjs`, swarm-dispatch gets `swarm_merge.mjs`, spec-render gets `render.mjs`, spec-lint gets `lint.mjs`, archive gets `archive.sh`, audit-baseline gets `audit.mjs`, code-browser gets `discover.mjs` + `walk.mjs`. All helper scripts `chmod +x`.
 
-**Step 6:** Write `.claude/commands/*.md` for the 4 gates (§4.4). All carry `disable-model-invocation: true` as belt-and-braces; structural user-only is enforced by their directory.
+**Step 6:** Write `.claude/commands/*.md` for the 6 commands (§4.4) — four consent gates plus the bootstrap and doctor. All carry `disable-model-invocation: true` as belt-and-braces; structural user-only is enforced by their directory.
 
 **Step 7:** Write `CLAUDE.md` at the repo root with the session constitution — the rules in §2, the phase list, the commands-vs-skills convention, the swarm + archive + writing-discipline notes.
 
@@ -623,7 +650,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 - **`CLAUDE.md` size cap.** `CLAUDE.md` SHALL NOT exceed **40,000 characters**. It carries binding rules only; amendment history, enforcement-mechanism narration, reference appendices, AND the elaborative rule tables for project amendments (Article XI) live in `.claude/CONSTITUTION.md` (read on demand) — when an Article's detail is relocated, CLAUDE.md retains that rule's binding clause plus a pointer to the annex, so no rule loses binding force by relocation. `audit-baseline` enforces the cap (FAIL when `CLAUDE.md` exceeds 40,000 chars), and the same cap binds the byte-equal mirror `src/CLAUDE.template.md`; the governance test suite MAY additionally enforce a tighter advisory headroom target below the hard cap.
 - Drift audits run periodically: count hooks on disk vs. counts claimed in docs, same for agents/skills/commands; list phase names referenced in any skill vs. the canonical list in §5.
 - Adding a component updates both the implementation AND this file in the same workflow. Archive the old seed as `docs/init/seed.<yyyy-mm-dd>.md` before replacing.
-- The baseline's own site (`docs/site/index.html`) is generated from this seed. If the site drifts from here, the site is wrong.
+- The baseline's own site (built from `site-src/` by Eleventy) is generated from this seed. If the site drifts from here, the site is wrong.
 
 ### Known follow-ups
 
@@ -692,7 +719,7 @@ This provenance system is intentionally minimal: the manifest tracks shipped-fil
 
 ### 18.1 Source of truth
 
-`.claude/workflows.jsonl` is the canonical source for every workflow this baseline can execute. The file holds one Track record per line (JSONL). It is project-owned and `NEVER_TOUCH` (declared in `src/cli/install.js:NEVER_TOUCH` and `scripts/build-manifest.mjs:NEVER_TOUCH_PATHS`); baseline upgrades preserve user customizations verbatim via `NEVER_TOUCH_PRESERVE`. The shipped baseline overlays the pristine 11-track set from `src/.claude/workflows.template.jsonl` onto fresh installs via `scripts/build-template.sh` Stage 2; existing installs are not touched. The JSON Schema document at `.claude/schemas/workflow-track.v1.json` is referenced by `Track.$schema` and is itself `NEVER_TOUCH`.
+`.claude/workflows.jsonl` is the canonical source for every workflow this baseline can execute. The file holds one Track record per line (JSONL). It is project-owned and `NEVER_TOUCH` (declared in `src/cli/install.js:NEVER_TOUCH` and `scripts/build-manifest.mjs:NEVER_TOUCH_PATHS`); baseline upgrades preserve user customizations verbatim via `NEVER_TOUCH_PRESERVE`. The shipped baseline overlays the pristine 10-track set from `src/.claude/workflows.template.jsonl` (the live tree adds `org`, which is not shipped in the pristine template) onto fresh installs via `scripts/build-template.sh` Stage 2; existing installs are not touched. The JSON Schema document at `.claude/schemas/workflow-track.v1.json` is referenced by `Track.$schema` and is itself `NEVER_TOUCH`.
 
 `workflows.jsonl` supersedes the hardcoded triage templates (intake-full / spec-entry / tdd-quickfix / chore). Triage reads `workflows.jsonl` at seed time, validates each Track, classifies the user's request, and materializes the chosen Track's DAG into the TaskList. The canonical four tracks shipped in the pristine template are byte-equivalent to the pre-§18 hardcoded templates per spec AC-016 (`tests/byte-equivalent-migration.test.mjs`). A fifth selectable track, `freeform`, is a §18-native addition with no pre-§18 byte-equivalent counterpart: its DAG carries only the closing sequence (`memory-flush` → `grant-commit` → `commit`) and relies on blanket exceptions across every pre-commit phase to silence track-ordering while keeping every hook active. The 11-track inventory: 9 selectable (intake-full, spec-entry, tdd-quickfix, chore, freeform, epic, epic-child, org, power) + 2 sub-tracks (swarm-implementation, tdd-worker-chain). The `power` batch-sprint track is opt-in via `velocity.power_mode.enabled` and requires git. The `epic` / `epic-child` pair (§18.9) amortizes feature-scoped discovery across the subtasks of one feature.
 
@@ -815,7 +842,7 @@ Migrator implementation: `src/cli/workflow-migrator.js` exports `migrateWorkflow
 
 ### 18.7 Lifecycle: install, upgrade, doctor
 
-- **Fresh install.** `scripts/build-template.sh` overlays `src/.claude/workflows.template.jsonl` → `obj/template/.claude/workflows.jsonl` at Stage 2, and the pristine schemas/ directory bulk-rsyncs at Stage 1. The CLI install copies both into the consumer target. Result: every fresh install has `<target>/.claude/workflows.jsonl` with the canonical 4 selectable + 2 sub-track set.
+- **Fresh install.** `scripts/build-template.sh` overlays `src/.claude/workflows.template.jsonl` → `obj/template/.claude/workflows.jsonl` at Stage 2, and the pristine schemas/ directory bulk-rsyncs at Stage 1. The CLI install copies both into the consumer target. Result: every fresh install has `<target>/.claude/workflows.jsonl` with the canonical 8 selectable + 2 sub-track set (the live tree adds `org` for a total of 9 selectable).
 
 - **Upgrade.** Both `.claude/workflows.jsonl` and `.claude/schemas/workflow-track.v1.json` are `NEVER_TOUCH`. The merge flow returns `NEVER_TOUCH_PRESERVE` for them on every upgrade; user customizations (added tracks, modified nodes, per-project additions like `cli-copy-review` and `spec-shippability-review`) survive verbatim.
 
@@ -843,7 +870,7 @@ Migrator implementation: `src/cli/workflow-migrator.js` exports `migrateWorkflow
 **The two tracks.**
 
 - **`epic`** (selectable) — discovery only. Canonical DAG: `intake → scout → research → spec → approve-direction → memory-flush → grant-commit → commit` (per-project review nodes such as `spec-shippability-review` insert before `approve-direction` exactly as they do in `intake-full`). It produces a **sliced spec** at `docs/specs/<epic>.md` (one `## Slice <id>` section per future child, each grouping the ACs that child owns), plus `docs/scout/<epic>.md` and `docs/research/<epic>.md`. It is approved **once** (one `/approve-direction` covers all slices) and commits the discovery bundle **live** — it deliberately omits `archive`, because the discovery is the deliverable of that commit and SHALL remain resolvable at its `docs/` path for children to pin. The epic stays *open* until its children resolve; the whole discovery bundle is then archived **automatically when the last child commits** — the `commit` skill's epic-child path (commit/SKILL.md Step 2.8) flips that child to `committed` pre-commit and invokes `.claude/skills/commit/epic_close.mjs <epic>`, which `git mv`s the bundle into `docs/archive/<date>/<epic>/` (riding that same commit, no separate consent gate) and merges `closed:true` + `closed_at` into the epic state file. Run outside the harness, `epic_close.mjs` is the idempotent standalone recovery path: it stages the move and prompts for a normal `/grant-commit` + `/commit`. It never writes `approved` and retains the state file. (Children still archive only their own slice artifacts separately.)
-- **`epic-child`** (selectable) — fast implementation path for one slice. Declared DAG: `tdd → simplify → security → integrate → document → archive → memory-flush → grant-commit → commit`, of which `simplify`, `security`, and `document` are written into `workflow.json → exceptions` **by default** (effective fast path `tdd → integrate → archive → memory-flush → grant-commit → commit`) and escalated into a given child — removed from `exceptions` — only when `/triage` risk-flags the slice (see *Conditional review weight* below). It does **not** re-run any discovery phase; it inherits the epic's. The full chain is declared (not a trimmed DAG) so escalation is a triage-time exception edit, never a TaskList reshape.
+- **`epic-child`** (selectable) — fast implementation path for one slice. Declared DAG: `tdd → simplify → security → integrate → document → archive → roadmap-sync → memory-flush → grant-commit → commit`, of which `simplify`, `security`, and `document` are written into `workflow.json → exceptions` **by default** (effective fast path `tdd → integrate → archive → roadmap-sync → memory-flush → grant-commit → commit`) and escalated into a given child — removed from `exceptions` — only when `/triage` risk-flags the slice (see *Conditional review weight* below). It does **not** re-run any discovery phase; it inherits the epic's. The full chain is declared (not a trimmed DAG) so escalation is a triage-time exception edit, never a TaskList reshape.
 
 Both tracks satisfy I1–I11 as plain Track records. Neither introduces a new schema field or a new predicate — the inheritance lives entirely in runtime `workflow.json` + the epic state file, and is enforced by `track_guard`, not by the Track definition.
 
@@ -903,7 +930,7 @@ The same escalation latitude applies to `tdd-quickfix`: `/triage` MAY except `si
 **Triage routing.** `/triage` classification gains three outcomes ahead of the existing single-shot tracks:
 
 - **`epic`** — a multi-subtask feature that warrants discovery-once: the request names ≥ `project.json → epic.min_slices` (default 3) separable slices, or the user frames it as an epic/umbrella. `/triage` runs the `epic` track and writes the epic state file with its slices.
-- **`epic-child`** — auto-selected when an `.claude/state/epic/*.json` with `approved == true` is active and the request matches one of its open slices. `/triage` pre-fills `epic`, `slice`, and `pinned_artifacts`, and escalates review phases per the table above.
+- **`epic-child`** — auto-selected when an `.claude/state/epic/*.json` is active with its `spec_approvals/<epic>.approval` token on disk (authorization derives from the token, never from the state file's `approved` boolean) and the request matches one of its open slices. `/triage` pre-fills `epic`, `slice`, and `pinned_artifacts`, and escalates review phases per the table above.
 - **single-shot** — the existing `intake-full` / `spec-entry` / `tdd-quickfix` / `chore` / `freeform` tracks, unchanged, for work that is not part of an epic.
 
 **Wall-clock effect.** A decomposed feature pays discovery **once** (the `epic` track) instead of per child, and each child runs ~4–6 phases (most review phases excepted) instead of ~16. The dominant cost the pair removes is serial latency: the feature's end-to-end time approaches *one* discovery cycle plus the sum of thin child implementations, rather than N full pipelines.

@@ -3,11 +3,17 @@
 //
 // Structurally gates the epic `approved: true` flip (seed §18.9). The harness
 // SOP flips `approved: true` in .claude/state/epic/<slug>.json after the
-// direction gate (/approve-direction); track_guard reads that flag to let an
-// epic-child skip mandatory discovery. A flag set WITHOUT a real direction gate
-// would let a child skip discovery, so this guard makes the flip un-forgeable: it
-// ALLOWS a transition of `approved` to true only when the matching persistent
-// token .claude/state/spec_approvals/<slug>.approval exists.
+// direction gate (/approve-direction).
+//
+// DEFENSE IN DEPTH, not the load-bearing gate. The flag was demoted: track_guard
+// derives an epic-child's authorization from the unforgeable approval token
+// (.claude/state/spec_approvals/<slug>.approval), NOT from this boolean — see
+// track_guard.mjs:55-56 and seed §18.9. Retiring the trusted boolean is what
+// closed the read surface, because a flag forged by any write vector that evades
+// this guard (a cd-relative Bash write, say) is now inert where it is read.
+// This guard and its Bash-surface twin (destructive_cmd_guard -> writesEpicApproval)
+// remain in force so the marker cannot lie: it ALLOWS a transition of `approved`
+// to true only when the matching persistent token exists.
 //
 // That token is itself unforgeable — only direction_approval_guard (which requires
 // a fresh consent marker Claude cannot write) permits its creation. Authorization

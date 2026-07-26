@@ -8,14 +8,15 @@
         <p class="footer-tagline">{{ site.tagline }}</p>
         <p class="footer-attribution">Product of <a target="_blank" href="https://friedbotstudio.com?utm_source=baseline&utm_medium=cta&utm_campaign=footer">Friedbot Studio Private Limited</a></p>
       </div>
+      {# Mirrors nav.primary so every top-level destination is reachable from the
+         bottom of any page. The prior list carried five of ten and silently
+         stranded install, workflows, cli, pm and org. #}
       <div class="footer-col">
         <h5>Docs</h5>
         <ul>
-          <li><a href="{{ '/hooks/' | rel }}">Hooks</a></li>
-          <li><a href="{{ '/memory/' | rel }}">Memory</a></li>
-          <li><a href="{{ '/swarm/' | rel }}">Swarm mode</a></li>
-          <li><a href="{{ '/standup/' | rel }}">Standup</a></li>
-          <li><a href="{{ '/skills/' | rel }}">Skills</a></li>
+          {%- for item in nav.primary %}{% if item.key != "overview" %}
+          <li><a href="{{ item.href | rel }}">{{ item.label }}</a></li>
+          {%- endif %}{% endfor %}
         </ul>
       </div>
       <div class="footer-col">

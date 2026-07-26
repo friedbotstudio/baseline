@@ -1,0 +1,122 @@
+---
+layout: docs.njk
+permalink: /epics/index.html
+pageTitle: "Epics · baseline"
+title: Epics
+titlePrimary: Epics
+titleAccent: "."
+description: "Five of the eleven phases describe a feature rather than a subtask. The epic track pays that discovery cost once instead of once per slice."
+eyebrow: Workflow
+lead: "Five of the eleven phases describe a feature, not a subtask. Running them once per subtask pays the same discovery cost three to eight times over. The epic track pays it once."
+active: workflows
+sidebarActive: epics
+heroSymbol: epics
+toc:
+  - { id: tax,        label: "The discovery tax" }
+  - { id: lifecycle,  label: "How an epic runs" }
+  - { id: pins,       label: "Why a child cannot cheat" }
+  - { id: risk,       label: "Risk escalation" }
+  - { id: gate,       label: "One gate, one demoted flag" }
+  - { id: close,      label: "Closing" }
+  - { id: incident,   label: "What that failure cost" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="tax">The discovery tax</h2>
+    </div>
+    <p>Intake, scout, research, spec, and the direction approval are feature-scoped.</p>
+  </div>
+  <p>The slice of codebase in play, the libraries involved, and the design do not change between the subtasks of one feature. Running the full pipeline per subtask re-pays that cost every time.</p>
+  <p>Human consent is amortised the same way. One approval covers the feature rather than one per subtask.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="lifecycle">How an epic runs</h2>
+    </div>
+    <p>Triage selects the epic track when the work decomposes into three or more separable slices.</p>
+  </div>
+  <p>Slices are proposed to you and confirmed before anything is written. They are scoping units, and deciding them is not the same as designing the solution.</p>
+  <p>The spec then carries one section per slice, and each section has to stand alone, because a child will read it without its siblings.</p>
+  <p>The epic commits its discovery live instead of archiving it, because children pin those documents by path and the paths have to keep resolving.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="pins">Why a child cannot cheat</h2>
+    </div>
+    <p>Each child pins the three discovery artefacts it inherited.</p>
+  </div>
+  <p>Before any write, the guard requires that the epic exists and parses, that the approval token is on disk, and that all three pins resolve.</p>
+  <p>Fail any of those and every write is refused, with one carve-out for the state directory so triage can repair itself. The guard runs before the ordering logic, so an unverifiable child never reaches the machinery that would otherwise let it skip phases.</p>
+  <p>The point is that a child's right to skip discovery is a consequence of a real approved epic, rather than a claim the child makes about itself.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="risk">Risk escalation</h2>
+    </div>
+    <p>Slices differ, so their children differ.</p>
+  </div>
+  <table>
+    <thead><tr><th>Phase</th><th>Escalated into the child when the slice</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">security</td><td>touches auth, an IO boundary, untrusted-input parsing, or a path marked sensitive in <code>project.json</code></td></tr>
+      <tr><td class="phase">simplify</td><td>spans more than one architectural layer, or more files than the configured threshold</td></tr>
+      <tr><td class="phase">document</td><td>changes a public API, a CLI surface, or committed documentation</td></tr>
+    </tbody>
+  </table>
+  <p>Escalation is not a change to the pipeline. The full chain is always declared, and escalating means leaving a phase out of the exception list so the declared node simply runs.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="gate">One gate, and a flag that was demoted</h2>
+    </div>
+    <p>One approval covers every slice.</p>
+  </div>
+  <p>That is sound because each slice section is a self-contained contract, so approving the spec is approving each of them.</p>
+  <p>The epic state file has an <code>approved</code> boolean, and it is worth being precise about what it does now: nothing, for authorisation. Authorisation derives from the approval token, which cannot be forged. The boolean is a human-readable marker.</p>
+  <p>Retiring that boolean is what closed the hole. The write-side guards could stop most ways of setting it, but not every one, and making the read side ignore it means a forged flag is inert wherever it would have mattered.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="close">Closing</h2>
+    </div>
+    <p>An epic closes when every slice has a committed child, not when every registered child has committed.</p>
+  </div>
+  <p>The distinction is not pedantic. Children register lazily, one at a time, so a check against registered children fires on the first slice and closes the epic while most of the work is still ahead.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VII</p>
+      <h2 id="incident">What that failure cost</h2>
+    </div>
+    <p>That is not hypothetical. It happened here, and the fix is the check that ships now.</p>
+  </div>
+  <p>An epic in this repository closed on its first slice. Recovering meant moving the discovery documents back to their live paths and re-registering the remaining slices.</p>
+  <p>One part could not be automated. Closing had archived the approval token along with the rest of the bundle, and that token is the thing the guard reads. Claude could move the documents back, but it could not restore the token, because restoring consent is exactly what it has no path to do. A human had to grant it again.</p>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>Both halves of that are the point.</strong>
+      <p>The premature close was a bug worth fixing. The part where the recovery stopped and waited for a person was the system working.</p>
+    </div>
+  </div>
+</section>

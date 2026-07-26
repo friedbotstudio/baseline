@@ -1,5 +1,11 @@
 // Orchestration: the live MCP *channel* server (project-local; NOT baseline-owned,
-// NOT shipped). It (a) auto-registers this session's peer on startup (registrar),
+// NOT REGISTERED). The bundled artifact DOES ship — scripts/bundle-mcp-servers.mjs
+// lists it in TARGETS and obj/template/.claude/manifest.json hashes the output — but
+// it is deliberately absent from .mcp.json, because a channel/broker server is not a
+// stdio server and a stdio entry would ship a broken registration. A consumer receives
+// the file and nothing launches it: the transport below is inert unless
+// SPRINT_POOL_ACTIVE=1, which only .claude/skills/companion/launch.sh sets.
+// It (a) auto-registers this session's peer on startup (registrar),
 // (b) exposes the enqueue_task / leave_peer / release_task tools the lead calls, and
 // (c) wires the transport: the lead hosts an in-process broker on a Unix-domain socket
 // and peers connect as broker clients, bridging pushed events into the session via

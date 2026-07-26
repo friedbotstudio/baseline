@@ -20,13 +20,36 @@ eleventyComputed:
         <p class="hero-readmore">
           <a data-cta="read-the-docs" href="{{ '/skills/' | rel }}"><span class="arr" aria-hidden="true">→</span> browse the {{ baseline.skills.total }} skills</a>
         </p>
-        <div class="meta-strip" aria-label="Baseline counts">
-          <div class="stat"><span class="num">{{ baseline.hooks.total }}</span><span class="label">Hooks</span></div>
-          <div class="stat"><span class="num">{{ baseline.skills.total }}</span><span class="label">Skills</span></div>
-          <div class="stat"><span class="num">{{ baseline.subagents.total }}</span><span class="label">Subagent</span></div>
-          <div class="stat"><span class="num">{{ baseline.phases }}</span><span class="label">Phases</span></div>
-          <div class="stat"><span class="num">{{ baseline.gates }}</span><span class="label">Gates</span></div>
-          <div class="stat"><span class="num">{{ baseline.tracks.canonical }}</span><span class="label">Tracks</span></div>
+        {# Claim-led, not count-led. The prior strip was six count tiles, which
+           opened the page with an inventory instead of an argument and sat close
+           to the hero-metric template the design laws ban. Each tile now leads
+           with what is true and carries its number as the evidence. #}
+        <div class="meta-strip" aria-label="What the baseline guarantees">
+          {# One composite ideogram in the site's SVG grammar — gate, boundary,
+             manifest, top to bottom, matching the claim order beside it. Open
+             ink strokes, one accent element each, hairline rail between. #}
+          <div class="ms-chain">
+            <svg viewBox="0 0 40 116" aria-hidden="true" focusable="false">
+              <path class="rail" d="M20 25v19M20 72v19" fill="none" stroke="var(--rule)" stroke-width="1.6"/>
+              <g fill="none" stroke="var(--ink)" stroke-width="1.6">
+                <path d="M11 2v20M20 2v20M29 2v20"/>
+                <path d="M3 58h13M19.5 48v20"/>
+                <rect x="9" y="93" width="22" height="22"/>
+                <path d="M13.5 100h14M13.5 105.5h14"/>
+              </g>
+              <circle cx="20" cy="12" r="2.6" fill="var(--accent)"/>
+              <path d="M28 46v24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-dasharray="4 4"/>
+              <circle cx="25.5" cy="110.5" r="2.1" fill="var(--accent)"/>
+            </svg>
+          </div>
+          {# .nb pins hyphenated compounds against a mid-word break. The claims
+             are phrases, not numerals, so any narrow column will split
+             "self-approve" at its hyphen without it. #}
+          <div class="ms-rows">
+            <div class="stat"><span class="num">Cannot <span class="nb">self-approve</span></span><span class="label">{{ baseline.phaseGates }} structural gates</span></div>
+            <div class="stat"><span class="num">Blocks, not advises</span><span class="label">{{ baseline.hooks.total }} <span class="nb">tool-boundary</span> hooks</span></div>
+            <div class="stat"><span class="num">Cannot drift unnoticed</span><span class="label"><span class="nb">sha256-verified,</span> <span class="nb">CI-enforced</span></span></div>
+          </div>
         </div>
       </div>
 
@@ -95,7 +118,7 @@ eleventyComputed:
         <div class="concept">
           <p class="num">01 · Constitution</p>
           <h3>CLAUDE.md as in-session contract</h3>
-          <p>Eleven articles bind authority, architecture, workflow ordering, engineering rules, git rules, and project memory. Genesis lives in <code>seed.md</code>; the constitution governs in-session behavior; hooks enforce the constitution.</p>
+          <p>Twelve articles bind authority, architecture, workflow ordering, engineering rules, git rules, and project memory. Genesis lives in <code>seed.md</code>; the constitution governs in-session behavior; hooks enforce the constitution.</p>
         </div>
         <div class="concept">
           <p class="num">02 · Enforcement</p>
@@ -171,7 +194,7 @@ eleventyComputed:
         <g>
           <line class="hook-line" x1="445" y1="84" x2="445" y2="216"/>
           <text class="hook-event" x="445" y="70" text-anchor="middle">PreToolUse</text>
-          <text class="hook-list" x="445" y="240" text-anchor="middle">12 guards</text>
+          <text class="hook-list" x="445" y="240" text-anchor="middle">15 guards</text>
           <text class="hook-sub" x="445" y="258" text-anchor="middle">block · ask · allow</text>
         </g>
         <g>
@@ -196,7 +219,7 @@ eleventyComputed:
     <figure class="figure">
       <svg class="diagram-svg arch-bento" viewBox="0 0 1000 1200" preserveAspectRatio="xMinYMin slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="workflow-diag-title" aria-describedby="workflow-diag-desc">
         <title id="workflow-diag-title">intake-full workflow track: eleven phases with three consent gates and a paired ship at the end.</title>
-        <desc id="workflow-diag-desc">Node order: intake, scout, research, spec, gate /approve-direction, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. The /grant-commit gate is branch-aware: under github-flow, an autonomous feature landing on a non-protected branch omits it and the commit pushes and opens a pull request. Runtime gate /grant-push fires at git push time under Article VII.</desc>
+        <desc id="workflow-diag-desc">Node order: intake, gate /approve-direction, scout, research, spec, machine review, implementation (swarm sub-track or solo TDD), simplify, security, integrate, document, archive, roadmap-sync, memory-flush, gate /grant-commit, commit. Step 0.5 brainstorm fires inside intake, spec, and tdd when not skipped; Step 1.5 codesign fires inside spec when codesign_mode is true. The /grant-commit gate is branch-aware: under github-flow, an autonomous feature landing on a non-protected branch omits it and the commit pushes and opens a pull request. Runtime gate /grant-push fires at git push time under Article VII.</desc>
 
         {# DESKTOP BENTO (v2: two-hero side-by-side) — visible above 768px.
            Spec hero left dominant (580x230); TDD tall right anchor (330x440).
@@ -465,7 +488,7 @@ eleventyComputed:
           </g>
         </g>
       </svg>
-      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-direction</code> and <code>/grant-commit</code>. The <code>/grant-commit</code> square carries a BRANCH-AWARE tag: under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the gate and the commit pushes and opens a pull request. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), <code>epic-child</code> (inherits the epic's discovery), and <code>org</code> (a flat pod of peer sessions over the broker, off by default). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
+      <figcaption><strong>The <code>intake-full</code> track.</strong> Eleven nodes from request to commit. The composition reads as five zones: a preamble strip (intake, scout, research), the plan anchor (<code>spec</code> as the hero cell), the execution arm (<code>tdd</code> as a tall right-side cell), a mid strip (simplify, security, integrate, document), and the closing nodes (archive with memory-flush; commit as the ship node). The two filled accent squares mark workflow-phase gates <code>/approve-direction</code> and <code>/grant-commit</code>. The <code>/grant-commit</code> square carries a BRANCH-AWARE tag: under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the gate and the commit pushes and opens a pull request. The third phase gate, <code>/approve-swarm</code>, sits inside the <code>swarm-implementation</code> sub-track of phase 6 and is not shown. The fourth gate, <code>/grant-push</code> below the grid, opens a five-minute window for <code>git push</code> on a protected branch. The other tracks ship in the same <code>workflows.jsonl</code>: <code>spec-entry</code> (skips intake, scout, research), <code>tdd-quickfix</code> (starts at tdd), <code>chore</code> (no failing-test-driven node), <code>freeform</code> (closing sequence only; relaxed phase ordering), <code>epic</code> (discovery once, then a sliced spec), <code>epic-child</code> (inherits the epic's discovery), <code>power</code> (a batch of related tickets in one cycle, off by default), and <code>org</code> (a flat pod of peer sessions over the broker, off by default). At viewports narrower than 768px, the bento collapses to a single-column vertical stack in temporal order.</figcaption>
     </figure>
   </section>
 
@@ -542,48 +565,6 @@ eleventyComputed:
     </p>
   </section>
 
-  <section class="section recent-teaser">
-    <div class="lede">
-      <div class="lede-head">
-        <h2>recently landed<span class="accent">.</span></h2>
-      </div>
-      <p>The baseline moves in enforced increments. These shipped in the current cycle, each with its mechanism named.</p>
-    </div>
-    <div class="concepts is-feed">
-      <div class="concept">
-        <p class="num">new · CI posture</p>
-        <h3>Secrets gate + branch protection as code</h3>
-        <p>Installs now deliver a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, a low-risk auto-merge classifier with a NEVER-list, and branch protection as reviewable config with a subset-asserting applier. On by default; <code>--no-ci-posture</code> opts out, and upgrades respect the choice.</p>
-      </div>
-      <div class="concept">
-        <p class="num">new · branch-aware landing</p>
-        <h3>Gate C knows your git model</h3>
-        <p>Under <code>github-flow</code>, an autonomous feature landing on a non-protected branch omits the <code>/grant-commit</code> gate at materialization time and the commit pushes and opens a pull request. Everywhere else the gate yields to the user, unchanged, with the commit-time guard as the backstop.</p>
-      </div>
-      <div class="concept">
-        <p class="num">new · build-to-spec triage</p>
-        <h3>Leanest safe track, evidence required</h3>
-        <p>Triage now classifies every request's novelty with cited evidence and defaults to the leanest track whose guardrails cover the risk. A heavier pick requires a named reason, recorded in workflow state. Requirement capture became opt-in and derivation-first: at most two questions, only when the answer changes the build.</p>
-      </div>
-      <div class="concept">
-        <p class="num">new · cycle generators</p>
-        <h3>Clean commits in, lessons out</h3>
-        <p>A read-only planner that splits a heterogeneous tree into single-concern Conventional Commits, and a cycle-end retrospective that converts recurring friction into landmine entries and graduation proposals up the enforcement funnel. Part of the <a href="{{ '/pm/' | rel }}">PM Mode toolkit</a>.</p>
-      </div>
-      <div class="concept">
-        <p class="num">new · roadmap-driven delivery</p>
-        <h3>Plan the order, batch the sprint</h3>
-        <p>A roadmap planner proves task order by re-deriving it from the spec and flagging producer-after-consumer violations. A sprint selector proposes the next dependency-ready batch, and the opt-in <code>power</code> track lands that batch in one cycle with per-ticket security and closure-last commits. Phase 10.6 <code>roadmap-sync</code> keeps the tracker current. Part of the <a href="{{ '/pm/' | rel }}">PM Mode toolkit</a>.</p>
-      </div>
-      <figure class="concept concept-figure" aria-labelledby="increments-title">
-        {% include "hero-symbols/increments.njk" %}
-      </figure>
-    </div>
-    <p class="hero-readmore">
-      <a data-cta="pm-feature" href="{{ '/pm/' | rel }}"><span class="arr" aria-hidden="true">&rarr;</span> see the full PM Mode toolkit</a>
-    </p>
-  </section>
-
   <section class="section standup-teaser">
     <div class="lede">
       <div class="lede-head">
@@ -598,10 +579,10 @@ eleventyComputed:
           <div class="dc-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
           <div class="dc-file">friedbotstudio/baseline · /standup</div>
         </div>
-        <pre class="dc-body"><code><span class="dc-dim">shipped</span>       <span class="dc-ok">v0.16.0</span>
-<span class="dc-dim">unreleased</span>    1 commit   <span class="dc-wait">(next bump: minor)</span>
-<span class="dc-dim">backlog</span>       7 open, 0 picked-up, 0 dropped
-<span class="dc-dim">next</span>          tier config dial   (small, unblocks the rest)</code></pre>
+        <pre class="dc-body"><code><span class="dc-dim">shipped</span>       <span class="dc-ok">the last tagged release</span>
+<span class="dc-dim">unreleased</span>    commits since that tag   <span class="dc-wait">(and the bump they trigger)</span>
+<span class="dc-dim">backlog</span>       open, picked-up, dropped
+<span class="dc-dim">next</span>          the smallest thing that unblocks the rest</code></pre>
       </div>
     </div>
 

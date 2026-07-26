@@ -20,6 +20,30 @@ const [major, minor] = pkg.version.split('.');
 // Update site-src/CNAME to change domains; this is not a second hardcoded copy.
 const cname = fs.readFileSync(path.join(__dirname, '..', 'CNAME'), 'utf8').trim();
 
+// Last-updated stamp, derived from the last commit that touched the site source
+// rather than typed by hand. The hand-typed literal this replaces sat at
+// 2026-04-29 for roughly three months while the site changed underneath it, and
+// it renders in every docs-page footer, so it was the most-shown stale value on
+// the whole site.
+//
+// Falls back to the build date when git is unavailable (a tarball build, a
+// shallow checkout with no history). A slightly-too-recent date degrades better
+// than a hardcoded one that is wrong by a quarter.
+function lastUpdatedFromGit() {
+  try {
+    const { execFileSync } = require('node:child_process');
+    const out = execFileSync(
+      'git',
+      ['log', '-1', '--format=%cs', '--', 'site-src'],
+      { cwd: path.join(__dirname, '..', '..'), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(out)) return out;
+  } catch {
+    // fall through
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
 module.exports = {
   brand: 'baseline',
   url: `https://${cname}`,
@@ -32,5 +56,5 @@ module.exports = {
   version: `v${pkg.version}`,
   versionMinor: `v${major}.${minor}`,
   pkgVersion: pkg.version,
-  lastUpdated: '2026-04-29',
+  lastUpdated: lastUpdatedFromGit(),
 };

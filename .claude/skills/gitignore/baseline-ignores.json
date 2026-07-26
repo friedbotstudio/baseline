@@ -11,6 +11,7 @@
     { "pattern": ".claude/memory/_thread.md", "comment": "State: durable local thread trail", "category": "state" },
     { "pattern": ".claude/skill-memory/", "comment": "State: per-skill working memory", "category": "state" },
     { "pattern": ".claude/agent-memory/", "comment": "State: legacy agent-memory dirs", "category": "state" },
+    { "pattern": ".impeccable/", "comment": "State: impeccable skill local state (hook cache, live-session journal, design state)", "category": "state" },
     { "pattern": "node_modules/", "comment": "Tooling: npm dependencies", "category": "tooling" },
     { "pattern": "obj/", "comment": "Tooling: build output tree", "category": "tooling" },
     { "pattern": "reports/", "comment": "Tooling: transient test/report output", "category": "tooling" },

@@ -114,7 +114,7 @@ toc:
   </div>
   <p>Add a Track record to <code>.claude/workflows.jsonl</code>, one record per line. The schema lives at <code>.claude/schemas/workflow-track.v1.json</code> and is documented in <code>seed.md §18.2</code>.</p>
   <p>Validate with <code>/init-project doctor</code> before the next <code>/triage</code> invocation. The doctor checks JSON Schema conformance and Article IV invariants; named errors point at offending lines with a remediation path.</p>
-  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector + AskUserQuestion flow as the canonical five.</p>
+  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector and AskUserQuestion flow as the {{ baseline.tracks.canonical }} that ship.</p>
 
   <h3 id="example">Example</h3>
   <p>A minimal pre-commit-lint track that runs a linter after <code>memory-flush</code> and before <code>/grant-commit</code>:</p>

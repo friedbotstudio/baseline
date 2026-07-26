@@ -1,4 +1,4 @@
-// Domain: the 7 channel tool handlers. Each takes {channelRoot, ...contractInput}
+// Domain: the 9 channel tool handlers. Each takes {channelRoot, ...contractInput}
 // and returns the contracted result object (see spec Slice B Contracts table).
 // Composed from the Foundation primitives (store/lock/schema). No SDK import —
 // the MCP stdio wrapper (server.mjs) is a separate, deferred concern.
@@ -69,13 +69,17 @@ export function claimTask({ channelRoot, peer_id, task_id }) {
   return lock.result ? { claimed: true } : { claimed: false, reason: 'task already claimed' };
 }
 
-export function signalDone({ channelRoot, peer_id, task_id }) {
+export function signalDone({ channelRoot, peer_id, task_id, commit_sha }) {
   if (!isSafeId(task_id) || !isSafeId(peer_id)) return { ok: false, error: 'invalid task_id or peer_id' };
   const tasks = readTasks(channelRoot);
   const target = findTask(tasks, task_id);
   if (!target) return { ok: false, error: 'unknown task' };
   if (target.claimed_by !== peer_id) return { ok: false, error: 'not claimer' };
   target.status = 'done';
+  // The task shape carries commit_sha (default null); record it when the peer
+  // supplies one so the lead can trace which commit closed the lane. Optional by
+  // contract, so an absent value leaves the existing field untouched.
+  if (typeof commit_sha === 'string' && commit_sha !== '') target.commit_sha = commit_sha;
   const done = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id));
   const unblocked = tasks
     .filter((t) => t.status === 'pending' && (t.depends_on || []).length > 0 && (t.depends_on || []).every((d) => done.has(d)))

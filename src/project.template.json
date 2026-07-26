@@ -239,6 +239,18 @@
       "docs/"
     ]
   },
+  "simplify": {
+    "min_files": 4
+  },
+  "security": {
+    "sensitive_globs": [
+      "**/auth/**",
+      "**/*.env*",
+      "**/secrets/**",
+      "**/*credential*",
+      "**/security/**"
+    ]
+  },
   "velocity": {
     "rightsize": {
       "enabled": true,

@@ -1,0 +1,151 @@
+---
+layout: docs.njk
+permalink: /velocity/index.html
+pageTitle: "Velocity · baseline"
+title: Velocity
+titlePrimary: Velocity
+titleAccent: "."
+description: "The mechanisms that decide when a phase can be skipped, when a review can be shortened, and what stops those decisions from becoming judgment calls."
+eyebrow: Reference
+lead: "Ceremony that pays for itself is worth keeping. These are the mechanisms that decide when a phase can be skipped, and the constraints that keep those decisions mechanical."
+active: ""
+sidebarActive: velocity
+heroSymbol: velocity
+toc:
+  - { id: shape,      label: "The shape they share" }
+  - { id: rightsize,  label: "The right-size gate" }
+  - { id: fanout,     label: "Checker fan-out" }
+  - { id: drift,      label: "Drift analysis" }
+  - { id: plan,       label: "Durable plan state" }
+  - { id: notifier,   label: "The notifier" }
+  - { id: timing,     label: "Phase timing" }
+  - { id: power,      label: "Power mode" }
+  - { id: flags,      label: "Flags and defaults" }
+---
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ I</p>
+      <h2 id="shape">The shape they share</h2>
+    </div>
+    <p>Every mechanism here follows the same three rules, and the rules matter more than any individual feature does.</p>
+  </div>
+  <p>The first is that decisions are mechanical: they come from counting files and matching globs, never from asking a model what it thinks. The second is that each mechanism is bounded to a fixed and small set of phases, so a phase outside that set is unreachable, not merely unlikely.</p>
+  <p>The third is a split. Optimisations fail open, so a broken flag degrades to running the full pipeline. Guards fail closed, so a malformed path errors out instead of being quietly tidied up, because a guard that repairs its input has quietly redirected the thing it was guarding.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ II</p>
+      <h2 id="rightsize">The right-size gate</h2>
+    </div>
+    <p>After the code phase, the gate measures the change and may skip cleanup passes that a small diff does not warrant.</p>
+  </div>
+  <p>It can skip at most two phases, and the security review is not one of them. That is structural, not policy: security never enters the skip list in the first place.</p>
+  <p>Two exclusions make the measurement meaningful. Test lines are excluded, because under test-first development every change ships with a test, and counting them kept the gate permanently over threshold. Files that were already dirty when the workflow started are excluded too, so pre-existing mess is not attributed to work that did not create it.</p>
+  <p>Where the security review has been excepted and a sensitive path changed anyway, the gate raises a non-blocking advisory instead of staying quiet.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ III</p>
+      <h2 id="fanout">Checker fan-out</h2>
+    </div>
+    <p>The spec reviews run as parallel oracles, not in sequence.</p>
+  </div>
+  <p>Verdicts merge deterministically, and a single blocking finding poisons the whole result. A blocked verdict at spec review stops the work before implementation begins; a blocked verdict at code review stops the landing.</p>
+  <div class="callout">
+    <span class="icon" aria-hidden="true">!</span>
+    <div class="body">
+      <strong>Parallel scripts are not subagents.</strong>
+      <p>This matters for the single-subagent claim made elsewhere on this site. Fanning out actual agents is refused until a specific amendment lands, and the refusal is enforced in code, not by convention.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IV</p>
+      <h2 id="drift">Drift analysis</h2>
+    </div>
+    <p>Every acceptance criterion in an approved spec, and every design call, is checked against the lines the work actually added.</p>
+  </div>
+  <p>An item nothing references is unresolved.</p>
+  <p>One exclusion carries the whole check: the spec document itself is excluded from the diff it is compared against. Without that, every criterion would match its own text in the spec, and the check would pass by construction while proving nothing.</p>
+  <p>Unresolved items stop the workflow and do not auto-retry. Either the implementation has a gap or the spec does, and both need a person.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ V</p>
+      <h2 id="plan">Durable plan state</h2>
+    </div>
+    <p>Plans are recorded as an append-only chain of revisions.</p>
+  </div>
+  <p>A replan adds a version; it never rewrites one. What changed between any two versions is computable rather than remembered.</p>
+  <p>The flag that enables this fails open, so a disabled or unreadable configuration simply means no plan is written. The slug guard fails closed and throws before any path is built, because normalising a hostile slug would quietly write somewhere nobody asked for.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VI</p>
+      <h2 id="notifier">The notifier</h2>
+    </div>
+    <p>Three moments can reach you: a consent gate or failure, the session going idle, and the session blocking mid-turn on a question or a permission prompt.</p>
+  </div>
+  <p>Delivery degrades through whatever the machine has, ending at a terminal bell and a single line on stderr. It never throws and always exits zero, because a notifier that stalls the loop is worse than one that stays quiet.</p>
+  <p>Presence-aware suppression can hold the idle and question pings when you are demonstrably watching the terminal already. Any uncertain signal notifies, and the consent-gate ping is exempt from suppression entirely.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VII</p>
+      <h2 id="timing">Phase timing</h2>
+    </div>
+    <p>Every phase and sub-step is stamped with elapsed time and token deltas against a run-start anchor.</p>
+  </div>
+  <p>Consent gates are folded into the following phase's human-wait rather than shown as their own rows, so waiting on a person is visible as waiting rather than as work. Rows observed together carry a batch marker, which distinguishes measurements taken at the same moment from work that genuinely cost nothing.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ VIII</p>
+      <h2 id="power">Power mode</h2>
+    </div>
+    <p>A batch of related tickets shares one pass through the mechanical phases. <span class="track-chip track-chip-soon">opt-in<span class="chip-soon-tag">off</span></span></p>
+  </div>
+  <p>Requires git, and off by default.</p>
+  <p>The security review is exempt from the amortisation. It runs once per ticket, and any ticket's blocker yields the whole batch. The rule the track is built around is that mechanical ceremony can be shared and judgment cannot.</p>
+  <p>The commit splits into ordered conventional commits with the closure last, because a guard hard-blocks a closure spread across more than one commit.</p>
+</section>
+
+<section class="section">
+  <div class="lede">
+    <div class="lede-head">
+      <p class="section-num">§ IX</p>
+      <h2 id="flags">Flags and defaults</h2>
+    </div>
+    <p>Every mechanism on this page is a <code>project.json</code> key under <code>velocity</code>.</p>
+  </div>
+  <table>
+    <thead><tr><th>Mechanism</th><th>Key</th><th>Ships</th></tr></thead>
+    <tbody>
+      <tr><td class="phase">right-size gate</td><td><code>velocity.rightsize.enabled</code></td><td>on</td></tr>
+      <tr><td class="phase">checker fan-out</td><td><code>velocity.checker_fanout.enabled</code></td><td>on</td></tr>
+      <tr><td class="phase">drift reverify-skip</td><td><code>velocity.drift_reverify_skip.enabled</code></td><td>on</td></tr>
+      <tr><td class="phase">durable plan</td><td><code>velocity.durable_plan.enabled</code></td><td>on</td></tr>
+      <tr><td class="phase">notifier</td><td><code>velocity.notifier.enabled</code></td><td>on</td></tr>
+      <tr><td class="phase">power mode</td><td><code>velocity.power_mode.enabled</code></td><td>off</td></tr>
+      <tr><td class="phase">org mode</td><td><code>velocity.org_mode.enabled</code></td><td>off</td></tr>
+    </tbody>
+  </table>
+  <p>Drift analysis itself has no flag. It runs on every workflow that has a spec, and the reverify-skip above only suppresses re-reading an already-clean result, never a real finding.</p>
+</section>

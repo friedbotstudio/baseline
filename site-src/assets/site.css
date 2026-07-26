@@ -173,6 +173,59 @@ button:focus-visible,
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* The notice reads as a record, not a sentence: three addressed fields, hairline
+   separated, wiped in left-to-right on load. Same three facts as the prose form.
+   Keys are --muted, NOT accent at reduced opacity: accent on this tint tops out
+   at 3.95:1 and no opacity value reaches the 4.5:1 floor these 9.5px keys need.
+   Muted clears it at 5.81:1 and, being cool against the warm field, still reads
+   quieter than the value it labels (--charcoal passes too, at 11.35:1, but
+   outweighs the value and inverts the hierarchy). */
+.alpha-banner-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px 22px;
+}
+.alpha-banner .ab-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  animation: ab-wipe .5s cubic-bezier(.22, 1, .36, 1) both;
+}
+.alpha-banner .ab-field:nth-child(2) { animation-delay: 80ms; }
+.alpha-banner .ab-field:nth-child(3) { animation-delay: 160ms; }
+.alpha-banner .ab-field + .ab-field {
+  border-inline-start: 1px solid var(--accent);
+  padding-inline-start: 22px;
+  margin-inline-start: -11px;
+}
+.alpha-banner .ab-key {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+@keyframes ab-wipe {
+  from { clip-path: inset(0 100% 0 0); opacity: 0; }
+  to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alpha-banner .ab-field { animation: none; clip-path: none; opacity: 1; }
+}
+/* The three fields need ~810px to sit on one line. Below that they stack, and a
+   vertical divider to the left of a stacked row is a leftover from the
+   horizontal case — drop it and tighten, or the record costs more height than
+   the sentence it replaced. */
+@media (max-width: 820px) {
+  .alpha-banner-text { gap: 4px 14px; }
+  .alpha-banner .ab-field + .ab-field {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    margin-inline-start: 0;
+  }
+}
 
 /* ----- topnav (shared) -------------------------------------------------- */
 
@@ -347,6 +400,78 @@ nav.primary a.is-active { color: var(--ink); }
 }
 .gh-link:hover .gh-repo {
   text-decoration: underline var(--accent) dashed;
+}
+
+/* Repo facts on demand. The pill stays quiet and the detail appears only when
+   asked for, so the nav pays nothing for it at rest. Entry uses @starting-style
+   with `transition-behavior: allow-discrete`, so display: none animates without
+   JS; browsers without it get an instant show, which is a fine floor.
+   dd is 12px, not 11.5px: against the 9.5px dt that is a 1.26 step, and the
+   design detector's 1.25 floor is the right call here — 1.21 read flat. */
+.gh-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.gh-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 214px;
+  padding: 11px 13px;
+  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 12px 28px -14px oklch(20% 0 0 / .28);
+  text-align: left;
+  display: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity .16s ease,
+              transform .16s cubic-bezier(.22, 1, .36, 1),
+              display .16s allow-discrete;
+}
+.gh-wrap:hover .gh-card,
+.gh-wrap:focus-within .gh-card {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+@starting-style {
+  .gh-wrap:hover .gh-card,
+  .gh-wrap:focus-within .gh-card {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.gh-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+}
+.gh-card dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.gh-card dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-align: right;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gh-card { transition: none; }
+}
+/* The card is a pointer/keyboard affordance; below the nav breakpoint the pill
+   is already icon-only and there is no hover to reveal it. */
+@media (max-width: 1180px) {
+  .gh-card { display: none !important; }
 }
 
 /* ----- buttons ---------------------------------------------------------- */
@@ -626,34 +751,64 @@ footer.site {
 @media (prefers-reduced-motion: reduce) {
   .hero .hero-readmore a:hover { transform: none; }
 }
-/* 5→6 cols + max-width 660→792 keeps per-tile width 132px constant; tile geometry preserved. */
+/* Three claim-led rows, not tiles. The claim is the headline and the number is
+   the supporting label, so the strip argues rather than inventories.
+   The prior 3-column grid inherited its geometry from the count-tile era
+   (per-tile width ~132px, sized for a 2-digit numeral). Phrase-length claims in
+   that measure broke at their hyphens ("self-approve", "sha256-verified") and
+   collided once the mono label wrapped past its line-height:1. Rows give each
+   claim the full column measure; .nb pins the compounds. */
 .hero .meta-strip {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 4vw, 28px);
   margin-top: 56px;
-  padding: 26px 0;
+  padding: 22px 0;
   border-block: 1px solid var(--rule);
-  max-width: 792px;
+  max-width: 640px;
+}
+/* One composite ideogram (gate → boundary → manifest) reading top-to-bottom
+   against the claim order. The slot (not the SVG) is the flex item: an SVG with
+   a viewBox reports an intrinsic height, which would set the flex line and
+   defeat the stretch. Taking the SVG out of flow drops that contribution, so
+   the line is the row block's height and the mark scales into it — its three
+   clusters land on the three row centers at any type size. */
+.hero .meta-strip .ms-chain {
+  position: relative;
+  width: 40px;
+  align-self: stretch;
+  flex: none;
+}
+.hero .meta-strip .ms-chain svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hero .meta-strip .ms-chain .rail {
+  stroke-dasharray: 1 5;
+  stroke-linecap: round;
+}
+.hero .meta-strip .ms-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
 }
 .hero .meta-strip .stat {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-inline: 22px;
-  border-inline-start: 1px solid var(--rule);
-}
-.hero .meta-strip .stat:first-child {
-  border-inline-start: 0;
-  padding-inline-start: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 10px;
 }
 .hero .meta-strip .stat .num {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 32px;
-  line-height: 1;
-  letter-spacing: -.025em;
+  font-size: 15.5px;
+  line-height: 1.25;
+  letter-spacing: -.012em;
   color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
 .hero .meta-strip .stat .label {
   font-family: var(--mono);
@@ -662,8 +817,9 @@ footer.site {
   letter-spacing: .10em;
   text-transform: uppercase;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.45;
 }
+.hero .meta-strip .nb { white-space: nowrap; }
 
 /* Hero 2-col layout: text content on the left, schematic on the right. */
 .hero .hero-grid {
@@ -870,9 +1026,6 @@ figcaption.strata-key strong {
   grid-column: 1 / -1;
 }
 .concepts.is-2col { grid-template-columns: 1fr 1fr; }
-/* Recently-landed changelog: a uniform 3-col card feed (not the 2+1 hero row).
-   Grows each cycle; the increments figure fills the final cell so the last row stays even. */
-.concepts.is-feed { grid-template-columns: repeat(3, 1fr); }
 .concept {
   background: var(--paper);
   padding: 32px;
@@ -969,11 +1122,22 @@ a.concept:focus-visible::after {
 /* Concept-03 track chips — HTML transcription of the bento .arch-bento .chain-chip + .chain-label pair.
    Every value mirrors an existing rule: background var(--cream), border 1px var(--rule), radius 4
    (= bento rect rx="4"), mono 11.5/500, color var(--ink), letter-spacing -0.005em. Zero novel tokens. */
+/* Flush 3-column grid, not a wrapped flex row. Nine ids of uneven length wrapped
+   to a ragged right edge; equal columns square it off and make the set legible
+   as a set. Scoped to the row — .track-chip also appears standalone inline
+   (pm.njk kickers, the -soon chips), and those keep the base geometry. */
 .track-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
   margin-top: 16px;
+}
+.track-chips .track-chip {
+  justify-content: center;
+  padding: 4px 6px;
+}
+@media (max-width: 600px) {
+  .track-chips { grid-template-columns: repeat(2, 1fr); }
 }
 .track-chip {
   display: inline-flex;
@@ -2953,22 +3117,11 @@ aside.toc {
   .article table th:first-child,
   .article table td:first-child { padding-left: 0; }
 
-  /* 5 stats laid out as 3 + 2 — top row carries the structural counts
-     (hooks, skills, subagent), bottom row the workflow counts (phases, gates). */
-  .hero .meta-strip {
-    grid-template-columns: repeat(3, 1fr);
-    row-gap: 22px;
-    padding: 22px 0;
-  }
-  .hero .meta-strip .stat {
-    border-inline-start: 1px solid var(--rule);
-    padding-inline: 14px;
-  }
-  .hero .meta-strip .stat:nth-child(3n + 1) {
-    border-inline-start: 0;
-    padding-inline-start: 0;
-  }
-  .hero .meta-strip .stat .num { font-size: 24px; }
+  /* Rows already reflow on their own (the label wraps under the claim when the
+     line runs out), so mobile only tightens the chain and the rhythm. */
+  .hero .meta-strip { gap: 16px; padding: 20px 0; }
+  .hero .meta-strip .ms-chain { width: 34px; }
+  .hero .meta-strip .ms-rows { gap: 15px; }
 
   footer.site { margin-top: 80px; padding: 48px 24px 24px; }
   /* Mobile footer: brand row full-width, link columns share a 2-col row. */
@@ -3136,6 +3289,25 @@ aside.toc {
     .strata-svg .strata-ii  { animation-range: entry 10% entry 55%; }
     .strata-svg .strata-iii { animation-range: entry 20% entry 75%; }
     .strata-svg .strata-iv  { animation-range: entry 30% cover 10%; }
+
+    /* Governance precedence stagger — the same narrative-order device as the
+       strata figure above, and the only one of the four new hero symbols that
+       earns it: this symbol IS an ordered chain, so revealing genesis before
+       constitution before annex before implementation restates the argument the
+       page is making. The other three new symbols deliberately do NOT get a
+       bespoke stagger; the same entrance applied to every symbol is the reflex
+       tell, not motion itself. They keep the shared docs-hero-symbol entrance. */
+    .governance-svg .gov-form {
+      animation: fb-rise linear both;
+      animation-timeline: view(--gov-figure);
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .docs-hero-symbol:has(.governance-svg) { view-timeline: --gov-figure block; }
+    .governance-svg .gov-i   { animation-range: entry 0%  entry 35%; }
+    .governance-svg .gov-ii  { animation-range: entry 10% entry 55%; }
+    .governance-svg .gov-iii { animation-range: entry 20% entry 75%; }
+    .governance-svg .gov-iv  { animation-range: entry 30% cover 10%; }
   }
 }
 

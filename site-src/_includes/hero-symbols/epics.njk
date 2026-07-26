@@ -1,0 +1,49 @@
+{# Epics hero symbol: discovery paid once, inherited by every child.
+   One filled discovery block sits at the top, holding the five feature-scoped
+   phases. Three outline children hang beneath it, each pinned back to that block
+   by a connector. The accent token beside the discovery block is the approval
+   that authorizes the skip: children derive their right to inherit from that
+   token, not from a claim they make about themselves. The dashed slots on the
+   right of each child are the review phases that only run when the slice's risk
+   escalates one. Vocabulary: filled = paid once, outline = the thin repeat,
+   accent = the authorization the read side actually checks. Styled inline with
+   the shared design tokens; no bespoke stylesheet. #}
+<svg class="hero-symbol-svg epics-svg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="epics-title">
+  <title id="epics-title">One filled discovery block at the top, carrying the five feature-scoped phases and an accent approval token, with three outline child slices beneath it pinned back to that block.</title>
+
+  {# Discovery: paid once. #}
+  <rect x="52" y="34" width="256" height="72" fill="var(--ink)"/>
+  <text x="180" y="64" text-anchor="middle" style="font-family: var(--mono); font-size: 12px; fill: var(--paper); letter-spacing: .04em;">discovery</text>
+  <text x="180" y="86" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--paper); letter-spacing: .04em; opacity: .72;">intake · scout · research · spec</text>
+
+  {# The approval token: accent, and the thing the guard actually reads. #}
+  <rect x="52" y="120" width="90" height="26" rx="3" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="97" y="137" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--accent); letter-spacing: .04em;">approval</text>
+  <text x="152" y="137" style="font-family: var(--mono); font-size: 10.5px; fill: var(--muted); letter-spacing: .04em;">one, for every slice</text>
+
+  {# Pins: each child inherits from the same block. #}
+  <line x1="80"  y1="164" x2="80"  y2="206" stroke="var(--charcoal)" stroke-width="1.25"/>
+  <line x1="180" y1="164" x2="180" y2="206" stroke="var(--charcoal)" stroke-width="1.25"/>
+  <line x1="280" y1="164" x2="280" y2="206" stroke="var(--charcoal)" stroke-width="1.25"/>
+  <line x1="80"  y1="164" x2="280" y2="164" stroke="var(--charcoal)" stroke-width="1.25"/>
+
+  {# Three children: the thin repeat. #}
+  <rect x="34"  y="206" width="92" height="76" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <text x="80"  y="234" text-anchor="middle" style="font-family: var(--mono); font-size: 11px; fill: var(--ink); letter-spacing: .04em;">slice A</text>
+  <text x="80"  y="254" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--charcoal); letter-spacing: .04em;">tdd</text>
+  <rect x="46"  y="262" width="68" height="12" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+
+  <rect x="134" y="206" width="92" height="76" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <text x="180" y="234" text-anchor="middle" style="font-family: var(--mono); font-size: 11px; fill: var(--ink); letter-spacing: .04em;">slice B</text>
+  <text x="180" y="254" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--charcoal); letter-spacing: .04em;">tdd</text>
+  <rect x="146" y="262" width="68" height="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/>
+
+  <rect x="234" y="206" width="92" height="76" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.25"/>
+  <text x="280" y="234" text-anchor="middle" style="font-family: var(--mono); font-size: 11px; fill: var(--ink); letter-spacing: .04em;">slice C</text>
+  <text x="280" y="254" text-anchor="middle" style="font-family: var(--mono); font-size: 10px; fill: var(--charcoal); letter-spacing: .04em;">tdd</text>
+  <rect x="246" y="262" width="68" height="12" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>
+
+  <text x="180" y="308" text-anchor="middle" style="font-family: var(--mono); font-size: 10.5px; fill: var(--muted); letter-spacing: .04em;">dashed slot: review runs only when the slice escalates it</text>
+
+  <text x="180" y="344" text-anchor="middle" style="font-family: var(--mono); font-size: 13px; fill: var(--muted); letter-spacing: .04em;">discovery once · implementation N times</text>
+</svg>

@@ -71,7 +71,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
     <tbody>
       <tr>
         <td class="phase">fresh<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);">(default)</span></td>
-        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the four sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved. In a TTY, a branded intro / spinner / outro frames the install; in CI, plain text matches the prior output line-for-line.</td>
+        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the five sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved. In a TTY, a branded intro / spinner / outro frames the install; in CI, plain text matches the prior output line-for-line.</td>
         <td>None.</td>
       </tr>
       <tr>
@@ -172,7 +172,7 @@ npx @friedbotstudio/create-baseline --version</code></pre>
 <pre><code>$ npx @friedbotstudio/create-baseline doctor ./my-project
 
 Baseline doctor — target: /Users/you/code/my-project
-Manifest: version 1, installed 2026-05-11T14:00:00Z
+Manifest: version 2, installed 2026-05-11T14:00:00Z
 
   matched:    160
   customized: 0
@@ -204,12 +204,12 @@ Manifest: version 1, installed 2026-05-11T14:00:00Z
     <p>The CLI special-cases <code>.mcp.json</code> on every install (fresh or merge). The behavior is <strong>baseline-refresh</strong>: servers the baseline owns get the template's current args; servers you added are preserved.</p>
   </div>
   <ul>
-    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>. The merge refreshes them from the template, so an <code>upgrade</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next upgrade.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
+    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>, and <code>sprint-channel</code>. The merge refreshes them from the template, so an <code>upgrade</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next upgrade.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
     <li><strong>Servers absent from the template are user-added.</strong> Preserved byte-for-byte across merges.</li>
     <li><strong>Top-level JSON keys</strong> outside <code>mcpServers</code> are additive: template keys are added when missing; the target's existing keys win on collision.</li>
     <li><strong>If the target has no <code>.mcp.json</code></strong>, the template is written verbatim.</li>
   </ul>
-  <p>The implementation lives in <code>src/cli/mcp.js</code>. The decision was recorded in <code>README.md</code> under "<code>.mcp.json</code> merge semantics".</p>
+  <p>The implementation lives in <code>src/cli/mcp.js</code>, and the docblock at the top of that file is the authoritative note on these semantics.</p>
 </section>
 
 <section class="section">
@@ -221,7 +221,7 @@ Manifest: version 1, installed 2026-05-11T14:00:00Z
     <p>After every install, the CLI writes <code>.claude/.baseline-manifest.json</code> at the target: a sha256-keyed hash table of every file shipped, plus a version stamp and the install timestamp.</p>
   </div>
   <pre><code>{
-  "manifest_version": 1,
+  "manifest_version": 2,
   "generated_at": "2026-05-11T14:00:00.000Z",
   "files": {
     "CLAUDE.md": "9a3f...",

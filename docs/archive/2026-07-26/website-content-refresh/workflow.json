@@ -1,0 +1,47 @@
+{
+  "request": "Website has drifted from shipped features. Build a sitemap (restructure allowed), then a content outline per page, then write each page's copy via copywriting/technical-tutorials/humanizer, rebuild the whole site with the new content, and finish with impeccable delight + animate + optimize passes.",
+  "slug": "website-content-refresh",
+  "track_id": "freeform",
+  "novelty": "novel",
+  "novelty_evidence": "Searched docs/specs/** (only erp-portables.md and release-workflow.md mention site-src, both unrelated), docs/roadmap-execution-plan.md (six epics, all harness-internal; sole `site` hit is the T2 slug-validator line), and all 13 keys in .claude/memory/backlog/ — no spec chapter, roadmap item, epic slice, or backlog entry covers a website IA or content refresh. Page-authoring mechanics are pattern-copy off the existing site-src/*.njk + _data/nav.json structure, but the sitemap/IA and per-page content decisions have no in-repo precedent.",
+  "track_reason": "User explicitly chose freeform over the recommended chore track after being shown that freeform blanket-excepts verify and integrate while this diff lands in site-src/**, where audit-baseline enforces live count parity (hooks.njk=26 hooks, workflows.njk=9 tracks). Mitigation: audit-baseline, npm test, and npm run build:site are seeded as explicit TaskList work items instead of phase guardrails.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "intake",
+    "integrate",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [
+    "chore",
+    "epic"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1784975629,
+  "updated_at": 1785072826,
+  "read_strategy": {
+    "mode": "fan-out",
+    "directive": "User instruction (2026-07-25): all reads in this workflow fan out to parallel read-only advisory subagents.",
+    "agent_type": "Explore",
+    "rationale": "Explore has no Write/Edit/NotebookEdit in its toolset, so seed.md §4.2-A (advisory subagents write nothing, decide nothing) holds structurally rather than by instruction.",
+    "boundary": "Gathering fans out. Synthesis, the drift table, the sitemap/IA, all copy, and every file write stay in main context per CLAUDE.md Article II."
+  },
+  "rightsize_base": []
+}

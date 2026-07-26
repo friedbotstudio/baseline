@@ -8,13 +8,15 @@ Nothing in this annex overrides `CLAUDE.md`. Where this annex and `CLAUDE.md` ap
 
 ## 1 — Amendment history
 
+> **Reading this section.** Entries are a **historical record**, written at the time each amendment landed. Every count, byte budget, and Article number inside an entry is **as-of that amendment** and is deliberately NOT restated when the roster or numbering later moves — correcting them in place would falsify the record. Where an entry names a count ("skills stay 48", "count stays 22") or an Article ("Article X.1", relocated to XI.1 when Article X became multi-session coordination), read it as a snapshot. **For current values, see Appendix A (§3) and Appendix B (§4); for current numbering, `CLAUDE.md`.** Only forward-looking instructions inside an entry are kept current.
+
 ### Post-§18 amendment (2026-05-21) — workflow tracks
 
 Workflow track definitions live in `.claude/workflows.jsonl` per `docs/init/seed.md §18`. The phase-ordering rules and entry-point classifications in Article IV remain binding; every Track declared in `workflows.jsonl` SHALL satisfy them plus the additional invariants in seed.md §18.3 (I1..I11). `/triage` reads `workflows.jsonl`, validates each Track against §18, classifies the user's request via LLM reasoning over `name + description + selector_hints`, confirms via `AskUserQuestion`, and materializes the chosen Track's DAG into the TaskList (via `src/cli/track-tasklist-materializer.js`). The 4 canonical tracks shipped in the pristine template are byte-equivalent to Article IV's hardcoded templates per spec AC-016. The harness migrates pre-§18 `workflow.json` files (carrying `entry_phase` + no `track_id`) one-shot at preflight via `src/cli/workflow-migrator.js`. `/init-project doctor` (sub-command) detects schema / invariant / mirror drift and offers interactive fixes.
 
-### X.1 — copy-register scoping (ongoing)
+### XI.1 — copy-register scoping (ongoing; landed as X.1, renumbered to XI.1)
 
-Article X.1 scopes the `impeccable` "Shared design laws" bans to user-facing copy only. Future "impeccable says X, but we ship Y on purpose" decisions get a row in the Article X.1 scope table without re-amending the constitution. Examples already in flight: the meta-strip on the landing (qualified in PRODUCT.md anti-references as "structural counts naming load-bearing components"), and the em-dash scoping itself. New rows SHALL cite the impeccable rule being scoped, the scope decision, and a one-line rationale.
+Article XI.1 scopes the `impeccable` "Shared design laws" bans to user-facing copy only. Future "impeccable says X, but we ship Y on purpose" decisions get a row in the Article XI.1 scope table (§5.1 below) without re-amending the constitution. Examples already in flight: the meta-strip on the landing (qualified in PRODUCT.md anti-references as "structural counts naming load-bearing components"), and the em-dash scoping itself. New rows SHALL cite the impeccable rule being scoped, the scope decision, and a one-line rationale.
 
 ### §II.A — bounded maker/checker charter (2026-06-06, `-c732`)
 
@@ -75,7 +77,24 @@ Discovered when a session was told to discard three archived `workflow.json` fil
 
 ### Article X relocation — annex §5 detail tables (2026-06-05, `-b4d1`)
 
-To hold the 40,000-char cap with comfortable headroom, the elaborative rule tables of Article X.1–X.4 were relocated from `CLAUDE.md` into annex **§5** (this file). `CLAUDE.md` Article X now carries each amendment's terse binding clause plus a pointer to its `§5.x` detail; Article X.5 (navigation routing) stays in full in the constitution. No rule lost binding force — the relocation moved elaboration only, leaving every SHALL/SHALL-NOT clause, enforcement-hook citation, and `REQUIRED_BINDING_MARKER` in the always-loaded file. `seed.md §14` was reworded in place to authorize relocating Article-level detail (not just narration/appendices) to the annex. The enforced soft target dropped from 38,500 to **34,000** (pinned by the always-loaded budget test, `CLAUDE_TARGET_MAX`), taking `CLAUDE.md` from 38,479 to 33,679 bytes (~6.3k headroom under the hard cap, up from ~1.5k). Hard cap, precedence chain (Art I.4), and the hook→Article mapping (Art VIII) are unchanged.
+To hold the 40,000-char cap with comfortable headroom, the elaborative rule tables of Article X.1–X.4 were relocated from `CLAUDE.md` into annex **§5** (this file). `CLAUDE.md` Article X now carries each amendment's terse binding clause plus a pointer to its `§5.x` detail; Article X.5 (navigation routing) stays in full in the constitution. No rule lost binding force — the relocation moved elaboration only, leaving every SHALL/SHALL-NOT clause, enforcement-hook citation, and `REQUIRED_BINDING_MARKER` in the always-loaded file. `seed.md §14` was reworded in place to authorize relocating Article-level detail (not just narration/appendices) to the annex. The enforced soft target dropped from 38,500 to **34,000** (pinned by the always-loaded budget test, `CLAUDE_TARGET_MAX`), taking `CLAUDE.md` from 38,479 to 33,679 bytes (~6.3k headroom under the hard cap, up from ~1.5k). Hard cap, precedence chain (Art I.4), and the hook→Article mapping (Art VIII) are unchanged. (Landed as Article X.1–X.5; renumbered to XI.1–XI.5 when Article X became multi-session coordination.)
+
+### Consolidated record — 2026-07-08 to 2026-07-25
+
+Ten governance-bearing amendments landed in this window without individual entries. Recorded here in one block so the history is complete; each is fully described in its own archive bundle under `docs/archive/<date>/<slug>/`.
+
+| Date | Slug / commit | What changed, constitutionally |
+|---|---|---|
+| 07-08 | `context7-outcome-mandate` | Art. VI.5 rewritten from a tool mandate to an **outcome mandate** — `context7` became the shipped default satisfier, replaceable or removable (U6, no irreplaceable dependency). `EXPECTED_MCP_SERVERS` split from `DEFAULT_MCP_SERVERS` so the audit never FAILs on its absence. |
+| 07-09 | `e90bfdc` roadmap/power port | `roadmap-sync` added as **Phase 10.6** on every committing track except `epic`; workflow-scoped commit consent (`consent.workflow_ttl_seconds`); `git.workflow_model: direct-to-main` made permissive. |
+| 07-10 | `66a11f4` | `power` batch-sprint track completed; the `requires_config_flag` opt-in fence generalized so an off-flag track is excluded from the candidate set **before** ranking. |
+| 07-11 | `c58b30d` | Art. VI.4 YAGNI reframed to a positive purpose (gates speculation, never spec-committed scope); Art. VI.7 read-before-overwrite added; research retrieve-first. |
+| 07-15 | `f1faf75` spec quality floor | Art. XI.2 gained the `## Design calls` Reference-target / Quality-criteria floor, enforced by the new `spec_design_calls_guard` (roster 25 → 26). |
+| 07-16 | `b887f74` + `7da3e19` + `c48f22d` (D3/CO-E) | **The gate collapse.** `/approve-spec` → `/approve-direction`, `spec_approval_guard` → `direction_approval_guard`, and the human gate **moved from post-spec to intake**; the spec in between became machine-reviewed. Three human touchpoints became two. Token path `spec_approvals/` deliberately retained so the epic forge-proof root survives. |
+| 07-17 | `e8d1480` (T4) | **Sharded memory store.** The seven canonical files became one-fact-per-file directories with a graph index; per-file 500-entry cap retired in the sharded shape. `memory.sharded_store` activated. Repaired 07-20 by `6ddda04`. |
+| 07-19 | `40057f8` | Phase-timing instrumentation: run-start anchor, batched-row marking, gate wait stored. |
+| 07-25 | `2db6d0c` + `ea618e9` | `sprint-channel` registered in `.mcp.json` — the **3 → 4 MCP count cascade**. Tool surface grew to nine with `release_task` + `leave_peer`. `sprint-pool` deliberately left unregistered (channel/broker, not stdio). |
+| 07-25 | `e98b712` | Slug predicate hoisted to `hooks/lib/slug.mjs` at its third use (REJECT, never normalize); gate-C consent made to survive `/archive` moving `workflow.json`. |
 
 ---
 
@@ -153,7 +172,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
 | `.claude/skills/` | 52 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (7) + audit (1) + alt tracks (2) + maintenance (2) + sprint (4) + roadmap (2) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-direction`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
-| `.claude/memory/` | 7 canonical knowledge files + `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
+| `.claude/memory/` | 7 canonical knowledge categories — flat `<name>.md`, or `<category>/<key>.md` directories under the sharded store (`memory.sharded_store.enabled`, live here since 2026-07-17) — plus `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
 | `.claude/settings.json` | hook wiring + permissions |
 | `.claude/state/` | runtime: `workflow.json`, `commit_consent`, `push_consent`, `spec_approvals/`, `swarm_approvals/`, `swarm/`, `harness/<slug>.log`, `last_test_result` |
@@ -174,7 +193,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Workflow phases (10)** — auto-invocable; orchestrator chains them:
 - `triage`, `scout`, `research`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`, `commit`
 
-**Phase workers (5)** — execute pre-decided recipes; mandatorily invoke a sub-skill:
+**Phase workers (5)** — execute pre-decided recipes; four mandatorily invoke a sub-skill (`verify` is mechanical and invokes none):
 - `scenario`, `implement`, `verify`, `prose`, `design-ui`
 
 **Spec helpers (5)**:
@@ -210,19 +229,31 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 **Audit (1)**:
 - `audit-baseline` — drift check between this constitution + seed.md and the implementation
 
-**Alternate tracks (1)** — stripped-down workflows routed via `/triage`:
+**Alternate tracks (2)** — stripped-down workflows routed via `/triage`:
 - `chore` — for tasks that need no TDD (documentation, governance counts, vendored content, configuration, formatting, dependency bumps, consolidation). Skips `/scenario` and `/implement`; runs edits directly; routes through `verify` / `simplify` / `integrate` / `document` only when their triggers apply. `archive`, `/grant-commit`, `/commit` mandatory; `verify` is conditional — skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs). Not a bypass — silent skips of triggered conditional phases are forbidden.
+- `power` — the batch-sprint track for a set of related, spec-committed tickets (`workflow.json → tickets[]`). Mechanical phases amortize once over the batch; `security` runs **once per ticket** and any ticket's BLOCKER yields the batch; `/commit` splits the tree into ordered Conventional Commits, closure last, under one workflow-scoped `/grant-commit`. Opt-in and OFF by default (`velocity.power_mode.enabled`); requires git.
 
-**Sprint (3)** — the sprint-mode skills (`mvp-sprint-parallel-cycles` epic); not workflow phases:
+**Maintenance (2)** — keep an installed baseline healthy:
+- `gitignore` — generate or repair a project's `.gitignore`, composing the baseline must-ignore set (`baseline-ignores.json`) with optional gitignore.io enrichment; merges add-only so existing entries are never lost.
+- `upgrade-project` — reconcile the baseline-versioned files that `create-baseline upgrade` staged for LLM-assisted semantic merge; reads the stage manifest, reasons through each three-way delta in main context, writes a reconciled LOCAL, deletes the stage when every file lands.
+
+**Roadmap (2)** — derive and maintain the execution plan:
+- `roadmap-planner` — re-derive an execution roadmap from the vision/spec corpus by first principles, then diff that derivation against the existing roadmap to prove task ORDER is correct (producer-after-consumer and seam-after-consumer errors, cycles, over-fragmentation). Never blindly overwrites a hand-crafted roadmap.
+- `roadmap-sync` — Phase 10.6. Flips the tasks named in `workflow.json → roadmap_tasks[]` from ⬜ to ✅ and promotes their epic headings, preserving the standup parser format contract. Fail-open; runs on every committing track **except `epic`**.
+
+**Sprint (4)** — the sprint-mode skills (`mvp-sprint-parallel-cycles` epic); not workflow phases:
 - `sprint-plan` — decompose an MVP vision into a sprint manifest where every feature carries explicit done-criteria (`done_record` + `edge_tests[]` + `wiring_test`). Authors + shape-validates the manifest (`validate-manifest.mjs`).
 - `sprint-oracle` — mechanical, exit-code-driven completeness gate: resolves each manifest feature's `// @sprint-feature:<id> @kind:edge|wiring|happy` tags and fails loud (exit 2) with a per-feature gap list until every feature has a done-record + a resolvable edge test + a resolvable wiring test (`oracle.mjs`). Read-only.
+- `sprint-planner` — propose the next dependency-ready sprint from the ALREADY-DECOMPOSED roadmap (standup's active sibling): computes per-task readiness from the roadmap's machine-readable status, orders with `roadmap-planner`'s graph engine, and emits a proposed task-set with per-feature done-criteria, excluding unready tasks and naming their unmet prerequisite. PROPOSES ONLY — the human confirms before `/triage` routes it, typically to the `power` track.
 - `org-dispatch` — the org-team execution engine (Article X; graduates and supersedes the retired `sprint-dispatch` Slice-C prototype): opt-in (`velocity.org_mode.enabled`, off by default), requires git. A flat pod of up to four peer Claude Code sessions claims lane-tagged slices of an approved spec over the MCP broker pool and implements them concurrently. Each peer DECIDES its own in-lane implementation choices in its own main context and escalates un-decidable or cross-lane forks peer→lead→human (`yield_fork` for task-bound forks, `ask_lead`/`answer_peer` for free-form queries). One peer wears the lead hat (arbitration + human relay); consent gates stay structural. Helpers: `org-mode.mjs`, `peer-select.mjs`, `yield-arbiter.mjs`.
 
 ---
 
-## 5 — Article XI project-amendment detail (reference)
+## 5 — Relocated Article detail (reference)
 
-The binding clauses for project amendments XI.1–XI.4 live in `CLAUDE.md` Article XI. This section holds the *elaborative rule tables* relocated from CLAUDE.md to hold the 40,000-char cap (Art I.6 / seed.md §14). Nothing here overrides the binding clause in CLAUDE.md; where this detail and the clause appear to conflict, **CLAUDE.md governs**. Article XI.5 (navigation routing) stays in full in CLAUDE.md and has no annex detail.
+This section holds the *elaborative rule tables* relocated from CLAUDE.md to hold the 40,000-char cap (Art I.6 / seed.md §14). Nothing here overrides a binding clause; where this detail and the clause appear to conflict, **CLAUDE.md governs**.
+
+Coverage: **§5.1–§5.4** and **§5.12** elaborate Article XI's project amendments (XI.1, XI.2, XI.3, XI.4, XI.12); **§5.6** elaborates **Article X** (multi-session coordinated workflows), not an XI clause; **§5.13** elaborates the `chore` and `freeform` track detail relocated from **Article IV**. Article XI.5 (navigation routing) stays in full in CLAUDE.md and has no annex detail. The numbering is non-contiguous because section numbers track their source clause and are retired rather than reused.
 
 ### 5.1 — XI.1 Copy register and skill overrides (detail)
 
@@ -239,10 +270,10 @@ These bans bind **only on user-facing copy** — surfaces a public reader sees a
 | User-facing copy | YES | `site-src/**/*.njk`, `site-src/_data/site.json` user-visible strings, marketing emails, the rendered docs site |
 | Internal governance | NO | `CLAUDE.md`, `docs/init/seed.md`, `PRODUCT.md`, `DESIGN.md` |
 | Project source documents | NO | `README.md`, `bin/cli.js` help/error text, `.claude/skills/*/SKILL.md` |
-| Memory bodies | NO | `.claude/memory/*.md` entries |
+| Memory bodies | NO | `.claude/memory/*.md` and `.claude/memory/*/*.md` entries (flat or sharded) |
 | Inline code / data samples | NO | `<code>` / `<pre>` blocks that quote literal data, CLI output, or canonical entry shapes |
 
-The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces. This override does not delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a row in the same scope table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale (in-flight examples in §1 "X.1 — copy-register scoping").
+The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces. This override does not delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a row in the same scope table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale (in-flight examples in §1 "XI.1 — copy-register scoping").
 
 ### 5.2 — XI.2 Design-task routing (detail)
 
@@ -328,3 +359,17 @@ The binding clause is CLAUDE.md XI.12; seed.md §6 carries the genesis note (ame
 **Timeout rule:** an `AskUserQuestion` timeout inside a phase skill adopts the recommended option as a **recorded assumption** (noted in `workflow.json → completed_notes` or the phase artifact) and surfaces it at the next consent gate. Questions never block an unattended run. **Consent gates are not questions** — they still block structurally (Art. IV); XI.12 never authorizes auto-satisfying a gate.
 
 Interplay: XI.4 codesign mode is the opt-in *maximal* question surface (engineer wants the forks surfaced); XI.12 is the default *minimal* one. XI.3's brainstorm probes count as questions and obey the same economy (derivation-first, cap 2).
+
+---
+
+### 5.13 — Article IV `chore` and `freeform` track detail
+
+Relocated from CLAUDE.md Article IV's entry-point list per Art. I.6. The binding clauses (when each track is selected, and what stays mandatory) remain in Article IV; this is the trigger enumeration only.
+
+**`chore` — the trigger list.** `/triage` selects `chore` when the request needs no failing-test-driven code change. The canonical triggers: documentation edits, governance count bumps, vendored-skill content updates, configuration tweaks, formatting, typo fixes, dependency bumps where no project code changes, skill consolidations, and file renames with no behaviour change. The classification rule is *"if there's no failing test that should exist for this work, it's a chore."*
+
+**`chore` — the `verify` skip rule.** `verify` is conditional, and the condition is narrow: it is skipped **only** for a pure-docs/prose diff when `project.json → test.kind` is `behavior`. An absent or invalid `test.kind` resolves to `structural`, which runs verify; any code or config change in the diff runs it regardless of `test.kind`. `verify` / `simplify` / `security` / `integrate` / `document` are the track's `internal_phases[]` — deliberately left OUT of `exceptions` at triage time, because the diff does not exist yet. The chore skill resolves each at runtime into `completed` (its trigger fired) or `exceptions` (it did not), recording an `auto_skipped[]` row. Chore is a stripped-down pipeline, not a bypass: silently skipping a conditional phase whose triggers apply is forbidden.
+
+**`freeform` — the blanket exception list.** Every pre-commit phase is excepted: `intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`. The DAG carries only `roadmap-sync` → `memory-flush` → `/grant-commit` → `/commit`.
+
+**`freeform` — what stays live.** All 26 hooks fire normally, including `tdd_order_guard` (still blocks a new source file without a paired test), `git_commit_guard`, `destructive_cmd_guard`, `env_guard`, `verify_pass_guard`, and every consent gate. Use freeform only when the work is genuinely heterogeneous — an optimization sweep across unrelated landmines, exploratory cleanup, drive-by fixes. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.

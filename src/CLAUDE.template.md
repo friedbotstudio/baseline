@@ -14,7 +14,7 @@ This file is the **in-session constitution** for this repository. It binds Claud
 2. **Constitution** — `CLAUDE.md` (this file) is the source of truth for Claude's in-session behavior in this repository.
 3. **Implementation** — the hooks, skills, commands, subagent, MCP servers, and config files are the actuators and enforcement mechanisms of (1) and (2).
 4. **Order of precedence** — `seed.md` > `CLAUDE.md` > implementation. Lower binds higher only via amendment in seed.md, which then propagates to this file, then to disk.
-5. **Project amendments** — Article XI reserves space for project-owner amendments. Amendments bind alongside Articles I–X but **SHALL NOT** contradict them.
+5. **Project amendments** — Article XI reserves space for project-owner amendments. Amendments bind alongside the baseline Articles (I–X, XII) but **SHALL NOT** contradict them.
 6. **Size cap (this file)** — `CLAUDE.md` SHALL NOT exceed **40,000 characters** and carries binding rules only; amendment history, enforcement narration, and reference appendices live in the annex `.claude/CONSTITUTION.md`. `audit-baseline` enforces the cap (FAIL above 40,000 chars), which also binds the byte-equal mirror `src/CLAUDE.template.md`.
 
 ## Article II — Architectural principle
@@ -25,7 +25,7 @@ The baseline ships exactly **one** subagent: `swarm-worker`. Its sole sanctioned
 
 A bounded maker/checker round-trip MAY run on the Workflow runtime under **§II.A** — **oracle-bound read-only checkers may fan out** (graduated 2026-06-21, `checker-graduation-fanout`); one maker, judgment checkers, and the one-subagent count stay bound. Full text in `seed.md §4.2`.
 
-Every other capability — code authoring, scenario authoring, scouting, researching, security review, spec review, prose writing, UI design — is a **skill** that runs in main context. Five execution skills mandatorily invoke a sub-skill:
+Every other capability — code authoring, scenario authoring, scouting, researching, security review, spec review, prose writing, UI design — is a **skill** that runs in main context. Five execution skills declare a sub-skill contract (four mandatory; `verify` is mechanical):
 
 | Skill | Mandatory sub-skill | Conditional |
 |---|---|---|
@@ -44,7 +44,7 @@ On every new session, before any work, you SHALL:
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
    > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 52 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
-   You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, spec-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
+   You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, direction-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
 4. **Memory check.** The `memory_session_start` hook injects a memory index into your additional context. The hook emits a **debt-mode nag** only when `_pending.md` has unflushed candidates AND no active workflow on disk (i.e., `.claude/state/workflow.json` is absent) — those candidates are debt from a prior workflow that didn't end-flush. During an active workflow, **Phase 10.7** (memory-flush) handles flushing automatically; the session-start nag stays silent. You SHALL run `/memory-flush` when the debt-mode nag fires, before starting new work.
@@ -62,6 +62,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | 2 | Scout | `/scout` | `docs/scout/<slug>.md` |
 | 3 | Research | `/research` | `docs/research/<slug>.md` |
 | 4 | Spec | `/spec` (+ `/spec-lint`, reviews) | `docs/specs/<slug>.md` |
+| 5 | Review (machine) | shippability + checker fan-out; **no human gate** | verdicts; BLOCKED halts entry to 6 |
 | 6 | TDD (solo) | `/tdd` | code |
 | 6a | TDD (swarm) | `/swarm-plan` | `.claude/state/swarm/<slug>.json` |
 | 6b | **Approve swarm** (gate B) | user runs **`/approve-swarm <slug>`** | approval token |
@@ -71,7 +72,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | 9 | Integrate | `/integrate` | binding verify verdict |
 | 10 | Document | `/document` | docs |
 | 10.5 | Archive | `/archive` | bundle at `docs/archive/<date>/<slug>/` |
-| 10.6 | Roadmap sync | `/roadmap-sync` | roadmap tracker synced to landed work (fail-open) |
+| 10.6 | Roadmap sync | `/roadmap-sync` (every committing track **except `epic`**) | roadmap tracker synced to landed work (fail-open) |
 | 10.7 | Memory flush | `/memory-flush` | curated canonical memory + reset `_pending.md` |
 | 11 | **Grant commit** (gate C) + commit | user runs **`/grant-commit`**, then `/commit` (skill) | commit |
 
@@ -83,7 +84,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - **Phase 6c and Phase 11 are git-conditional.** On a non-git tree (`git rev-parse --is-inside-work-tree` exits non-zero), `/triage` SHALL auto-add `swarm-plan`, `approve-swarm`, `swarm-dispatch`, `grant-commit`, and `commit` to `exceptions`; Phase 6 routes to solo `/tdd` and the workflow ends after `/archive`. Worktree isolation requires git; `swarm.isolation: "shared"` is sanctioned only for git projects opting out of worktrees, never as a non-git fallback. See Article VII.
 - The three consent gates (A, B, C) are **commands**, not skills. They are structurally un-invokable by Claude. You SHALL NOT self-approve.
 - **Gate C is branch-conditional (seed.md §18.4, §11).** Commits-tracks annotate `grant-commit` with `condition: {"name": "requires_commit_consent"}`; materialization resolves it via `isAutonomousFeatureLanding()` (fail-safe false). Only a github-flow autonomous feature landing omits the gate — `/commit` then pushes + opens a PR, yielding on any failure (Art. VII); everywhere else gate C yields as above, `git_commit_guard` the commit-time backstop.
-- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard (`direction_approval_guard`, `swarm_approval_guard`, `git_commit_guard`) allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (marker paths, TTL, `canonicalSlug`): `.claude/CONSTITUTION.md` (annex).
+- **How the gates are structurally enforced.** Each consent command is a slash command **typed by the user**. The `consent_gate_grant` UserPromptSubmit hook runs **before Claude is invoked** and writes a short-lived, single-use, slug-matched marker; the matching PreToolUse guard allows Claude's approval-token write only while that marker is fresh, and blocks Claude from writing the marker itself. Claude cannot reach the UserPromptSubmit path, so it cannot forge consent. `/grant-push` is a Bash-time push consent, not a workflow gate (Art. VII). Full handshake (guards, marker paths, TTL, `canonicalSlug`): annex.
 - **Out-of-band**: `/rca` produces an incident postmortem at `docs/rca/<slug>.md`. It is not a workflow phase and often precedes a bugfix intake.
 
 **Entry points** (`/triage` writes `workflow.json` with `entry_phase` and `exceptions`). **Step 0 — leanest-safe-track triage (seed.md §5):** `/triage` classifies novelty FIRST — `pattern-copy | spec-derived | novel | ambiguous` — with cited evidence, recorded as `workflow.json → novelty` (+ `novelty_evidence`); the DEFAULT is the leanest track whose guardrails cover the risk, and a heavier pick requires a named `track_reason`. Step 0 also writes `skip_brainstorm` explicitly on every workflow (XI.3). Helpers: `flag-parser.mjs → validateNoveltyRecord / resolveSkipBrainstorm`.
@@ -91,8 +92,8 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - New feature → `/triage` selects `intake`.
 - Bugfix → `/triage` selects `spec` or `tdd`.
 - Quickfix → `/triage` selects `tdd`.
-- Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change** (doc edits, governance count bumps, vendored-skill updates, config tweaks, formatting, typo fixes, dependency bumps without project code, skill consolidations). It skips `/scenario` and `/implement`, runs the edits directly, then conditionally routes through `verify` / `simplify` / `integrate` / `document` by what the diff touches. `archive`, `/grant-commit` + `/commit` remain mandatory. `verify` is conditional: skipped only for a pure-docs/prose diff when `project.json → test.kind` is `behavior` (absent/invalid → `structural` → verify runs; any code/config change runs it regardless). Work needing a failing test routes to `tdd` or higher.
-- Freeform → `/triage` selects the `freeform` track for ad-hoc batches that fit no other track (optimization sweeps across unrelated landmines, exploratory cleanup, drive-by fixes). Every pre-commit phase (`intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`) is a blanket exception; the DAG carries only `roadmap-sync` → `memory-flush` → `/grant-commit` → `/commit`. All 26 hooks stay active and fire normally — including `tdd_order_guard` (still blocks new source files without paired tests) and the consent gates. Use freeform only when work is genuinely heterogeneous; anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
+- Chore → `/triage` selects the `chore` track when the request needs **no failing-test-driven code change**. It skips `/scenario` and `/implement` and runs the edits directly; `verify` / `simplify` / `integrate` / `document` resolve conditionally on what the diff touches, while `archive`, gate C, and `/commit` stay mandatory. Work needing a failing test SHALL route to `tdd` or higher. Trigger list + the `verify` skip rule: annex §5.13.
+- Freeform → `/triage` selects the `freeform` track for ad-hoc **heterogeneous** batches. Every pre-commit phase is a blanket exception; the DAG carries only `roadmap-sync` → `memory-flush` → `/grant-commit` → `/commit`. All 26 hooks stay active, including `tdd_order_guard` and the consent gates. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher. Full exception list: annex §5.13.
 - Epic / Epic-child → a multi-subtask feature runs `epic` once (discovery + sliced spec + one approval); each slice then runs an `epic-child` inheriting that discovery via `track_guard`. seed.md §18.9.
 - Power → `/triage` selects the `power` batch-sprint track for a batch of related, spec-committed tickets (`workflow.json → tickets[]`, proposed by `sprint-planner`, confirmed by the human). Mechanical phases amortize once over the batch; `security` runs **once per ticket** and any ticket's BLOCKER yields the batch; `/commit` splits the tree into ordered Conventional Commits, closure last, under one workflow-scoped `/grant-commit`. Opt-in and OFF by default: the track declares `requires_config_flag` on `velocity.power_mode.enabled` (seed.md §18.4), so off-flag the preconditions exclude it before ranking. Requires git.
 
@@ -172,7 +173,7 @@ The following bind every code change.
 
 On a **protected branch**, commits require fresh `commit_consent` (`/grant-commit`, 15-min TTL) and pushes fresh `push_consent` (`/grant-push`, 5-min TTL), each gated on the user having asked for the op in their current request. Non-protected branches proceed without consent. `git_commit_guard` (Art. VIII) enforces.
 
-**Branch topology (full rules: annex + seed.md Art. VII).** `git.workflow_model` + `git.release_branches` declare where commits may land; `git_commit_guard` enforces on the primary tree only (swarm worktrees exempt). **Binding precedence:** a non-`ask` model **overrides Claude's generic branching instincts and the harness default** — branch only as it prescribes; under `ask`, yield to the user.
+**Branch topology (full rules: annex + seed.md §11).** `git.workflow_model` + `git.release_branches` declare where commits may land; `git_commit_guard` enforces on the primary tree only (swarm worktrees exempt). **Binding precedence:** a non-`ask` model **overrides Claude's generic branching instincts and the harness default** — branch only as it prescribes; under `ask`, yield to the user.
 
 **Detached HEAD.** When the branch resolves to the literal `HEAD`, the guard denies both commit and push; check out a named branch first (branch-aware policy needs one to evaluate `git.protected_branches`/`git.branch_pattern`).
 
@@ -197,11 +198,11 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | Hook | Event | Article enforced | Behavior (terse) |
 |---|---|---|---|
 | `setup_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. III | Advisory reminder when `configured: false` (rate-limited). Never blocks. |
-| `destructive_cmd_guard` | PreToolUse / Bash | Art. VII | Hard-block catastrophic commands; ask on risky |
+| `destructive_cmd_guard` | PreToolUse / Bash | Art. IV, VII | Hard-block catastrophic commands; ask on risky. Also closes the Bash surface of consent: writes to a consent path, and epic `approved` flips. |
 | `git_commit_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IV gate C, Art. VII | Branch-aware consent; hard-block forbidden flags; gate consent writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex) |
-| `gitignore_leak_guard` | PreToolUse / Bash | Art. VII | Hard-block a commit staging a must-ignore path; fail-closed. |
+| `gitignore_leak_guard` | PreToolUse / Bash | Art. VII | Hard-block a commit staging a must-ignore path. Fail-closed on an inspection error; fail-open on missing baseline data. |
 | `env_guard` | PreToolUse / Edit\|Write\|MultiEdit\|NotebookEdit | Art. VII | Block writes to `.env*` (allows `.env.example`) |
-| `direction_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow direction-approval token write only on fresh marker; block self-approval + marker writes |
+| `direction_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate A | Allow direction-approval token write only on fresh marker; block self-approval + marker writes; opt-in provenance-anchor arm. (annex) |
 | `swarm_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV gate B | Allow swarm-approval write only on fresh marker; block marker writes |
 | `epic_approval_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV (§18.9) | Allow an epic-state `approved: true` flip only when the matching `spec_approvals/<slug>.approval` token exists; other writes pass. (annex) |
 | `verify_pass_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. V, VI | Block writing PASS to verify artifacts when truth source says FAIL |
@@ -211,17 +212,19 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `plantuml_syntax_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true. |
 | `spec_diagram_presence_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 4 | Block specs missing required diagram kinds |
 | `spec_design_calls_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. XI.2 | Block UI specs whose `## Design calls` rows lack a Reference target/Quality criteria |
-| `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline in shared isolation mode |
+| `swarm_boundary_guard` | PreToolUse / Edit\|Write\|MultiEdit | Art. IV phase 6c | Enforce write_set discipline whenever a wave is active (both isolation modes) |
 | `tdd_order_guard` | PreToolUse / Write | Art. VI.4 | Require test before new source file |
-| `process_lifecycle_guard` | PreToolUse / Bash | Art. IX | Advisory. Surfaces kill/lsof/serve landmines before matching Bash. Never blocks. (annex) |
-| `lint_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `lint.cmd` on code changes (guide mode until configured) |
-| `test_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `test.cmd` on code changes (guide mode until configured) |
+| `process_lifecycle_guard` | PreToolUse / Bash + Edit\|Write\|MultiEdit | Art. IX | Advisory. Bash leg surfaces landmines; write leg surfaces phase-scoped memory. Never blocks. (annex) |
+| `lint_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `lint.cmd` on code changes (guide mode until configured); `exit 2` on failure |
+| `test_runner` | PostToolUse / Edit\|Write\|MultiEdit | Art. VI | Run `test.cmd` on code changes (guide mode until configured); `exit 2` on failure |
 | `phase_timer` | PostToolUse / Edit\|Write\|MultiEdit + Bash | Art. V | Observe-only; stamps per-phase timing on `completed[]` growth, incl. Bash-driven `workflow.json` writes. Never blocks or mutates. |
 | `memory_session_start` | SessionStart | Art. III, IX | Inject memory index + resume snapshot at session start |
 | `memory_stop` | Stop | Art. IX | Auto-extract memory candidates each turn-end |
 | `harness_continuation` | Stop | Art. V | Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex) |
 | `memory_pre_compact` | PreCompact | Art. IX | Capture resume snapshot before context compaction |
 | `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C, Art. VII | Detect consent commands in user input and write the gate marker, OUTSIDE Claude's tool boundary |
+
+Every `Edit\|Write\|MultiEdit` row is wired on `NotebookEdit` too. `tdd_order_guard` is the one true `Write`-only guard.
 
 ## Article IX — Project memory
 
@@ -231,7 +234,7 @@ The memory system at `.claude/memory/` accumulates project facts across sessions
 2. **Re-verify before citing.** Every skill that cites a memory entry SHALL re-verify it (file exists, symbol still at named line, library version still pinned). Failed verification → you SHALL correct or delete the entry in the same run before proceeding.
 3. Treat `_pending.md` as the auto-extraction inbox (written by `memory_stop`). Promote candidates to canonical files only via `/memory-flush`. You SHALL NOT write directly into canonical memory files outside the natural byproduct of phase skills.
 4. Treat `_resume.md` as the cross-session continuity snapshot (refreshed every turn-end and before compaction). It is **session memory**, not project memory.
-5. Respect `size-cap: 500` per canonical file. When a write exceeds the cap, prune the oldest unverified entries in the same write. Entries unverified for ≥ 30 commits or ≥ 90 days are stale; the next phase that touches them either re-verifies or deletes.
+5. Respect `size-cap: 500` per canonical file **in the flat shape** (prune oldest unverified on overflow); the sharded shape has no per-file cap. Entries unverified for ≥ 30 commits or ≥ 30 days are stale; the next phase that touches them re-verifies or deletes.
 6. **Preserve verbatim.** Memory entries with `source: user-instruction` or `source: user-feedback` SHALL include a `verbatim:` blockquote of the user's actual words. The verbatim is canonical; the entry body is Claude's interpretation. When verbatim and interpretation conflict, **verbatim wins**, and you SHALL surface the conflict to the user before acting on the interpretation. `/memory-flush` SHALL reject promotions to canonical files that lack a required verbatim. Schema: `.claude/memory/README.md → Source provenance`.
 7. **Respect advisory memory hooks.** Advisory PreToolUse hooks (e.g., `process_lifecycle_guard`) surface relevant memory entries inline before matching tool calls. You SHALL read the surfaced verbatim before executing the matched command, and SHALL treat it as binding for the current operation.
 8. **Durable local thread trail.** `.claude/memory/_thread.md` is a third memory class — **local + durable**: gitignored content (only `src/memory/_thread.template.md` ships the pristine structure), and OUTSIDE `/memory-flush`'s reset path, so a shelved thread survives flushes and `/clear`. Claude Code (never the human) shelves the active thread mechanically and surfaces a summary at resume (TTL-cached); invoked by the model internally, not via any skill or command. Detail + shelve/resume behavior: `.claude/CONSTITUTION.md` (annex).
@@ -253,7 +256,7 @@ A **peer** is a full Claude Code session (with its own subagents/parallel agents
 
 ## Article XI — Project-specific rules
 
-Reserved for project-owner amendments. Rules below the boundary line bind alongside Articles I–X but SHALL NOT contradict them. Amendments to Articles I–X require an edit to `docs/init/seed.md` first per the precedence rule (Art. I.4).
+Reserved for project-owner amendments. Rules below the boundary line bind alongside the baseline Articles (I–X, XII; XII is baseline-owned, sited below by budget) but SHALL NOT contradict them. Amendments to them require an edit to `docs/init/seed.md` first per the precedence rule (Art. I.4).
 
 ---
 
