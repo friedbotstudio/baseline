@@ -1,0 +1,130 @@
+{#
+  The tool boundary, as two authored layouts rather than one that scales.
+
+  Wide is 740 user units and renders at its natural size on desktop, so its
+  12px mono matches the page's own mono. Stacked is 340 units for a phone.
+  Both are inline, so they consume DESIGN.md tokens through .dg-* classes and
+  render in IBM Plex like everything else; an SVG referenced through an image
+  element could do neither, and its text would not be crawlable either.
+  CSS swaps them at 760px — only one is ever in the a11y tree.
+#}
+
+<svg class="dg dg-wide" width="740" height="254" viewBox="0 0 740 254" role="img" aria-labelledby="dgb-w-t dgb-w-d" preserveAspectRatio="xMidYMid meet">
+  <title id="dgb-w-t">The Claude Code tool lifecycle and the hook boundary beneath it</title>
+  <desc id="dgb-w-d">A user prompt passes to Claude, which reads, plans and picks a tool. The tool call — Write, Edit or Bash — returns a diff, output or an error, and the result passes back. Below that lane, outside Claude's reach, sit three hook events: UserPromptSubmit, where consent_gate_grant writes the consent marker; PreToolUse, where the guards block, ask or allow; and PostToolUse, where lint_runner and test_runner run.</desc>
+
+  <g class="dg-lane">
+    <text x="0" y="14">user</text>
+    <text x="196" y="14">claude</text>
+    <text x="392" y="14">tool</text>
+    <text x="588" y="14">result</text>
+  </g>
+
+  <g class="dg-box">
+    <rect x="0" y="26" width="150" height="88" vector-effect="non-scaling-stroke"/>
+    <rect x="196" y="26" width="150" height="88" vector-effect="non-scaling-stroke"/>
+    <rect x="392" y="26" width="150" height="88" vector-effect="non-scaling-stroke"/>
+    <rect x="588" y="26" width="150" height="88" vector-effect="non-scaling-stroke"/>
+  </g>
+
+  <g class="dg-t">
+    <text x="14" y="78">prompt</text>
+    <text x="210" y="56">read</text>
+    <text x="210" y="78">plan</text>
+    <text x="210" y="100">pick</text>
+    <text x="406" y="56">Write</text>
+    <text x="406" y="78">Edit</text>
+    <text x="406" y="100">Bash</text>
+    <text x="602" y="56">diff</text>
+    <text x="602" y="78">output</text>
+    <text x="602" y="100">error</text>
+  </g>
+
+  <g class="dg-arrow">
+    <path d="M150 56h40M346 56h40M542 56h40" vector-effect="non-scaling-stroke"/>
+    <path d="M196 100h-40M392 100h-40M588 100h-40" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-head">
+    <path d="M196 56l-7-4v8zM392 56l-7-4v8zM588 56l-7-4v8z"/>
+    <path d="M150 100l7-4v8zM346 100l7-4v8zM542 100l7-4v8z"/>
+  </g>
+
+  <g class="dg-tick">
+    <path d="M75 114v34M271 114v34M467 114v34M663 114v34" vector-effect="non-scaling-stroke"/>
+  </g>
+
+  <path class="dg-dash" d="M0 148h740" vector-effect="non-scaling-stroke"/>
+
+  <g class="dg-gate">
+    <text x="0" y="176">UserPromptSubmit</text>
+    <text x="392" y="176">PreToolUse</text>
+    <text x="588" y="176">PostToolUse</text>
+  </g>
+  <g class="dg-note">
+    <text x="0" y="196">consent_gate_grant</text>
+    <text x="0" y="213">writes the marker</text>
+    <text x="392" y="196">the guards</text>
+    <text x="392" y="213">block · ask · allow</text>
+    <text x="588" y="196">lint_runner</text>
+    <text x="588" y="213">test_runner</text>
+  </g>
+
+  <path class="dg-dash" d="M0 244h214M526 244h214" vector-effect="non-scaling-stroke"/>
+  <text class="dg-edge" x="370" y="248" text-anchor="middle">outside Claude's reach</text>
+</svg>
+
+<svg class="dg dg-stack" width="340" height="760" viewBox="0 0 340 760" role="img" aria-labelledby="dgb-s-t dgb-s-d" preserveAspectRatio="xMidYMid meet">
+  <title id="dgb-s-t">The Claude Code tool lifecycle and the hook boundary beneath it</title>
+  <desc id="dgb-s-d">A user prompt passes to Claude, which reads, plans and picks a tool. The tool call — Write, Edit or Bash — returns a diff, output or an error, and the result passes back. Below that lane, outside Claude's reach, sit three hook events: UserPromptSubmit, where consent_gate_grant writes the consent marker; PreToolUse, where the guards block, ask or allow; and PostToolUse, where lint_runner and test_runner run.</desc>
+
+  <g class="dg-box">
+    <rect x="0" y="24" width="340" height="74" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="138" width="340" height="74" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="252" width="340" height="74" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="366" width="340" height="74" vector-effect="non-scaling-stroke"/>
+  </g>
+
+  <g class="dg-lane">
+    <text x="14" y="46">user</text>
+    <text x="14" y="160">claude</text>
+    <text x="14" y="274">tool</text>
+    <text x="14" y="388">result</text>
+  </g>
+  <g class="dg-t">
+    <text x="14" y="76">prompt</text>
+    <text x="14" y="190">read · plan · pick</text>
+    <text x="14" y="304">Write · Edit · Bash</text>
+    <text x="14" y="418">diff · output · error</text>
+  </g>
+
+  <g class="dg-arrow">
+    <path d="M130 100v28M130 214v28M130 328v28" vector-effect="non-scaling-stroke"/>
+    <path d="M210 136v-28M210 250v-28M210 364v-28" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-head">
+    <path d="M130 136l-4-7h8zM130 250l-4-7h8zM130 364l-4-7h8z"/>
+    <path d="M210 100l-4 7h8zM210 214l-4 7h8zM210 328l-4 7h8z"/>
+  </g>
+
+  <g class="dg-tick">
+    <path d="M170 440v34" vector-effect="non-scaling-stroke"/>
+  </g>
+  <path class="dg-dash" d="M0 474h340" vector-effect="non-scaling-stroke"/>
+
+  <g class="dg-gate">
+    <text x="0" y="506">UserPromptSubmit</text>
+    <text x="0" y="578">PreToolUse</text>
+    <text x="0" y="650">PostToolUse</text>
+  </g>
+  <g class="dg-note">
+    <text x="0" y="526">consent_gate_grant</text>
+    <text x="0" y="543">writes the marker</text>
+    <text x="0" y="598">the guards</text>
+    <text x="0" y="615">block · ask · allow</text>
+    <text x="0" y="670">lint_runner</text>
+    <text x="0" y="687">test_runner</text>
+  </g>
+
+  <path class="dg-dash" d="M0 722h340" vector-effect="non-scaling-stroke"/>
+  <text class="dg-edge" x="170" y="746" text-anchor="middle">outside Claude's reach</text>
+</svg>

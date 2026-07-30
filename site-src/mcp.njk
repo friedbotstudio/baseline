@@ -1,124 +1,61 @@
 ---
 layout: docs.njk
-permalink: /mcp/index.html
-pageTitle: "MCP servers · baseline"
-title: MCP servers
-titlePrimary: MCP
-titleAccent: " servers"
-eyebrow: Reference
-eleventyComputed:
-  description: "The {{ baseline.mcpServersWord }} MCP servers the baseline declares, the first-party coordination channel it ships bundled, and how .mcp.json merges on install and upgrade."
-  lead: "{{ baseline.mcpServersWord | capitalize }} MCP servers are declared. Three are fetched when needed; one is first-party and travels with the install. A fifth ships bundled and unregistered, inert until a launcher activates it."
-active: ""
-sidebarActive: mcp
-heroSymbol: mcp
+title: "MCP servers: what the overlay registers · baseline"
+description: "Reference for the four MCP servers the baseline registers in .mcp.json: what each provides, how it is launched, and how the file merges on install and upgrade."
+heading: "Four servers,<br>registered on install."
+lead: "Reference for the servers declared in .mcp.json. Three of them are fetched from npm the first time they launch, while the fourth is the coordination broker that ships inside the overlay itself and needs no separate install."
+updated: 2026-07-29
+breadcrumb: ["docs", "reference", "mcp servers"]
+facts:
+  - { label: "servers", value: "4" }
+  - { label: "declared in", value: ".mcp.json" }
+  - { label: "merge", value: "additive" }
 toc:
-  - { id: four,      label: "The roster" }
-  - { id: outcome,   label: "Docs as an outcome" }
-  - { id: channel,   label: "The channel" }
-  - { id: bundling,  label: "Bundling" }
-  - { id: merge,     label: "Merge semantics" }
-  - { id: broker,    label: "The broker" }
+  - { id: "servers", label: "The servers" }
+  - { id: "launch", label: "Launch commands" }
+  - { id: "merge", label: "Merge behaviour" }
+  - { id: "replacing", label: "Replacement" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="four">The roster</h2>
-    </div>
-    <p>All declared in <code>.mcp.json</code> at the repository root, so the capability travels with the project.</p>
-  </div>
-  <table>
-    <thead><tr><th>Server</th><th>Provides</th><th>Delivery</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">context7</td><td>Current library documentation, so a third-party API is verified, never recalled</td><td>fetched on demand</td></tr>
-      <tr><td class="phase">plantuml</td><td>Diagram rendering and syntax validation for specs</td><td>fetched on demand</td></tr>
-      <tr><td class="phase">playwright</td><td>Browser automation for cross-engine visual checks</td><td>fetched on demand</td></tr>
-      <tr><td class="phase">sprint-channel</td><td>A file-locked coordination channel for multi-session work</td><td>first-party, ships bundled</td></tr>
-    </tbody>
-  </table>
-  <p>The roster splits in two. Three servers are required and checked by name. <code>context7</code> is the default satisfier of a documentation requirement, and the audit reports it when present but never fails when it is gone.</p>
-</section>
+<h2 id="servers"><span class="sec-mark" aria-hidden="true">§ I</span> The servers</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="outcome">Documentation is an outcome, not a tool</h2>
-    </div>
-    <p>The rule is that a third-party API must be verified against current documentation before code is written against it, and never recalled from training.</p>
+{# Names derive from .mcp.json; the per-server note is editorial and lives in
+   _data/mcpnotes.json, with a coverage guard in roster.cjs that fails the build
+   if the two fall out of step. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for m in roster.mcpDetail %}
+  <div class="cell" id="mcp-{{ m.name }}">
+    <div class="cell-kicker">{{ m.name }}</div>
+    <p>{{ m.note }}</p>
   </div>
-  <p>The rule names an outcome. It is satisfied by <code>context7</code>, by a library's own documentation, or by a pinned local cache, and a project may remove <code>context7</code> entirely as long as the outcome holds.</p>
-  <p>Hard-mandating a service that prompts a login would have coupled every downstream user of an open-source baseline to a commercial signup, which is a dependency hiding inside a rule.</p>
-</section>
+  {% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="channel">The channel</h2>
-    </div>
-    <p><code>sprint-channel</code> exposes nine tools, all declared in <code>.claude/mcp/sprint-channel/server.mjs</code>.</p>
-  </div>
-  <table>
-    <thead><tr><th>Tool</th><th>Does</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">register_peer</td><td>Register a peer, worker or session, on the channel</td></tr>
-      <tr><td class="phase">leave_peer</td><td>Deregister a peer and remove it from <code>peers[]</code></td></tr>
-      <tr><td class="phase">send_message</td><td>Send a mechanical-coordination message to one peer</td></tr>
-      <tr><td class="phase">broadcast</td><td>Send a coordination message to every peer</td></tr>
-      <tr><td class="phase">claim_task</td><td>Claim a task atomically, file-locked and race-safe</td></tr>
-      <tr><td class="phase">signal_done</td><td>Mark a task done and unblock its dependents</td></tr>
-      <tr><td class="phase">release_task</td><td>Lead re-dispatch: reset a claimed or yielded task to pending and resolve its open yield</td></tr>
-      <tr><td class="phase">raise_conflict</td><td>Raise a write-set conflict for lead arbitration</td></tr>
-      <tr><td class="phase">yield_fork</td><td>Yield an un-decidable fork to the lead</td></tr>
-    </tbody>
-  </table>
-  <p><code>claim_task</code> takes its lock with <code>mkdirSync</code>, which is atomic on POSIX, so two peers racing for the same task produce one winner and one <code>EEXIST</code>. A lock older than the 30 second TTL counts as stale and is reclaimed by an atomic <code>renameSync</code>, so a crashed peer cannot leave a task unclaimable forever.</p>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>The message types are a closed set.</strong>
-      <p>That is a design decision rather than an oversight. There is no free-form directive type, so a design instruction cannot travel over the channel at all. Coordination goes through it; judgment does not.</p>
-    </div>
-  </div>
-</section>
+<h2 id="launch"><span class="sec-mark" aria-hidden="true">§ II</span> Launch commands</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="bundling">Bundling</h2>
-    </div>
-    <p><code>sprint-channel</code> imports <code>@modelcontextprotocol/sdk</code> and <code>zod</code>. Both are devDependencies that never reach an install.</p>
-  </div>
-  <p><code>esbuild</code> inlines them at build time, so the shipped <code>server.mjs</code> is self-contained and the baseline carries no runtime dependency. The development tree keeps the readable source; only the shipped copy is bundled. That costs 1111 KB for <code>sprint-channel</code> and 563 KB for <code>sprint-pool</code>.</p>
-  <p>Registering the server only became safe once that bundle existed. Before it, declaring the server would have handed consumers something that could not start.</p>
-</section>
+<p class="sec-lead">Each entry's command, exactly as registered. The Claude Code client is what starts these servers, and they run on your own machine with the project directory as their working directory (nothing is dialled out to a hosted endpoint).</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="merge">Merge semantics on install and upgrade</h2>
-    </div>
-    <p>Servers named in the shipped template are baseline-canonical.</p>
+<div class="plate">
+  <div class="plate-bar">
+    <span>.mcp.json</span>
   </div>
-  <p>They are replaced wholesale from the template on every install and upgrade rather than merged key by key. A server under a name of your own is preserved exactly. A customisation applied to a baseline-named server is not, and that is the mechanism by which upgrades deliver changes to those servers rather than an accident.</p>
-  <p>The guidance is one sentence: keep intentional customisations under a non-baseline name.</p>
-  <p>Note the asymmetry. Inside the server map, the template wins. Outside it, your file wins, and template keys are only added when missing.</p>
-</section>
+  <pre class="plate-body">{% for m in roster.mcpDetail %}<span class="t-ok">{{ m.name }}</span>
+  {{ m.command }}
+{% endfor %}</pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="broker">The broker</h2>
-    </div>
-    <p><code>sprint-pool</code> is a second first-party server, bundled and deliberately unregistered.</p>
-  </div>
-  <p>It is a channel server rather than a stdio one, so declaring it in <code>.mcp.json</code> would ship a registration that cannot work. It stays inert until <code>.claude/skills/companion/launch.sh</code> activates it.</p>
-  <p>Both servers sit on top of <code>sprint-broker</code>, which is transport only. It reuses <code>sprint-channel</code>'s handlers and adds a Unix-domain socket over <code>node:net</code> plus a frame codec, and that split is why it is not a server in its own right.</p>
-  <p>One broker owns a channel. When a second broker hits <code>EADDRINUSE</code> it probes the socket before reclaiming it: a live broker answers and the newcomer refuses to start, while a crashed broker refuses the connection and leaves a socket that is safe to unlink. Silently taking over would split the pod and hand the new broker empty state.</p>
-</section>
+<p>The three <code class="tok">npx</code> entries pull from npm the first time they launch, whereas <code class="tok">sprint-channel</code> runs from the overlay itself. That is why org mode needs no extra install, and also why every session in a pod must share a single checkout.</p>
+
+<h2 id="merge"><span class="sec-mark" aria-hidden="true">§ III</span> Merge behaviour</h2>
+
+<p>If you already have a <code class="tok">.mcp.json</code>, install and upgrade will merge into it rather than replace it. Servers the template names belong to the baseline and refresh from it, which is how you pick up new baseline arguments and environment settings. Servers the template does not name are yours, and those stay byte for byte as they were.</p>
+
+<p>To keep a change of your own, put it under a name the template does not use. Change one of the template's own servers and the next upgrade will overwrite it, because for those names the template wins.</p>
+
+<p>Top-level keys outside <code class="tok">mcpServers</code> behave the same way: the merge adds template keys you are missing and leaves the keys you already have. Where the result would match your file exactly, nothing is written at all and the upgrade reports the file unchanged.</p>
+
+<h2 id="replacing"><span class="sec-mark" aria-hidden="true">§ IV</span> Replacement</h2>
+
+<p>Article VI.5 requires that a third-party API be checked against current documentation before any code is written against it. The rule names the outcome and leaves the tool open, so while <code class="tok">context7</code> is the shipped default you may swap it out or drop it entirely, provided the checking still happens. A library's own <code class="tok">llms.txt</code> will do, and so will a pinned local copy of the docs.</p>
+
+<p><code class="tok">audit-baseline</code> checks these servers by name and not by count. If you swap one out, the audit will tell you which name it expected to find.</p>

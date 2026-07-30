@@ -46,7 +46,12 @@ describe('manifest — ownership + hashes (AC-009)', () => {
   });
 });
 
-describe('counts — 46→48 reconciled everywhere (AC-009)', () => {
+// The pin moves whenever the skill roster changes; its job is to force every
+// surface to move together. Last moved 52→53 by site-positioning-org-ship,
+// which graduated `companion` to a baseline-owned skill. The guard caught two
+// surfaces that edit had missed (.claude/CONSTITUTION.md and README's inventory
+// table), which is exactly what it is for.
+describe('counts — reconciled across every prose surface (AC-009)', () => {
   const COUNT_SURFACES = [
     'CLAUDE.md',
     'src/CLAUDE.template.md',
@@ -56,12 +61,15 @@ describe('counts — 46→48 reconciled everywhere (AC-009)', () => {
     '.claude/CONSTITUTION.md',
   ];
   for (const rel of COUNT_SURFACES) {
-    it(`test_when_counts_reconciled_then_52_skills_in_${rel.replace(/[^\w]/g, '_')}`, () => {
+    it(`test_when_counts_reconciled_then_53_skills_in_${rel.replace(/[^\w]/g, '_')}`, () => {
       const text = read(rel);
-      assert.ok(text.includes('52 skills'), `${rel} must read "52 skills"`);
-      assert.ok(!text.includes('46 skills'), `${rel} must no longer read "46 skills"`);
+      assert.ok(text.includes('53 skills'), `${rel} must read "53 skills"`);
+      for (const superseded of ['46 skills', '52 skills']) {
+        assert.ok(!text.includes(superseded), `${rel} must no longer read "${superseded}"`);
+      }
     });
   }
+
 });
 
 describe('inventory.mjs — deterministic single-concern grouping (AC-009)', () => {

@@ -1,160 +1,194 @@
 ---
 layout: docs.njk
-permalink: /install/index.html
-pageTitle: "Install · baseline"
-title: Install
-titlePrimary: Install
-titleAccent: "."
-description: "The baseline is a repository overlay materialized by `npx @friedbotstudio/create-baseline <target>`. Five sentinel paths land in the target project; nothing else is touched. Node ≥ 18.17 required."
-eyebrow: Getting started
-lead: "The baseline is a repository overlay materialized by <code>npx @friedbotstudio/create-baseline &lt;target&gt;</code>. Five sentinel paths land in the target project; nothing else is touched. Node 18.17 or later is the only hard requirement."
-active: install
-sidebarActive: install
-heroSymbol: install
+title: "Install: one command, then you approve · baseline"
+description: Install the baseline overlay into a project with one npx command, tailor it to your stack with /init-project, and start your first workflow. Node 18.17 and bash 4 are the only hard requirements.
+heading: "One command,<br>then you approve."
+lead: By the end of this page the overlay is installed in a project on your machine, tailored to your stack, and a first workflow is running under it.
+updated: 2026-07-29
+breadcrumb: ["docs", "tutorials", "install"]
+chips:
+  - { label: "~10 min" }
+facts:
+  - { label: "you need", value: "node 18.17 · bash 4" }
+  - { label: "optional", value: "git · java 8+" }
+  - { label: "license", value: "Apache 2.0" }
 toc:
-  - { id: requirements, label: "Requirements" }
-  - { id: one-command,  label: "One command" }
-  - { id: lands,        label: "What lands" }
-  - { id: after,        label: "After install" }
-  - { id: recover,      label: "Recover from a bad install" }
+  - { id: "requirements", label: "Check the requirements" }
+  - { id: "install", label: "Install the overlay" }
+  - { id: "tree", label: "See what landed" }
+  - { id: "rerun", label: "Run the command again" }
+  - { id: "live", label: "Open in Claude Code" }
+  - { id: "configure", label: "Configure your stack" }
+  - { id: "first-workflow", label: "Start your first workflow" }
+  - { id: "next", label: "Continue from here" }
 ---
 
-<div class="page-install">
-  {% include "install-pill.njk" %}
-  <p class="pill-meta">{{ site.versionMinor }} · {{ site.license }} · open source</p>
+<p class="sec-lead">One command installs the overlay. A second command, run inside Claude Code, tailors it to your stack, and that one will ask you before it writes anything.</p>
+
+<h2 id="requirements"><span class="sec-mark" aria-hidden="true">§ I</span> Check the requirements</h2>
+
+{# Rendered as cells rather than a table: the docs surface ships no table
+   component, and inventing one for four rows would add CSS no other page
+   uses. `grid-2` gives a 2x2 that collapses to a single column on mobile. #}
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">node 18.17.0+</div>
+    <p>Check with <code class="tok">node --version</code>. The CLI reads its arguments with <code class="tok">node:util</code> <code class="tok">parseArgs</code> in strict mode.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">bash 4+</div>
+    <p>Check with <code class="tok">bash --version</code>. <code class="tok">/init-project</code> stops if bash is older.</p>
+  </div>
+  <div class="cell cell-sand">
+    <div class="cell-kicker">git · optional</div>
+    <p>Without git, the workflow skips the commit phase and ends after <code class="tok">/archive</code>.</p>
+  </div>
+  <div class="cell cell-sand">
+    <div class="cell-kicker">java 8+ · optional</div>
+    <p>Without java, you lose PlantUML diagram checks and <code class="tok">/spec-render</code>.</p>
+  </div>
 </div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="requirements">Requirements</h2>
-    </div>
-    <p>Everything the baseline needs from your environment before it can install. Two of the rows below are optional.</p>
+<p>If you are on macOS, note that it still ships bash 3.2, so install a newer one before you reach the configuration step. The installer itself skips this check; <code class="tok">/init-project</code> is what makes it, in step two.</p>
+
+<p>The target directory does not have to exist beforehand, because the installer will create it for you.</p>
+
+<h2 id="install"><span class="sec-mark" aria-hidden="true">§ II</span> Install the overlay</h2>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>terminal</span>
+    <span class="spacer"></span>
+    <button type="button" class="plate-copy js-copy" data-copy="npx @friedbotstudio/create-baseline ./my-project">
+      <span class="copy-state">click to copy</span>
+      <span class="visually-hidden">Copy the install command</span>
+    </button>
   </div>
-  <table>
-    <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">Node ≥ 18.17</td><td>The CLI uses <code>node:util.parseArgs</code> with <code>strict</code> mode, available from this version.</td></tr>
-      <tr><td class="phase">npx on <code>$PATH</code></td><td>The canonical invocation. <code>npm exec @friedbotstudio/create-baseline</code> works too.</td></tr>
-      <tr><td class="phase">A target directory</td><td>An existing project root, or an empty directory you intend to populate. The CLI does not <code>mkdir</code> for you.</td></tr>
-      <tr><td class="phase">Git (optional)</td><td>Without git, the workflow ends at <code>/archive</code>. Phase 11 auto-excepts, including <code>/grant-commit</code> and <code>commit</code> at 11. See <a href="{{ '/swarm/#dispatch' | rel }}"><code>/swarm-dispatch</code></a> for the worktree-isolation case.</td></tr>
-      <tr><td class="phase">Java (optional)</td><td>Required only if you want PlantUML diagrams rendered at <code>/spec-render</code> time. The install fetches a {{ baseline.size.plantumlJar }} sha-pinned jar; you supply the JVM. See <a href="{{ '/cli/#plantuml' | rel }}">CLI · PlantUML jar</a>.</td></tr>
-    </tbody>
-  </table>
-</section>
+  <pre class="plate-body"><span class="t-prompt">$</span> npx @friedbotstudio/create-baseline ./my-project
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="one-command">One command</h2>
-    </div>
-    <p>From the parent of your target, or anywhere with <code>npx</code> available:</p>
+<span class="t-ok">Baseline installed at /abs/path/my-project (manifest v2).</span>
+<span class="t-dim">For reproducible installs, pin the exact version:</span>
+<span class="t-dim">@friedbotstudio/create-baseline@{{ site.pkgVersion }}</span></pre>
+</div>
+
+<p>Pin that version wherever your team keeps its tool versions. Two people who install different versions will end up with different hooks and a different constitution, which is a confusing thing to debug later.</p>
+
+<p>Most of the wait is a single download: a PlantUML jar of about {{ baseline.size.plantumlJar }}, taken from the <code class="tok">plantuml</code> v1.2026.2 GitHub release and pinned to a sha256. If the network fails or the hash does not match, the install warns you and carries on, and you lose the diagram checks. Pass <code class="tok">--no-plantuml</code> to skip the download entirely; a missing java gives you the same warning and the same result.</p>
+
+<p>Later installs will fetch the jar again unless <code class="tok">.claude/bin/plantuml.jar</code> is already present and its sha256 matches. A <code class="tok">plantuml</code> binary on your PATH does not satisfy the check.</p>
+
+<h2 id="tree"><span class="sec-mark" aria-hidden="true">§ III</span> See what landed</h2>
+
+<p class="sec-lead">The installer writes the tree below, and it also writes a copy of that tree to <code class="tok">.claude/.baseline-prior/</code>. The copy is gitignored, and a later upgrade needs it to diff against.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>my-project/</span>
   </div>
+  <pre class="plate-body">.claude/
+├── hooks/          <span class="t-dim">{{ baseline.hooks.total }} guards wired at the tool boundary</span>
+├── skills/         <span class="t-dim">{{ baseline.skills.total }} baseline-owned skills</span>
+├── agents/         <span class="t-dim">{{ baseline.subagents.total }} subagent, swarm-worker</span>
+├── commands/       <span class="t-dim">the consent gates you type yourself</span>
+├── mcp/            <span class="t-dim">server implementations</span>
+├── memory/         <span class="t-dim">the seven canonical memory files</span>
+├── schemas/
+├── settings.json   <span class="t-dim">which hook fires on which event</span>
+├── project.json    <span class="t-dim">your stack, once configured</span>
+├── workflows.jsonl <span class="t-dim">the selectable tracks</span>
+└── CONSTITUTION.md <span class="t-dim">the annex</span>
+CLAUDE.md           <span class="t-dim">the in-session constitution</span>
+.mcp.json           <span class="t-dim">the baseline MCP servers</span>
+docs/init/seed.md   <span class="t-dim">the genesis specification</span>
+.gitignore
+.githooks/pre-commit
+scripts/ci/
+.github/branch-protection/main.json</pre>
+</div>
 
-  <div class="install-snippet">
-    <div class="bar">
-      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-      <span class="file">~/code · zsh</span>
-    </div>
-<pre><code><span class="tok-com"># preview without writing anything</span>
-$ npx @friedbotstudio/create-baseline ./my-project --dry-run
+<p>Two files you may already own are merged rather than replaced. Your <code class="tok">.gitignore</code> stays byte for byte as it was, and the installer only appends the baseline patterns you are missing, under a comment header. That pattern list lives in <code class="tok">.claude/skills/gitignore/baseline-ignores.json</code>.</p>
 
-<span class="tok-com"># the real thing</span>
-$ npx @friedbotstudio/create-baseline ./my-project
-<span class="tok-com"># → Baseline installed at /Users/you/code/my-project (manifest v2).</span>
-<span class="tok-com"># → For reproducible installs, pin the exact version: @friedbotstudio/create-baseline@{{ site.pkgVersion }}</span></code></pre>
+<p>Your <code class="tok">.mcp.json</code> gets a deep merge: servers the baseline names refresh from the template, while any server you added yourself stays untouched.</p>
+
+<h2 id="rerun"><span class="sec-mark" aria-hidden="true">§ IV</span> Run the command again</h2>
+
+<p>Run the same command again and it exits 1:</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>terminal</span>
   </div>
+  <pre class="plate-body"><span class="t-prompt">$</span> npx @friedbotstudio/create-baseline ./my-project
 
-  <p>The first run takes 5 to 30 seconds, dominated by the PlantUML jar fetch (~{{ baseline.size.plantumlJar }}, sha256-pinned). Subsequent runs reuse the cached jar.</p>
+<span class="t-blocked">existing baseline detected at ./my-project: .claude,</span>
+<span class="t-blocked">.claude/.baseline-manifest.json, CLAUDE.md, .mcp.json,</span>
+<span class="t-blocked">docs/init/seed.md. Pass --force to overwrite or use</span>
+<span class="t-blocked">`create-baseline upgrade &lt;target&gt;` to three-way merge.</span></pre>
+</div>
 
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>Pin the exact version.</strong>
-      <p>The baseline changes between releases. Teams sharing a repository should pin to a specific <code>@friedbotstudio/create-baseline@&lt;version&gt;</code> so every install of the repo gets the same hooks, skills, and constitution. Running <code>npx @friedbotstudio/create-baseline upgrade ./project</code> at a newer version reconciles the target against the new template; in a TTY each customised file becomes an interactive prompt, and in CI every per-file action is reported and exit 3 fires when any customisation cannot be auto-reconciled (see <a href="{{ '/cli/#modes' | rel }}">CLI · Modes</a>).</p>
-    </div>
+<p>Those five paths are the sentinels the installer looks for, and finding any one of them stops the run. This is why you cannot wipe a working install by re-running the command out of shell history.</p>
+
+<h2 id="live"><span class="sec-mark" aria-hidden="true">§ V</span> Open the project in Claude Code</h2>
+
+<p>Open the project in Claude Code. The <code class="tok">SessionStart</code> hook injects the memory index, and Claude opens with the project-agnostic banner:</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>claude code</span>
   </div>
-</section>
+  <pre class="plate-body">This repo has the Claude Code baseline installed ({{ baseline.hooks.total }} hooks,
+{{ baseline.subagents.total }} subagent, {{ baseline.skills.total }} skills). It's in <span class="t-ok">project-agnostic mode</span> —
+test_runner and lint_runner are in guide mode and nothing
+is tailored to your stack.</pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="lands">What lands</h2>
-    </div>
-    <p>Five sentinel paths, a small set of vendored bins, and the default-on CI posture. Nothing else in your project is touched. The CLI refuses to run if any sentinel is already present, unless you pass <code>--force</code> or use the <code>upgrade</code> subcommand.</p>
-  </div>
-  <table>
-    <thead><tr><th>Path</th><th>Role</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">.claude/</td><td><a href="{{ '/hooks/' | rel }}">{{ baseline.hooks.total }} hooks</a>, <a href="{{ '/skills/' | rel }}">{{ baseline.skills.total }} skills</a>, {{ baseline.commands }} consent commands, {{ baseline.subagents.total }} subagent, <a href="{{ '/memory/' | rel }}">memory schemas</a>, <code>project.json</code>, <code>settings.json</code>.</td></tr>
-      <tr><td class="phase">CLAUDE.md</td><td>In-session constitution. Binds Claude's behavior in this repository.</td></tr>
-      <tr><td class="phase">.mcp.json</td><td>The four baseline MCP servers: <code>context7</code>, <code>plantuml</code>, <code>playwright</code>, <code>sprint-channel</code>.</td></tr>
-      <tr><td class="phase">docs/init/seed.md</td><td>Genesis prompt. The governing specification of the baseline.</td></tr>
-      <tr><td class="phase">.githooks/, scripts/ci/, .github/branch-protection/</td><td>The CI/secrets posture, delivered by default: a gitleaks pre-commit gate that hard-fails a commit when the scanner is absent, a low-risk auto-merge classifier, and branch protection as a fill-in config with a subset-asserting applier. Skip the whole set with <code>--no-ci-posture</code>.</td></tr>
-      <tr><td class="phase">.claude/bin/LICENSE, NOTICE</td><td>Apache 2.0 license + provenance for the side-fetched PlantUML jar.</td></tr>
-      <tr><td class="phase">.claude/bin/plantuml.jar</td><td>Side-fetched at install time, sha256-pinned, ~{{ baseline.size.plantumlJar }}. Skipped if <code>plantuml</code> is already on <code>$PATH</code>.</td></tr>
-      <tr><td class="phase">.claude/.baseline-manifest.json</td><td>The hash table the CLI writes after install. Used by the <code>upgrade</code> subcommand to do a three-way reconcile on the next install.</td></tr>
-    </tbody>
-  </table>
-  <p>If your project has an existing <code>.mcp.json</code>, the install performs an additive merge: the four baseline servers are added (or refreshed); your user-added servers are preserved byte-for-byte. See <a href="{{ '/cli/#mcp-merge' | rel }}">CLI · <code>.mcp.json</code> merge semantics</a>.</p>
-  <p>The CLI itself ships one pinned runtime dependency, <code>@clack/prompts</code>, which supplies the prompt primitives behind the branded TTY flows. Everything else it needs is Node stdlib and the contents of the npm tarball; the dependency stays in the CLI and never lands in your project.</p>
-</section>
+<p>From this moment the hooks are live and enforcing, though nothing is tailored to your stack yet. <code class="tok">test_runner</code> and <code class="tok">lint_runner</code> will print guidance rather than run anything, because nothing has yet told them your test and lint commands.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="after">After install</h2>
-    </div>
-    <p>The baseline runs in <strong>project-agnostic mode</strong> immediately. Hooks are active. <code>test_runner</code> and <code>lint_runner</code> emit guidance only until tailored.</p>
-  </div>
-  <ol>
-    <li>
-      <strong>Open the project in Claude Code.</strong> The <code>SessionStart</code> hook injects the memory index. Claude greets you with the project-agnostic banner.
-    </li>
-    <li>
-      <strong>Run <code>/init-project</code>.</strong> Claude scouts the codebase, runs the recommender, proposes a tailored <code>project.json</code> (test command, lint command, TDD source globs, destructive patterns, optional MCP servers and skills, optional stack skills for <code>swarm-worker</code>), and writes it after you approve. The <code>configured</code> flag flips to <code>true</code>.
-    </li>
-    <li>
-      <strong>Restart Claude Code.</strong> The session re-reads <code>project.json</code>; the runner hooks switch from guide mode to enforcement.
-    </li>
-    <li>
-      <strong>Run your first <code>/triage "&lt;request&gt;"</code>.</strong> <code>/triage</code> classifies the request and presents the picked track plus alternates via <code>AskUserQuestion</code>. You confirm or pick an alternate. <code>/harness</code> then walks the chosen track end to end, yielding at consent gates so you can review.
-    </li>
-  </ol>
-  <p>Until <code>/init-project</code> runs, you can still use every phase. You just won't have stack-specific tailoring. Project-agnostic mode is a sanctioned operating state, not a partial install.</p>
-</section>
+<h2 id="configure"><span class="sec-mark" aria-hidden="true">§ VI</span> Configure your stack</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="recover">Recover from a bad install</h2>
+<p>Type <code class="tok">/init-project</code> yourself. Its frontmatter sets <code class="tok">disable-model-invocation: true</code>, which means Claude cannot start it on your behalf.</p>
+
+<ol class="steps">
+  <li class="step">
+    <div class="step-num" aria-hidden="true">1</div>
+    <div class="step-body">
+      <h3>Run <code class="tok">/init-project</code></h3>
+      <p>Nine steps run in order. They include a welcome, a check on your dependencies, and a survey of the whole codebase done in main context. Then the <code class="tok">claude-automation-recommender</code> skill runs. Last, you get a proposed <code class="tok">.claude/project.json</code> to approve before anything is written.</p>
+      <p class="step-note">It also appends a §16 addendum to <code class="tok">docs/init/seed.md</code> recording what was added, and runs <code class="tok">audit-baseline</code>.</p>
     </div>
-    <p>Three paths back to a clean baseline. Each is read-and-write safe: the CLI never silently overwrites user customizations.</p>
+  </li>
+  <li class="step">
+    <div class="step-num" aria-hidden="true">2</div>
+    <div class="step-body">
+      <h3>Restart Claude Code</h3>
+      <p>The new session reads <code class="tok">project.json</code>. The runner hooks switch from guide mode to enforcing.</p>
+    </div>
+  </li>
+</ol>
+
+<p>You can skip this step for as long as you like, since project-agnostic mode is a supported way to run. What you lose is the tailoring to your stack; every guarantee the overlay makes stays exactly the same.</p>
+
+<h2 id="first-workflow"><span class="sec-mark" aria-hidden="true">§ VII</span> Start your first workflow</h2>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>claude code</span>
+    <span class="spacer"></span>
+    <button type="button" class="plate-copy js-copy" data-copy='/triage "your request"'>
+      <span class="copy-state">click to copy</span>
+      <span class="visually-hidden">Copy the triage command</span>
+    </button>
   </div>
-  <table>
-    <thead><tr><th>Situation</th><th>Command</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="phase">Half-installed baseline</td>
-        <td><code>npx @friedbotstudio/create-baseline ./project --force</code></td>
-        <td>Refuses unless you type <code>overwrite</code>. Replaces every baseline file except <code>.claude/project.json</code> (preserved).</td>
-      </tr>
-      <tr>
-        <td class="phase">Upgrade to a newer baseline</td>
-        <td><code>npx @friedbotstudio/create-baseline upgrade ./project</code></td>
-        <td>Three-way merge against the last install's manifest. In a TTY, each customised file becomes a keep-mine / take-theirs / abort prompt. In CI, untouched files refresh, customizations are preserved (exit 3 if any), and removed-upstream files prune when you had not touched them.</td>
-      </tr>
-      <tr>
-        <td class="phase">Suspect drift</td>
-        <td><code>npx @friedbotstudio/create-baseline doctor ./project</code></td>
-        <td>Read-only. Reports matched / customized / missing / added. Exit 0 if clean, 1 if any baseline file is missing, 2 if no manifest is present.</td>
-      </tr>
-    </tbody>
-  </table>
-  <p>For the full semantics of each mode, every flag, every exit code, and the <code>doctor</code> drift report categories, see the <a href="{{ '/cli/' | rel }}">CLI reference</a>.</p>
-</section>
+  <pre class="plate-body"><span class="t-prompt">&gt;</span> /triage <span class="t-ok">"your request"</span>
+<span class="t-prompt">&gt;</span> /harness</pre>
+</div>
+
+<p><code class="tok">/triage</code> classifies the request and picks the lightest track whose guardrails still cover the risk, then confirms that choice with you before recording it.</p>
+
+<p><code class="tok">/harness</code> then walks the track from one phase to the next, stopping at each consent gate. Nothing beyond a gate can happen until you type the approval yourself.</p>
+
+<h2 id="next"><span class="sec-mark" aria-hidden="true">§ VIII</span> Continue with the Org tutorial</h2>
+
+<p>Every flag, install mode and exit code lives in the <a class="link-inline" href="{{ '/cli/' | rel }}">CLI reference</a>, including the <code class="tok">upgrade</code> and <code class="tok">doctor</code> subcommands you will want the first time a new baseline version ships.</p>
+
+<p>The <a class="link-inline" href="{{ '/org/setup/' | rel }}">Org tutorial</a> is the next walkthrough: it takes a pod of peer sessions through a coordinated sprint.</p>

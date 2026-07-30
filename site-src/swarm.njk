@@ -1,108 +1,90 @@
 ---
 layout: docs.njk
-permalink: /swarm/index.html
-pageTitle: "Swarm mode · baseline"
-title: Swarm mode
-titlePrimary: Swarm mode
-titleAccent: "."
-description: "Swarm mode parallelizes TDD across isolated worktrees. Decisions live in main context; the single subagent executes pre-decided recipes."
-eyebrow: Reference
-lead: "Swarm mode parallelizes TDD across isolated worktrees. Decisions live in main context; the single subagent executes pre-decided recipes."
-active: swarm
-sidebarActive: swarm
-heroSymbol: swarm
+title: "Swarm mode: main context decides, workers execute · baseline"
+description: "Why the baseline ships exactly one subagent, how a spec is cut into waves with non-overlapping write sets, what git worktrees buy and what they cost, and when solo beats parallel."
+heading: "Main context decides.<br>Workers execute."
+lead: "Parallel agents go wrong when each one is allowed to make its own design calls. Swarm mode splits the two jobs. The main session decides everything, writes each decision into a recipe, then hands identical workers a task that is already settled."
+updated: 2026-07-29
+breadcrumb: ["docs", "concepts", "swarm mode"]
+chips:
+  - { label: "needs git" }
+facts:
+  - { label: "subagent", value: "1" }
+  - { label: "pod size", value: "4 by default" }
+  - { label: "worth it at", value: "3+ components" }
 toc:
-  - { id: principle, label: "The principle" }
-  - { id: subagent,  label: "The single subagent" }
-  - { id: pipeline,  label: "The pipeline" }
-  - { id: plan,      label: "/swarm-plan",      lvl: 3 }
-  - { id: approve,   label: "/approve-swarm",   lvl: 3 }
-  - { id: dispatch,  label: "/swarm-dispatch",  lvl: 3 }
-  - { id: threshold, label: "When to swarm" }
-  - { id: isolation, label: "Worktree vs shared" }
-  - { id: recovery,  label: "Failure recovery" }
+  - { id: "principle", label: "One subagent, by design" }
+  - { id: "waves", label: "Waves and write sets" }
+  - { id: "isolation", label: "Two ways to keep workers apart" }
+  - { id: "limits", label: "The single-wave limit" }
+  - { id: "when", label: "When solo wins" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="principle">The principle</h2>
-    </div>
-    <p>Decisions live in main context. Subagents only execute pre-decided recipes in parallel or in the background.</p>
+<h2 id="principle"><span class="sec-mark" aria-hidden="true">§ I</span> One subagent, by design</h2>
+
+<p>The baseline ships exactly one subagent, called <code class="tok">swarm-worker</code>, and the constitution fixes that number at one (Article II). This page is about why one is the number, and why it is not a setting you can raise.</p>
+
+<p>A subagent gets its own context, sealed at both ends: what the main session knows stays outside it, and how the subagent reasoned stays inside. If you hand it a decision, the judgement moves somewhere nobody can review. Do that four times over and four choices made in isolation all land in one repository, each of them defensible on its own terms.</p>
+
+<p>So every decision stays upstream of the worker. Before dispatch the main session writes two documents for each task: a scenario recipe naming exactly which failing tests to write, and an implementation contract naming exactly which files may be touched and what they must do. The worker's prompt carries both of them word for word.</p>
+
+<p>The worker then runs two skills and reports back as JSON. Its job is the recipe as written and it ends there, because every call worth an argument was settled while there was still somebody able to argue about it.</p>
+
+<h2 id="waves"><span class="sec-mark" aria-hidden="true">§ II</span> Waves and write sets</h2>
+
+<p class="sec-lead"><code class="tok">/swarm-plan</code> turns an approved spec into one task per component, and every task declares up front which files it will write.</p>
+
+<p>That declared <code class="tok">write_set</code> is what makes the rest work. A scheduler sorts tasks into waves under a single rule: within a wave, every write set must be disjoint from every other. Two workers therefore always hold different files, and the usual reason parallel agents corrupt one another is gone before the run starts.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>.claude/state/swarm/&lt;slug&gt;.json</span>
   </div>
-  <p>The main context owns architecture, scenario selection, and recipe design, work that depends on conversational visibility (screenshots, prior rounds, off-hand corrections). Subagents get a task brief and execute it. They do not design around it.</p>
-</section>
+  <pre class="plate-body"><span class="t-ok">"id"</span>: <span class="t-val">"T-001"</span>
+<span class="t-ok">"component"</span>: <span class="t-val">"auth-token-store"</span>   <span class="t-dim">from the C4 diagram</span>
+<span class="t-ok">"acs"</span>: <span class="t-val">["AC-001", "AC-002"]</span>
+<span class="t-ok">"write_set"</span>: <span class="t-val">["src/auth/store.py", "tests/auth/test_store.py"]</span>
+<span class="t-ok">"read_set"</span>: <span class="t-val">["src/common/http.py"]</span>
+<span class="t-ok">"depends_on"</span>: <span class="t-val">[]</span></pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="subagent">The single subagent</h2>
-    </div>
-    <p>The baseline ships exactly one subagent: <code>swarm-worker</code>. Its job is narrow: run <code>Skill(scenario)</code> to write failing tests, then run <code>Skill(implement)</code> to make them pass, inside an isolated worktree.</p>
+<p>The plan is built entirely from documents that already exist. Components come from the spec's C4 diagram, acceptance criteria from its table, and dependency edges from its graph, while the file paths come from the scout report which mapped components to files earlier in the workflow.</p>
+
+<p>Waves are computed rather than chosen: the validator sorts by dependency with the no-overlap rule folded in, so the same plan will always yield the same schedule.</p>
+
+<p>If a worker reaches outside its declared set, the write is blocked at the tool boundary, whichever isolation mode the run is using. While a wave is live, <code class="tok">swarm_boundary_guard</code> inspects every write (both modes, no exceptions), which is what turns the declaration into a promise the guard can keep.</p>
+
+<h2 id="isolation"><span class="sec-mark" aria-hidden="true">§ III</span> Two ways to keep workers apart</h2>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">worktree</div>
+    <p>Each worker gets its own git worktree, a separate checkout of the same repo. Work reaches your tree only after a merge audit compares each worktree against the recorded baseline commit and confirms it stayed inside its write set.</p>
   </div>
-  <p>It receives a fully-specified recipe from the main context and executes it verbatim. It does not pick abstractions, expand scope, or make architectural choices.</p>
-  <p><code>swarm-worker</code> is sanctioned for use only inside <code>/swarm-dispatch</code>. Invoking it outside that path is a constitutional violation (Article II).</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="pipeline">The pipeline</h2>
-    </div>
-    <p>Three commands form the swarm path. The first two are decisions in main context; the third is the only place <code>swarm-worker</code> may run.</p>
+  <div class="cell">
+    <div class="cell-kicker">shared</div>
+    <p>Workers run against your working tree, kept apart by the boundary guard alone. Cheap to start, with the guard as the single layer.</p>
   </div>
+</div>
 
-  <h3 id="plan">/swarm-plan</h3>
-  <p>Decomposes an approved spec into a dependency-ordered set of tasks. Each task has a name, a write set (the exact source paths it may touch), a behavior contract, and a wave assignment. Tasks in the same wave have disjoint write sets and can run in parallel. Tasks in later waves depend on earlier-wave output.</p>
+<p>Worktree mode is the default wherever git is available, and it buys a real second layer: a worker that somehow slips past the boundary guard still has to survive the merge audit before its work can land.</p>
 
-  <h3 id="approve">/approve-swarm &lt;slug&gt;</h3>
-  <p>Consent gate B, the second of three workflow-phase gates. The user types this command; Claude cannot invoke it. <code>consent_gate_grant</code> detects the command in the user's submission and writes a short-lived marker. <code>swarm_approval_guard</code> validates the marker before allowing the swarm-approval token to be written. Without a valid marker, the write is blocked.</p>
+<p>If a tree has no git at all, swarm mode is simply unavailable: <code class="tok">/triage</code> strips the swarm phases as it sets up the workflow, and a later request for swarm is refused. Worktrees need git, which is the whole reason swarm mode does. Shared mode stays a choice for git projects that want the speed (it is never a fallback for a tree without git).</p>
 
-  <h3 id="dispatch">/swarm-dispatch</h3>
-  <p>Executes the approved plan wave by wave. For each wave, the main context decides every task's recipe and spawns <code>swarm-worker</code> instances in parallel. Worktree isolation fits a single-wave plan, because the Agent tool owns each worktree's base commit and a later wave's worktree may not contain an earlier wave's output. Multi-wave plans run in shared mode instead, and <code>/swarm-dispatch</code> refuses a multi-wave worktree run rather than build on a stale base. After each wave, dispatch confirms every worker returned a complete status and audits the wave's changes against the declared write sets before it continues. A failed wave stops further dispatch.</p>
-</section>
+<h2 id="limits"><span class="sec-mark" aria-hidden="true">§ IV</span> The single-wave limit</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="threshold">When to swarm vs solo</h2>
-    </div>
-    <p>The decision is declarative, not a runtime heuristic. The <code>intake-full</code> track in <code>.claude/workflows.jsonl</code> declares a selector node at phase 6 with two alternates: the <code>swarm-implementation</code> sub-track (<code>swarm-plan</code> + <code>approve-swarm</code> + <code>swarm-dispatch</code>) and the <code>tdd-worker-chain</code> sub-track (solo <code>/tdd</code>). The harness evaluates each alternate's preconditions in declaration order and picks the first match.</p>
-  </div>
-  <p>The swarm alternate carries two preconditions: <code>requires_git</code> (the project root is a git work tree) and <code>requires_min_components</code> with argument <code>3</code> (the approved spec declares at least three C4 Components). When both pass, the harness expands the swarm sub-track inline. When either fails, the solo TDD alternate (no preconditions) wins by fallthrough.</p>
-  <p>The threshold value is configurable per project via <code>project.json &rarr; swarm.min_tasks_worth_swarming</code>. Default is 3. Editing the file <code>.claude/workflows.jsonl</code> lets a project add new preconditions or replace either alternate with a custom sub-track. The decision lives next to the data; nothing about the harness body needs to change.</p>
-</section>
+<p class="sec-lead">Worktree mode handles one wave per run, and the reason is worth stating plainly.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="isolation">Worktree isolation vs shared mode</h2>
-    </div>
-    <p>When git is available and the plan is a single wave, <code>/swarm-dispatch</code> creates a separate git worktree per task. Each worker writes only to its own worktree, and the merge audit checks write-set membership before changes land back on the branch.</p>
-  </div>
-  <p>Physical isolation means workers cannot accidentally touch each other's files.</p>
-  <p>Multi-wave plans run in shared mode, and so does any project without git. <code>swarm_boundary_guard</code> blocks any write outside the declared write set at the Write boundary. That guard exempts some paths such as <code>.claude/</code>, so after each wave a diff-audit also compares the wave's real changes against the union of its write sets, catching drift the boundary guard lets through. Shared mode keeps no per-task branch history, but it is no longer audit-free.</p>
-</section>
+<p>The base commit a worktree forks from is chosen by the tool that creates it, outside the baseline's control, and wave output is applied to your tree without being committed. Put those two facts together and a second wave will fork from a commit predating everything the first wave did.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="recovery">Failure recovery</h2>
-    </div>
-    <p>A failed wave stops further dispatch immediately. No subsequent waves run. The failed worktrees are preserved on disk for inspection.</p>
-  </div>
-  <p>The orchestrator does not auto-retry or auto-clean. The <code>swarm-worker</code> reports <code>status: "failed"</code> with a note; the main context decides whether to re-plan, fix the recipe, or escalate.</p>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>The merge audit is mandatory.</strong>
-      <p>Even when a worker reports success, the merge audit runs against the worktree to verify the changes match the declared write set. A worker that wrote outside its set fails the audit, and its wave fails.</p>
-    </div>
-  </div>
-</section>
+<p>So the baseline refuses that combination rather than engineering around it. Before dispatch, a safety check compares the plan's wave count and the worktree's real merge base against what was recorded. A multi-wave plan under worktree isolation aborts before a single worker starts, and the plan is then steered to shared mode.</p>
+
+<p>This limit was found the hard way, on a real run that forked from a stale ref. Some limits resist engineering, and those are generally better documented than rediscovered.</p>
+
+<h2 id="when"><span class="sec-mark" aria-hidden="true">§ V</span> When solo wins</h2>
+
+<p>Parallel work has a floor. Below three independent components the planning, dispatch and merge audit will cost more than they save, so a spec under that line routes to <code class="tok">/tdd</code> solo. The threshold sits in <code class="tok">project.json</code> if your projects typically run differently.</p>
+
+<p>Components have to be genuinely independent, and the write sets are what tell you whether they are. Two tasks that keep reaching for the same file are really one task; force them apart and the plan will simply run them in order anyway.</p>
+
+<p>Swarm mode parallelises inside one session. Several sessions working one spec between them is the org track, which answers a different question altogether: how a group of peers shares a single body of work.</p>

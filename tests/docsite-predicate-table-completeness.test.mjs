@@ -19,11 +19,28 @@ const REPO_ROOT = path.resolve(path.dirname(__filename), '..');
 
 // Foundation: parse the §III predicate rows. Each row is
 // `<tr><td class="phase">requires_*</td>...`. Return the set of predicate names.
-function njkPredicateSet(njkText) {
+// Parse the rendered predicate cells, not the template. The page builds the
+// section from a `{% for %}` over _data/roster.cjs, so no predicate name appears
+// in workflows.njk at all — a template scan would report every predicate missing
+// against a correct page. Each predicate is the kicker of its own cell.
+// Scoped to the §Preconditions section. The §Invariants section above it also
+// carries `requires_`-prefixed kickers (requires_spec, requires_swarm), and those
+// are Article IV invariant names, not predicates — a whole-page scan would report
+// them as vocabulary drift.
+function preconditionsSection(html) {
+  const start = html.indexOf('id="preconditions"');
+  if (start === -1) return '';
+  const rest = html.slice(start);
+  const end = rest.indexOf('<h2', 1);
+  return end === -1 ? rest : rest.slice(0, end);
+}
+
+function njkPredicateSet(html) {
   const out = new Set();
-  const re = /<td class="phase">(requires_[a-z_]+)<\/td>/g;
+  const re = /<div class="cell-kicker">(requires_[a-z_]+)<\/div>/g;
   let m;
-  while ((m = re.exec(njkText)) !== null) out.add(m[1]);
+  const section = preconditionsSection(html);
+  while ((m = re.exec(section)) !== null) out.add(m[1]);
   return out;
 }
 
@@ -35,7 +52,7 @@ function predicateDiff(tableSet, vocabSet) {
 }
 
 const V1 = (await import(path.join(REPO_ROOT, 'src/cli/workflows-validator-predicates.js'))).V1_PREDICATES;
-const njk = readFileSync(path.join(REPO_ROOT, 'site-src/workflows.njk'), 'utf8');
+const njk = readFileSync(path.join(REPO_ROOT, 'obj/site/workflows/index.html'), 'utf8');
 
 describe('the docsite predicate table equals V1_PREDICATES', () => {
   // AC-007 — regression trap: green now, fails on any future drift

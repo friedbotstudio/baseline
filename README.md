@@ -46,7 +46,7 @@ The baseline is that opinion, written down and enforced below the layer Claude c
 
 ## What this is
 
-A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **52 skills**, **1 subagent**, **9 workflow tracks**, and **4 consent gates** you type yourself.
+A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **53 skills**, **1 subagent**, **9 workflow tracks**, and **4 consent gates** you type yourself.
 
 The hooks run as separate processes, outside Claude's tool boundary, before the tool call resolves. So _"don't push"_, _"don't `--amend`"_, _"don't self-approve specs"_ stop being instructions Claude may follow and become operations it cannot perform. It cannot disable a hook with a flag, cannot write its own consent marker, and cannot reorder a phase without an exception `/triage` records on disk.
 
@@ -99,7 +99,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 | What | Count | Where it lives |
 | --- | ---: | --- |
 | **Hooks** on PreToolUse, PostToolUse, SessionStart, Stop, PreCompact, and UserPromptSubmit | 26 | `.claude/hooks/` |
-| **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 52 | `.claude/skills/` |
+| **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 53 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — three workflow-phase gates plus `/grant-push` at runtime. All user-typed, all structurally un-invokable by Claude | 3 + 1 | `consent_gate_grant` UserPromptSubmit hook |
@@ -112,6 +112,8 @@ The roster counts are asserted by `audit-baseline` against `docs/init/seed.md` a
 The 26 hooks declared in `.claude/settings.json` fire at Claude's tool boundaries: PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. Each is a Node ESM script (`.mjs`) invoked as a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
 
 The architectural rule is short: **decisions live in main context; subagents only execute pre-decided recipes.** The baseline ships exactly one subagent, `swarm-worker`, and its only sanctioned use is parallel dispatch of fully-specified recipes inside isolated git worktrees during `/swarm-dispatch`. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) is a **skill** running in main context with full conversation visibility.
+
+The full pipeline runs `intake → /approve-direction → scout → research → spec → tdd → simplify → security → integrate → document → archive → roadmap-sync → memory-flush → /grant-commit → commit`. The closing sequence matters: `archive` moves the workflow's artifacts into `docs/archive/<date>/<slug>/`, `roadmap-sync` flips the tasks this work landed, and `memory-flush` curates the session's memory candidates into the canonical files — all before `/grant-commit` opens the consent window and `commit` lands the change. A track may skip phases it declares no node for, but it cannot reorder them.
 
 Tracks declared in `.claude/workflows.jsonl` are enforced at the write boundary by `track_guard`, and node ordering inside each track is binding. Two mechanisms may bypass a node: the `exceptions` array in `.claude/state/workflow.json`, written by `/triage` at workflow-creation time, and the post-`tdd` **right-size gate**, a mechanical, fail-open, additive-only oracle that may auto-skip a hard subset of `{simplify, document}` on a small diff, recording each skip in `auto_skipped[]`. It never skips `security` and never overrides an existing exception.
 

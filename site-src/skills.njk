@@ -1,0 +1,81 @@
+---
+layout: docs.njk
+title: "Skills: the roster and what each one does · baseline"
+description: "Reference for the baseline skills: all 53 baseline-owned skills, what each one does, how they are categorised, and how ownership decides what ships."
+heading: "Fifty-three skills,<br>all in main context."
+lead: Reference for the skills. A skill runs in main context with the whole conversation visible, which is what lets it decide anything. The baseline ships one subagent, and everything else that might have been one is a skill instead.
+updated: 2026-07-29
+breadcrumb: ["docs", "reference", "skills"]
+facts:
+  - { label: "skills", value: "53" }
+  - { label: "categories", value: "15" }
+  - { label: "subagents", value: "1" }
+toc:
+  - { id: "categories", label: "Categories" }
+  - { id: "roster", label: "The roster" }
+  - { id: "ownership", label: "Ownership" }
+  - { id: "contracts", label: "Sub-skill contracts" }
+---
+
+<h2 id="categories"><span class="sec-mark" aria-hidden="true">§ I</span> Categories</h2>
+
+<p class="sec-lead">If these counts and the real total ever drift apart, <code class="tok">audit-baseline</code> fails the build. There are {{ roster.skillCategoryCount }} categories, assigned by hand rather than derived from disk. That is why they live beside the deriver, and why this section can give you counts without a per-skill grouping.</p>
+
+<div class="grid-rule grid-3 lane-grid">
+  {% for name, n in roster.skillCategories %}
+  <div class="cell">
+    <div class="cell-kicker">{{ name }}</div>
+    <p>{{ n }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 id="roster"><span class="sec-mark" aria-hidden="true">§ II</span> The roster</h2>
+
+<p class="sec-lead">{{ roster.skills | length }} baseline-owned skills, in alphabetical order. Each summary is excerpted from the first sentence of the skill's own description. It is never reworded, because a skill prompt is a contract and editing it from a template would quietly change how the skill behaves in a session (the roster derives from the files themselves).</p>
+
+{# Names and summaries both derive from the SKILL.md files. The summary text is
+   written for Claude rather than for this page, so it is excerpted, never
+   reworded: a skill prompt is a contract and editing it from a template would
+   change behaviour. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for s in roster.skills %}
+  <div class="cell" id="skill-{{ s.name }}">
+    <div class="cell-kicker">{{ s.name }}</div>
+    <p class="excerpt">{{ s.gloss }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 id="ownership"><span class="sec-mark" aria-hidden="true">§ III</span> Ownership</h2>
+
+<p>A skill is baseline-owned when its <code class="tok">SKILL.md</code> frontmatter says <code class="tok">owner: baseline</code>. Every other skill on disk belongs to the project. Leaving the line out is the default on purpose, so a repository that already carries skills of its own can install the overlay without anyone annotating a single file (an explicit <code class="tok">owner: user</code> is permitted, never required).</p>
+
+<p>To keep a maintainer's working skills out of the package, the build ships a skill only when it claims baseline ownership. Ownership decides one further thing. <code class="tok">audit-baseline</code> hash-checks the baseline-owned paths and nothing else, which leaves your own skills outside the audit.</p>
+
+<h2 id="contracts"><span class="sec-mark" aria-hidden="true">§ IV</span> Sub-skill contracts</h2>
+
+<p class="sec-lead">Five skills call another skill as part of their job, and four of those calls are mandatory. Where a skill declares none, its work is mechanical enough not to need one.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">scenario</div>
+    <p>Calls <code class="tok">code-structure</code>.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">implement</div>
+    <p>Calls <code class="tok">code-structure</code>. Also checks current docs for any third-party API.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">design-ui</div>
+    <p>Calls <code class="tok">impeccable</code> to do the design. Writes no product code itself.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">prose</div>
+    <p>Always calls <code class="tok">humanizer</code>. Also calls one register skill, picked by whoever ran it.</p>
+  </div>
+  <div class="cell cell-sand">
+    <div class="cell-kicker">verify</div>
+    <p>Mechanical. Declares no sub-skill.</p>
+  </div>
+</div>

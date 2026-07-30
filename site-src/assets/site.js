@@ -1,318 +1,295 @@
-/* baseline — site.js
- * Two behaviours, no dependencies:
- *   1. dev-console: types a Claude Code session in the hero, loops.
- *   2. cli-strip:   click-to-copy install command above the footer.
- * Both honour prefers-reduced-motion and run only when their target exists.
+/* baseline — site behavior
+ *
+ * Two behaviors, both progressive enhancements over working markup:
+ *   1. Click-to-copy on install-command affordances.
+ *   2. FAQ disclosure.
+ *
+ * The FAQ answers ship visible in the HTML and are collapsed here on load, so
+ * a reader without JS gets every answer rather than a row of dead buttons.
  */
-
-(() => {
+(function () {
   "use strict";
 
-  /* The DevTools console signature is emitted by an inline templated <script>
-     in _layouts/base.njk so its counts stay bound to _data/baseline.cjs. */
+  var COPY_RESET_MS = 1600;
+  var status = document.getElementById("copy-status");
 
-  const reducedMotion =
-    typeof matchMedia === "function" &&
-    matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* --------------------------------------------------------- analytics */
 
-  /* ------------------------------------------------------------------ */
-  /* dev-console: live-typing Claude Code session                       */
-  /* ------------------------------------------------------------------ */
-
-  const STREAM = document.getElementById("dc-stream");
-
-  const SCRIPT = [
-    { kind: "cmd",   text: '/triage "add user-facing onboarding flow"' },
-    { kind: "tick",  text: "entry: intake · exceptions: []" },
-    { kind: "blank" },
-    { kind: "cmd",   text: "/intake" },
-    { kind: "tick",  text: "docs/intake/onboarding.md" },
-    { kind: "blank" },
-    { kind: "cmd",   text: "/scout" },
-    { kind: "tick",  text: "12 files · 3 modules mapped" },
-    { kind: "blank" },
-    { kind: "cmd",   text: "/research" },
-    { kind: "wait",  text: "surfacing 3 candidates via context7…" },
-  ];
-
-  const TYPE_MS = 28;     // per char while typing a command body
-  const TICK_MS = 16;     // per char on success lines (faster, less performative)
-  const PAUSE_AFTER_LINE = 320;
-  const PAUSE_AFTER_RUN = 6500;
-
-  function el(tag, cls, text) {
-    const node = document.createElement(tag);
-    if (cls) node.className = cls;
-    if (text != null) node.textContent = text;
-    return node;
+  /* gtag exists only when _data/analytics.js resolved a measurement id, which
+   * happens in CI builds and nowhere else. Every call site re-checks it, so a
+   * local build with no tag on the page is a no-op rather than a ReferenceError.
+   */
+  function analyticsReady() {
+    return typeof window.gtag === "function";
   }
 
-  function appendCursor(line) {
-    const c = el("span", "dc-cursor");
-    c.setAttribute("aria-hidden", "true");
-    line.appendChild(c);
-    return c;
+  /* ------------------------------------------------------------- copy */
+
+  function announce(message) {
+    if (status) status.textContent = message;
   }
 
-  function removeCursor(line) {
-    const c = line.querySelector(".dc-cursor");
-    if (c) c.remove();
+  function setCopyState(button, label) {
+    var slot = button.querySelector(".copy-state");
+    if (slot) slot.textContent = label;
   }
 
-  function sleep(ms) {
-    return new Promise((r) => setTimeout(r, ms));
-  }
+  function copyCommand(button) {
+    var text = button.getAttribute("data-copy") || "";
+    if (!text) return;
 
-  async function typeInto(parent, str, speed) {
-    for (let i = 0; i < str.length; i++) {
-      const ch = str[i];
-      parent.appendChild(document.createTextNode(ch));
-      await sleep(speed);
-    }
-  }
+    var done = function () {
+      setCopyState(button, "copied");
+      announce("Copied " + text + " to the clipboard.");
+      window.clearTimeout(button._copyTimer);
+      button._copyTimer = window.setTimeout(function () {
+        setCopyState(button, "click to copy");
+      }, COPY_RESET_MS);
+    };
 
-  /* For commands the slash and command name color in accent; the quoted
-     argument colors in str-green. We split a command line into pieces. */
-  function paintCommand(line, text) {
-    const m = text.match(/^(\/[a-z-]+)(\s+)?(.*)?$/);
-    if (!m) {
-      line.appendChild(document.createTextNode(text));
+    var failed = function () {
+      setCopyState(button, "copy failed");
+      announce("Copy failed. Select the command and copy it manually.");
+      window.clearTimeout(button._copyTimer);
+      button._copyTimer = window.setTimeout(function () {
+        setCopyState(button, "click to copy");
+      }, COPY_RESET_MS);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, failed);
       return;
     }
-    const slash = el("span", "dc-slash", m[1]);
-    line.appendChild(slash);
-    if (m[2]) line.appendChild(document.createTextNode(m[2]));
-    if (m[3]) {
-      const arg = el("span", "dc-str", m[3]);
-      line.appendChild(arg);
+
+    // Fallback for non-secure contexts, where navigator.clipboard is absent.
+    var field = document.createElement("textarea");
+    field.value = text;
+    field.setAttribute("readonly", "");
+    field.style.position = "absolute";
+    field.style.left = "-9999px";
+    document.body.appendChild(field);
+    field.select();
+    var ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (err) {
+      ok = false;
     }
+    document.body.removeChild(field);
+    if (ok) done();
+    else failed();
   }
 
-  async function renderStep(step) {
-    const line = el("span", "dc-line dc-" + step.kind);
-
-    if (step.kind === "cmd") {
-      const prompt = el("span", "dc-prompt", "> ");
-      line.appendChild(prompt);
-      STREAM.appendChild(line);
-      appendCursor(line);
-      await sleep(160);
-      // type characters; for cmd we paint slash/arg AFTER fully typed
-      const buf = el("span", "dc-cmd-buf");
-      line.insertBefore(buf, line.querySelector(".dc-cursor"));
-      for (let i = 0; i < step.text.length; i++) {
-        buf.appendChild(document.createTextNode(step.text[i]));
-        await sleep(TYPE_MS);
+  var copyButtons = document.querySelectorAll(".js-copy");
+  for (var i = 0; i < copyButtons.length; i++) {
+    copyButtons[i].addEventListener("click", function (event) {
+      var button = event.currentTarget;
+      copyCommand(button);
+      var command = button.getAttribute("data-copy") || "";
+      if (analyticsReady()) {
+        window.gtag("event", "copy_install_command", { command: command });
       }
-      // promote: replace plain buf with painted version
-      buf.textContent = "";
-      paintCommand(buf, step.text);
-      removeCursor(line);
-      STREAM.appendChild(document.createTextNode("\n"));
-      await sleep(PAUSE_AFTER_LINE);
-      return;
-    }
-
-    if (step.kind === "tick") {
-      line.appendChild(el("span", "dc-pad", "  "));
-      line.appendChild(el("span", "dc-ok", "✓ "));
-      const body = el("span", "dc-dim");
-      line.appendChild(body);
-      STREAM.appendChild(line);
-      appendCursor(line);
-      await typeInto(body, step.text, TICK_MS);
-      removeCursor(line);
-      STREAM.appendChild(document.createTextNode("\n"));
-      await sleep(PAUSE_AFTER_LINE);
-      return;
-    }
-
-    if (step.kind === "wait") {
-      line.appendChild(el("span", "dc-pad", "  "));
-      line.appendChild(el("span", "dc-wait", "⏳ "));
-      const body = el("span", "dc-dim");
-      line.appendChild(body);
-      STREAM.appendChild(line);
-      appendCursor(line);
-      await typeInto(body, step.text, TICK_MS);
-      // leave the cursor blinking on this last line for a beat
-      await sleep(1400);
-      removeCursor(line);
-      STREAM.appendChild(document.createTextNode("\n"));
-      return;
-    }
-
-    if (step.kind === "blank") {
-      STREAM.appendChild(document.createTextNode("\n"));
-      await sleep(120);
-      return;
-    }
-  }
-
-  function renderStatic() {
-    /* Reduced-motion: paint the whole script as final state, no animation. */
-    STREAM.textContent = "";
-    for (const step of SCRIPT) {
-      if (step.kind === "blank") {
-        STREAM.appendChild(document.createTextNode("\n"));
-        continue;
-      }
-      const line = el("span", "dc-line dc-" + step.kind);
-      if (step.kind === "cmd") {
-        line.appendChild(el("span", "dc-prompt", "> "));
-        const buf = el("span", "dc-cmd-buf");
-        paintCommand(buf, step.text);
-        line.appendChild(buf);
-      } else if (step.kind === "tick") {
-        line.appendChild(el("span", "dc-pad", "  "));
-        line.appendChild(el("span", "dc-ok", "✓ "));
-        line.appendChild(el("span", "dc-dim", step.text));
-      } else if (step.kind === "wait") {
-        line.appendChild(el("span", "dc-pad", "  "));
-        line.appendChild(el("span", "dc-wait", "⏳ "));
-        line.appendChild(el("span", "dc-dim", step.text));
-      }
-      STREAM.appendChild(line);
-      STREAM.appendChild(document.createTextNode("\n"));
-    }
-  }
-
-  async function runConsoleLoop() {
-    while (true) {
-      STREAM.textContent = "";
-      for (const step of SCRIPT) {
-        await renderStep(step);
-      }
-      await sleep(PAUSE_AFTER_RUN);
-    }
-  }
-
-  if (STREAM) {
-    if (reducedMotion) {
-      renderStatic();
-    } else {
-      runConsoleLoop();
-    }
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* docs sidebar: mobile hamburger drawer                              */
-  /* ------------------------------------------------------------------ */
-
-  const navToggle = document.querySelector(".nav-toggle");
-  const navBackdrop = document.querySelector(".nav-backdrop");
-  const navSidebar = document.getElementById("docs-sidebar");
-
-  function setNavOpen(open) {
-    document.body.classList.toggle("is-nav-open", open);
-    if (navToggle) {
-      navToggle.setAttribute("aria-expanded", String(open));
-      navToggle.setAttribute(
-        "aria-label",
-        open ? "Close documentation navigation" : "Open documentation navigation"
-      );
-    }
-  }
-
-  if (navToggle) {
-    navToggle.addEventListener("click", () => {
-      setNavOpen(!document.body.classList.contains("is-nav-open"));
     });
   }
-  if (navBackdrop) {
-    navBackdrop.addEventListener("click", () => setNavOpen(false));
-  }
-  if (navSidebar) {
-    /* Close drawer when a link inside is tapped — links navigate to a new
-       page anyway, but on same-page anchor links we still want the drawer
-       to close so the content is visible. */
-    navSidebar.addEventListener("click", (e) => {
-      if (e.target.closest("a")) setNavOpen(false);
+
+  /* ------------------------------------------------------------- cta */
+
+  /* Deliberately keyed on [data-cta] alone. Copy affordances carry [data-copy]
+   * and are handled above, so a button that both copies and is a CTA would
+   * otherwise report twice for one click. The two selectors stay disjoint.
+   */
+  var ctaLinks = document.querySelectorAll("[data-cta]");
+  for (var c = 0; c < ctaLinks.length; c++) {
+    ctaLinks[c].addEventListener("click", function (event) {
+      var el = event.currentTarget;
+      if (analyticsReady()) {
+        window.gtag("event", "select_content", {
+          content_type: "cta",
+          content_id: el.getAttribute("data-cta"),
+        });
+      }
     });
   }
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && document.body.classList.contains("is-nav-open")) {
-      setNavOpen(false);
-      if (navToggle) navToggle.focus();
+
+  /* ------------------------------------------------------------- menu */
+
+  var bar = document.querySelector(".util-bar");
+  var navToggle = document.querySelector(".nav-toggle");
+  var panel = document.getElementById("util-collapse");
+
+  function setMenu(open) {
+    if (!bar || !navToggle) return;
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) bar.classList.add("is-open");
+    else bar.classList.remove("is-open");
+  }
+
+  function menuIsOpen() {
+    return !!navToggle && navToggle.getAttribute("aria-expanded") === "true";
+  }
+
+  if (navToggle && panel && bar) {
+    navToggle.addEventListener("click", function () {
+      setMenu(!menuIsOpen());
+    });
+
+    // A same-page anchor does not reload, so the panel would stay open over the
+    // section it just scrolled to.
+    panel.addEventListener("click", function (event) {
+      if (event.target.closest("a")) setMenu(false);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && menuIsOpen()) {
+        setMenu(false);
+        navToggle.focus();
+      }
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!menuIsOpen()) return;
+      if (bar.contains(event.target)) return;
+      setMenu(false);
+    });
+
+    // Leaving the narrow breakpoint with the panel open would strand the
+    // is-open class on a bar that no longer collapses.
+    var narrow = window.matchMedia("(max-width: 760px)");
+    var onChange = function (event) {
+      if (!event.matches) setMenu(false);
+    };
+    if (narrow.addEventListener) narrow.addEventListener("change", onChange);
+    else if (narrow.addListener) narrow.addListener(onChange);
+  }
+
+  /* -------------------------------------------------------------- faq */
+
+  function toggleFaq(button) {
+    var panel = document.getElementById(button.getAttribute("aria-controls"));
+    if (!panel) return;
+    var open = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", open ? "false" : "true");
+    panel.hidden = open;
+    var sign = button.querySelector(".sign");
+    if (sign) sign.textContent = open ? "+" : "–";
+  }
+
+  // Collapse every row except those the markup marks as starting open. The
+  // rule is declared per row rather than inferred from the row count, so a
+  // page with a different number of questions behaves predictably.
+  var questions = document.querySelectorAll(".faq-q");
+  for (var j = 0; j < questions.length; j++) {
+    var question = questions[j];
+    if (!question.hasAttribute("data-start-open")) {
+      var faqPanel = document.getElementById(question.getAttribute("aria-controls"));
+      if (faqPanel) {
+        faqPanel.hidden = true;
+        question.setAttribute("aria-expanded", "false");
+        var sign = question.querySelector(".sign");
+        if (sign) sign.textContent = "+";
+      }
     }
-  });
+    question.addEventListener("click", function (event) {
+      toggleFaq(event.currentTarget);
+    });
+  }
 
-  /* ------------------------------------------------------------------ */
-  /* cli-strip: click-to-copy install command                           */
-  /* ------------------------------------------------------------------ */
+  /* ------------------------------------------------------- docs sidebar */
 
-  document.querySelectorAll("[data-copy]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const text = btn.getAttribute("data-copy");
-      // Track actual success — both writeText and execCommand can throw OR
-      // (in execCommand's case) return false. Lying about success when both
-      // refuse is worse than admitting the failure and offering recovery.
-      let ok = false;
-      try {
-        await navigator.clipboard.writeText(text);
-        ok = true;
-      } catch (_) {
-        // Older browsers / insecure context: synthesize a textarea + execCommand.
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        try { ok = document.execCommand("copy"); } catch (_) {}
-        ta.remove();
+  // The sidebar ships `open` so a reader without JS gets the full menu rather
+  // than a disclosure they cannot operate. With JS, it starts closed on narrow
+  // viewports, where 16 open nav rows would bury the article.
+  var side = document.querySelector(".docs-side");
+  if (side) {
+    var stacked = window.matchMedia("(max-width: 860px)");
+    var syncSide = function (matches) {
+      if (matches) side.removeAttribute("open");
+      else side.setAttribute("open", "");
+    };
+    syncSide(stacked.matches);
+    var onSideChange = function (event) { syncSide(event.matches); };
+    if (stacked.addEventListener) stacked.addEventListener("change", onSideChange);
+    else if (stacked.addListener) stacked.addListener(onSideChange);
+
+    // A nav choice on a phone should not leave the menu covering the page.
+    side.addEventListener("click", function (event) {
+      if (stacked.matches && event.target.closest("a")) side.removeAttribute("open");
+    });
+  }
+
+  /* -------------------------------------------------------------- toc */
+
+  // Mark the section the reader is in. Wayfinding on a long tutorial, so it
+  // earns its place on a Read surface; it changes state, never animates.
+  var tocLinks = document.querySelectorAll(".toc-link");
+  if (tocLinks.length && "IntersectionObserver" in window) {
+    var byId = {};
+    var targets = [];
+    for (var k = 0; k < tocLinks.length; k++) {
+      var id = decodeURIComponent((tocLinks[k].getAttribute("href") || "").slice(1));
+      var target = id && document.getElementById(id);
+      if (!target) continue;
+      byId[id] = tocLinks[k];
+      targets.push(target);
+    }
+
+    // The reading line. A heading at or above it has been passed; the last one
+    // passed names the section the reader is in.
+    var READING_LINE = 120;
+
+    var setActive = function () {
+      // Geometry decides, not intersection state. Preferring the first heading
+      // inside an observer band looks equivalent but is wrong for any section
+      // shorter than the band: the NEXT heading is already on screen while the
+      // reader is still in the current section, so the band-first rule lights
+      // the row below the one being read. Walking to the last passed heading
+      // has no such case and needs no per-target bookkeeping.
+      var current = null;
+      for (var m = 0; m < targets.length; m++) {
+        if (targets[m].getBoundingClientRect().top <= READING_LINE) current = targets[m].id;
       }
-      if (typeof window.gtag === "function") {
-        window.gtag("event", "copy_install_command", { command: text, success: ok });
-      }
-      const hint = btn.querySelector(".cli-hint");
-      const live = btn.querySelector("[aria-live]");
-      if (ok) {
-        btn.classList.add("is-copied");
-        if (hint) hint.textContent = hint.getAttribute("data-copied");
-        // Live region announces success without a focus change (WCAG 4.1.3).
-        if (live) live.textContent = btn.getAttribute("data-copied-status") || "Copied install command";
-        setTimeout(() => {
-          btn.classList.remove("is-copied");
-          if (hint) hint.textContent = hint.getAttribute("data-default");
-          if (live) live.textContent = "";
-        }, 1800);
-      } else {
-        // Don't lie: no check icon, no success announcement. Pre-select the
-        // command text so Ctrl+C / Cmd+C copies it without further user effort.
-        btn.classList.add("is-copy-failed");
-        const cmd = btn.querySelector(".cli-cmd, .ip-cmd");
-        if (cmd) {
-          const range = document.createRange();
-          range.selectNodeContents(cmd);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
+      // Above the first heading there is deliberately no active row.
+
+      // At maxScroll the document runs out of scroll beneath the last heading,
+      // which can leave it permanently below the reading line. Once the reader
+      // is at the bottom, the last section is the one they are in.
+      var atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atBottom && targets.length) current = targets[targets.length - 1].id;
+
+      for (var id2 in byId) {
+        if (Object.prototype.hasOwnProperty.call(byId, id2)) {
+          byId[id2].classList.toggle("is-active", id2 === current);
         }
-        if (hint) hint.textContent = "press Ctrl+C";
-        if (live) live.textContent = "Copy failed. Press Ctrl plus C to copy the selected command.";
-        setTimeout(() => {
-          btn.classList.remove("is-copy-failed");
-          if (hint) hint.textContent = hint.getAttribute("data-default");
-          if (live) live.textContent = "";
-        }, 4000);
       }
-    });
-  });
+    };
 
-  /* ------------------------------------------------------------------ */
-  /* GA4: CTA click instrumentation                                     */
-  /* ------------------------------------------------------------------ */
-  /* Separate selector ([data-cta]) from the copy handler ([data-copy]) so
-     the cli-strip button — which has [data-copy] but not [data-cta] — does
-     not double-fire as both a CTA click and a copy event. */
-  document.querySelectorAll("[data-cta]").forEach((el) => {
-    el.addEventListener("click", () => {
-      if (typeof window.gtag !== "function") return;
-      window.gtag("event", "select_content", {
-        content_type: "cta",
-        content_id: el.getAttribute("data-cta"),
+    // The observer is a trigger, not the source of truth: it re-runs the
+    // geometry when a heading crosses the viewport, which covers reflow the
+    // scroll listener would not see.
+    var observer = new IntersectionObserver(function () {
+      setActive();
+    }, { rootMargin: "-80px 0px -70% 0px" });
+
+    for (var t = 0; t < targets.length; t++) observer.observe(targets[t]);
+
+    // The observer alone leaves the row stale on a jump. Clicking a TOC link
+    // (or landing on a #hash) can move every heading from above-the-band to
+    // above-the-band without one ever crossing it, which fires no entries, so
+    // setActive never runs and the previous row stays lit. A rAF-throttled
+    // scroll listener re-runs the same geometry; the observer stays as the
+    // cheap path for ordinary reading.
+    var queued = false;
+    var onScroll = function () {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(function () {
+        queued = false;
+        setActive();
       });
-    });
-  });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    setActive();
+  }
 })();

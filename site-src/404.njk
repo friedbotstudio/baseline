@@ -1,91 +1,34 @@
 ---
 layout: base.njk
 permalink: /404.html
-pageTitle: "404 · baseline"
-description: "This URL maps to no phase in the baseline. Either the page moved, the link is wrong, or you typed a path the router cannot resolve."
-active: ""
-eleventyComputed:
-  subtitle: "/ {{ site.versionMinor }}"
+eleventyExcludeFromCollections: true
+title: "Page not found · baseline"
+description: "That page is not here. Every documentation route is listed below."
 ---
-{#
-  Links on this page are ABSOLUTE, not piped through `rel`, and that is deliberate.
 
-  GitHub Pages serves this one file for a miss at ANY depth. The `rel` filter
-  computes its `../` prefix from this page's own url (/404.html, depth 1), so a
-  miss at /skills/anything/ would resolve "Back to overview" to /skills/ and
-  every card below to a sibling that does not exist. Absolute URLs are the only
-  form that survives being served from an arbitrary path.
-
-  This is the one page in the site where the mount-point portability that
-  `_filters/rel-url.cjs` exists to protect has to be traded away, because the
-  page's whole job is to work when the path is wrong.
-#}
-<main id="main" class="marketing not-found">
-  <section class="hero">
-    <p class="eyebrow">404 · off the workflow</p>
-    <h1>Phase not found<span class="accent">.</span></h1>
-    <p class="lead">This URL maps to no phase in the baseline. Either the page moved, the link is wrong, or the path you typed never existed. The constitution is fine. The router is not.</p>
-    <div class="ctas">
-      <a class="btn btn-primary" data-cta="back-to-overview" href="{{ site.url }}/">Back to overview <span class="arr">→</span></a>
-      <a class="btn btn-secondary" data-cta="install-instead" href="{{ site.url }}/install/">Install instead</a>
+<section class="section" aria-labelledby="nf-title">
+  <div class="wrap">
+    <div class="nf-head">
+      <div class="hero-eyebrow">404</div>
+      <h1 id="nf-title">That page is not here.</h1>
+      <p class="doc-lead">The link may be old, or the page may have moved during the documentation rewrite. Every route is listed below, grouped the way the sidebar groups them.</p>
     </div>
-  </section>
 
-  <section class="section">
-    <div class="lede">
-      <div class="lede-head">
-        <p class="section-num">§ I</p>
-        <h2>Find your way back</h2>
+    {# Built from docsnav.json, so a page that ships is reachable from here in the
+       same edit that adds it. A recovery page that lists yesterday's routes is
+       worse than no recovery page. #}
+    {% for group in docsnav %}
+    <h2 class="nf-group">{{ group.group or "Start here" }}</h2>
+    {% if group.blurb %}<p class="nf-blurb">{{ group.blurb }}</p>{% endif %}
+    <div class="grid-rule grid-3 lane-grid">
+      {% for item in group.items %}{% if item.url %}
+      <div class="cell">
+        <div class="cell-kicker"><a class="link-inline" href="{{ item.url | rel }}">{{ item.label }}</a></div>
       </div>
-      <p>Pick one. Every link below is a real route, and each reference page carries the structural detail behind whatever claim brought you here.</p>
+      {% endif %}{% endfor %}
     </div>
+    {% endfor %}
 
-    <div class="concepts">
-      <a class="concept" href="{{ site.url }}/">
-        <p class="num">/</p>
-        <h3>Overview</h3>
-        <p>What the baseline is, why enforcement sits at the tool boundary, and how consent is written so it cannot be forged.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/install/">
-        <p class="num">/install/</p>
-        <h3>Install</h3>
-        <p>One command and five sentinel paths. Requirements, what lands, what to do next, how to recover from a bad install.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/governance/">
-        <p class="num">/governance/</p>
-        <h3>Governance</h3>
-        <p>The precedence chain, what makes the rules law rather than style, how to amend one, and what stops the set from rotting.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/workflows/">
-        <p class="num">/workflows/</p>
-        <h3>Workflow tracks</h3>
-        <p>The {{ baseline.tracks.canonical }} selectable tracks declared as data, the invariants every track satisfies, and how to add your own.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/hooks/">
-        <p class="num">/hooks/</p>
-        <h3>Hooks</h3>
-        <p>The {{ baseline.hooks.total }} hooks at every tool boundary, what each one enforces, and why the consent gates cannot be forged.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/skills/">
-        <p class="num">/skills/</p>
-        <h3>Skills</h3>
-        <p>{{ baseline.skills.total }} skills across {{ baseline.skills.categoriesWord }} categories. Core skills, and the shared globals vendored from elsewhere.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/memory/">
-        <p class="num">/memory/</p>
-        <h3>Memory</h3>
-        <p>Seven canonical categories, the staging inbox, and the rule that every cited entry is re-verified before it is trusted.</p>
-      </a>
-      <a class="concept" href="{{ site.url }}/standup/">
-        <p class="num">/standup/</p>
-        <h3>Standup</h3>
-        <p>What shipped, what is staged and unreleased, what the backlog holds, and a recommendation for what to pick up next.</p>
-      </a>
-      <a class="concept" href="{{ site.repo }}">
-        <p class="num">gh</p>
-        <h3>GitHub</h3>
-        <p>Source, issues, releases. File a bug if you arrived here from a broken link in the docs.</p>
-      </a>
-    </div>
-  </section>
-</main>
+    <p>Still stuck? The <a class="link-inline" href="{{ '/' | rel }}">homepage</a> carries the install command, and issues go to <a class="link-inline" href="{{ site.repo }}/issues">the tracker</a>.</p>
+  </div>
+</section>

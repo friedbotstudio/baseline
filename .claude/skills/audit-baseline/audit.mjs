@@ -32,7 +32,7 @@ import { run as derivedCountSurfaces } from './checks/derived-count-surfaces.mjs
 import { run as docsiteDrift } from './checks/docsite-drift.mjs';
 
 export {
-  checkSurfaceCount, checkByCategorySum, sectionSlice, checkDocsiteTracks, checkDocsiteHookTable,
+  checkSurfaceCount, checkByCategorySum,
 } from './checks/surface-helpers.mjs';
 export { checkConfigParity, CONFIG_PARITY_ALLOWLIST } from './config-parity.mjs';
 

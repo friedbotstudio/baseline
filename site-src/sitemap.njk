@@ -1,12 +1,25 @@
 ---
 permalink: /sitemap.xml
 eleventyExcludeFromCollections: true
+layout: null
 ---
+{%- set pages = [{ url: "/" }] -%}
+{%- for group in docsnav -%}
+  {%- for item in group.items -%}
+    {%- if item.url -%}
+      {%- set pages = (pages.push({ url: item.url }), pages) -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
 <?xml version="1.0" encoding="UTF-8"?>
+{#- Built from the same docsnav.json the sidebar reads, so a page that ships is
+    listed here from the same edit. 404 is absent because it is never a
+    destination, and this file omits itself. -#}
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-{%- for page in collections.all %}
-{%- if "/404." not in page.url %}
-  <url><loc>{{ site.url }}{{ page.url }}</loc>{% if page.date %}<lastmod>{{ page.date.toISOString().slice(0, 10) }}</lastmod>{% endif %}</url>
-{%- endif %}
+{%- for p in pages %}
+  <url>
+    <loc>{{ site.url }}{{ p.url }}</loc>
+    <lastmod>{{ site.lastUpdated }}</lastmod>
+  </url>
 {%- endfor %}
 </urlset>

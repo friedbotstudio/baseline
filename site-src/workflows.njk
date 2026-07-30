@@ -1,149 +1,116 @@
 ---
 layout: docs.njk
-permalink: /workflows/index.html
-pageTitle: "Workflow tracks · baseline"
-title: Workflow tracks
-titlePrimary: Workflow tracks
-titleAccent: "."
-eyebrow: Reference
-eleventyComputed:
-  description: "Workflows live in .claude/workflows.jsonl. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. {{ baseline.tracks.canonical }} selectable tracks ship in the pristine template."
-  lead: "Workflows live in <code>.claude/workflows.jsonl</code>. Tracks are DAGs of skill nodes; selector nodes pick among alternates by evaluating declarative preconditions. {{ baseline.tracks.canonical }} selectable tracks ship in the pristine template."
-active: workflows
-sidebarActive: workflows
-heroSymbol: workflows
+title: "Workflow tracks: the nine, and what each one skips · baseline"
+description: "Reference for the workflow tracks: the nine a human can select at triage, the two sub-tracks selector nodes enter, and the invariants every track is validated against."
+heading: "Nine tracks, and<br>what each one skips."
+lead: "Reference for the tracks declared in .claude/workflows.jsonl. A track is a dependency graph of workflow phases: triage picks one at the start of a run, and track_guard then enforces that graph's ordering at the write boundary, so a phase cannot be taken out of turn."
+updated: 2026-07-29
+breadcrumb: ["docs", "reference", "workflow tracks"]
+facts:
+  - { label: "selectable", value: "9" }
+  - { label: "sub-tracks", value: "2" }
+  - { label: "declared in", value: ".claude/workflows.jsonl" }
 toc:
-  - { id: tracks,     label: "What a track is" }
-  - { id: canonical,  label: "The canonical set",     lvl: 3 }
-  - { id: subtracks,  label: "Sub-tracks",            lvl: 3 }
-  - { id: invariants, label: "Article IV invariants" }
-  - { id: predicates, label: "Predicate vocabulary" }
-  - { id: declare,    label: "Declaring a project-local track" }
-  - { id: example,    label: "Example",               lvl: 3 }
-  - { id: doctor,     label: "/init-project doctor" }
-  - { id: drift,      label: "Drift detection",       lvl: 3 }
+  - { id: "selectable", label: "Selectable tracks" }
+  - { id: "sub-tracks", label: "Sub-tracks" }
+  - { id: "invariants", label: "Invariants" }
+  - { id: "preconditions", label: "Preconditions" }
+  - { id: "selection", label: "Track selection" }
+  - { id: "project-tracks", label: "Project-declared tracks" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="tracks">What a track is</h2>
-    </div>
-    <p>A track is a DAG of skill nodes declared in <code>.claude/workflows.jsonl</code>. One record per line. Each node names a skill, lists its predecessors and successors, and optionally flags itself as a consent gate or as part of a parallel cluster. A node may also carry an optional <code>condition</code> (a predicate such as <code>requires_commit_consent</code> on <code>grant-commit</code> nodes), resolved when the tasklist is materialized and fail-safe toward keeping the node.</p>
+<h2 id="selectable"><span class="sec-mark" aria-hidden="true">§ I</span> Selectable tracks</h2>
+
+{# The count reads `tracks.shipped`, not `tracks.canonical`: this sentence is a
+   claim about what a fresh install receives, so it must come off the pristine
+   template rather than whatever this repo's own workflows.jsonl happens to
+   carry. tests/track-count-truth.test.mjs pins that distinction. #}
+<p class="sec-lead">{{ baseline.tracks.shipped }} selectable tracks ship in the pristine template, and you pick one of them at triage. The node count on each card is the size of that track's graph, which you can read as a rough measure of how much process the track will add to a run.</p>
+
+{# Derived from workflows.jsonl. A track added to that file appears here on the
+   next build, and audit-baseline's docsite check fails if it does not. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for t in roster.trackDetail %}{% if t.selectable %}
+  <div class="cell" id="track-{{ t.id }}">
+    <div class="cell-kicker">{{ t.id }}</div>
+    <p class="excerpt">{{ t.gloss }}</p>
+    <p class="cell-note">{{ t.phases }} nodes{% if t.invariants %} · {{ t.invariants | join(", ") }}{% endif %}</p>
   </div>
+  {% endif %}{% endfor %}
+</div>
 
-  <h3 id="canonical">The canonical set</h3>
-  <p>{{ baseline.tracks.canonical }} selectable tracks ship in the pristine template:</p>
-  <ul>
-    <li><code>intake-full</code>. Nodes for a new feature that needs a written spec: intake, <code>/approve-direction</code> (gate A, at intake), scout, research, spec, machine spec-review, implementation (selector: swarm or solo TDD), simplify, security, integrate, document, archive, memory-flush, <code>/grant-commit</code>, commit. Under github-flow, a plain feature branch skips the <code>/grant-commit</code> pause: commit, push, and PR land on their own, while protected branches still wait for your consent.</li>
-    <li><code>spec-entry</code>. Starts at <code>/spec</code>. For a bugfix where the failing case is contract-level. Skips intake, scout, research.</li>
-    <li><code>tdd-quickfix</code>. Starts at <code>/tdd</code>. For a localised bug with a known failing case. Skips spec entirely.</li>
-    <li><code>chore</code>. Stripped-down. For documentation, configuration tweaks, dependency bumps. Skips scenario and implement.</li>
-    <li><code>freeform</code>. Ad-hoc batch of edits with relaxed phase ordering. The DAG carries only the closing sequence: <code>memory-flush</code>, <code>/grant-commit</code>, <code>commit</code>. All {{ baseline.hooks.total }} hooks remain active, so per-tool guards still fire. For batches of unrelated edits that share no single goal.</li>
-    <li><code>epic</code>. Discovery-once umbrella for a feature built as three or more separately-committed slices. Runs intake, <code>/approve-direction</code>, scout, research, and spec once, then produces a sliced spec with one <code>## Slice</code> section per child. The single approval (gate A) covers every slice.</li>
-    <li><code>epic-child</code>. One slice of an approved epic. Inherits the epic's discovery through pinned artifacts, enforced by <code>track_guard</code>, so it re-runs no discovery phase. Runs the fast path: tdd, integrate, archive, <code>/grant-commit</code>, commit. Escalates simplify, security, or document only when the slice's risk flags require it.</li>
-    <li><code>org</code>. Multi-session org-team pipeline (Article X). A flat pod of up to four peer Claude Code sessions claims lane-tagged slices of an approved spec over the MCP broker and implements them concurrently, deciding in-lane and escalating cross-lane or un-decidable forks peer→lead→human. Phase 6 runs <code>org-dispatch</code> instead of solo TDD. Opt-in via <code>velocity.org_mode.enabled</code>; requires git.</li>
-    <li><code>power</code>. Batch-sprint pipeline: delivers a sprint of related, spec-committed tickets in one cycle. The mechanical phases run once for the batch while <code>security</code> iterates per ticket over <code>workflow.json.tickets[]</code>, and the commit phase splits the batch into ordered Conventional Commits (closure last). <code>sprint-planner</code> proposes the ready batch from the roadmap graph; you confirm before triage routes it. Opt-in via <code>velocity.power_mode.enabled</code>; requires git.</li>
-  </ul>
+<h2 id="sub-tracks"><span class="sec-mark" aria-hidden="true">§ II</span> Sub-tracks</h2>
 
-  <h3 id="subtracks">Sub-tracks</h3>
-  <p>{{ baseline.tracks.subTracks }} sub-tracks ship in the canonical set, referenced only by selector nodes inside the {{ baseline.tracks.canonical }} selectable tracks: <code>swarm-implementation</code> (parallel dispatch via <code>swarm-plan</code> and <code>swarm-dispatch</code>) and <code>tdd-worker-chain</code> (solo fallback). Sub-tracks carry <code>selectable: false</code>; triage cannot pick them directly.</p>
-</section>
+<p class="sec-lead">Two tracks carry <code class="tok">selectable: false</code>, which means triage will never offer them to you. They are entered by a selector node sitting inside another track, so you reach them only as a consequence of a choice made further up.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="invariants">Article IV invariants</h2>
-    </div>
-    <p>Every track in <code>workflows.jsonl</code> satisfies eleven invariants. The validator runs at install time (audit-baseline), at triage time (the LLM-driven selector), and at harness time (per node before dispatch).</p>
+<div class="grid-rule grid-2 lane-grid">
+  {% for t in roster.trackDetail %}{% if not t.selectable %}
+  <div class="cell" id="track-{{ t.id }}">
+    <div class="cell-kicker">{{ t.id }}</div>
+    <p class="excerpt">{{ t.gloss }}</p>
+    <p class="cell-note">{{ t.phases }} nodes</p>
   </div>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Invariant</th></tr>
-    </thead>
-    <tbody>
-      <tr><td class="phase">I1</td><td>Unique <code>track_id</code> across the file.</td></tr>
-      <tr><td class="phase">I2</td><td>Unique <code>node.id</code> within a track.</td></tr>
-      <tr><td class="phase">I3</td><td><code>type=task</code> nodes carry exactly one of <code>{skill, sub_track}</code>. <code>type=selector</code> nodes carry non-empty <code>alternates</code>.</td></tr>
-      <tr><td class="phase">I4</td><td>Every <code>depends_on</code> and <code>blocks</code> reference resolves to a <code>node.id</code> in the same track.</td></tr>
-      <tr><td class="phase">I5</td><td>The dependency DAG is acyclic.</td></tr>
-      <tr><td class="phase">I6</td><td>Tracks declaring the <code>commits</code> invariant include a <code>needs_user</code> <code>/grant-commit</code> node ordered before the node with <code>skill: "commit"</code>. The node stays declared even when it carries a <code>condition</code>; conditional omission happens only at materialize time.</td></tr>
-      <tr><td class="phase">I7</td><td>Every <code>sub_track</code> reference resolves to a track with <code>selectable: false</code>.</td></tr>
-      <tr><td class="phase">I8</td><td>Every <code>skill</code> reference resolves to a known invokable: a skill in <code>EXPECTED_SKILLS</code> plus <code>project.json additions.skills</code>, or a consent-gate command.</td></tr>
-      <tr><td class="phase">I9</td><td><code>needs_user</code> nodes appear in dependency order before any node that depends on their consent.</td></tr>
-      <tr><td class="phase">I10</td><td>A selector node's alternates share the same shape (all <code>skill</code>, or all <code>sub_track</code>).</td></tr>
-      <tr><td class="phase">I11</td><td>Every <code>Predicate.name</code>, in <code>preconditions</code> and in a node's <code>condition</code>, resolves to a known v1 predicate (see §III).</td></tr>
-    </tbody>
-  </table>
-</section>
+  {% endif %}{% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="predicates">Predicate vocabulary (v1)</h2>
-    </div>
-    <p>The closed set of declarative predicates that may appear in Track or Alternate <code>preconditions</code>. Unknown predicates fail Article IV invariant I11 at validate time.</p>
+<h2 id="invariants"><span class="sec-mark" aria-hidden="true">§ III</span> Invariants</h2>
+
+<p class="sec-lead">Each track lists the invariants it meets, and triage checks a track against Article IV before it builds the graph out. If a track breaks one of them, it is rejected with an error naming the rule it failed, so a malformed track can never become a task list.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">commits</div>
+    <p>The track ends in a commit. It has to carry <code class="tok">/grant-commit</code> before its <code class="tok">commit</code> node.</p>
   </div>
-  <table>
-    <thead>
-      <tr><th>Predicate</th><th>Argument</th><th>Evaluates true when</th></tr>
-    </thead>
-    <tbody>
-      <tr><td class="phase">requires_git</td><td><span class="muted">(none)</span></td><td><code>git rev-parse --is-inside-work-tree</code> exits 0 at the project root.</td></tr>
-      <tr><td class="phase">requires_user_override</td><td><code>&lt;value&gt;</code></td><td>The user explicitly named this alternate in conversation (e.g., "use solo").</td></tr>
-      <tr><td class="phase">requires_min_components</td><td><code>&lt;int&gt;</code></td><td>The approved spec has at least N C4 Components.</td></tr>
-      <tr><td class="phase">requires_phase_completed</td><td><code>&lt;phase&gt;</code></td><td>The named phase appears in <code>workflow.json -&gt; completed</code>.</td></tr>
-      <tr><td class="phase">requires_skill_present</td><td><code>&lt;skill_id&gt;</code></td><td>The named skill exists in <code>EXPECTED_SKILLS</code> plus <code>additions.skills</code>.</td></tr>
-      <tr><td class="phase">requires_commit_consent</td><td><span class="muted">(none)</span></td><td>Commit consent is required for this workflow: <code>NOT isAutonomousFeatureLanding()</code>. False only under a github-flow autonomous feature landing.</td></tr>
-      <tr><td class="phase">requires_config_flag</td><td><code>{path, equals}</code></td><td>The dot-path resolves in <code>project.json</code> and strictly equals <code>equals</code>; absent, null, or type-mismatched resolves false (fail-safe). Lets a track declare a <code>velocity.*</code> opt-in flag structurally.</td></tr>
-    </tbody>
-  </table>
-  <p>Adding a new predicate is a constitutional change. Update <code>seed.md §18.4</code>, the predicate validator (<code>src/cli/workflows-validator-predicates.js</code>), and the corresponding <code>seed.template.md</code> mirror.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="declare">Declaring a project-local track</h2>
-    </div>
-    <p>Tracks are project-owned. The file <code>.claude/workflows.jsonl</code> is tier-classified <code>NEVER_TOUCH</code>; baseline upgrades preserve your additions verbatim.</p>
+  <div class="cell">
+    <div class="cell-kicker">requires_spec</div>
+    <p>The track goes through <code class="tok">/spec</code> and the approval gate after it.</p>
   </div>
-  <p>Add a Track record to <code>.claude/workflows.jsonl</code>, one record per line. The schema lives at <code>.claude/schemas/workflow-track.v1.json</code> and is documented in <code>seed.md §18.2</code>.</p>
-  <p>Validate with <code>/init-project doctor</code> before the next <code>/triage</code> invocation. The doctor checks JSON Schema conformance and Article IV invariants; named errors point at offending lines with a remediation path.</p>
-  <p>Triage classifies your declared track from its <code>selector_hints</code> at the next request. The track participates in the same selector and AskUserQuestion flow as the {{ baseline.tracks.canonical }} that ship.</p>
-
-  <h3 id="example">Example</h3>
-  <p>A minimal pre-commit-lint track that runs a linter after <code>memory-flush</code> and before <code>/grant-commit</code>:</p>
-<pre><code><span class="tok-com">{</span><span class="tok-str">"$schema"</span>:<span class="tok-str">"./schemas/workflow-track.v1.json"</span>,<span class="tok-str">"track_id"</span>:<span class="tok-str">"pre-commit-lint"</span>,<span class="tok-str">"name"</span>:<span class="tok-str">"Pre-commit lint"</span>,<span class="tok-str">"description"</span>:<span class="tok-str">"Run linter before commit."</span>,<span class="tok-str">"selectable"</span>:<span class="tok-kw">true</span>,<span class="tok-str">"selector_hints"</span>:[<span class="tok-str">"lint pass"</span>,<span class="tok-str">"formatting"</span>],<span class="tok-str">"preconditions"</span>:[],<span class="tok-str">"invariants"</span>:[<span class="tok-str">"commits"</span>],<span class="tok-str">"nodes"</span>:[
-  {<span class="tok-str">"id"</span>:<span class="tok-str">"lint"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"prose"</span>,<span class="tok-str">"depends_on"</span>:[],<span class="tok-str">"blocks"</span>:[<span class="tok-str">"grant-commit"</span>]},
-  {<span class="tok-str">"id"</span>:<span class="tok-str">"grant-commit"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"grant-commit"</span>,<span class="tok-str">"depends_on"</span>:[<span class="tok-str">"lint"</span>],<span class="tok-str">"blocks"</span>:[<span class="tok-str">"commit"</span>],<span class="tok-str">"needs_user"</span>:<span class="tok-kw">true</span>},
-  {<span class="tok-str">"id"</span>:<span class="tok-str">"commit"</span>,<span class="tok-str">"type"</span>:<span class="tok-str">"task"</span>,<span class="tok-str">"skill"</span>:<span class="tok-str">"commit"</span>,<span class="tok-str">"depends_on"</span>:[<span class="tok-str">"grant-commit"</span>],<span class="tok-str">"blocks"</span>:[]}
-<span class="tok-com">]}</span></code></pre>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="doctor"><code>/init-project doctor</code></h2>
-    </div>
-    <p>Run <code>/init-project doctor</code> to validate <code>.claude/workflows.jsonl</code> against the shipped JSON Schema and Article IV's eleven invariants. The doctor surfaces every violation with a remediation path and applies the named fix on user confirmation.</p>
+  <div class="cell">
+    <div class="cell-kicker">git_only</div>
+    <p>The track needs a git repo. Without one, triage drops it before ranking.</p>
   </div>
+  <div class="cell">
+    <div class="cell-kicker">requires_swarm</div>
+    <p>The track sends out work in parallel, so it needs the swarm approval gate.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">chore</div>
+    <p>Its verify, simplify, integrate and document nodes only run if the diff touches something that needs them.</p>
+  </div>
+</div>
 
-  <h3 id="drift">Drift detection</h3>
-  <p>The doctor checks four dimensions on every run.</p>
-  <ol>
-    <li><strong>Schema conformance.</strong> Each Track record validates against <code>.claude/schemas/workflow-track.v1.json</code>.</li>
-    <li><strong>Article IV invariants.</strong> I1..I11 evaluated per Track.</li>
-    <li><strong>Skill resolution.</strong> Every <code>skill</code> reference resolves to <code>EXPECTED_SKILLS</code> plus <code>project.json additions.skills</code>, or to a consent-gate command in <code>.claude/commands/</code>.</li>
-    <li><strong>Predicate vocabulary.</strong> Every <code>Predicate.name</code> is in the v1 closed set above.</li>
-  </ol>
+<h2 id="preconditions"><span class="sec-mark" aria-hidden="true">§ IV</span> Preconditions</h2>
 
-  <p>The four-way Article IV mirror is enforced separately. The <code>seed.md §18</code> text, <code>CLAUDE.md Article IV</code>, <code>src/seed.template.md</code>, and <code>src/CLAUDE.template.md</code> are bound together by <code>audit-baseline</code>. The doctor extends that check to <code>workflows.jsonl</code> against the shipped pristine template at <code>obj/template/.claude/workflows.template.jsonl</code>. Any track in your <code>workflows.jsonl</code> that has the same <code>track_id</code> as a pristine track but differs structurally is flagged.</p>
+<p class="sec-lead">A track can declare what has to be true before it is even a candidate. The vocabulary is closed: {{ roster.predicates.length }} predicate names, and Article IV invariant I11 rejects a track that uses any other.</p>
 
-  <p>Schema-version handling closes the upgrade-safety loop. Each Track carries a <code>$schema</code> field referencing the JSON Schema document version. Unknown <code>$schema</code> values are rejected with a named error citing the supported versions. This prevents silent schema-version skew across baseline upgrades; bumping the schema is a constitutional change that updates the mirror at the same time.</p>
-</section>
+{# Names come from src/cli/workflows-validator-predicates.js, the module the
+   validator itself reads. The gloss is editorial and sits in
+   _data/predicatenotes.json behind a coverage guard, so a predicate added to the
+   vocabulary fails the build until it is documented here. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for p in roster.predicates %}
+  <div class="cell">
+    <div class="cell-kicker">{{ p.name }}</div>
+    <p>{{ p.note | safe }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<p>Because preconditions run before ranking, a track that cannot apply never competes at all. An exception is a different thing: it skips a single node inside a track you have already picked, and it is recorded in the workflow state where the audit can find it.</p>
+
+<h2 id="selection"><span class="sec-mark" aria-hidden="true">§ V</span> Track selection</h2>
+
+<p><code class="tok">/triage</code> first classifies how new the request is, as <code class="tok">pattern-copy</code>, <code class="tok">spec-derived</code>, <code class="tok">novel</code> or <code class="tok">ambiguous</code>, and it must cite the evidence behind that call. The default is then the lightest track whose guardrails still cover the risk. Choosing a heavier one requires a named reason, which is recorded in the workflow state.</p>
+
+<p>If the tree is not a git repository, a track marked <code class="tok">git_only</code> drops out before ranking; a track sitting behind a config flag drops out for as long as that flag is off. That is how <code class="tok">power</code> and <code class="tok">org</code> stay out of the picker until you deliberately turn them on.</p>
+
+<p>The chosen track's graph becomes your session task list, and <code class="tok">track_guard</code> enforces its node order on every workflow artifact written from then on.</p>
+
+<p>Two things can skip a node. The first is the <code class="tok">exceptions</code> array that triage records when it creates the workflow; the second is the right-size gate which runs after <code class="tok">tdd</code>. On a small enough diff that gate may drop simplify and document, and it records every skip it makes (it can never drop security, or a core phase).</p>
+
+<h2 id="project-tracks"><span class="sec-mark" aria-hidden="true">§ VI</span> Project-declared tracks</h2>
+
+<p>To declare your own tracks, or to add nodes to the shipped ones, edit <code class="tok">.claude/workflows.jsonl</code> directly. The Article IV invariants bind every track whoever wrote it. Miss <code class="tok">/grant-commit</code> before a <code class="tok">commit</code> node, or leave a cycle in the graph, and triage will reject the track outright.</p>
+
+<p>Because that file is on the never-touch list, install and upgrade both leave it alone. Merging your local edits against tracks added upstream is therefore a manual job, and the upgrade will not attempt it for you.</p>

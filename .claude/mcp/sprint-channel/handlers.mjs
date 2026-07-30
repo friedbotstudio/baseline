@@ -5,6 +5,7 @@
 
 import {
   readSprint, writeSprint, readTasks, writeTasks, readYields, writeYields, appendMailbox,
+  readMessages, writeMessages,
 } from './lib/store.mjs';
 import { withLock } from './lib/lock.mjs';
 import { validateMessage } from './lib/schema.mjs';
@@ -86,6 +87,82 @@ export function signalDone({ channelRoot, peer_id, task_id, commit_sha }) {
     .map((t) => t.id);
   writeTasks(channelRoot, tasks);
   return { ok: true, unblocked };
+}
+
+// --- Article X escalation surface -------------------------------------------
+// org-dispatch needs eight tools; the four below previously existed only on
+// sprint-pool, which is a research-preview CHANNEL server and needs
+// --dangerously-load-development-channels plus org policy to load. Hosting them
+// here — a plain stdio server already in .mcp.json — is what lets a consumer run
+// org mode with no flag. sprint-pool stays the opt-in push accelerator.
+
+// Message ids are positional, not random: a channel's state is a plain file and
+// the id must survive a re-read. `isSafeId`-clean so it can never widen a path.
+const nextMessageId = (messages, peer_id) => `m${messages.length + 1}-${peer_id}`;
+
+export function askLead({ channelRoot, peer_id, body }) {
+  if (!isSafeId(peer_id)) return { ok: false, error: 'invalid peer_id' };
+  if (typeof body !== 'string' || body.trim() === '') return { ok: false, error: 'empty body' };
+  const messages = readMessages(channelRoot);
+  const message_id = nextMessageId(messages, peer_id);
+  messages.push({ message_id, from_peer: peer_id, body, answer: null, answered_at: null, ts: Date.now() });
+  writeMessages(channelRoot, messages);
+  return { ok: true, message_id };
+}
+
+export function answerPeer({ channelRoot, message_id, answer }) {
+  if (typeof answer !== 'string' || answer.trim() === '') return { ok: false, error: 'empty answer' };
+  const messages = readMessages(channelRoot);
+  const target = messages.find((m) => m.message_id === message_id);
+  if (!target) return { ok: false, error: `unknown message_id: ${message_id}` };
+  // Idempotent: re-answering with the same text is a no-op so a retried relay
+  // cannot move answered_at or duplicate the record.
+  if (target.answer === answer) return { ok: true, already_answered: true };
+  if (target.answer !== null) return { ok: false, error: `message ${message_id} already answered` };
+  target.answer = answer;
+  target.answered_at = Date.now();
+  writeMessages(channelRoot, messages);
+  return { ok: true };
+}
+
+export function sprintStatus({ channelRoot }) {
+  const tasks = readTasks(channelRoot);
+  const sprint = readSprint(channelRoot);
+  return {
+    ok: true,
+    tasks,
+    peers: sprint.peers || [],
+    messages: readMessages(channelRoot),
+    yields: readYields(channelRoot),
+    // Authoritative completion check. Pushed events are lossy hints; this flag
+    // is never dropped, so a lead reconciles from it rather than trusting a
+    // push it may not have received. No tasks means nothing was dispatched,
+    // which is not the same as finished.
+    all_done: tasks.length > 0 && tasks.every((t) => t.status === 'done'),
+  };
+}
+
+export function enqueueTask({ channelRoot, task_id, brief, write_set, depends_on, assignee }) {
+  if (!isSafeId(task_id)) return { ok: false, error: 'invalid task_id' };
+  if (assignee !== undefined && assignee !== null && !isSafeId(assignee)) {
+    return { ok: false, error: 'invalid assignee' };
+  }
+  const tasks = readTasks(channelRoot);
+  const existing = findTask(tasks, task_id);
+  // Idempotent by task_id so a re-dispatch cannot fork a lane in two.
+  if (existing) return { ok: true, task_id, already_enqueued: true };
+  tasks.push({
+    id: task_id,
+    brief: typeof brief === 'string' ? brief : '',
+    write_set: Array.isArray(write_set) ? write_set : [],
+    depends_on: Array.isArray(depends_on) ? depends_on : [],
+    assignee: assignee || null,
+    status: 'pending',
+    claimed_by: null,
+    commit_sha: null,
+  });
+  writeTasks(channelRoot, tasks);
+  return { ok: true, task_id };
 }
 
 export function raiseConflict({ channelRoot, peer_id, task_id, path }) {

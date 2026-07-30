@@ -1,0 +1,37 @@
+{
+  "landmarks": {
+    "owner": "scout",
+    "holds": "Where things live in this repo.",
+    "key": "path:line"
+  },
+  "libraries": {
+    "owner": "research",
+    "holds": "Third-party APIs that were checked against current docs, pinned to the version checked.",
+    "key": "<lib>@<version>"
+  },
+  "decisions": {
+    "owner": "spec · rca",
+    "holds": "Choices made and why, plus the options that were turned down.",
+    "key": "short slug"
+  },
+  "landmines": {
+    "owner": "security · integrate · scout",
+    "holds": "Traps. Edit this and you have to edit that too.",
+    "key": "path:line or slug"
+  },
+  "conventions": {
+    "owner": "scenario · implement",
+    "holds": "How this repo writes its tests and lays out its code.",
+    "key": "short slug"
+  },
+  "pending-questions": {
+    "owner": "any phase",
+    "holds": "Questions a session could not settle, and what each one blocks.",
+    "key": "Q-NNN"
+  },
+  "backlog": {
+    "owner": "/memory-flush",
+    "holds": "Future work, picked up from what you and Claude said you would come back to.",
+    "key": "slug plus a 4-character hash"
+  }
+}

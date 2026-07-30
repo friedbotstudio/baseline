@@ -1,0 +1,384 @@
+<!-- Reference artifact — NOT shipped code, NOT an Eleventy input (site input dir is site-src/).
+     Provenance: claude.ai design project f67769d8-cf26-426d-ac05-7ca0865f0cf6,
+     document "Baseline Page Redesign.dc.html", variant 1b "Proof grid".
+     Extracted 2026-07-28 via DesignSync get_file. This is the rubric anchor the
+     design-judge captures-and-compares against for docs/specs/site-redesign-proof-grid.md.
+     Contains design-tool artifacts (<x-dc> wrappers, {{ copy }} placeholders, #1b hrefs)
+     which are part of the source and deliberately preserved verbatim below. -->
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Proof grid — sticky install bar, evidence-first bento, wide grid</div>
+<div class="dv-card" style="width:1280px">
+
+<div style="background:#fbf9f5;color:#15130f">
+
+<div style="background:#15130f;padding:11px 48px;display:flex;align-items:center;gap:28px;font:500 11px/1 'IBM Plex Mono',monospace;color:#c8c0b3">
+<span style="color:#f4ede2;font-weight:600">baseline</span>
+<span style="color:#6f675c">v0.20 · Apache 2.0 · public alpha</span>
+<span style="margin-left:auto;display:flex;gap:22px">
+<a href="#1b" style="color:#c8c0b3;text-decoration:none">install</a>
+<a href="#1b" style="color:#c8c0b3;text-decoration:none">governance</a>
+<a href="#1b" style="color:#c8c0b3;text-decoration:none">workflows</a>
+<a href="#1b" style="color:#c8c0b3;text-decoration:none">hooks</a>
+<a href="#1b" style="color:#c8c0b3;text-decoration:none">skills</a>
+</span>
+<button type="button" onClick="{{ copy }}" data-key="nav-b" data-text="npx @friedbotstudio/create-baseline@latest ." style="background:#c2440c;border:0;color:#fff;font:500 11px/1 'IBM Plex Mono',monospace;padding:8px 12px;cursor:pointer" style-hover="background:#a5380a">$ npx create-baseline</button>
+</div>
+
+<div style="background:#f4ddcd;padding:80px 48px 0">
+<div style="display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:end">
+<div>
+<div style="font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#a33a09;margin-bottom:24px">claude code · constitutional baseline</div>
+<h1 style="font:600 76px/.98 'IBM Plex Sans',sans-serif;letter-spacing:-.038em;margin:0 0 26px;color:#15130f">Claude cannot<br>self-approve.</h1>
+<p style="font:400 20px/1.55 'IBM Plex Sans',sans-serif;color:#5b4335;margin:0 0 34px;max-width:520px;text-wrap:pretty">baseline is a repository overlay that governs how Claude works in your codebase — intake to commit — and enforces every rule at the tool boundary, where Claude cannot reach.</p>
+<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+<button type="button" onClick="{{ copy }}" data-text="npx @friedbotstudio/create-baseline@latest ." data-key="hero-b" style="display:flex;align-items:center;gap:14px;background:#15130f;border:0;padding:17px 22px;cursor:pointer;font:500 14px/1 'IBM Plex Mono',monospace;color:#f4ede2" style-hover="background:#241f18">
+<span style="color:#e0873f">$</span>
+<span>npx @friedbotstudio/create-baseline@latest .</span>
+<span style="margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.18);font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ lbl_hero_b }}</span>
+</button>
+<a href="#1b" style="font:500 14px/1 'IBM Plex Sans',sans-serif;color:#a33a09;text-decoration:none;border-bottom:1px solid rgba(163,58,9,.35);padding-bottom:3px">browse the 52 skills →</a>
+</div>
+</div>
+<div style="background:#15130f;margin-bottom:-40px;box-shadow:0 24px 48px rgba(60,30,10,.18)">
+<div style="display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.09);font:400 10.5px/1 'IBM Plex Mono',monospace;color:#8b8377">
+<span style="width:7px;height:7px;border-radius:50%;background:#c2440c;display:inline-block"></span>
+<span>~/your-project · claude</span>
+</div>
+<pre style="margin:0;padding:20px 16px 24px;font:400 11.5px/1.85 'IBM Plex Mono',monospace;color:#c8c0b3;overflow:hidden"><span style="color:#c2440c">&gt;</span> commit the refactor and push to main
+
+<span style="color:#6f675c">⏺ Bash(git commit -m "refactor: …")</span>
+  <span style="color:#d1503f">✗ blocked · git_commit_guard</span>
+    no consent token at
+    .claude/state/commit_consent
+    <span style="color:#8b8377">type /grant-commit to open a gate</span>
+
+<span style="color:#6f675c">⏺ Bash(git push origin main)</span>
+  <span style="color:#d1503f">✗ blocked · protected_branch_guard</span>
+    art. VII · /grant-push required
+
+<span style="color:#9aa87a">↳ 2 tool calls refused before execution.</span>
+<span style="color:#6f675c">  hooks run outside my reach.</span></pre>
+</div>
+</div>
+</div>
+
+<div style="padding:76px 48px 0">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.12)">
+<div style="background:#fbf9f5;padding:30px 28px">
+<div style="font:600 48px/1 'IBM Plex Sans',sans-serif;letter-spacing:-.04em;color:#c2440c;margin-bottom:14px">3</div>
+<div style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin-bottom:6px">structural gates</div>
+<div style="font:400 13px/1.6 'IBM Plex Mono',monospace;color:#8a8377">user-typed · unforgeable</div>
+</div>
+<div style="background:#fbf9f5;padding:30px 28px">
+<div style="font:600 48px/1 'IBM Plex Sans',sans-serif;letter-spacing:-.04em;color:#c2440c;margin-bottom:14px">26</div>
+<div style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin-bottom:6px">tool-boundary hooks</div>
+<div style="font:400 13px/1.6 'IBM Plex Mono',monospace;color:#8a8377">blocks, not advises</div>
+</div>
+<div style="background:#fbf9f5;padding:30px 28px">
+<div style="font:600 48px/1 'IBM Plex Sans',sans-serif;letter-spacing:-.04em;color:#c2440c;margin-bottom:14px">52</div>
+<div style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin-bottom:6px">skills, 1 subagent</div>
+<div style="font:400 13px/1.6 'IBM Plex Mono',monospace;color:#8a8377">sha256-verified · CI-enforced</div>
+</div>
+</div>
+</div>
+
+<div style="padding:96px 48px 0">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ I</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">What it is</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 40px;max-width:640px;text-wrap:pretty">Memory, prompts, and skills shape what Claude <em>does</em>. The hooks are what enforce it. Four strata, one overlay.</p>
+
+<div style="display:grid;grid-template-columns:320px 1fr;gap:1px;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.12)">
+<div style="background:#f0ece4;padding:28px;display:flex;flex-direction:column;gap:3px;justify-content:center">
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#8a8377;margin-bottom:12px">four strata</div>
+<div style="background:#fbf9f5;padding:13px 15px;display:flex;gap:12px;align-items:baseline"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#b3aa9a;width:20px">I</span><span style="font:600 13px 'IBM Plex Sans',sans-serif">Genesis</span><span style="font:400 11.5px 'IBM Plex Mono',monospace;color:#8a8377;margin-left:auto">seed.md</span></div>
+<div style="background:#f7f4ee;padding:13px 15px;display:flex;gap:12px;align-items:baseline"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#b3aa9a;width:20px">II</span><span style="font:600 13px 'IBM Plex Sans',sans-serif">Constitution</span><span style="font:400 11.5px 'IBM Plex Mono',monospace;color:#8a8377;margin-left:auto">CLAUDE.md</span></div>
+<div style="background:#efeae0;padding:13px 15px;display:flex;gap:12px;align-items:baseline"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#b3aa9a;width:20px">III</span><span style="font:600 13px 'IBM Plex Sans',sans-serif">Implementation</span><span style="font:400 11.5px 'IBM Plex Mono',monospace;color:#8a8377;margin-left:auto">hooks · skills</span></div>
+<div style="background:#15130f;padding:13px 15px;display:flex;gap:12px;align-items:baseline"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:#7a7267;width:20px">IV</span><span style="font:600 13px 'IBM Plex Sans',sans-serif;color:#f4ede2">Tool boundary</span><span style="font:400 11.5px 'IBM Plex Mono',monospace;color:#c2440c;margin-left:auto">guards</span></div>
+</div>
+<div style="background:#fbf9f5;display:grid;grid-template-rows:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.12)">
+<div style="background:#fbf9f5;padding:22px 28px">
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#c2440c;margin-bottom:9px">01 · constitution</div>
+<h3 style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin:0 0 6px">CLAUDE.md as in-session contract</h3>
+<p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#736d62;margin:0;text-wrap:pretty">Twelve articles bind authority, architecture, workflow ordering, engineering rules, git rules, and memory.</p>
+</div>
+<div style="background:#fbf9f5;padding:22px 28px">
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#c2440c;margin-bottom:9px">02 · enforcement</div>
+<h3 style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin:0 0 6px">26 hooks at every boundary</h3>
+<p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#736d62;margin:0;text-wrap:pretty">Pre and post tool-use guards block destructive commands, gate consent markers, and enforce phase ordering.</p>
+</div>
+<div style="background:#fbf9f5;padding:22px 28px">
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#c2440c;margin-bottom:9px">03 · workflow tracks</div>
+<h3 style="font:600 17px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.012em;margin:0 0 8px">9 canonical tracks, declared as data</h3>
+<div style="display:flex;flex-wrap:wrap;gap:4px">
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">intake-full</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">spec-entry</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">tdd-quickfix</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">chore</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">freeform</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">epic</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">epic-child</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">org</span>
+<span style="font:400 11px/1 'IBM Plex Mono',monospace;background:#f0ece4;color:#5c564c;padding:5px 8px">power</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:96px;background:#f0ece4;padding:72px 48px">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ II</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">Why hooks</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 36px;max-width:640px;text-wrap:pretty">When a hook blocks a tool call, Claude never executes it. The dashed lines are the surfaces Claude cannot reach.</p>
+<div style="background:#fbf9f5;border:1px solid rgba(0,0,0,.1);padding:36px 34px">
+<pre style="margin:0;font:400 13px/1.9 'IBM Plex Mono',monospace;color:#3d382f;overflow-x:auto">   <span style="color:#8a8377">user</span>              <span style="color:#8a8377">claude</span>              <span style="color:#8a8377">tool</span>              <span style="color:#8a8377">result</span>
+ ┌────────┐        ┌──────────┐        ┌──────────┐        ┌──────────┐
+ │ prompt │ ─────▶ │ read     │ ─────▶ │ Write    │ ─────▶ │ diff     │
+ │        │        │ plan     │        │ Edit     │        │ output   │
+ │        │ ◀───── │ pick     │ ◀───── │ Bash     │ ◀───── │ error    │
+ └────────┘        └──────────┘        └──────────┘        └──────────┘
+      ╎                  ╎                   ╎                   ╎
+ ╌╌╌╌╌┴╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┴╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┴╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┴╌╌╌╌╌
+ <span style="color:#c2440c;font-weight:600">UserPromptSubmit</span>                   <span style="color:#c2440c;font-weight:600">PreToolUse</span>          <span style="color:#c2440c;font-weight:600">PostToolUse</span>
+ consent_gate_grant                 15 guards           lint_runner
+ writes the marker                  block · ask · allow test_runner
+ ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ <span style="color:#15130f;font-weight:600">outside Claude's reach</span> ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌</pre>
+</div>
+<p style="font:400 13px/1.65 'IBM Plex Sans',sans-serif;color:#8a8377;margin:16px 0 0;max-width:860px;text-wrap:pretty"><strong style="color:#5c564c;font-weight:600">The tool boundary.</strong> <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">consent_gate_grant</span> writes the marker on <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">UserPromptSubmit</span>; the paired <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">PreToolUse</span> guard validates it before the approval-token write is allowed. That pairing is what makes consent unforgeable.</p>
+</div>
+
+<div style="padding:96px 48px 0">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ III</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">How it flows</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 36px;max-width:640px;text-wrap:pretty">A track is a DAG of skill nodes. Here is <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;color:#15130f">intake-full</span> — eleven nodes from request to commit, with the gates you type marked in orange.</p>
+<div style="display:grid;grid-template-columns:1fr 300px;gap:1px;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.12)">
+<div style="background:#f7f4ee;padding:34px 32px">
+<pre style="margin:0;font:400 12.5px/1.85 'IBM Plex Mono',monospace;color:#3d382f;overflow-x:auto">  01 intake ─▶ 02 scout ─▶ 03 research
+                                │
+                       <span style="color:#c2440c;font-weight:600">■ /approve-direction</span>  <span style="color:#b3aa9a">user-typed</span>
+                                │
+                          04 <span style="color:#15130f;font-weight:600">spec</span>   <span style="color:#b3aa9a">plan anchor</span>
+                                │
+                          06 <span style="color:#15130f;font-weight:600">tdd</span>    <span style="color:#b3aa9a">scenario ▸ implement ▸ verify</span>
+                                │      <span style="color:#b3aa9a">solo, or swarm at ≥3 components</span>
+     07 simplify ─▶ 08 security ─▶ 09 integrate ─▶ 10 document
+                                │
+                  10.5 archive ─▶ 10.6 memory-flush
+                                │
+                      <span style="color:#c2440c;font-weight:600">■ /grant-commit</span>      <span style="color:#b3aa9a">branch-aware</span>
+                                │
+                          11 <span style="color:#15130f;font-weight:600">commit</span>  <span style="color:#b3aa9a">ship</span></pre>
+</div>
+<div style="background:#fbf9f5;padding:28px 26px;display:flex;flex-direction:column;gap:20px">
+<div>
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#c2440c;margin-bottom:8px">the four gates</div>
+<div style="display:flex;flex-direction:column;gap:7px;font:400 12.5px/1.5 'IBM Plex Mono',monospace;color:#5c564c">
+<span>■ /approve-direction</span>
+<span>■ /approve-swarm <span style="color:#b3aa9a">· in phase 6</span></span>
+<span>■ /grant-commit</span>
+<span>■ /grant-push <span style="color:#b3aa9a">· runtime</span></span>
+</div>
+</div>
+<p style="font:400 13px/1.6 'IBM Plex Sans',sans-serif;color:#8a8377;margin:0;text-wrap:pretty">All four are user-typed commands. Claude cannot reach the code path that writes the markers.</p>
+<p style="font:400 13px/1.6 'IBM Plex Sans',sans-serif;color:#8a8377;margin:0;text-wrap:pretty">Under <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">github-flow</span>, an autonomous feature on a non-protected branch omits <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">/grant-commit</span> and opens a pull request instead.</p>
+<a href="#1b" style="font:500 13px/1 'IBM Plex Sans',sans-serif;color:#c2440c;text-decoration:none;border-bottom:1px solid rgba(194,68,12,.3);padding-bottom:3px;margin-top:auto">all 9 tracks →</a>
+</div>
+</div>
+</div>
+
+<div style="padding:96px 48px 0">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ IV</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">One subagent, and it decides nothing</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 36px;max-width:640px;text-wrap:pretty">Decisions live in main context. Subagents only execute pre-decided recipes in parallel.</p>
+<div style="display:grid;grid-template-columns:1fr 200px 1fr;gap:1px;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.12)">
+<div style="background:#fbf9f5;padding:30px 28px">
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#c2440c;margin-bottom:14px">main context</div>
+<h3 style="font:600 21px/1.25 'IBM Plex Sans',sans-serif;letter-spacing:-.016em;margin:0 0 10px">Where decisions live</h3>
+<p style="font:400 14.5px/1.6 'IBM Plex Sans',sans-serif;color:#736d62;margin:0 0 18px;text-wrap:pretty">Architecture, scenario selection, recipe design, security calls — anything that depends on conversational visibility.</p>
+<div style="display:flex;flex-direction:column;gap:6px;font:400 12.5px/1 'IBM Plex Mono',monospace;color:#5c564c">
+<span>scout · research · spec</span>
+<span>scenario decide</span>
+<span>implement decide</span>
+<span>merge audit</span>
+</div>
+</div>
+<div style="background:#f0ece4;padding:30px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center">
+<div style="font:400 12px/1.7 'IBM Plex Mono',monospace;color:#8a8377">recipe<br>─────▶</div>
+<div style="font:600 12px/1.4 'IBM Plex Sans',sans-serif;color:#15130f">merge audit<br><span style="font:400 11.5px 'IBM Plex Mono',monospace;color:#8a8377">write_set check</span></div>
+<div style="font:400 12px/1.7 'IBM Plex Mono',monospace;color:#8a8377">◀─────<br>status</div>
+</div>
+<div style="background:#15130f;padding:30px 28px">
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#e0873f;margin-bottom:14px">isolated worktree</div>
+<h3 style="font:600 21px/1.25 'IBM Plex Sans',sans-serif;letter-spacing:-.016em;margin:0 0 10px;color:#f4ede2">Where execution runs</h3>
+<p style="font:400 14.5px/1.6 'IBM Plex Sans',sans-serif;color:#a9a196;margin:0 0 18px;text-wrap:pretty"><span style="font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:#e0873f">swarm-worker</span> executes a fully-specified recipe. No design choices, no scope expansion, no test edits.</p>
+<div style="display:flex;flex-direction:column;gap:6px;font:400 12.5px/1 'IBM Plex Mono',monospace;color:#c8c0b3">
+<span>Skill(scenario)</span>
+<span>Skill(implement)</span>
+<span>tests pass · fail</span>
+<span>JSON status returns</span>
+</div>
+</div>
+</div>
+</div>
+
+<div style="padding:96px 48px 0">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ V</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">Adoption is one command</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 36px;max-width:700px;text-wrap:pretty">One npx command lays down the full overlay — hooks, skills, subagent, MCP servers, and the constitutional documents — plus a CI posture by default.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.12)">
+<div style="background:#fbf9f5;padding:22px 20px"><div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#c2440c;margin-bottom:10px">01</div><p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3d382f;margin:0">Run the overlay command in a clean working tree.</p></div>
+<div style="background:#fbf9f5;padding:22px 20px"><div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#c2440c;margin-bottom:10px">02</div><p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3d382f;margin:0">Open the repo in Claude Code, or the JetBrains / VS Code extension.</p></div>
+<div style="background:#fbf9f5;padding:22px 20px"><div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#c2440c;margin-bottom:10px">03</div><p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3d382f;margin:0">Run <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;background:#f0ece4;padding:1px 5px">/init-project</span> to tailor the config to your stack.</p></div>
+<div style="background:#fbf9f5;padding:22px 20px"><div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#c2440c;margin-bottom:10px">04</div><p style="font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3d382f;margin:0">Drive work through <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;background:#f0ece4;padding:1px 5px">/triage</span> or <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;background:#f0ece4;padding:1px 5px">/harness</span>.</p></div>
+</div>
+<div style="background:#15130f">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.09);font:400 11px/1 'IBM Plex Mono',monospace;color:#8b8377">
+<span>~/your-repo · zsh</span>
+<button type="button" onClick="{{ copy }}" data-text="npx @friedbotstudio/create-baseline@latest ." data-key="zsh-b" style="background:transparent;border:1px solid rgba(255,255,255,.16);color:#c8c0b3;font:400 10px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;cursor:pointer" style-hover="border-color:#c2440c;color:#e0873f">{{ lbl_zsh_b }}</button>
+</div>
+<pre style="margin:0;padding:20px 16px;font:400 12.5px/1.9 'IBM Plex Mono',monospace;color:#c8c0b3;overflow-x:auto"><span style="color:#6f675c"># inside a clean git working tree
+</span><span style="color:#c2440c">$</span> npx @friedbotstudio/create-baseline@latest .
+
+<span style="color:#6f675c"># open in Claude Code, then:
+</span><span style="color:#c2440c">&gt;</span> /init-project
+<span style="color:#c2440c">&gt;</span> /triage <span style="color:#9aa87a">"add user-facing onboarding flow"</span></pre>
+</div>
+</div>
+</div>
+
+<div style="padding:96px 48px 0">
+<div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px">
+<span style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;color:#c2440c">§ VI</span>
+<h2 style="font:600 40px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0">Common questions</h2>
+</div>
+<p style="font:400 18px/1.6 'IBM Plex Sans',sans-serif;color:#4a463e;margin:0 0 32px;max-width:640px;text-wrap:pretty">What evaluators ask before installing. Every answer names the mechanism that backs it.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 48px">
+
+<div style="border-top:1px solid rgba(0,0,0,.12)">
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b1 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">Will it commit to my repo without me knowing?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b1 }}</span>
+</button>
+<sc-if value="{{ open_b1 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">No. Gate C requires a typed <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">/grant-commit</span> within fifteen minutes; without a fresh token, <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">git_commit_guard</span> blocks the Bash call. The marker is written outside Claude's tool boundary.</p>
+</sc-if>
+</div>
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b2 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">What if I want something the baseline forbids?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b2 }}</span>
+</button>
+<sc-if value="{{ open_b2 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">Add a named exception via <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">/triage</span> — recorded, scoped, visible to the audit. For a recurring need, declare a project-local track; it survives upgrades verbatim.</p>
+</sc-if>
+</div>
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b3 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">Can I disable a hook?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b3 }}</span>
+</button>
+<sc-if value="{{ open_b3 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">Yes, but it takes an explicit amendment to <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">seed.md</span> §4.1 plus the matching settings edit. The disable is constitutional, not silent.</p>
+</sc-if>
+</div>
+</div>
+
+<div style="border-top:1px solid rgba(0,0,0,.12)">
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b4 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">Will my customizations survive an upgrade?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b4 }}</span>
+</button>
+<sc-if value="{{ open_b4 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">Yes. The upgrade does a three-way reconcile against the manifest: untouched files refresh, tier-2 auto-merges, tier-3 stages for review, and your edits prompt first. Reported per file in CI.</p>
+</sc-if>
+</div>
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b5 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">Does it ship its own Claude Code?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b5 }}</span>
+</button>
+<sc-if value="{{ open_b5 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">No. baseline is a repository overlay: the ruleset, the hooks, the skills, the workflow. You bring your own Claude Code.</p>
+</sc-if>
+</div>
+<div style="border-bottom:1px solid rgba(0,0,0,.09)">
+<button type="button" onClick="{{ tog_b6 }}" style="width:100%;display:flex;align-items:center;gap:16px;background:transparent;border:0;padding:18px 0;cursor:pointer;text-align:left;font:600 16px/1.35 'IBM Plex Sans',sans-serif;letter-spacing:-.01em;color:#15130f" style-hover="color:#c2440c">
+<span style="flex:1">Where do my project secrets go?</span>
+<span style="font:400 17px/1 'IBM Plex Mono',monospace;color:#c2440c;width:14px;text-align:center">{{ sign_b6 }}</span>
+</button>
+<sc-if value="{{ open_b6 }}" hint-placeholder-val="{{ false }}">
+<p style="font:400 14.5px/1.7 'IBM Plex Sans',sans-serif;color:#5c564c;margin:0 0 20px;text-wrap:pretty">Not into the baseline. <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">env_guard</span> blocks every write targeting <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">.env</span> files except <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">.env.example</span>.</p>
+</sc-if>
+</div>
+</div>
+
+</div>
+</div>
+
+<div style="margin-top:96px;background:#15130f;padding:64px 48px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:48px;flex-wrap:wrap">
+<div>
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#e0873f;margin-bottom:14px">also ships · off by default</div>
+<h2 style="font:600 34px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0 0 10px;color:#f4ede2">org mode and standup.</h2>
+<p style="font:400 15.5px/1.6 'IBM Plex Sans',sans-serif;color:#8b8377;margin:0;max-width:560px;text-wrap:pretty">A flat pod of peer sessions taking one feature between them, governed by Article X — and one command that reads your release state, backlog, and open questions, then says what to pick up.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<a href="#1b" style="font:500 14px/1 'IBM Plex Sans',sans-serif;color:#e0873f;text-decoration:none;border-bottom:1px solid rgba(224,135,63,.3);padding-bottom:4px">→ see the org mode page</a>
+<a href="#1b" style="font:500 14px/1 'IBM Plex Sans',sans-serif;color:#e0873f;text-decoration:none;border-bottom:1px solid rgba(224,135,63,.3);padding-bottom:4px">→ see the full standup page</a>
+</div>
+</div>
+</div>
+
+<div style="background:#f4ddcd;padding:60px 48px;display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap">
+<div>
+<h2 style="font:600 34px/1.12 'IBM Plex Sans',sans-serif;letter-spacing:-.028em;margin:0 0 8px">Install it in a clean tree.</h2>
+<p style="font:400 15px/1.6 'IBM Plex Sans',sans-serif;color:#6b4c37;margin:0">Apache 2.0 · open source · public alpha, under active development.</p>
+</div>
+<button type="button" onClick="{{ copy }}" data-text="npx @friedbotstudio/create-baseline@latest ." data-key="cta-b" style="display:flex;align-items:center;gap:12px;background:#15130f;border:0;padding:17px 24px;cursor:pointer;font:500 14.5px/1 'IBM Plex Mono',monospace;color:#f4ede2" style-hover="background:#241f18">
+<span style="color:#e0873f">$</span>
+<span>npx @friedbotstudio/create-baseline@latest .</span>
+<span style="margin-left:6px;padding-left:12px;border-left:1px solid rgba(255,255,255,.18);font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.55">{{ lbl_cta_b }}</span>
+</button>
+</div>
+
+<div style="background:#0f0e0b;padding:40px 48px;display:flex;justify-content:space-between;gap:48px;flex-wrap:wrap">
+<div style="max-width:320px">
+<div style="font:600 15px/1 'IBM Plex Sans',sans-serif;color:#f4ede2;margin-bottom:10px">baseline</div>
+<p style="font:400 13px/1.6 'IBM Plex Sans',sans-serif;color:#8b8377;margin:0 0 12px">A discipline layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit.</p>
+<p style="font:400 11px/1.5 'IBM Plex Mono',monospace;color:#5c564c;margin:0">© 2026 baseline · Apache 2.0 · v0.20.0</p>
+</div>
+<div style="display:flex;gap:56px">
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#6f675c;margin-bottom:3px">docs</div>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">Install</a>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">Governance</a>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">Workflows</a>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">Hooks · Skills · CLI</a>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#6f675c;margin-bottom:3px">project</div>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">GitHub</a>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">Constitution</a>
+<a href="#1b" style="font:400 13px/1 'IBM Plex Sans',sans-serif;color:#c8c0b3;text-decoration:none">License · Issues</a>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: "take <a class="dv-oid" href="#1b">1b</a>'s hero but <a class="dv-oid" href="#1a">1a</a>'s narrow reading column" · "make the refused-tool-call terminal the hero of <a class="dv-oid" href="#1a">1a</a> too" · "cut §IV entirely"</p>

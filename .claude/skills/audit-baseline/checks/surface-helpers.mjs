@@ -43,28 +43,8 @@ export function checkByCategorySum(byCategory, total) {
     : { status: 'FAIL', detail: `byCategory sum ${sum} != skills total ${total}` };
 }
 
-// Slice the substring anchored at id="<startId>" up to (exclusive) id="<endId>".
-export function sectionSlice(text, startId, endId) {
-  const start = text.indexOf(`id="${startId}"`);
-  if (start === -1) return '';
-  const rest = text.slice(start);
-  const end = rest.indexOf(`id="${endId}"`);
-  return end === -1 ? rest : rest.slice(0, end);
-}
-
-// Assert the docsite track list enumerates every selectable track.
-export function checkDocsiteTracks(njkText, selectableIds) {
-  const missing = selectableIds.filter(id => !njkText.includes(`<code>${id}</code>`));
-  return missing.length
-    ? { status: 'FAIL', detail: `missing track entries: ${JSON.stringify(missing)}` }
-    : { status: 'PASS', detail: `${selectableIds.length} tracks listed` };
-}
-
-// Assert a docsite hooks table enumerates every hook. `render` maps a hook name
-// to the literal the table is expected to carry.
-export function checkDocsiteHookTable(regionText, hookNames, render) {
-  const missing = hookNames.filter(h => !regionText.includes(render(h)));
-  return missing.length
-    ? { status: 'FAIL', detail: `missing: ${JSON.stringify(missing)}` }
-    : { status: 'PASS', detail: `${hookNames.length} hooks covered` };
-}
+// sectionSlice / checkDocsiteTracks / checkDocsiteHookTable were removed on
+// 2026-07-29. They scanned `site-src/*.njk` for literal hook and track names,
+// which the docsite stopped containing once those pages started building their
+// rosters from a `{% for %}` over _data. checks/docsite-drift.mjs replaced them
+// and asserts against the rendered tree instead; nothing else consumed them.

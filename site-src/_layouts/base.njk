@@ -1,58 +1,234 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ pageTitle }}</title>
-  <meta name="description" content="{{ description }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%23111%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%224.5%22%20fill%3D%22%23ea6a25%22%2F%3E%3C%2Fsvg%3E">
-  <link rel="stylesheet" href="{{ '/assets/site.css' | rel }}">
-  {% if analytics.measurement_id %}
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id={{ analytics.measurement_id }}"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '{{ analytics.measurement_id }}');
-  </script>
-  {% endif %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+<link rel="canonical" href="{{ site.url }}{{ page.url }}">
+
+{# Social card. og:image must be an absolute URL and a raster format: X and
+   Facebook do not reliably render SVG, so the 1200x630 PNG is what ships.
+   Source and regeneration command: docs/design/og-card.svg. #}
+<meta property="og:type" content="{% if page.url == '/' %}website{% else %}article{% endif %}">
+<meta property="og:site_name" content="{{ site.brand }}">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ site.url }}{{ page.url }}">
+<meta property="og:image" content="{{ site.url }}/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ site.brand }} — {{ site.tagline }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ title }}">
+<meta name="twitter:description" content="{{ description }}">
+<meta name="twitter:image" content="{{ site.url }}/assets/og-card.png">
+<meta name="twitter:image:alt" content="{{ site.brand }} — {{ site.tagline }}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="{{ '/assets/favicon.svg' | rel }}" type="image/svg+xml">
+<link rel="stylesheet" href="{{ '/assets/site.css' | rel }}">
+
+{# Structured data. Every value here is a fact the repository already carries:
+   the name, the licence, the price. Nothing is invented — in particular no
+   aggregateRating or review, because the project has neither and a fabricated
+   rating is the one structured-data abuse search engines actually penalise. #}
+{% if page.url == "/" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "{{ site.brand }}",
+  "description": "{{ site.tagline }}",
+  "url": "{{ site.url }}/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS, Linux, Windows",
+  "softwareVersion": "{{ site.pkgVersion }}",
+  "license": "https://opensource.org/licenses/Apache-2.0",
+  "codeRepository": "{{ site.repo }}",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@id": "https://friedbotstudio.com/#org" }
+}
+</script>
+{% elif breadcrumb %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": {{ title | dump | safe }},
+  "description": {{ description | dump | safe }},
+  "url": "{{ site.url }}{{ page.url }}",
+  "inLanguage": "en",
+  "isPartOf": { "@type": "WebSite", "name": "{{ site.brand }}", "url": "{{ site.url }}/" },
+  "license": "https://opensource.org/licenses/Apache-2.0",
+  "publisher": { "@id": "https://friedbotstudio.com/#org" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "{{ site.brand }}", "item": "{{ site.url }}/" },
+    { "@type": "ListItem", "position": 2, "name": {{ title | replace(" · baseline docs", "") | replace(" · baseline", "") | dump | safe }}, "item": "{{ site.url }}{{ page.url }}" }
+  ]
+}
+</script>
+{% endif %}
+
+{# The publisher, declared once per page and referenced by @id from the entity
+   above. Sitewide because an Organization with no page carrying it is invisible
+   to a crawler that only fetches one URL. #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://friedbotstudio.com/#org",
+  "name": "Friedbot Studio Private Limited",
+  "url": "https://friedbotstudio.com",
+  "sameAs": ["{{ site.repo }}"]
+}
+</script>
+
+{# Emitted only when _data/analytics.js resolved a measurement id, which happens
+   inside a GitHub Actions build and nowhere else. A local build ships no
+   analytics at all rather than a disabled tag. #}
+{% if analytics.measurement_id %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ analytics.measurement_id }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{ analytics.measurement_id }}');
+</script>
+{% endif %}
 </head>
-<body>
-<a class="skip" href="#main">Skip to content</a>
+<body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
+<a class="skip-link" href="#main">Skip to content</a>
 
-{# Inline SVG filter defs: hand-drawn-ish wobble for dev-window + plate outlines.
-   The displacement only perturbs the pseudo-element border that calls filter:url(#wobble),
-   so content inside the wobble-frame stays pixel-sharp. #}
-<svg class="svg-defs" aria-hidden="true" focusable="false" width="0" height="0">
-  <defs>
-    <filter id="wobble" x="-2%" y="-2%" width="104%" height="104%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="7" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <filter id="wobble-fine" x="-2%" y="-2%" width="104%" height="104%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="11" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-  </defs>
-</svg>
+<div class="frame">
 
-{% include "topnav.njk" %}
+  <div class="util-bar">
+    <div class="wrap">
+      {# Four groups, one per idea: identity, facts, navigation, action. Grouping
+         is what makes the row fit — the bar carries three gaps instead of four,
+         and each group is flex:none/nowrap so a tight width sheds a whole group
+         rather than squeezing every label into ragged two-line text. #}
+      <div class="util-identity">
+        <a class="util-brand" href="{{ '/' | rel }}"><span class="dot" aria-hidden="true"></span>{{ site.brand }}</a>
+        {# A real outbound link rather than plain text, so the studio gets the
+           referral from every page. A sibling of .util-brand because an <a> may
+           not nest inside an <a>. #}
+        {%- if site.byline %}
+        <a class="util-byline" href="https://friedbotstudio.com?utm_source=baseline&amp;utm_medium=referral&amp;utm_campaign=header" target="_blank" rel="noopener">{{ site.byline }}</a>
+        {%- endif %}
+        {%- if site.versionMinor %}
+        <span>{{ site.versionMinor }}</span>
+        {%- endif %}
+      </div>
 
-{# Site-wide status banner — surfaces public-alpha state on every page.
-   Subtle by design (DESIGN.md "quiet authority"); accent-tinted strip below
-   the sticky topnav, scrolls away with the page. Update wording in one
-   place to change the message everywhere. #}
-<aside class="alpha-banner" role="status" aria-label="Project status">
-  <span class="alpha-banner-text"><span class="ab-field"><b class="ab-key">status</b> <strong>Public alpha</strong></span><span class="ab-field"><b class="ab-key">stage</b> under active development</span><span class="ab-field"><b class="ab-key">pin</b> <code>@friedbotstudio/create-baseline@&lt;version&gt;</code></span></span>
-</aside>
+      {# Collapses behind the toggle below 760px. `display: contents` above that
+         breakpoint, so on desktop the three children sit directly in the bar's
+         flex row exactly as if this wrapper were not here. #}
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="util-collapse">
+        <span class="visually-hidden">Menu</span>
+        <svg class="icon-bars" width="18" height="14" viewBox="0 0 18 14" aria-hidden="true" focusable="false">
+          <path d="M0 1h18M0 7h18M0 13h18" stroke="currentColor" stroke-width="2" fill="none"/>
+        </svg>
+        <svg class="icon-close" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M1 1l14 14M15 1L1 15" stroke="currentColor" stroke-width="2" fill="none"/>
+        </svg>
+      </button>
 
-{{ content | safe }}
+      <div class="util-collapse" id="util-collapse">
+        {# One link per documentation group, derived from _data/docsnav.json. This
+           is the global navigation: it names every part of the site, and the docs
+           sidebar owns the pages inside each part. Two earlier shapes were both
+           wrong — homepage anchors could only send a reader back to the landing
+           page, and a hand-picked list of six pages duplicated six sidebar entries
+           while leaving eleven unreachable. Labels are the sidebar's own group
+           names so the site keeps one vocabulary. #}
+        <nav class="util-nav" aria-label="Primary">
+          {%- for g in docsnav | docsGroups %}
+            {%- if g.isCurrent %}
+          <a class="is-current" aria-current="page" href="{{ g.url | rel }}">{{ g.label }}</a>
+            {%- else %}
+          <a href="{{ g.url | rel }}">{{ g.label }}</a>
+            {%- endif %}
+          {%- endfor %}
+        </nav>
+        {# The install command already owns the hero and the closing band;
+           repeating it here spends the bar's one action slot on something the
+           visitor has just been given. #}
+        <div class="util-action">
+        <a class="btn-repo" href="{{ site.repo }}">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          <span>Star on GitHub</span>
+        </a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-{% include "footer.njk" %}
+  {# Site-wide status strip. Reads as a record of three addressed fields rather
+     than a sentence; values come from _data/site.cjs so a release bump moves it
+     in one place. Sits below the sticky bar and scrolls away with the page. #}
+  <aside class="status-banner" role="status" aria-label="Project status">
+    <div class="wrap">
+      <p class="status-fields">
+        <span class="sb-field"><b class="sb-key">status</b> <strong>public alpha</strong></span>
+        <span class="sb-field"><b class="sb-key">licence</b> {{ site.license }}</span>
+        <span class="sb-field"><b class="sb-key">release</b> {{ site.versionMinor }}</span>
+      </p>
+    </div>
+  </aside>
+
+  <main id="main">
+    {{ content | safe }}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+    <div class="footer-brand">
+      <div class="name">{{ site.brand }}</div>
+      <p>{{ site.tagline }}</p>
+      <p class="footer-attribution">Product of <a href="https://friedbotstudio.com?utm_source=baseline&amp;utm_medium=cta&amp;utm_campaign=footer" target="_blank" rel="noopener">Friedbot Studio Private Limited</a></p>
+      <p class="legal">© {{ site.year }} {{ site.brand }} · {{ site.license }} · {{ site.version }}</p>
+      {# Provenance: which build produced this page. `dev` locally, `gha-<run id>`
+         from CI, so a page in the wild traces back to the run that shipped it. #}
+      <p class="legal build-id">build {{ build.build_id }}</p>
+    </div>
+    <div class="footer-cols">
+      {# Rendered from docsnav so the footer points at the docs pages themselves.
+         These were homepage anchors, which stranded every page below the fold. #}
+      <div class="footer-col">
+        <div class="head">docs</div>
+        <a href="{{ '/overview/' | rel }}">Overview</a>
+        {%- for group in docsnav %}{% if group.type == "reference" %}
+        {%- for item in group.items %}
+        <a href="{{ item.url | rel }}">{{ item.label }}</a>
+        {%- endfor %}
+        {%- endif %}{% endfor %}
+      </div>
+      <div class="footer-col">
+        <div class="head">project</div>
+        <a href="{{ site.repo }}">GitHub</a>
+        <a href="{{ site.repo }}/blob/main/CLAUDE.md">Constitution</a>
+        <a href="{{ site.repo }}/blob/main/LICENSE">License</a>
+        <a href="{{ site.repo }}/issues">Issues</a>
+      </div>
+    </div>
+    </div>
+  </footer>
+
+</div>
+
+<div class="visually-hidden" role="status" aria-live="polite" id="copy-status"></div>
 <script>
 /* Console signature for engineers who open DevTools. Quiet, attributable,
    names the mechanism. Counts come from _data/baseline.cjs (derived from disk)
@@ -61,7 +237,7 @@
   if (typeof console === "undefined" || typeof console.log !== "function") return;
   console.log(
     "%cbaseline%c constitutional discipline for Claude Code. {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, {{ baseline.subagents.total }} subagent. github.com/friedbotstudio/baseline",
-    "background:#c2410c;color:#fff;padding:2px 8px;border-radius:3px;font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;",
+    "background:#a33a09;color:#fff;padding:2px 8px;border-radius:3px;font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;",
     "color:#888;font:400 12px ui-monospace,SFMono-Regular,Menlo,monospace;padding-left:6px;"
   );
 })();

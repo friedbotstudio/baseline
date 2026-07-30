@@ -17,9 +17,9 @@ const CANONICAL_MEMORY = [
 const SPELLED = {
   1: 'one', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven',
   11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', 15: 'fifteen',
-  22: 'twenty-two', 24: 'twenty-four', 40: 'forty',
+  22: 'twenty-two', 24: 'twenty-four', 26: 'twenty-six', 40: 'forty',
   41: 'forty-one', 42: 'forty-two', 43: 'forty-three', 44: 'forty-four', 45: 'forty-five',
-  46: 'forty-six', 48: 'forty-eight', 50: 'fifty', 52: 'fifty-two',
+  46: 'forty-six', 48: 'forty-eight', 50: 'fifty', 52: 'fifty-two', 53: 'fifty-three',
 };
 
 // The skills category breakdown. Category ASSIGNMENT is editorial (not
@@ -40,7 +40,7 @@ export const SKILL_CATEGORIES = {
   audit: 1,
   altTracks: 2,
   maintenance: 2,
-  sprint: 4,
+  sprint: 5,
   roadmap: 2,
 };
 
@@ -81,12 +81,15 @@ function skillIsBaselineOwned(skillDir) {
   return owner ? owner[1] === 'baseline' : false;
 }
 
-function countTracks(root) {
-  const p = join(root, '.claude', 'workflows.jsonl');
+const TRACK_SOURCES = {
+  template: ['obj', 'template', '.claude', 'workflows.jsonl'],
+  live: ['.claude', 'workflows.jsonl'],
+};
+
+function tallyTracks(file) {
   let canonical = 0;
   let subTracks = 0;
-  if (!existsSync(p)) return { canonical, subTracks };
-  for (const line of readFileSync(p, 'utf8').split('\n')) {
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
     if (!line.trim()) continue;
     let track;
     try { track = JSON.parse(line); } catch { continue; }
@@ -96,13 +99,101 @@ function countTracks(root) {
   return { canonical, subTracks };
 }
 
-function countMcpServers(root) {
+// A "ships in the pristine template" claim must be derived from the TEMPLATE,
+// not the dev tree. Counting the live tree let the site assert that 9 tracks
+// shipped while the template shipped 8 — `org` existed only in this repo. The
+// returned `source` tells callers which tree the number came from.
+export function countTracks(root, { source = 'template' } = {}) {
+  const order = source === 'live' ? ['live'] : ['template', 'live'];
+  for (const key of order) {
+    const file = join(root, ...TRACK_SOURCES[key]);
+    if (existsSync(file)) return { ...tallyTracks(file), source: key };
+  }
+  return { canonical: 0, subTracks: 0, source: 'none' };
+}
+
+// Every shipped-count claim on a rendered page must equal the template count.
+// `pages` is [{ path, text }] so the caller owns IO and this stays pure.
+export function checkShippedClaims({ templateCount, pages = [] }) {
+  const CLAIM = /(\d+)\s+(?:selectable tracks|canonical shapes|canonical tracks)\s+ship in the pristine template/gi;
+  const offenders = [];
+  for (const page of pages) {
+    for (const m of String(page.text || '').matchAll(CLAIM)) {
+      const claimed = Number(m[1]);
+      if (claimed !== templateCount) {
+        offenders.push({ path: page.path, claimed, expected: templateCount });
+      }
+    }
+  }
+  return { ok: offenders.length === 0, offenders };
+}
+
+function listMcpServers(root) {
   const p = join(root, '.mcp.json');
-  if (!existsSync(p)) return 0;
+  if (!existsSync(p)) return [];
   try {
     const m = JSON.parse(readFileSync(p, 'utf8'));
-    return Object.keys(m.mcpServers || m.servers || {}).length;
-  } catch { return 0; }
+    return Object.keys(m.mcpServers || m.servers || {}).sort();
+  } catch { return []; }
+}
+
+function countMcpServers(root) {
+  return listMcpServers(root).length;
+}
+
+function namesTracks(file) {
+  const canonical = [];
+  const subTracks = [];
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    let track;
+    try { track = JSON.parse(line); } catch { continue; }
+    if (track.selectable === true) canonical.push(track.track_id);
+    else if (track.selectable === false) subTracks.push(track.track_id);
+  }
+  return { canonical: canonical.sort(), subTracks: subTracks.sort() };
+}
+
+// deriveNames — the roster behind the four Reference pages.
+//
+// deriveCounts answers "how many". A page that lists hooks or tracks needs
+// "which ones", and the check that verifies the page needs the same answer.
+// Both read this function, so the rendered page and the drift check cannot
+// disagree about what the roster is.
+//
+// Kept as a SEPARATE export rather than folded into deriveCounts: that
+// function's return shape is asserted by strict deepEqual in several places,
+// so widening it breaks callers for no gain.
+//
+// Every list is sorted and deduped. Callers render them in this order, which
+// makes a page diff reviewable when a hook is added.
+export function deriveNames(root) {
+  const claude = join(root, '.claude');
+  const skillsRoot = join(claude, 'skills');
+  const tracksFile = [
+    join(root, ...TRACK_SOURCES.template),
+    join(root, ...TRACK_SOURCES.live),
+  ].find((f) => existsSync(f));
+
+  return {
+    hooks: listFiles(join(claude, 'hooks'))
+      .filter((n) => n.endsWith('.mjs'))
+      .map((n) => n.replace(/\.mjs$/, ''))
+      .sort(),
+    skills: listDirs(skillsRoot)
+      .filter((slug) => skillIsBaselineOwned(join(skillsRoot, slug)))
+      .sort(),
+    commands: listFiles(join(claude, 'commands'))
+      .filter((n) => n.endsWith('.md'))
+      .map((n) => n.replace(/\.md$/, ''))
+      .sort(),
+    subagents: listFiles(join(claude, 'agents'))
+      .filter((n) => n.endsWith('.md'))
+      .map((n) => n.replace(/\.md$/, ''))
+      .sort(),
+    tracks: tracksFile ? namesTracks(tracksFile) : { canonical: [], subTracks: [] },
+    mcpServers: listMcpServers(root),
+  };
 }
 
 // Derive every governance count from the artifacts under `root`.
@@ -122,7 +213,10 @@ export function deriveCounts(root) {
     hooks,
     commands,
     subagents,
-    tracks: countTracks(root),
+    // Strip `source` here: deriveCounts' shape is a long-standing contract
+    // asserted by strict deepEqual. `source` stays available to direct
+    // countTracks callers that need to know which tree they read.
+    tracks: (({ canonical, subTracks }) => ({ canonical, subTracks }))(countTracks(root)),
     memoryFiles,
     mcpServers: countMcpServers(root),
   };

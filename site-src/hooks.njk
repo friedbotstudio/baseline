@@ -1,127 +1,79 @@
 ---
 layout: docs.njk
-permalink: /hooks/index.html
-pageTitle: "Hooks · baseline"
-title: Hooks
-titlePrimary: Hooks
-titleAccent: "."
-eyebrow: Reference
-eleventyComputed:
-  description: "The {{ baseline.hooks.total }} hooks are the structural enforcement layer of the baseline. Each runs at a tool boundary or lifecycle event, outside Claude's control."
-  lead: "The {{ baseline.hooks.total }} hooks are the structural enforcement layer of the baseline. Each runs at a tool boundary or lifecycle event, outside Claude's control."
-active: hooks
-sidebarActive: hooks
-heroSymbol: hooks
+title: "Hooks: every guard and where it is wired · baseline"
+description: "Reference for the baseline hooks: every guard, the lifecycle event it is wired on, the Article it enforces, and what it does when it fires."
+heading: "Every guard, and<br>where it is wired."
+lead: Reference for the hooks. Each one is a Node ESM script that Claude Code runs as a subprocess when a lifecycle event fires, and what the script writes back decides whether the pending tool call may go ahead. The roster below is derived from the files on disk and their wiring in settings.json, so a hook added to the directory shows up here without an edit to this page.
+updated: 2026-07-30
+breadcrumb: ["docs", "reference", "hooks"]
+facts:
+  - { label: "hooks", value: "26" }
+  - { label: "events", value: "7" }
+  - { label: "declared in", value: ".claude/settings.json" }
 toc:
-  - { id: why,      label: "Why hooks" }
-  - { id: boundary, label: "By tool boundary" }
-  - { id: article,  label: "What each enforces" }
-  - { id: consent,  label: "Unforgeable consent" }
-  - { id: amend,    label: "Modifying a hook" }
+  - { id: "lifecycle", label: "Lifecycle events" }
+  - { id: "roster", label: "The roster" }
+  - { id: "outcomes", label: "Hook outcomes" }
+  - { id: "changing", label: "Amendment procedure" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="why">Why hooks</h2>
-    </div>
-    <p>The baseline ships {{ baseline.hooks.total }} hooks wired into Claude Code's PreToolUse, PostToolUse, UserPromptSubmit, and lifecycle events. They form the part of the constitution that cannot be overridden by memory or prompt text alone.</p>
-  </div>
-  <p>A hook runs outside Claude's tool boundary. When a hook blocks a write, Claude never executes the tool call. This matters because Claude cannot forge a consent marker (written by <code>consent_gate_grant</code> on the UserPromptSubmit path) by invoking a tool: the block happens before Claude gets the chance.</p>
-</section>
+<h2 id="lifecycle"><span class="sec-mark" aria-hidden="true">§ I</span> Lifecycle events</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="boundary">Hooks by tool boundary</h2>
-    </div>
-    <p>Most hooks run on Write, Edit, MultiEdit, or Bash before the tool fires. A small set runs on the surrounding session lifecycle.</p>
-  </div>
-  <table>
-  <thead><tr><th>Event</th><th>Hooks</th></tr></thead>
-  <tbody>
-    <tr><td>PreToolUse · Bash</td><td class="phase">destructive_cmd_guard, git_commit_guard, gitignore_leak_guard, process_lifecycle_guard</td></tr>
-    <tr><td>PreToolUse · Edit / Write / MultiEdit (advisory)</td><td class="phase">process_lifecycle_guard</td></tr>
-    <tr><td>PreToolUse · Edit / Write / MultiEdit</td><td class="phase">setup_guard, env_guard, git_commit_guard, direction_approval_guard, swarm_approval_guard, epic_approval_guard, verify_pass_guard, track_guard, branch_guard, artifact_template_guard, plantuml_syntax_guard, spec_diagram_presence_guard, spec_design_calls_guard, swarm_boundary_guard, tdd_order_guard</td></tr>
-    <tr><td>PostToolUse · Edit / Write / MultiEdit</td><td class="phase">lint_runner, test_runner, phase_timer</td></tr>
-    <tr><td>PostToolUse · Bash</td><td class="phase">phase_timer</td></tr>
-    <tr><td>UserPromptSubmit</td><td class="phase">consent_gate_grant</td></tr>
-    <tr><td>SessionStart</td><td class="phase">memory_session_start</td></tr>
-    <tr><td>Stop</td><td class="phase">memory_stop, harness_continuation</td></tr>
-    <tr><td>PreCompact</td><td class="phase">memory_pre_compact</td></tr>
-  </tbody>
-</table>
-</section>
+<p class="sec-lead">Seven events carry hooks. If a hook is wired on <code class="tok">PreToolUse</code> it sees the call before it runs and may stop it; on <code class="tok">PostToolUse</code> the call has already happened, so the hook can only report on what it produced. The remaining five fire at points in the session itself (at start, at a stop, before a compaction), where there is no pending call to gate.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="article">What each hook enforces</h2>
-    </div>
-    <p>The constitution maps each hook to the article it backs. Modifying or disabling a hook requires user approval and a corresponding amendment in <code>seed.md</code>.</p>
+{# Derived from settings.json so an added hook appears here without an edit.
+   The tally sum exceeds the hook count because `notify`, which is wired on
+   three events, is counted once per event and lives outside .claude/hooks/. #}
+<div class="grid-rule grid-3 lane-grid">
+  {% for e in roster.events %}
+  <div class="cell">
+    <div class="cell-kicker">{{ e.event }}</div>
+    <p>{{ e.count }} {% if e.count == 1 %}hook{% else %}hooks{% endif %}</p>
   </div>
-  <table>
-  <thead><tr><th>Hook</th><th>Article</th><th>Behavior</th></tr></thead>
-  <tbody>
-    <tr><td class="phase">setup_guard</td><td>III</td><td>Advisory reminder when project is unconfigured (rate-limited 10 minutes). Does not block.</td></tr>
-    <tr><td class="phase">destructive_cmd_guard</td><td>VII</td><td>Hard-blocks catastrophic Bash commands and asks before risky ones. Also blocks shell writes that would forge a consent token or flip an epic's <code>approved</code> flag, so the approval gates hold even when work drops to a shell.</td></tr>
-    <tr><td class="phase">git_commit_guard</td><td>IV (gate C), VII</td><td>Require fresh consent for <code>git commit</code> and block forbidden flags. Enforce the branch model declared in <code>git.workflow_model</code> so commits never land on the wrong branch: under <code>direct-to-main</code> a feature-branch commit is blocked with a fix-it hint, and swarm worktrees are exempt. Gate writes to the commit-consent marker. A commit that closes backlog work has to record that closure in the same commit, so a finished item's done-stamp can't be left uncommitted. Inside a workflow, one <code>/grant-commit</code> covers the whole landing: consent is bound to the workflow slug and still resolves after <code>/commit</code> archives <code>workflow.json</code>, so a long landing does not need a second grant. <code>consent.workflow_ttl_seconds</code> bounds that window. An ad-hoc commit outside any workflow keeps the shorter <code>consent.commit_ttl_seconds</code>.</td></tr>
-    <tr><td class="phase">env_guard</td><td>VII</td><td>Block writes to <code>.env*</code> files (allows <code>.env.example</code>).</td></tr>
-    <tr><td class="phase">direction_approval_guard</td><td>IV (gate A)</td><td>Validate fresh direction marker before allowing approval-token writes; block self-approval inside spec markdown.</td></tr>
-    <tr><td class="phase">swarm_approval_guard</td><td>IV (gate B)</td><td>Validate fresh marker before allowing swarm-approval writes.</td></tr>
-    <tr><td class="phase">epic_approval_guard</td><td>IV (§18.9)</td><td>Allow an epic-state <code>approved: true</code> transition only when the matching persistent <code>spec_approvals/&lt;slug&gt;.approval</code> token exists; non-transition writes pass through.</td></tr>
-    <tr><td class="phase">verify_pass_guard</td><td>V, VI</td><td>Block writing PASS to verify artifacts when truth source says FAIL.</td></tr>
-    <tr><td class="phase">track_guard</td><td>IV</td><td>Enforce per-track DAG ordering for workflow artifacts.</td></tr>
-    <tr><td class="phase">branch_guard</td><td>IV, VII</td><td>Block starting a workflow on a release branch when the git model is PR-based (<code>github-flow</code>), so work always begins on a feature branch. Fails open on any ambiguity (other model, non-git, detached HEAD, linked worktree): editing is never bricked, and the commit-time guard remains the backstop.</td></tr>
-    <tr><td class="phase">artifact_template_guard</td><td>IV</td><td>Block artifact writes missing required sections.</td></tr>
-    <tr><td class="phase">plantuml_syntax_guard</td><td>IV (phase 4)</td><td>Advisory by default (no JVM): notes that PlantUML fences in <code>docs/specs/*.md</code> are unvalidated at write time. Runs the strict <code>java -checkonly</code> parse only when <code>project.json</code> sets <code>plantuml.strict_syntax_check</code> to true; otherwise validate on demand with <code>/spec-lint</code>.</td></tr>
-    <tr><td class="phase">spec_diagram_presence_guard</td><td>IV (phase 4)</td><td>Block specs missing the diagram kinds required for their <code>write_set</code> profile (full set by default; reduced for non-architectural changes).</td></tr>
-    <tr><td class="phase">spec_design_calls_guard</td><td>X.2</td><td>Block specs whose <code>write_set</code> intersects <code>tdd.ui_globs</code> when a <code>## Design calls</code> row omits its Reference target or Quality criteria (roadmap B1 quality floor).</td></tr>
-    <tr><td class="phase">swarm_boundary_guard</td><td>IV (phase 6c)</td><td>Enforce write-set discipline whenever a wave is active. It fires in both isolation modes; it never reads <code>swarm.isolation</code>.</td></tr>
-    <tr><td class="phase">tdd_order_guard</td><td>VI.4</td><td>Require a test before a new source file lands.</td></tr>
-    <tr><td class="phase">gitignore_leak_guard</td><td>VII</td><td>Blocks a <code>git commit</code> that stages a path meant to stay ignored, such as a secret (<code>.env</code>) or generated state (<code>.claude/state/</code>). It checks staged paths against the baseline must-ignore set offline with <code>git check-ignore</code> and names whatever leaks, and warns when a should-be-ignored path exists but is not yet covered. Secrets and build noise cannot slip into history by accident, and it never touches the network.</td></tr>
-    <tr><td class="phase">process_lifecycle_guard</td><td>IX</td><td>Advisory. Surfaces relevant memory entries (e.g. <code>landmines.md → lsof-port-kill-takes-firefox-with-it</code>, <code>conventions.md → dev-server-ownership</code>) verbatim before any <code>kill</code>, <code>lsof</code>, or <code>serve</code> Bash. Never blocks. On the write boundary it surfaces phase-scoped memory before an artifact write instead.</td></tr>
-    <tr><td class="phase">lint_runner</td><td>VI</td><td>Run <code>lint.cmd</code> on code changes (guide mode until configured). When <code>lint.file_globs</code> is set, only matching paths trigger it; absent means everything runs. Exits 2 on failure, so a lint break surfaces rather than passing quietly.</td></tr>
-    <tr><td class="phase">test_runner</td><td>VI</td><td>Run <code>test.cmd</code> on code changes (guide mode until configured). When <code>test.file_globs</code> is set, only matching paths trigger it; absent means everything runs. Exits 2 on failure.</td></tr>
-    <tr><td class="phase">phase_timer</td><td>V</td><td>Observe-only. Stamps per-phase completion timing and cumulative token counts (output/input/cache-read, from the session transcript) into <code>.claude/state/timing/&lt;slug&gt;.jsonl</code> when <code>workflow.json</code> <code>completed[]</code> grows (plus nested <code>tdd:&lt;tick&gt;</code> sub-rows from <code>tdd_ticks[]</code> when <code>subtick_timing</code> is enabled); <code>/archive</code> renders a table of model-time-vs-human-wait plus per-phase token deltas, with the <code>tdd</code> rollup broken into a per-worker-tick breakdown. Never blocks or mutates.</td></tr>
-    <tr><td class="phase">memory_session_start</td><td>III, IX</td><td>Inject memory index and resume snapshot at session start.</td></tr>
-    <tr><td class="phase">memory_stop</td><td>IX</td><td>Auto-extract memory candidates each turn-end.</td></tr>
-    <tr><td class="phase">memory_pre_compact</td><td>IX</td><td>Capture resume snapshot before context compaction.</td></tr>
-    <tr><td class="phase">harness_continuation</td><td>V</td><td>Stop-hook safety net that re-fires <code>Skill(harness)</code> only when the loop exited mid-flow with a fresh marker; silent otherwise. Never writes consent.</td></tr>
-    <tr><td class="phase">consent_gate_grant</td><td>IV (gates A / B / C), VII (push gate)</td><td>Detect the four slash commands (<code>/approve-direction</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>, <code>/grant-push</code>) in user input and write the gate-specific consent marker. Runs outside Claude's tool boundary.</td></tr>
-  </tbody>
-</table>
-</section>
+  {% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="consent">Why consent gates are unforgeable</h2>
-    </div>
-    <p>Each gate is a slash command the user types. Three are workflow-phase gates (<code>/approve-direction</code>, <code>/approve-swarm</code>, <code>/grant-commit</code>). The fourth, <code>/grant-push</code>, is a runtime gate for protected-branch pushes (Article VII). UserPromptSubmit runs outside Claude's tool boundary, so Claude has no way to write the marker.</p>
-  </div>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>Consent gates are not bypassable.</strong>
-      <p>The <code>consent_gate_grant</code> hook runs on UserPromptSubmit, before Claude sees the prompt. It writes a short-lived marker that the matching PreToolUse guard validates. Markers expire after two minutes by default (<code>consent.gate_marker_ttl_seconds</code>) and are deleted on use, so the same gate cannot be replayed.</p>
-    </div>
-  </div>
-  <p>The PreToolUse guard then allows Claude's slash-command-body write of the approval token only if the marker is present, fresh, and slug-matched. The marker is single-use and deleted on the allowed write.</p>
-</section>
+<p>Those counts add up to {{ roster.eventTallySum }}, which is more than the {{ roster.hooks | length }} scripts under <code class="tok">.claude/hooks/</code>. One script, <code class="tok">notify</code>, is wired on three events and counts once in each; it also lives outside that directory. Every other hook runs on exactly one event.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="amend">Modifying or disabling a hook</h2>
-    </div>
-    <p>Disabling, modifying, or bypassing a hook requires explicit user approval and a corresponding amendment in <code>seed.md</code> (the genesis prompt). The order of precedence is <code>seed.md</code> &gt; <code>CLAUDE.md</code> &gt; implementation.</p>
+<h2 id="roster"><span class="sec-mark" aria-hidden="true">§ II</span> The roster</h2>
+
+<p class="sec-lead">{{ roster.hooks | length }} hooks in alphabetical order, each naming the Article it enforces. Article VIII of <code class="tok">CLAUDE.md</code> is the record; if this table and the constitution ever disagree, the table is the drift.</p>
+
+{# Two columns of hairline cells, the same component the CLI flag table uses.
+   Each cell carries an id so a hook can be linked to directly. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for h in roster.hooks %}
+  <div class="cell" id="hook-{{ h.name }}">
+    <div class="cell-kicker">{{ h.name }}</div>
+    <p class="excerpt">{{ h.note }}</p>
+    <p class="cell-note">{{ h.events | join(", ") }} · {{ h.article }}</p>
   </div>
-  <p>Hooks are the implementation layer: they cannot be loosened by a memory entry or a CLAUDE.md amendment alone.</p>
-  <p>For a one-shot exception inside a workflow, use the <code>exceptions</code> array in <code>.claude/state/workflow.json</code>. <code>/triage</code> derives it from the chosen track's DAG: a phase with no node in the track is unreachable, so it is excepted automatically. Consent gates are never excepted, whatever the track looks like. A track may also declare <code>internal_phases</code> for conditionals its own skill runs without a DAG node, and that skill resolves each one at runtime into <code>completed</code> or <code>exceptions</code> with a recorded reason. Exceptions are surfaced in every phase log so the audit trail records which phases ran and which were waived.</p>
-</section>
+  {% endfor %}
+</div>
+
+<h2 id="outcomes"><span class="sec-mark" aria-hidden="true">§ III</span> Hook outcomes</h2>
+
+<p class="sec-lead">A <code class="tok">PreToolUse</code> hook writes its decision to standard output as JSON, or it exits 0 to say nothing and let the call through. Three decisions are available.</p>
+
+<div class="grid-rule grid-3 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">deny</div>
+    <p>The tool call never runs. Claude gets the guard's reason back in place of a result.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">ask</div>
+    <p>The call waits for you to decide before it goes ahead.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">allow</div>
+    <p>The call goes ahead. Advisory hooks add context here and always allow.</p>
+  </div>
+</div>
+
+<p>If <code class="tok">lint_runner</code> or <code class="tok">test_runner</code> finds a problem it exits 2, and that failure reaches Claude as feedback on the edit it just made. Neither one can stop the write, because a <code class="tok">PostToolUse</code> hook only fires once the call has already run.</p>
+
+<h2 id="changing"><span class="sec-mark" aria-hidden="true">§ IV</span> Amendment procedure</h2>
+
+<p>To change a hook, disable one, or work around one, Claude needs your explicit approval first. The amendment then lands in <code class="tok">docs/init/seed.md</code> §4.1 before the matching edit to <code class="tok">.claude/settings.json</code>, because the genesis spec governs the implementation rather than the other way round.</p>
+
+<p>The hook count is itself part of the constitution, so it cannot drift quietly. On every build <code class="tok">audit-baseline</code> re-derives the count from disk and checks it against both the genesis spec and the shipped manifest; should those three ever disagree, CI will fail rather than warn.</p>

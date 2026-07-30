@@ -52,7 +52,11 @@ describe('ga4 base layout — gated gtag block (AC-001)', () => {
 
   it('test_when_base_njk_read_then_existing_head_content_intact', () => {
     const text = readBase();
-    assert.match(text, /<title>\{\{\s*pageTitle\s*\}\}<\/title>/, 'base.njk must still contain the <title> tag');
+    // The layout rewrite renamed the front-matter variable `pageTitle` -> `title`.
+    // The contract here is "the head content survives the gtag insertion", not the
+    // name of the variable, so the locator tracks the rename and the assertion
+    // stays exactly as strong.
+    assert.match(text, /<title>\{\{\s*title\s*\}\}<\/title>/, 'base.njk must still contain the <title> tag');
     assert.match(text, /<meta\s+name="description"/, 'base.njk must still contain <meta name="description">');
     assert.match(text, /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.googleapis\.com"/, 'first font preconnect link must survive');
     assert.match(text, /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.gstatic\.com"/, 'second font preconnect link must survive');

@@ -1,3349 +1,2514 @@
-/* =========================================================================
-   baseline · site.css
-   Design system: variant-1 (Quiet authority — editorial calm).
-   Type: Inter Tight 600 + Inter 400/500 + JetBrains Mono.
-   Color: warm off-white bg, ink near-black, single muted indigo accent
-   reserved for interactive state and small typographic moments.
-   Density: low. Generous whitespace. Content-first.
-   ========================================================================= */
+/* baseline — site stylesheet
+ *
+ * Register: Warm technical press. Paper and ink, set like a printed
+ * specification. Structure is drawn with 1px hairlines and 1px grid gutters,
+ * never with cards, radii, or shadows. Every corner in this system is square.
+ *
+ * The token table, component catalog, and accessibility floor live in
+ * DESIGN.md at the repo root. That file is the contract; this file is its
+ * application. Do not introduce a token here that DESIGN.md does not name.
+ */
+
+/* ---------------------------------------------------------------- tokens */
 
 :root {
-  /* Palette extracted from DESIGN.md (phantomflow register).
-     Cool neutrals on slate hue + bold orange accent (orange-700 primary, orange-500 light). */
-  --ink:          oklch(15%   0     0);
-  --text:         oklch(15%   0     0);
-  --charcoal:     oklch(28%   0     0);
-  --muted:        oklch(45%   0.026 257);
-  --faint:        oklch(72%   0.012 257);
-  --rule:         oklch(89%   0.013 257);
-  --rule-soft:    oklch(94%   0     0);
-  --bg:           oklch(96.5% 0     0);
-  --paper:        oklch(99%   0     0);
-  --cream:        oklch(94%   0     0);
+  /* Ground */
+  --paper: #fbf9f5;
+  --sand: #f0ece4;
+  --sand-light: #f7f4ee;
+  --stratum-3: #efeae0;
+  --peach: #f4ddcd;
 
-  --accent:       oklch(55.8% 0.187 41.5);          /* orange-700 — primary state, type, links */
-  --accent-light: oklch(70.3% 0.187 41.5);          /* orange-500 — dots, hover, syntax accents */
-  --accent-soft:  oklch(70.3% 0.187 41.5 / .15);
-  --accent-faint: oklch(70.3% 0.187 41.5 / .08);
+  /* Ink */
+  --ink: #15130f;
+  --ink-deep: #0f0e0b;
+  --ink-soft: #241f18;
 
-  --warn:         oklch(58% 0.13 60);
+  /* Text on paper */
+  --text: #15130f;
+  --text-body: #3d382f;
+  --text-lead: #4a463e;
+  --text-muted: #5f5a51;
+  --text-dim: #6e685e;
+  --text-peach: #5b4335;
+  --text-peach-2: #6b4c37;
 
-  --code-bg:      oklch(15% 0.015 260);
-  --code-fg:      oklch(92% 0.005 260);
+  /* Text on ink */
+  --on-ink: #f4ede2;
+  --on-ink-body: #c8c0b3;
+  --on-ink-dim: #8b8377;
+  --on-ink-faint: #8a837a;
+  --on-ink-muted: #a9a196;
 
-  /* Code-window palette — the dark surfaces (.dev-console, .install-snippet,
-     .cli-strip) and the syntax token classes that ride on top of them. */
-  --code-bar-bg:        oklch(20% 0.015 260);   /* dev-console title bar */
-  --code-bar-bg-alt:    oklch(25% 0.005 260);   /* install-snippet bar (slightly lighter) */
-  --code-bar-border:    oklch(28% 0.015 260);   /* hairline below title bar */
-  --code-bar-fg:        oklch(72% 0 0);         /* bar text */
-  --code-fg-file:       oklch(78% 0 0);         /* filename label in the bar */
-  --code-fg-bright:     oklch(95% 0 0);         /* .dc-cmd-buf, .cli-cmd */
-  --code-fg-default:    oklch(88% 0 0);         /* .cli-strip default text */
-  --code-fg-mid:        oklch(85% 0 0);         /* .dc-body default */
-  --code-fg-prompt:     oklch(60% 0 0);         /* .dc-prompt, .cli-hint idle */
-  --code-fg-dim:        oklch(64% 0 0);         /* .dc-dim */
-  --hover-tint:         oklch(98% 0 0);         /* a.concept:hover bg, table row hover */
-  --code-strip-shadow:  0 12px 36px -16px oklch(20% 0 0 / .18);
+  /* Accent */
+  --accent: #c2440c;
+  --accent-deep: #a33a09;
+  --accent-dark: #8f3208;
+  --accent-hover: #a5380a;
+  --accent-light: #e0873f;
+  /* accent-light at 15% — the brand dot's pulse ring, which has to read as a
+     halo rather than a second dot. */
+  --accent-soft: rgba(224, 135, 63, .15);
 
-  /* Syntax highlighting — oklch equivalents of the prior hex values. */
-  --tok-key: oklch(78% 0.10 280);
-  --tok-str: oklch(89% 0.09 158);
-  --tok-num: oklch(85% 0.13 90);
-  --tok-com: oklch(54% 0.04 250);
-  --tok-kw:  oklch(78% 0.13 0);
+  /* Status amber, for the site-wide status strip. Contrast is computed against
+   * this exact ground, not assumed: --accent measures 4.49:1 on it and misses
+   * the 4.5:1 small-text floor, which is the miss the previous banner shipped. */
+  --amber-soft: #fbf1c7;
+  --amber-rule: #a97b12;
 
-  /* Dev-console stream — semantic state colors used by site.js. */
-  --dc-str:  oklch(78% 0.10 145);
-  --dc-ok:   oklch(70% 0.13 145);
-  --dc-wait: oklch(75% 0.13 80);
+  /* Rules */
+  --rule: rgba(0, 0, 0, 0.12);
+  --rule-soft: rgba(0, 0, 0, 0.09);
+  --rule-dark: rgba(255, 255, 255, 0.09);
+  --rule-dark-2: rgba(255, 255, 255, 0.16);
 
-  /* CLI strip "is-copied" success accent. */
-  --cli-success: oklch(70% 0.15 145);
+  /* Terminal semantics */
+  --term-blocked: #d9614f;
+  --term-ok: #9aa87a;
 
-  /* Mac traffic-light dots — kept as literal cultural references but
-     normalized to oklch for theme consistency. */
-  --mac-red:    oklch(70% 0.21 24);
-  --mac-yellow: oklch(82% 0.18 80);
-  --mac-green:  oklch(76% 0.21 145);
+  /* Type */
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --content:    856px;
-  --sidebar:    260px;
-  --toc:        220px;
-  --header:     60px;
+  /* Type roles. Named by the job they do, not the value they hold. In rem, so
+   * a reader who raises their browser's default font size gets a larger page;
+   * px would silently ignore that preference. Seven
+   * arbitrary body sizes (13 / 14 / 14.5 / 15 / 15.5 / 16.5) collapsed to two:
+   * --t-body for prose, --t-dense for genuinely dense rows. Adjacent roles
+   * differ enough to be told apart; 14 vs 14.5 never could. */
+  --t-display: clamp(2.875rem, 5.4vw, 4.75rem);
+  --t-title: clamp(2.375rem, 4vw, 3.375rem);
+  --t-section: clamp(1.875rem, 3vw, 2.5rem);
+  --t-band: 2.125rem;
+  --t-sub: 1.3125rem;
+  --t-cell: 1.0625rem;
+  --t-lead: 1.25rem;
+  --t-lead-sm: 1.125rem;
+  --t-body: 1rem;
+  --t-dense: 0.875rem;
+  --t-label: 0.6875rem;
+  --t-nav: 0.84375rem;
+  --t-nav-sub: 0.78125rem;
+  --t-meta: 0.78125rem;
+  --t-code: 0.78125rem;
 
-  --display: "Inter Tight", system-ui, -apple-system, Segoe UI, sans-serif;
-  --body:    "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
-  --mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Leading is tuned against measure, not applied as one universal ratio. */
+  --lh-body: 1.65;
+  --lh-dense: 1.55;
+  --lh-lead: 1.55;
+
+  /* Prose measure ceiling, inside the 45-75ch band. */
+  --measure-ch: 62ch;
+
+  /* Layout */
+  --gutter: 48px;
+  --measure: 640px;
+  --content: 1200px;
 }
 
-/* ----- reset ------------------------------------------------------------ */
+/* ---------------------------------------------------------------- reset */
 
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-img, svg { display: block; max-width: 100%; }
-button { font: inherit; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-/* ----- base ------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
-  font-family: var(--body);
-  font-size: 17px;
-  line-height: 1.7;
+  margin: 0;
+  background: var(--paper);
   color: var(--text);
-  background: var(--bg);
-  font-feature-settings: "ss01", "cv11";
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+pre {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
 }
 
 a {
-  color: var(--ink);
-  text-decoration: none;
-  transition: color .15s ease;
+  color: var(--accent);
 }
-a:hover { color: var(--accent); }
 
-a:focus-visible,
-button:focus-visible,
-[tabindex]:focus-visible {
+button {
+  font-family: inherit;
+  border-radius: 0;
+}
+
+/* Square corners are load-bearing in this system. */
+* {
+  border-radius: 0;
+}
+
+/* ------------------------------------------------------------- a11y base */
+
+:where(a, button, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 3px;
 }
 
-::selection { background: var(--accent-soft); color: var(--ink); }
+.plate :where(a, button):focus-visible,
+.util-bar :where(a, button):focus-visible,
+.band-ink :where(a, button):focus-visible,
+.site-footer :where(a, button):focus-visible {
+  outline-color: var(--accent-light);
+  outline-offset: 3px;
+}
 
-.pt-0 { padding-top: 0 !important; }
-
-/* ----- skip link -------------------------------------------------------- */
-
-.skip {
+.skip-link {
   position: absolute;
-  left: -9999px;
+  left: 8px;
+  top: 8px;
+  z-index: 100;
+  transform: translateY(-200%);
   background: var(--ink);
-  color: var(--paper);
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 500;
-  z-index: 99;
+  color: var(--on-ink);
+  font: 500 13px/1 var(--mono);
+  padding: 12px 16px;
+  text-decoration: none;
 }
-.skip:focus { left: 16px; top: 16px; }
 
-/* Off-screen-but-readable. Used as an aria-live target for copy-success
-   announcements on the install copy affordances (.cli-strip, .install-pill)
-   so screen readers hear "Copied install command" without focus changes. */
+.skip-link:focus {
+  transform: translateY(0);
+  color: var(--on-ink);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
+  padding: 0;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
 }
 
-/* ----- alpha banner (site-wide status) ---------------------------------- */
-/* Subtle accent-tinted strip below the sticky topnav. Surfaces public-alpha
-   state on every page without dominating the layout (DESIGN.md "quiet
-   authority"). Mono font, accent body on accent-soft background, single
-   hairline at the accent stop. Render order: topnav → banner → page content;
-   the banner scrolls away with the page while the topnav stays pinned. The
-   banner is semantic <aside role="status"> so screen readers can skip past it. */
-.alpha-banner {
-  background: var(--accent-soft);
-  border-bottom: 1px solid var(--accent);
-  border-top: 1px solid var(--accent);
-  padding: 8px 24px;
-  text-align: center;
-  font: 500 12.5px/1.4 var(--mono);
-  color: var(--accent);
-  letter-spacing: 0.01em;
-}
-.alpha-banner code {
-  background: transparent;
-  color: inherit;
-  font-size: inherit;
-  padding: 0;
-}
-.alpha-banner strong {
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-/* The notice reads as a record, not a sentence: three addressed fields, hairline
-   separated, wiped in left-to-right on load. Same three facts as the prose form.
-   Keys are --muted, NOT accent at reduced opacity: accent on this tint tops out
-   at 3.95:1 and no opacity value reaches the 4.5:1 floor these 9.5px keys need.
-   Muted clears it at 5.81:1 and, being cool against the warm field, still reads
-   quieter than the value it labels (--charcoal passes too, at 11.35:1, but
-   outweighs the value and inverts the hierarchy). */
-.alpha-banner-text {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px 22px;
-}
-.alpha-banner .ab-field {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  animation: ab-wipe .5s cubic-bezier(.22, 1, .36, 1) both;
-}
-.alpha-banner .ab-field:nth-child(2) { animation-delay: 80ms; }
-.alpha-banner .ab-field:nth-child(3) { animation-delay: 160ms; }
-.alpha-banner .ab-field + .ab-field {
-  border-inline-start: 1px solid var(--accent);
-  padding-inline-start: 22px;
-  margin-inline-start: -11px;
-}
-.alpha-banner .ab-key {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-@keyframes ab-wipe {
-  from { clip-path: inset(0 100% 0 0); opacity: 0; }
-  to   { clip-path: inset(0 0 0 0);    opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .alpha-banner .ab-field { animation: none; clip-path: none; opacity: 1; }
-}
-/* The three fields need ~810px to sit on one line. Below that they stack, and a
-   vertical divider to the left of a stacked row is a leftover from the
-   horizontal case — drop it and tighten, or the record costs more height than
-   the sentence it replaced. */
-@media (max-width: 820px) {
-  .alpha-banner-text { gap: 4px 14px; }
-  .alpha-banner .ab-field + .ab-field {
-    border-inline-start: 0;
-    padding-inline-start: 0;
-    margin-inline-start: 0;
-  }
+/* ---------------------------------------------------------------- frame */
+
+/* Bands run the full width of the viewport; content is capped and centred by
+ * .wrap inside them. Constraining the outer frame instead makes every ink and
+ * peach band stop short of the screen edge, which reads as a floating card
+ * rather than a page. */
+.frame {
+  width: 100%;
 }
 
-/* ----- topnav (shared) -------------------------------------------------- */
-
-header.top {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  height: var(--header);
-  background: color-mix(in oklch, var(--bg) 88%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--rule);
-  display: flex;
-  align-items: center;
-  padding: 0 32px;
-}
-
-/* Hamburger toggle — only rendered on docs pages (subtitle == "/ docs"),
-   only visible at the mobile breakpoint where the sidebar collapses to a drawer. */
-.nav-toggle {
-  display: none;
-  background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  width: 38px;
-  height: 38px;
-  margin-right: 12px;
-  padding: 0;
-  cursor: pointer;
-  color: var(--ink);
-  align-items: center;
-  justify-content: center;
-  transition: border-color .15s ease, background .15s ease;
-}
-.nav-toggle:hover { border-color: var(--ink); background: var(--paper); }
-.nav-toggle .bars,
-.nav-toggle .bars::before,
-.nav-toggle .bars::after {
-  content: "";
-  display: block;
-  width: 16px;
-  height: 1.5px;
-  background: currentColor;
-  border-radius: 2px;
-  position: relative;
-  transition: transform .25s cubic-bezier(.22, 1, .36, 1), opacity .15s ease;
-}
-.nav-toggle .bars::before { position: absolute; top: -5px; left: 0; }
-.nav-toggle .bars::after  { position: absolute; top:  5px; left: 0; }
-body.is-nav-open .nav-toggle .bars { background: transparent; }
-body.is-nav-open .nav-toggle .bars::before { transform: translateY(5px) rotate(45deg); }
-body.is-nav-open .nav-toggle .bars::after  { transform: translateY(-5px) rotate(-45deg); }
-
-/* Backdrop is inert outside the mobile drawer context. */
-.nav-backdrop { display: none; }
-
-.brand {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -.015em;
-  color: var(--ink);
-}
-.brand:hover { color: var(--ink); }
-.brand .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent-light);
-  display: inline-block;
-  align-self: center;
-  /* Slow, infinite pulse — quiet "live signal" gesture; ring fades out so the
-     decoration never overlaps adjacent typography. Reduced-motion zeroed below. */
-  animation: brand-dot-pulse 2.6s cubic-bezier(.4, 0, .2, 1) infinite;
-  transform-origin: center;
-}
-@keyframes brand-dot-pulse {
-  0%   { transform: scale(1);    box-shadow: 0 0 0 0 var(--accent-soft); }
-  60%  { transform: scale(1);    box-shadow: 0 0 0 7px var(--accent-soft); }
-  100% { transform: scale(1);    box-shadow: 0 0 0 0 transparent; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .brand .dot { animation: none; }
-}
-.brand .sub {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  font-weight: 500;
-  min-width: 4rem;
-}
-
-/* Byline sits INSIDE the brand text span (not as a flex sibling), so the
-   parent .brand's 10px gap doesn't apply between it and the wordmark.
-   Italic differentiates it from the mono uppercase .sub crumb that follows;
-   no decorative separator needed — the type does the work. */
-.brand .byline {
-  font-family: var(--display);
-  font-style: italic;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: 0.35em;
-  letter-spacing: -.005em;
-  white-space: nowrap;
-}
-
-nav.primary {
-  margin-left: 48px;
-  display: flex;
-  gap: 28px;
-  font-size: 14px;
-  /* The header must never overflow the page. When the viewport is narrower
-     than the full link row (721-1120px band; the drawer only exists below
-     720 and only on docs pages), the nav scrolls within itself instead. */
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-nav.primary::-webkit-scrollbar { display: none; }
-nav.primary a {
-  color: var(--muted);
-  font-weight: 500;
-  white-space: nowrap;
-}
-nav.primary a:hover,
-nav.primary a.is-active { color: var(--ink); }
-@media (max-width: 1180px) {
-  nav.primary { margin-left: 24px; gap: 18px; }
-  .gh-link .gh-repo { display: none; }
-  .gh-link { padding: 0 8px; }
-  .brand .byline { display: none; }
-}
-
-.head-spacer { flex: 1; }
-
-.gh-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: -.005em;
-  transition: background .15s ease, color .15s ease;
-}
-.gh-link .gh-icon {
-  flex-shrink: 0;
-  display: block;
-  color: var(--muted);
-  transition: color .15s ease;
-}
-.gh-link .gh-repo {
-  white-space: nowrap;
-  font-size: 11px;
-  text-decoration: underline var(--muted) dashed
-}
-.gh-link:hover {
-  color: var(--accent);
-  background: var(--accent-faint);
-}
-.gh-link:hover .gh-icon {
-  color: var(--accent);
-}
-.gh-link:hover .gh-repo {
-  text-decoration: underline var(--accent) dashed;
-}
-
-/* Repo facts on demand. The pill stays quiet and the detail appears only when
-   asked for, so the nav pays nothing for it at rest. Entry uses @starting-style
-   with `transition-behavior: allow-discrete`, so display: none animates without
-   JS; browsers without it get an instant show, which is a fine floor.
-   dd is 12px, not 11.5px: against the 9.5px dt that is a 1.26 step, and the
-   design detector's 1.25 floor is the right call here — 1.21 read flat. */
-.gh-wrap {
-  position: relative;
-  display: inline-flex;
-}
-.gh-card {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 60;
-  min-width: 214px;
-  padding: 11px 13px;
-  border-radius: 8px;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  box-shadow: 0 12px 28px -14px oklch(20% 0 0 / .28);
-  text-align: left;
-  display: none;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity .16s ease,
-              transform .16s cubic-bezier(.22, 1, .36, 1),
-              display .16s allow-discrete;
-}
-.gh-wrap:hover .gh-card,
-.gh-wrap:focus-within .gh-card {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
-@starting-style {
-  .gh-wrap:hover .gh-card,
-  .gh-wrap:focus-within .gh-card {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-.gh-card dl {
-  margin: 0;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 6px 14px;
-}
-.gh-card dt {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.gh-card dd {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink);
-  text-align: right;
-}
-@media (prefers-reduced-motion: reduce) {
-  .gh-card { transition: none; }
-}
-/* The card is a pointer/keyboard affordance; below the nav breakpoint the pill
-   is already icon-only and there is no hover to reveal it. */
-@media (max-width: 1180px) {
-  .gh-card { display: none !important; }
-}
-
-/* ----- buttons ---------------------------------------------------------- */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--display);
-  font-weight: 500;
-  font-size: 15px;
-  letter-spacing: -.01em;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition:
-    background .15s ease,
-    color .15s ease,
-    border-color .15s ease,
-    transform .15s cubic-bezier(.25, 1, .5, 1);
-  white-space: nowrap;
-  will-change: transform;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn:active { transform: translateY(0); }
-.btn-primary {
-  background: var(--ink);
-  color: var(--paper);
-}
-.btn-primary:hover {
-  background: var(--accent);
-  color: var(--paper);
-}
-.btn-secondary {
-  color: var(--ink);
-  border-color: var(--rule);
-  background: var(--paper);
-}
-.btn-secondary:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-@media (prefers-reduced-motion: reduce) {
-  .btn:hover, .btn:active { transform: none; }
-}
-.btn .arr {
-  transform: translateY(-.5px);
-  transition: transform .15s cubic-bezier(.25, 1, .5, 1);
-}
-.btn:hover .arr { transform: translate(3px, -.5px); }
-
-/* ----- typography ------------------------------------------------------- */
-
-h1, h2, h3, h4 {
-  font-family: var(--display);
-  color: var(--ink);
-  margin: 0;
-}
-
-h1 {
-  font-size: clamp(38px, 5vw, 56px);
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -.03em;
-}
-h2 {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -.015em;
-  line-height: 1.25;
-}
-h3 {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-  line-height: 1.4;
-}
-p { margin: 0 0 20px; max-width: var(--content); }
-
-code {
-  font-family: var(--mono);
-  font-size: .875em;
-  background: var(--accent-soft);
-  color: var(--ink);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-pre {
-  font-family: var(--mono);
-  background: var(--code-bg);
-  color: var(--code-fg);
-  padding: 24px 28px;
-  border-radius: 10px;
-  font-size: 13.5px;
-  line-height: 1.65;
-  overflow-x: auto;
-  margin: 24px 0 32px;
+/* Full-bleed bands run under the notch and the rounded corners in landscape,
+ * so the gutter takes the larger of the design value and the device inset. */
+.wrap {
   max-width: var(--content);
-}
-pre code {
-  background: none;
-  color: inherit;
-  padding: 0;
-  font-size: inherit;
-  font-weight: 400;
-}
-.tok-key { color: var(--tok-key); }
-.tok-str { color: var(--tok-str); }
-.tok-num { color: var(--tok-num); }
-.tok-com { color: var(--tok-com); font-style: italic; }
-.tok-kw  { color: var(--tok-kw); }
-
-.eyebrow {
-  font-family: var(--display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 14px;
-}
-
-/* ----- footer ----------------------------------------------------------- */
-
-footer.site {
-  border-top: 1px solid var(--rule);
-  margin-top: 120px;
-  padding: 64px 32px 28px;
-}
-.footer-inner {
-  max-width: 1080px;
   margin: 0 auto;
-}
-.footer-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 64px;
-  padding-bottom: 40px;
-  border-bottom: 1px solid var(--rule);
-}
-.footer-brand-col {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.footer-tagline {
-  font-family: var(--body);
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--muted);
-  margin: 0;
-  max-width: 32ch;
-}
-.footer-attribution {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--muted);
-  margin: 0;
-  letter-spacing: .01em;
-}
-.footer-attribution a {
-  color: var(--text);
-  border-bottom: 1px solid var(--rule);
-}
-.footer-attribution a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.footer-col h5 {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .10em;
-  color: var(--muted);
-  margin: 0 0 18px;
-}
-.footer-col ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.footer-col a {
-  font-family: var(--body);
-  font-size: 14px;
-  color: var(--text);
-  font-weight: 400;
-}
-.footer-col a:hover { color: var(--accent); }
-.footer-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-top: 22px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--muted);
-  letter-spacing: 0;
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
 }
 
-/* =========================================================================
-   MARKETING (home page)
-   ========================================================================= */
-
-.marketing {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0 32px;
-}
-
-.hero {
-  padding: 96px 0 80px;
-  border-bottom: 1px solid var(--rule);
-}
-.hero h1 {
-  font-size: clamp(42px, 6vw, 68px);
-  letter-spacing: -.035em;
-  line-height: 1.0;
-  max-width: 920px;
-  margin-bottom: 28px;
-}
-.hero h1 .accent,
-.article > h1 .accent { color: var(--accent); }
-.hero .lead {
-  font-size: 21px;
-  line-height: 1.55;
-  color: var(--text);
-  max-width: 640px;
-  margin-bottom: 40px;
-}
-/* Emphasis on the three constitutional claims — italic at default weight
-   reads thin against the 21px lead; bump to 500 to keep the cadence even. */
-.hero .lead em {
-  font-style: italic;
-  font-weight: 500;
-  color: var(--ink);
-}
-.hero .ctas {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 56px;
-}
-/* Leading accent-arrow + concrete copy: "→ browse the 37 skills" links to
-   the most concrete "what's in this baseline" page. Whole link slides
-   right on hover (forward-motion metaphor); reduced-motion zeros the
-   translate but keeps the colour change. */
-.hero .hero-readmore {
-  margin: 0 0 56px;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--muted);
-  letter-spacing: -.005em;
-}
-.hero .hero-readmore a {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color .15s ease, transform .15s cubic-bezier(.25, 1, .5, 1);
-}
-.hero .hero-readmore a:hover {
-  color: var(--ink);
-  transform: translateX(3px);
-}
-.hero .hero-readmore .arr {
-  color: var(--accent);
-  font-weight: 600;
-}
-.section .hero-readmore {
-  margin: 20px 0 56px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero .hero-readmore a:hover { transform: none; }
-}
-/* Three claim-led rows, not tiles. The claim is the headline and the number is
-   the supporting label, so the strip argues rather than inventories.
-   The prior 3-column grid inherited its geometry from the count-tile era
-   (per-tile width ~132px, sized for a 2-digit numeral). Phrase-length claims in
-   that measure broke at their hyphens ("self-approve", "sha256-verified") and
-   collided once the mono label wrapped past its line-height:1. Rows give each
-   claim the full column measure; .nb pins the compounds. */
-.hero .meta-strip {
-  display: flex;
-  align-items: center;
-  gap: clamp(16px, 4vw, 28px);
-  margin-top: 56px;
-  padding: 22px 0;
-  border-block: 1px solid var(--rule);
-  max-width: 640px;
-}
-/* One composite ideogram (gate → boundary → manifest) reading top-to-bottom
-   against the claim order. The slot (not the SVG) is the flex item: an SVG with
-   a viewBox reports an intrinsic height, which would set the flex line and
-   defeat the stretch. Taking the SVG out of flow drops that contribution, so
-   the line is the row block's height and the mark scales into it — its three
-   clusters land on the three row centers at any type size. */
-.hero .meta-strip .ms-chain {
-  position: relative;
-  width: 40px;
-  align-self: stretch;
-  flex: none;
-}
-.hero .meta-strip .ms-chain svg {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.hero .meta-strip .ms-chain .rail {
-  stroke-dasharray: 1 5;
-  stroke-linecap: round;
-}
-.hero .meta-strip .ms-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
+/* Grid and flex children default to min-width:auto, so one wide descendant
+ * (a terminal plate, a command button) pushes its whole track past the
+ * viewport. Releasing the floor lets the track shrink; the wide content then
+ * scrolls inside its own overflow container, which is where it belongs. */
+.grid-rule > *,
+.hero-grid > *,
+.install-split > *,
+.faq-cols > *,
+.band-ink .wrap > *,
+.band-cta .wrap > * {
   min-width: 0;
-}
-.hero .meta-strip .stat {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 3px 10px;
-}
-.hero .meta-strip .stat .num {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 15.5px;
-  line-height: 1.25;
-  letter-spacing: -.012em;
-  color: var(--ink);
-}
-.hero .meta-strip .stat .label {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--muted);
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  font-weight: 500;
-  line-height: 1.45;
-}
-.hero .meta-strip .nb { white-space: nowrap; }
-
-/* Hero 2-col layout: text content on the left, schematic on the right. */
-.hero .hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 80px;
-  align-items: center;
-}
-.hero-content { min-width: 0; }
-.hero-figure {
-  margin: 0;
-  min-width: 0;
-}
-/* Plate caption baseline — unified across all figure/plate contexts.
-   Mono 11.5/1.6 muted, with a hairline rule above and a display-faced leader.
-   .figure figcaption, .hero-figure figcaption, figcaption.strata-key, and
-   figcaption.plate-caption all inherit this baseline. */
-.hero-figure figcaption,
-.figure figcaption,
-figcaption.plate-caption,
-figcaption.strata-key {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--muted);
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
-}
-.hero-figure figcaption strong,
-.figure figcaption strong,
-figcaption.plate-caption strong,
-figcaption.strata-key strong {
-  font-family: var(--display);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink);
-  letter-spacing: -.005em;
-  margin-right: 8px;
-}
-figcaption.plate-caption code,
-.figure figcaption code,
-.hero-figure figcaption code {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink);
-  background: var(--cream);
-  padding: 0 4px;
-  border-radius: 3px;
-}
-
-/* Strata illustration: a vertical SVG composition of four geometric forms.
-   Filled square (Genesis), open frame (Constitution), dotted rectangle
-   (Implementation), and a horizontal line with a single accent dot
-   (Tool boundary). Roman numerals are inscribed in each form. */
-.strata-svg {
-  width: 100%;
-  max-width: 360px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-}
-.strata-svg .form-fill   { fill: var(--ink); }
-.strata-svg .form-stroke { fill: none; stroke: var(--ink); stroke-width: 1.75; }
-.strata-svg .form-dotted { fill: url(#strata-dots); }
-.strata-svg .form-line   { stroke: var(--ink); stroke-width: 1.75; }
-.strata-svg .form-accent { fill: var(--accent); }
-.strata-svg .pattern-dot { fill: var(--charcoal); }
-.strata-svg .numeral {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -.02em;
-  fill: var(--ink);
-}
-.strata-svg .numeral.on-fill { fill: var(--paper) !important; }
-.strata-svg .numeral-mono {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .10em;
-  fill: var(--ink);
-  text-transform: uppercase;
-}
-
-/* Strata key — overrides only the layout (flex legend, not a sentence
-   caption). Type tokens come from the unified .plate-caption baseline above. */
-figcaption.strata-key {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 18px;
-  text-align: center;
-}
-figcaption.strata-key span { white-space: nowrap; }
-figcaption.strata-key strong {
-  font-size: 12px;
-  margin-right: 6px;
-  letter-spacing: .04em;
-}
-
-/* Strata relocated as a small key-visual inside §I What it is. */
-.figure-strata {
-  margin: 0 auto var(--spacing-xl, 48px);
-  max-width: 360px;
-  text-align: center;
-}
-.figure-strata .strata-svg {
-  margin: 0 auto;
-  max-width: 320px;
-}
-
-@media (max-width: 1000px) {
-  .hero .hero-grid {
-    grid-template-columns: 1fr;
-    gap: 64px;
-  }
-  .hero-figure {
-    max-width: 480px;
-    margin-inline: auto;
-    width: 100%;
-  }
-}
-
-.columns {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
-}
-/* Below the figure-friendly width, stack the figure above the concept rail.
-   At narrow viewports the right column otherwise compresses to a few px and
-   forces the figure to stretch to the rail's wrapped height. */
-@media (max-width: 720px) {
-  .columns {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .columns > .figure-strata {
-    margin-inline: auto;
-  }
 }
 
 .section {
-  padding: 80px 0;
-  border-bottom: 1px solid var(--rule);
-}
-.section:last-of-type { border-bottom: 0; }
-.section .lede {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 80px;
-  margin-bottom: 56px;
-  align-items: baseline;
-}
-.section .lede h2 { max-width: 12ch; }
-.section .lede .lede-head {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.section .lede .lede-head h2 { margin: 0; }
-.section-num {
-  font-family: var(--mono);
-  font-size: 14px !important;
-  font-weight: 600;
-  letter-spacing: .14rem;
-  text-transform: uppercase;
-  color: var(--accent) !important;
-  margin: 0 !important;
-  line-height: 1 !important;
-}
-.section .lede p {
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--text);
-  margin: 0;
+  padding: 96px 0 0;
 }
 
-/* Concept grid (default 3-col; .is-2col modifier for two-up). Hairline-bracketed
-   plate-and-paper, never card-shadowed. Anchor-as-concept enables full-cell
-   click affordance on navigational uses (e.g. /skills/). */
-.concepts {
+.band {
+  margin-top: 96px;
+  padding: 72px 0;
+}
+
+.band-sand {
+  background: var(--sand);
+}
+
+/* --accent clears only 4.3:1 on --sand; small accent text deepens a step.
+ * Applies anywhere --sand is the ground, not just to the landing band. */
+.band-sand .sec-mark,
+.recap .sec-mark {
+  color: var(--accent-deep);
+}
+
+/* -------------------------------------------------------- status banner */
+
+/* A warm amber strip under the bar, carrying the facts the utility bar used to
+ * hold. Every colour here was measured against this #fbf1c7 ground rather than
+ * assumed: body --text-body 10.25:1, keys --text-muted 6.03:1, the emphasised
+ * value --accent-dark 7.04:1, hairline --amber-rule 3.25:1. Do NOT restore
+ * --accent for text — it lands at 4.49:1 and fails the small-text floor, which
+ * is exactly the defect the previous accent-on-tint banner carried.
+ *
+ * No entrance animation: DESIGN.md allows one authored moment (the copy
+ * affordance) and no scroll-bound or entrance reveals. The old banner's wipe-in
+ * predates that rule. */
+.status-banner {
+  background: var(--amber-soft);
+  border-top: 1px solid var(--amber-rule);
+  border-bottom: 1px solid var(--amber-rule);
+  color: var(--text-body);
+  font: 500 12px/1.4 var(--mono);
+}
+
+.status-banner .wrap {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* A record of addressed fields, not a sentence. Wraps to more rows on a narrow
+ * screen rather than truncating, since every field is load-bearing. */
+.status-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 22px;
+}
+
+.sb-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+/* Hairline between fields, drawn with the negative margin trick so the rule sits
+ * midway in the gap rather than hugging the following key. */
+.sb-field + .sb-field {
+  border-inline-start: 1px solid var(--amber-rule);
+  padding-inline-start: 22px;
+  margin-inline-start: -11px;
+}
+
+.sb-key {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+
+.status-banner strong {
+  font-weight: 600;
+  color: var(--accent-dark);
+}
+
+/* ------------------------------------------------------------- util bar */
+
+.util-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--ink);
+  color: var(--on-ink-body);
+  font: 500 12px/1 var(--mono);
+  letter-spacing: 0;
+  padding: 11px 0;
+}
+
+/* Four groups, three gaps. Every group is flex:none and nowrap, so the row can
+ * never resolve an overflow by shrinking a group and wrapping its label — the
+ * failure that put "Getting started", the meta line and the GitHub button on two
+ * lines each. space-between spends the slack between groups instead. */
+.util-bar .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  /* A utility strip runs tighter than prose: the 48px prose gutter costs the
+   * row 96px it does not have at 12px type. */
+  padding-left: max(32px, env(safe-area-inset-left));
+  padding-right: max(32px, env(safe-area-inset-right));
+}
+
+.util-identity,
+.util-action {
+  display: flex;
+  align-items: center;
+  flex: none;
+  white-space: nowrap;
+}
+
+.util-identity {
+  gap: 8px;
+}
+
+.util-brand {
+  color: var(--on-ink);
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The baseline mark: a single accent dot on a slow pulse. A quiet "live signal"
+   gesture — the ring fades out so the decoration never overlaps the wordmark. */
+.util-brand .dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-light);
+  animation: brand-dot-pulse 2.6s cubic-bezier(.4, 0, .2, 1) infinite;
+  transform-origin: center;
+}
+
+@keyframes brand-dot-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft); }
+  60%  { box-shadow: 0 0 0 7px var(--accent-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .util-brand .dot { animation: none; }
+}
+
+/* Studio byline: an outbound credit that sits quietly beside the wordmark. It
+   is deliberately one step down in weight and colour so it reads as attribution
+   rather than as a second piece of navigation. */
+.util-byline {
+  color: var(--on-ink-faint);
+  font-family: var(--mono);
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.util-byline:hover {
+  color: var(--on-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.util-nav {
+  display: flex;
+  flex: none;
+  white-space: nowrap;
+  gap: 14px;
+}
+
+.util-nav a {
+  color: var(--on-ink-body);
+  text-decoration: none;
+  transition: color 120ms ease-out;
+}
+
+/* A three-column docs shell needs more room than a single-column marketing
+ * page; at 1440 the homepage read as spread out. Set on the body so the bar
+ * and footer widen with the docs grid rather than disagreeing about the left
+ * edge within a page. */
+body.is-docs {
+  --content: 1440px;
+}
+
+/* Current page. Carries weight and an underline as well as colour, so the
+ * state is not signalled by hue alone. */
+.util-nav a.is-current {
+  color: var(--on-ink);
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 3px;
+}
+
+/* Above the collapse breakpoint this wrapper is transparent to layout, so its
+ * three children are flex items of .wrap exactly as if it did not exist. */
+.util-collapse {
+  display: contents;
+}
+
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  background: transparent;
+  border: 0;
+  color: var(--on-ink-body);
+  cursor: pointer;
+  transition: color 120ms ease-out;
+}
+
+.nav-toggle .icon-close {
+  display: none;
+}
+
+.nav-toggle[aria-expanded="true"] .icon-bars {
+  display: none;
+}
+
+.nav-toggle[aria-expanded="true"] .icon-close {
+  display: block;
+}
+
+
+/* --------------------------------------------------------------- buttons */
+
+/* The bar's one action, filled light against the ink so it carries weight at
+ * 11px. Paper rather than accent: the accent fill belongs to the install
+ * command in the hero, and two primary-weight fills above the fold would each
+ * blunt the other. `--paper` rather than pure #fff keeps it in the warm
+ * family the rest of the page is set in. */
+.btn-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  font: 600 12px/1 var(--mono);
+  letter-spacing: 0;
+  padding: 8px 12px;
+  transition: background 120ms ease-out;
+}
+
+.btn-repo svg {
+  flex: none;
+}
+
+
+.btn-cmd {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--ink);
+  border: 0;
+  padding: 17px 22px;
+  cursor: pointer;
+  font: 500 14px/1 var(--mono);
+  color: var(--on-ink);
+  text-align: left;
+  transition: background 120ms ease-out;
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+.btn-cmd .sigil {
+  color: var(--accent-light);
+}
+
+.btn-cmd .copy-state {
+  margin-left: 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--rule-dark-2);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+/* The full command is the honest label; below the narrow breakpoint it would
+ * wrap mid-package-name, so the button shows the short form and copies the
+ * full one either way. */
+.cmd-short {
+  display: none;
+}
+
+.link-quiet {
+  font: 500 14px/1 var(--sans);
+  color: var(--accent-deep);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(163, 58, 9, 0.35);
+  padding-bottom: 3px;
+  transition: color 120ms ease-out, border-color 120ms ease-out;
+}
+
+
+.link-accent {
+  font: 500 13px/1 var(--sans);
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(194, 68, 12, 0.3);
+  padding-bottom: 3px;
+}
+
+/* Inline link inside body prose. Unlike .link-quiet and .link-accent, this one
+ * declares no `font:` shorthand: a shorthand would reset size AND weight to a
+ * fixed value, so the link would shrink against the paragraph it sits in and
+ * change weight with it. It inherits both instead. --accent-deep is 6.31:1 on
+ * --paper. */
+.link-inline {
+  color: var(--accent-deep);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(163, 58, 9, 0.35);
+  transition: border-color 120ms ease-out;
+}
+
+.link-inline:hover {
+  border-bottom-color: var(--accent-deep);
+}
+
+
+/* ------------------------------------------------------------ hero band */
+
+.band-hero {
+  background: var(--peach);
+  padding: 80px 0 16px;
+}
+
+.hero-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: max-content;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 56px;
+  align-items: end;
+}
+
+.hero-eyebrow {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 24px;
+}
+
+.hero-grid h1 {
+  font: 600 var(--t-display)/0.98 var(--sans);
+  letter-spacing: -0.038em;
+  margin-bottom: 26px;
+  color: var(--text);
+}
+
+.hero-lead {
+  font: 400 var(--t-lead)/var(--lh-lead) var(--sans);
+  color: var(--text-peach);
+  margin-bottom: 34px;
+  max-width: 520px;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* The one deliberate escape from the grid: the plate breaks the band edge. */
+.hero-plate {
+  margin-bottom: -40px;
+  box-shadow: 0 24px 48px rgba(60, 30, 10, 0.18);
+}
+
+/* -------------------------------------------------------- terminal plate */
+
+.plate {
+  background: var(--ink);
+}
+
+.plate-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--rule-dark);
+  font: 400 10.5px/1 var(--mono);
+  color: var(--on-ink-dim);
+}
+
+.plate-bar .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  flex: none;
+}
+
+.plate-bar .spacer {
+  margin-left: auto;
+}
+
+.plate-body {
+  margin: 0;
+  padding: 20px 16px 24px;
+  font: 400 11.5px/1.85 var(--mono);
+  color: var(--on-ink-body);
+  overflow-x: auto;
+}
+
+.plate-copy {
+  background: transparent;
+  border: 1px solid var(--rule-dark-2);
+  color: var(--on-ink-body);
+  font: 400 10px/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: border-color 120ms ease-out, color 120ms ease-out;
+}
+
+
+/* --accent is the light-surface accent and lands at 3.65:1 on --ink, under the
+   4.5:1 floor. --accent-light is the same ramp at 6.81:1 and is already the
+   dark-surface accent for .t-val, so the prompt glyph uses it too. */
+.t-prompt {
+  color: var(--accent-light);
+}
+.t-call {
+  color: var(--on-ink-faint);
+}
+.t-blocked {
+  color: var(--term-blocked);
+}
+.t-note {
+  color: var(--on-ink-dim);
+}
+.t-ok {
+  color: var(--term-ok);
+}
+
+.t-val {
+  color: var(--accent-light);
+}
+.t-dim {
+  color: var(--on-ink-faint);
+}
+
+/* ----------------------------------------------------------- stat strip */
+
+.stat-strip {
+  padding: 76px 0 0;
+}
+
+.stat {
+  background: var(--paper);
+  padding: 30px 28px;
+}
+
+.stat .num {
+  font: 600 48px/1 var(--sans);
+  letter-spacing: -0.04em;
+  color: var(--accent);
+  margin-bottom: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat .claim {
+  font: 600 var(--t-cell)/1.3 var(--sans);
+  letter-spacing: -0.012em;
+  margin-bottom: 6px;
+}
+
+.stat .qual {
+  font: 400 var(--t-meta)/1.6 var(--mono);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------- hairline grid */
+
+.grid-rule {
+  display: grid;
   gap: 1px;
   background: var(--rule);
   border: 1px solid var(--rule);
-  border-radius: 12px;
-  overflow: hidden;
-  max-width: var(--content);
-  align-self: start;
-  margin: 0 auto;
-}
-/* 2+1: concepts 01 + 02 share row 1; concept 03 hero-spans row 2 as a full-width panel. */
-.concepts.is-row {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-}
-.concepts.is-row .concept:nth-child(3) {
-  grid-column: 1 / -1;
-}
-.concepts.is-2col { grid-template-columns: 1fr 1fr; }
-.concept {
-  background: var(--paper);
-  padding: 32px;
-}
-a.concept {
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background .15s ease,
-    transform .15s cubic-bezier(.25, 1, .5, 1);
-  will-change: transform;
-}
-a.concept {
-  position: relative;
-  padding-right: 56px;
-}
-a.concept:hover {
-  background: var(--hover-tint);
-}
-a.concept:hover h3 { color: var(--accent); }
-@media (prefers-reduced-motion: reduce) {
-  a.concept:hover, a.concept:active { transform: none; }
-}
-a.concept::after {
-  content: "→";
-  position: absolute;
-  top: 32px;
-  right: 28px;
-  font-family: var(--display);
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--faint);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: transform .2s cubic-bezier(.25, 1, .5, 1), opacity .2s ease, color .15s ease;
-}
-a.concept:hover::after,
-a.concept:focus-visible::after {
-  opacity: 1;
-  transform: translateX(0);
-  color: var(--accent);
-}
-.concept .num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--accent);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-.concept h3 {
-  font-size: 17px;
-  margin-bottom: 10px;
-  transition: color .15s ease;
-}
-.concept p {
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--muted);
-  margin: 0;
-  max-width: none;
 }
 
-/* Concept hero-panel read-more link — byte-faithful mirror of .hero .hero-readmore
-   except for margin (top: 16px to integrate within a card; hero version uses
-   bottom: 56px to space from the meta-strip below). */
-.concept-readmore {
-  margin: 16px 0 0;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--muted);
-  letter-spacing: -.005em;
-}
-.concept-readmore a {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color .15s ease, transform .15s cubic-bezier(.25, 1, .5, 1);
-}
-.concept-readmore a:hover {
-  color: var(--ink);
-  transform: translateX(3px);
-}
-.concept-readmore .arr {
-  color: var(--accent);
-  font-weight: 600;
-}
-@media (prefers-reduced-motion: reduce) {
-  .concept-readmore a:hover { transform: none; }
-}
-
-/* Concept-03 track chips — HTML transcription of the bento .arch-bento .chain-chip + .chain-label pair.
-   Every value mirrors an existing rule: background var(--cream), border 1px var(--rule), radius 4
-   (= bento rect rx="4"), mono 11.5/500, color var(--ink), letter-spacing -0.005em. Zero novel tokens. */
-/* Flush 3-column grid, not a wrapped flex row. Nine ids of uneven length wrapped
-   to a ragged right edge; equal columns square it off and make the set legible
-   as a set. Scoped to the row — .track-chip also appears standalone inline
-   (pm.njk kickers, the -soon chips), and those keep the base geometry. */
-.track-chips {
-  display: grid;
+.grid-3 {
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin-top: 16px;
 }
-.track-chips .track-chip {
-  justify-content: center;
-  padding: 4px 6px;
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
 }
-@media (max-width: 600px) {
-  .track-chips { grid-template-columns: repeat(2, 1fr); }
+
+/* A hairline grid shows its own background through any unfilled track, so an
+ * item count that does not divide by the column count leaves a dead grey block
+ * at the end of the last row (7 lifecycle events in 3 columns, for instance).
+ * Stretching the final cell across the remainder closes it. The selectors only
+ * match when the last child would start a short row, so grids whose count
+ * divides evenly are untouched. */
+.grid-3 > :last-child:nth-child(3n + 1) {
+  grid-column: span 3;
 }
-.track-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--cream);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.005em;
+
+.grid-3 > :last-child:nth-child(3n + 2) {
+  grid-column: span 2;
 }
-/* Not-yet-shipped track: dashed outline on the page bg (not the filled cream),
-   muted ink, and a small caps affix in the gate-tag vocabulary. Reads as
-   "declared, not delivered" at a glance; the track_id text stays greppable. */
-.track-chip-soon {
-  background: var(--bg);
-  border-style: dashed;
-  color: var(--muted);
-  gap: 8px;
+
+.grid-2 > :last-child:nth-child(2n + 1) {
+  grid-column: span 2;
 }
-.track-chip-soon .chip-soon-tag {
-  font-size: 9px;
-  font-weight: 600;
+.grid-strata {
+  grid-template-columns: 320px 1fr;
+}
+.grid-flow {
+  grid-template-columns: 1fr 300px;
+}
+.grid-swarm {
+  grid-template-columns: 1fr 200px 1fr;
+}
+
+.cell {
+  background: var(--paper);
+  padding: 22px 28px;
+}
+
+.cell-kicker {
+  font: 500 10.5px/1 var(--mono);
   letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-/* A soon-chip inline in a concept kicker (PM Mode "next" cards) sits beside
-   the kicker text rather than in the chip row. */
-.concept .num .track-chip-soon {
-  margin-left: 8px;
-  vertical-align: middle;
-}
-/* A figure cell inside a concept grid (recently-landed): same paper plate as
-   its card siblings, symbol centered, margins zeroed against the UA figure
-   default so the hairline grid stays even. */
-.concept-figure {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.concept-figure .hero-symbol-svg {
-  width: 100%;
-  max-width: 340px;
-  height: auto;
-}
-
-/* =========================================================================
-   DIAGRAMS
-   Reusable figure + SVG/HTML diagram styles for the homepage.
-   ========================================================================= */
-
-.figure {
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  padding: 40px 32px 32px !important;
-  margin: 0 0 32px 0;
-}
-.figure svg { display: block; width: 100%; height: auto; }
-/* .figure figcaption + strong: type baseline is set in the unified
-   .plate-caption block above. No further declarations needed here. */
-
-/* SVG diagram themed via CSS custom properties */
-.diagram-svg .stage {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.diagram-svg .stage-label {
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 600;
-  fill: var(--ink);
-  letter-spacing: -.01em;
-}
-.diagram-svg .stage-sub {
-  font-family: var(--body);
-  font-size: 12px;
-  fill: var(--muted);
-}
-.diagram-svg .conn {
-  stroke: var(--ink);
-  stroke-width: 1.5;
-  fill: none;
-}
-.diagram-svg .conn-arrow {
-  fill: var(--ink);
-}
-.diagram-svg .hook-line {
-  stroke: var(--accent);
-  stroke-width: 1.75;
-  stroke-dasharray: 4 4;
-  fill: none;
-}
-.diagram-svg .hook-event {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  fill: var(--accent);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-.diagram-svg .hook-list {
-  font-family: var(--mono);
-  font-size: 11px;
-  fill: var(--muted);
-}
-.diagram-svg .hook-sub {
-  font-family: var(--mono);
-  font-size: 11px;
-  fill: var(--faint);
-}
-.diagram-svg .num {
-  font-family: var(--mono);
-  font-size: 10px;
-  fill: var(--muted);
-  font-weight: 500;
-}
-.diagram-svg .node-circle {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.diagram-svg .node-gate {
-  fill: var(--accent);
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-.diagram-svg .gate-anno .gate-rule {
-  stroke: var(--accent);
-  stroke-width: 1.25;
-  stroke-dasharray: 3 3;
-  fill: none;
-}
-.diagram-svg .gate-anno .gate-bracket {
-  stroke: var(--accent);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: square;
-}
-.diagram-svg .gate-anno .gate-glyph {
-  stroke: var(--paper);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-.diagram-svg .gate-anno .gate-cmd {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  fill: var(--accent);
-  letter-spacing: -.005em;
-}
-.diagram-svg .node-label {
-  font-family: var(--display);
-  font-size: 12.5px;
-  font-weight: 500;
-  fill: var(--ink);
-  letter-spacing: -.005em;
-}
-.diagram-svg .node-label-gate {
-  font-family: var(--display);
-  font-size: 12.5px;
-  font-weight: 600;
-  fill: var(--ink);
-  letter-spacing: -.005em;
-}
-.diagram-svg .artifact {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  fill: var(--muted);
-}
-.diagram-svg .gate-tag {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  fill: var(--accent);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-.diagram-svg .axis {
-  stroke: var(--rule);
-  stroke-width: 1.5;
-}
-
-/* Architecture bento — the §III workflow diagram.
-   Single inline SVG with two <g> subtrees (.bento-desktop, .bento-mobile).
-   Desktop renders a 1000x540 bento composition; mobile (<=768px) collapses
-   to a 360x1200 vertical stack of the same intake-full track nodes plus three gates.
-   viewBox is fixed at 0 0 1000 1200; preserveAspectRatio="xMinYMin slice"
-   clips the unused regime. CSS aspect-ratio swaps the SVG container shape;
-   display:none toggles which subtree is visible. */
-.arch-bento {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1000 / 565;
-  max-width: 1000px;
-  margin: 0 auto;
-  display: block;
-}
-.arch-bento .bento-mobile { display: none; }
-.arch-bento .bento-desktop { display: initial; }
-
-@media (max-width: 768px) {
-  .arch-bento {
-    aspect-ratio: 360 / 1200;
-    max-width: 400px;
-  }
-  .arch-bento .bento-desktop { display: none; }
-  .arch-bento .bento-mobile { display: initial; }
-}
-
-/* Hero cell — spec. Filled paper, ink 1.5 stroke. Carries the bento's visual anchor. */
-.arch-bento .stage-hero {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-
-/* Tall cell — tdd. Open-frame dashed stroke signals "where work happens";
-   matches the comptree conditional-edge vocabulary in the hero-symbols catalog. */
-.arch-bento .stage-tall {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-  stroke-dasharray: 6 3;
-}
-
-/* Ship pair cell — changelog + commit. Slightly louder ink stroke to mark the pair. */
-.arch-bento .stage-ship {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-
-/* Ship pair accent seam — vertical 1.5 accent rule between changelog and commit.
-   Honors the reserved-accent contract: this is the user-pinned "ship pair" device. */
-.arch-bento .ship-seam {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  stroke-linecap: square;
-}
-
-/* Cell eyebrow — mono caps inside hero/tall cells (e.g., "PLAN ANCHOR", "EXECUTION"). */
-.arch-bento .cell-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  fill: var(--accent);
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-}
-
-/* Cell ordinal — mono numeral aligned right inside hero/tall. */
-.arch-bento .cell-ord {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  fill: var(--muted);
-  letter-spacing: 0.04em;
-}
-
-/* Cell title — Inter Tight 22/600 inside hero, 20/600 inside tall.
-   The xl variant carries the v2 two-hero side-by-side composition where
-   spec and tdd are both substantial cells (580x230 and 330x440) that
-   warrant a larger title. */
-.arch-bento .cell-title {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 600;
-  fill: var(--ink);
-  letter-spacing: -0.025em;
-}
-.arch-bento .cell-tall .cell-title {
-  font-size: 20px;
-}
-.arch-bento .cell-title-xl {
-  font-size: 38px;
-  letter-spacing: -0.035em;
-}
-
-/* TDD inner chain — five sub-phase chips (scenario, implement, verify, design-ui, drift-check)
-   arranged in a 2-column grid inside the tall TDD cell, separated by arrows.
-   Chips are paper-faced with hairline borders; mono labels in muted ink. */
-.arch-bento .chain-chip {
-  fill: var(--cream);
-  stroke: var(--rule);
-  stroke-width: 1;
-}
-.arch-bento .chain-label {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 500;
-  fill: var(--ink);
-  letter-spacing: -0.005em;
-}
-.arch-bento .chain-arrow {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 500;
-  fill: var(--muted);
-}
-.arch-bento .chain-arrow-v {
-  font-size: 13px;
-}
-
-/* Cell sub — body 13/400 muted inside hero/tall. */
-.arch-bento .cell-sub {
-  font-family: var(--body);
-  font-size: 13px;
-  fill: var(--muted);
-  letter-spacing: normal;
-}
-.arch-bento .cell-tall .cell-sub {
-  font-size: 11.5px;
-}
-.arch-bento .cell-sub-step {
-  fill: var(--faint);
-  font-size: 11px;
-}
-
-/* Cell foot — mono 10/500 muted at bottom of hero/tall (e.g., file path or transition annotation). */
-.arch-bento .cell-foot {
-  font-family: var(--mono);
-  font-size: 10px;
-  fill: var(--muted);
-  letter-spacing: 0.02em;
-}
-.arch-bento .cell-foot-r {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  fill: var(--accent);
-  letter-spacing: 0.02em;
-}
-/* Cell foot rule — hairline separator between chain zone and foot annotations inside TDD. */
-.arch-bento .cell-foot-rule {
-  stroke: var(--rule);
-  stroke-width: 1;
-}
-
-/* Cell modifier — mono caps inside standard cells for status labels (e.g., "OPTIONAL").
-   Floor raised to 10.5px after the 2026-05-29 a11y audit (P0-3): sub-7px render at common viewports. */
-.arch-bento .cell-modifier {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  fill: var(--faint);
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-}
-
-/* Pair bracket — hairline rule + mono caps tag above a paired cell row. */
-.arch-bento .pair-rule {
-  stroke: var(--rule);
-  stroke-width: 1;
-}
-.arch-bento .pair-rule-accent {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-.arch-bento .pair-tag {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  fill: var(--muted);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.arch-bento .pair-tag-accent {
-  fill: var(--accent);
-}
-
-/* Runtime gate beneath the grid — dashed accent rule + caps tag + footnote.
-   Distinct from phase-gate annotations because /grant-push sits OUTSIDE the pipeline. */
-.arch-bento .runtime-rule {
-  stroke: var(--accent);
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
-  opacity: 0.75;
-}
-.arch-bento .runtime-tag {
-  letter-spacing: 0.14em;
-}
-.arch-bento .runtime-foot {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  fill: var(--muted);
-  letter-spacing: 0.02em;
-}
-
-/* Memory-flow plate — hand-drawn-ish hairline diagram for the lifecycle loop. */
-.plate-flow { padding: 32px 24px 28px; }
-.memflow-svg { max-width: 720px; margin: 0 auto; }
-.memflow-svg .mf-node rect {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.25;
-}
-.memflow-svg .mf-node-canonical rect {
-  stroke-width: 1.5;
-  stroke: var(--ink);
-}
-.memflow-svg .mf-title {
-  font-family: var(--display);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: -.005em;
-  fill: var(--ink);
-}
-.memflow-svg .mf-sub {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  fill: var(--muted);
-  letter-spacing: 0;
-}
-.memflow-svg .mf-step {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  fill: var(--accent);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-.memflow-svg .mf-edge {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  fill: var(--muted);
-  letter-spacing: 0;
-}
-.memflow-svg .mf-edge-fail { fill: var(--charcoal); }
-.memflow-svg .mf-conn {
-  stroke: var(--ink);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-}
-.memflow-svg .mf-conn-ok {
-  stroke: var(--accent);
-  stroke-width: 1.25;
-  stroke-dasharray: 4 4;
-  fill: none;
-  stroke-linecap: round;
-}
-.memflow-svg .mf-conn-fail {
-  stroke: var(--charcoal);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-}
-.memflow-svg .mf-arrow { fill: var(--ink); }
-.memflow-svg .mf-arrow-acc { fill: var(--accent); }
-@media (max-width: 720px) {
-  .memflow-svg { max-width: 100%; }
-}
-
-/* Architecture diagram: HTML/CSS, two columns + connector spine */
-.arch {
-  display: grid;
-  grid-template-columns: 1fr 160px 1fr;
-  gap: 0;
-  align-items: stretch;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
-  overflow: hidden;
-  font-family: var(--body);
-  position: relative;
-  margin-top: 0;
-}
-.arch-col {
-  padding: 32px 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.arch-col + .arch-col { border-left: 1px solid var(--rule); }
-.arch-col .label {
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .10em;
-  text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 4px;
+  margin-bottom: 9px;
 }
-.arch-col h3 {
-  font-family: var(--display);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -.01em;
-  color: var(--ink);
-  margin: 0 0 8px;
+
+.cell h3 {
+  font: 600 var(--t-cell)/1.3 var(--sans);
+  letter-spacing: -0.012em;
+  margin-bottom: 6px;
 }
-.arch-col p {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--muted);
-  margin: 0;
-  max-width: none;
+
+.cell p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-muted);
+  max-width: var(--measure-ch);
 }
-.arch-col ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.arch-col li {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--ink);
+
+/* -------------------------------------------------------- section heads */
+
+.sec-head {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 16px;
+  margin-bottom: 8px;
 }
-.arch-col li::before {
-  content: "›";
+
+.sec-mark {
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.12em;
   color: var(--accent);
-  font-weight: 700;
+  flex: none;
 }
-.arch-col li.dim { color: var(--muted); }
-.arch-col li.dim::before { color: var(--faint); }
 
-.arch-spine {
-  border-left: 1px solid var(--rule);
-  border-right: 1px solid var(--rule);
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 10px;
-  gap: 18px;
-  position: relative;
+.sec-head h2 {
+  font: 600 var(--t-section)/1.1 var(--sans);
+  letter-spacing: -0.028em;
 }
-.arch-spine .arrow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+
+.sec-lead {
+  font: 400 var(--t-lead-sm)/1.6 var(--sans);
+  color: var(--text-lead);
+  margin-bottom: 40px;
+  max-width: var(--measure);
+}
+
+.sec-lead code,
+.sec-lead .mono {
   font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--ink);
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  font-weight: 600;
-  white-space: nowrap;
-  line-height: 1;
-}
-.arch-spine .arrow svg {
-  width: 100%;
-  max-width: 124px;
-  height: 10px;
-  color: var(--ink);
-}
-.arch-spine .audit {
-  border: 1.5px solid var(--accent);
-  background: var(--paper);
-  border-radius: 10px;
-  padding: 10px 14px;
-  text-align: center;
-  font-family: var(--display);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: -.005em;
-  line-height: 1.4;
-}
-.arch-spine .audit-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--muted);
-  margin-top: 4px;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-@media (max-width: 820px) {
-  .arch {
-    grid-template-columns: 1fr;
-  }
-  .arch-col + .arch-col { border-left: 0; border-top: 1px solid var(--rule); }
-  .arch-spine {
-    border: 0;
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 18px 24px;
-  }
-  .arch-spine .arrow svg { display: none; }
-}
-
-/* Install block */
-.install {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: start;
-}
-.install-copy h2 { margin-bottom: 16px; }
-.install-copy p { font-size: 16.5px; max-width: 460px; }
-.install-steps {
-  list-style: none;
-  padding: 0;
-  margin: 32px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 14.5px;
+  font-size: 16px;
   color: var(--text);
 }
-.install-steps li {
+
+/* -------------------------------------------------------------- strata */
+
+.strata {
+  background: var(--sand);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.strata-label {
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.stratum {
+  padding: 13px 15px;
   display: flex;
   gap: 12px;
   align-items: baseline;
 }
-.install-steps .n {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--accent);
-  width: 18px;
-  flex-shrink: 0;
+
+.stratum .roman {
+  font: 600 9.5px/1 var(--mono);
+  color: var(--text-dim);
+  width: 20px;
+  flex: none;
 }
-.install-snippet {
-  background: var(--code-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  font-family: var(--mono);
+
+.stratum .name {
+  font: 600 13px/1 var(--sans);
 }
-.install-snippet .bar {
+
+.stratum .where {
+  font: 400 11.5px/1 var(--mono);
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+.stratum-1 {
+  background: var(--paper);
+}
+.stratum-2 {
+  background: var(--sand-light);
+}
+.stratum-3 {
+  background: var(--stratum-3);
+}
+.stratum-4 {
+  background: var(--ink);
+}
+.stratum-4 .roman {
+  color: var(--on-ink-faint);
+}
+.stratum-4 .name {
+  color: var(--on-ink);
+}
+.stratum-4 .where {
+  color: var(--accent-light);
+}
+
+.strata-detail {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule);
+}
+
+/* --------------------------------------------------------------- chips */
+
+.chip-row {
   display: flex;
-  align-items: center;
-  background: var(--code-bar-bg-alt);
-  color: var(--code-bar-fg);
-  padding: 10px 14px;
-  font-size: 11.5px;
-  border-bottom: 1px solid var(--code-bar-border);
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
 }
-.install-snippet .bar .dots {
-  display: flex; gap: 6px; margin-right: 14px;
+
+.chip {
+  font: 400 11px/1 var(--mono);
+  background: var(--sand);
+  color: var(--text-muted);
+  padding: 5px 8px;
 }
-.install-snippet .bar .dots span {
-  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
-}
-.install-snippet .bar .dots .r { background: var(--mac-red); }
-.install-snippet .bar .dots .y { background: var(--mac-yellow); }
-.install-snippet .bar .dots .g { background: var(--mac-green); }
-.install-snippet .bar .file { color: var(--code-fg-file); }
-.install-snippet pre {
-  margin: 0;
-  padding: 18px 22px;
-  background: transparent;
-  border-radius: 0;
-  font-size: 13px;
-  line-height: 1.7;
-  overflow-x: auto;
-}
-.install-snippet img {
-  /* The CLI TUI screenshots embed inside the same terminal chrome the
-     surrounding doc snippets use. The black background of the PNG already
-     reads as "in the terminal"; clipping to the chrome's rounded corners
-     and centering keeps the figure visually anchored even when the source
-     is wider than the column. */
+
+/* ------------------------------------------------------------ svg figures */
+
+/* Two authored layouts, swapped at the breakpoint. Only one is ever in the
+ * accessibility tree, because the other is display:none. Both are inline, so
+ * every colour below is a DESIGN.md token and the type is the page's own
+ * IBM Plex — neither of which survives an SVG referenced through an image
+ * element, which is also why this system does not use srcset. */
+.dg {
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* Neither layout upscales past its authored size: the wide one is drawn at the
+ * width of the column it lives in, so its 12px mono matches the page's mono
+ * exactly rather than ballooning on a large display. */
+.dg-wide {
+  max-width: 740px;
   margin: 0;
 }
 
-/* CLI preview figure on cli.njk — sits above § I as a visual hero for the
-   page. Caption inherits the project-wide plate-caption styling (mono 11.5
-   muted with a hairline rule above). */
-.cli-preview {
-  margin: 0 0 40px;
+.dg-stack {
+  display: none;
+  max-width: 380px;
+  margin: 0 auto;
 }
-.cli-preview figcaption {
-  font-family: var(--mono);
+
+/* Identity + nav + action needs 867px of content, so the single row stops fitting
+ * below a ~967px viewport. The drawer therefore takes over at 979px rather than
+ * the 760px it used to: between those widths the nav labels were wrapping. */
+@media (max-width: 979px) {
+  .util-bar {
+    position: static;
+  }
+
+  .util-bar .wrap {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  /* Closed by default and opened by the toggle. The panel takes the full row
+   * beneath the brand; the facts and the action travel with it rather than
+   * competing for the bar's single line. */
+  .util-collapse {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 14px 0 4px;
+    margin-top: 11px;
+    border-top: 1px solid var(--rule-dark);
+  }
+
+  .util-bar.is-open .util-collapse {
+    display: flex;
+  }
+
+  /* Panel order: links, then the action, then the facts. Ordering targets the
+   * group wrappers, since they are the flex items inside the panel now. */
+  .util-nav {
+    order: 1;
+    width: 100%;
+    gap: 0;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+
+  .util-action {
+    order: 2;
+    margin-top: 14px;
+    align-self: flex-start;
+  }
+
+  /* Menu rows are touch-sized at this breakpoint whatever the pointer type:
+   * a narrow desktop window gets the same 44px rows a phone does. */
+  .util-nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 760px) {
+  .dg-wide {
+    display: none;
+  }
+
+  .dg-stack {
+    display: block;
+  }
+}
+
+/* The stacked variant is drawn in a narrower coordinate space, so its labels
+ * need more user units to land at the same rendered size as the wide one. */
+.dg-stack .dg-t text,
+.dg-stack .dg-node text,
+.dg-stack .dg-gate text {
+  font-size: 13px;
+}
+
+.dg-stack .dg-note text {
+  font-size: 12px;
+}
+
+.dg-stack .dg-lane text {
   font-size: 11.5px;
-  font-weight: 500;
-  line-height: 1.6;
-  color: var(--muted);
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--rule);
 }
 
-/* =========================================================================
-   DEV-CONSOLE — live-typing Claude Code session in the homepage hero.
-   Replaces the strata illustration on the right column. Driven by site.js.
-   ========================================================================= */
+/* A 1px stroke on an integer coordinate straddles the pixel boundary and
+ * renders as two half-intensity rows, which reads as a broken hairline.
+ * crispEdges snaps axis-aligned geometry to device pixels at any scale;
+ * the arrowheads stay anti-aliased because they are diagonal fills. */
+.dg-box rect,
+.dg-gate-box rect,
+.dg-arrow path,
+.dg-tick path,
+.dg-spine path,
+.dg-dash {
+  shape-rendering: crispEdges;
+}
 
-.dev-console {
-  background: var(--code-bg);
-  border-radius: 12px;
-  overflow: hidden;
+.dg-box rect {
+  fill: var(--paper);
+  stroke: var(--rule);
+}
+
+.dg-gate-box rect {
+  fill: var(--paper);
+  stroke: var(--accent);
+}
+
+.dg-gate-mark rect {
+  fill: var(--accent);
+}
+
+.dg-arrow path,
+.dg-tick path,
+.dg-spine path {
+  fill: none;
+  stroke: var(--text-dim);
+}
+
+.dg-spine path {
+  stroke: var(--rule);
+}
+
+.dg-head path {
+  fill: var(--text-dim);
+}
+
+.dg-dash {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-dasharray: 3 4;
+}
+
+.dg text {
   font-family: var(--mono);
+}
+
+.dg-lane text {
+  fill: var(--text-dim);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dg-t text {
+  fill: var(--text-body);
+  font-size: 12px;
+}
+
+.dg-node text {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dg-gate text {
+  fill: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dg-note text {
+  fill: var(--text-dim);
+  font-size: 11px;
+}
+
+.dg-edge {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* ----------------------------------------------------------- docs shell */
+
+.docs-grid {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 220px;
+  gap: 0 40px;
+  align-items: start;
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+
+/* Sidebar and TOC are <details>/sticky rails on desktop and collapse below. */
+.docs-side {
+  position: sticky;
+  top: 76px;
+}
+
+.docs-side-toggle {
+  display: none;
+}
+
+.docs-side-inner {
   display: flex;
   flex-direction: column;
-  align-self: stretch;
-  min-width: 0;
+  gap: 26px;
 }
-.dc-bar {
+
+.docs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* A section header must outrank the links beneath it. At 9.5px in --text-dim
+ * this label was both smaller and lighter than its own items (13.5px,
+ * --text-muted), which inverted the hierarchy and made the groups read as
+ * captions. Size steps up to the --t-label token, weight to 700, colour to the
+ * strongest ink. Tracking eases off slightly because wider letterforms need
+ * less of it. */
+.docs-group-label {
+  font: 700 var(--t-label)/1 var(--mono);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.docs-link {
+  position: relative;
   display: flex;
   align-items: center;
-  background: var(--code-bar-bg);
-  color: var(--code-bar-fg);
-  border-bottom: 1px solid var(--code-bar-border);
-  padding: 11px 16px;
-  font-size: 11.5px;
+  font: 400 var(--t-nav)/1.3 var(--sans);
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 7px 0;
 }
-.dc-dots {
+
+.docs-link .rail {
+  position: absolute;
+  left: -14px;
+  width: 4px;
+  height: 16px;
+  background: var(--accent);
+}
+
+.docs-link.is-current {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* A page the IA commits to that does not exist yet. Rendering it as inert
+ * text keeps the shape of the docs honest without shipping a dead link. */
+.docs-link.is-pending {
+  color: var(--text-dim);
+  cursor: default;
+}
+
+.docs-link .soon {
+  display: none;
+}
+
+.docs-note {
+  font: 400 11px/1.5 var(--mono);
+  color: var(--text-dim);
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 14px;
+}
+
+.docs-main {
+  min-width: 0;
+  border-left: 1px solid var(--rule-soft);
+  border-right: 1px solid var(--rule-soft);
+  padding: 0 36px;
+  margin: 0 -8px;
+}
+
+.docs-toc {
+  position: sticky;
+  top: 76px;
+}
+
+.toc-list {
   display: flex;
-  gap: 6px;
-  margin-right: 14px;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 30px;
 }
-.dc-dots span {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  display: inline-block;
+
+.toc-link {
+  position: relative;
+  font: 400 var(--t-nav)/1.4 var(--sans);
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 5px 0;
 }
-.dc-dots .r { background: var(--mac-red); }
-.dc-dots .y { background: var(--mac-yellow); }
-.dc-dots .g { background: var(--mac-green); }
-.dc-file { color: var(--code-fg-file); }
-.dev-console .dc-body {
-  margin: 0;
-  padding: 24px 26px;
+
+.toc-link.is-sub {
+  font-size: var(--t-nav-sub);
+  padding-left: 14px;
+  color: var(--text-dim);
+}
+
+.toc-link .rail {
+  position: absolute;
+  left: -13px;
+  top: 6px;
+  width: 3px;
+  height: 15px;
+  background: var(--accent);
+  opacity: 0;
+}
+
+.toc-link.is-active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.toc-link.is-active .rail {
+  opacity: 1;
+}
+
+/* One line per group saying what the section is for. Diátaxis type names are
+ * author vocabulary; a reader looking for "how do I turn on org mode" does not
+ * know that lives under Explanation. */
+.docs-group-blurb {
+  font: 400 var(--t-nav-sub)/1.45 var(--sans);
+  color: var(--text-dim);
+  margin: -2px 0 8px;
+  max-width: 26ch;
+}
+
+/* The page's Diátaxis type, resolved from docsnav rather than declared per
+ * page. Quieter than a status chip: it labels the kind of reading, it is not
+ * a warning. */
+.chip-type {
   background: transparent;
-  border-radius: 0;
+  color: var(--text-dim);
+  border: 1px solid var(--rule);
+}
+
+.page-state {
+  background: var(--sand-light);
+  border: 1px solid var(--rule);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 400 11.5px/1.4 var(--mono);
+  color: var(--text-muted);
+}
+
+.page-state .state-label {
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+
+/* --------------------------------------------------------- docs content */
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 400 11px/1 var(--mono);
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+
+.crumbs .sep {
+  color: var(--text-dim);
+}
+
+.crumbs span:last-child {
+  color: var(--text-muted);
+}
+
+.chip-set {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.doc-chip {
+  font: 600 9.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--sand);
+  color: var(--text-muted);
+  padding: 6px 9px;
+}
+
+.chip-warn {
+  background: var(--peach);
+  color: var(--accent-deep);
+}
+
+.docs-main h1 {
+  font: 600 var(--t-title)/1.02 var(--sans);
+  letter-spacing: -0.034em;
+  margin-bottom: 22px;
+}
+
+.doc-lead {
+  font: 400 var(--t-lead)/var(--lh-lead) var(--sans);
+  color: var(--text-lead);
+  max-width: var(--measure);
+}
+
+.fact-strip {
+  display: flex;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-soft);
+  margin: 32px 0 44px;
+  flex-wrap: wrap;
+}
+
+.fact {
+  padding: 14px 22px 14px 0;
+  margin-right: 22px;
+  border-right: 1px solid var(--rule-soft);
+}
+
+.fact:last-child {
+  border-right: 0;
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.fact-label {
+  font: 500 9.5px/1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.fact-value {
+  font: 400 13px/1 var(--mono);
+  color: var(--text-body);
+}
+
+/* A ruled note box, not a side-stripe. The peach ground and the accent mark
+ * carry the "pay attention" signal; the hairline draws the box the way every
+ * other container in this system draws one. The 3px accent left border this
+ * replaces came from the comp, but PRODUCT.md bans side-stripe coloured
+ * borders by name, and that is the higher authority. */
+.callout {
+  display: flex;
+  gap: 16px;
+  background: var(--peach);
+  border: 1px solid var(--accent);
+  padding: 22px 24px;
+  margin-bottom: 56px;
+}
+
+.callout-mark {
+  font: 600 15px/1.2 var(--mono);
+  color: var(--accent-deep);
+  flex: none;
+}
+
+.callout-title {
+  font: 600 var(--t-body)/1.35 var(--sans);
+  color: var(--text);
+  margin-bottom: 7px;
+}
+
+.callout p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-peach-2);
+}
+
+.callout .tok {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.docs-main h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font: 600 var(--t-section)/1.12 var(--sans);
+  letter-spacing: -0.026em;
+  margin-bottom: 14px;
+}
+
+.docs-main h3 {
+  font: 600 var(--t-sub)/1.25 var(--sans);
+  letter-spacing: -0.018em;
+  margin-bottom: 8px;
+}
+
+.docs-main .sec-lead {
+  font: 400 var(--t-lead-sm)/1.6 var(--sans);
+  margin-bottom: 32px;
+}
+
+/* Vertical rhythm and measure for bare docs prose.
+ *
+ * The reset zeroes margins on every element, and each component (.cell p,
+ * .step-body p, .callout p) restores its own. Body prose sitting directly in
+ * the docs column had no rule at all, so consecutive paragraphs rendered
+ * flush and blocks butted against each other. It only surfaced once a page
+ * carried substantial prose outside a component.
+ *
+ * Direct-child selectors so component internals keep their own spacing, and
+ * :not() on the two lead classes because `.docs-main > p` outranks the bare
+ * `.doc-lead` / `.sec-lead` selectors and would otherwise override the wider
+ * lead measure.
+ *
+ * 16px matches .step-body p. 70ch is the long-prose cap DESIGN.md names;
+ * uncapped, this column sets around 110ch. Adjacent-sibling margins collapse,
+ * so the 48px section break below absorbs the 16px rather than stacking. */
+.docs-main > p:not(.doc-lead):not(.sec-lead) {
+  max-width: 70ch;
+  margin-bottom: 16px;
+}
+
+.docs-main > .plate,
+.docs-main > .grid-rule {
+  margin-bottom: 32px;
+}
+
+.docs-main > h2 {
+  margin-top: 48px;
+}
+
+.docs-main > h2:first-child {
+  margin-top: 0;
+}
+
+/* Subheads inside a section (the CLI page groups its flags under them) take
+ * the same treatment one step down, so a group boundary reads as subordinate
+ * to a section boundary rather than competing with it. */
+.docs-main > h3 {
+  margin-top: 40px;
+}
+
+/* Secondary line inside a .cell: a caveat or an applicability note under the
+ * main description. Cells previously supported a kicker and body copy only,
+ * which left no way to mark a line as subordinate without inventing weight. */
+.cell-note {
+  font: 400 var(--t-dense)/1.55 var(--sans);
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.step-grid {
+  margin-bottom: 64px;
+}
+
+/* The numbered run. The rule down the left is the spine; each ordinal sits
+ * on it, so the sequence is legible before a single word is read. */
+.steps {
+  list-style: none;
+  margin: 0 0 64px;
+  padding: 0;
+  border-left: 1px solid var(--rule);
+}
+
+.step {
+  position: relative;
+  padding: 0 0 40px 32px;
+}
+
+.step:last-child {
+  padding-bottom: 8px;
+}
+
+.step-num {
+  position: absolute;
+  left: -13px;
+  top: 2px;
+  width: 25px;
+  height: 25px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 11.5px/25px var(--mono);
+  text-align: center;
+}
+
+.step-body p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  max-width: var(--measure-ch);
+}
+
+.step-note {
+  margin-top: 14px;
+  margin-bottom: 0 !important;
+  font-size: 14px !important;
+  color: var(--text-dim) !important;
+}
+
+.step .plate {
+  max-width: 720px;
+}
+
+.lane-grid {
+  margin-top: 16px;
+  max-width: 720px;
+}
+
+.cell-sand {
+  background: var(--sand-light);
+}
+
+.lane-grid .cell {
+  padding: 16px 18px;
+}
+
+.lane-grid .cell p {
+  font: 400 var(--t-dense)/var(--lh-dense) var(--sans);
+  margin: 0;
+}
+
+.recap {
+  background: var(--sand);
+  padding: 36px 34px;
+  margin-bottom: 64px;
+}
+
+.recap h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+
+.recap p {
+  font: 400 var(--t-lead-sm)/1.6 var(--sans);
+  color: var(--text-lead);
+  max-width: var(--measure);
+}
+
+.recap strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.docfoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--rule);
+  padding: 22px 0 20px;
+  margin-top: 56px;
+  font: 400 12px/1 var(--mono);
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+
+.docfoot a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pager {
+  margin-bottom: 8px;
+}
+
+.pager-cell {
+  background: var(--paper);
+  padding: 20px 22px;
+}
+
+.pager-next {
+  text-align: right;
+}
+
+/* Whole cell is the target, so the hit area is the box rather than the title.
+ * A one-sided pager (first or last page) renders a single full-width cell. */
+a.pager-cell {
+  display: block;
+  text-decoration: none;
+  transition: background 120ms ease-out;
+}
+
+.pager-group {
+  font: 400 var(--t-nav-sub)/1 var(--mono);
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+.pager-dir {
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.pager-title {
+  font: 600 16px/1.3 var(--sans);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------- diagrams */
+
+/* The panel spans the band like every other section's content block, and the
+ * figure inside it is centred.
+ *
+ * The panel used to hug the diagram at 812px (740 units + padding). That left
+ * the section with three different right edges — figure 980, note 1028, heading
+ * 1272 — so it read as truncated beside the grid sections, which all reach the
+ * full 1104. Filling the panel fixes the outer geometry; centring the SVG inside
+ * spreads the spare width rather than banking it all on one side.
+ *
+ * The diagram keeps its authored 740-unit size and is NOT scaled to fit: its
+ * 12px mono is sized to match the page's own mono, and stretching the SVG would
+ * enlarge that text away from the body copy it sits beside. */
+.figure {
+  background: var(--paper);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 36px 34px;
+  margin: 0;
+}
+
+.figure > svg {
+  margin-inline: auto;
+}
+
+/* A grid item with `margin: 0 auto` shrinks to fit instead of stretching, so
+ * this one keeps the stretch and drops the centring the block figure needs. */
+.figure-flow {
+  background: var(--sand-light);
+  padding: 30px 20px;
+  border: 0;
+  max-width: none;
+  margin: 0;
+  width: 100%;
+}
+
+.diagram-note {
+  font: 400 var(--t-dense)/var(--lh-dense) var(--sans);
+  color: var(--text-dim);
+  margin-top: 16px;
+  max-width: 860px;
+}
+
+.diagram-note strong {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.diagram-note .mono,
+.sec-lead .mono,
+.panel .mono,
+.faq-a .mono {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+/* ---------------------------------------------------------------- panel */
+
+.panel {
+  background: var(--paper);
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-label {
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.gate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font: 400 12.5px/1.5 var(--mono);
+  color: var(--text-muted);
+}
+
+.gate-list .qual {
+  color: var(--text-dim);
+}
+
+.panel p {
+  font: 400 var(--t-dense)/var(--lh-dense) var(--sans);
+  color: var(--text-dim);
+}
+
+.panel .link-accent {
+  margin-top: auto;
+}
+
+/* --------------------------------------------------------- swarm split */
+
+.swarm-main h3,
+.swarm-worker h3 {
+  font: 600 var(--t-sub)/1.25 var(--sans);
+  letter-spacing: -0.016em;
+  margin-bottom: 10px;
+}
+
+.swarm-main,
+.swarm-worker {
+  padding: 30px 28px;
+}
+
+.swarm-main {
+  background: var(--paper);
+}
+
+.swarm-main p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  max-width: var(--measure-ch);
+}
+
+.swarm-bridge {
+  background: var(--sand);
+  padding: 30px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.swarm-bridge .flow {
+  font: 400 12px/1.7 var(--mono);
+  color: var(--text-dim);
+}
+
+.swarm-bridge .audit {
+  font: 600 12px/1.4 var(--sans);
+  color: var(--text);
+}
+
+.swarm-bridge .audit span {
+  font: 400 11.5px/1.6 var(--mono);
+  color: var(--text-dim);
+}
+
+.swarm-worker {
+  background: var(--ink);
+}
+
+.swarm-worker .panel-label {
+  color: var(--accent-light);
+  margin-bottom: 14px;
+}
+
+.swarm-worker h3 {
+  color: var(--on-ink);
+}
+
+.swarm-worker p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--on-ink-muted);
+  margin-bottom: 18px;
+}
+
+.swarm-worker .mono-em {
   font-family: var(--mono);
   font-size: 13.5px;
-  line-height: 1.85;
-  color: var(--code-fg-mid);
-  flex: 1;
-  min-height: 380px;
-  overflow: hidden;
-  max-width: none;
-}
-.dev-console .dc-body code {
-  background: none;
-  color: inherit;
-  font-size: inherit;
-  font-weight: 400;
-  padding: 0;
-  display: block;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.dc-line { display: inline; }
-.dc-prompt { color: var(--code-fg-prompt); user-select: none; }
-.dc-cmd-buf { color: var(--code-fg-bright); }
-.dc-slash { color: var(--accent-light); font-weight: 500; }
-.dc-str { color: var(--dc-str); }
-.dc-pad { color: transparent; user-select: none; }
-.dc-ok { color: var(--dc-ok); font-weight: 500; }
-.dc-wait { color: var(--dc-wait); }
-.dc-dim { color: var(--code-fg-dim); }
-.dc-cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  background: var(--accent-light);
-  vertical-align: -2px;
-  margin-left: 2px;
-  animation: dc-blink 1.05s steps(2, end) infinite;
-}
-@keyframes dc-blink { 50% { opacity: 0; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .dc-cursor { animation: none; opacity: 1; }
+  color: var(--accent-light);
 }
 
-/* =========================================================================
-   CLI-STRIP — persistent click-to-copy install command above the footer.
-   Driven by site.js (Clipboard API + execCommand fallback).
-   ========================================================================= */
-
-.cli-strip {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 96px auto 0;
-  max-width: 760px;
-  width: calc(100% - 64px);
-  padding: 16px 22px;
-  background: var(--code-bg);
-  border-radius: 10px;
-  border: 1px solid var(--rule);
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--code-fg-default);
-  cursor: pointer;
-  user-select: none;
-  text-align: left;
-  transition: background .15s ease, transform .15s ease, border-color .15s ease;
-  box-shadow: var(--code-strip-shadow);
-}
-.cli-strip:hover {
-  background: var(--code-bar-bg);
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-.cli-strip:active { transform: translateY(0); }
-.cli-strip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.cli-prompt { color: var(--accent-light); font-weight: 700; flex: 0 0 auto; }
-.cli-cmd {
-  color: var(--code-fg-bright);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cli-caret {
-  display: inline-block;
-  width: 8px;
-  height: 1em;
-  background: var(--accent-light);
-  vertical-align: -2px;
-  animation: dc-blink 1.05s steps(2, end) infinite;
-}
-.cli-hint {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--code-fg-prompt);
-  text-transform: uppercase;
-  letter-spacing: .10em;
-  font-weight: 500;
-  transition: color .15s ease;
-  white-space: nowrap;
-}
-.cli-strip.is-copied .cli-hint { color: var(--cli-success); }
-.cli-strip.is-copied .cli-caret { animation: none; opacity: 0; transform: scale(.7); }
-
-/* Success ✓ glyph — replaces the caret on `.is-copied`. The stroke draws in
-   via path-length animation; subtle pop on entrance. Reduced-motion users
-   get the final state instantly. */
-.cli-check {
-  display: inline-block;
-  width: 14px;
-  height: 1em;
-  margin-left: 2px;
-  vertical-align: -2px;
-  color: var(--cli-success);
-  opacity: 0;
-  transform: scale(.7);
-  transition: opacity .15s ease, transform .25s cubic-bezier(.22, 1, .36, 1);
-}
-.cli-check path {
-  stroke-dasharray: 20;
-  stroke-dashoffset: 20;
-}
-.cli-strip.is-copied .cli-check {
-  opacity: 1;
-  transform: scale(1);
-}
-.cli-strip.is-copied .cli-check path {
-  animation: cli-check-draw .35s cubic-bezier(.22, 1, .36, 1) .05s forwards;
-}
-@keyframes cli-check-draw {
-  to { stroke-dashoffset: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cli-check, .cli-strip.is-copied .cli-check { transition: none; }
-  .cli-strip.is-copied .cli-check path { animation: none; stroke-dashoffset: 0; }
-}
-
-@media (max-width: 720px) {
-  .cli-strip {
-    font-size: 12.5px;
-    padding: 12px 16px;
-    gap: 10px;
-    width: calc(100% - 48px);
-  }
-  .cli-hint { display: none; }
-}
-@media (max-width: 480px) {
-  .cli-strip {
-    font-size: 11.5px;
-    gap: 8px;
-  }
-}
-
-/* =========================================================================
-   INSTALL-PILL — quieter cousin of .cli-strip for header-adjacent contexts.
-   Reuses the [data-copy] handler in site.js (.is-copied class flips icons).
-   ========================================================================= */
-
-.install-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: var(--code-bg);
-  color: var(--code-fg-default);
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.4;
-  cursor: pointer;
-  width: max-content;
-  max-width: 100%;
-  user-select: none;
-  text-align: left;
-  transition: background-color .2s cubic-bezier(.22, 1, .36, 1),
-              border-color   .2s cubic-bezier(.22, 1, .36, 1);
-}
-.install-pill:hover {
-  background: var(--code-bar-bg);
-}
-.install-pill:active { transform: translateY(1px); }
-.install-pill:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.install-pill .ip-prompt {
-  color: var(--code-fg-prompt);
-  font-weight: 600;
-  flex: 0 0 auto;
-}
-.install-pill .ip-cmd {
-  color: var(--code-fg-bright);
-  min-width: 0;
-  white-space: nowrap;
-}
-.install-pill .ip-icon {
-  flex: 0 0 auto;
-  color: currentColor;
-  opacity: .55;
-  transition: opacity .2s cubic-bezier(.22, 1, .36, 1);
-}
-.install-pill:hover .ip-icon { opacity: .85; }
-
-/* Blinking caret — signals "live shell, ready to receive". Reuses the
-   dc-blink keyframes at line 1597 so pill and .cli-strip share the same
-   cadence. Hidden on .is-copied so the check has the success-state to itself. */
-.install-pill .ip-caret {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  background: var(--accent-light);
-  vertical-align: -2px;
-  animation: dc-blink 1.05s steps(2, end) infinite;
-  flex: 0 0 auto;
-}
-.install-pill.is-copied .ip-caret { animation: none; opacity: 0; transform: scale(.7); }
-@media (prefers-reduced-motion: reduce) {
-  .install-pill .ip-caret { animation: none; }
-}
-
-.install-pill .ip-check { display: none; color: var(--cli-success); opacity: 1; }
-.install-pill.is-copied { border-color: color-mix(in oklch, var(--accent-light) 60%, transparent); }
-.install-pill.is-copied .ip-copy { display: none; }
-.install-pill.is-copied .ip-check { display: inline-block; }
-
-/* Copy-failed recovery — when both clipboard paths refuse, the JS pre-
-   selects the command text so Ctrl+C works. Cursor + user-select hint that
-   the text is now grabable; no border-colour change (would conflict with
-   hover/copied states on .cli-strip). The ::selection highlight (line 115)
-   IS the visible failure signal. */
-.install-pill.is-copy-failed,
-.cli-strip.is-copy-failed {
-  cursor: text;
-}
-.install-pill.is-copy-failed .ip-cmd,
-.cli-strip.is-copy-failed .cli-cmd { user-select: text; }
-
-@media (max-width: 640px) {
-  /* Padding bumps the touch target from ~34px to ~42px tall on phones —
-     well clear of the 24×24 AA floor and within reach of the 44×44 AAA. */
-  .install-pill { width: 100%; font-size: 12.5px; padding: 12px 14px; }
-  .install-pill .ip-cmd {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .install-pill,
-  .install-pill .ip-icon { transition: none; }
-  .install-pill:active { transform: none; }
-}
-
-.hero-install { margin: 8px 0 24px; }
-.page-install { margin: 12px 0 32px; }
-
-/* Pill-meta — version + license + open-source label, sits directly under
-   the pill in both .hero-install and .page-install contexts. Answers the
-   30-second-scan question "what version and license am I getting". */
-.pill-meta {
-  margin: 8px 0 0;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--muted);
-  letter-spacing: .02em;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cli-caret { animation: none; }
-  .cli-strip:hover { transform: none; }
-}
-
-/* =========================================================================
-   FAQ — accordion of common questions at the bottom of the landing.
-   Native <details>/<summary>; the +/× glyph is the only iconography. Items
-   are hairline-separated, no card chrome, no shadows. Reveal animation is
-   opt-in via `interpolate-size: allow-keywords` — browsers without support
-   simply snap open/closed.
-   ========================================================================= */
-
-.faq-list {
-  max-width: var(--content);
-  margin: 0 auto;
+.token-list {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  font: 400 12.5px/1 var(--mono);
+  color: var(--text-muted);
+}
+
+.swarm-worker .token-list {
+  color: var(--on-ink-body);
+}
+
+.swarm-main .panel-label {
+  margin-bottom: 14px;
+}
+
+/* --------------------------------------------------------------- steps */
+
+.step-cell {
+  background: var(--paper);
+  padding: 22px 20px;
+}
+
+.step-cell .n {
+  font: 600 11px/1 var(--mono);
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.step-cell p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-body);
+  max-width: var(--measure-ch);
+}
+
+.install-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+code.tok {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--sand);
+  padding: 1px 5px;
+}
+
+/* ----------------------------------------------------------------- FAQ */
+
+.faq-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 48px;
+}
+
+.faq-col {
   border-top: 1px solid var(--rule);
-  /* `interpolate-size` permits transitioning to/from `auto`. Browsers without
-     this rule ignore the property and snap the panels open/closed cleanly. */
-  interpolate-size: allow-keywords;
 }
 
 .faq-item {
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-soft);
 }
-
-/* Strip the default disclosure triangle in every engine. */
-.faq-item > summary {
-  list-style: none;
-}
-.faq-item > summary::-webkit-details-marker { display: none; }
 
 .faq-q {
-  font-family: var(--display);
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -.005em;
-  color: var(--text);
-  padding: 24px 56px 24px 0;
-  cursor: pointer;
-  position: relative;
-  transition: color .15s ease;
-}
-.faq-q:hover { color: var(--accent); }
-.faq-item[open] > .faq-q { color: var(--ink); }
-
-/* The plus glyph — rotates to × on open. Built from two pseudo strokes so
-   the rotation is a single transform on the parent, not two coordinated ones. */
-.faq-q::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 4px;
-  width: 14px;
-  height: 14px;
-  margin-top: -7px;
-  background:
-    linear-gradient(var(--accent), var(--accent)) center / 14px 1.5px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) center / 1.5px 14px no-repeat;
-  transition: transform .2s cubic-bezier(.4, 0, .2, 1);
-}
-.faq-item[open] > .faq-q::after {
-  transform: rotate(45deg);
-}
-
-/* The answer panel — Inter body, ash color, 65ch reading rail. */
-.faq-a {
-  font-family: var(--body);
-  font-size: 16px;
-  line-height: 1.65;
-  color: var(--muted);
-  max-width: 65ch;
-  padding: 0 0 28px;
-}
-.faq-a code {
-  font-family: var(--mono);
-  font-size: .85em;
-  background: var(--accent-soft);
-  color: var(--ink);
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-/* Focus ring on the summary lives on the inner row (matches button focus
-     elsewhere in the site). */
-.faq-item > summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-  border-radius: 3px;
-}
-
-/* Animated open/close in browsers that support `::details-content` */
-@supports selector(::details-content) {
-  .faq-item::details-content {
-    block-size: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: block-size .26s cubic-bezier(.4, 0, .2, 1), opacity .18s ease, content-visibility .26s allow-discrete;
-  }
-  .faq-item[open]::details-content {
-    block-size: auto;
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .faq-q::after { transition: none; }
-  .faq-item::details-content { transition: none; }
-}
-
-/* =========================================================================
-   DOCS shell
-   ========================================================================= */
-
-.docs-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar) 1fr var(--toc);
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 32px;
-}
-
-aside.sidebar {
-  position: sticky;
-  top: var(--header);
-  align-self: start;
-  height: calc(100vh - var(--header));
-  overflow-y: auto;
-  padding: 40px 32px 80px 0;
-  border-right: 1px solid var(--rule);
-  margin-right: 48px;
-  font-size: 14px;
-}
-
-.nav-group + .nav-group { margin-top: 36px; }
-.nav-group h4 {
-  margin: 0 0 12px;
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.nav-group ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.nav-group li { position: relative; }
-.nav-group a {
-  display: block;
-  padding: 5px 0 5px 12px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-  font-weight: 400;
-}
-.nav-group a:hover { color: var(--ink); }
-.nav-group a.is-active {
-  color: var(--ink);
-  font-weight: 500;
-}
-/* Per DESIGN.md reserved-accent contract: active rails belong to ink, not accent.
-   Rail sits at the link's left edge (inside the sidebar's clipping context). */
-.nav-group a.is-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 2px;
-  border-radius: 1px;
-  background: var(--ink);
-}
-
-main.article {
-  padding: 64px 0 120px;
-  min-width: 0;
-}
-.article > .eyebrow { margin-bottom: 16px; }
-.article > h1 {
-  font-size: 48px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -.025em;
-  margin-bottom: 20px;
-}
-.article > .lead {
-  font-size: 21px;
-  line-height: 1.55;
-  color: var(--text);
-  max-width: 620px;
-  margin-bottom: 0;
-}
-
-/* Docs hero — opt-in via frontmatter `heroSymbol: <name>`. Mirrors the
-   landing hero's shape (text on the left, symbolic SVG on the right) but
-   keeps the docs register: lighter type, narrower symbol column, no CTA bar. */
-.docs-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 56px;
-  align-items: center;
-  margin-bottom: 40px;
-}
-.docs-hero-text > .eyebrow { margin-bottom: 16px; }
-.docs-hero-text > h1 {
-  font-size: 48px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -.025em;
-  margin-bottom: 20px;
-  color: var(--ink);
-  font-family: var(--display);
-}
-.docs-hero-text > h1 .accent { color: var(--accent); }
-.docs-hero-text > .lead {
-  font-size: 19px;
-  line-height: 1.55;
-  color: var(--text);
-  max-width: 560px;
-  margin-bottom: 0;
-}
-.docs-hero-symbol {
-  position: relative;
-  min-width: 0;
-}
-.hero-symbol-svg {
-  display: block;
   width: 100%;
-  max-width: 320px;
-  height: auto;
-  margin: 0 auto;
-}
-
-/* Org-mode homepage teaser: a quiet experimental flag stacked under the h2 in
-   the lede-head column, and the org hero symbol centered in a single figure
-   card (the .hero-symbol-svg caps its own width at 320px). */
-.org-teaser .lede-head .org-flag {
-  font-family: var(--mono);
-  font-size: .72rem;
-  letter-spacing: .06em;
-  line-height: 1.4;
-  color: var(--accent);
-  margin: 0;
-}
-.org-teaser .org-hero-figure { text-align: center; }
-
-/* Memory ring symbol — re-verified anchor + canonical inner ring +
-   candidate stream on the outer dotted band. Uses the same filled / stroke /
-   dotted / accent vocabulary as the strata SVG. */
-.memring-svg .memring-outer-fill { fill: url(#memring-dots); }
-.memring-svg .pattern-dot { fill: var(--charcoal); }
-.memring-svg .memring-outer {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1;
-  stroke-opacity: .35;
-}
-.memring-svg .memring-inner {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.75;
-}
-.memring-svg .memring-tick { fill: var(--ink); }
-.memring-svg .memring-cand {
-  fill: var(--ink);
-  stroke: var(--bg);
-  stroke-width: 2;
-  paint-order: stroke fill;
-}
-.memring-svg .memring-cand-active {
-  fill: var(--accent);
-  stroke: var(--bg);
-  stroke-width: 2.5;
-  paint-order: stroke fill;
-}
-.memring-svg .memring-promote {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.25;
-  stroke-dasharray: 3 3;
-  stroke-linecap: round;
-}
-.memring-svg .memring-arrow { fill: var(--accent); }
-.memring-svg .memring-cite { fill: var(--accent); }
-.memring-svg .memring-radial {
-  stroke: var(--accent);
-  stroke-width: 1;
-  stroke-linecap: round;
-  opacity: .7;
-}
-.memring-svg .memring-anchor { fill: var(--ink); }
-.memring-svg .memring-key {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* ----- Shared hero-symbol caption + numeral baselines ------------------- */
-.hero-symbol-svg .on-fill { fill: var(--paper) !important; }
-
-/* Swarm hero symbol — fan and merge. */
-.fanmerge-svg .fm-recipe { fill: var(--ink); }
-.fanmerge-svg .fm-numeral {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 700;
-  fill: var(--ink);
-  letter-spacing: -.005em;
-}
-.fanmerge-svg .fm-worker {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.fanmerge-svg .fm-tag {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  fill: var(--ink);
-}
-.fanmerge-svg .fm-conn {
-  stroke: var(--ink);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-}
-.fanmerge-svg .fm-arrow { fill: var(--ink); }
-.fanmerge-svg .fm-arrow-acc { fill: var(--accent); }
-.fanmerge-svg .fm-audit {
-  fill: var(--accent);
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-.fanmerge-svg .fm-audit-glyph {
-  stroke: var(--paper);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.fanmerge-svg .fm-result { fill: var(--ink); }
-.fanmerge-svg .fm-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* Workflows hero symbol — track DAG with a selector node and two alternates.
-   Property-by-property transcription of .fanmerge-svg .fm-* per the brief audit. */
-.trackdag-svg .wf-anchor     { fill: var(--ink); }
-.trackdag-svg .wf-node {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.trackdag-svg .wf-tag {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  fill: var(--ink);
-}
-.trackdag-svg .wf-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .10em;
-  text-transform: uppercase;
-  fill: var(--muted);
-}
-.trackdag-svg .wf-conn {
-  stroke: var(--ink);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-}
-.trackdag-svg .wf-arrow      { fill: var(--ink); }
-.trackdag-svg .wf-selector {
-  fill: var(--accent);
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-.trackdag-svg .wf-selector-glyph {
-  stroke: var(--paper);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-}
-.trackdag-svg .wf-result     { fill: var(--ink); }
-.trackdag-svg .wf-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* Hooks hero symbol — the boundary. */
-.boundary-svg .bnd-claude { fill: var(--ink); }
-.boundary-svg .bnd-tool {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.boundary-svg .bnd-numeral {
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  fill: var(--ink);
-}
-.boundary-svg .bnd-numeral.on-fill { fill: var(--paper) !important; }
-.boundary-svg .bnd-rule {
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-dasharray: 6 5;
-  stroke-linecap: round;
-}
-.boundary-svg .bnd-tick {
-  stroke: var(--accent);
-  stroke-width: 1.75;
-  stroke-linecap: round;
-}
-.boundary-svg .bnd-consent {
-  fill: var(--accent);
-  stroke: var(--bg);
-  stroke-width: 2;
-  paint-order: stroke fill;
-}
-.boundary-svg .bnd-zone {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--muted);
-}
-.boundary-svg .bnd-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* Skills hero symbol — composition tree. */
-.comptree-svg .ct-anchor { fill: var(--ink); }
-.comptree-svg .ct-skill {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.comptree-svg .ct-tag {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  fill: var(--ink);
-  letter-spacing: -.005em;
-}
-.comptree-svg .ct-conn {
-  stroke: var(--ink);
-  stroke-width: 1;
-  fill: none;
-  stroke-linecap: round;
-}
-.comptree-svg .ct-arrow { fill: var(--ink); }
-.comptree-svg .ct-arrow-acc { fill: var(--accent); }
-.comptree-svg .ct-edge-must {
-  stroke: var(--accent);
-  stroke-width: 1.75;
-  fill: none;
-}
-.comptree-svg .ct-edge-cond {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 4;
-  fill: none;
-}
-.comptree-svg .ct-edge-none {
-  stroke: var(--muted);
-  stroke-width: 1.5;
-  stroke-linecap: square;
-}
-.comptree-svg .ct-sub {
-  fill: var(--ink);
-  stroke: var(--bg);
-  stroke-width: 2;
-  paint-order: stroke fill;
-}
-.comptree-svg .ct-sub-tag {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  fill: var(--ink);
-  letter-spacing: -.005em;
-}
-.comptree-svg .ct-sub-rule {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  fill: var(--muted);
-  letter-spacing: .04em;
-}
-.comptree-svg .ct-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* Install hero symbol — the drop. Open frame project root, filled sentinels
-   landing inside, accent dot marking the install action. */
-.dropbox-svg .db-action      { fill: var(--accent); }
-.dropbox-svg .db-drop {
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-dasharray: 3 4;
-  stroke-linecap: round;
-}
-.dropbox-svg .db-target {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
-.dropbox-svg .db-target-tag {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  fill: var(--muted);
-  text-transform: lowercase;
-}
-.dropbox-svg .db-sentinel rect { fill: var(--ink); }
-.dropbox-svg .db-label {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -.005em;
-  fill: var(--paper);
-}
-.dropbox-svg .db-label-mini {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0;
-  fill: var(--paper);
-}
-.dropbox-svg .db-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-/* CLI hero symbol — the command fork. Filled command axis at top, accent
-   fork dot, three branches to mode nodes (one highlighted in accent),
-   converging to a single target dot. */
-.cmdfork-svg .cf-cmd { fill: var(--ink); }
-.cmdfork-svg .cf-cmd-label {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -.005em;
-  fill: var(--paper);
-}
-.cmdfork-svg .cf-spine {
-  stroke: var(--ink);
-  stroke-width: 1.5;
-  fill: none;
-}
-.cmdfork-svg .cf-fork {
-  fill: var(--accent);
-  stroke: var(--bg);
-  stroke-width: 2;
-  paint-order: stroke fill;
-}
-.cmdfork-svg .cf-branch {
-  stroke: var(--ink);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-  opacity: .55;
-}
-.cmdfork-svg .cf-branch-act {
-  stroke: var(--accent);
-  stroke-width: 1.75;
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 4 4;
-}
-.cmdfork-svg .cf-mode-frame {
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 1.25;
-}
-.cmdfork-svg .cf-mode-frame-act {
-  fill: var(--accent);
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-.cmdfork-svg .cf-mode-tag {
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -.005em;
-  fill: var(--ink);
-}
-.cmdfork-svg .cf-mode-sub {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  fill: var(--muted);
-}
-.cmdfork-svg .cf-mode-sub-act {
-  font-family: var(--mono);
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  fill: var(--paper);
-  opacity: .82;
-}
-.cmdfork-svg .cf-converge {
-  stroke: var(--ink);
-  stroke-width: 1.25;
-  fill: none;
-  stroke-linecap: round;
-  opacity: .55;
-}
-.cmdfork-svg .cf-converge-act {
-  stroke: var(--accent);
-  stroke-width: 1.75;
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 4 4;
-}
-.cmdfork-svg .cf-target {
-  fill: var(--ink);
-  stroke: var(--bg);
-  stroke-width: 2.5;
-  paint-order: stroke fill;
-}
-.cmdfork-svg .cf-caption {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  fill: var(--accent);
-}
-
-@media (max-width: 1000px) {
-  .docs-hero {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .docs-hero-symbol {
-    max-width: 280px;
-    margin: 0 auto;
-  }
-}
-
-/* Article sections share the landing's .section + .lede rhythm.
-   First section sits flush under the lead paragraph (no double-padding);
-   last section drops its bottom border and tightens its trailing pad
-   so the .docfoot lands at a sensible distance. */
-.article > .section { padding: 64px 0; }
-.article > .section:first-of-type { padding-top: 56px; }
-.article > .section:last-of-type { padding-bottom: 32px; border-bottom: 0; }
-.article > .section h2 { scroll-margin-top: 84px; }
-/* Docs H2s are often longer than landing H2s (e.g. "Worktree isolation
-   vs shared mode"). Relax the 12ch cap so titles wrap on word boundaries
-   rather than stranding trailing tokens. */
-.article > .section .lede h2 { max-width: none; }
-
-/* H3 (used inside section bodies, e.g. /swarm/ pipeline subsections). */
-.article h3 {
-  margin-top: 40px;
-  margin-bottom: 12px;
-  font-size: 18px;
-}
-.article p,
-.article ul,
-.article ol { max-width: var(--content); }
-.article ul, .article ol {
-  padding-left: 22px;
-  margin: 0 0 20px;
-}
-.article li + li { margin-top: 6px; }
-.article li { color: var(--text); }
-.article li code { font-size: .85em; }
-
-/* tables — wrapped at narrow viewports for horizontal scroll.
-   The wrapper is auto-generated below at the mobile breakpoint via overflow-x
-   on the table itself, which permits scrolling without an extra DOM wrapper.
-   We pair display:block with white-space:nowrap on cells at narrow widths
-   so tables scroll rather than silently clip. */
-.article table {
-  border-collapse: collapse;
-  width: 100%;
-  max-width: var(--content);
-  font-size: 14.5px;
-  margin: 24px 0 32px;
-}
-.article table th,
-.article table td {
-  padding: 12px 16px 12px 0;
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-  vertical-align: top;
-}
-.article table th {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  padding-bottom: 10px;
-  padding-top: 0;
-  border-bottom-color: var(--ink);
-}
-.article table td:first-child {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--muted);
-  width: 36px;
-}
-.article table td.phase {
-  font-weight: 500;
-  color: var(--ink);
-}
-.article table tbody tr {
-  transition: background .12s ease;
-}
-.article table tbody tr:hover {
-  background: var(--hover-tint);
-}
-.article table tbody tr:hover td.phase {
-  color: var(--accent);
-}
-
-/* callout */
-.callout {
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  padding: 20px 24px;
-  margin: 24px 0 32px;
-  max-width: var(--content);
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-.callout .icon {
-  flex: 0 0 22px;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--warn);
-  color: var(--paper);
-  display: grid;
-  place-items: center;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 13px;
-  margin-top: 2px;
-}
-.callout .body {
-  flex: 1;
-  font-size: 15px;
-  line-height: 1.6;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  border: 0;
+  padding: 18px 0;
+  cursor: pointer;
+  text-align: left;
+  font: 600 16px/1.35 var(--sans);
+  letter-spacing: -0.01em;
   color: var(--text);
+  transition: color 120ms ease-out;
 }
-.callout strong {
-  color: var(--ink);
-  display: block;
-  margin-bottom: 4px;
-  font-family: var(--display);
-  font-weight: 600;
-}
-.callout p { margin: 0; }
 
-/* TOC (right rail) */
-aside.toc {
-  position: sticky;
-  top: var(--header);
-  align-self: start;
-  height: calc(100vh - var(--header));
-  overflow-y: auto;
-  padding: 64px 0 80px 48px;
-  font-size: 13px;
+
+.faq-q .label {
+  flex: 1;
 }
-.toc h5 {
-  margin: 0 0 16px;
-  font-family: var(--display);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
+
+.faq-q .sign {
+  font: 400 17px/1 var(--mono);
+  color: var(--accent);
+  width: 14px;
+  text-align: center;
+  flex: none;
 }
-.toc ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+
+.faq-a {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-muted);
+  margin: 0 0 20px;
+  max-width: var(--measure-ch);
 }
-.toc li { margin: 0 0 7px; position: relative; }
-.toc a {
-  display: block;
-  color: var(--muted);
-  font-size: 13.5px;
-  line-height: 1.5;
+
+.faq-a[hidden] {
+  display: none;
 }
-.toc a:hover { color: var(--ink); }
-/* Active TOC item: ink rail (per DESIGN.md reserved-accent contract —
-   active rails belong to ink, not accent). Mirrors the sidebar treatment. */
-.toc a.is-active { color: var(--ink); font-weight: 500; }
-.toc a.is-active::before {
-  content: "";
-  position: absolute;
-  left: -14px;
-  top: 4px;
-  bottom: 4px;
-  width: 2px;
-  border-radius: 1px;
+
+/* ----------------------------------------------------------- ink band */
+
+.band-ink {
   background: var(--ink);
+  padding: 64px 0;
 }
-.toc a.lvl-3 { padding-left: 14px; font-size: 13px; }
 
-/* footer inside article: slim "last updated" + single edit link.
-   License and other Project links live in the rich site footer below. */
-.article footer.docfoot {
-  border-top: 1px solid var(--rule);
-  margin-top: 80px;
-  padding-top: 24px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted);
+.band-ink .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.band-ink .panel-label {
+  color: var(--accent-light);
+  margin-bottom: 14px;
+}
+
+.band-ink h2 {
+  font: 600 var(--t-band)/1.1 var(--sans);
+  letter-spacing: -0.028em;
+  margin-bottom: 10px;
+  color: var(--on-ink);
+}
+
+.band-ink p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--on-ink-dim);
+  max-width: 560px;
+}
+
+.band-ink .links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.band-ink .links a {
+  font: 500 14px/1 var(--sans);
+  color: var(--accent-light);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(224, 135, 63, 0.3);
+  padding-bottom: 4px;
+}
+
+
+/* ------------------------------------------------------------ CTA band */
+
+.band-cta {
+  background: var(--peach);
+  padding: 60px 0;
+  margin-top: 0;
+}
+
+.band-cta .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.band-cta h2 {
+  font: 600 var(--t-band)/1.12 var(--sans);
+  letter-spacing: -0.028em;
+  margin-bottom: 8px;
+}
+
+.band-cta p {
+  font: 400 var(--t-body)/var(--lh-body) var(--sans);
+  color: var(--text-peach-2);
+}
+
+.band-cta .btn-cmd {
+  font-size: 14.5px;
+  padding: 17px 24px;
+}
+
+/* -------------------------------------------------------------- footer */
+
+.site-footer {
+  background: var(--ink-deep);
+  padding: 40px 0 max(40px, env(safe-area-inset-bottom));
+}
+
+.site-footer .wrap {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  max-width: var(--content);
-  letter-spacing: 0;
+  gap: 48px;
+  flex-wrap: wrap;
 }
-.article footer.docfoot a { color: var(--muted); }
-.article footer.docfoot a:hover { color: var(--accent); }
-.article footer.docfoot .docfoot-edit { font-weight: 500; }
-.article footer.docfoot .docfoot-edit .arr {
-  display: inline-block;
-  transition: transform .15s cubic-bezier(.25, 1, .5, 1);
-}
-.article footer.docfoot .docfoot-edit:hover .arr { transform: translateX(3px); }
 
-/* =========================================================================
-   responsive
-   ========================================================================= */
+.footer-brand {
+  max-width: 320px;
+}
+
+.footer-brand .name {
+  font: 600 15px/1 var(--sans);
+  color: var(--on-ink);
+  margin-bottom: 10px;
+}
+
+.footer-brand p {
+  font: 400 var(--t-dense)/var(--lh-dense) var(--sans);
+  color: var(--on-ink-dim);
+  margin-bottom: 12px;
+}
+
+.footer-brand .legal {
+  font: 400 11px/1.5 var(--mono);
+  color: var(--on-ink-faint);
+}
+
+/* Studio attribution. The link is the accent colour so the outbound credit is
+   findable, while the surrounding sentence stays at footer weight. */
+.footer-brand .footer-attribution {
+  font: 400 var(--t-dense)/var(--lh-dense) var(--sans);
+  color: var(--on-ink-dim);
+  margin-bottom: 12px;
+}
+
+.footer-brand .footer-attribution a {
+  color: var(--accent-light);
+  text-decoration: none;
+}
+
+.footer-brand .footer-attribution a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-cols {
+  display: flex;
+  gap: 56px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.footer-col .head {
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--on-ink-faint);
+  margin-bottom: 3px;
+}
+
+.footer-col a {
+  font: 400 13px/1 var(--sans);
+  color: var(--on-ink-body);
+  text-decoration: none;
+  transition: color 120ms ease-out;
+}
+
+
+
+/* ------------------------------------------------- light-on-dark type */
+
+/* The same size and weight reads lighter and tighter on ink than on paper.
+ * One weight step, a touch of tracking and a little more leading bring the
+ * two grounds back to the same apparent texture. */
+.band-ink p,
+.swarm-worker p,
+.footer-brand p {
+  font-weight: 500;
+  letter-spacing: 0.006em;
+  line-height: calc(var(--lh-body) + 0.05);
+}
+
+.plate-body,
+.util-bar,
+.token-list {
+  letter-spacing: 0.004em;
+}
+
+/* ------------------------------------------------------- hover states */
+
+/* Guarded on pointer capability: on a touch device :hover latches after a tap
+ * and leaves a row or link stuck in its hover colour. */
+@media (hover: hover) {
+  a.pager-cell:hover {
+    background: var(--peach);
+  }
+
+  a:hover {
+    color: var(--accent-dark);
+  }
+
+  .util-nav a:hover {
+    color: var(--accent-light);
+  }
+
+  .btn-repo:hover {
+    background: var(--peach);
+  }
+
+  .btn-cmd:hover {
+    background: var(--ink-soft);
+  }
+
+  .link-quiet:hover {
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent-dark);
+  }
+
+  .link-accent:hover {
+    color: var(--accent-dark);
+  }
+
+  .plate-copy:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+  }
+
+  .faq-q:hover {
+    color: var(--accent);
+  }
+
+  .band-ink .links a:hover {
+    color: var(--on-ink);
+    border-bottom-color: var(--on-ink);
+  }
+
+  .footer-col a:hover {
+    color: var(--accent-light);
+  }
+}
+
+/* ------------------------------------------------------- touch adaptation */
+
+/* Sized by input capability, not by screen width: a touch laptop and a phone
+ * both need the larger target, and a narrow desktop window does not. */
+@media (pointer: coarse) {
+  .util-nav {
+    gap: 4px;
+  }
+
+  .util-nav a,
+  .footer-col a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 8px;
+    margin: 0 -8px;
+  }
+
+  .footer-col {
+    gap: 0;
+  }
+
+  .util-brand {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .btn-repo,
+  .plate-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  /* Isolated inline links keep their exact underline position; the tap area
+   * grows behind them instead, so the type does not move. */
+  .link-quiet,
+  .link-accent,
+  .link-inline,
+  .band-ink .links a,
+  .docfoot a {
+    position: relative;
+  }
+
+  .link-quiet::after,
+  .link-accent::after,
+  .link-inline::after,
+  .band-ink .links a::after,
+  .docfoot a::after {
+    content: "";
+    position: absolute;
+    inset: -14px -10px;
+  }
+
+  .docfoot a::after {
+    inset: -16px -10px;
+  }
+
+  /* Stacked links: the gap has to exceed twice the hit-area inset, or two
+   * adjacent targets overlap and the boundary between them mis-taps. */
+  .band-ink .links {
+    gap: 34px;
+  }
+}
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 1180px) {
+  :root {
+    --gutter: 32px;
+  }
+}
 
 @media (max-width: 1100px) {
-  aside.toc { display: none; }
-  .docs-shell { grid-template-columns: var(--sidebar) 1fr; }
+  /* The TOC rail is the first thing to go: the sidebar is wayfinding between
+   * pages, the TOC only within one. */
+  .docs-grid {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 0 32px;
+  }
+
+  .docs-toc {
+    display: none;
+  }
+
+  .docs-main {
+    border-right: 0;
+    padding-right: 0;
+  }
 }
-@media (max-width: 900px) {
-  .section .lede { grid-template-columns: 1fr; gap: 24px; }
-  .install { grid-template-columns: 1fr; }
-  .concepts,
-  .concepts.is-2col,
-  .concepts.is-row { grid-template-columns: 1fr; }
-}
-@media (max-width: 720px) {
-  header.top { padding: 0 20px; }
-  nav.primary { display: none; }
-  .nav-toggle { display: inline-flex; }
-  .marketing { padding: 0 24px; }
-  .hero { padding: 56px 0 56px; }
-  .section { padding: 56px 0; }
-  .docs-shell { grid-template-columns: 1fr; padding: 0 24px; }
 
-  /* Sidebar becomes a slide-in drawer at mobile, controlled by the topnav
-     hamburger. Hidden by default; revealed when body has .is-nav-open. */
-  aside.sidebar {
-    position: fixed;
-    top: var(--header);
-    bottom: 0;
-    left: 0;
-    width: min(320px, 84vw);
-    height: auto;
-    margin: 0;
-    padding: 28px 24px 80px;
-    background: var(--paper);
-    border-right: 1px solid var(--rule);
-    border-bottom: 0;
-    z-index: 30;
-    transform: translateX(-100%);
-    transition: transform .28s cubic-bezier(.22, 1, .36, 1);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-  body.is-nav-open aside.sidebar {
-    transform: translateX(0);
-    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.10);
+@media (max-width: 860px) {
+  .docs-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  /* Backdrop — fades in only while the drawer is open; tap-to-close target. */
-  .nav-backdrop {
-    display: block;
-    position: fixed;
-    inset: var(--header) 0 0 0;
-    background: rgba(0, 0, 0, .42);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s ease;
-    z-index: 25;
-  }
-  body.is-nav-open .nav-backdrop {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  body.is-nav-open { overflow: hidden; }
-
-  main.article { padding: 32px 0 80px; }
-  .article > h1 { font-size: 36px; }
-
-  /* Mobile drawer is a tap surface — bump nav-group link targets toward
-     the 44px target-size recommendation (WCAG 2.5.5). At desktop the rail
-     is operated by pointer and 24px is fine; here the user is tapping. */
-  aside.sidebar .nav-group a {
-    padding: 10px 0 10px 12px;
-    font-size: 15px;
-  }
-
-  /* Article tables — long mode/action tables on /cli/ would otherwise
-     silently clip at narrow widths. Allow horizontal scroll with a subtle
-     edge cue so users know more content is available. */
-  .article table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
+  .docs-main {
     border: 0;
+    padding: 0;
+    margin: 0;
   }
-  .article table thead,
-  .article table tbody { display: table; width: 100%; min-width: 480px; }
-  .article table th,
-  .article table td { white-space: normal; }
-  .article table th:first-child,
-  .article table td:first-child { padding-left: 0; }
 
-  /* Rows already reflow on their own (the label wraps under the claim when the
-     line runs out), so mobile only tightens the chain and the rhythm. */
-  .hero .meta-strip { gap: 16px; padding: 20px 0; }
-  .hero .meta-strip .ms-chain { width: 34px; }
-  .hero .meta-strip .ms-rows { gap: 15px; }
-
-  footer.site { margin-top: 80px; padding: 48px 24px 24px; }
-  /* Mobile footer: brand row full-width, link columns share a 2-col row. */
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 28px 24px;
-    padding-bottom: 32px;
+  /* Sidebar becomes a native disclosure — no second JS widget, keyboard
+   * operable for free, and it degrades to fully open without scripting. */
+  .docs-side {
+    position: static;
+    border: 1px solid var(--rule);
+    margin-bottom: 40px;
   }
-  .footer-brand-col { grid-column: 1 / -1; }
-  .footer-meta-row {
-    flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
+
+  .docs-side-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 44px;
+    padding: 0 16px;
+    font: 600 12px/1 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .docs-side-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .docs-side-toggle .chev {
+    font: 400 15px/1 var(--mono);
+    color: var(--accent);
+  }
+
+  .docs-side[open] .docs-side-toggle .chev {
+    visibility: hidden;
+  }
+
+  .docs-side[open] .docs-side-toggle::after {
+    content: "–";
+    font: 400 15px/1 var(--mono);
+    color: var(--accent);
+    margin-left: -14px;
+  }
+
+  .docs-side-inner {
+    padding: 4px 16px 20px;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .docs-link {
+    min-height: 44px;
+    padding: 4px 0;
+  }
+
+  .docs-link .rail {
+    left: -16px;
   }
 }
 
-/* =========================================================================
-   WOBBLE-FRAME — hand-drawn-ish 2px ink outline drawn just outside an inner
-   pixel-sharp surface (dev-console, install-snippet, plates). Uses an SVG
-   turbulence filter (defined inline in base.njk) to perturb only the border
-   of the ::after pseudo-element. Content stays sharp. Per DESIGN.md the
-   inner window may carry a slight rotation (≤2°) to read as a sticker.
-   ========================================================================= */
+@media (max-width: 700px) {
+  /* Once the facts stack one per row, a right-hand separator reads as a stray
+   * tick beside each value. Divide the rows instead. */
+  .fact-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 
-.svg-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  overflow: hidden;
+  .fact {
+    padding: 12px 0;
+    margin-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .fact:last-child {
+    border-bottom: 0;
+  }
 }
 
-.wobble-frame {
-  position: relative;
-  display: block;
-  align-self: stretch;
-  min-width: 0;
-  isolation: isolate;
-  transform: rotate(-0.45deg);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
-}
-.wobble-frame.is-tilt-rev { transform: rotate(0.5deg); }
-
-/* Outline: inset slightly outside the inner surface, ink stroke, filter
-   warps the rectangle into a hand-drawn-feeling outline. The pseudo
-   contains nothing but a border, so only the border edges distort. */
-.wobble-frame::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border: 2px solid var(--ink);
-  border-radius: 16px;
-  pointer-events: none;
-  z-index: -1;
-  filter: url(#wobble);
-}
-
-/* Inner surface keeps its own clipping + radius. Wobble-frame children
-   stretch to fill so dev-console + install-snippet still match heights. */
-.wobble-frame > * {
-  position: relative;
-  z-index: 0;
-  height: 100%;
-}
-
-/* dev-console frame: hero-grid item — the wobble-frame replaces .dev-console
-   as the grid item. Stretch to align with the .hero-content baseline column. */
-.dc-frame { display: flex; }
-.dc-frame > .dev-console { width: 100%; }
-
-/* Hover: gently un-tilt; respects the wobble-frame::after rotation. */
-@media (hover: hover) {
-  .wobble-frame:hover { transform: rotate(0deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wobble-frame { transform: none; transition: none; }
-  .wobble-frame.is-tilt-rev { transform: none; }
-  .wobble-frame::after { filter: none; }
-}
-
+/* Between the 760px collapse and 1000px the bar has to fit the brand, five group
+ * links and the repo action on one row. The version meta is the lowest-value
+ * element there, so it yields rather than letting the nav wrap onto a second
+ * line. Bounded below 761px on purpose: inside the toggle panel the meta has a
+ * row of its own and should stay. */
+/* The four-group row needs 1123px of content; .wrap tops out at 1136px, so the
+ * facts group only fits from a 1200px viewport up. Between the drawer breakpoint
+ * and there it is dropped — the version, license and status are all still in the
+ * footer legal line and, on docs pages, the page-state panel. */
 @media (max-width: 1000px) {
-  /* on stacked layout, drop rotation so frames align to flow */
-  .wobble-frame, .wobble-frame.is-tilt-rev { transform: none; }
-}
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    align-items: start;
+  }
 
-/* =========================================================================
-   ENTRANCE & SCROLL ANIMATIONS
-   Hero entrance is CSS-only with animation-delay stagger — plays on first
-   paint, no JS, no flash. Figure reveals use animation-timeline: view() so
-   browsers without scroll-driven-animation support simply show the final
-   state. No degradation, no fallback shim.
-   ========================================================================= */
+  .hero-plate {
+    margin-bottom: -40px;
+  }
 
-@keyframes fb-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0);    }
-}
-@keyframes fb-rise-lg {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0);    }
-}
+  .grid-strata,
+  .grid-flow,
+  .grid-swarm {
+    grid-template-columns: 1fr;
+  }
 
-/* Marketing hero — staggered entrance, one signature page-load moment. */
-.hero .eyebrow,
-.hero h1,
-.hero .lead,
-.hero .ctas,
-.hero .meta-strip,
-.hero .hero-figure,
-.hero .dc-frame {
-  animation: fb-rise 0.6s cubic-bezier(.22, 1, .36, 1) both;
-}
-.hero h1           { animation-delay:  60ms; }
-.hero .lead        { animation-delay: 160ms; }
-.hero .ctas        { animation-delay: 260ms; }
-.hero .meta-strip  { animation-delay: 360ms; }
-.hero .hero-figure,
-.hero .dc-frame {
-  animation-name: fb-rise-lg;
-  animation-duration: 0.8s;
-  animation-delay: 200ms;
-}
+  .strata-detail {
+    grid-template-rows: none;
+  }
 
-/* Docs hero — same shape, slightly tighter pacing for reference pages. */
-.docs-hero .eyebrow,
-.docs-hero h1,
-.docs-hero .lead,
-.docs-hero-symbol {
-  animation: fb-rise 0.55s cubic-bezier(.22, 1, .36, 1) both;
-}
-.docs-hero h1     { animation-delay:  60ms; }
-.docs-hero .lead  { animation-delay: 160ms; }
-.docs-hero-symbol {
-  animation-duration: 0.7s;
-  animation-delay: 200ms;
-}
+  .install-split {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 
-/* Scroll-driven reveals — modern browsers get a quiet fade-up as figures
-   enter the viewport. Browsers without animation-timeline ignore the rules
-   and the figures render in their final state. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .figure,
-    .figure-strata,
-    .callout,
-    .install {
-      animation: fb-rise-lg linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 22%;
-    }
+  .faq-cols {
+    grid-template-columns: 1fr;
+  }
 
-    /* Strata stagger — the four forms reveal in narrative order
-       (Genesis → Constitution → Implementation → Tool boundary) as the
-       figure scrolls into view. Each form gets a slightly later activation
-       window via animation-range, so the cascade feels deliberate. */
-    .strata-svg .strata-form {
-      animation: fb-rise linear both;
-      animation-timeline: view(--strata-figure);
-      transform-box: fill-box;
-      transform-origin: center;
-    }
-    .figure-strata { view-timeline: --strata-figure block; }
-    .strata-svg .strata-i   { animation-range: entry 0%  entry 35%; }
-    .strata-svg .strata-ii  { animation-range: entry 10% entry 55%; }
-    .strata-svg .strata-iii { animation-range: entry 20% entry 75%; }
-    .strata-svg .strata-iv  { animation-range: entry 30% cover 10%; }
-
-    /* Governance precedence stagger — the same narrative-order device as the
-       strata figure above, and the only one of the four new hero symbols that
-       earns it: this symbol IS an ordered chain, so revealing genesis before
-       constitution before annex before implementation restates the argument the
-       page is making. The other three new symbols deliberately do NOT get a
-       bespoke stagger; the same entrance applied to every symbol is the reflex
-       tell, not motion itself. They keep the shared docs-hero-symbol entrance. */
-    .governance-svg .gov-form {
-      animation: fb-rise linear both;
-      animation-timeline: view(--gov-figure);
-      transform-box: fill-box;
-      transform-origin: center;
-    }
-    .docs-hero-symbol:has(.governance-svg) { view-timeline: --gov-figure block; }
-    .governance-svg .gov-i   { animation-range: entry 0%  entry 35%; }
-    .governance-svg .gov-ii  { animation-range: entry 10% entry 55%; }
-    .governance-svg .gov-iii { animation-range: entry 20% entry 75%; }
-    .governance-svg .gov-iv  { animation-range: entry 30% cover 10%; }
+  .faq-col + .faq-col {
+    border-top: 0;
   }
 }
 
-/* Hero-symbol accent-dot breath on hover. Soft scale + accent halo on the
-   accent dots inside each docs hero symbol. Single signal that the
-   ideogram is alive; respects reduced motion via the global override at
-   end of file. */
-.docs-hero-symbol .hero-symbol-svg .bnd-consent,
-.docs-hero-symbol .hero-symbol-svg .ct-sub,
-.docs-hero-symbol .hero-symbol-svg .fm-result,
-.docs-hero-symbol .hero-symbol-svg .memring-cand-active {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform .35s cubic-bezier(.22, 1, .36, 1);
-}
-.docs-hero-symbol:hover .hero-symbol-svg .bnd-consent,
-.docs-hero-symbol:hover .hero-symbol-svg .ct-sub,
-.docs-hero-symbol:hover .hero-symbol-svg .fm-result,
-.docs-hero-symbol:hover .hero-symbol-svg .memring-cand-active {
-  transform: scale(1.35);
+@media (max-width: 760px) {
+  :root {
+    --gutter: 20px;
+  }
+
+  .section,
+  .stat-strip {
+    padding-top: 64px;
+  }
+
+  .band {
+    margin-top: 64px;
+    padding: 48px 0;
+  }
+
+  /* The panel gives most of its padding back so the diagram gets the width;
+   * at 390px that is a 0.95 scale rather than 0.83. */
+  .figure,
+  .figure-flow {
+    padding: 20px 14px;
+  }
+
+  .band-hero {
+    padding-top: 56px;
+  }
+
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Full-bleed within the column so the button squares up with the terminal
+   * plate beneath it. Contents stay left-aligned with the copy state pushed
+   * right: the headline, lead, and plate all key off the same left edge, and
+   * centring the command here would be the only centred thing on the page. */
+  .btn-cmd {
+    font-size: 13px;
+    padding: 16px;
+    gap: 10px;
+    min-height: 44px;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .btn-cmd .copy-state {
+    margin-left: auto;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .hero-actions,
+  .band-cta .wrap > div,
+  .band-cta .btn-cmd {
+    width: 100%;
+  }
+
+  .hero-actions {
+    gap: 14px;
+  }
+
+  .cmd-long {
+    display: none;
+  }
+
+  .cmd-short {
+    display: inline;
+  }
+
+  .band-ink .wrap,
+  .band-cta .wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  /* Reading copy comes up to 16px on a phone. The mono inside terminal plates
+   * and diagrams deliberately does not: it is code in a scroll container, and
+   * enlarging it only narrows how much of a line is visible at once. */
+  .cell p,
+  .step-cell p,
+  .panel p,
+  .swarm-main p,
+  .swarm-worker p,
+  .band-ink p,
+  .faq-a,
+  .diagram-note {
+    font-size: 16px;
+  }
+
+  .sec-lead {
+    font-size: 17px;
+    margin-bottom: 32px;
+  }
+
+  .hero-lead {
+    font-size: 18px;
+  }
+
+  .faq-q {
+    font-size: 17px;
+  }
+
+  .cell h3,
+  .stat .claim {
+    font-size: 18px;
+  }
 }
 
-/* 404 page — share the .marketing shell + .concepts grid, just slimmer
-   between hero and §I (no meta-strip, no dev console). */
-.not-found .hero { padding: 96px 0 48px; border-bottom: 0; }
-.not-found .hero h1 { max-width: 720px; }
-.not-found .hero .lead { max-width: 580px; }
-.not-found .section { padding-top: 24px; border-bottom: 0; }
-.not-found .concepts.is-2col {
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: minmax(0, auto);
+/* ------------------------------------------------------- short viewports */
+
+/* A landscape phone is ~390px tall; a 60px sticky bar takes 15% of it and
+ * never gives it back. Height, not width, is the constraint being solved. */
+@media (max-height: 560px) {
+  .util-bar {
+    position: static;
+  }
 }
+
+/* ----------------------------------------------------- reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    transition-duration: .01ms !important;
-    animation-duration: .01ms !important;
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

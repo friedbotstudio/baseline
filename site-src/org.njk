@@ -1,0 +1,92 @@
+---
+layout: docs.njk
+title: "Org mode: several sessions, one body of work · baseline"
+description: "Why several Claude Code sessions can share one body of work: the flat pod of four peers, the rule that a peer decides in its own lane, and the escalation path from peer to lead to you."
+heading: "Four sessions,<br>one body of work."
+lead: "Swarm mode splits a spec across workers inside one session. Org mode splits it across sessions. Each peer is a full Claude Code session with judgement of its own. That is what makes one boundary carry the whole design: when a peer decides, and when it escalates."
+updated: 2026-07-29
+breadcrumb: ["docs", "concepts", "org mode"]
+chips:
+  - { label: "off by default" }
+  - { label: "needs git" }
+facts:
+  - { label: "pod size", value: "4 peers" }
+  - { label: "fence", value: "velocity.org_mode" }
+  - { label: "track", value: "org" }
+toc:
+  - { id: "axis", label: "A second axis" }
+  - { id: "pod", label: "The flat pod" }
+  - { id: "lanes", label: "Lanes and who claims them" }
+  - { id: "escalation", label: "The decide-or-escalate line" }
+  - { id: "gates", label: "What stays with you" }
+---
+
+<h2 id="axis"><span class="sec-mark" aria-hidden="true">§ I</span> A second axis</h2>
+
+<p>Article II governs what happens inside one session: decisions live in the main context, and subagents only run recipes that were already decided. Org mode adds a second axis, and leaves the first one untouched.</p>
+
+<p>The distinction is worth getting right, because the two look similar from outside. A subagent has no context of its own worth trusting, so it gets a recipe. A peer session, by contrast, is a complete Claude Code instance with its own memory, its own hooks, and its own main context where Article II applies in full, so handing it a recipe would waste the judgement that makes it useful.</p>
+
+<p>So peers get lanes. A lane is a slice of an approved spec with a declared write set, and the peer which claims it decides for itself how to build it.</p>
+
+<h2 id="pod"><span class="sec-mark" aria-hidden="true">§ II</span> The flat pod</h2>
+
+<p class="sec-lead">Up to four peers work one spec at a time. They talk over a coordination broker that runs on your machine, on a Unix socket, with the project as its working directory.</p>
+
+<p>The pod is flat for claiming: any free peer may take any unblocked lane it is eligible for, and where two try at once the broker picks a single winner. One peer also wears the lead hat, which adds two duties and no extra claiming rights, namely settling what peers escalate and relaying the rest to you.</p>
+
+<p>A peer stays a peer for the whole of its session. If the same person happens to be running the lead session in another window, the peer keeps working lanes regardless: it arbitrates nothing, answers no other peer, and claims every lane it is eligible for. The broker bakes each session's identity and role into the instructions it hands out, so a session always knows which one it is.</p>
+
+<p>One more rule protects the pod's state. If a second broker arrives on an occupied socket it refuses and exits, because a silent takeover would split the pod, leaving half the peers talking to fresh state and half to the old. A socket left behind by a crashed broker is reclaimed, since that case is safe.</p>
+
+<h2 id="lanes"><span class="sec-mark" aria-hidden="true">§ III</span> Lanes and who claims them</h2>
+
+<p>The lead reads the approved spec and cuts it into lanes along its dependency graph, and each lane carries an id, a write set, and whatever it depends on.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">claim-any</div>
+    <p>Leave the lane unassigned and the first free peer takes it. Simplest to run. One fast peer can hoover up the queue while the others sit idle.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">directed</div>
+    <p>Name a peer and only that peer may claim it. The broker enforces it, so a claim from anyone else is rejected. This is how the lead spreads load or puts a specific lane with a specific session.</p>
+  </div>
+</div>
+
+<p>When a peer finishes a lane it signals done, which unblocks whatever depended on that lane. Work therefore flows as a pipeline rather than stopping at a barrier every round, and a peer whose next lane is ready can start on it immediately.</p>
+
+<p>Completion is checked every time. The broker pushes events as lanes are claimed and finished, but a push can go missing, so the lead treats those events as hints only and confirms against the channel status (which carries a flag the broker always keeps current).</p>
+
+<h2 id="escalation"><span class="sec-mark" aria-hidden="true">§ IV</span> The decide-or-escalate line</h2>
+
+<p class="sec-lead">This is the line the whole model rests on, and it has exactly one test. Does the choice stay inside the lane?</p>
+
+<p>An in-lane implementation choice belongs to the peer, which decides in its own main context and carries on exactly as any single session would. If routine choices went to the lead instead, every peer would end up queued behind one arbitrator and the pod would run slower than a single session.</p>
+
+<p>A choice which reaches across lanes, or which the peer genuinely cannot settle, escalates instead. Guessing across lanes is the failure this rule exists to prevent, because two peers guessing about a shared boundary will produce work that only conflicts later.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>the escalation spine</span>
+  </div>
+  <pre class="plate-body"><span class="t-ok">peer</span>  <span class="t-dim">yield_fork  — a fork tied to one task</span>
+      <span class="t-dim">ask_lead    — a free-form question</span>
+   <span class="t-dim">↓</span>
+<span class="t-ok">lead</span>  <span class="t-dim">settles what it can, in its own main context</span>
+      <span class="t-dim">answer_peer — routes the decision back</span>
+   <span class="t-dim">↓</span>
+<span class="t-ok">you</span>   <span class="t-dim">anything that needs human judgement</span></pre>
+</div>
+
+<p>If an escalation cannot be delivered it comes back as an error and waits in the channel status. Losing one silently would leave a peer blocked on an answer nobody knows it asked for.</p>
+
+<h2 id="gates"><span class="sec-mark" aria-hidden="true">§ V</span> What stays with you</h2>
+
+<p>Every hook fires on every peer write. A guard which blocks a commit in a single session will block it in a pod as well, four times over, with identical logic each time.</p>
+
+<p>The consent gates work the same way. Approving a direction, a swarm plan or a commit still means you typing a command, checked by a hook which runs before Claude is invoked. No peer and no lead can satisfy one, and adding sessions changes nothing there, since the check was never about which session was asking.</p>
+
+<p>Org mode ships off. It waits behind <code class="tok">velocity.org_mode.enabled</code> and needs git, and where either is missing the engine refuses with a named reason. Four sessions on one repository is a real change in how a team works, which is the sort of change worth switching on deliberately.</p>
+
+<p>The default pipeline is untouched by all of this. <code class="tok">org</code> is one more track you can pick at triage, and every other track runs exactly as it did before.</p>

@@ -1,0 +1,14 @@
+{
+  "I": "Which document wins when two disagree, and how an amendment travels.",
+  "II": "Decisions stay in the main session. Subagents run recipes that are already decided.",
+  "III": "What Claude reads and tells you at the start of every session.",
+  "IV": "The eleven phases, their order, and the three gates only you can pass.",
+  "V": "How the harness loops through phases, and the four ways it stops.",
+  "VI": "The rules every code change obeys: no stubs, no mocks of your own code, current docs.",
+  "VII": "What Claude may do with git, which branches are protected, and what is refused outright.",
+  "VIII": "The hook table. Every guard, its event, and the Article it enforces.",
+  "IX": "How project facts survive across sessions, and why a cited fact is re-checked first.",
+  "X": "Several sessions working one body of work, and how a fork reaches a human.",
+  "XI": "Space reserved for your own rules, which bind alongside the rest.",
+  "XII": "Which skills the baseline owns, and how a changed one is detected."
+}

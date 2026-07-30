@@ -18,7 +18,11 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FOOTER_NJK = path.join(REPO_ROOT, 'site-src/_includes/footer.njk');
+// The site rewrite folded _includes/footer.njk into the base layout. The contract
+// this file pins is "the footer interpolates the build id from _data/build.js",
+// which is about the value, not the file it lives in — so the locator follows the
+// footer to its new home and the assertion is unchanged.
+const FOOTER_NJK = path.join(REPO_ROOT, 'site-src/_layouts/base.njk');
 const BUILD_DATA_PATH = path.join(REPO_ROOT, 'site-src/_data/build.js');
 
 function readFooter() {

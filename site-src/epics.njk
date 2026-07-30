@@ -1,122 +1,114 @@
 ---
 layout: docs.njk
-permalink: /epics/index.html
-pageTitle: "Epics · baseline"
-title: Epics
-titlePrimary: Epics
-titleAccent: "."
-description: "Five of the eleven phases describe a feature rather than a subtask. The epic track pays that discovery cost once instead of once per slice."
-eyebrow: Workflow
-lead: "Five of the eleven phases describe a feature, not a subtask. Running them once per subtask pays the same discovery cost three to eight times over. The epic track pays it once."
-active: workflows
-sidebarActive: epics
-heroSymbol: epics
+title: "Epics: run discovery once, ship it in slices · baseline"
+description: "How to run a multi-slice feature as an epic: discovery once, a sliced spec approved a single time, then one child workflow per slice inheriting that discovery."
+heading: "Run discovery once,<br>land it in slices."
+lead: "Some features split into tasks that ship separately. Run each task as its own workflow and you pay for the same background work every time. An epic makes you pay once: intake, scout, research and spec run one time, and every slice inherits them."
+updated: 2026-07-29
+breadcrumb: ["docs", "how-to", "epics"]
+chips:
+  - { label: "needs git" }
+facts:
+  - { label: "discovery", value: "once per epic" }
+  - { label: "gate A", value: "once, on the sliced spec" }
+  - { label: "state", value: ".claude/state/epic/" }
 toc:
-  - { id: tax,        label: "The discovery tax" }
-  - { id: lifecycle,  label: "How an epic runs" }
-  - { id: pins,       label: "Why a child cannot cheat" }
-  - { id: risk,       label: "Risk escalation" }
-  - { id: gate,       label: "One gate, one demoted flag" }
-  - { id: close,      label: "Closing" }
-  - { id: incident,   label: "What that failure cost" }
+  - { id: "choose", label: "Choose the epic track" }
+  - { id: "discovery", label: "Run discovery once" }
+  - { id: "slices", label: "Land a slice" }
+  - { id: "escalate", label: "Escalate a risky slice" }
+  - { id: "state", label: "Read the epic state" }
+  - { id: "when-not", label: "When to use something else" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="tax">The discovery tax</h2>
-    </div>
-    <p>Intake, scout, research, spec, and the direction approval are feature-scoped.</p>
-  </div>
-  <p>The slice of codebase in play, the libraries involved, and the design do not change between the subtasks of one feature. Running the full pipeline per subtask re-pays that cost every time.</p>
-  <p>Human consent is amortised the same way. One approval covers the feature rather than one per subtask.</p>
-</section>
+<h2 id="choose"><span class="sec-mark" aria-hidden="true">§ I</span> Choose the epic track</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="lifecycle">How an epic runs</h2>
-    </div>
-    <p>Triage selects the epic track when the work decomposes into three or more separable slices.</p>
-  </div>
-  <p>Slices are proposed to you and confirmed before anything is written. They are scoping units, and deciding them is not the same as designing the solution.</p>
-  <p>The spec then carries one section per slice, and each section has to stand alone, because a child will read it without its siblings.</p>
-  <p>The epic commits its discovery live instead of archiving it, because children pin those documents by path and the paths have to keep resolving.</p>
-</section>
+<p>Use an epic when one feature splits into tasks that can ship on their own, and when those tasks also share the same background work. The test is whether a second workflow would read the same code and reach the same answers; if it would, you are about to pay for that reading twice.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="pins">Why a child cannot cheat</h2>
-    </div>
-    <p>Each child pins the three discovery artefacts it inherited.</p>
-  </div>
-  <p>Before any write, the guard requires that the epic exists and parses, that the approval token is on disk, and that all three pins resolve.</p>
-  <p>Fail any of those and every write is refused, with one carve-out for the state directory so triage can repair itself. The guard runs before the ordering logic, so an unverifiable child never reaches the machinery that would otherwise let it skip phases.</p>
-  <p>The point is that a child's right to skip discovery is a consequence of a real approved epic, rather than a claim the child makes about itself.</p>
-</section>
+<p>Start it like any other work: <code class="tok">/triage</code> classifies the request and offers you a track, and you pick <code class="tok">epic</code> when you see it.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="risk">Risk escalation</h2>
-    </div>
-    <p>Slices differ, so their children differ.</p>
+<div class="plate">
+  <div class="plate-bar">
+    <span>claude code</span>
+    <span class="spacer"></span>
+    <button type="button" class="plate-copy js-copy" data-copy='/triage "your multi-slice feature"'>
+      <span class="copy-state">click to copy</span>
+      <span class="visually-hidden">Copy the triage command</span>
+    </button>
   </div>
-  <table>
-    <thead><tr><th>Phase</th><th>Escalated into the child when the slice</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">security</td><td>touches auth, an IO boundary, untrusted-input parsing, or a path marked sensitive in <code>project.json</code></td></tr>
-      <tr><td class="phase">simplify</td><td>spans more than one architectural layer, or more files than the configured threshold</td></tr>
-      <tr><td class="phase">document</td><td>changes a public API, a CLI surface, or committed documentation</td></tr>
-    </tbody>
-  </table>
-  <p>Escalation is not a change to the pipeline. The full chain is always declared, and escalating means leaving a phase out of the exception list so the declared node simply runs.</p>
-</section>
+  <pre class="plate-body"><span class="t-prompt">&gt;</span> /triage <span class="t-ok">"your multi-slice feature"</span></pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="gate">One gate, and a flag that was demoted</h2>
-    </div>
-    <p>One approval covers every slice.</p>
-  </div>
-  <p>That is sound because each slice section is a self-contained contract, so approving the spec is approving each of them.</p>
-  <p>The epic state file has an <code>approved</code> boolean, and it is worth being precise about what it does now: nothing, for authorisation. Authorisation derives from the approval token, which cannot be forged. The boolean is a human-readable marker.</p>
-  <p>Retiring that boolean is what closed the hole. The write-side guards could stop most ways of setting it, but not every one, and making the read side ignore it means a forged flag is inert wherever it would have mattered.</p>
-</section>
+<p>Triage writes <code class="tok">.claude/state/epic/&lt;slug&gt;.json</code> next to the usual workflow state. Later children read that file to learn which slice they own and which research they inherit, so it has to stay put once the epic is under way.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="close">Closing</h2>
-    </div>
-    <p>An epic closes when every slice has a committed child, not when every registered child has committed.</p>
-  </div>
-  <p>The distinction is not pedantic. Children register lazily, one at a time, so a check against registered children fires on the first slice and closes the epic while most of the work is still ahead.</p>
-</section>
+<h2 id="discovery"><span class="sec-mark" aria-hidden="true">§ II</span> Run discovery once</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VII</p>
-      <h2 id="incident">What that failure cost</h2>
-    </div>
-    <p>That is not hypothetical. It happened here, and the fix is the check that ships now.</p>
+<p class="sec-lead">The epic track carries nine nodes and stops at the commit: <code class="tok">intake</code>, <code class="tok">scout</code>, <code class="tok">research</code>, <code class="tok">spec</code>, <code class="tok">spec-shippability-review</code>, <code class="tok">approve-direction</code>, <code class="tok">memory-flush</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Code comes later, in the children.</p>
+
+<p>What you get is a sliced spec at <code class="tok">docs/specs/&lt;epic&gt;.md</code>, in which each future child has its own <code class="tok">## Slice &lt;id&gt;</code> section holding that child's acceptance criteria. You approve the whole document once, at gate A.</p>
+
+<p>That single approval has two consequences worth planning around. Write each slice so that it can ship on its own, because you get one approval and no later chance to redraw the lines. Put each acceptance criterion in exactly one slice as well, since an AC appearing in two slices will simply be built twice.</p>
+
+<p>The discovery bundle commits live, which means the spec, scout and research stay exactly where they are. If a child runs three weeks later it must still be able to find them, so archiving them now would break every child still waiting.</p>
+
+<h2 id="slices"><span class="sec-mark" aria-hidden="true">§ III</span> Land a slice</h2>
+
+<p>Open a session and describe the slice you want to build. If an approved epic is active, triage will match your request to an open slice and pick the <code class="tok">epic-child</code> track for you.</p>
+
+<p>A child skips discovery entirely and pins whatever the epic already produced. Its declared graph is <code class="tok">tdd</code>, <code class="tok">simplify</code>, <code class="tok">security</code>, <code class="tok">integrate</code>, <code class="tok">document</code>, <code class="tok">archive</code>, <code class="tok">roadmap-sync</code>, <code class="tok">memory-flush</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Three of those nodes only run when they are needed.</p>
+
+<div class="callout">
+  <span class="callout-mark" aria-hidden="true">!</span>
+  <div>
+    <div class="callout-title">You cannot start a child until the epic is approved.</div>
+    <p><code class="tok">track_guard</code> blocks every write on a child until two things are true: the epic's approval token must exist at <code class="tok">.claude/state/spec_approvals/&lt;epic&gt;.approval</code>, and its pinned scout, research and spec must all still be findable. Because the guard enforces both, a child cannot run on an epic whose discovery was skipped, nor on one whose files have since moved.</p>
   </div>
-  <p>An epic in this repository closed on its first slice. Recovering meant moving the discovery documents back to their live paths and re-registering the remaining slices.</p>
-  <p>One part could not be automated. Closing had archived the approval token along with the rest of the bundle, and that token is the thing the guard reads. Claude could move the documents back, but it could not restore the token, because restoring consent is exactly what it has no path to do. A human had to grant it again.</p>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>Both halves of that are the point.</strong>
-      <p>The premature close was a bug worth fixing. The part where the recovery stopped and waited for a person was the system working.</p>
-    </div>
+</div>
+
+<p>Each child ends at its own <code class="tok">/grant-commit</code>, so slices land one at a time. Should a slice turn out to be wrong, it costs you a single child workflow and the rest of the epic still stands.</p>
+
+<h2 id="escalate"><span class="sec-mark" aria-hidden="true">§ IV</span> Escalate a risky slice</h2>
+
+<p>Record the risk on the slice as you write the sliced spec. Triage reads those flags and adds <code class="tok">simplify</code>, <code class="tok">security</code> and <code class="tok">document</code> to that particular child, while a slice carrying no risk flags runs the short path and skips all three.</p>
+
+<p>You do this per slice, which is the whole point of slicing risk: the one risky child gets a <code class="tok">security</code> review, and the other slices stay lean.</p>
+
+<h2 id="state"><span class="sec-mark" aria-hidden="true">§ V</span> Read the epic state</h2>
+
+<p class="sec-lead">Check <code class="tok">.claude/state/epic/&lt;slug&gt;.json</code> to see which slices are left and which children have landed.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>.claude/state/epic/&lt;slug&gt;.json</span>
   </div>
-</section>
+  <pre class="plate-body">{
+  <span class="t-ok">"epic"</span>: <span class="t-val">"erp-portables"</span>,
+  <span class="t-ok">"artifacts"</span>: { <span class="t-dim">scout, research, spec — the pinned paths</span> },
+  <span class="t-ok">"slices"</span>: [ { <span class="t-ok">"id"</span>: <span class="t-val">"A"</span>, <span class="t-ok">"title"</span>: …, <span class="t-ok">"acs"</span>: […], <span class="t-ok">"risk"</span>: […] } ],
+  <span class="t-ok">"approved"</span>: <span class="t-val">true</span>,
+  <span class="t-ok">"children"</span>: [ { <span class="t-ok">"slice"</span>: <span class="t-val">"A"</span>, <span class="t-ok">"slug"</span>: <span class="t-val">"…-slice-a"</span>, <span class="t-ok">"status"</span>: <span class="t-val">"committed"</span> } ]
+}</pre>
+</div>
+
+<p>The <code class="tok">approved</code> flag is guarded. <code class="tok">epic_approval_guard</code> will let it flip to <code class="tok">true</code> only when the matching <code class="tok">.claude/state/spec_approvals/&lt;slug&gt;.approval</code> token is on disk, that token being the lasting record of a real gate-A approval. Other writes pass through untouched: appends to <code class="tok">children</code>, status flips, and rewrites of an epic that is already approved.</p>
+
+<p>The guard checks two things only: that the token exists, and that the slug matches. The token then stays valid indefinitely, so an approved spec remains approved and children can keep landing weeks afterwards.</p>
+
+<h2 id="when-not"><span class="sec-mark" aria-hidden="true">§ VI</span> When to use something else</h2>
+
+<div class="grid-rule grid-3 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">one deliverable</div>
+    <p>Work that lands in one change has nothing to spread out. Use <code class="tok">intake-full</code> or something lighter.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">parallel, one session</div>
+    <p>Want separate tasks built at the same time, in one workflow? That is the swarm path at phase 6.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">already spec'd</div>
+    <p>A batch of tickets that already have specs is the <code class="tok">power</code> track. It saves repeat work on the mechanical phases.</p>
+  </div>
+</div>
+
+<p>An epic pays off when discovery is the expensive part and the tasks land over time. If the build is the expensive part and all of it can land at once, one of the three options above will cost you less.</p>

@@ -1,0 +1,67 @@
+---
+layout: docs.njk
+title: "Overview: rules the agent cannot decline · baseline"
+description: A repository overlay that governs how Claude works in your codebase, intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.
+heading: "Rules the agent<br>cannot decline."
+lead: The baseline is an opinion your team already holds, written down and then enforced below the layer Claude can reach. This page explains what it is, and why enforcement has to live where it does rather than in a prompt.
+updated: 2026-07-29
+breadcrumb: ["docs", "overview"]
+facts:
+  - { label: "install", value: "one npx command" }
+  - { label: "license", value: "Apache 2.0" }
+  - { label: "status", value: "public alpha" }
+toc:
+  - { id: "problem", label: "The problem with prompt-level rules" }
+  - { id: "boundary", label: "The tool boundary" }
+  - { id: "consent", label: "The consent handshake" }
+  - { id: "authority", label: "Authority and precedence" }
+  - { id: "skipping", label: "Named exceptions" }
+  - { id: "next", label: "Where to go next" }
+---
+
+<h2 id="problem"><span class="sec-mark" aria-hidden="true">§ I</span> The problem with prompt-level rules</h2>
+
+<p>Leave Claude Code alone on a real codebase for long enough and it will push to main without review, amend a published commit, mock the database in a test, or sign off on its own spec. Each time, Claude Code is working exactly as designed. What is missing is a rule your team already agrees on, written down somewhere the agent has no choice but to obey it.</p>
+
+<p>The baseline is that rule set, written down and enforced below the layer Claude can reach. It installs into your repo: {{ baseline.hooks.total }} hooks, {{ baseline.skills.total }} skills, {{ baseline.subagents.totalWord }} subagent, an eleven-phase workflow, {{ baseline.gates }} consent gates, and {{ baseline.tracks.canonical }} workflow tracks you can pick from. You bring your own Claude Code.</p>
+
+<h2 id="boundary"><span class="sec-mark" aria-hidden="true">§ II</span> The tool boundary</h2>
+
+<p>What matters is where the rule lives. If you put it in a prompt, a memory entry or a <code class="tok">CLAUDE.md</code> paragraph, you are asking the model to follow it, and a model may comply unevenly. Put the same rule in a hook and it becomes a program which runs before the tool call and decides whether that call happens at all.</p>
+
+<p>The hooks run on seven events. Nineteen of them sit on <code class="tok">PreToolUse</code>, where they see a Write, Edit or Bash call before it runs and may answer block, ask or allow; three run on <code class="tok">PostToolUse</code> and can only report on what the call produced. The rest cover the session itself: one on <code class="tok">UserPromptSubmit</code>, one at <code class="tok">SessionStart</code>, three on <code class="tok">Stop</code>, one on <code class="tok">Notification</code>, and one before context is compacted.</p>
+
+<p>Add those up and you get 29, which is more than the {{ baseline.hooks.total }} scripts under <code class="tok">.claude/hooks/</code>. One script, <code class="tok">notify</code>, is wired on three events and counts once in each, and it also lives outside that directory. Every other hook runs on exactly one event.</p>
+
+<p>Because a guard runs before the model is consulted, a blocked call ends at the guard: Claude receives the refusal in place of a result and has to work from that.</p>
+
+<h2 id="consent"><span class="sec-mark" aria-hidden="true">§ III</span> The consent handshake</h2>
+
+<p>Consent is the sharpest case, because it is the one an agent has the most reason to work around.</p>
+
+<p>When you type <code class="tok">/grant-commit</code>, <code class="tok">consent_gate_grant</code> runs on <code class="tok">UserPromptSubmit</code>, an event which fires before Claude is invoked on that turn, and it writes a short-lived single-use marker to disk. Later, when Claude tries to write an approval token, a second guard on <code class="tok">PreToolUse</code> will allow the write only while that marker is still fresh. The same guard blocks Claude from writing the marker itself.</p>
+
+<p>Claude cannot reach the <code class="tok">UserPromptSubmit</code> code path, so the input the second hook checks can only come from a human typing the command.</p>
+
+<h2 id="authority"><span class="sec-mark" aria-hidden="true">§ IV</span> Authority and precedence</h2>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell"><div class="cell-kicker">I · genesis</div><p><code class="tok">docs/init/seed.md</code>. The specification the whole overlay is rebuilt from.</p></div>
+  <div class="cell"><div class="cell-kicker">II · constitution</div><p><code class="tok">CLAUDE.md</code>. Binds Claude's behaviour inside a session.</p></div>
+  <div class="cell"><div class="cell-kicker">III · implementation</div><p>The hooks and skills that actuate the two above.</p></div>
+  <div class="cell"><div class="cell-kicker">IV · tool boundary</div><p>The guards themselves, running outside the model's reach.</p></div>
+</div>
+
+<p>Each layer binds the ones below it. If the constitution and the code disagree, the constitution wins and the code is what gets fixed; should <code class="tok">seed.md</code> and the constitution disagree, work stops until a human has been told about the drift.</p>
+
+<p><code class="tok">audit-baseline</code> checks all of this on every CI run, comparing a shipped list of per-file sha256 hashes against what is actually on disk and failing when the two differ. Every number on this page derives from that same source, so if a hook is added without the docs being updated the build breaks (rather than a sentence here quietly going stale).</p>
+
+<h2 id="skipping"><span class="sec-mark" aria-hidden="true">§ V</span> Named exceptions</h2>
+
+<p>You can skip a workflow phase, but it takes a named exception which <code class="tok">/triage</code> records in the workflow state where the audit can find it. Turning a hook off is possible too, and that one takes an amendment to <code class="tok">seed.md</code> plus a matching settings edit.</p>
+
+<p>Both routes leave a record behind, and both of them require a human.</p>
+
+<h2 id="next"><span class="sec-mark" aria-hidden="true">§ VI</span> Where to go next</h2>
+
+<p>To set this up in a repository, start with the install page. The reference pages hold what you will look up afterwards: the CLI commands and exit codes, the workflow tracks, the hooks, the skills, and the MCP servers.</p>

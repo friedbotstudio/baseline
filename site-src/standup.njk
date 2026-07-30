@@ -1,131 +1,138 @@
 ---
 layout: docs.njk
-permalink: /standup/index.html
-pageTitle: "Standup · baseline"
-title: Standup
-titlePrimary: Standup
-titleAccent: "."
-description: "A read-only recap of where a project stands and what to pick up next, on demand and at session start."
-eyebrow: Feature
-lead: "A read-only recap of where a project stands and what to pick up next, on demand and at session start."
-active: standup
-sidebarActive: standup
-heroSymbol: standup
+title: "Standup: what shipped and what to pick up · baseline"
+description: "How to use /standup: a read-only recap of the last release, the commits waiting behind it, the backlog and the open questions, plus how to judge whether the pile is ready to cut."
+heading: "Where the work stands,<br>read off the repo."
+lead: "Two questions come up every time you sit down: what is waiting to ship, and what should you pick up next. /standup answers both from the repo itself. It reads git, the release config and the memory files, reports what it finds, and leaves everything as it was."
+updated: 2026-07-29
+breadcrumb: ["docs", "how-to", "standup"]
+chips:
+  - { label: "read-only" }
+facts:
+  - { label: "helper", value: "gather.mjs" }
+  - { label: "workflow phase", value: "none" }
+  - { label: "writes", value: "nothing" }
 toc:
-  - { id: question,  label: "The question" }
-  - { id: reads,     label: "What it reads" }
-  - { id: readout,   label: "The readout" }
-  - { id: modes,     label: "Two modes" }
-  - { id: judgment,  label: "Gather vs recommendation" }
-  - { id: run,       label: "Run it" }
+  - { id: "run", label: "Run the recap" }
+  - { id: "release", label: "Read the release section" }
+  - { id: "backlog", label: "Read the backlog" }
+  - { id: "choose", label: "Choose what to ship next" }
+  - { id: "partial", label: "Check a partial repo" }
 ---
 
-{# Feature page for the standup skill. Design-call: standup-page (see docs/specs/standup-site-feature.md). Reuses the .dc-* dev-console and .cli-strip components; no bespoke stylesheet. #}
+<h2 id="run"><span class="sec-mark" aria-hidden="true">§ I</span> Run the recap</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="question">where are we, what's next<span class="accent">.</span></h2>
-    </div>
-    <p>Every planning session starts the same way. You read the changelog, scan git log against the last tag, open the backlog, hold it all in your head, then guess what is next.</p>
+<p>Type <code class="tok">/standup</code> whenever you want it. It sits outside the eleven phases, so <code class="tok">track_guard</code> ignores it and it can never block a commit. Run it mid-workflow if you like.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>claude code</span>
+    <span class="spacer"></span>
+    <button type="button" class="plate-copy js-copy" data-copy="/standup">
+      <span class="copy-state">click to copy</span>
+      <span class="visually-hidden">Copy the standup command</span>
+    </button>
   </div>
-  <p>Standup does the reading. One command turns the scattered state of a repository into one structured recap, so the question you actually care about, what to work on next, is the only one left to answer.</p>
-</section>
+  <pre class="plate-body"><span class="t-prompt">&gt;</span> /standup</pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="reads">what it reads</h2>
-    </div>
-    <p>The recap is assembled from the repository itself, not from anything you maintain by hand.</p>
+<p>It runs in two steps. A helper gathers the mechanical facts, then Claude reads them and names the next pickup, with a one-line reason. The helper stops at the facts on purpose. Choosing what to build next is a judgement call, and Article II keeps those in the main session.</p>
+
+<p>You can run the helper on its own from a shell. It prints JSON and takes an optional <code class="tok">--root</code>.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>shell</span>
   </div>
-  <ul>
-    <li>the last shipped release.</li>
-    <li>every commit since that tag, classified by conventional-commit type, with the version bump it will trigger.</li>
-    <li>whether those commits are pushed, or still only local.</li>
-    <li>the backlog, bucketed into open, picked-up, and dropped, with epics nested under their parent.</li>
-    <li>the open questions, condensed to one line each.</li>
-  </ul>
-</section>
+  <pre class="plate-body"><span class="t-prompt">$</span> node .claude/skills/standup/gather.mjs --root .</pre>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="readout">the readout</h2>
-    </div>
-    <p>The point of standup is the artifact it prints. Here is a real one, read from this repository.</p>
+<p>A shorter version of the same recap greets you at session start, along with a pointer back here. The full read, and the recommendation, wait until you ask.</p>
+
+<h2 id="release"><span class="sec-mark" aria-hidden="true">§ II</span> Read the release section</h2>
+
+<p class="sec-lead">This is the pile that has built up behind your last tag.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>release</span>
   </div>
+  <pre class="plate-body"><span class="t-ok">lastVersion</span>      <span class="t-val">"0.20.0"</span>
+<span class="t-ok">lastTag</span>          <span class="t-val">"v0.20.0"</span>
+<span class="t-ok">commitsSinceTag</span>  <span class="t-dim">[ { sha, type, scope, subject, bump } ]</span>
+<span class="t-ok">aggregateBump</span>    <span class="t-val">"none"</span> <span class="t-dim">| "patch" | "minor" | "major"</span>
+<span class="t-ok">upstream</span>         <span class="t-dim">{ state, ahead, behind }</span></pre>
+</div>
 
-  <figure class="figure" aria-labelledby="su-readout-cap">
-    <div class="wobble-frame dc-frame">
-      <div class="dev-console" aria-label="An example standup readout for the baseline repository">
-        <div class="dc-bar" aria-hidden="true">
-          <div class="dc-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-          <div class="dc-file">friedbotstudio/baseline · /standup</div>
-        </div>
-        <pre class="dc-body"><code><span class="dc-dim">shipped</span>            <span class="dc-ok">v&lt;last tag&gt;</span>
-<span class="dc-dim">unreleased</span>         N commits since that tag   <span class="dc-wait">(next bump: minor)</span>
-                     <span class="tok-key">feat</span>(skills)  add standup recap skill   <span class="dc-wait">minor</span>
-<span class="dc-dim">upstream</span>           <span class="dc-wait">ahead N, not pushed</span>
+<p>Every commit since the tag is sorted by its conventional-commit type, and each one carries the version bump it would cause. <code class="tok">aggregateBump</code> is the largest of them, which is the bump the whole pile triggers.</p>
 
-<span class="dc-dim">backlog</span>            N open, N picked-up, N dropped
-                     <span class="dc-ok">epic</span>  baseline-v1 thought-compiler   (open, N children)
-                     open  threat / value tier config dial
-                     open  promote review skills to oracle-bound checkers
-                     <span class="dc-dim">... and 4 more</span>
+<p>Those bump rules come from <code class="tok">.releaserc.json</code>, read fresh on every run. Change your release config and the recap follows it the same day.</p>
 
-<span class="dc-dim">open questions</span>     Q-002, Q-007, Q-008
+<p><code class="tok">upstream</code> tells you where your local branch sits against origin. An <code class="tok">ahead</code> count above zero is work that exists on your machine alone.</p>
 
-<span class="dc-dim">recommended next</span>
-                     tier config dial. small, foundational, it unblocks the
-                     slice-b checkers that the rest of the epic depends on.</code></pre>
-      </div>
-    </div>
-    <figcaption id="su-readout-cap">An example readout from this repository. Everything above the recommendation is read straight from git, the release rules, and the memory files.</figcaption>
-  </figure>
-</section>
+<h2 id="backlog"><span class="sec-mark" aria-hidden="true">§ III</span> Read the backlog</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="modes">two modes</h2>
-    </div>
-    <p>Standup shows up where you need it, without a setup step.</p>
+<p>Backlog entries arrive in three buckets: <code class="tok">open</code>, <code class="tok">picked-up</code> and <code class="tok">dropped</code>. Epic children sit nested under their parent. A parent with four children reads as one line with four beneath it, so the shape of the work survives the listing.</p>
+
+<p>Open questions come from <code class="tok">pending-questions.md</code>, boiled down to an id, a question, and what it blocks. Only entries keyed <code class="tok">Q-1</code>, <code class="tok">Q-2</code> and so on are picked up.</p>
+
+<p>If your project keeps a roadmap, the recap reads that too. It looks at <code class="tok">project.json → roadmap.path</code>, falling back to <code class="tok">docs/roadmap-execution-plan.md</code>. Each epic reports its number, title, tag and status, plus a count of its tasks by state.</p>
+
+<div class="grid-rule grid-3 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">✅ done</div>
+    <p>Finished and landed.</p>
   </div>
-  <p>Run it on demand with <code>/standup</code> when you sit down to plan a release or choose the next thing to build. A compact version of the same recap also appears at the top of every session, so you start already knowing where you left off. The two stay out of each other's way: the session-start line is the short form, the on-demand command is the full readout above.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="judgment">gather vs recommendation</h2>
-    </div>
-    <p>The recap has two halves, and they are held to different standards.</p>
+  <div class="cell">
+    <div class="cell-kicker">🟡 in progress</div>
+    <p>Started, still open.</p>
   </div>
-  <p>The gather step is deterministic. The same repository state always reads the same way, so the facts in the readout are reproducible, not a guess. The recommended next pickup is the one judgment call, and it is reasoned in context rather than emitted by the helper. Standup draws the line on purpose: it reports what is true, and it reasons about what is worth doing, and it keeps the two clearly apart.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="run">run it</h2>
-    </div>
-    <p>It ships with the baseline. There is nothing to install beyond the baseline itself.</p>
+  <div class="cell">
+    <div class="cell-kicker">⬜ planned</div>
+    <p>Written down, untouched.</p>
   </div>
-  <button class="cli-strip" data-copy="/standup" aria-label="Copy the standup command to clipboard">
-    <span class="cli-prompt" aria-hidden="true">$</span>
-    <span class="cli-cmd">/standup</span>
-    <span class="cli-caret" aria-hidden="true"></span>
-    <svg class="cli-check" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14">
-      <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span class="cli-hint" data-default="click to copy" data-copied="copied to clipboard">click to copy</span>
-    <span class="visually-hidden" aria-live="polite"></span>
-  </button>
-</section>
+</div>
+
+<p>Those three emoji are the legend the roadmap file itself uses. The recap counts them; it never edits them. Writing status back to the roadmap is <code class="tok">/roadmap-sync</code>'s job, at phase 10.6.</p>
+
+<p>Building the plan is a third skill's job again. <code class="tok">roadmap-planner</code> derives a roadmap from your vision and spec documents, then diffs that derivation against the plan you have to check the task order. Run it when the recap keeps showing you work in an order that feels wrong.</p>
+
+<h2 id="choose"><span class="sec-mark" aria-hidden="true">§ IV</span> Choose what to ship next</h2>
+
+<p class="sec-lead">Whether a pile of commits is ready to cut depends on how your project ships. Declare that in <code class="tok">project.json → release</code> and the recommendation follows your rules instead of a generic instinct.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">ship continuously</div>
+    <p><code class="tok">release_trigger: on-push</code>, <code class="tok">release_cycle: continuous</code>, or consumers who upgrade often. Push early and often. Sitting on a pile is the risk here, and fixing forward is cheap.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">ship on a cut</div>
+    <p><code class="tok">release_trigger: on-tag</code> or manual, sprint-based cycles, or consumers who upgrade rarely. Each cut is expensive to correct. Gate it on an audit that says the set is whole.</p>
+  </div>
+</div>
+
+<p>One rule bites in the second case. Set <code class="tok">release.completeness_gate.half_wired_blocks_release</code> to <code class="tok">true</code> and a half-wired feature holds the cut. A feature is half wired when it shipped dark and its opt-in path is still broken. Consumers who upgrade rarely would sit with that for months.</p>
+
+<p>Say nothing about your release policy and you get the plain answer: here is the semver bump your commits imply, and the call is yours.</p>
+
+<h2 id="partial"><span class="sec-mark" aria-hidden="true">§ V</span> Check a partial repo</h2>
+
+<p class="sec-lead">The helper runs on a tree that is missing files, and names each file it could not find. Every gap lands in <code class="tok">degraded</code> under a stable name.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>degraded</span>
+  </div>
+  <pre class="plate-body"><span class="t-ok">no-git</span>                 <span class="t-dim">the tree is not a git repository</span>
+<span class="t-ok">no-tags</span>                <span class="t-dim">git repo, no release tagged yet</span>
+<span class="t-ok">no-upstream</span>            <span class="t-dim">the branch tracks no remote</span>
+<span class="t-ok">no-backlog</span>             <span class="t-dim">backlog.md absent</span>
+<span class="t-ok">no-pending-questions</span>   <span class="t-dim">pending-questions.md absent</span>
+<span class="t-ok">no-roadmap-plan</span>        <span class="t-dim">no roadmap at the configured path</span>
+<span class="t-ok">no-release-model</span>       <span class="t-dim">project.json declares no release policy</span></pre>
+</div>
+
+<p>A fresh clone on a brand-new project can trip most of these at once and still get a useful answer. The helper reports what it has and names the rest.</p>
+
+<p>The core is deterministic. Identical repo and memory state give identical helper output, because nothing on that path reads the clock. Two people running the recap an hour apart compare the same numbers.</p>

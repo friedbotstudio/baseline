@@ -1,267 +1,103 @@
 ---
 layout: docs.njk
-permalink: /cli/index.html
-pageTitle: "CLI · baseline"
-title: CLI
-titlePrimary: CLI
-titleAccent: "."
-description: "`npx @friedbotstudio/create-baseline <target>` materializes the baseline. Install, upgrade, and doctor subcommands; branded interactive flows in a TTY; plain output in CI."
-eyebrow: Reference
-lead: "<code>npx @friedbotstudio/create-baseline &lt;target&gt;</code> materializes the baseline. The install, <code>upgrade</code>, and <code>doctor</code> subcommands each route to a branded interactive flow in a TTY and to plain output in CI. One pinned runtime dependency, <code>@clack/prompts</code>, supplies the prompt primitives; everything else is Node stdlib."
-active: cli
-sidebarActive: cli
-heroSymbol: cli
+title: "CLI: commands, flags and exit codes · baseline"
+description: "Reference for the create-baseline CLI: commands, flags, exit codes, upgrade tiers, doctor categories, and the merge semantics for .mcp.json and .gitignore."
+heading: "The create-baseline<br>command line."
+lead: Reference for the create-baseline CLI. The command, flag and exit-code tables on this page are generated from src/cli/surface.js, and a test pins that module to the argv parser in bin/cli.js, so the page cannot drift from the binary without failing CI.
+updated: 2026-07-30
+breadcrumb: ["docs", "reference", "cli"]
+facts:
+  - { label: "commands", value: "install · upgrade · doctor" }
+  - { label: "exit codes", value: "0 – 5" }
+  - { label: "install via", value: "npx" }
 toc:
-  - { id: invocation, label: "Invocation" }
-  - { id: modes,      label: "Modes" }
-  - { id: flags,      label: "Flags" }
-  - { id: exit,       label: "Exit codes" }
-  - { id: doctor,     label: "Doctor" }
-  - { id: mcp-merge,  label: ".mcp.json merge" }
-  - { id: manifest,   label: "Manifest" }
-  - { id: plantuml,   label: "PlantUML jar" }
+  - { id: "commands", label: "Commands" }
+  - { id: "flags", label: "Flags" }
+  - { id: "exit-codes", label: "Exit codes" }
+  - { id: "upgrade", label: "Upgrade tiers" }
+  - { id: "doctor", label: "Doctor categories" }
+  - { id: "merge", label: "Merge semantics" }
 ---
 
-<section class="section pt-0">
-  <figure class="cli-preview">
-    <div class="install-snippet">
-      <div class="bar">
-        <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-        <span class="file">~ · zsh</span>
-      </div>
-      <img src="{{ '/assets/cli-splash.png' | rel }}" alt="create-baseline TTY splash: BASELINE wordmark in three bands of FBS orange, tagline, command table, and discover URL" loading="lazy" decoding="async" />
-    </div>
-    <figcaption>The TTY landing for <code>npx @friedbotstudio/create-baseline</code>. The same wordmark appears on <code>--help</code> and <code>--version</code>; the slim brand strip frames <code>upgrade</code> and the usage errors.</figcaption>
-  </figure>
+<h2 id="commands"><span class="sec-mark" aria-hidden="true">§ I</span> Commands</h2>
 
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="invocation">Invocation</h2>
-    </div>
-    <p>Three shapes. Install takes a target; <code>upgrade</code> defaults to the current directory and runs against an existing install; <code>doctor</code> defaults to the current directory and reports drift.</p>
+<p class="sec-lead">Three commands, one of which is the default. If the first positional is not a subcommand the CLI installs; when it is <code class="tok">upgrade</code> or <code class="tok">doctor</code>, that command runs instead. Install will refuse to touch a target that already holds an install, checking five sentinel paths and exiting 1 if it finds any of them. Upgrade needs the manifest that install wrote, and exits 2 without one. Doctor writes nothing at all.</p>
+
+{# One cell per COMMANDS entry. Iterating the data rather than hand-writing
+   three blocks means a fourth subcommand appears here the moment it is
+   declared, instead of the day someone remembers this page exists. #}
+{% for c in cli.commands %}
+<div class="plate">
+  <div class="plate-bar">
+    <span>{{ c.id }}</span>
   </div>
-<pre><code><span class="tok-com"># install or dry-run a target</span>
-npx @friedbotstudio/create-baseline &lt;target&gt; [--force] [--dry-run]
-                              [--no-plantuml | --require-plantuml] [--with-npmrc]
-                              [--no-ci-posture]
+  <pre class="plate-body"><span class="t-prompt">$</span> {{ c.usage }}</pre>
+</div>
+<p>{{ c.summary }}</p>
+<p>{{ c.detail }}</p>
+{% endfor %}
 
-<span class="tok-com"># three-way upgrade against an installed target</span>
-npx @friedbotstudio/create-baseline upgrade [target] [--dry-run]
+<h2 id="flags"><span class="sec-mark" aria-hidden="true">§ II</span> Flags</h2>
 
-<span class="tok-com"># read-only drift report against an installed target</span>
-npx @friedbotstudio/create-baseline doctor [target] [--strict] [--json]
+<p class="sec-lead">{{ cli.flagCount }} flags, grouped by what they change. Every flag is a boolean and none of them takes a value. Because most apply to a single command, each row names the commands it can be used with.</p>
 
-<span class="tok-com"># misc</span>
-npx @friedbotstudio/create-baseline --help
-npx @friedbotstudio/create-baseline --version</code></pre>
-  <p><code>--no-plantuml</code> and <code>--require-plantuml</code> conflict; pick one or omit both. Command-line parse errors exit 2.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="modes">Modes</h2>
-    </div>
-    <p>Three modes: a default fresh install, an opt-in <code>--force</code> overwrite, and the <code>upgrade</code> subcommand that reconciles an existing install against a newer baseline. The <code>--merge</code> flag was retired in this release; passing it now exits 2 with a stderr line pointing to <code>create-baseline upgrade &lt;target&gt;</code>.</p>
+{% for group in cli.flagGroups %}
+<h3>{{ group.label }}</h3>
+<div class="grid-rule grid-2 lane-grid">
+  {% for f in group.flags %}
+  <div class="cell">
+    <div class="cell-kicker">{{ f.cli }}{% if f.short %} · -{{ f.short }}{% endif %}</div>
+    <p>{{ f.summary }}</p>
+    {% if f.note %}<p class="cell-note">{{ f.note }}</p>{% endif %}
+    <p class="cell-note">applies to {{ f.appliesTo | join(", ") }}</p>
   </div>
-  <table>
-    <thead><tr><th>Mode</th><th>Behavior</th><th>Confirmation</th></tr></thead>
-    <tbody>
-      <tr>
-        <td class="phase">fresh<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);">(default)</span></td>
-        <td>Copies every baseline file into the target. Refuses with exit 1 if any of the five sentinel paths is already present (<code>.claude</code>, <code>.claude/.baseline-manifest.json</code>, <code>CLAUDE.md</code>, <code>.mcp.json</code>, <code>docs/init/seed.md</code>). On a clean target, <code>.mcp.json</code> takes the additive merge path so any user-added servers in a hand-written file are preserved. In a TTY, a branded intro / spinner / outro frames the install; in CI, plain text matches the prior output line-for-line.</td>
-        <td>None.</td>
-      </tr>
-      <tr>
-        <td class="phase">--force</td>
-        <td>Overwrites every baseline file. Preserves <code>.claude/project.json</code> (it carries your <code>/init-project</code> tailoring; the install never touches it). Special-cases <code>.mcp.json</code> via the additive merge.</td>
-        <td>Typed <code>overwrite</code> in an interactive TTY. Non-TTY without <code>--dry-run</code> exits 2.</td>
-      </tr>
-      <tr>
-        <td class="phase">upgrade</td>
-        <td>Three-way merge against <code>.claude/.baseline-manifest.json</code>, dispatched by the per-file <em>tier</em> shipped in the new manifest. Tier <code>BINARY_PROMPT</code> surfaces each customized file as a keep-mine / take-theirs / abort prompt in a TTY. Tier <code>MECHANICAL</code> runs <code>git merge-file --diff3</code> against a recovered BASE; clean merges land silently, conflicts surface with conflict markers (exit 4). Tier <code>SEMANTIC</code> stages the file at <code>.claude/state/upgrade/&lt;ts&gt;/</code> for the <code>/upgrade-project</code> Claude Code skill to reconcile (exit 5). In CI every per-file action is reported with a user-facing label (<em>add</em>, <em>update</em>, <em>kept yours</em>, <em>merged cleanly</em>, …); exit 3 fires when any customisation cannot be auto-reconciled.</td>
-        <td>None in CI. In a TTY, an interactive prompt per binary-prompt conflict; abort or Ctrl+C exits 1 with the tree unchanged.</td>
-      </tr>
-      <tr>
-        <td class="phase">--dry-run</td>
-        <td>Combines with the install or with <code>upgrade</code>. Prints intended actions; writes nothing. The PlantUML jar fetch is also skipped.</td>
-        <td>None.</td>
-      </tr>
-    </tbody>
-  </table>
+  {% endfor %}
+</div>
+{% endfor %}
 
-  <p>Under <code>upgrade</code> the per-file action is one of twelve kinds. The internal <em>kind</em> is the enum surfaced in the JSON shape; the <em>label</em> is the user-facing string rendered in CLI output:</p>
-  <table>
-    <thead><tr><th>Kind</th><th>Label</th><th>Trigger</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">ADD</td><td>add</td><td>New in the template; absent in the target.</td></tr>
-      <tr><td class="phase">OVERWRITE</td><td>update</td><td>Target hash matches the old manifest (untouched since last install). Refreshed.</td></tr>
-      <tr><td class="phase">NOOP</td><td>unchanged</td><td>Target hash matches the new manifest. Already current.</td></tr>
-      <tr><td class="phase">SKIP_CUSTOMIZED</td><td>kept yours</td><td>Target hash differs from both old and new. User customized it. Preserved. Contributes to exit 3.</td></tr>
-      <tr><td class="phase">PRUNE</td><td>removed (upstream)</td><td>Removed from the new template; target hash matches the old manifest. Untouched stale file. <strong>Deleted.</strong></td></tr>
-      <tr><td class="phase">PRUNE_SKIPPED_CUSTOMIZED</td><td>kept yours (upstream removed)</td><td>Removed from the new template; target hash differs from the old manifest. Customized stale file. Preserved. Contributes to exit 3.</td></tr>
-      <tr><td class="phase">NEVER_TOUCH_PRESERVE</td><td>kept yours (never-touch)</td><td>Path is in <code>NEVER_TOUCH</code> and the target has it. Always preserved. Covers <code>.claude/project.json</code>, <code>.claude/workflows.jsonl</code>, and <code>.claude/schemas/workflow-track.v1.json</code>.</td></tr>
-      <tr><td class="phase">NEVER_TOUCH_ADD</td><td>add (never-touch)</td><td>Path is in <code>NEVER_TOUCH</code> and the target lacks it. Written from the template.</td></tr>
-      <tr><td class="phase">SPECIAL_MERGE</td><td>merged (.mcp.json deep-merge)</td><td>Path is in <code>SPECIAL_MERGE</code> (currently <code>.mcp.json</code> only). The additive merge runs (see <a href="#mcp-merge">below</a>).</td></tr>
-      <tr><td class="phase">MECHANICAL_MERGE_CLEAN</td><td>merged cleanly</td><td>Tier-2 customized file. <code>git merge-file --diff3</code> ran against the recovered BASE and produced no conflict hunks. The merged contents are now on disk.</td></tr>
-      <tr><td class="phase">MECHANICAL_MERGE_CONFLICTED</td><td>merged with conflicts; resolve manually</td><td>Tier-2 customized file. <code>git merge-file</code> wrote conflict markers into the target. Exit 4.</td></tr>
-      <tr><td class="phase">SEMANTIC_MERGE_STAGED</td><td>staged for /upgrade-project</td><td>Tier-3 customized file. The base/incoming/local triple is written to <code>.claude/state/upgrade/&lt;ts&gt;/</code> for the <code>/upgrade-project</code> Claude Code skill to reconcile in main context. Exit 5.</td></tr>
-    </tbody>
-  </table>
-</section>
+<h2 id="exit-codes"><span class="sec-mark" aria-hidden="true">§ III</span> Exit codes</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="flags">Flags</h2>
-    </div>
-    <p>Operational flags beyond the modes. Two control the PlantUML side-fetch; one materializes a security-hardened npm config; one opts out of the CI posture the install delivers by default.</p>
+<div class="grid-rule grid-3 lane-grid">
+  {% for e in cli.exitCodes %}
+  <div class="cell">
+    <div class="cell-kicker">exit {{ e.code }}</div>
+    <p>{{ e.meaning }}</p>
   </div>
-  <table>
-    <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">--dry-run</td><td>Print intended actions without writing. Skips the PlantUML fetch. Combines with any install mode.</td></tr>
-      <tr><td class="phase">--no-plantuml</td><td>Skip the jar download entirely. PlantUML rendering will fall back to either system <code>plantuml</code> (if on <code>$PATH</code>) or the <code>plantuml-mcp-server</code> hosted endpoint.</td></tr>
-      <tr><td class="phase">--require-plantuml</td><td>Treat jar fetch failure (network or sha256 mismatch) as fatal. Exit 4 instead of the default behavior of warning and continuing.</td></tr>
-      <tr><td class="phase">--with-npmrc</td><td>Materialize <code>target/.npmrc</code> with security-hardened defaults (<code>ignore-scripts=true</code>, <code>min-release-age=7</code>). Off by default; existing <code>.npmrc</code> preserved verbatim.</td></tr>
-      <tr><td class="phase">--no-ci-posture</td><td>Skip the CI/secrets posture the install delivers by default (the <code>.githooks/pre-commit</code> gitleaks gate, the <code>scripts/ci/</code> helpers, and the branch-protection fill-in config) and set <code>project.json</code> <code>ci_posture.enabled: false</code>. Upgrades respect the knob: an opted-out project never has the artifacts re-delivered, and its own hooks at those paths are never touched.</td></tr>
-      <tr><td class="phase">--help, -h</td><td>Print the usage block and exit 0.</td></tr>
-      <tr><td class="phase">--version</td><td>Print the package version and exit 0.</td></tr>
-    </tbody>
-  </table>
-</section>
+  {% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="exit">Exit codes</h2>
-    </div>
-    <p>Six exit codes. Designed for CI scripts to branch on the structural cases.</p>
+<h2 id="upgrade"><span class="sec-mark" aria-hidden="true">§ IV</span> Upgrade tiers</h2>
+
+<p class="sec-lead">The shipped manifest declares which of three tiers each file belongs to before any merge begins.</p>
+
+<p>If a file is tier 1 and you have changed it, the run stops and offers four choices: keep your version, take the new baseline, merge, or abort. Should you keep your version, the run exits 3 when anything was skipped. Choose merge and the incoming bytes are parked under <code class="tok">.claude/state/upgrade/&lt;timestamp&gt;/</code> and the run exits 5, leaving <code class="tok">/upgrade-project</code> to reconcile them inside Claude Code.</p>
+
+<p>Tier 2 files are merged for you, through <code class="tok">git merge-file --diff3</code>. BASE comes from the <code class="tok">.claude/.baseline-prior/</code> copy that install wrote, or from npm should that copy have gone missing. A clean merge lands quietly; a conflicted one is written out with markers and exits 4.</p>
+
+<p>Where judgement is needed the shell merges nothing at all. A tier 3 file is parked alongside whatever tier 1 chose to merge, and the run exits 5.</p>
+
+<p>Separately from all three tiers, the upgrade will delete baseline files that were dropped upstream, provided you have not edited them.</p>
+
+<p>If the target's manifest already records this CLI's <code class="tok">baseline_version</code> and nothing is parked, the run prints <code class="tok">already on baseline X.Y.Z; nothing to do</code> and exits 0 without writing. That is the one case which skips the merge entirely.</p>
+
+<h2 id="doctor"><span class="sec-mark" aria-hidden="true">§ V</span> Doctor categories</h2>
+
+<p>Each category is a statement about one file's hash. <code class="tok">matched</code> means the hash is unchanged, <code class="tok">customized</code> means it differs, <code class="tok">missing</code> means a baseline file has gone, and <code class="tok">added</code> means a file is present now that the install snapshot did not have, which is usually <code class="tok">/init-project</code>'s doing. Only <code class="tok">missing</code> changes the exit code by default; the flag table above says what <code class="tok">--strict</code> changes.</p>
+
+<div class="callout">
+  <span class="callout-mark" aria-hidden="true">!</span>
+  <div>
+    <div class="callout-title">A clean install reports one customized file.</div>
+    <p>A brand-new install reports <code class="tok">customized: 1</code> for <code class="tok">.claude/project.json</code>, which is a known wrinkle rather than real drift. The CLI writes <code class="tok">baseline_version</code> into that file after it has taken the manifest snapshot, so the hash can never match. A strict run will therefore exit 1 on a clean install.</p>
   </div>
-  <table>
-    <thead><tr><th>Code</th><th>Reason</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">0</td><td>Success. Or a clean <code>doctor</code> report.</td></tr>
-      <tr><td class="phase">1</td><td>User abort (install confirmation declined, or interactive <code>upgrade</code> aborted), sentinel conflict without <code>--force</code> or the <code>upgrade</code> subcommand, or <code>doctor</code> reports missing baseline files.</td></tr>
-      <tr><td class="phase">2</td><td>Bad command line (including the retired <code>--merge</code> flag and conflicting flag combinations), prompted input needed but no terminal attached, <code>doctor</code> finds no manifest at the target, or <code>upgrade</code> runs against a target without a baseline manifest.</td></tr>
-      <tr><td class="phase">3</td><td><code>upgrade</code> kept your customized files: at least one <code>SKIP_CUSTOMIZED</code> or <code>PRUNE_SKIPPED_CUSTOMIZED</code> action. The reconcile succeeded; you have customizations the upgrade could not auto-resolve.</td></tr>
-      <tr><td class="phase">4</td><td><code>--require-plantuml</code> and the jar fetch failed, <strong>or</strong> a tier-2 mechanical merge produced conflict markers (<code>MECHANICAL_MERGE_CONFLICTED</code>) you must resolve manually.</td></tr>
-      <tr><td class="phase">5</td><td><code>upgrade</code> staged at least one tier-3 file for semantic merge (<code>SEMANTIC_MERGE_STAGED</code>). Open Claude Code and run <code>/upgrade-project</code> to reconcile.</td></tr>
-    </tbody>
-  </table>
-</section>
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="doctor">Doctor</h2>
-    </div>
-    <p>A read-only drift check against an installed target's <code>.claude/.baseline-manifest.json</code>. Writes nothing. Returns a structured report.</p>
-  </div>
+<h2 id="merge"><span class="sec-mark" aria-hidden="true">§ VI</span> Merge semantics</h2>
 
-  <div class="install-snippet">
-    <div class="bar">
-      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-      <span class="file">~/code · zsh</span>
-    </div>
-<pre><code>$ npx @friedbotstudio/create-baseline doctor ./my-project
+<p class="sec-lead">Install and upgrade merge exactly two files. Every other path is either copied or preserved.</p>
 
-Baseline doctor — target: /Users/you/code/my-project
-Manifest: version 2, installed 2026-05-11T14:00:00Z
+<p>To keep a change to a server the template names, put it under a name the template does not use. <code class="tok">.mcp.json</code> gets a deep merge: servers the template names belong to the baseline and refresh from it, while servers it does not name are yours and stay byte for byte. Change one of the baseline's own servers and the next upgrade will overwrite it.</p>
 
-  matched:    160
-  customized: 0
-  missing:    0
-  added:      0</code></pre>
-  </div>
+<p>You never lose a line from <code class="tok">.gitignore</code>, because the merge only ever appends. It runs offline and is deterministic, so your file survives byte for byte and only the baseline patterns you lack are added, under a comment header.</p>
 
-  <p>Four categories, surfaced in this order whenever non-zero:</p>
-  <table>
-    <thead><tr><th>Category</th><th>Meaning</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">matched</td><td>File hash on disk equals the hash recorded in the manifest at install time. Clean.</td></tr>
-      <tr><td class="phase">customized</td><td>File hash differs from the manifest. The user (or <code>/init-project</code>, or any phase skill) has edited it. <strong>Informational only.</strong></td></tr>
-      <tr><td class="phase">missing</td><td>File is in the manifest but absent from disk. Lossy drift. Triggers exit 1.</td></tr>
-      <tr><td class="phase">added</td><td>File is under <code>.claude/</code> but not in the manifest. Likely from <code>/init-project</code> additions or your own customizations. Informational only.</td></tr>
-    </tbody>
-  </table>
-  <p>Doctor never modifies the target. To repair drift, run the <code>upgrade</code> subcommand (preserves customizations; interactive in a TTY) or <code>--force</code> (overwrites everything except <code>.claude/project.json</code>).</p>
-
-  <p>For CI parsers, add <code>--json</code> to emit the structured report on stdout instead of the human renderer. The schema preserves <code>matched</code>, <code>customized</code>, <code>missing</code>, <code>added</code>, plus <code>strict</code>, <code>target</code>, <code>manifestVersion</code>, <code>generatedAt</code>, <code>tampered</code>, and the <code>exitCode</code>. Exit codes are unchanged; <code>--strict</code> still escalates customizations to exit 1.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="mcp-merge"><code>.mcp.json</code> merge semantics</h2>
-    </div>
-    <p>The CLI special-cases <code>.mcp.json</code> on every install (fresh or merge). The behavior is <strong>baseline-refresh</strong>: servers the baseline owns get the template's current args; servers you added are preserved.</p>
-  </div>
-  <ul>
-    <li><strong>Servers named in the template are baseline-canonical.</strong> Currently <code>context7</code>, <code>plantuml</code>, <code>playwright</code>, and <code>sprint-channel</code>. The merge refreshes them from the template, so an <code>upgrade</code> delivers baseline arg and env updates (for example, a new flag on the playwright server). <strong>A user who customized a baseline-named server loses that customization on the next upgrade.</strong> Intentional customizations belong under a non-baseline name (for example <code>playwright-custom</code>).</li>
-    <li><strong>Servers absent from the template are user-added.</strong> Preserved byte-for-byte across merges.</li>
-    <li><strong>Top-level JSON keys</strong> outside <code>mcpServers</code> are additive: template keys are added when missing; the target's existing keys win on collision.</li>
-    <li><strong>If the target has no <code>.mcp.json</code></strong>, the template is written verbatim.</li>
-  </ul>
-  <p>The implementation lives in <code>src/cli/mcp.js</code>, and the docblock at the top of that file is the authoritative note on these semantics.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VII</p>
-      <h2 id="manifest">Manifest</h2>
-    </div>
-    <p>After every install, the CLI writes <code>.claude/.baseline-manifest.json</code> at the target: a sha256-keyed hash table of every file shipped, plus a version stamp and the install timestamp.</p>
-  </div>
-  <pre><code>{
-  "manifest_version": 2,
-  "generated_at": "2026-05-11T14:00:00.000Z",
-  "files": {
-    "CLAUDE.md": "9a3f...",
-    ".claude/hooks/track_guard.mjs": "1c4b...",
-    ".claude/skills/intake/SKILL.md": "f0d2...",
-    ...
-  }
-}</code></pre>
-  <p>This file is the input to every subsequent <code>upgrade</code> and to <code>doctor</code>. Two design notes:</p>
-  <ul>
-    <li>Each <code>upgrade</code> run replaces the manifest with a fresh one stamped at the new install time. The old manifest is the "old" side of the three-way reconcile; the new template is the "new" side; the target on disk is the lived side.</li>
-    <li>The manifest is recommended for <strong>commit</strong> to the project's git history. It is the audit trail for "what baseline version was this project on as of which commit". The baseline's <code>.gitignore</code> does not exclude it.</li>
-  </ul>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VIII</p>
-      <h2 id="plantuml">PlantUML jar</h2>
-    </div>
-    <p>The baseline's <code>plantuml-syntax-guard</code> and <code>/spec-render</code> skill need a PlantUML binary. The install side-fetches one when the system has no <code>plantuml</code> on <code>$PATH</code>.</p>
-  </div>
-  <table>
-    <thead><tr><th>Property</th><th>Value</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">Pinned version</td><td><code>plantuml-asl-1.2026.2.jar</code></td></tr>
-      <tr><td class="phase">Pinned sha256</td><td><code>c348f6a26d999f81fd05b5d49834bb70df9cf35fab0939c4edecb0909e64022b</code></td></tr>
-      <tr><td class="phase">Pinned size</td><td>19 395 808 bytes (~19 MB)</td></tr>
-      <tr><td class="phase">Destination</td><td><code>.claude/bin/plantuml.jar</code> (gitignored)</td></tr>
-      <tr><td class="phase">Write</td><td>Atomic. Writes to <code>plantuml.jar.tmp.&lt;pid&gt;</code>, then <code>rename(2)</code>.</td></tr>
-      <tr><td class="phase">License</td><td>Apache 2.0. The <code>LICENSE</code> + <code>NOTICE</code> files ship in the npm tarball at <code>.claude/bin/</code>.</td></tr>
-    </tbody>
-  </table>
-  <p>The fetch is skipped when:</p>
-  <ul>
-    <li><code>plantuml</code> is already on the system <code>$PATH</code>.</li>
-    <li><code>--no-plantuml</code> is set.</li>
-    <li><code>--dry-run</code> is set.</li>
-    <li>The destination jar is already present with a matching sha256.</li>
-  </ul>
-  <p>On network failure or sha mismatch, the install prints a warning and continues. Pass <code>--require-plantuml</code> to make the failure fatal (exit 4) so CI catches a wedged mirror.</p>
-</section>
+<p>Four paths are never written, on install or on upgrade: <code class="tok">.claude/workflows.jsonl</code>, the workflow-track schema, and the two runtime memory files. Those memory files are rewritten on every conversation turn, so prompting you about them would be a false alarm every single time.</p>

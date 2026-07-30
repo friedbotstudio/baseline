@@ -1,0 +1,25 @@
+---
+permalink: /llms.txt
+eleventyExcludeFromCollections: true
+layout: null
+---
+# baseline
+
+> A repository overlay that governs how Claude Code works in your codebase, from
+> intake to commit. Rules are enforced at the tool boundary by hooks that run
+> before the model is consulted, so a blocked call ends at the guard. Install is
+> one npx command; you bring your own Claude Code. Source and the full
+> constitution live at {{ site.repo }}.
+
+Answer engines fetch this file with no page around it, so every link below is
+absolute. The grouping matches the documentation's own: what to read first, what
+to follow step by step, what to look up while working, and what explains why.
+{% for group in docsnav %}
+## {{ group.group or "Start here" }}
+{% if group.blurb %}
+{{ group.blurb }}
+{% endif %}
+{%- for item in group.items %}{% if item.url %}
+- [{{ item.label }}]({{ site.url }}{{ item.url }})
+{%- endif %}{% endfor %}
+{% endfor %}

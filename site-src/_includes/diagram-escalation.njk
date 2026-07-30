@@ -1,0 +1,87 @@
+{#
+  peer → lead → human. Same two-layout pattern and the same .dg-* token classes
+  as the landing figures; the wide one is drawn at the docs content measure.
+#}
+
+<svg class="dg dg-wide" width="480" height="248" viewBox="0 0 480 248" role="img" aria-labelledby="dge-w-t dge-w-d" preserveAspectRatio="xMidYMid meet">
+  <title id="dge-w-t">The org-mode escalation chain</title>
+  <desc id="dge-w-d">Peers p2, p3 and p4 sit on the broker and decide inside their own lanes. A fork a peer cannot settle travels up to the lead, which relays. A fork needing human judgment travels up from the lead to the human, who decides.</desc>
+
+  <g class="dg-gate-box">
+    <rect x="170" y="8" width="140" height="30" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-gate-mark"><rect x="184" y="19" width="8" height="8"/></g>
+  <g class="dg-gate"><text x="200" y="28">human</text></g>
+  <g class="dg-note"><text x="322" y="28">decides</text></g>
+
+  <g class="dg-arrow"><path d="M240 76v-30" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-head"><path d="M240 40l-4 7h8z"/></g>
+  <g class="dg-note"><text x="252" y="66">fork needing judgment</text></g>
+
+  <g class="dg-box">
+    <rect x="176" y="84" width="128" height="30" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-node"><text x="190" y="104">lead</text></g>
+  <g class="dg-note"><text x="316" y="104">relays</text></g>
+
+  <g class="dg-arrow">
+    <path d="M240 152v-30" vector-effect="non-scaling-stroke"/>
+    <path d="M80 152h320M80 152v22M240 152v22M400 152v22" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-head"><path d="M240 116l-4 7h8z"/></g>
+
+  <g class="dg-box">
+    <rect x="26" y="174" width="108" height="30" vector-effect="non-scaling-stroke"/>
+    <rect x="186" y="174" width="108" height="30" vector-effect="non-scaling-stroke"/>
+    <rect x="346" y="174" width="108" height="30" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-node">
+    <text x="40" y="194">p2</text>
+    <text x="200" y="194">p3</text>
+    <text x="360" y="194">p4</text>
+  </g>
+  <g class="dg-note"><text x="150" y="228">decide in-lane · claim from the broker</text></g>
+
+  <g class="dg-spine"><path d="M80 204v14M80 218h320M400 218v-14" vector-effect="non-scaling-stroke"/></g>
+</svg>
+
+<svg class="dg dg-stack" width="320" height="404" viewBox="0 0 320 404" role="img" aria-labelledby="dge-s-t dge-s-d" preserveAspectRatio="xMidYMid meet">
+  <title id="dge-s-t">The org-mode escalation chain</title>
+  <desc id="dge-s-d">Peers p2, p3 and p4 sit on the broker and decide inside their own lanes. A fork a peer cannot settle travels up to the lead, which relays. A fork needing human judgment travels up from the lead to the human, who decides.</desc>
+
+  <g class="dg-gate-box"><rect x="0" y="8" width="170" height="32" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-gate-mark"><rect x="14" y="20" width="8" height="8"/></g>
+  <g class="dg-gate"><text x="30" y="29">human</text></g>
+  <g class="dg-note"><text x="182" y="29">decides</text></g>
+
+  <g class="dg-arrow"><path d="M40 84v-32" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-head"><path d="M40 46l-4 7h8z"/></g>
+  <g class="dg-note"><text x="54" y="74">fork needing judgment</text></g>
+
+  <g class="dg-box"><rect x="0" y="90" width="170" height="32" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-node"><text x="14" y="111">lead</text></g>
+  <g class="dg-note"><text x="182" y="111">relays</text></g>
+
+  <g class="dg-arrow"><path d="M40 166v-32" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-head"><path d="M40 128l-4 7h8z"/></g>
+  <g class="dg-note"><text x="54" y="156">fork it cannot settle</text></g>
+
+  <g class="dg-box">
+    <rect x="0" y="172" width="170" height="32" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="216" width="170" height="32" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="260" width="170" height="32" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g class="dg-node">
+    <text x="14" y="193">p2</text>
+    <text x="14" y="237">p3</text>
+    <text x="14" y="281">p4</text>
+  </g>
+  <g class="dg-note">
+    <text x="182" y="193">decide</text>
+    <text x="182" y="237">in-lane</text>
+  </g>
+
+  <g class="dg-spine"><path d="M40 292v22M40 314h240" vector-effect="non-scaling-stroke"/></g>
+  <g class="dg-lane"><text x="0" y="344">broker</text></g>
+  <g class="dg-note"><text x="0" y="372">.claude/state/sprint/&lt;channel&gt;/</text></g>
+</svg>

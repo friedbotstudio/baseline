@@ -8,11 +8,13 @@
 // Both are subset assertions: the site may say MORE (an explicitly-labeled
 // upcoming chip is fine); it must never omit a shipped surface.
 
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { ensureSiteBuilt, readRendered } from './helpers/site-build.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '..');
@@ -41,33 +43,52 @@ function extractSelectableTrackIds(workflowsJsonl) {
 }
 
 describe('public site covers the shipped CLI and track surfaces', () => {
+  // Asserts against the RENDERED page, not the .njk source. The CLI page builds
+  // its flag table from a `{% for %}` over _data/cli.cjs, so no flag literal
+  // appears in the template at all; a source scan would fail against a
+  // correct page, and the obvious "fix" would be to hand-write the table and
+  // silently abandon the derive-from-data contract. Reading obj/site is also
+  // the stronger assertion: it checks what a visitor receives.
+  before(() => {
+    ensureSiteBuilt();
+  });
+
   it('test_when_cli_flags_documented_then_site_cli_page_covers_every_flag', async () => {
-    const [cliSource, cliPage] = await Promise.all([
-      readRepoFile('bin/cli.js'),
-      readRepoFile('site-src/cli.njk'),
-    ]);
+    const cliSource = await readRepoFile('bin/cli.js');
+    const cliPage = readRendered('cli/index.html');
+    assert.ok(
+      cliPage.length > 0,
+      'obj/site/cli/index.html must exist; the CLI reference page is expected to render',
+    );
     const missing = extractCliOptionFlags(cliSource).filter(
       (flag) => !cliPage.includes(`--${flag}`),
     );
     assert.deepEqual(
       missing,
       [],
-      `site-src/cli.njk must document every bin/cli.js flag; missing: ${missing.map((f) => `--${f}`).join(', ')}`,
+      `the rendered CLI page must document every bin/cli.js flag; missing: ${missing.map((f) => `--${f}`).join(', ')}`,
     );
   });
 
   it('test_when_selectable_tracks_on_disk_then_index_chips_cover_them', async () => {
-    const [workflowsJsonl, indexPage] = await Promise.all([
-      readRepoFile('.claude/workflows.jsonl'),
-      readRepoFile('site-src/index.njk'),
-    ]);
+    // The track surface moved. The homepage used to carry a `track-chip` per
+    // track; the rewrite has it name the count and link onward, and the
+    // enumeration lives on the Workflow tracks reference page. So the assertion
+    // follows the surface: every selectable track must appear on the rendered
+    // page that claims to list them.
+    const workflowsJsonl = await readRepoFile('.claude/workflows.jsonl');
+    const tracksPage = readRendered('workflows/index.html');
+    assert.ok(
+      tracksPage.length > 0,
+      'obj/site/workflows/index.html must exist; the track reference page is expected to render',
+    );
     const missing = extractSelectableTrackIds(workflowsJsonl).filter(
-      (trackId) => !new RegExp(`track-chip[^>]*>\\s*${trackId}\\s*<`).test(indexPage),
+      (trackId) => !new RegExp(`id="track-${trackId}"`).test(tracksPage),
     );
     assert.deepEqual(
       missing,
       [],
-      `site-src/index.njk track chips must include every selectable track; missing: ${missing.join(', ')}`,
+      `the rendered track page must carry a cell for every selectable track; missing: ${missing.join(', ')}`,
     );
   });
 });

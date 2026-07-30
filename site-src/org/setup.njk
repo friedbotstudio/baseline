@@ -1,111 +1,226 @@
 ---
 layout: docs.njk
-permalink: /org/setup/index.html
-pageTitle: "Org mode setup · baseline"
-title: Getting started
-titlePrimary: Getting started
-titleAccent: "."
-description: "Stand up an org-mode pod and run one feature across lanes, end to end. The local setup and test procedure for the baseline's experimental org mode."
-eyebrow: "Experimental · Tutorial"
-lead: "A hands-on run, end to end. You will stand up a lead session and a peer pod, dispatch one small feature across lanes, and watch a question travel peer to lead to human. About ten minutes."
-active: org
-sidebarActive: org-tutorial
+title: "Org mode setup: stand up a peer pod in ten minutes · baseline"
+description: A hands-on run. Stand up a lead session and a peer pod, dispatch one feature across lanes, and watch a question travel peer to lead to human.
+heading: "Stand up a pod<br>in ten minutes."
+lead: A hands-on run, end to end. You will stand up a lead session and a peer pod, dispatch one small feature across lanes, and watch a question travel peer to lead to human.
+updated: 2026-07-28
+breadcrumb: ["docs", "modes", "org", "setup"]
+chips:
+  - { label: "experimental", tone: "warn" }
+  - { label: "~10 min" }
+facts:
+  - { label: "you need", value: "git · 2+ terminals" }
+  - { label: "pod size", value: "up to 4, incl. lead" }
+  - { label: "runs on", value: "one machine, one repo" }
 toc:
-  - { id: prereqs,  label: "Prerequisites" }
-  - { id: run,      label: "The run" }
-  - { id: recap,    label: "What just happened" }
-  - { id: teardown, label: "Teardown and limits" }
-  - { id: trouble,  label: "If something stalls", lvl: 3 }
+  - { id: "prerequisites", label: "Prerequisites" }
+  - { id: "the-run", label: "The run" }
+  - { id: "step-1", label: "1 · Turn org mode on", sub: true }
+  - { id: "step-2", label: "2 · Open the lead", sub: true }
+  - { id: "step-3", label: "3 · Register a peer", sub: true }
+  - { id: "step-4", label: "4 · Dispatch a feature", sub: true }
+  - { id: "step-5", label: "5 · Escalation chain", sub: true }
+  - { id: "step-6", label: "6 · Verify every lane finished", sub: true }
+  - { id: "what-happened", label: "What just happened" }
+  - { id: "teardown", label: "Teardown and limits" }
+  - { id: "stalls", label: "If something stalls", sub: true }
+pagestate:
+  - "flag · off by default"
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="prereqs">Prerequisites</h2>
+<div class="callout">
+  <span class="callout-mark" aria-hidden="true">!</span>
+  <div>
+    <div class="callout-title">Experimental, and opt-in.</div>
+    <p>Org mode is off by default and needs git. The channel the sessions talk over is a file-locked directory under <code class="tok">.claude/state/sprint/&lt;channel_id&gt;/</code>, which means every session in the pod has to sit on the same machine and in the same checkout. The <code class="tok">sprint-channel</code> server ships already registered in <code class="tok">.mcp.json</code>, and a peer is just an ordinary Claude Code session with no launcher and no special flags.</p>
+  </div>
+</div>
+
+<h2 id="prerequisites"><span class="sec-mark" aria-hidden="true">§ I</span> Prerequisites</h2>
+
+<div class="grid-rule grid-3 step-grid">
+  <div class="step-cell"><div class="n">01</div><p>A git repository with the baseline installed, checked out on a branch.</p></div>
+  <div class="step-cell"><div class="n">02</div><p>The <code class="tok">claude</code> CLI on your PATH, and the repo opened in it.</p></div>
+  <div class="step-cell"><div class="n">03</div><p>Two or more terminals: one lead, one or more peers.</p></div>
+</div>
+
+<h2 id="the-run"><span class="sec-mark" aria-hidden="true">§ II</span> The run</h2>
+<p class="sec-lead">Six steps. You finish with a lead and a peer pod working one feature together, having watched a question travel from peer to lead to you and the answer come back down the same chain.</p>
+
+<ol class="steps">
+
+  <li class="step" id="step-1">
+    <div class="step-num" aria-hidden="true">1</div>
+    <div class="step-body">
+      <h3>Turn org mode on</h3>
+      <p>In <code class="tok">.claude/project.json</code>, set the flag. It is <code class="tok">false</code> by default:</p>
+      <div class="plate">
+        <div class="plate-bar">
+          <span>.claude/project.json</span>
+          <span class="spacer"></span>
+          <button type="button" class="plate-copy js-copy" data-copy='"velocity": { "org_mode": { "enabled": true } }'>
+            <span class="copy-state">click to copy</span>
+            <span class="visually-hidden">Copy the config snippet</span>
+          </button>
+        </div>
+        <pre class="plate-body"><span class="t-ok">"velocity"</span>: { <span class="t-ok">"org_mode"</span>: { <span class="t-ok">"enabled"</span>: <span class="t-val">true</span> } }</pre>
+      </div>
+      <p class="step-note">Once the flag is on you can pick the <code class="tok">org</code> track at triage, and <code class="tok">org-dispatch</code> will run rather than refuse.</p>
     </div>
-    <div>
-      <div class="callout">
-        <span class="icon" aria-hidden="true">!</span>
-        <div class="body">
-          <strong>Experimental, and local for now.</strong>
-          <p>Org mode is opt-in, off by default, and requires git. Today the coordination channel runs inside the baseline's own repo through a dev launcher; the coordination server itself ships bundled with the install, so it needs no runtime dependency of its own. These steps are the local dogfood: run them in this repo.</p>
+  </li>
+
+  <li class="step" id="step-2">
+    <div class="step-num" aria-hidden="true">2</div>
+    <div class="step-body">
+      <h3>Open the lead session</h3>
+      <p>In your first terminal, from the repository root. The lead is an ordinary session; what makes it the lead is simply that it runs triage and settles whatever the peers escalate.</p>
+      <div class="plate">
+        <div class="plate-bar">
+          <span>terminal 1 · lead</span>
+          <span class="spacer"></span>
+          <button type="button" class="plate-copy js-copy" data-copy="claude mcp list">
+            <span class="copy-state">click to copy</span>
+            <span class="visually-hidden">Copy the verification command</span>
+          </button>
+        </div>
+        <pre class="plate-body"><span class="t-prompt">$</span> claude
+<span class="t-prompt">$</span> claude mcp list   <span class="t-dim"># sprint-channel ... Connected</span></pre>
+      </div>
+      <p class="step-note">If <code class="tok">sprint-channel</code> is missing, the session started before the server registered, so restart it.</p>
+    </div>
+  </li>
+
+  <li class="step" id="step-3">
+    <div class="step-num" aria-hidden="true">3</div>
+    <div class="step-body">
+        <h3>Register a peer</h3>
+        <p>Use a second terminal, or a third for a larger pod of up to four including the lead. Open an ordinary session in the same repository, then register it on the channel from inside that session.</p>
+        <div class="plate">
+          <div class="plate-bar">
+            <span>terminal 2 · peer p2</span>
+            <span class="spacer"></span>
+            <button type="button" class="plate-copy js-copy" data-copy="/companion on lobby p2">
+              <span class="copy-state">click to copy</span>
+              <span class="visually-hidden">Copy the companion command</span>
+            </button>
+          </div>
+          <pre class="plate-body"><span class="t-prompt">$</span> claude
+<span class="t-prompt">&gt;</span> /companion on lobby p2
+<span class="t-ok">  { ok: true, registered: true }</span></pre>
+        </div>
+      <p class="step-note">The channel id is yours to pick, and <code class="tok">lobby</code> is only a name both sessions agree on. If you leave the peer id off it defaults to <code class="tok">companion-1</code>. The peer now sits in the pod as an equal, polling <code class="tok">sprint_status</code> for lanes it is eligible to claim.</p>
+    </div>
+  </li>
+
+  <li class="step" id="step-4">
+    <div class="step-num" aria-hidden="true">4</div>
+    <div class="step-body">
+      <h3>Dispatch a feature from the lead</h3>
+      <p>Put a small change through triage, one that genuinely does split into two lanes, and pick the <code class="tok">org</code> track when it is offered. Drive it as far as phase 6, where <code class="tok">org-dispatch</code> splits the approved spec into lane-tagged tasks and writes them to the channel.</p>
+      <div class="plate">
+        <div class="plate-bar">
+          <span>terminal 1 · lead</span>
+          <span class="spacer"></span>
+          <button type="button" class="plate-copy js-copy" data-copy='/triage "your small two-lane change"'>
+            <span class="copy-state">click to copy</span>
+            <span class="visually-hidden">Copy the triage command</span>
+          </button>
+        </div>
+        <pre class="plate-body"><span class="t-prompt">&gt;</span> /triage <span class="t-ok">"your small two-lane change"</span>
+
+<span class="t-dim"># or hand a lane directly to a named peer:</span>
+enqueue_task { task_id: <span class="t-ok">"lane-b"</span>, brief: <span class="t-ok">"..."</span>, assignee: <span class="t-ok">"p3"</span> }</pre>
+      </div>
+      <div class="grid-rule grid-2 lane-grid">
+        <div class="cell cell-sand">
+          <div class="cell-kicker">undirected lane</div>
+          <p>Claim-any: the first free peer whose dependencies are met wins the race.</p>
+        </div>
+        <div class="cell cell-sand">
+          <div class="cell-kicker">directed lane</div>
+          <p>Only the named peer can take it. This is the lead's lever for spreading work.</p>
         </div>
       </div>
-      <ul>
-        <li>This repo, checked out on a git branch.</li>
-        <li>The <code>claude</code> CLI on your PATH, or <code>CLAUDE_BIN</code> set.</li>
-        <li>Two or more terminals: one lead, one or more peers.</li>
-      </ul>
     </div>
-  </div>
-</section>
+  </li>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="run">The run</h2>
+  <li class="step" id="step-5">
+    <div class="step-num" aria-hidden="true">5</div>
+    <div class="step-body">
+      <h3>Exercise the escalation chain</h3>
+      <p>From a peer, ask an open question with <code class="tok">ask_lead</code>. The lead decides in its own main context and replies with <code class="tok">answer_peer</code>, and the peer reads that answer back off <code class="tok">sprint_status</code>. If instead the peer hits a choice it cannot settle inside its own task, it calls <code class="tok">yield_fork</code> and stops that lane there.</p>
+      <figure class="figure figure-flow">
+        {% include "diagram-escalation.njk" %}
+      </figure>
     </div>
-    <p>Six steps. You end with a lead and a peer pod coordinating on one feature, and a question that travels peer to lead to human with the answer routed back.</p>
-  </div>
+  </li>
 
-  <h3>1 · Turn org mode on</h3>
-  <p>In <code>.claude/project.json</code>, set the flag (it is <code>false</code> by default):</p>
-  <pre><code>"velocity": { "org_mode": { "enabled": true } }</code></pre>
-  <p>With the flag on, the <code>org</code> track becomes selectable at triage and <code>org-dispatch</code> runs instead of refusing.</p>
-
-  <h3>2 · Launch the lead session</h3>
-  <p>In your first terminal, from the repo root:</p>
-  <pre><code>.claude/skills/companion/launch.sh</code></pre>
-  <p>No arguments means lead. It loads the broker pool on channel <code>lobby</code> (override with <code>SPRINT_POOL_CHANNEL</code>). Confirm the pool is connected:</p>
-  <pre><code>claude mcp list   # sprint-pool ... Connected</code></pre>
-
-  <h3>3 · Launch the peer pod</h3>
-  <p>In a second terminal, and a third for a larger pod, up to four total including the lead:</p>
-  <pre><code>.claude/skills/companion/launch.sh --peer p2</code></pre>
-  <p>Then, inside that peer session, register it on the pool:</p>
-  <pre><code>/companion on lobby p2</code></pre>
-  <p>Expect <code>{ ok: true, registered: true }</code>. The peer is now a flat member of the pod.</p>
-
-  <h3>4 · Dispatch a feature from the lead</h3>
-  <p>In the lead session, route a small, genuinely two-lane change through triage and pick the <code>org</code> track when offered:</p>
-  <pre><code>/triage "your small two-lane change"</code></pre>
-  <p>Drive it to phase 6. <code>org-dispatch</code> splits the approved spec into lane-tagged tasks and writes them to the pool; each peer claims an unblocked lane, does the bounded work in its lane, and signals done to unblock dependents.</p>
-  <p>Allocation is the lead's to control. Leave a lane open for claim-any, where the first free peer wins, or direct a lane at a named peer so only that peer takes it:</p>
-  <pre><code>enqueue_task { task_id: "lane-b", brief: "...", assignee: "p3" }</code></pre>
-  <p>A directed lane is the lead's lever to spread work across the pod or hand a specific lane to a specific peer; an undirected lane stays first-free-wins.</p>
-
-  <h3>5 · Exercise the escalation chain</h3>
-  <p>From a peer, raise a free-form question with the <code>ask_lead</code> tool. The broker pushes a <code>peer-message</code> to the lead; the lead arbitrates in its own main context and replies with <code>answer_peer</code>, and the peer receives the answer. For a task-bound fork it cannot settle, the peer uses <code>yield_fork</code> instead and stops. When a fork needs human judgment, the lead brings it to you and routes your decision back down: peer to lead to human.</p>
-
-  <h3>6 · Verify</h3>
-  <p>As lead, you are pushed <code>task-claimed</code>, <code>task-done</code>, and, when the last lane drains, <code>all-done</code>. Pushes are hints and can drop, so while you wait, pull authoritative state with the <code>sprint_status</code> tool: its <code>all_done</code> flag is true exactly when every lane has drained, so a lost push can never strand you. Confirm the lanes reached <code>done</code> and any escalation message reached <code>answered</code>.</p>
-</section>
-
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="recap">What just happened</h2>
+  <li class="step" id="step-6">
+    <div class="step-num" aria-hidden="true">6</div>
+    <div class="step-body">
+      <h3>Verify every lane finished</h3>
+      <p>Pull the authoritative state from the lead. Because the shipped peer path polls <code class="tok">sprint_status</code> rather than trusting pushed events, a notification that gets lost cannot hide an unfinished lane.</p>
+      <div class="plate">
+        <div class="plate-bar">
+          <span>terminal 1 · lead</span>
+          <span class="spacer"></span>
+          <button type="button" class="plate-copy js-copy" data-copy="sprint_status">
+            <span class="copy-state">click to copy</span>
+            <span class="visually-hidden">Copy the status command</span>
+          </button>
+        </div>
+        <pre class="plate-body"><span class="t-prompt">&gt;</span> sprint_status
+<span class="t-ok">  { all_done: true, lanes: [ done, done ], asks: [ answered ] }</span></pre>
+      </div>
+      <p class="step-note">The <code class="tok">all_done</code> flag turns true only once every lane is empty, so a missed notification cannot leave you stuck part-way.</p>
     </div>
-    <p>You ran one feature across a flat pod. Each peer decided inside its own lane; the fork a peer could not settle traveled up to the lead, and the one that needed judgment traveled up to you. That is the chain Article X governs: peers decide, the lead relays, the human decides.</p>
-  </div>
-</section>
+  </li>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="teardown">Teardown and limits</h2>
-    </div>
-    <p>Set <code>org_mode.enabled</code> back to <code>false</code> to restore the default solo and swarm behavior; the <code>org</code> track is then no longer offered. The channel exposes <code>leave_peer</code> to deregister a peer and <code>release_task</code> to return a claimed or yielded lane to the pool, and the lead may still list it.</p>
-  </div>
+</ol>
 
-  <h3 id="trouble">If something stalls</h3>
-  <ul>
-    <li><strong>org-dispatch refuses.</strong> Org mode is off, or the tree is not git. Check the flag and <code>git rev-parse --is-inside-work-tree</code>.</li>
-    <li><strong>Peer tools missing</strong> (<code>ask_lead</code> or <code>claim_task</code> not found). The session started before the server registered. Relaunch via <code>launch.sh</code>; <code>claude mcp list</code> should show <code>sprint-pool</code> connected.</li>
-    <li><strong>A peer cannot claim a lane.</strong> The lane's dependencies are not all done, or another peer won the race. Pull <code>sprint_status</code> and take another pending lane.</li>
-  </ul>
-</section>
+<div class="recap">
+  <h2 id="what-happened"><span class="sec-mark" aria-hidden="true">§ III</span> What just happened</h2>
+  <p>You ran one feature across a flat pod, with each peer deciding things inside its own lane. A choice a peer could not settle went up to the lead, and the one which needed human judgement came to you. Article X governs that chain.</p>
+</div>
+
+<h2 id="teardown"><span class="sec-mark" aria-hidden="true">§ IV</span> Teardown and limits</h2>
+<p class="sec-lead">Set <code class="tok">org_mode.enabled</code> back to <code class="tok">false</code> and you get the default solo and swarm behaviour again. Triage stops offering the <code class="tok">org</code> track.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">/companion off</div>
+    <p>Takes this session off the channel with <code class="tok">leave_peer</code> and marks its local marker inactive.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">release_task</div>
+    <p>Returns a claimed or yielded lane to the pool so another peer can take it.</p>
+  </div>
+</div>
+
+<h3 id="stalls">If something stalls</h3>
+<p class="sec-lead">Three causes cover most stalls.</p>
+
+<div class="faq-col">
+  <div class="faq-item">
+    <button type="button" class="faq-q" data-start-open aria-expanded="true" aria-controls="stall-1">
+      <span class="label"><code class="tok">org-dispatch</code> refuses</span>
+      <span class="sign" aria-hidden="true">–</span>
+    </button>
+    <p class="faq-a" id="stall-1">Either org mode is off, or the tree is not a git repository. Check the flag first, then <code class="tok">git rev-parse --is-inside-work-tree</code>.</p>
+  </div>
+  <div class="faq-item">
+    <button type="button" class="faq-q" aria-expanded="true" aria-controls="stall-2">
+      <span class="label">Peer tools missing: <code class="tok">ask_lead</code> or <code class="tok">claim_task</code> not found</span>
+      <span class="sign" aria-hidden="true">–</span>
+    </button>
+    <p class="faq-a" id="stall-2">The session started before the server registered. Restart it; <code class="tok">claude mcp list</code> should show <code class="tok">sprint-channel</code> connected.</p>
+  </div>
+  <div class="faq-item">
+    <button type="button" class="faq-q" aria-expanded="true" aria-controls="stall-3">
+      <span class="label">A peer cannot claim a lane</span>
+      <span class="sign" aria-hidden="true">–</span>
+    </button>
+    <p class="faq-a" id="stall-3">Either the lane's dependencies are not all done, another peer won the race for it, or the lane is directed at a different peer. Pull <code class="tok">sprint_status</code> and take another pending lane instead.</p>
+  </div>
+</div>

@@ -1,0 +1,126 @@
+---
+layout: docs.njk
+title: "PM mode: pin down the ask before anything is built · baseline"
+description: "How to run the PM-mode brainstorm: a short question round that captures the requirement before any intake, spec or test gets drafted, and how to skip it or pair it with engineer mode."
+heading: "Pin down the ask<br>before anything is built."
+lead: "A vague request turns into a confident spec, and the spec is wrong. PM mode puts a short question round in front of the drafting. It fills in what it can from the request and the repo, then asks you only about the gaps that would change what gets built."
+updated: 2026-07-29
+breadcrumb: ["docs", "how-to", "pm mode"]
+facts:
+  - { label: "brief", value: "docs/brief/" }
+  - { label: "questions", value: "2 rounds, at most" }
+  - { label: "engineer mode", value: "off by default" }
+toc:
+  - { id: "run", label: "Check when the round runs" }
+  - { id: "answer", label: "Answer the questions" }
+  - { id: "confirm", label: "Confirm the brief" }
+  - { id: "skip", label: "Skip the round" }
+  - { id: "codesign", label: "Turn on engineer mode" }
+---
+
+<h2 id="run"><span class="sec-mark" aria-hidden="true">§ I</span> Check when the round runs</h2>
+
+<p>PM mode fires at Step 0.5 of whichever skill starts your workflow: <code class="tok">/intake</code>, <code class="tok">/spec</code> or <code class="tok">/tdd</code>. It runs before that skill opens its template, so the answers shape the first draft instead of correcting it later.</p>
+
+<p><code class="tok">/triage</code> decides whether it runs, and writes <code class="tok">skip_brainstorm</code> into <code class="tok">.claude/state/workflow.json</code> on every workflow. It sets the flag to <code class="tok">true</code> when your request already comes from a spec chapter, a roadmap, a backlog entry or an approved epic. It also sets <code class="tok">true</code> for fresh work that already names who is affected, when the problem shows up, and what should happen instead.</p>
+
+<p>The flag reads <code class="tok">false</code> in one case: the request is genuinely unclear, and your answers would change what gets built. A workflow with no flag at all runs the round.</p>
+
+<h2 id="answer"><span class="sec-mark" aria-hidden="true">§ II</span> Answer the questions</h2>
+
+<p class="sec-lead">Claude works out as much as it can before it asks you anything. It reads your request, the artifact triage cited, repo memory and the conversation so far, then fills in six fields.</p>
+
+<div class="grid-rule grid-3 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">actor</div>
+    <p>A real role or person. "Users" is too broad to count.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">trigger</div>
+    <p>When the problem shows up.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">current_state</div>
+    <p>What happens today, as observed. Guesses stay out.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">desired_state</div>
+    <p>What should happen instead.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">non_goals</div>
+    <p>What this work leaves alone.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">solution_leakage</div>
+    <p>Solution-shaped verbs in your request: <code class="tok">add X</code>, <code class="tok">use Y</code>, <code class="tok">refactor to</code>.</p>
+  </div>
+</div>
+
+<p>A field it can fill with cited support is filled, and you never see a question about it. Only the gaps it cannot fill, and that would change the build, reach you. You get two rounds of those at most.</p>
+
+<p>The questions stay off solutions. <code class="tok">discipline.mjs</code> scans each one before you see it. It catches solution verbs, library names such as Redis or PostgreSQL, and phrasing like "we could" or "I recommend". Anything it flags gets rewritten first.</p>
+
+<p>Propose a solution yourself and it lands under <code class="tok">solution_leakage</code>. The questions keep working on the need behind it, because that is what the spec has to be right about.</p>
+
+<p>Gaps still open after two rounds become <code class="tok">open_questions</code> in the brief, and travel with the work from there.</p>
+
+<h2 id="confirm"><span class="sec-mark" aria-hidden="true">§ III</span> Confirm the brief</h2>
+
+<p>Claude reads the brief back to you and offers three answers: capture it, edit one section, or start over. Editing sends you back to the questions for that one field.</p>
+
+<p>Say yes and it writes <code class="tok">docs/brief/&lt;slug&gt;.md</code> with the six fields in a fixed order. Your entry skill picks that file up as its main input, so each field flows into the matching section of the intake or spec.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>docs/brief/&lt;slug&gt;.md</span>
+  </div>
+  <pre class="plate-body"><span class="t-ok">actor</span>            <span class="t-dim">who is affected</span>
+<span class="t-ok">trigger</span>          <span class="t-dim">when it happens</span>
+<span class="t-ok">current_state</span>    <span class="t-dim">what happens today</span>
+<span class="t-ok">desired_state</span>    <span class="t-dim">what should happen</span>
+<span class="t-ok">non_goals</span>        <span class="t-dim">what stays untouched</span>
+<span class="t-ok">solution_leakage</span> <span class="t-dim">solutions you proposed</span></pre>
+</div>
+
+<p>Reject it five times in a row and the round stops and hands the work back to you.</p>
+
+<div class="callout">
+  <span class="callout-mark" aria-hidden="true">!</span>
+  <div>
+    <div class="callout-title">Running the entry skill twice asks you once.</div>
+    <p>If <code class="tok">docs/brief/&lt;slug&gt;.md</code> is already on disk for that slug, the round short-circuits and reads the existing file. Only the brief lasts. <code class="tok">.claude/state/brainstorm/&lt;slug&gt;.json</code> is scratch for picking a half-finished dialogue back up in a later session, and it is left out of the archive.</p>
+  </div>
+</div>
+
+<h2 id="skip"><span class="sec-mark" aria-hidden="true">§ IV</span> Skip the round</h2>
+
+<p>Put <code class="tok">--no-brainstorm</code> in your triage request and the round returns straight away. No question ever fires.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>claude code</span>
+    <span class="spacer"></span>
+    <button type="button" class="plate-copy js-copy" data-copy='/triage "your request --no-brainstorm"'>
+      <span class="copy-state">click to copy</span>
+      <span class="visually-hidden">Copy the triage command</span>
+    </button>
+  </div>
+  <pre class="plate-body"><span class="t-prompt">&gt;</span> /triage <span class="t-ok">"your request --no-brainstorm"</span></pre>
+</div>
+
+<p>Two tracks stay quiet on their own. <code class="tok">chore</code> and <code class="tok">freeform</code> have no <code class="tok">/intake</code>, <code class="tok">/spec</code> or <code class="tok">/tdd</code> step for the round to hook into, so it cannot fire there by design.</p>
+
+<p>The skip path matches the behaviour the baseline had before PM mode existed, byte for byte. Opting out costs you the brief and nothing else.</p>
+
+<h2 id="codesign"><span class="sec-mark" aria-hidden="true">§ V</span> Turn on engineer mode</h2>
+
+<p class="sec-lead">PM mode captures what to build. Engineer mode captures how, and it ships off. Turn it on with <code class="tok">--codesign</code> on your triage request, or by setting <code class="tok">codesign_mode</code> in <code class="tok">workflow.json</code> yourself.</p>
+
+<p>With it on, <code class="tok">/spec</code> Step 1.5 hunts for the technical calls your expertise should decide. A computer-vision approach, a model architecture, a numerical method, an IPC pattern. Claude names its pick for each one and gives you a short reason. Then it asks: approve that pick, offer your own, or talk the trade-off through.</p>
+
+<p>Your words win. Override the pick and your reasoning goes into the spec's <code class="tok">## Decisions</code> section as a blockquote, with the recorded choice being yours. <code class="tok">spec-lint</code> check #4 fails a spec that has engineer mode on and no <code class="tok">## Decisions</code> heading. With the mode off, that check drops out of the report entirely.</p>
+
+<p>Triage will suggest engineer mode when your request mentions one of a fixed set of words, among them <code class="tok">cryptographic</code>, <code class="tok">consensus</code>, <code class="tok">realtime</code>, <code class="tok">kernel</code> and <code class="tok">algorithm design</code>. It asks; the switch is yours to throw.</p>
+
+<p>Each decision can come back around three times. Say <code class="tok">/integrate</code> fails later and the cause is the spec, Claude reopens the decision that caused it. The fourth pass on the same decision stops and asks for you.</p>

@@ -1,0 +1,24 @@
+<!-- Source for site-src/assets/og-card.png. Lives outside site-src so it is not
+     shipped: X and Facebook do not reliably render an SVG og:image, so the PNG
+     is what crawlers get. Regenerate after editing:
+       rsvg-convert -w 1200 -h 630 -b "#15130f" \
+         docs/design/og-card.svg -o site-src/assets/og-card.png -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="baseline — a discipline layer for Claude Code">
+  <rect width="1200" height="630" fill="#15130f"/>
+  <circle cx="88" cy="92" r="9" fill="#e0873f"/>
+  <text x="112" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="30" font-weight="600" fill="#f4ede2">baseline</text>
+  <text x="252" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="24" fill="#8a837a">by friedbotstudio</text>
+  <text x="88" y="266" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="92" font-weight="600" fill="#f4ede2" letter-spacing="-2">Claude cannot</text>
+  <text x="88" y="368" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="92" font-weight="600" fill="#f4ede2" letter-spacing="-2">self-approve.</text>
+  <text x="88" y="438" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="30" fill="#c8c0b3">Rules enforced at the tool boundary, where the model cannot reach.</text>
+  <g font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">
+    <rect x="88" y="500" width="1024" height="1" fill="#3a352d"/>
+    <text x="88"  y="556" font-size="26" font-weight="600" fill="#e0873f">26</text>
+    <text x="128" y="556" font-size="26" fill="#8a837a">hooks</text>
+    <text x="268" y="556" font-size="26" font-weight="600" fill="#e0873f">4</text>
+    <text x="292" y="556" font-size="26" fill="#8a837a">consent gates</text>
+    <text x="540" y="556" font-size="26" font-weight="600" fill="#e0873f">1</text>
+    <text x="564" y="556" font-size="26" fill="#8a837a">subagent</text>
+    <text x="1112" y="556" font-size="26" fill="#8a837a" text-anchor="end">Apache 2.0</text>
+  </g>
+</svg>

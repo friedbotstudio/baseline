@@ -1,0 +1,143 @@
+---
+layout: docs.njk
+title: "Roadmap planner: prove the build order is right · baseline"
+description: "How to prove a roadmap's task order is right: re-derive the plan from your spec, build the real dependency graph, and read a delta report that names every producer-after-consumer error."
+heading: "Prove the order,<br>then argue about it."
+lead: "Reading a roadmap top to bottom will never tell you the order is wrong. A plan is a schedule over a dependency graph, and the common mistake is scheduling something before the thing it needs. roadmap-planner re-derives the plan from your spec, builds that graph, and hands you a list of what it found."
+updated: 2026-07-29
+breadcrumb: ["docs", "how-to", "roadmap planner"]
+facts:
+  - { label: "outputs", value: "proposal + delta" }
+  - { label: "helper", value: "graph.mjs" }
+  - { label: "adoption", value: "yours" }
+toc:
+  - { id: "choose", label: "Choose the roadmap planner" }
+  - { id: "inputs", label: "Set the inputs" }
+  - { id: "derive", label: "Build the derivation" }
+  - { id: "order", label: "Check the order" }
+  - { id: "ranking", label: "Review the ranking" }
+  - { id: "delta", label: "Read the delta" }
+---
+
+<h2 id="choose"><span class="sec-mark" aria-hidden="true">§ I</span> Choose the roadmap planner</h2>
+
+<p>Run it when you suspect the build order is wrong and cannot point at why. Run it too when you want to know whether a plan has gaps, loops, or epics split so finely that the ceremony costs more than the work.</p>
+
+<p>When one task produces a contract, a schema, an SDK or a service, and the task that consumes it is scheduled first, you have the failure this skill hunts. Everyone reads past it. Each line looks reasonable on its own, and the problem lives in the space between two of them (which is why a careful read will miss it).</p>
+
+<div class="callout">
+  <span class="callout-mark" aria-hidden="true">!</span>
+  <div>
+    <div class="callout-title">It proposes. You adopt.</div>
+    <p>The planner writes two files and leaves your roadmap alone. Your plan usually holds context the spec left out, so the derivation exists to challenge it and adoption stays your call.</p>
+  </div>
+</div>
+
+<h2 id="inputs"><span class="sec-mark" aria-hidden="true">§ II</span> Set the inputs</h2>
+
+<p class="sec-lead">Three inputs, of which two carry sensible defaults, so a first run can usually name only the corpus.</p>
+
+<div class="grid-rule grid-3 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">corpus</div>
+    <p>The documents that hold your intent. A spec tree, a product requirements doc, a seed file, architecture decision records. Actors and use cases usually sit in the product docs; modules and services in the design docs.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">existing roadmap</div>
+    <p>The plan being checked. Defaults to <code class="tok">project.json → roadmap.path</code>, which the baseline points at <code class="tok">docs/roadmap-execution-plan.md</code>.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">buckets</div>
+    <p>Your delivery lanes, named by you. One lane is fine. They only break ties in the ordering, so getting them wrong costs little.</p>
+  </div>
+</div>
+
+<p>If there is no spec to read, the planner falls back to your README and issue tracker, and it records that thin evidence as a finding in its own right. Where no roadmap exists yet, the comparison is skipped and you simply get the derived plan.</p>
+
+<h2 id="derive"><span class="sec-mark" aria-hidden="true">§ III</span> Build the derivation</h2>
+
+<p>The derivation runs from actors down to tasks, and every level must trace back to the one above it, so that any task you cannot explain by pointing at a use case will show up as a finding rather than as a plausible line in a list.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>the chain</span>
+  </div>
+  <pre class="plate-body"><span class="t-ok">actors</span>        <span class="t-dim">who uses the system</span>
+<span class="t-ok">use cases</span>     <span class="t-dim">what each actor does · cited to a doc</span>
+<span class="t-ok">modules</span>       <span class="t-dim">grouped by what they do, named for capability</span>
+<span class="t-ok">epics</span>         <span class="t-dim">a capability a demo can show</span>
+<span class="t-ok">tasks</span>         <span class="t-dim">infrastructure · business logic · interface</span></pre>
+</div>
+
+<p>To keep reuse apart from assembly, modules split into two families: platform is what you reuse, and solution is the assembly for one customer. The reasoning behind each call is written down, because someone will want to argue with it later.</p>
+
+<p>One rule runs through every step: derive first, then reconcile. Your spec probably already names its modules and roles. Deriving fresh from use cases and comparing is the point. Every disagreement between the two is a finding, and papering over it loses the only signal the exercise produces.</p>
+
+<p>A cross-cutting concern is one that every feature is expected to pick up for free: security, audit, tenancy, observability. Because nothing visibly breaks without them, a plain dependency graph will push them to the very end of the plan, and that is how they come to be retrofitted.</p>
+
+<p>So each of those concerns is split in two. The contract that consumers are written against is scheduled early, while the backend behind it can wait. A soft edge runs from the first consumer back to the contract and the helper floats it forward. Should a feature epic carry no edge at all to a concern your project treats as automatic, that absence is itself a finding.</p>
+
+<h2 id="order"><span class="sec-mark" aria-hidden="true">§ IV</span> Check the order</h2>
+
+<p class="sec-lead">Every task gets an id and declares what it depends on. Then a script decides whether the order holds, so the answer is computed rather than argued.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>shell</span>
+  </div>
+  <pre class="plate-body"><span class="t-prompt">$</span> node .claude/skills/roadmap-planner/scripts/graph.mjs analyze tasks.json
+<span class="t-ok">exit 0</span>  <span class="t-dim">acyclic, and every task follows what it depends on</span>
+<span class="t-blocked">exit 2</span>  <span class="t-dim">a cycle, printed with the path around it</span>
+<span class="t-blocked">exit 3</span>  <span class="t-dim">a task scheduled at or before something it needs</span></pre>
+</div>
+
+<p>A cycle means two tasks each wait on the other, so no valid order exists at all. Fixing one takes a split: pull whatever both need into a third task, point both at it, and run the analysis again until the graph comes back clean. Finding the loop is the script's job, while the judgement about where to cut it will always be yours.</p>
+
+<p>Two more commands round it out. <code class="tok">order</code> prints one valid sequence with ties broken by bucket and then by id, which becomes the derived roadmap's spine, and <code class="tok">compact</code> lists the tasks worth merging.</p>
+
+<p>However neatly lanes and categories group the work, that grouping is only a first guess. Where the guess and the graph disagree the graph wins, and the disagreement is written into the delta where you can see it.</p>
+
+<h2 id="ranking"><span class="sec-mark" aria-hidden="true">§ V</span> Review the ranking</h2>
+
+<p>Edges can only answer whether an order is legal. Which of the legal orders is a good one is a separate question, and scoring is what answers that; it will only ever rank tasks that are already free to start, so a score can never pull work in front of something it depends on.</p>
+
+<p>Each task carries two scores, and that split is the whole idea. A single number quietly encodes one stakeholder's view, usually the business one, and engineering work starves. So value to the product is scored by the product owner, and maintainability, diagnosability and security posture are scored by whoever owns the architecture.</p>
+
+<p>The second seat is structural, and it exists to stop engineering discipline being graded by the person who wants the feature. That grading is the root of how seams come to be scheduled after the code which needed them.</p>
+
+<p>Ranking is a weighted average of the two, divided by effort, applied to the ready set. It never crosses a hard edge. One useful effect falls out for free: a low-value, high-effort task drifts as late as its dependents allow, so deferral needs no special marker. Where the score gets a call wrong, you override it and give a reason, and the reason is kept. Scoring advises and never blocks.</p>
+
+<h2 id="delta"><span class="sec-mark" aria-hidden="true">§ VI</span> Read the delta</h2>
+
+<p class="sec-lead">Two files land under <code class="tok">docs/roadmap/</code>: the derived plan, and what it disagrees with.</p>
+
+<p>The delta opens with a verdict in a single paragraph: whether the current order is sound, and which three fixes are worth doing. Read that first. Everything after it is ordered by how much the finding is likely to cost you.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">1 · ordering violations</div>
+    <p>A task scheduled before something it needs. The finding names the task, the prerequisite, and the fix. This is the one you ran the planner for.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">2 · cycles</div>
+    <p>Loops that were found, and how each was broken.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">3 · missing and extra</div>
+    <p>In the derivation but absent from your plan, or the reverse. Each traced to a use case, or flagged as having none.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">4 · compaction</div>
+    <p>Epics split too finely. Two tasks in one lane with nothing between them can merge, and so can a chain where the second waits only on the first.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">5 · spec disagreements</div>
+    <p>Where the derivation and your written spec describe different systems.</p>
+  </div>
+</div>
+
+<p>Merging is worth real time, because every task boundary buys another round of intake, spec and review, and a plan cut too fine will spend its budget on ceremony. Keep merging for as long as the merge hides no dependency and the result is still a sane slice. Then stop.</p>
+
+<p>Two rules bound what you should trust here. Every task must trace to a use case, and every use case to an actor and a citation. If a task has nothing behind it, it is probably gold-plating; a use case with no task is a hole in the plan.</p>
+
+<p>On a large corpus, the reading phase runs as parallel readers over slices of the docs, merged in one pass before the graph work begins. The ordering itself stays in one place, because a dependency graph assembled from four opinions is four graphs.</p>

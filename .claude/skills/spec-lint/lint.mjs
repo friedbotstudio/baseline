@@ -159,9 +159,12 @@ function checkDesignCalls(spec, pj) {
   try { uiGlobs = pj?.tdd?.ui_globs || []; } catch { return ['SKIP', 'tdd.ui_globs not configured']; }
   if (!uiGlobs.length) return ['SKIP', 'tdd.ui_globs is empty'];
 
+  // Must match the guard exactly, including the bolded template form
+  // (`**Write set**: ...`) and the prose form — see spec_design_calls_guard.mjs
+  // and hooks/lib/write-set-profile.mjs.
   const writeSetPaths = new Set();
   for (const line of spec.split('\n')) {
-    const m = line.match(/write[_\s]set\s*:\s*(.+)$/i);
+    const m = line.match(/write[_\s]set\*{0,2}\s*(?::|is\s)\s*(.+)$/i);
     if (m) {
       for (const tok of m[1].split(/[`,\s|]+/)) {
         const t = tok.replace(/\*/g, '').trim();

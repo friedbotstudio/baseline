@@ -1,0 +1,104 @@
+[
+  {
+    "group": null,
+    "type": "explanation",
+    "items": [
+      {
+        "label": "Overview",
+        "url": "/overview/"
+      }
+    ]
+  },
+  {
+    "group": "Getting started",
+    "type": "tutorial",
+    "blurb": "Learn by doing. These walk a first run end to end.",
+    "items": [
+      {
+        "label": "Install",
+        "url": "/install/"
+      },
+      {
+        "label": "Org Mode tutorial",
+        "url": "/org/setup/"
+      }
+    ]
+  },
+  {
+    "group": "How-to guides",
+    "type": "how-to",
+    "blurb": "You know the subject already. One goal, one set of steps.",
+    "items": [
+      {
+        "label": "Epics",
+        "url": "/epics/"
+      },
+      {
+        "label": "PM mode",
+        "url": "/pm-mode/"
+      },
+      {
+        "label": "Standup",
+        "url": "/standup/"
+      },
+      {
+        "label": "Roadmap planner",
+        "url": "/roadmap/"
+      }
+    ]
+  },
+  {
+    "group": "Reference",
+    "type": "reference",
+    "blurb": "Names, flags, exit codes and tables, for while you work.",
+    "items": [
+      {
+        "label": "CLI",
+        "url": "/cli/"
+      },
+      {
+        "label": "Workflow tracks",
+        "url": "/workflows/"
+      },
+      {
+        "label": "Hooks",
+        "url": "/hooks/"
+      },
+      {
+        "label": "Skills",
+        "url": "/skills/"
+      },
+      {
+        "label": "MCP servers",
+        "url": "/mcp/"
+      }
+    ]
+  },
+  {
+    "group": "Concepts",
+    "type": "explanation",
+    "blurb": "Background and design decisions. Read away from the keyboard.",
+    "items": [
+      {
+        "label": "Governance",
+        "url": "/governance/"
+      },
+      {
+        "label": "Memory",
+        "url": "/memory/"
+      },
+      {
+        "label": "Velocity",
+        "url": "/velocity/"
+      },
+      {
+        "label": "Swarm mode",
+        "url": "/swarm/"
+      },
+      {
+        "label": "Org mode",
+        "url": "/org/"
+      }
+    ]
+  }
+]

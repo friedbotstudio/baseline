@@ -1,0 +1,14 @@
+{
+  "rightsize": "After the tests pass, measures the real diff and drops ceremony a tiny change never needed.",
+  "drift_reverify_skip": "Skips re-checking a memory entry that was already verified this session.",
+  "checker_fanout": "Runs the spec checkers side by side instead of one after another.",
+  "durable_plan": "Keeps the plan on disk, so a workflow survives losing its session.",
+  "code_review": "Reviews the diff along several lines at once: security, simplicity, structure.",
+  "design_judge": "Scores design options against each other before one is picked.",
+  "sprint_mode": "Lets the coordination channel hand tasks to helper sessions.",
+  "power_mode": "Runs a batch of already-specified tickets through the mechanical phases once.",
+  "org_mode": "Opens the pod of peer sessions behind the org track.",
+  "notifier": "Tells you when a run stops and needs you.",
+  "mutation_oracle": "Mutates your source to find out whether the tests would have caught it.",
+  "ac_conformance": "Checks each acceptance criterion against the test that claims to cover it."
+}

@@ -1,45 +1,126 @@
 ---
 layout: base.njk
-subtitle: "/ docs"
+bodyClass: is-docs
 ---
-<div class="docs-shell">
-  {% include "sidebar.njk" %}
+{#
+  Docs shell — Read surface. Three columns inside the shared 1200px .wrap so
+  the utility bar and the docs content share one left edge; a wider docs frame
+  would make the chrome disagree with itself between surfaces.
 
-  <main id="main" class="article">
-    {%- if heroSymbol %}
-    <header class="docs-hero">
-      <div class="docs-hero-text">
-        {%- if eyebrow %}
-        <p class="eyebrow">{{ eyebrow }}</p>
-        {%- endif %}
-        <h1>{{ titlePrimary or title }}<span class="accent">{{ titleAccent or "." }}</span></h1>
-        {%- if lead %}
-        <p class="lead">{{ lead | safe }}</p>
-        {%- endif %}
+  The sidebar renders from _data/docsnav.json, which carries the committed IA
+  recorded in PRODUCT.md. Entries without a `url` are pages that do not exist
+  yet: they render as plain text rather than as links, so the IA is honest
+  about its own debt instead of shipping a dozen 404s.
+#}
+<div class="wrap docs-grid">
+
+    <details class="docs-side" open>
+      <summary class="docs-side-toggle">
+        <span>Documentation menu</span>
+        <span class="chev" aria-hidden="true">+</span>
+      </summary>
+      <nav class="docs-side-inner" aria-label="Documentation">
+        {% for group in docsnav %}
+        <div class="docs-group">
+          {% if group.group %}<div class="docs-group-label">{{ group.group }}</div>{% endif %}
+          {# The Diátaxis type names mean nothing to a reader who does not know
+             the framework, so each group says what it is for. #}
+          {% if group.blurb %}<p class="docs-group-blurb">{{ group.blurb }}</p>{% endif %}
+          {% for item in group.items %}
+            {% if item.url and item.url == page.url %}
+              <span class="docs-link is-current" aria-current="page"><span class="rail" aria-hidden="true"></span>{{ item.label }}</span>
+            {% elif item.url %}
+              <a class="docs-link" href="{{ item.url | rel }}">{{ item.label }}</a>
+            {% else %}
+              <span class="docs-link is-pending">{{ item.label }}<span class="soon">soon</span></span>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </nav>
+    </details>
+
+    <article class="docs-main">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        {% for c in breadcrumb %}<span>{{ c }}</span>{% if not loop.last %}<span class="sep" aria-hidden="true">/</span>{% endif %}{% endfor %}
+      </nav>
+
+      {# The type chip is resolved from docsnav rather than declared per page,
+         so a page's advertised type and its sidebar group cannot drift apart.
+         Front-matter `chips` adds page-specific facts on top; `typeChip: false`
+         opts out. #}
+      {% set navEntry = docsnav | docsEntry %}
+      {% if chips or (navEntry.type and typeChip !== false) %}
+      <div class="chip-set">
+        {% if navEntry.type and typeChip !== false %}<span class="doc-chip chip-type">{{ navEntry.type }}</span>{% endif %}
+        {% for chip in chips %}<span class="doc-chip{% if chip.tone %} chip-{{ chip.tone }}{% endif %}">{{ chip.label }}</span>{% endfor %}
       </div>
-      <div class="docs-hero-symbol">
-        {% include "hero-symbols/" + heroSymbol + ".njk" %}
+      {% endif %}
+
+      <h1>{{ heading | safe }}</h1>
+      {% if lead %}<p class="doc-lead">{{ lead | safe }}</p>{% endif %}
+
+      {% if facts %}
+      <div class="fact-strip">
+        {% for f in facts %}
+        <div class="fact">
+          <div class="fact-label">{{ f.label }}</div>
+          <div class="fact-value">{{ f.value }}</div>
+        </div>
+        {% endfor %}
       </div>
-    </header>
-    {%- else %}
-    {%- if eyebrow %}
-    <p class="eyebrow">{{ eyebrow }}</p>
-    {%- endif %}
-    <h1>{{ titlePrimary or title }}<span class="accent">{{ titleAccent or "." }}</span></h1>
-    {%- if lead %}
-    <p class="lead">{{ lead | safe }}</p>
-    {%- endif %}
-    {%- endif %}
+      {% endif %}
 
-    {{ content | safe }}
+      {{ content | safe }}
 
-    <footer class="docfoot">
-      <span>Last updated {{ site.lastUpdated }}</span>
-      <a href="{{ site.repo }}" class="docfoot-edit">Edit on GitHub <span class="arr">→</span></a>
-    </footer>
-  </main>
+      <div class="docfoot">
+        <span>last updated {{ updated | isoDate }}</span>
+        <a href="{{ site.repo }}/blob/main/site-src{{ page.inputPath | replace('./site-src', '') }}">edit on GitHub →</a>
+      </div>
 
-  {%- if toc %}
-  {% include "toc.njk" %}
-  {%- endif %}
+      {# Derived from docsnav order; front matter can override for a page that
+         should point somewhere non-adjacent. Each side renders only when a
+         neighbour exists, so the first and last pages get one cell. #}
+      {% set pg = pager or (docsnav | docsPager) %}
+      {% if pg.prev or pg.next %}
+      <nav class="pager grid-rule{% if pg.prev and pg.next %} grid-2{% endif %}" aria-label="Documentation pages">
+        {% if pg.prev %}
+        <a class="pager-cell" href="{{ pg.prev.url | rel }}">
+          <div class="pager-dir">← previous</div>
+          <div class="pager-title">{{ pg.prev.label }}</div>
+          {% if pg.prev.group %}<div class="pager-group">{{ pg.prev.group }}</div>{% endif %}
+        </a>
+        {% endif %}
+        {% if pg.next %}
+        <a class="pager-cell pager-next" href="{{ pg.next.url | rel }}">
+          <div class="pager-dir">next →</div>
+          <div class="pager-title">{{ pg.next.label }}</div>
+          {% if pg.next.group %}<div class="pager-group">{{ pg.next.group }}</div>{% endif %}
+        </a>
+        {% endif %}
+      </nav>
+      {% endif %}
+    </article>
+
+    <aside class="docs-toc" aria-label="On this page">
+      <div class="docs-group-label">on this page</div>
+        <nav class="toc-list">
+          {% for t in toc %}
+          <a class="toc-link{% if t.sub %} is-sub{% endif %}" href="#{{ t.id }}"><span class="rail" aria-hidden="true"></span>{{ t.label }}</a>
+          {% endfor %}
+        </nav>
+        {# The status/release/license trio is identical on every docs page, so
+           the layout owns it and derives the release from site.versionMinor.
+           Hand-typing it per page meant three copies of the version number,
+           one of which was already a literal `v0.20`. Front-matter `pagestate`
+           appends page-specific rows, e.g. a feature flag. #}
+        <div class="page-state">
+          <div class="docs-group-label state-label">page state</div>
+          <span>status · public alpha</span>
+          <span>release · {{ site.versionMinor }}</span>
+          <span>license · {{ site.license }}</span>
+          {% for s in pagestate %}<span>{{ s }}</span>{% endfor %}
+        </div>
+    </aside>
+
 </div>

@@ -128,7 +128,10 @@ describe('branch_guard — governance lockstep (roster 26)', () => {
       'CLAUDE.md states the roster count');
     assert.match(claude, /`branch_guard`/, 'CLAUDE.md Article VIII table names branch_guard');
 
-    const njk = read('site-src/hooks.njk');
-    assert.match(njk, /branch_guard/, 'docsite hooks page lists branch_guard');
+    // Read the RENDERED page, not the template. hooks.njk builds its roster from
+    // a `{% for %}` over _data/roster.cjs, so no hook name appears in the source;
+    // a template scan here would fail against a correct page.
+    const rendered = read('obj/site/hooks/index.html');
+    assert.match(rendered, /branch_guard/, 'docsite hooks page lists branch_guard');
   });
 });

@@ -435,10 +435,18 @@ describe('post-refactor invariants', () => {
   });
 
   it('test_harness_state_is_3_fields_only', async () => {
-    const raw = await fs.readFile(
-      path.join(REPO_ROOT, '.claude/state/harness_state'),
-      'utf8'
-    );
+    // No harness_state means no workflow is in flight, which is a sanctioned
+    // resting state — the file is written when the loop arms and removed when a
+    // workflow ends or is abandoned. The invariant is about its SHAPE when it
+    // exists, so absence passes rather than erroring on ENOENT.
+    const statePath = path.join(REPO_ROOT, '.claude/state/harness_state');
+    let raw;
+    try {
+      raw = await fs.readFile(statePath, 'utf8');
+    } catch (err) {
+      if (err.code === 'ENOENT') return;
+      throw err;
+    }
     const parsed = JSON.parse(raw);
     const keys = Object.keys(parsed).sort();
     assert.deepEqual(

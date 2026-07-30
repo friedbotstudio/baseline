@@ -1,0 +1,36 @@
+---
+permalink: /robots.txt
+eleventyExcludeFromCollections: true
+layout: null
+crawlers:
+  - group: "Training crawlers"
+    agents: ["GPTBot", "ClaudeBot", "Google-Extended"]
+  - group: "Answer-engine search crawlers"
+    agents: ["OAI-SearchBot", "Claude-SearchBot", "PerplexityBot", "Googlebot"]
+  - group: "User-initiated fetchers"
+    agents: ["ChatGPT-User", "Claude-User", "Perplexity-User"]
+---
+# baseline — the docs site for the Claude Code constitutional overlay.
+#
+# The only absolute origin in this file is the Sitemap line, and it is rendered
+# from site.url. A CNAME change therefore carries through with no edit here.
+#
+# Every crawler is allowed, and each one is named explicitly rather than left to
+# inherit the default group. An explicit Allow survives a future tightening of
+# the wildcard, and it documents which agents were considered.
+#
+# Tokens are the ones the vendors currently document. Retired spellings
+# (anthropic-ai, Claude-Web) are deliberately absent: a rule keyed on a token no
+# crawler sends is a rule that reads as policy and enforces nothing.
+{% for entry in crawlers %}
+# {{ entry.group }}
+{%- for agent in entry.agents %}
+User-agent: {{ agent }}
+Allow: /
+{% endfor %}
+{%- endfor %}
+# Everything else
+User-agent: *
+Allow: /
+
+Sitemap: {{ site.url }}/sitemap.xml

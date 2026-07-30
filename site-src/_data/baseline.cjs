@@ -23,7 +23,8 @@ module.exports = async () => {
   const c = deriveCounts(repoRoot);
 
   return {
-    hooks: { total: c.hooks },
+    // `totalWord` lets prose spell the count without a second hardcoded copy.
+    hooks: { total: c.hooks, totalWord: numToWord(c.hooks) },
     skills: {
       total: c.skills,
       categoriesWord: numToWord(Object.keys(SKILL_CATEGORIES).length),
@@ -36,7 +37,15 @@ module.exports = async () => {
     gates: 4,
     phaseGates: 3,
     runtimeGates: 1,
-    tracks: { canonical: c.tracks.canonical, subTracks: c.tracks.subTracks },
+    // `shipped` is the count a "ships in the pristine template" claim MUST use.
+    // Naming it separately keeps a shipped claim from silently being rewired to
+    // a live-tree count, which is how the site came to assert 9 while the
+    // template shipped 8. `source` records which tree the deriver read.
+    tracks: {
+      canonical: c.tracks.canonical,
+      shipped: c.tracks.canonical,
+      subTracks: c.tracks.subTracks,
+    },
     mcpServersWord: numToWord(c.mcpServers),
     size: { unpacked: '1.5 MB', plantumlJar: '19 MB' },
   };

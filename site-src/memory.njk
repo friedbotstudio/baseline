@@ -1,125 +1,175 @@
 ---
 layout: docs.njk
-permalink: /memory/index.html
-pageTitle: "Memory · baseline"
-title: Memory
-titlePrimary: Memory
-titleAccent: "."
-description: "Seven canonical categories hold long-term project knowledge; three more files handle staging, session continuity, and a durable local thread trail. Every cited entry is re-verified before it is trusted."
-eyebrow: Reference
-lead: "Memory is what stops the next session relearning what this one already established. Seven canonical categories hold long-term project knowledge, and three more files handle staging, continuity, and a durable local thread."
-active: ""
-sidebarActive: memory
-heroSymbol: memory
+title: "Memory: what the repo remembers about itself · baseline"
+description: "How project memory works: seven canonical files, a curated inbox, the verbatim rule, how an entry closes or ages out, and why a commit can be blocked until memory catches up."
+heading: "What the repo<br>remembers about itself."
+lead: "Every session starts from nothing unless something carries facts forward. Project memory is that carrier. It holds seven files of durable knowledge and keeps your exact words where your words matter. It re-checks a fact before anyone leans on it, and it can hold a commit until the record is straight."
+updated: 2026-07-29
+breadcrumb: ["docs", "concepts", "memory"]
+facts:
+  - { label: "canonical files", value: "7" }
+  - { label: "inbox", value: "_pending.md" }
+  - { label: "curated by", value: "/memory-flush" }
 toc:
-  - { id: shape,     label: "The shape" }
-  - { id: kinds,     label: "Three kinds of memory" }
-  - { id: lifecycle, label: "The lifecycle" }
-  - { id: reverify,  label: "Re-verification" }
-  - { id: decay,     label: "Decay and closure" }
-  - { id: schema,    label: "Entry schema" }
+  - { id: "files", label: "The seven files" }
+  - { id: "inbox", label: "From inbox to canonical" }
+  - { id: "verbatim", label: "Your words and Claude's reading of them" }
+  - { id: "closing", label: "Verification, closure and decay" }
+  - { id: "commit", label: "Memory at the commit gate" }
+  - { id: "scope", label: "Facts that fire at a decision point" }
+  - { id: "reading", label: "Where the record surfaces" }
+  - { id: "session", label: "Session memory" }
+  - { id: "limits", label: "What memory cannot do" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="shape">The shape</h2>
-    </div>
-    <p>Two layouts exist, and which one you have depends on whether the sharded store has been activated.</p>
-  </div>
-  <p>A fresh install ships the <strong>flat</strong> shape: one file per category, holding many entries, capped by a <code>size-cap:</code> in its frontmatter. Activating <code>memory.sharded_store</code> migrates each of those files into a <strong>sharded</strong> directory of one fact per file. Skills detect the shape from what is on disk rather than by reading the flag, so both are read correctly and the migration is reversible.</p>
-  <p>The rest of this page describes the sharded shape, and calls out the flat shape where behaviour differs.</p>
-  <table>
-    <thead><tr><th>Category</th><th>Holds</th></tr></thead>
-    <tbody>
-      <tr><td class="phase">landmarks</td><td>Where things are. A symbol, a file, a line worth finding again.</td></tr>
-      <tr><td class="phase">libraries</td><td>Third-party dependencies and the version a decision was pinned to.</td></tr>
-      <tr><td class="phase">decisions</td><td>A choice made, its rationale, and what was rejected.</td></tr>
-      <tr><td class="phase">landmines</td><td>Something that broke, and how not to break it again.</td></tr>
-      <tr><td class="phase">conventions</td><td>How this project does a recurring thing.</td></tr>
-      <tr><td class="phase">pending-questions</td><td>Open questions carrying an id, waiting on a human.</td></tr>
-      <tr><td class="phase">backlog</td><td>Deferred work with a stable key, closed by a commit that names it.</td></tr>
-    </tbody>
-  </table>
-  <p>One fact per file means there is no per-file size cap in the sharded shape. A fact never has to be evicted to make room for another one. The 500-line cap belongs to the flat shape, where every fact in a category shares a file and a write that overflows has to prune the oldest unverified entries to fit.</p>
-  <p>The seven category files are committed. The three files in the next section are not: staging, continuity, and the thread trail are all gitignored, so nothing half-formed and nothing session-local reaches your teammates.</p>
-</section>
+<h2 id="files"><span class="sec-mark" aria-hidden="true">§ I</span> The seven files</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="kinds">Three kinds of memory</h2>
-    </div>
-    <p>They differ in what they hold and in how long they last.</p>
-  </div>
-  <p><strong>Project memory</strong> is the seven categories. It accumulates, it is cited, and it is re-verified before use.</p>
-  <p><strong>Session memory</strong> is <code>_resume.md</code>, rewritten at the end of every turn and before any compaction. It records what the session was doing, not what the project knows. Reading it is how a fresh session picks up mid-thought.</p>
-  <p><strong>The thread trail</strong> is <code>_thread.md</code>. It is local, gitignored, and deliberately outside the flush reset path, so a shelved thread survives both a memory flush and a <code>/clear</code>. Claude shelves and resumes it internally; no skill or command exposes it.</p>
-</section>
+<p>Memory lives at <code class="tok">.claude/memory/</code> and travels with the repo. Each file holds one kind of knowledge, and every entry has a stable key. A second entry under the same key replaces the first, so nothing piles up beside it.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="lifecycle">The lifecycle</h2>
-    </div>
-    <p>Nothing enters project memory without passing through a staging inbox first.</p>
+{# The category list is imported from the audit's own memory check, which
+   validates the store on disk. One oracle, two readers: adding a category
+   moves this grid and the check together. The owner and key columns are
+   editorial and sit in _data/memorynotes.json under a coverage guard. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for m in roster.memory %}
+  <div class="cell">
+    <div class="cell-kicker">{{ m.name }}</div>
+    <p>{{ m.holds }}</p>
+    <p class="cell-note">written by {{ m.owner }} · key: <code class="tok">{{ m.key }}</code></p>
   </div>
-  <p>The <code>memory_stop</code> hook runs at the end of every turn and writes candidates into <code>_pending.md</code>. That file is an inbox, not memory. Nothing in it counts until a curation step promotes it.</p>
-  <p><code>/memory-flush</code> runs at Phase 10.7 of every committing track, between the roadmap sync and the commit gate. It reviews the candidates, promotes the keepers into canonical files, and resets the pending body.</p>
-  <p>Writing straight into a canonical file, outside the natural byproduct of a phase skill, is not allowed. The inbox exists so that memory accrues deliberately rather than as a side effect of a long conversation.</p>
-</section>
+  {% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="reverify">Re-verification before citation</h2>
-    </div>
-    <p>Every skill that cites a memory entry re-verifies it first.</p>
-  </div>
-  <p>The file still exists, the symbol is still at the named line, the version is still pinned. A failed check is corrected or deleted in the same run, before the citing work continues.</p>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>This is the rule that keeps the store from becoming confidently wrong.</strong>
-      <p>A memory that is never checked is worse than no memory, because it is trusted.</p>
-    </div>
-  </div>
-</section>
+<p>Each file is owned by the phase which learns its kind of fact. Scout finds where things live, so scout writes landmarks; research checks a library API, so research writes libraries. The knowledge lands next to the work that produced it, while the reason for it is still fresh in the session.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="decay">Decay and closure</h2>
-    </div>
-    <p>An entry unverified for 30 commits, or 30 days on a project without git, is marked stale.</p>
-  </div>
-  <p>The session-start hook counts them and reports the total; the next phase that touches one either re-verifies or removes it.</p>
-  <p>Closure is a different signal. A backlog entry closed by a commit that named its key carries a closure stamp, and closure short-circuits decay: a closed entry is not stale, it is finished.</p>
-</section>
+<p>Two shapes are supported. A small project keeps one flat file per category, capped at 500 entries, and the oldest unverified entries fall off the end. A larger one shards each category into a directory of single-fact files, where the cap goes away. Every reader handles both, because the baseline ships you the flat shape and a shard-only reader would go quiet on a fresh install without saying so.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="schema">Entry schema</h2>
-    </div>
-    <p>Frontmatter carries the structured fields, the body carries the fact.</p>
+<h2 id="inbox"><span class="sec-mark" aria-hidden="true">§ II</span> From inbox to canonical</h2>
+
+<p class="sec-lead">Nothing writes straight into a canonical file from a conversation. Candidates land in an inbox first, and a person decides what survives.</p>
+
+<p>At the end of every turn, the <code class="tok">memory_stop</code> hook reads what just happened and pulls out anything which looks like a durable fact. Those candidates go to <code class="tok">_pending.md</code>, which is an inbox and holds no authority of its own.</p>
+
+<p>At flush time a router reads each candidate and proposes where it belongs, matching purely on shape. A file path reads as a landmark, a line ending in a question mark reads as an open question, words like <code class="tok">follow-up</code> or <code class="tok">defer</code> read as backlog, and a phrasing such as "decided to" reads as a decision. Each suggestion carries the cue it fired on and a weight between 0.1 and 0.7, so obvious chatter sorts to the bottom.</p>
+
+<p>The router is deliberately dull: no filesystem, no network, no model call, and it writes nothing at all. It hands you a default to accept or override, and promotion to a canonical file stays a human act.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>the path a fact takes</span>
   </div>
-  <p><code>key</code>, <code>category</code>, <code>source</code>, <code>verified-at</code>, and <code>last-touched</code> are common to every category. The rest are category-specific: the backlog entry below carries <code>status</code> and <code>raised-on</code> because backlog items are opened and closed, which a landmark never is.</p>
-  <pre><code><span class="tok-com">---</span>
-<span class="tok-key">key</span>: commit-consent-token-is-never-consumed-after-use
-<span class="tok-key">category</span>: backlog
-<span class="tok-key">scope</span>: [security, spec, tdd]
-<span class="tok-key">status</span>: open
-<span class="tok-key">raised-on</span>: 2026-07-25
-<span class="tok-key">source</span>: user-instruction
-<span class="tok-key">verified-at</span>: ea618e9
-<span class="tok-key">last-touched</span>: 2026-07-25
-<span class="tok-com">---</span></code></pre>
-  <p>Entries sourced from a user instruction or user feedback must quote the user's actual words. When that quote and Claude's interpretation of it disagree, the quote wins and the conflict is surfaced rather than resolved silently. A flush rejects any promotion that should carry a quote and does not.</p>
-</section>
+  <pre class="plate-body"><span class="t-dim">turn ends</span>      <span class="t-ok">memory_stop</span>   <span class="t-dim">→ _pending.md</span>
+<span class="t-dim">flush</span>          <span class="t-ok">route</span>         <span class="t-dim">→ suggested bucket + weight</span>
+               <span class="t-ok">you</span>           <span class="t-dim">→ accept, move, or discard</span>
+               <span class="t-ok">write</span>         <span class="t-dim">→ the canonical file, with provenance</span></pre>
+</div>
+
+<p>The split matters more than it looks. Automatic capture is generous by design, because a fact nobody noticed is simply gone, while curation is strict, because a memory file full of noise is one nobody reads. Separating the two lets each side do its job honestly.</p>
+
+<p>An empty inbox costs almost nothing. The flush short-circuits, runs its housekeeping sweeps, and reports that there was nothing to curate, so a workflow which learned nothing new pays only a bounded price for saying so.</p>
+
+<h2 id="verbatim"><span class="sec-mark" aria-hidden="true">§ III</span> Your words and Claude's reading of them</h2>
+
+<p>Every entry declares where the rule came from. An entry learned by reading the codebase says so, and one learned from a <code class="tok">context7</code> lookup says so too, pinning the version it read.</p>
+
+<p>Two sources carry a stricter rule. If you state a directive, or correct Claude's behaviour, the resulting entry must quote you.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>an entry with a verbatim</span>
+  </div>
+  <pre class="plate-body"><span class="t-dim">## dont-mock-the-broker-in-channel-tests</span>
+
+<span class="t-ok">&gt; verbatim (user, 2026-06-14):</span>
+<span class="t-ok">&gt; run it against a real socket, a mocked broker</span>
+<span class="t-ok">&gt; has never once caught the bug I care about</span>
+
+<span class="t-dim">- source: user-feedback</span>
+<span class="t-dim">- verified-at: 8f2c1ab</span>
+<span class="t-dim">- last-touched: 2026-06-14</span></pre>
+</div>
+
+<p>The quote is the canonical part. The body underneath is Claude's reading of it, and readings drift, so when the two disagree your words win and Claude must raise the conflict with you before acting on its own paraphrase.</p>
+
+<p><code class="tok">/memory-flush</code> enforces this at the boundary. If a candidate claims to come from you and carries no quote, promotion is refused and it stays a candidate.</p>
+
+<p>You can add quotes over time. Clarify an instruction across three turns and the entry keeps all three blocks, oldest first, because how a rule got sharpened is often the thing that explains it.</p>
+
+<h2 id="closing"><span class="sec-mark" aria-hidden="true">§ IV</span> Verification, closure and decay</h2>
+
+<p class="sec-lead">An entry leaves the store three ways, and only one of them is time passing.</p>
+
+<p><strong>It fails a check.</strong> Citing an entry means re-checking it first. Does the file still exist? Is the symbol still at the line the entry names? Is that library still pinned to the version that was validated? An entry that fails gets corrected or deleted on the spot, in the same run, before the work carries on.</p>
+
+<p><strong>It closes.</strong> Entries carry closure stamps. An answered question gets <code class="tok">resolved-at</code>; anything superseded on the other six files gets <code class="tok">superseded-at</code>. Every flush sweeps for those stamps and deletes what they mark. A stamp on the wrong file, or a malformed date, is reported and the entry is kept, because guessing is how a real fact gets swept away.</p>
+
+<p>People usually write closure in prose rather than stamping it, so a second sweep scans entry bodies for the phrasings they actually use, along the lines of "superseded by", "resolved on" and "resolution path taken". Every match is surfaced for you to answer: close it, keep it, or leave it for next time.</p>
+
+<p><strong>It ages out.</strong> An entry that has gone 30 commits or 30 days without verification is marked stale, and the next phase that touches it either re-checks it or removes it.</p>
+
+<p>One precondition guards all of this. Before any sweep runs, the store is checked for stamps still sitting in entry bodies instead of the frontmatter, and while any remain the session-start reader and the sweep will count different entries as stale. Curating against the wrong count churns entries and leaves the real problem in place, so the sweep stops and says so.</p>
+
+<p>The result is a store which heals itself while being used. Nobody schedules a memory cleanup, because wrong entries are caught by the next task that depends on them, which is the one moment somebody actually cares.</p>
+
+<h2 id="commit"><span class="sec-mark" aria-hidden="true">§ V</span> Memory at the commit gate</h2>
+
+<p class="sec-lead">Here is what makes memory more than a notebook. It can stop a commit.</p>
+
+<p>When <code class="tok">/triage</code> starts work from a backlog entry, it records that entry's key in the workflow state. The work now carries a debt: the backlog said this was coming, and landing it ought to close the record.</p>
+
+<p>At commit time, <code class="tok">/commit</code> stamps each of those backlog entries <code class="tok">picked-up</code> with today's date and stages the change. If the staged <code class="tok">backlog.md</code> is then missing a stamp for any key the workflow claimed, <code class="tok">git_commit_guard</code> blocks the commit and names the keys in the message.</p>
+
+<p>The stamp has to land in the same commit as the work, and splitting the two is refused. A backlog entry which closes one commit later will still be open when the branch is cut, and the next person reads it as work nobody started.</p>
+
+<p>There is a second lock. Unless <code class="tok">memory-flush</code> sits in the workflow's completed list or has been explicitly excepted, <code class="tok">/commit</code> refuses to run at all, so whatever the session learned is curated before anything lands.</p>
+
+<p>Wiring memory into the commit path is a deliberate choice, and it has a cost: you cannot land work while the record is behind. That is the point. Memory that nothing depends on rots quietly, and the rot only shows up months later when someone trusts it.</p>
+
+<h2 id="scope"><span class="sec-mark" aria-hidden="true">§ VI</span> Facts that fire at a decision point</h2>
+
+<p>A fact can name the workflow phases it applies to. When one of those phases begins the fact is surfaced inline, before any of the work starts.</p>
+
+<p>What gets surfaced is the quote, first and whole. A paraphrase is Claude's reading, and the reading is the part that drifts, so the words you actually said are what reaches the decision.</p>
+
+<p>The same mechanism runs against shell commands. An advisory guard watches for the command shapes a landmine entry warns about and prints that warning before the command runs, at which point the entry stops being a record and becomes a constraint on the operation in front of you.</p>
+
+<p>This is the whole argument for keeping memory at all. A lesson filed away and read by nobody is archaeology, and a habit of filing them is worse. A lesson that appears at the point where it would have been ignored is a guardrail.</p>
+
+<h2 id="reading"><span class="sec-mark" aria-hidden="true">§ VII</span> Where the record surfaces</h2>
+
+<p class="sec-lead">Two of the seven files exist to be read back to you, and one command does the reading.</p>
+
+<p><code class="tok">/standup</code> reports the store. It buckets backlog entries into open, picked-up and dropped, nesting epic children under their parent, and condenses open questions down to an id, the question, and what each one blocks. Alongside those it reads your roadmap tracker, so a single recap covers what you meant to do and what is left of it.</p>
+
+<p>That closes the loop the commit gate opens. A backlog entry gets picked up by triage, stamped closed by the commit that lands it, deleted by the next flush, and gone from the next recap. Work you finished stops asking for your attention, and nobody had to tidy up.</p>
+
+<p>The roadmap tracker sits beside memory instead of inside it, and two skills keep it honest. <code class="tok">/roadmap-sync</code> runs at phase 10.6 on every committing track except epics. It flips the tasks your workflow named from planned to done and promotes their epic heading as the children land, writing only when something changed.</p>
+
+<p>It is built to stay out of the way: it never throws, it does nothing at all where no roadmap is configured or no task matches, and it never blocks a commit. A roadmap is a plan, and a plan which can veto shipped work is a gate wearing a plan's clothes.</p>
+
+<p><code class="tok">roadmap-planner</code> is the other half, and you run it on purpose. It re-derives the roadmap from your vision and spec documents by first principles, then diffs that fresh derivation against the plan you already have. What it is really checking is order: whether a task sits ahead of something it depends on. Reach for it when the plan feels wrong and you cannot say why.</p>
+
+<h2 id="session"><span class="sec-mark" aria-hidden="true">§ VIII</span> Session memory</h2>
+
+<p>Two more files sit in the same directory and do a different job. Both are gitignored, because they describe one session instead of the project.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">_resume.md</div>
+    <p>A continuity snapshot: the last phase completed, what is due next, the files in flight, your recent prompts. Rewritten at every turn-end and again before the context is compacted, then re-injected the moment a session starts.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">_thread.md</div>
+    <p>A durable trail of shelved threads. One rolling section per shelve, holding your exact words, the open questions and the next step. Claude Code shelves and resumes it on its own; there is no command for you to run.</p>
+  </div>
+</div>
+
+<p>The difference between them is lifespan. <code class="tok">_resume.md</code> is overwritten constantly and describes only the present moment. <code class="tok">_thread.md</code> is append-only and sits outside the flush. A thread you shelved two weeks ago survives a <code class="tok">/clear</code>, a compaction and every flush in between.</p>
+
+<p>At session start you get an index of the store, not the store itself: one row per category with its entry count and how many have gone stale. It is capped in size, so a large store still leaves room for your code.</p>
+
+<h2 id="limits"><span class="sec-mark" aria-hidden="true">§ IX</span> What memory cannot do</h2>
+
+<p>Memory speeds up triage. A landmark can save a scout pass, a pinned library version can save a research pass, and a landmine stops the same trap catching a second person.</p>
+
+<p>What it can never do is authorise a skip. Remembering that a phase went fine last time is evidence about the past, whereas skipping one takes a named exception recorded in the workflow state where the audit can see it. The two are kept apart deliberately, because a store which could licence its own shortcuts would soon start finding reasons to.</p>

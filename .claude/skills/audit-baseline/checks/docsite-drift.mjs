@@ -1,39 +1,105 @@
-// WF-6: docsite prose + table drift — the workflows.njk track list must
-// enumerate every selectable track, and the two hooks.njk tables every hook on
-// disk, so a new track/hook cannot ship with a silently stale docs page. Skipped
-// on consumer installs with no site-src/ tree (readText returns '').
-import { checkDocsiteTracks, checkDocsiteHookTable, sectionSlice } from './surface-helpers.mjs';
+// docsite drift — every name the baseline ships must appear on the rendered
+// page that claims to list it.
+//
+// WHY THIS READS obj/site AND NOT site-src. The previous version scanned
+// `site-src/hooks.njk` and `site-src/workflows.njk` for literal names. Those
+// pages now build their rosters from a `{% for %}` over _data, so no name
+// appears in the template at all, and a source scan is either vacuously true or
+// fails against a correct page. Worse, both branches were guarded by
+// `if (readText(...))`, and when the pages were renamed during a site rewrite
+// the guards went falsy: the check emitted ZERO rows while audit-baseline kept
+// reporting PASS. A placebo check is worse than a deleted one, so this version
+// asserts against the built artifact and reports explicitly when it cannot.
+//
+// THE ORACLE IS SHARED. deriveNames() is the same function site-src/_data/
+// roster.cjs reads to render the pages. That is deliberate: page and check
+// cannot disagree about what the roster is. The residual risk — a bug in the
+// enumerator making both wrong together — is covered by tests/derive-counts.
+// test.mjs, which re-reads disk directly instead of trusting the enumerator.
 
-function selectableTrackIds(ctx) {
-  const text = ctx.readText('.claude/workflows.jsonl');
-  if (!text) return [];
-  const ids = [];
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue;
-    let track;
-    try { track = JSON.parse(line); } catch { continue; }
-    if (track.selectable === true && typeof track.track_id === 'string') ids.push(track.track_id);
-  }
-  return ids;
+import { deriveNames } from '../derive-counts.mjs';
+
+// Pages that enumerate a roster, and what each must contain. `url` is the built
+// path under obj/site; `names` pulls the expected list off the enumerator.
+const ENUMERATING_PAGES = [
+  {
+    url: 'hooks/index.html',
+    label: 'hook',
+    names: (n) => n.hooks,
+  },
+  {
+    url: 'workflows/index.html',
+    label: 'selectable track',
+    names: (n) => n.tracks.canonical,
+  },
+  {
+    url: 'skills/index.html',
+    label: 'skill',
+    names: (n) => n.skills,
+  },
+  {
+    url: 'mcp/index.html',
+    label: 'MCP server',
+    names: (n) => n.mcpServers,
+  },
+];
+
+// Strip tags so a name split across markup ("<code>env_guard</code>") still
+// counts, and so a name appearing only inside an HTML attribute does not.
+function renderedText(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ');
 }
 
 export function run(ctx) {
   const rows = [];
   const add = (n, s, d = '') => rows.push([n, s, d]);
 
-  const workflowsNjk = ctx.readText('site-src/workflows.njk');
-  if (workflowsNjk) {
-    const r = checkDocsiteTracks(workflowsNjk, selectableTrackIds(ctx));
-    add('docsite: workflows.njk lists every selectable track', r.status, r.detail);
+  let names;
+  try {
+    names = deriveNames(ctx.root);
+  } catch (err) {
+    add('docsite: roster enumerator readable', 'FAIL', err.message);
+    return rows;
   }
 
-  const hooksNjk = ctx.readText('site-src/hooks.njk');
-  if (hooksNjk) {
-    const hooks = [...ctx.diskBaselineHooks].sort();
-    const eventCheck = checkDocsiteHookTable(sectionSlice(hooksNjk, 'boundary', 'article'), hooks, h => h);
-    add('docsite: hooks.njk by-event table covers every hook', eventCheck.status, eventCheck.detail);
-    const enforceCheck = checkDocsiteHookTable(sectionSlice(hooksNjk, 'article', 'consent'), hooks, h => `<td class="phase">${h}</td>`);
-    add('docsite: hooks.njk enforcement table covers every hook', enforceCheck.status, enforceCheck.detail);
+  // A consumer install has no site tree at all. Distinguish that from "the site
+  // exists but the page is missing", which is real drift.
+  const siteBuilt = ctx.readText('obj/site/index.html') !== '';
+  if (!siteBuilt) {
+    add('docsite: rendered site present', 'SKIP', 'no obj/site — run npm run build:site');
+    return rows;
   }
+
+  for (const page of ENUMERATING_PAGES) {
+    const expected = page.names(names);
+    const html = ctx.readText(`obj/site/${page.url}`);
+
+    if (!html) {
+      // The page is not built yet. Report it rather than skipping silently:
+      // silence here is exactly how this check went vacuous before.
+      add(
+        `docsite: ${page.url} lists every ${page.label}`,
+        'SKIP',
+        `page not built (${expected.length} unlisted)`,
+      );
+      continue;
+    }
+
+    const text = renderedText(html);
+    const missing = expected.filter((name) => !text.includes(name));
+    add(
+      `docsite: ${page.url} lists every ${page.label}`,
+      missing.length === 0 ? 'PASS' : 'FAIL',
+      missing.length === 0
+        ? `${expected.length} listed`
+        : `missing: ${missing.join(', ')}`,
+    );
+  }
+
   return rows;
 }

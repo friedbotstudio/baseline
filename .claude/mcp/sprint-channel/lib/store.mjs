@@ -24,6 +24,12 @@ export const writeTasks = (channelRoot, value) => writeJson(channelRoot, 'tasks.
 export const readYields = (channelRoot) => readJson(channelRoot, 'yields.json', []);
 export const writeYields = (channelRoot, value) => writeJson(channelRoot, 'yields.json', value);
 
+// Free-form peer->lead escalation records (ask_lead / answer_peer). Separate
+// from the append-only mailbox because a message is MUTABLE — the lead writes
+// an answer back onto the same record, and the peer reads it by message_id.
+export const readMessages = (channelRoot) => readJson(channelRoot, 'messages.json', []);
+export const writeMessages = (channelRoot, value) => writeJson(channelRoot, 'messages.json', value);
+
 export function appendMailbox(channelRoot, message) {
   appendFileSync(join(channelRoot, 'mailbox.jsonl'), `${JSON.stringify(message)}\n`);
 }

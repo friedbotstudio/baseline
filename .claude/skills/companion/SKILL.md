@@ -1,92 +1,84 @@
 ---
 name: companion
-description: Project-local helper to join/leave a sprint-channel as a session peer for sprint-mode dogfooding. `/companion on <sprint_id> [peer_id]` registers this Claude Code session as a `pclass:"session"` peer and works the claim → execute → signal loop, yielding un-decidable forks to the lead (never deciding). `/companion off` stops the loop and marks the local peer inactive. `/companion status` reports the current peer/sprint. NOT baseline-owned, NOT shipped to consumers — throwaway tooling for the slice-C sprint-mode prototype. Use when a human launches a second session to act as a companion peer during a sprint dogfood.
+owner: baseline
+description: EXPERIMENTAL. Join or leave an org-team coordination channel as a session peer. `/companion on <channel_id> [peer_id]` registers this Claude Code session as a `pclass:"session"` peer and works the claim → execute → signal loop, escalating un-decidable forks to the lead (never deciding). `/companion off` deregisters. `/companion status` reports the current peer. Part of org mode (Article X), which is opt-in via `velocity.org_mode.enabled` and OFF by default. Use when a human launches a second session to act as a peer alongside a lead.
 ---
 
-# companion — be a session peer on the sprint channel
+# companion — be a session peer on an org-team channel
 
-This is a **project-local prototype tool** (no `owner: baseline`; out of scope of `audit-baseline`). It turns the current Claude Code session into a **session peer** on a sprint-mode coordination channel so a sprint can be dogfooded with a real human-launched peer instead of lead-spawned swarm-worker subagents.
+**Experimental.** This skill is part of org mode (Article X — multi-session coordinated workflows), which is **opt-in and off by default** (`velocity.org_mode.enabled`). The single-session workflow is unaffected by anything here.
 
-It exists to make the dogfood ergonomic — instead of pasting the `register_peer` / `claim_task` / `signal_done` instructions by hand, you type `/companion on <sprint_id>`.
+It turns the current Claude Code session into a **session peer** on a coordination channel, so a feature can be worked by a small pod of real sessions instead of by one. Instead of pasting `register_peer` / `claim_task` / `signal_done` calls by hand, you type `/companion on <channel_id>`.
 
-## The bounded-peer contract (Article II — non-negotiable)
+## The bounded-peer contract (Article X — non-negotiable)
 
-A session peer is a **recipe-executor, not a decision-maker**. When acting as a companion you SHALL:
+A peer **decides in its own lane and escalates out of it**. When acting as a companion you SHALL:
 
-- **Stay a peer.** You are a peer on this channel and you remain one for the whole session, even if you (or the same human) also run the workflow-lead session elsewhere. You SHALL NOT arbitrate yields, release or re-dispatch tasks, answer other peers, or **decline a claimable lane on the belief that you are the lead**. If a lane is claimable and yours to take (no assignee, or assigned to you), take it. (Dogfood finding: a peer that believed it was "the lead" declined a claimable lane and starved the queue.)
-- **Know who you are.** You are the exact `peer_id` you registered as, and no other peer. Never infer your identity from a task push — a `task-available` for a lane assigned to a different peer is not yours, and a rejected claim does not mean you should change who you are. Claim only a lane with no assignee or assigned to your own `peer_id`. (Dogfood finding: a peer assumed it was `peer-1` and only discovered it was `peer-2` when a directed claim was rejected.)
-- Execute the claimed task's recipe **within its declared `write_set`** only.
-- On any **un-decidable fork** — a design, scope, abstraction, or naming choice the recipe does not settle — call `yield_fork(sprint_id, peer_id, task_id, fork_desc)` and **stop work on that task**. You do NOT guess, and you do NOT make the call yourself. The lead arbitrates in main context and re-dispatches.
-- On a **write-set clash** with another peer's path, call `raise_conflict(...)` and let the lead arbitrate.
-- Never send a free-form directive over the channel — the only messages are the mechanical ones the channel's tools expose.
+- **Stay a peer.** You are a peer on this channel for the whole session, even if the same human also runs the lead session elsewhere. You SHALL NOT arbitrate yields, release or re-dispatch lanes, answer other peers, or **decline a claimable lane on the belief that you are the lead**. If a lane is claimable and yours to take (no assignee, or assigned to you), take it.
+- **Know who you are.** You are the exact `peer_id` you registered as, and no other. Never infer identity from a task push — a `task-available` for a lane assigned to another peer is not yours, and a rejected claim does not mean you should change who you are.
+- **Decide in-lane.** How to structure a function, which existing helper to reuse, where a boundary sits — those are yours to make, in your own main context. That is what makes a peer a peer rather than a worker.
+- **Escalate out-of-lane.** A **cross-lane** choice (its answer changes another lane) or an **un-decidable** one (it needs design or product judgment) is not yours. Task-bound → `yield_fork(...)` and stop that lane. Free-form → `ask_lead(...)` and continue if you can. The lead answers via `answer_peer`; read it back with `sprint_status`.
+- **Never send a free-form directive over the channel.** The message types are a closed set; coordination travels over it, judgment does not.
 
-This is the sandbox fence that keeps the lead the sole decision locus. Breaking it defeats the whole point of the prototype.
+Execute a claimed lane **within its declared `write_set`** only. Every PreToolUse hook fires on your writes exactly as in a solo session.
 
 ## Prerequisites
 
-1. **The `sprint-channel` MCP server is loaded in this session.** Verify the tools are present (the session was started *after* the server was registered). If the `register_peer` / `claim_task` / … tools are not available, stop and tell the user to restart this session (`claude mcp list` should show `sprint-channel … ✔ Connected`).
-2. **Same repo, same machine as the lead.** The channel is a shared on-disk directory (`.claude/state/sprint/<sprint_id>/`), file-locked. A peer in a different repo or on another machine cannot see it.
-3. **Sprint mode is on** for this repo (`velocity.sprint_mode.enabled` in `.claude/project.json`). If off, stop — the sandbox fence is closed.
+1. **Org mode is enabled** for this repo (`velocity.org_mode.enabled` in `.claude/project.json`). Off → stop; the fence is closed by design.
+2. **The `sprint-channel` MCP server is loaded.** It ships registered in `.mcp.json`, so a normally-started session has it. Verify with `claude mcp list` (expect `sprint-channel … Connected`). If the tools are missing, the session started before the server was registered — restart it.
+3. **Same repo, same machine as the lead.** The channel is a file-locked on-disk directory under `.claude/state/sprint/<channel_id>/`. A peer elsewhere cannot see it.
+4. **A git repository.** Org mode requires git.
+
+No launcher and no special flags: a peer is an ordinary Claude Code session opened in the same repo.
 
 ## Subcommands
 
 Parse the argument string. The first token is the subcommand (`on` | `off` | `status`).
 
-### `/companion on <sprint_id> [peer_id]`
+### `/companion on <channel_id> [peer_id]`
 
-1. Require `<sprint_id>` (kebab/alphanumeric — it must satisfy the channel's `isSafeId`). If absent, stop and ask for it.
-2. Choose `peer_id`: use the second token if given, else default to `companion-1`. It must also be a safe id.
-3. Call the MCP tool `register_peer` with `{ sprint_id, peer_id, pclass: "session", role: "peer", workspace: "." }`. Confirm `{ ok: true, registered: true }`.
-4. Write the local marker `.claude/state/companion/<sprint_id>.json` (create the dir if missing) with:
+1. Require `<channel_id>` (alphanumeric, `_`/`-`, at most 128 chars — it must satisfy the channel's `isSafeId`). If absent, stop and ask.
+2. Choose `peer_id`: the second token if given, else `companion-1`. Same id rules.
+3. Call `register_peer` with `{ channel_id, peer_id, pclass: "session", role: "peer", workspace: "." }`. Confirm `{ ok: true, registered: true }`.
+4. Write the local marker `.claude/state/companion/<channel_id>.json` (create the dir if missing):
    ```json
-   { "sprint_id": "<sprint_id>", "peer_id": "<peer_id>", "pclass": "session", "active": true, "registered_at": <epoch> }
+   { "channel_id": "<channel_id>", "peer_id": "<peer_id>", "pclass": "session", "active": true, "registered_at": 0 }
    ```
-   This marker is how `off` / `status` find the active peer. The `.claude/state/` tree is gitignored — the marker is never committed.
+   `off` and `status` find the active peer through this marker. `.claude/state/` is gitignored.
 5. Enter the **claim loop**:
-   - Call `claim_task({ sprint_id, peer_id, task_id })` for an available task. To discover task ids, read `.claude/state/sprint/<sprint_id>/tasks.json` and pick a `pending` task whose `depends_on` are all `done` (the handler re-checks atomically, so a lost race just returns `claimed: false` — move to the next).
-   - On a successful claim, **execute that task's recipe** within its `write_set`. The recipe comes from the task definition and any `send_message` the lead addressed to this peer (read the mailbox). Apply `code-structure` discipline; all 25 PreToolUse hooks fire on your writes exactly as normal.
-   - On completion call `signal_done({ sprint_id, peer_id, task_id })`; report the `unblocked` list it returns.
-   - On an un-decidable fork → `yield_fork(...)` and stop that task (see the contract above).
-   - When no claimable task remains, **do not stop — enter watch mode** so a lead re-dispatch is picked up with no human turn. Start the watcher in the background and end the turn: run `node .claude/skills/companion/watch.mjs <sprint_id> <peer_id>` with `run_in_background`. It blocks (polling `tasks.json`) until a task becomes claimable by this peer, then exits so the session is re-invoked.
-6. **Watch-mode re-invocation.** When the background watcher exits, the session is re-invoked with its JSON output. Act on the exit:
-   - `{"wake":true,"task_id":…}` (exit 0) — a task became claimable. Re-enter the claim loop (step 5): claim it, execute within its `write_set`, `signal_done` (or `yield_fork` if it is *still* under-specified). Then **re-arm** the watcher (`run_in_background` again) and end the turn.
-   - `{"wake":false,"reason":"companion inactive"}` (exit 2) — `/companion off` ran. Do **not** re-arm; report the peer stopped.
-   - `{"wake":false,"reason":"heartbeat"}` (exit 3) — no work within the cap window. Just re-arm the watcher and end the turn (this only keeps each turn bounded; it is not idle-stop).
-7. Report what you claimed, finished, and yielded across the cycle. The watcher makes the peer **hands-off**: once it is armed, every subsequent lead re-dispatch is auto-claimed with no `/companion` re-run.
+   - Call `sprint_status({ channel_id })` for authoritative state. Pick a `pending` lane with no assignee (or assigned to you) whose `depends_on` are all `done`, then `claim_task({ channel_id, peer_id, task_id })`. The handler re-checks atomically, so a lost race returns `claimed: false` — move to the next lane.
+   - On a successful claim, execute that lane within its `write_set`, applying `code-structure` discipline.
+   - On completion call `signal_done({ channel_id, peer_id, task_id })` and report the `unblocked` list it returns.
+   - On an out-of-lane fork → `yield_fork(...)` (task-bound) or `ask_lead(...)` (free-form), per the contract above.
+   - When no claimable lane remains, **do not stop — enter watch mode** so a lead re-dispatch is picked up with no human turn: run `node .claude/skills/companion/watch.mjs <channel_id> <peer_id>` with `run_in_background` and end the turn.
+6. **Watch-mode re-invocation.** When the watcher exits, act on its JSON:
+   - `{"wake":true,"task_id":…}` (exit 0) — a lane became claimable. Re-enter the claim loop, then **re-arm** the watcher and end the turn.
+   - `{"wake":false,"reason":"companion inactive"}` (exit 2) — `/companion off` ran. Do not re-arm.
+   - `{"wake":false,"reason":"heartbeat"}` (exit 3) — no work in the cap window. Re-arm and end the turn; this only keeps each turn bounded.
+7. Report what you claimed, finished, and escalated. Once the watcher is armed the peer is hands-off.
 
-### `/companion off [sprint_id]`
+### `/companion off [channel_id]`
 
-1. Resolve the marker: the given `<sprint_id>`, or the single active marker under `.claude/state/companion/` if only one exists (otherwise ask which).
-2. Stop the claim loop. Do not claim anything further. A background watcher (if armed) reads the marker's `active` flag each tick and exits `2` on the next poll, so it self-stops once step 3 flips the flag — do not re-arm it after that.
-3. Mark the peer inactive: set `"active": false` in the marker.
-4. **Deregister on the channel.** Call the `leave_peer` MCP tool with `{ sprint_id, peer_id }` — it removes this peer from `sprint.peers[]` and returns `{ ok: true, removed: <bool> }` (idempotent; `removed: false` if it was already gone). This is the real deregister; the lead no longer sees a departed peer listed.
-5. Report: peer deregistered from the channel (removed from `sprint.peers[]`) and marked inactive locally. The background watcher (if armed) self-stops on its next tick once the marker flips.
+1. Resolve the marker: the given `<channel_id>`, or the single active marker under `.claude/state/companion/` if only one exists (otherwise ask which).
+2. Stop the claim loop. An armed watcher reads the marker's `active` flag each tick and exits `2` on the next poll, so it self-stops once step 3 runs — do not re-arm after that.
+3. Set `"active": false` in the marker.
+4. Call `leave_peer` with `{ channel_id, peer_id }`. It removes the peer from `peers[]` and returns `{ ok: true, removed: <bool> }` (idempotent).
+5. Report: deregistered from the channel and marked inactive locally.
 
 ### `/companion status`
 
-Read any markers under `.claude/state/companion/`. For each, report `sprint_id`, `peer_id`, `active`, and `registered_at`. If none, report "no companion peer registered in this session."
+Read any markers under `.claude/state/companion/` and report `channel_id`, `peer_id`, `active`, `registered_at` for each. If none, report "no companion peer registered in this session."
+
+## Optional: push dispatch
+
+The shipped path above **polls** — `sprint_status` is the authoritative check, and the watcher blocks between ticks. That is deliberate: it depends on nothing outside the project.
+
+A push-dispatch path exists via a sibling channel server, but it is **not part of the shipped path** and this skill does not use it. Claude Code channels are in research preview: custom channels are not on the approved allowlist and require a `--dangerously-load-development-channels` launch flag, and Team and Enterprise organizations must explicitly enable channels before any of them load. None of those can be assumed on a consumer install, so the shipped peer path avoids them entirely.
+
+If you are experimenting with push dispatch, treat it as research-preview tooling with the failure modes that implies. Nothing in the claim loop above changes: `sprint_status` remains the never-dropped completion check, and a lost push is recoverable by reconciling from it.
 
 ## Constraints
 
-- **Bounded execution only** — re-read the Article II contract above. A companion never makes a design decision; it yields.
-- **`off` deregisters via `leave_peer`** — it removes the peer from `sprint.peers[]` on the channel and marks the local marker inactive. (Earlier prototype builds lacked a leave tool and could only mark-inactive; the `leave_peer` tool closed that gap.)
-- **This skill is not baseline-owned** — it carries no `owner: baseline`, is excluded from `audit-baseline`, and is not shipped to consumers. It is prototype tooling for the sprint-mode dogfood and may be reworked or removed once the §II.B charter (slice E) settles the real pattern.
-
-## Channel-pool mode (push-dispatch, no polling)
-
-The manual `on/off/status` flow above is the **polling** path: you type the join command and the session reads `tasks.json` on a loop. For running several peers at once, prefer the **pool channel** — a project-local Claude Code *channel* (`.claude/mcp/sprint-pool/`) that auto-registers the peer on launch and **pushes** work in, so the session never polls.
-
-The pool channel's transport is an **in-process broker over a Unix-domain socket** (`.claude/mcp/sprint-broker/`): the lead session hosts the broker (sole writer of coordination state) and every peer connects to it as a client, so claims/yields/done-signals cross sessions over the socket — not a shared file. This works even when peers run from **separate repo clones** (the rendezvous is `$SPRINT_BROKER_SOCK`, a short path outside any clone; `launch.sh` sets it, defaulting under the XDG runtime dir / `TMPDIR`). There is no 750ms watch loop — delivery is event-native.
-
-**Launch a pool peer** (one terminal per peer; the channel is custom so it needs the dev flag):
-
-```
-SPRINT_POOL_PEER_ID=peer-2 claude --dangerously-load-development-channels server:sprint-pool
-```
-
-- On startup the channel registers a `session` peer on the `lobby` channel (override with `SPRINT_POOL_CHANNEL`) — **no `/companion on` needed** — provided `velocity.sprint_mode.enabled` is true; otherwise it refuses to start.
-- The lead hands work over by calling the `enqueue_task` tool; the broker pushes a `task-available` event to peer clients and a peer claims via the existing `claim_task`. An un-decidable fork still goes through `yield_fork` (bounded-executor contract unchanged); the broker delivers the `yield` to the lead, and the lead re-dispatches with `release_task` (which also resolves the yield) — no hand-editing of channel state.
-- **Launch the lead** with `SPRINT_POOL_ROLE=lead` so this session hosts the broker and receives yield escalations.
-- Closing the terminal (SIGTERM) marks the peer inactive; or call `leave_peer`.
-
-Prerequisites and the bounded-peer contract above apply identically. Peers run **attended** — normal permission prompts still gate their tool use (no `--dangerously-skip-permissions`).
+- **Decide in-lane, escalate out-of-lane** — re-read the Article X contract above. A peer that guesses a cross-lane answer defeats the model.
+- **`off` deregisters via `leave_peer`** — it removes the peer from `peers[]` and marks the local marker inactive.
+- **Experimental** — org mode is opt-in, off by default, and its surface may change. The single-session workflow is unaffected.

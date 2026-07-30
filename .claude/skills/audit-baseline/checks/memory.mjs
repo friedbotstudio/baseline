@@ -4,7 +4,10 @@
 import { existsSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
+// Exported so the docs site's _data/roster.cjs renders the same list this check
+// validates. One oracle, two readers: a category added here appears on the
+// Memory page from the same edit.
+export const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
 
 export function run(ctx) {
   const rows = [];

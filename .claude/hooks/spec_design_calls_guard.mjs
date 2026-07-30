@@ -79,10 +79,16 @@ function matchesAnyGlob(path, globs) {
   return false;
 }
 
-// Extract write_set paths from the spec body.
+// Extract write_set paths from the spec body. The spec template mandates the
+// BOLDED form (`**Write set**: ...`), so the pattern must tolerate the `**`
+// between "set" and the colon, and the prose form (`The write_set is ...`).
+// A colon-only regex silently matched nothing but `+write_set: string[]` inside
+// the class diagram — which yields zero paths, so the guard reached its SKIP
+// branch on every spec and never denied a write. Same pattern as
+// hooks/lib/write-set-profile.mjs.
 const writeSetPaths = new Set();
 for (const line of content.split(/\r?\n/)) {
-  const m = /write[_\s]set\s*:\s*(.+)$/i.exec(line);
+  const m = /write[_\s]set\*{0,2}\s*(?::|is\s)\s*(.+)$/i.exec(line);
   if (!m) continue;
   for (let tok of m[1].split(/[`,\s|]+/)) {
     tok = tok.trim().replace(/^\*+|\*+$/g, '').trim();

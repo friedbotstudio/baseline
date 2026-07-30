@@ -1,0 +1,9 @@
+{
+  "requires_git": "The project has to be a git repository. On a tree without one, the track drops out before ranking.",
+  "requires_user_override": "You have to ask for this track by name. Triage never reaches for it on its own.",
+  "requires_min_components": "The spec has to carry at least this many independent components. Carries an argument, so `3` is the swarm floor.",
+  "requires_phase_completed": "A named earlier phase has to be finished already. This is how a node waits on discovery it did not run itself.",
+  "requires_skill_present": "A named skill has to be on disk. A track that calls a skill you removed drops out rather than failing mid-run.",
+  "requires_commit_consent": "Gate C applies to this node. It resolves per branch, so a github-flow feature landing can pass where a protected branch cannot.",
+  "requires_config_flag": "A dot-path in `project.json` has to equal a given value. Carries `path` and `equals`, and it is the fence behind `power` and `org`."
+}

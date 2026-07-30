@@ -1,0 +1,106 @@
+{
+  "setup_guard": {
+    "article": "Art. III",
+    "note": "Advisory reminder when `configured: false` (rate-limited). Never blocks."
+  },
+  "destructive_cmd_guard": {
+    "article": "Art. IV, VII",
+    "note": "Hard-block catastrophic commands; ask on risky. Also closes the Bash surface of consent: writes to a consent path, and epic `approved` flips."
+  },
+  "git_commit_guard": {
+    "article": "Art. IV gate C, Art. VII",
+    "note": "Branch-aware consent; hard-block forbidden flags; gate consent writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex)"
+  },
+  "gitignore_leak_guard": {
+    "article": "Art. VII",
+    "note": "Hard-block a commit staging a must-ignore path. Fail-closed on an inspection error; fail-open on missing baseline data."
+  },
+  "env_guard": {
+    "article": "Art. VII",
+    "note": "Block writes to `.env*` (allows `.env.example`)"
+  },
+  "direction_approval_guard": {
+    "article": "Art. IV gate A",
+    "note": "Allow direction-approval token write only on fresh marker; block self-approval + marker writes; opt-in provenance-anchor arm. (annex)"
+  },
+  "swarm_approval_guard": {
+    "article": "Art. IV gate B",
+    "note": "Allow swarm-approval write only on fresh marker; block marker writes"
+  },
+  "epic_approval_guard": {
+    "article": "Art. IV (§18.9)",
+    "note": "Allow an epic-state `approved: true` flip only when the matching `spec_approvals/<slug>.approval` token exists; other writes pass. (annex)"
+  },
+  "verify_pass_guard": {
+    "article": "Art. V, VI",
+    "note": "Block writing PASS to verify artifacts when truth source says FAIL"
+  },
+  "track_guard": {
+    "article": "Art. IV",
+    "note": "Enforce 11-phase ordering for workflow artifacts"
+  },
+  "branch_guard": {
+    "article": "Art. IV, VII",
+    "note": "Deny `workflow.json` creation on a release branch under `github-flow`; fail-open otherwise"
+  },
+  "artifact_template_guard": {
+    "article": "Art. IV",
+    "note": "Block artifact writes missing required `##` sections"
+  },
+  "plantuml_syntax_guard": {
+    "article": "Art. IV phase 4",
+    "note": "Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true."
+  },
+  "spec_diagram_presence_guard": {
+    "article": "Art. IV phase 4",
+    "note": "Block specs missing required diagram kinds"
+  },
+  "spec_design_calls_guard": {
+    "article": "Art. XI.2",
+    "note": "Block UI specs whose `## Design calls` rows lack a Reference target/Quality criteria"
+  },
+  "swarm_boundary_guard": {
+    "article": "Art. IV phase 6c",
+    "note": "Enforce write_set discipline whenever a wave is active (both isolation modes)"
+  },
+  "tdd_order_guard": {
+    "article": "Art. VI.4",
+    "note": "Require test before new source file"
+  },
+  "process_lifecycle_guard": {
+    "article": "Art. IX",
+    "note": "Advisory. Bash leg surfaces landmines; write leg surfaces phase-scoped memory. Never blocks. (annex)"
+  },
+  "lint_runner": {
+    "article": "Art. VI",
+    "note": "Run `lint.cmd` on code changes (guide mode until configured); `exit 2` on failure"
+  },
+  "test_runner": {
+    "article": "Art. VI",
+    "note": "Run `test.cmd` on code changes (guide mode until configured); `exit 2` on failure"
+  },
+  "phase_timer": {
+    "article": "Art. V",
+    "note": "Observe-only; stamps per-phase timing on `completed[]` growth, incl. Bash-driven `workflow.json` writes. Never blocks or mutates."
+  },
+  "memory_session_start": {
+    "article": "Art. III, IX",
+    "note": "Inject memory index + resume snapshot at session start"
+  },
+  "memory_stop": {
+    "article": "Art. IX",
+    "note": "Auto-extract memory candidates each turn-end"
+  },
+  "harness_continuation": {
+    "article": "Art. V",
+    "note": "Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex)"
+  },
+  "memory_pre_compact": {
+    "article": "Art. IX",
+    "note": "Capture resume snapshot before context compaction"
+  },
+  "consent_gate_grant": {
+    "article": "Art. IV gates A/B/C, Art. VII",
+    "note": "Detect consent commands in user input and write the gate marker, OUTSIDE Claude's tool boundary"
+  }
+}

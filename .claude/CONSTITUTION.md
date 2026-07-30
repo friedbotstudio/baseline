@@ -170,7 +170,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 |---|---|
 | `.claude/hooks/` | 26 hook scripts (21 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 52 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (7) + audit (1) + alt tracks (2) + maintenance (2) + sprint (4) + roadmap (2) |
+| `.claude/skills/` | 53 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (7) + audit (1) + alt tracks (2) + maintenance (2) + sprint (5) + roadmap (2) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-direction`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
 | `.claude/memory/` | 7 canonical knowledge categories — flat `<name>.md`, or `<category>/<key>.md` directories under the sharded store (`memory.sharded_store.enabled`, live here since 2026-07-17) — plus `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
@@ -272,6 +272,12 @@ These bans bind **only on user-facing copy** — surfaces a public reader sees a
 | Project source documents | NO | `README.md`, `bin/cli.js` help/error text, `.claude/skills/*/SKILL.md` |
 | Memory bodies | NO | `.claude/memory/*.md` and `.claude/memory/*/*.md` entries (flat or sharded) |
 | Inline code / data samples | NO | `<code>` / `<pre>` blocks that quote literal data, CLI output, or canonical entry shapes |
+
+Scoping decisions taken against a named `impeccable` rule are recorded here. Each row cites the scoped rule, the scope decision, and a one-line rationale.
+
+| Scoped rule | Scope decision | Rationale |
+|---|---|---|
+| `impeccable` "copy with specificity" read as permitting topic-named section headings | On user-facing copy a section headline SHALL assert what becomes true for the reader, not name a topic; mechanism follows the claim and never replaces it. Bans and the verifiability rule are untouched. | A site marketing a discipline layer was organised as a design doc — `What it is` / `Why hooks` / `How it flows` named subjects, so the page described instead of arguing. Scoping the argument, not the register, fixes it without loosening a single ban (2026-07-27, `site-positioning-org-ship`). |
 
 The constitutional voice in scoped-OUT surfaces uses em dashes deliberately. Audits run by `impeccable` (and any future register-aware critique skill) SHALL apply the bans only within the scoped-IN surfaces. This override does not delete bans from the impeccable skill; it scopes them. Other shared design laws (color strategy, theme commitment, typography hierarchy, motion vocabulary, accessibility floor) remain in force everywhere Claude generates UI. Future "impeccable says X, but we ship Y" decisions get a row in the same scope table without re-amending the constitution; each row SHALL cite the scoped rule, the scope decision, and a one-line rationale (in-flight examples in §1 "XI.1 — copy-register scoping").
 

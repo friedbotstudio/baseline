@@ -1,134 +1,121 @@
 ---
 layout: docs.njk
-permalink: /governance/index.html
-pageTitle: "Governance · baseline"
-title: Governance
-titlePrimary: Governance
-titleAccent: "."
-description: "The precedence chain, what makes the baseline's rules law rather than style, how to amend one, and the audit that stops the set from quietly going out of date."
-eyebrow: Reference
-lead: "Rules that are written down decay. Rules that are checked do not. This is how the baseline's rules are structured, how you change one, and what keeps the set honest."
-active: governance
-sidebarActive: governance
-heroSymbol: governance
+title: "Governance: the constitution and how to amend it · baseline"
+description: "The twelve Articles of the in-session constitution, the engineering rules that bind every code change, how an amendment travels from seed.md to disk, and how skill ownership is recorded and checked."
+heading: "A constitution,<br>and a way to amend it."
+lead: "Rules that cannot change are brittle, and rules anyone can change are decoration. This page explains what the constitution binds, and the path a change has to walk before it takes effect."
+updated: 2026-07-29
+breadcrumb: ["docs", "concepts", "governance"]
+facts:
+  - { label: "constitution", value: "CLAUDE.md" }
+  - { label: "size cap", value: "40,000 chars" }
+  - { label: "annex", value: ".claude/CONSTITUTION.md" }
 toc:
-  - { id: precedence,  label: "The precedence chain" }
-  - { id: law,         label: "Law, not style guide" }
-  - { id: budget,      label: "The byte budget" }
-  - { id: amend,       label: "Changing a rule" }
-  - { id: audit,       label: "What the audit checks" }
-  - { id: nooptout,    label: "No opt-out" }
-  - { id: provenance,  label: "Skill provenance" }
-  - { id: class,       label: "Governance class" }
+  - { id: "articles", label: "The twelve articles" }
+  - { id: "engineering", label: "Rules that bind every change" }
+  - { id: "amendment", label: "The amendment path" }
+  - { id: "budget", label: "The size budget" }
+  - { id: "ownership", label: "Skill ownership" }
+  - { id: "questions", label: "The economy of questions" }
 ---
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ I</p>
-      <h2 id="precedence">The precedence chain</h2>
-    </div>
-    <p>Four layers, and the order between them is load-bearing.</p>
-  </div>
-  <p>The genesis prompt at <code>docs/init/seed.md</code> governs the constitution at <code>CLAUDE.md</code>, which governs the annex, which governs the implementation on disk. The chain exists so that a disagreement has a defined resolution instead of a debate.</p>
-  <p>A conflict between any two adjacent layers resolves differently depending on which pair it is, and the difference is the interesting part.</p>
-  <p>Below the constitution, the resolution is automatic. Disk can be measured against a written rule, so disk loses and gets corrected, and no one has to be consulted about it.</p>
-  <p>Above the constitution, there is no automatic answer. Two written rules contradicting each other is not a measurement problem, so Claude halts and reports it instead of picking a winner. The chain deliberately declines to resolve that case, because resolving it would mean a model choosing which rule governs it.</p>
-</section>
+<h2 id="articles"><span class="sec-mark" aria-hidden="true">§ I</span> The twelve articles</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ II</p>
-      <h2 id="law">What makes it law rather than a style guide</h2>
-    </div>
-    <p>Twelve articles, numbered in roman, with dotted clauses beneath them.</p>
-  </div>
-  <p>Forty-two <code>SHALL</code> constructions, twenty of them <code>SHALL NOT</code>, and three <code>SHALL NEVER</code>. An imperative that can be read two ways is an imperative a model can drift through.</p>
-  <p>Article XI is reserved space for project amendments. Its numbering is deliberately non-contiguous, because a retired clause number is never reused, so a citation in an old commit message still points where it pointed.</p>
-  <p>Rules can be waived, but only through a recorded exception written at triage time and scoped to a single workflow. There is no ambient way to turn a rule off.</p>
-</section>
+<p><code class="tok">CLAUDE.md</code> lands in your repository root at install, and Claude Code reads it at the start of every session, where it binds behaviour for the whole of that session. It runs to {{ roster.articleCount }} Articles.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ III</p>
-      <h2 id="budget">The constitution has a byte budget</h2>
-    </div>
-    <p><code>CLAUDE.md</code> is capped at 40,000 characters, enforced over both the live file and its shipped mirror.</p>
+{# Numerals and titles are parsed from src/CLAUDE.template.md, the byte-equal
+   mirror of the CLAUDE.md a user installs. The one-line gloss is editorial and
+   sits in _data/articlenotes.json under a coverage guard, the same arrangement
+   as hooknotes.json. #}
+<div class="grid-rule grid-2 lane-grid">
+  {% for a in roster.articles %}
+  <div class="cell">
+    <div class="cell-kicker">{{ a.numeral }} · {{ a.title | lower }}</div>
+    <p>{{ a.gloss }}</p>
   </div>
-  <p>The cap exists because this file is loaded into every session. A constitution nobody can afford to read is not binding in practice, so elaboration moves into an annex and the always-loaded file keeps only the clauses that bind.</p>
-  <p>The budget makes amendments cost something, which turns out to be useful. One recent amendment added a binding rule and ended up leaving the file about a thousand characters smaller, because paying for the addition meant finding duplicated detail to relocate first. Adding a rule does not have to cost budget when the always-loaded file is carrying explanation it does not need to.</p>
-</section>
+  {% endfor %}
+</div>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ IV</p>
-      <h2 id="amend">Changing a rule</h2>
-    </div>
-    <p>Editing the implementation first is the common mistake. The chain runs the other way.</p>
-  </div>
-  <p>Start at the genesis prompt, because it governs everything below it. Propagate the binding clause into the constitution, keeping it terse. Put the elaboration in the annex. Mirror both templates, since the shipped copies are byte-compared against the live ones. Then change the code, update the roster the audit reads, and rebuild.</p>
-  <p>The audit fails until every layer agrees, so a half-finished amendment cannot ship. Governance files also sit on a never-auto-merge list, which means a change here always gets a human review.</p>
-</section>
+<p>Eleven of them ship fixed, while Article XI is yours and is held open for rules applying to your project alone. Anything you put there binds with the same force as the rest, on one condition: it must not contradict the other Articles.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ V</p>
-      <h2 id="audit">What the audit actually checks</h2>
-    </div>
-    <p>Sixteen check modules, any one of which failing takes the exit code non-zero.</p>
-  </div>
-  <p>Three of them are worth describing, because they cover the three ways governance usually rots.</p>
-  <p>Content drift is caught by re-hashing. Every file in every baseline-owned skill, 305 of them, is hashed and compared against the shipped manifest, so an edited skill is caught even when nothing about its name or location changed.</p>
-  <p>Claim drift is caught by reading the prose. Numbers asserted in the constitution, the genesis prompt, and the README are extracted and compared against what is on disk, with a heuristic that separates a binding headline claim from an incidental mention so only the former can fail the build.</p>
-  <p>Public drift is caught by reading this website. The hook table on the hooks page has to name all {{ baseline.hooks.total }}, which means a new hook cannot ship while its public documentation is still stale. The page you are reading is inside the same net.</p>
-  <div class="callout">
-    <span class="icon" aria-hidden="true">!</span>
-    <div class="body">
-      <strong>Silence is the signal.</strong>
-      <p>The hash check emits nothing when everything matches, and produces rows only where something moved, so you are never asked to scan a wall of green to find out that nothing happened.</p>
-    </div>
-  </div>
-</section>
+<h2 id="engineering"><span class="sec-mark" aria-hidden="true">§ II</span> Rules that bind every change</h2>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VI</p>
-      <h2 id="nooptout">No opt-out</h2>
-    </div>
-    <p>There is no environment variable that disables the audit, and no configuration key that turns it off.</p>
-  </div>
-  <p>Nine separate test files assert that it exits zero, so removing the build gate would still leave the suite red.</p>
-  <p>One flag exists and is narrower than it sounds. During a build, the manifest is stamped and then immediately verified against the same source, which is tautological, so that single re-hash is skipped. Every other check still runs, and a test asserts that the same tampering caught without the flag is still caught with it.</p>
-</section>
+<p class="sec-lead">Article VI is the one you will feel most often, because it applies to every line Claude writes.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VII</p>
-      <h2 id="provenance">Skill provenance</h2>
-    </div>
-    <p>A skill is baseline-owned when its frontmatter says so.</p>
-  </div>
-  <p>The shipped manifest records the same set, and the audit requires both sides to agree.</p>
-  <p>Skills you write yourself need no annotation at all. Absence is the default, which is what makes installing into a repository that already has its own skills a non-event: they are excluded from the count, the roster check, and the hash check, and nothing touches them.</p>
-  <p>There is a pleasing recursion here worth naming. The article that mandates drift detection is itself drift-detected, and deleting the clause that says there is no opt-out is a failing condition.</p>
-</section>
+<p>The first rule is that a declared function is a finished function. If the body is unknown then the function does not get declared at all, and the spec is written first. Alongside it comes a ban on <code class="tok">TODO</code>, <code class="tok">FIXME</code>, <code class="tok">HACK</code> and <code class="tok">XXX</code> in source, and on leaving code commented out; deleted code is deleted.</p>
 
-<section class="section">
-  <div class="lede">
-    <div class="lede-head">
-      <p class="section-num">§ VIII</p>
-      <h2 id="class">Governance class</h2>
-    </div>
-    <p>This one is off by default. <span class="track-chip track-chip-soon">opt-in<span class="chip-soon-tag">off</span></span></p>
+<p>The second rule is about mocks, and it is stricter than most teams write down. Claude may never mock your own modules, your database, or a gRPC channel. Three targets are allowed: a third-party HTTP API that cannot run on your machine, the system clock, and the operating system's randomness. Each one carries a <code class="tok">MOCK</code> comment saying why.</p>
+
+<p>Behind that sits an opinion worth stating plainly. An internal module which is hard to test is usually telling you something about the design, and mocking it will hide the message, so the rule points at the design rather than at the test.</p>
+
+<p>YAGNI is the third, and it cuts one way only. It will stop params, flags and abstractions added for a future nobody has asked for, but it carries no authority at all over scope your approved spec has already committed to. A spec row that defers committed work must say why and give a real reason (a dependency, a risk, a cost, or your own instruction), because citing YAGNI there is a blocker at gate A.</p>
+
+<p>The last one is small and saves real time. For any third-party library, Claude must check the current documentation before writing code against it, since recalling an API from training data is how you end up with a signature that was true two versions ago.</p>
+
+<h2 id="amendment"><span class="sec-mark" aria-hidden="true">§ III</span> The amendment path</h2>
+
+<p><code class="tok">docs/init/seed.md</code> is the specification the whole overlay is built from. The constitution sits beneath it, and the hooks and skills sit beneath both, which is why a change has to enter at the top.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>order of precedence</span>
   </div>
-  <p>When it is enabled, it grades a change from D up to A by blast radius rather than by anyone's judgment.</p>
-  <p>Touching a consent path forces the top class. Touching a hook or a governance document floors at the second. Spanning several layers or many files raises by one more. The classifier can raise a class and never lower it.</p>
-  <p>The class then decides how much evidence an approval needs, from a single rung at D to six at A. The check is presence-based, so a rung counts when it holds anything real. Length, authorship, and how long it took never affect the verdict, which means evidence written by Claude is never penalised for being written by Claude.</p>
-  <p>Every branch that is not an affirmative low-class result resolves toward more governance rather than less.</p>
-</section>
+  <pre class="plate-body"><span class="t-ok">docs/init/seed.md</span>   <span class="t-dim">the genesis specification</span>
+       <span class="t-dim">↓ binds</span>
+<span class="t-ok">CLAUDE.md</span>           <span class="t-dim">the in-session constitution</span>
+       <span class="t-dim">↓ binds</span>
+<span class="t-ok">.claude/hooks · skills · config</span>   <span class="t-dim">the actuators</span></pre>
+</div>
+
+<p>Amend the seed, then the constitution, then the code which carries it out. Going the other way round is how a rule ends up written in three places and true in only one of them.</p>
+
+<p>Turning a hook off follows the same path with a second lock on it: your explicit approval and a matching seed amendment, both of them, every time. A guard that a session could quietly disable would be a suggestion with extra steps.</p>
+
+<p>When the constitution and the code disagree, the constitution wins and the code is what gets corrected. If instead the seed and the constitution disagree, Claude stops and raises it, because that case is drift: someone edited one of two documents that were supposed to move together.</p>
+
+<h2 id="budget"><span class="sec-mark" aria-hidden="true">§ IV</span> The size budget</h2>
+
+<p class="sec-lead">The constitution has a hard ceiling of 40,000 characters, and <code class="tok">audit-baseline</code> fails the build above it.</p>
+
+<p>The reason is context. Because <code class="tok">CLAUDE.md</code> is loaded into every session, every character in it competes with your codebase for room, and a constitution that grows without limit will slowly crowd out the code it governs.</p>
+
+<p>So the file carries binding rules and nothing else. Amendment history moves next door into <code class="tok">.claude/CONSTITUTION.md</code>, along with the account of how each hook enforces its Article and the long reference tables, and Claude opens that file when it needs them. The cap binds the shipped template as well, since the two are byte for byte the same file.</p>
+
+<p>Working under a budget shapes the writing. Rules get tightened where they would otherwise simply be appended to, and a rule that cannot earn its characters was generally carrying nothing.</p>
+
+<h2 id="ownership"><span class="sec-mark" aria-hidden="true">§ V</span> Skill ownership</h2>
+
+<p>If you install into a repository that already has skills of its own, a question shows up at once: which of them does the baseline get to police? Article XII answers it.</p>
+
+<p>A skill belongs to the baseline when its <code class="tok">SKILL.md</code> frontmatter says <code class="tok">owner: baseline</code>, and everything else on disk is yours. Silence is the default, so a project carrying its own skills installs without you touching a single file to declare them.</p>
+
+<p>For the skills it does own, the shipped manifest records a sha256 hash of every file, and the audit re-derives those hashes from disk on each run. A changed file, or a listed skill that has gone missing, is a hard failure with no opt-out available. That is deliberate, because drift you can silence is drift you will eventually stop noticing.</p>
+
+<p>Your own skills sit outside all of it, left out of the count, the name check and the hash check alike. Maintaining them stays your job, which is the honest division of the work.</p>
+
+<h2 id="questions"><span class="sec-mark" aria-hidden="true">§ VI</span> The economy of questions</h2>
+
+<p class="sec-lead">Every question Claude asks costs you attention, and attention is the scarce resource. So the constitution puts a closed list on what may be asked.</p>
+
+<div class="grid-rule grid-2 lane-grid">
+  <div class="cell">
+    <div class="cell-kicker">consent-adjacent scope</div>
+    <p>Anything that widens what a gate covers: extra paths at commit, a bigger write surface, one more skipped phase.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">one-way operations</div>
+    <p>History rewrites, deletes outside the write set, publishing outward, migrations with no way back.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">policy flips</div>
+    <p>Changing a default the constitution or <code class="tok">project.json</code> declares.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">requirements that clash</div>
+    <p>Two acceptance criteria, or an instruction and a memory, that cannot both hold.</p>
+  </div>
+</div>
+
+<p>Everything outside those four is an ordinary engineering fork. Claude decides it in the main session and writes it into the spec's <code class="tok">## Decisions</code> section along with the reasoning, and you see all of them at gate A before approving anything. The call is still yours, but it arrives as a batch you can read rather than an interruption you have to field.</p>
+
+<p>If you leave a question unanswered it takes the recommended option, records that it did so, and surfaces the assumption at the next consent gate, which is how an unattended run keeps moving. The gates themselves work differently: they block and wait, and no timeout will ever satisfy one.</p>

@@ -54,6 +54,28 @@ const TOOLS = [
   ['leave_peer', 'Deregister a peer from the sprint channel (removes it from peers[])',
     { sprint_id: z.string(), peer_id: z.string() },
     (channelRootPath, a) => handlers.leavePeer({ channelRoot: channelRootPath, ...a })],
+  // Article X escalation surface (experimental — org mode is opt-in via
+  // velocity.org_mode.enabled and off by default). These four live here rather
+  // than on sprint-pool so a consumer needs no research-preview channel flag.
+  ['ask_lead', 'Peer asks the lead a free-form question (peer->lead->human escalation)',
+    { sprint_id: z.string(), peer_id: z.string(), body: z.string() },
+    (channelRootPath, a) => handlers.askLead({ channelRoot: channelRootPath, ...a })],
+  ['answer_peer', 'Lead answers a peer question; the peer reads it back by message_id',
+    { sprint_id: z.string(), message_id: z.string(), answer: z.string() },
+    (channelRootPath, a) => handlers.answerPeer({ channelRoot: channelRootPath, ...a })],
+  ['sprint_status', 'Authoritative channel state; all_done is the never-dropped completion check',
+    { sprint_id: z.string() },
+    (channelRootPath, a) => handlers.sprintStatus({ channelRoot: channelRootPath, ...a })],
+  ['enqueue_task', 'Lead enqueues a lane; optional assignee makes it directed rather than claim-any',
+    {
+      sprint_id: z.string(),
+      task_id: z.string(),
+      brief: z.string().optional(),
+      write_set: z.array(z.string()).optional(),
+      depends_on: z.array(z.string()).optional(),
+      assignee: z.string().optional(),
+    },
+    (channelRootPath, a) => handlers.enqueueTask({ channelRoot: channelRootPath, ...a })],
 ];
 
 export function buildServer() {

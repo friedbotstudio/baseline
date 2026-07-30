@@ -118,3 +118,13 @@ __pycache__/
 # element picked, variant delivered, and accept/discard. Machine-local
 # recovery state for an interactive session, not source.
 .impeccable/
+
+# Pre-redesign site source, kept locally while the new site-src is rebuilt
+# against the pinned landing reference. Local recovery material, not source.
+site-src.backup/
+
+# Design-review screenshots captured at the repo root during site work
+# (full-page renders, viewport captures). Scratch output from the visual
+# iteration loop, not published assets — those live under site-src/assets/.
+# Root-anchored so site-src/assets/*.png stays tracked.
+/*.png

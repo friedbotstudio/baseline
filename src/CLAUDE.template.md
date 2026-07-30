@@ -43,7 +43,7 @@ On every new session, before any work, you SHALL:
 
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
-   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 52 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 53 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
    You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, direction-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
@@ -264,6 +264,8 @@ Reserved for project-owner amendments. Rules below the boundary line bind alongs
 
 The vendored `impeccable` skill's "Shared design laws" absolute bans (no em dashes, hero-metric template, glassmorphism, gradient text, heavy side-stripes, modal-first, identical card grids) bind **only on user-facing copy** (`site-src/**`, the docs site) — NOT internal governance, source docs, memory bodies, or code samples, where the constitutional voice uses em dashes deliberately. This scopes the bans; it does not delete them. Other design laws (color, theme, typography, motion, accessibility) stay in force everywhere Claude generates UI. Full scope table: `.claude/CONSTITUTION.md §5.1` (annex).
 
+**Outcome-led argument.** Register stays constitutional; the *argument* is outcome-led. On user-facing copy a section headline SHALL assert what becomes true for the reader, not name a topic; mechanism follows the claim and never replaces it. Every `PRODUCT.md` anti-reference and the verifiability rule stay binding.
+
 ---
 
 ### XI.2 Design-task routing
@@ -274,7 +276,7 @@ Every UI design task inside a workflow phase SHALL route through `design-ui`, wh
 
 ### XI.3 Entry-phase brainstorm (PM mode)
 
-Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `workflow.json → skip_brainstorm` is `true` (defaults `false`; absent → run). `/triage` Step 0 writes the flag **explicitly** — `true` for spec-derived/complete-framing, `false` only when genuinely ambiguous AND answers would change the build. Brainstorm is **derivation-first** (Stage 1 derives every derivable field; only underivable build-changing gaps probe, Stage 2 cap **2**), writes `docs/brief/<slug>.md` as the entry skill's primary input, and SHALL NOT propose solutions (enforced by `discipline.mjs → scanTurn`). `chore`/`freeform` have no entry seam. Runs in main context per Article II. Full rule table: `.claude/CONSTITUTION.md §5.3` (annex).
+Every workflow entry phase (`/intake`, `/spec`, `/tdd`) SHALL invoke `Skill(brainstorm)` as Step 0.5 before opening its template, unless `workflow.json → skip_brainstorm` is `true` (defaults `false`; absent → run). `/triage` Step 0 writes the flag **explicitly**. Brainstorm is **derivation-first**, writes `docs/brief/<slug>.md` as the entry skill's primary input, and SHALL NOT propose solutions. Runs in main context per Article II. Flag-resolution rules, probe mechanics and cap, the `chore`/`freeform` carve-out, and the `discipline.mjs` enforcement: `.claude/CONSTITUTION.md §5.3` (annex).
 
 ---
 
@@ -292,7 +294,7 @@ For a code-navigation question ("where does X come from", "what renders Y") in a
 
 ### XI.12 Decision economy
 
-Only **load-bearing, human's-call forks** may surface as questions or gate-A decision points — the closed category list (consent-adjacent scope, irreversible/destructive ops, policy flips, contradictory requirements) lives in the annex. Routine engineering choices are decided in main context and RECORDED in the spec's `## Decisions` section with rationale (`owner: engineer`) — reviewed at gate A, not asked. An `AskUserQuestion` timeout inside a phase skill adopts the recommended option as a **recorded assumption** surfaced at the next consent gate; questions never block an unattended run — consent gates still do (seed.md §6 governs FIRST). Full rule table: `.claude/CONSTITUTION.md §5.12` (annex).
+Only **load-bearing, human's-call forks** may surface as questions or gate-A decision points; the closed category list lives in the annex. Routine engineering choices are decided in main context and RECORDED in the spec's `## Decisions` section with rationale (`owner: engineer`), reviewed at gate A rather than asked. An `AskUserQuestion` timeout adopts the recommended option as a **recorded assumption** surfaced at the next consent gate; questions never block an unattended run, consent gates still do (seed.md §6 governs FIRST). Category list and full rule table: `.claude/CONSTITUTION.md §5.12` (annex).
 
 ---
 
@@ -312,6 +314,6 @@ You SHALL:
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 52 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 53 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 52 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 53 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).

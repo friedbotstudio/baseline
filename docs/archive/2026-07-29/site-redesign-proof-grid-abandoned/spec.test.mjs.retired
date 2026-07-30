@@ -1,0 +1,329 @@
+// Redesign onto design direction 1b ("Proof grid") — homepage + shared chrome.
+//
+// Spec: docs/specs/site-redesign-proof-grid.md
+// Reference: docs/design/site-1b-proof-grid.html
+//
+// Scope note — this suite deliberately does NOT re-assert two invariants:
+//   AC-007 (no orphaned ancestor-scoped CSS) is owned by tests/css-selector-orphans.test.mjs
+//   AC-008 (homepage spine order)            is owned by tests/site-spine.test.mjs
+// Both already fail loudly on a bad recomposition. A second owner would let the
+// two copies drift apart, and the weaker copy would become the de-facto contract.
+//
+// RED until the redesign lands.
+
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+
+import { ensureSiteBuilt, readRendered, renderedPages, REPO_ROOT } from './helpers/site-build.mjs';
+import {
+  readStylesheet,
+  readStylesheetAtHead,
+  customProperties,
+  tokenValue,
+  nonOklchColorLiterals,
+  addedLines,
+} from './helpers/css-tokens.mjs';
+import { contrastRatio, aaFloorFor } from './helpers/contrast.mjs';
+
+describe('1b redesign — token layer', () => {
+  let css;
+  let headCss;
+
+  before(() => {
+    css = readStylesheet();
+    headCss = readStylesheetAtHead();
+  });
+
+  it('test_when_stylesheet_scanned_then_no_raw_hex_added_outside_mac_block', () => { // AC-001
+    // The --mac-* traffic-light tokens are a pre-existing cultural reference the
+    // spec exempts by name; everything else this workflow adds must be oklch().
+    const addedText = new Set(addedLines(headCss, css).map((l) => l.text));
+    const offenders = nonOklchColorLiterals(css)
+      .filter((hit) => addedText.has(hit.text))
+      .filter((hit) => !/--mac-/.test(hit.text));
+
+    assert.deepEqual(
+      offenders.map((o) => `L${o.line}: ${o.text}`),
+      [],
+      'every colour this workflow adds must be authored in oklch()',
+    );
+  });
+
+  it('test_when_accent_token_read_then_declaration_is_byte_unchanged', () => { // AC-002
+    // 1b's #c2440c measures oklch(55.7% 0.171 39.4) against the shipped
+    // oklch(55.8% 0.187 41.5) — a 0.1% lightness and 2.1 degree hue delta. The
+    // redesign therefore inherits the accent rather than restating it.
+    assert.equal(
+      tokenValue(css, '--accent'),
+      tokenValue(headCss, '--accent'),
+      '--accent must survive the redesign byte-identical',
+    );
+  });
+
+  it('test_when_content_token_read_then_unchanged_and_canvas_gutter_declared', () => { // AC-003
+    // The 15 interior prose pages read --content as their rail and are out of
+    // scope; the wide grid gets its own tokens instead of redefining theirs.
+    assert.equal(
+      tokenValue(css, '--content'),
+      tokenValue(headCss, '--content'),
+      '--content must survive the redesign byte-identical',
+    );
+    assert.equal(tokenValue(css, '--canvas'), '1280px');
+    assert.equal(tokenValue(css, '--gutter'), '48px');
+  });
+});
+
+describe('1b redesign — shared chrome', () => {
+  let pages;
+
+  before(() => {
+    ensureSiteBuilt();
+    pages = renderedPages().map((rel) => ({ rel, html: readRendered(rel) }));
+  });
+
+  it('test_when_any_page_rendered_then_single_top_bar_carries_meta_and_no_alpha_banner', () => { // AC-004
+    assert.ok(pages.length > 0, 'expected the build to emit pages');
+
+    for (const { rel, html } of pages) {
+      const bars = html.match(/<header\b[^>]*class="[^"]*\btop\b[^"]*"/g) ?? [];
+      assert.equal(bars.length, 1, `${rel}: expected exactly one top bar, found ${bars.length}`);
+
+      assert.ok(
+        !/class="[^"]*\balpha-banner\b/.test(html),
+        `${rel}: the alpha banner folded into the top bar (D-4) — no .alpha-banner element may remain`,
+      );
+
+      const bar = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+      assert.ok(/Apache/i.test(bar), `${rel}: top bar must carry the licence`);
+      assert.ok(/alpha/i.test(bar), `${rel}: top bar must carry the alpha status`);
+      assert.ok(/\bv?\d+\.\d+/.test(bar), `${rel}: top bar must carry the version`);
+    }
+  });
+
+  it('test_when_site_built_then_every_existing_page_still_renders', () => { // AC-012
+    // The invariant is "no page is lost", not a magic number — a dropped page
+    // means a template broke. Enumerated rather than counted so a regression
+    // names the missing route instead of reporting an off-by-one.
+    const expected = [
+      '404.html',
+      'cli/index.html',
+      'epics/index.html',
+      'governance/index.html',
+      'hooks/index.html',
+      'index.html',
+      'install/index.html',
+      'mcp/index.html',
+      'memory/index.html',
+      'org/index.html',
+      'org/setup/index.html',
+      'pm/index.html',
+      'skills/core/index.html',
+      'skills/index.html',
+      'skills/third-party/index.html',
+      'standup/index.html',
+      'swarm/index.html',
+      'velocity/index.html',
+      'workflows/index.html',
+    ];
+
+    const rendered = new Set(pages.map((p) => p.rel));
+    const missing = expected.filter((rel) => !rendered.has(rel));
+    assert.deepEqual(missing, [], 'the redesign must not drop a page');
+
+    for (const { rel, html } of pages) {
+      assert.ok(html.length > 0, `${rel}: rendered empty`);
+    }
+  });
+});
+
+describe('1b redesign — hero proof is server-rendered', () => {
+  let html;
+
+  before(() => {
+    ensureSiteBuilt();
+    html = readRendered('index.html');
+  });
+
+  it('test_when_index_read_as_raw_bytes_then_both_refused_calls_present', () => { // AC-005
+    // Read as raw bytes, no DOM and no JS: this is what a crawler, an LLM fetch
+    // and a JS-off reader see. The refusal transcript is the page's core proof,
+    // so it has to survive all three.
+    //
+    // Scoped to the hero, not the whole document. `git_commit_guard` is already
+    // named further down the page, so a document-wide search would pass without
+    // the transcript ever being server-rendered — the exact defect this guards.
+    const heroStart = html.indexOf('<section');
+    const heroEnd = html.indexOf('<section', heroStart + 1);
+    assert.ok(heroStart >= 0 && heroEnd > heroStart, 'index.html must open with a hero section');
+    const hero = html.slice(heroStart, heroEnd);
+
+    assert.ok(
+      /git_commit_guard/.test(hero),
+      'the refused-commit call must be server-rendered inside the hero',
+    );
+    assert.ok(
+      /push/i.test(hero) && /guard/.test(hero),
+      'the refused-push call must be server-rendered inside the hero',
+    );
+
+    const refusals = hero.match(/blocked|refused/gi) ?? [];
+    assert.ok(
+      refusals.length >= 2,
+      `expected both tool calls marked refused in the hero, found ${refusals.length}`,
+    );
+  });
+
+  it('test_when_site_js_read_then_dev_console_module_absent_and_three_modules_intact', () => { // AC-006
+    const js = readFileSync(path.join(REPO_ROOT, 'site-src/assets/site.js'), 'utf8');
+
+    assert.ok(!/dc-stream/.test(js), 'the dev-console stream target is retired (D-3)');
+    assert.ok(
+      !/setInterval|setTimeout\s*\(\s*function\s+type|requestAnimationFrame/.test(js),
+      'no typewriter loop should remain in site.js',
+    );
+
+    // The other three modules keep working — retiring the typewriter must not
+    // take the copy button, the drawer or the analytics wiring with it.
+    assert.ok(/clipboard|execCommand/.test(js), 'copy-to-clipboard module must remain');
+    assert.ok(/nav-toggle|drawer|sidebar/i.test(js), 'docs drawer module must remain');
+    assert.ok(/data-cta/.test(js), 'GA4 CTA instrumentation must remain');
+  });
+});
+
+describe('1b redesign — layout primitives', () => {
+  let css;
+  let html;
+
+  before(() => {
+    ensureSiteBuilt();
+    css = readStylesheet();
+    html = readRendered('index.html');
+  });
+
+  it('test_when_band_token_pairs_measured_then_each_meets_wcag_aa', () => { // AC-009
+    // The pairs the four bands actually put on screen. `#c2440c` on the peach
+    // band measures 3.89:1, which is why 1b itself reaches for a deeper accent
+    // there — hence --accent-deep rather than reusing --accent.
+    const pairs = [
+      { bg: '--band-warm', fg: '--ink', fontSizePx: 76, note: 'hero headline' },
+      { bg: '--band-warm', fg: '--accent-deep', fontSizePx: 14, note: 'hero eyebrow + link' },
+      { bg: '--band-cool', fg: '--ink', fontSizePx: 40, note: 'section heading' },
+      { bg: '--band-cool', fg: '--text', fontSizePx: 18, note: 'section lede' },
+      { bg: '--band-ink', fg: '--on-dark-bright', fontSizePx: 34, note: 'dark band heading' },
+      { bg: '--band-ink', fg: '--on-dark-body', fontSizePx: 15.5, note: 'dark band body' },
+      { bg: '--band-footer', fg: '--on-dark-body', fontSizePx: 13, note: 'footer body' },
+    ];
+
+    const tokens = customProperties(css);
+    const failures = [];
+
+    for (const { bg, fg, fontSizePx, note } of pairs) {
+      const bgValue = tokens.get(bg);
+      const fgValue = tokens.get(fg);
+      if (!bgValue || !fgValue) {
+        failures.push(`${note}: missing token ${!bgValue ? bg : fg}`);
+        continue;
+      }
+      const ratio = contrastRatio(fgValue, bgValue);
+      const floor = aaFloorFor({ fontSizePx });
+      if (ratio < floor) {
+        failures.push(`${note}: ${fg} on ${bg} = ${ratio.toFixed(2)}:1, needs ${floor}:1`);
+      }
+    }
+
+    assert.deepEqual(failures, [], 'every band foreground must clear its WCAG AA floor');
+  });
+
+  it('test_when_layout_primitives_declared_then_no_unguarded_fixed_width_exceeds_viewport', () => { // AC-010
+    // Structural proxy for horizontal overflow. The live 360/768/1024/1280/1440
+    // sweep runs under playwright during the design-ui ticks; this guards the
+    // one authoring mistake that causes it — a fixed width where a max-width
+    // belongs.
+    const canvasRule = /\.canvas\b[^{]*\{([^}]*)\}/.exec(css);
+    assert.ok(canvasRule, '.canvas primitive must be declared');
+    assert.ok(
+      /max-width:\s*var\(--canvas\)/.test(canvasRule[1]),
+      '.canvas must constrain with max-width: var(--canvas)',
+    );
+    assert.ok(
+      /padding-inline:\s*var\(--gutter\)/.test(canvasRule[1]),
+      '.canvas must use padding-inline: var(--gutter) so the gutter survives narrow viewports',
+    );
+    assert.ok(
+      !/^\s*width:\s*\d{3,}px/m.test(canvasRule[1]),
+      '.canvas must not pin a fixed width',
+    );
+  });
+
+  it('test_when_bento_rendered_then_hairline_seams_and_single_column_below_768', () => { // AC-011
+    const bentoRule = /\.bento\b(?![\w-])[^{]*\{([^}]*)\}/.exec(css);
+    assert.ok(bentoRule, '.bento primitive must be declared');
+
+    assert.ok(/display:\s*grid/.test(bentoRule[1]), '.bento must be a grid');
+    assert.ok(/gap:\s*1px/.test(bentoRule[1]), '.bento seams must be exactly 1px');
+    assert.ok(
+      /background:\s*var\(--hairline-bed\)/.test(bentoRule[1]),
+      '.bento must sit on var(--hairline-bed) so the gaps read as hairlines',
+    );
+    assert.ok(
+      /border:\s*1px solid var\(--hairline-bed\)/.test(bentoRule[1]),
+      '.bento must carry a 1px outer border matching its bed',
+    );
+
+    assert.ok(
+      /\.bento\s*>\s*\*[^{]*\{[^}]*background:/.test(css),
+      '.bento children must carry an opaque surface, or the bed shows through the cells',
+    );
+
+    const collapse = /@media[^{]*max-width:\s*76[78]px[^{]*\{([\s\S]*?)\n\}/.exec(css);
+    assert.ok(
+      collapse && /\.bento\b/.test(collapse[1]),
+      '.bento must collapse to a single column below 768px',
+    );
+
+    assert.ok(/class="[^"]*\bbento\b/.test(html), 'the homepage must actually use .bento');
+  });
+});
+
+describe('1b redesign — scope boundary', () => {
+  it('test_when_diff_inspected_then_no_interior_page_template_modified', () => { // AC-013
+    // The interior-page layout pass is a separate slice (spec Non-goals,
+    // AC-013 deferred: cost). The tree carries unrelated pre-existing edits, so
+    // the baseline is rightsize_base — the paths already dirty when this
+    // workflow first armed — not a clean tree.
+    const workflow = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, '.claude/state/workflow.json'), 'utf8'),
+    );
+    const preExisting = new Set(workflow.rightsize_base ?? []);
+
+    const allowed = new Set([
+      'site-src/index.njk',
+      'site-src/_includes/topnav.njk',
+      'site-src/_includes/footer.njk',
+      'site-src/_layouts/base.njk',
+    ]);
+
+    const r = spawnSync('git', ['status', '--porcelain', '--', 'site-src'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    });
+    assert.equal(r.status, 0, `git status failed: ${r.stderr}`);
+
+    const touched = r.stdout
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => line.slice(3).trim())
+      .filter((p) => p.endsWith('.njk'))
+      .filter((p) => !allowed.has(p))
+      .filter((p) => !preExisting.has(p));
+
+    assert.deepEqual(
+      touched,
+      [],
+      'this slice must not modify interior page templates — that is the deferred follow-up slice',
+    );
+  });
+});
