@@ -1,3 +1,11 @@
+# [0.21.0](https://github.com/friedbotstudio/baseline/compare/v0.20.0...v0.21.0) (2026-07-30)
+
+
+### Features
+
+* rebuild the docs site, ship org mode, and land accumulated pre-session work ([d2761fb](https://github.com/friedbotstudio/baseline/commit/d2761fb874b63c29047758590d70902d51bdb23a))
+* **skills:** ship the technical-writing pipeline as baseline-owned (53 -> 56) ([851b454](https://github.com/friedbotstudio/baseline/commit/851b4548fcff82333f054636cd1dc54f20c38f08))
+
 # [0.20.0](https://github.com/friedbotstudio/baseline/compare/v0.19.0...v0.20.0) (2026-07-26)
 
 
