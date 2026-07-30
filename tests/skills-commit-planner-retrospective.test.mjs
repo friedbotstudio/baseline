@@ -60,16 +60,42 @@ describe('counts — reconciled across every prose surface (AC-009)', () => {
     'src/seed.template.md',
     '.claude/CONSTITUTION.md',
   ];
+  // The expected count is derived, not written here: this file exists to catch a
+  // count that drifted on one prose surface, so hardcoding the number would make
+  // every future bump edit the test that is supposed to police the bump.
+  const SUPERSEDED = [46, 52, 53, 55];
   for (const rel of COUNT_SURFACES) {
-    it(`test_when_counts_reconciled_then_53_skills_in_${rel.replace(/[^\w]/g, '_')}`, () => {
+    it(`test_when_counts_reconciled_then_derived_skill_count_in_${rel.replace(/[^\w]/g, '_')}`, async () => {
+      const { SKILL_CATEGORIES } = await import(
+        join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs')
+      );
+      const total = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
       const text = read(rel);
-      assert.ok(text.includes('53 skills'), `${rel} must read "53 skills"`);
-      for (const superseded of ['46 skills', '52 skills']) {
-        assert.ok(!text.includes(superseded), `${rel} must no longer read "${superseded}"`);
+      assert.ok(text.includes(`${total} skills`), `${rel} must read "${total} skills"`);
+      for (const n of SUPERSEDED.filter((n) => n !== total)) {
+        assert.ok(!text.includes(`${n} skills`), `${rel} must no longer read "${n} skills"`);
       }
     });
   }
 
+  // A prose match on "<n> skills" cannot see a bare numeral in a table cell, which
+  // is exactly how README's inventory row held a stale 53 while every other
+  // surface read 56. Assert the numeral itself on the row that carries it.
+  it('test_when_readme_inventory_row_then_carries_the_derived_skill_count', async () => {
+    const { SKILL_CATEGORIES } = await import(
+      join(REPO_ROOT, '.claude/skills/audit-baseline/derive-counts.mjs')
+    );
+    const total = Object.values(SKILL_CATEGORIES).reduce((a, b) => a + b, 0);
+    const row = read('README.md')
+      .split('\n')
+      .find((l) => l.startsWith('| **Skills**'));
+    assert.ok(row, 'README must carry a | **Skills** ... | <count> | inventory row');
+    const cells = row.split('|').map((c) => c.trim());
+    assert.ok(
+      cells.includes(String(total)),
+      `README inventory row must carry the bare count ${total}; row reads: ${cells.join(' | ')}`,
+    );
+  });
 });
 
 describe('inventory.mjs — deterministic single-concern grouping (AC-009)', () => {

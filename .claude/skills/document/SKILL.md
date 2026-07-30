@@ -1,7 +1,7 @@
 ---
 name: document
 owner: baseline
-description: Workflow Phase 10 — orchestrator for documentation work. Surveys the diff, routes technical writing through the `documentation` skill, tutorials through `technical-tutorials`, and all prose body work (inline docs, README updates, user-facing copy) through the `prose` skill (which mandates `humanizer` and conditionally `copywriting`). Verifies completeness and marks phase done.
+description: Workflow Phase 10 — orchestrator for documentation work. Surveys the diff, routes any page on a documentation surface through `technical-writer`, standalone technical reference through the `documentation` skill, tutorials through `technical-tutorials`, and all other prose body work (inline docs, README updates, user-facing copy) through the `prose` skill (which mandates `humanizer` and conditionally `copywriting`). Verifies completeness and marks phase done.
 ---
 
 # document — Phase 10 orchestrator
@@ -10,6 +10,7 @@ This skill does **not** write docs directly. It surveys the diff, decides what k
 
 | Delegate skill | Kind | Runs on |
 |---|---|---|
+| `technical-writer` | A page on a documentation surface | docs-site pages, `docs/**` guides — anything a reader navigates to as documentation |
 | `prose` | Prose body — any English writing that needs humanizing | inline docs, README surface, user-facing copy, summary/narrative sections |
 | `documentation` | Technical reference | API docs, architecture notes, operational runbooks |
 | `technical-tutorials` | Step-by-step narrative | quickstarts, walkthroughs, code tutorials |
@@ -22,6 +23,7 @@ The key shift: **`prose` is the sole channel for prose-shaping work**. It owns t
 
 ## When each delegate fires
 
+- **`technical-writer`** — the diff adds or changes a page on a documentation surface (a docs site, a `docs/**` guide). It runs the full SOP: source-gathering, `technical-writing`, `reader-level`, `humanizer`, then gates on `measure.mjs` and `score.mjs`. Prefer it over `documentation` whenever the deliverable is a *page* rather than a section of reference material.
 - **`documentation`** — diff touches a public API, config surface, module architecture, or adds runbook-worthy operational behavior. Reference material a future engineer will look up.
 - **`technical-tutorials`** — diff adds a feature a *first-time user* must learn by doing. Hands-on-learning, not lookup-reference.
 - **`prose`** — when prose needs to be written or revised:
@@ -37,6 +39,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 1. **Verify prereq.** `integrate` is in `completed` or `exceptions`. Otherwise stop and say which phase is missing.
 
 2. **Survey the diff.** `git diff --name-status <merge-base>..HEAD`. Classify touched files:
+   - A page on a documentation surface → `technical-writer` candidate (takes precedence over the two below for that page).
    - Public API / CLI / contract surfaces → `documentation` candidate.
    - New capability a user learns by doing → `technical-tutorials` candidate.
    - Marketing / pricing / feature / landing pages (`site-src/**`) → BOTH registers (see 2.5).
@@ -58,6 +61,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 3. **Always: inline docs.** For every changed public symbol — module-level docstring / header comment / doc comment appropriate to the language. Short. If you need a comment to explain *what*, the abstraction is wrong; comments are for non-obvious *why*.
 
 4. **Delegate.** For each matched category, invoke the delegate skill with a scoped brief:
+   - `technical-writer`: invoke via `Skill(technical-writer)` with the page path, its Diátaxis type, and the source material. It owns its own gates; do not declare the page done until both scorers exit 0.
    - `documentation` / `technical-tutorials`: invoke via `Skill(...)`. Include the diff slice, upstream spec/intake, and the specific deliverable (e.g., "API reference for the new retry endpoint"). Read its output and incorporate it.
    - `prose`: invoke via `Skill(prose)` with brief, source material (diff slice, spec excerpt), audience, register, and output target (file path or section). The `prose` skill applies `humanizer` always, plus the conditional skill you name.
 
@@ -71,7 +75,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 
 ## Constraints
 
-- **Delegation is mandatory.** You do not write prose here; `prose` does. You do not write API reference here; `documentation` does. You do not write tutorials here; `technical-tutorials` does. This skill decides *who* writes *what* and stitches the result.
+- **Delegation is mandatory.** You do not write prose here; `prose` does. You do not write documentation pages here; `technical-writer` does. You do not write API reference here; `documentation` does. You do not write tutorials here; `technical-tutorials` does. This skill decides *who* writes *what* and stitches the result.
 - **Do not skip the humanizer pass.** Everything in `prose` runs it. If you find yourself tempted to write a README paragraph inline to save a hop, don't — route it through `prose`.
 - **Do not invoke delegates that don't apply.** Internal refactor with no external surface? Don't fire `prose` (persuasive register) just because the skill is available. Step 2's survey gates the invocations.
 - **Keep this skill lightweight.** The body is mostly "decide → delegate → verify → mark done". Heavy lifting lives in the delegates.

@@ -1,0 +1,327 @@
+{
+  "provenance": {
+    "corpus": "28 documentation pages, 113,887 words of body prose, all published before 2022",
+    "sources": [
+      "SQLite (lang_select, pragma, wal, whentouse)",
+      "PostgreSQL 12 (sql-select, datatype-numeric, backup-dump)",
+      "Python 3.8 (json, subprocess, tutorial/introduction, tutorial/controlflow, howto/logging)",
+      "Django 3.2 (ref/models/fields, design-philosophies, intro/tutorial01, intro/tutorial02, howto/wsgi, howto/static-files)",
+      "The Rust Programming Language 1.58 (ch04-01 ownership, ch02 guessing game)",
+      "Effective Go",
+      "Pro Git 2e (plumbing-and-porcelain, branches-in-a-nutshell)",
+      "nginx (ngx_http_core_module)",
+      "Backbone.js",
+      "12factor (config, processes)",
+      "Redis persistence (archived 2021-03)"
+    ],
+    "method": "Per-document values; band endpoints are the 10th and 90th percentile across documents, widened to the nearest round number. Ceiling-only axes take the 90th percentile plus a margin.",
+    "derived": "2026-07-30"
+  },
+  "threshold": 4.5,
+  "calibration": "Weighted deviation score. Corpus: median 0.14, p90 4.93. Shipped site pages at derivation time: min 5.83, median 10.61. A threshold of 4.5 passes 86% of the corpus and none of the pre-rewrite site pages.",
+  "shared": {
+    "sentMean": {
+      "min": 14,
+      "max": 22,
+      "corpus": 17.6,
+      "low": "Sentences are shorter than professional documentation. Uniformly short sentences are the loudest machine-written signal.",
+      "high": "Sentences run longer than professional documentation. Split the ones carrying two independent claims.",
+      "weight": 4
+    },
+    "pctLongSent": {
+      "min": 5,
+      "max": 22,
+      "corpus": 11.5,
+      "low": "Almost no long sentences. Real documentation runs about 11% of its sentences past 30 words, because qualification, conditions and cross-references need the room. A page with none reads as a list of assertions.",
+      "high": "Too many long sentences with nothing short between them.",
+      "weight": 5
+    },
+    "pctShortSent": {
+      "min": 12,
+      "max": 38,
+      "corpus": 24.8,
+      "low": "Not enough short sentences to break the rhythm.",
+      "high": "The page is mostly clipped sentences. Three or more in a row reads as a manufactured punchline.",
+      "weight": 3
+    },
+    "sentP90": {
+      "min": 24,
+      "max": 42,
+      "corpus": 30,
+      "low": "The longest sentences on the page are still short. There is no upper register.",
+      "high": "The longest sentences are unmanageable.",
+      "weight": 3
+    },
+    "adjacentDelta": {
+      "min": 6.5,
+      "max": 13.5,
+      "corpus": 9.4,
+      "low": "Neighbouring sentences are too close in length. Professional prose alternates by about 9 words from one sentence to the next; flat spacing is what makes a page feel generated even when every sentence is correct.",
+      "high": "Sentence length swings so hard it reads as erratic.",
+      "weight": 5
+    },
+    "paraWordMean": {
+      "min": 24,
+      "max": 60,
+      "corpus": 42.4,
+      "low": "Paragraphs are too thin to develop anything.",
+      "high": "Paragraphs are too dense to scan.",
+      "weight": 2
+    },
+    "pctPara3to5": {
+      "min": 8,
+      "max": 52,
+      "corpus": 30.7,
+      "high": "Too many paragraphs are the same 3-to-5-sentence block. That uniform shape is a default, not a decision.",
+      "weight": 2
+    },
+    "openAssertionPct": {
+      "max": 76,
+      "corpus": 67,
+      "high": "Too many paragraphs open by asserting a fact. Real documentation opens with a condition, a purpose, a definition or a contrast about a third of the time. Uniform assertion is the structural signature of generated prose.",
+      "weight": 5
+    },
+    "openConditionPct": {
+      "min": 3,
+      "corpus": 9.8,
+      "low": "Almost no paragraph opens with a condition. Documentation is full of \"If...\", \"When...\", \"Unless...\" because behaviour is conditional; prose without them describes a system that apparently has no cases.",
+      "weight": 4
+    },
+    "openMoveVariety": {
+      "min": 4,
+      "corpus": 9,
+      "low": "The page uses too few distinct opening moves across its paragraphs.",
+      "weight": 2
+    },
+    "modalsPer1k": {
+      "min": 11,
+      "max": 32,
+      "corpus": 20.3,
+      "low": "Too few modal verbs. Documentation constantly says can, may, must, will and should because it describes what is permitted, required and possible. Flat indicative prose overstates certainty and reads as generated.",
+      "high": "Over-hedged with modals; some of these are facts.",
+      "weight": 4
+    },
+    "subordPer1k": {
+      "min": 9,
+      "max": 28,
+      "corpus": 20.4,
+      "low": "Few subordinate clauses. Conditions and reasons have been stripped out, leaving bare claims.",
+      "weight": 2
+    },
+    "parensPer1k": {
+      "min": 1.5,
+      "max": 22.0,
+      "corpus": 7.6,
+      "low": "Almost no parentheticals. Real documentation uses them constantly for units, defaults, cross-references and short clarifications.",
+      "high": "So many asides that the main clause is hard to follow.",
+      "weight": 3
+    },
+    "commasPerSent": {
+      "min": 0.5,
+      "max": 1.35,
+      "corpus": 0.79,
+      "low": "Sentences carry almost no internal structure.",
+      "weight": 2
+    },
+    "fkGrade": {
+      "min": 8.5,
+      "max": 13.5,
+      "corpus": 10.7,
+      "low": "Simpler than professional documentation, which sits near grade 10.7. Simplifying past that strips the qualifying clauses and precise terms that carry the meaning, and the result reads flat rather than clear.",
+      "high": "Denser than professional documentation.",
+      "weight": 3
+    },
+    "longWordPct": {
+      "min": 11,
+      "max": 23,
+      "corpus": 17,
+      "low": "Vocabulary is unusually plain for a technical page; precise terms may have been paraphrased away.",
+      "weight": 2
+    },
+    "inlineCodePerPara": {
+      "min": 0.2,
+      "max": 3.5,
+      "corpus": 1.44,
+      "low": "Too few inline identifiers. Professional documentation names the actual flag, field or function roughly 1.4 times per paragraph instead of describing it in words.",
+      "weight": 1
+    },
+    "itemsPer1k": {
+      "min": 1.5,
+      "corpus": 7.4,
+      "low": "Almost nothing is enumerated. Real documentation breaks out options, cases and steps as list, table or definition items.",
+      "weight": 1
+    },
+    "headWordMean": {
+      "min": 1.0,
+      "max": 6.0,
+      "corpus": 2.7,
+      "high": "Headings are long. Professional headings average under three words; a long heading is usually a sentence trying to make a claim.",
+      "weight": 1
+    },
+    "negationDefPer1k": {
+      "max": 2.8,
+      "corpus": 1.3,
+      "high": "Too many \"X, not Y\" constructions. One or two per page is natural; a run of them is a writer reaching for contrast instead of the positive claim.",
+      "weight": 3,
+      "minCount": 4
+    },
+    "aiVocabPer1k": {
+      "max": 1.5,
+      "corpus": 0.55,
+      "high": "Inflated vocabulary above the natural rate. Note the natural rate is not zero — the corpus uses these words 0.55 times per 1000.",
+      "weight": 2,
+      "minCount": 3
+    },
+    "transitionPer1k": {
+      "max": 5,
+      "corpus": 1.5,
+      "high": "Too many discourse connectives doing work the sentence order should do.",
+      "weight": 2,
+      "minCount": 4
+    },
+    "ruleOfThreePer1k": {
+      "max": 1.6,
+      "corpus": 0.53,
+      "high": "Too many three-item lists in running prose. Forced triplets are a cadence habit.",
+      "weight": 1,
+      "minCount": 3
+    },
+    "emDashPer1k": {
+      "max": 3.2,
+      "corpus": 0.92,
+      "high": "Em dashes above the corpus rate.",
+      "weight": 1,
+      "minCount": 4
+    },
+    "headNegationCount": {
+      "max": 0,
+      "corpus": 0,
+      "weight": 3,
+      "high": "A heading is built as a contrast (\"X, not Y\"). Across 506 headings in the corpus this shape appears zero times. A heading names a subject for someone scanning; it does not argue."
+    }
+  },
+  "byType": {
+    "reference": {
+      "youPer1k": {
+        "max": 22,
+        "corpus": 7.5,
+        "high": "Reference addresses the reader less than this. State what the machinery does.",
+        "weight": 1
+      },
+      "passivePctSent": {
+        "min": 18,
+        "max": 48,
+        "corpus": 36.2,
+        "low": "Reference prose is about 36% passive, because the actor is usually irrelevant — the value is returned, the file is created. Forcing active voice everywhere invents an agent and reads unnatural.",
+        "weight": 2
+      },
+      "codeBlocksPer1kProse": {
+        "min": 0.4,
+        "max": 11,
+        "corpus": 5.4,
+        "low": "Too few examples for a reference page.",
+        "weight": 1
+      },
+      "fkGrade": {
+        "min": 9,
+        "max": 13.5,
+        "corpus": 10.7,
+        "weight": 3
+      }
+    },
+    "explanation": {
+      "youPer1k": {
+        "max": 24,
+        "corpus": 7.1,
+        "weight": 1
+      },
+      "passivePctSent": {
+        "min": 8,
+        "max": 38,
+        "corpus": 23.3,
+        "weight": 2
+      },
+      "codeBlocksPer1kProse": {
+        "max": 12,
+        "corpus": 6.9,
+        "weight": 1
+      },
+      "sentMean": {
+        "min": 15,
+        "max": 24,
+        "corpus": 19.2,
+        "low": "Explanation runs the longest sentences of any type because it carries argument, not just fact.",
+        "weight": 4
+      },
+      "hedgePer1k": {
+        "min": 0.8,
+        "corpus": 3.1,
+        "low": "Explanation weighs alternatives and admits uncertainty. No hedging at all reads as assertion rather than reasoning.",
+        "weight": 2
+      }
+    },
+    "tutorial": {
+      "youPer1k": {
+        "min": 5,
+        "max": 45,
+        "corpus": 19.3,
+        "low": "A tutorial addresses the reader directly.",
+        "weight": 1
+      },
+      "passivePctSent": {
+        "max": 38,
+        "corpus": 19.2,
+        "weight": 2
+      },
+      "codeBlocksPer1kProse": {
+        "min": 4,
+        "max": 28,
+        "corpus": 12.2,
+        "low": "A tutorial needs an example roughly every 80 words of prose. Every step must produce a visible result.",
+        "weight": 1
+      },
+      "fkGrade": {
+        "min": 8,
+        "max": 12.5,
+        "corpus": 9.9,
+        "weight": 3
+      },
+      "headWordMean": {
+        "min": 2,
+        "max": 6.5,
+        "corpus": 3.9,
+        "weight": 1
+      }
+    },
+    "howto": {
+      "youPer1k": {
+        "min": 8,
+        "max": 52,
+        "corpus": 20.8,
+        "weight": 1
+      },
+      "passivePctSent": {
+        "max": 38,
+        "corpus": 24.9,
+        "weight": 2
+      },
+      "codeBlocksPer1kProse": {
+        "min": 1,
+        "max": 14,
+        "corpus": 6.1,
+        "weight": 1
+      },
+      "headWordMean": {
+        "min": 2,
+        "max": 6.5,
+        "corpus": 3.5,
+        "weight": 1
+      },
+      "itemsPer1k": {
+        "min": 2,
+        "corpus": 11.7,
+        "weight": 1
+      }
+    }
+  }
+}

@@ -65,3 +65,104 @@ describe('AC-002 — site _data is computed from the deriver (no stale literal)'
     assert.equal(data.tracks.canonical, c.tracks.canonical, 'site tracks match deriver');
   });
 });
+
+// ---------------------------------------------------------------------------
+// deriveNames() — the shared NAME enumerator.
+//
+// deriveCounts() answers "how many"; the four Reference pages need "which ones".
+// Both the site's _data layer and audit-baseline's docsite drift check read this
+// one function, so the rendered page and the check that verifies it cannot
+// disagree about what the roster is.
+//
+// That shared-oracle design has a failure mode worth naming: if the enumerator
+// is wrong, the page and the check are wrong together, consistently, which is
+// exactly the shape that hides. So the assertions below re-read disk directly
+// instead of trusting the enumerator, and cross-check names against the
+// independently-maintained expected-baseline rosters.
+
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+
+describe('deriveNames() — the roster behind the reference pages', () => {
+  it('test_when_names_derived_then_hooks_match_disk_read_independently', async () => {
+    const { deriveNames } = await import(DERIVER);
+    const onDisk = readdirSync(join(REPO_ROOT, '.claude/hooks'))
+      .filter((n) => n.endsWith('.mjs'))
+      .map((n) => n.replace(/\.mjs$/, ''))
+      .sort();
+    assert.deepEqual(deriveNames(REPO_ROOT).hooks, onDisk);
+    assert.deepEqual([...EXPECTED_HOOKS].sort(), onDisk, 'roster and disk agree');
+  });
+
+  it('test_when_names_derived_then_only_baseline_owned_skills_are_listed', async () => {
+    const { deriveNames } = await import(DERIVER);
+    const root = join(REPO_ROOT, '.claude/skills');
+    const owned = readdirSync(root, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .filter((e) => {
+        const md = join(root, e.name, 'SKILL.md');
+        return existsSync(md) && /^owner:\s*baseline\s*$/m.test(readFileSync(md, 'utf8'));
+      })
+      .map((e) => e.name)
+      .sort();
+    const names = deriveNames(REPO_ROOT).skills;
+    assert.deepEqual(names, owned);
+    // Only owner: baseline skills reach the roster; a user-owned skill never does.
+    const userOwned = readdirSync(root, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .filter((e) => {
+        const md = join(root, e.name, 'SKILL.md');
+        return existsSync(md) && !/^owner:\s*baseline\s*$/m.test(readFileSync(md, 'utf8'));
+      })
+      .map((e) => e.name);
+    for (const skill of userOwned) {
+      assert.ok(!names.includes(skill), `${skill} is user-owned and stays off the roster`);
+    }
+  });
+
+  it('test_when_names_derived_then_tracks_split_selectable_from_sub', async () => {
+    const { deriveNames } = await import(DERIVER);
+    const selectable = [];
+    const sub = [];
+    for (const line of readFileSync(join(REPO_ROOT, '.claude/workflows.jsonl'), 'utf8').split('\n')) {
+      if (!line.trim()) continue;
+      const t = JSON.parse(line);
+      if (t.selectable === true) selectable.push(t.track_id);
+      else if (t.selectable === false) sub.push(t.track_id);
+    }
+    const n = deriveNames(REPO_ROOT).tracks;
+    assert.deepEqual(n.canonical, selectable.sort());
+    assert.deepEqual(n.subTracks, sub.sort());
+  });
+
+  it('test_when_names_derived_then_mcp_servers_match_the_manifest', async () => {
+    const { deriveNames } = await import(DERIVER);
+    const m = JSON.parse(readFileSync(join(REPO_ROOT, '.mcp.json'), 'utf8'));
+    assert.deepEqual(deriveNames(REPO_ROOT).mcpServers, Object.keys(m.mcpServers).sort());
+  });
+
+  // The invariant that keeps the two exports honest. A name list that disagrees
+  // with its own count means one of them is reading disk wrong.
+  it('test_when_both_derived_then_every_name_list_length_equals_its_count', async () => {
+    const { deriveNames, deriveCounts } = await import(DERIVER);
+    const n = deriveNames(REPO_ROOT);
+    const c = deriveCounts(REPO_ROOT);
+    assert.equal(n.hooks.length, c.hooks, 'hooks');
+    assert.equal(n.skills.length, c.skills, 'skills');
+    assert.equal(n.commands.length, c.commands, 'commands');
+    assert.equal(n.mcpServers.length, c.mcpServers, 'mcpServers');
+    assert.equal(n.tracks.canonical.length, c.tracks.canonical, 'canonical tracks');
+    assert.equal(n.tracks.subTracks.length, c.tracks.subTracks, 'sub tracks');
+  });
+
+  it('test_when_names_derived_then_every_list_is_sorted_and_deduped', async () => {
+    const { deriveNames } = await import(DERIVER);
+    const n = deriveNames(REPO_ROOT);
+    for (const [label, list] of [
+      ['hooks', n.hooks], ['skills', n.skills], ['commands', n.commands],
+      ['mcpServers', n.mcpServers], ['tracks.canonical', n.tracks.canonical],
+    ]) {
+      assert.deepEqual(list, [...list].sort(), `${label} must be sorted`);
+      assert.equal(list.length, new Set(list).size, `${label} must be deduped`);
+    }
+  });
+});

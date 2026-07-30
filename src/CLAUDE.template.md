@@ -25,15 +25,15 @@ The baseline ships exactly **one** subagent: `swarm-worker`. Its sole sanctioned
 
 A bounded maker/checker round-trip MAY run on the Workflow runtime under **§II.A** — **oracle-bound read-only checkers may fan out** (graduated 2026-06-21, `checker-graduation-fanout`); one maker, judgment checkers, and the one-subagent count stay bound. Full text in `seed.md §4.2`.
 
-Every other capability — code authoring, scenario authoring, scouting, researching, security review, spec review, prose writing, UI design — is a **skill** that runs in main context. Five execution skills declare a sub-skill contract (four mandatory; `verify` is mechanical):
+Every other capability — code authoring, scouting, research, security and spec review, prose, UI design — is a **skill** that runs in main context. Five execution skills declare a mandatory sub-skill contract; `verify` declares none (mechanical):
 
 | Skill | Mandatory sub-skill | Conditional |
 |---|---|---|
 | `scenario` | `code-structure` | — |
-| `implement` | `code-structure` | current-docs check for any third-party API (`context7` default) |
-| `verify` | — (mechanical) | — |
+| `implement` | `code-structure` | current-docs check for third-party APIs (`context7`) |
 | `design-ui` | `impeccable` | — |
 | `prose` | `humanizer` (always) | `copywriting` / `documentation` / `technical-tutorials` by register |
+| `technical-writer` | `technical-writing`, `reader-level`, `humanizer` | — |
 
 You SHALL NOT route **binding judgment** — a written decision or production change (design tone, code architecture, security calls, scenario selection) — through a subagent. **Read-only advisory subagents** (Explore/Plan, scout/research gathering, §II.A checkers) MAY gather and advise; they write nothing and decide nothing — main context decides and writes. Full clause: `seed.md §4.2-A`.
 
@@ -43,7 +43,7 @@ On every new session, before any work, you SHALL:
 
 1. **Read** `.claude/project.json` and check the `configured` field.
 2. **If `configured: false`** — `/init-project` has not run. The repository is in a sanctioned operating state called **project-agnostic mode**: hooks are active but `test_runner` and `lint_runner` run in guide mode and nothing is tailored to the user's stack. You SHALL greet the user with this exact framing:
-   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 53 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+   > "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 56 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
    You SHALL then proceed with whatever the user asks — project-agnostic mode is **allowed** (running `/init-project` is not required). The `setup_guard` hook surfaces a rate-limited one-shot reminder on Write/Edit/MultiEdit; it does **not** block writes. Other guards (commit, env, direction-approval, verify-pass, track, swarm-boundary) remain hard regardless of `configured` state.
 3. **If `configured: true`** — read `docs/init/seed.md` §16 if present so you know what was added. Tell the user:
    > "Configured for `<stack>`. Run `/triage \"<request>\"` to start a workflow, or `/harness` for the full pipeline."
@@ -314,6 +314,6 @@ You SHALL:
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 53 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 56 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 53 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 56 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).
