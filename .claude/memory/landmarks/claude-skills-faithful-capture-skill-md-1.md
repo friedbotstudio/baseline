@@ -1,0 +1,19 @@
+---
+key: .claude/skills/faithful-capture/SKILL.md:1
+category: landmarks
+scope: [scout]
+caveat: TRAP 1 — R7 ("propose anyway") is load-bearing, not a softener. Strip it and the skill collapses into `brainstorm`'s "SHALL NOT propose solutions", which this thread established is SLOWER than anchor-and-correct whenever the speaker has taste and correction is cheap. Its detection tell is deliberately crude (three consecutive turns with no substantive contribution) because a subtle tell will not fire. TRAP 2 — this skill is deliberately user-owned (NO `owner:` key in its frontmatter). Adding `owner: baseline` without also bumping the skill count in CLAUDE.md + `.claude/CONSTITUTION.md` Appendix B + the Article III session-start greeting, and regenerating `manifest.files` sha256, is a hard `audit-baseline` FAIL per Article XII.3.
+verified-at: c4999eb
+last-touched: 2026-08-04
+---
+
+- Path: `.claude/skills/faithful-capture/SKILL.md` (9,714 bytes, added 2026-07-31, untracked at time of writing)
+- Role: capture discipline shared by TWO consumers — the interview leg (eliciting intent in live conversation) and the ADR/decision-record leg (turning a conversation into a durable node). Written to be a dependency of a future ADR-writing skill that does not exist yet.
+- Ownership: user-owned by design. No `owner:` frontmatter key → excluded from the baseline manifest, the skill count (still 56), the names-match check, and hash-drift detection, per CLAUDE.md Article XII.1 and XII.5. This is why it could ship mid-conversation with zero governance drag.
+- Failure mode it exists to prevent: the recorder fills space the speaker left unspecified, then evaluates that filling as if the speaker had specified it. In conversation this costs one turn of reclaimed ground; in a durable record it plants a false node that gets cited later and defended by a future session as established fact.
+- Rule structure is NOT eight flat maxims. R1 (quote before you critique) is the parent; R2 (illustration is not commitment), R3 (unspecified is not maximal), R4 (an open shape is not a defect) are its three violation surfaces. R5 (completion is the speaker's to declare), R6 (contributing ≠ evaluating), R7 (propose anyway), R8 (verbatim outranks interpretation) are independent.
+- Every rule carries a **tell** (mechanical detection) and a **repair**. The tells are aggregated into a 7-step pre-output gate that is meant to be run against a draft before it ships — that gate, not the prose, is the part that does runtime work.
+- R8 extends CLAUDE.md Article IX clause 6 (verbatim canonical for `user-instruction` / `user-feedback`) to decision capture. Where both apply, Article IX governs; this skill widens reach and never relaxes.
+- ADR-leg rules with no analogue elsewhere in the baseline: a fork must be quotable to be recorded; an option nobody raised is NOT a rejected alternative; **absence is not a decision** (scope never discussed ≠ scope that was cut). The last one exists because an extraction node reading a prototype would otherwise manufacture rejections for everything the prototype does not do.
+- Provenance: derived from a live design conversation (2026-07-30/31) in which the project owner raised four objections to Claude's reply, all four reducing to the same mechanism. R1–R6 are the taxonomy of that mechanism, R7 guards the overcorrection, R8 connects it to existing doctrine. The conversation is recorded at `docs/vision/living-system-model.md`.
+- Known open item (recorded in that vision note §3.7): whether R1's quote-check holds when the "speaker" is a transcript rather than a live person — the extraction leg reading `_pending.md` has quotes but no surrounding intent. May need a ninth rule; may already be R8's job. Intended to be answered by a real extraction run, not by reasoning.

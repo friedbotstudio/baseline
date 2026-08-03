@@ -1,0 +1,46 @@
+{
+  "request": "living system model — durable architecture memory + decision graph",
+  "slug": "living-system-model",
+  "track_id": "epic",
+  "novelty": "novel",
+  "novelty_evidence": "Searched .claude/workflows.jsonl (11 validated tracks; none declares a durable-model, ADR-graph, or constraint-node phase) and docs/specs/ (no entry for architecture memory, decision index, or constraint graph). No in-repo pattern to copy. Direction is captured at docs/vision/living-system-model.md, which is a vision note explicitly marked not-spec-ready, not a spec.",
+  "track_reason": "Heavier than the leanest safe track (chore) because the request is a build, not a landing of finished artifacts. Epic over intake-full because the work decomposes into 6 separately-committed slices (>= epic.min_slices 3), so intake/scout/research discovery amortizes once instead of repeating per slice. Discovery is also where docs/vision/living-system-model.md Part 3 open items (index construction, honesty mechanism, chain-of-proof terminology, protocol placement) get resolved, and gate A is where the owner decides them.",
+  "skip_brainstorm": false,
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "integrate",
+    "org-dispatch",
+    "roadmap-sync",
+    "security",
+    "simplify",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1785784640,
+  "updated_at": 1785785102,
+  "rightsize_base": [
+    ".claude/memory/landmarks/claude-skills-audit-baseline-checks-docsite-drift-mjs-1.md",
+    ".claude/memory/landmarks/claude-skills-faithful-capture-skill-md-1.md",
+    ".claude/memory/landmarks/claude-skills-reader-level-score-mjs-1.md",
+    ".claude/memory/landmarks/claude-skills-technical-writer-skill-md-1.md",
+    ".claude/memory/landmarks/claude-skills-technical-writing-measure-mjs-1.md",
+    ".claude/memory/landmarks/src-cli-surface-js-1.md",
+    ".claude/skills/faithful-capture/",
+    "docs/vision/living-system-model.md"
+  ]
+}
