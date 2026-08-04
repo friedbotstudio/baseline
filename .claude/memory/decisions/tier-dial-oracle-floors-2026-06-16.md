@@ -3,8 +3,8 @@ key: tier-dial-oracle-floors-2026-06-16
 category: decisions
 scope: [spec]
 source: user-instruction (the `regulated` tier choice) + spec.
-verified-at: d418551
-last-touched: 2026-06-16
+verified-at: d36d7f0
+last-touched: 2026-08-05
 ---
 
 - Decision: shipped v1 piece-2 — the threat/value tier dial. New shipped accessor `.claude/hooks/lib/tier-dial.mjs` (exports `readTier`, `resolveCheckerThreshold`, `resolveAllCheckers`; consts `CANONICAL_CHECKERS` [brainstorm/spec/tdd/security/review/ac-conformance], `DEFAULT_PROFILES` for internal-tool/customer-data/regulated, `DEFAULT_THRESHOLD`). One read path for every checker's floor (quality threshold) + ceiling (effort budget): `project.json → tier.level` picks a built-in profile, `tier.overrides.<checker>` tunes per field. Throw-safe — falls back to `common.mjs` `projectGet`, defaults to `internal-tool`. This repo self-classifies `tier.level: "regulated"` (tdd mutation floor 0.85). `scripts/mutation-oracle.mjs` reads its `tdd` floor via the accessor and surfaces score-vs-floor (ABOVE/BELOW/NA) — ADVISORY ONLY: never writes `last_test_result`, exits 0. The 5 representative checker SKILL.md files (brainstorm, spec-lint, security, simplify, integrate) carry a `tier-dial:read-path` marker; `tests/tier-dial-coverage.test.mjs` is the mechanical "all checkers wired" oracle.

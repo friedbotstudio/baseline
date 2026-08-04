@@ -152,12 +152,24 @@ Apply the canonical entry shape (from `.claude/memory/README.md`):
 For **each** candidate resolved in Step 2, promoted or discarded alike, record the decision:
 
 ```
-node -e "import('./.claude/skills/memory-flush/ledger.mjs').then(m=>m.recordCuration({key:'<candidate key>',disposition:'promoted'|'discarded'},{rootDir:process.cwd()}))"
+node -e "import('./.claude/skills/memory-flush/ledger.mjs').then(m=>m.recordCuration({key:'<FULL ## CANDIDATE: header text>',disposition:'promoted'|'discarded'},{rootDir:process.cwd()}))"
 ```
+
+**`key` is the ENTIRE text following `## CANDIDATE: ` in `_pending.md` — copy the header line verbatim, separator and target included.** `memory_stop` matches this set by exact string, so only the header form suppresses anything:
+
+| candidate | the key to record |
+|---|---|
+| landmark | `.claude/skills/workspace/annotations.mjs → landmarks.md` |
+| library | `some-lib → libraries.md` |
+| backlog | `backlog → extract-the-category-list-ab81` |
+
+A bare key (`annotations.mjs`) is **refused** — `recordCuration` returns `false` and names the expected shape on stderr. It is refused rather than repaired because nothing can infer which target a bare key belonged to, and a silently rewritten key would hide the mistake at the one moment you could still fix it. Check the return value; `false` means nothing was recorded.
 
 This is what makes AC-006 true in the path that actually runs. `memory_stop` already folds `decidedKeys()` into its dedup set, but the ledger stays empty unless this step writes to it, and an unwritten ledger re-offers every candidate you just curated on the very next turn. The behaviour was observed on 2026-08-04: fifteen candidates curated, eleven discarded, all fifteen back within the hour.
 
 The ledger lives OUTSIDE Step 5's reset for exactly this reason. Record before you reset, never after.
+
+**Verifying the step worked takes more than `ls`.** A ledger file exists as soon as any row lands, including rows keyed wrongly, so file presence proves the step ran — not that it suppresses anything. Confirm the rows carry the ` → ` separator, or re-run capture and check the candidate does not come back.
 
 **Promoting a constraint** goes through the guarded writer rather than a raw file write, so the category-registration preflight (AC-010) cannot be bypassed:
 

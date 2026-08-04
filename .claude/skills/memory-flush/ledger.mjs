@@ -20,6 +20,26 @@ import { dirname, join } from 'node:path';
 
 const DISPOSITIONS = new Set(['promoted', 'discarded']);
 
+// The ONE definition of a candidate key's shape. memory_stop builds every key
+// through candidateKey() and recordCuration validates through isCandidateKey(),
+// so the builder and the validator cannot drift apart — which is exactly how a
+// curator following Step 4.5 came to record bare keys that matched nothing.
+// decidedKeys() feeds memory_stop's suppression set by exact string, so a key in
+// any other shape is stored and inert: the ledger looks healthy and suppresses
+// nothing.
+export const CANDIDATE_SEPARATOR = ' → ';
+
+export function candidateKey(left, right) {
+  return `${left}${CANDIDATE_SEPARATOR}${right}`;
+}
+
+export function isCandidateKey(key) {
+  if (typeof key !== 'string' || /[\r\n]/.test(key)) return false;
+  const at = key.indexOf(CANDIDATE_SEPARATOR);
+  if (at < 0) return false;
+  return key.slice(0, at).trim().length > 0 && key.slice(at + CANDIDATE_SEPARATOR.length).trim().length > 0;
+}
+
 export function ledgerPath(rootDir) {
   return join(rootDir, '.claude', 'memory', '_discard-ledger.md');
 }
@@ -59,6 +79,17 @@ export function recordCuration({ key, disposition }, { rootDir } = {}) {
   // memory that should have been captured is never offered again (security review
   // F-3). `disposition` was already bounded by a closed set; `key` was not.
   if (/[\r\n]/.test(String(key))) return false;
+  // Refused LOUDLY rather than repaired: recordCuration cannot infer which target
+  // a bare key belonged to, and rewriting it would mask the mistake at the one
+  // moment the curator could still fix it. REJECT, never repair.
+  if (!isCandidateKey(key)) {
+    process.stderr.write(
+      `ledger: refused key ${JSON.stringify(key)} — expected the full '## CANDIDATE:' header form, `
+      + `e.g. "<path>${CANDIDATE_SEPARATOR}landmarks.md" or "backlog${CANDIDATE_SEPARATOR}<slug>". `
+      + `A key in any other shape records a row that suppresses nothing.\n`,
+    );
+    return false;
+  }
   const existing = readLedger({ rootDir });
   if (existing[disposition].includes(key)) return false;
 

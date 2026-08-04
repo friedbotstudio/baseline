@@ -24,3 +24,11 @@
 - discarded :: .claude/skills/code-structure/SKILL.md → landmarks.md
 - discarded :: backlog → the-plan-is-sound-in-ordering-but-i-2b21
 - promoted :: .claude/skills/workspace/annotations.mjs
+- discarded :: .claude/skills/workspace/annotations.mjs
+- discarded :: the-fix-is-small-and-named-unlink-the-59b1
+- discarded :: .claude/skills/workspace/annotations.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-small-and-named-unlink-the-59b1
+- promoted :: backlog → if-that-misleading-number-keeps-prompting-sweeps-the-15a1
+- promoted :: .claude/hooks/lib/memory_stop.mjs → landmarks.md
+- discarded :: backlog → if-you-want-the-wording-re-examined-the-e8ca
+- promoted :: backlog → simplify-prereq-omits-exceptions-escape-7b56

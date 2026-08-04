@@ -7,8 +7,8 @@ raised-on: 2026-07-25
 raised-in-context: slug-guard-hoist-and-consent-expiry (`/security` MEDIUM finding)
 source: user-instruction
 estimated-effort: medium (touches /commit's contract; power-track interaction needs its own coverage)
-verified-at: ea618e9
-last-touched: 2026-07-25
+verified-at: d36d7f0
+last-touched: 2026-08-05
 caveat: do NOT "fix" this by lowering `consent.workflow_ttl_seconds`. The TTL is a bound on a window that should not exist at all once the landing it authorized has finished; shrinking it narrows the symptom and leaves the cause.
 ---
 

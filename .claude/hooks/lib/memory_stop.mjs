@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOISE_PREFIXES, SKILL_SOP_MARKER, isBoilerplate } from './common.mjs';
-import { decidedKeys } from '../../skills/memory-flush/ledger.mjs';
+import { candidateKey, decidedKeys } from '../../skills/memory-flush/ledger.mjs';
 
 const SRC_PREFIXES = ['src/', 'lib/', 'app/', 'pkg/', 'internal/', 'cmd/', '.claude/hooks/', '.claude/skills/'];
 const SKIP_PREFIXES = [
@@ -279,6 +279,10 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   // with the candidates; the ledger outlives that reset, so a key already promoted
   // or discarded is not re-offered as fresh (AC-006). Absent ledger → empty set →
   // byte-identical behavior to before (AC-012).
+  // Matched by exact string against the header-form keys built above, which is why
+  // every construction site routes through candidateKey(). A ledger row in any
+  // other shape joins this set and matches nothing.
+  // @landmine:discard-ledger-is-inert-until-memory-flush-step-4-5-runs
   for (const key of decidedKeys({ rootDir: projectRoot })) existingKeys.add(key);
 
   const candidates = []; // [key, category, bodyLines]
@@ -376,7 +380,7 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
     if (!isSource(rel)) continue;
     const sawWrite = pathSawWrite.has(fp);
     if (!sawWrite && n < LANDMARK_EDIT_MIN) continue;
-    const key = `${rel} → landmarks.md`;
+    const key = candidateKey(rel, 'landmarks.md');
     if (existingKeys.has(key)) continue;
     const trigger = sawWrite
       ? 'newly written this session'
@@ -398,7 +402,7 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   for (const q of libQueries) {
     if (seenLibs.has(q.library)) continue;
     seenLibs.add(q.library);
-    const key = `${q.library} → libraries.md`;
+    const key = candidateKey(q.library, 'libraries.md');
     if (existingKeys.has(key)) continue;
     const body = [
       `## CANDIDATE: ${key}`,
@@ -423,10 +427,10 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   } catch {}
 
   for (const cand of intentCandidates) {
-    const fullKey = `backlog → ${cand.key}`;
+    const fullKey = candidateKey('backlog', cand.key);
     if (existingKeys.has(fullKey)) continue;
     const body = [
-      `## CANDIDATE: backlog → ${cand.key}`,
+      `## CANDIDATE: ${fullKey}`,
       `- Intent: ${cand.verbatim}`,
       `- Role: ${cand.role}`,
       `- Source: ${cand.source}`,

@@ -1,0 +1,53 @@
+{
+  "request": "Fix the discard-ledger key-form defect: /memory-flush Step 4.5 instructs a bare candidate key, but memory_stop dedups against the full `## CANDIDATE:` header form and ledger.mjs stores it verbatim, so a wrong-form key suppresses nothing and the candidate is re-offered next turn (AC-006 regression, reached by following the SOP). Correct the Step 4.5 example, make a wrong-form key fail loudly, and record the trap as a landmine.",
+  "slug": "ledger-key-form",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "AC-006 defined at docs/archive/2026-08-04/living-system-model-abcd/spec.md:565 (ticket D). The mechanism ships and its test passes: tests/memory-discard-ledger.test.mjs:56 extracts the key via the `## CANDIDATE:` header regex and feeds that form to recordCuration. The defect is in the SOP that operationalizes the AC, not new surface.",
+  "track_reason": "chore is leaner but structurally forbids failing-test-driven code changes; the recordCuration guard is owed a failing test, so tdd-quickfix is the leanest track whose guardrails cover the risk.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "simplify"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "change measured under the right-size threshold",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 3,
+        "lines": 59,
+        "touched": [
+          ".claude/hooks/lib/memory_stop.mjs",
+          ".claude/skills/memory-flush/SKILL.md",
+          ".claude/skills/memory-flush/ledger.mjs"
+        ]
+      }
+    }
+  ],
+  "completed": ["tdd", "security", "integrate", "document", "archive", "roadmap-sync", "memory-flush"],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1785877332,
+  "updated_at": 1785877332,
+  "rightsize_base": [
+    ".claude/memory/_discard-ledger.md",
+    ".claude/memory/backlog/commit-consent-token-is-never-consumed-after-use.md",
+    ".claude/memory/conventions/hook-script-shape.md",
+    ".claude/memory/decisions/tier-dial-oracle-floors-2026-06-16.md",
+    ".claude/memory/landmines/destructive-guard-blocks-benign-bash-containing-consent-redirect-shapes.md",
+    ".claude/memory/landmines/npm-install-local-tarball-under-os-tmpdir-writes-no-node-modules.md",
+    ".claude/memory/landmines/shell-command-guards-must-classify-wrapper-and-quote-aware.md"
+  ]
+}
