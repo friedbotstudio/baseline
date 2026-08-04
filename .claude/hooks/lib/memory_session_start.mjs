@@ -13,9 +13,16 @@ import { readMostRecentMarkdown, readWorkingThread } from './thread_store.mjs';
 import { gatherSync } from '../../skills/standup/gather.mjs';
 import { parseFrontmatter } from './frontmatter-parser.mjs';
 
-const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
-const PENDING_FILE = 'pending-questions';
-const STALE_EXEMPT_FILES = new Set(['backlog']);
+import {
+  CANONICAL,
+  PENDING_FILE,
+  STALE_EXEMPT,
+  SUPERSESSION_DRIVEN,
+  closureFieldFor,
+} from '../../skills/memory-index/categories.mjs';
+import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
+import { decisionsRestingOn } from '../../skills/memory-index/constraints.mjs';
+
 const STALE_COMMITS = 30;
 const STALE_DAYS = 30;
 const DEFAULT_SIZE_CAP = 500;
@@ -107,9 +114,13 @@ function splitBlocks(body) {
 }
 
 function isStale(block, name, head, root) {
-  if (STALE_EXEMPT_FILES.has(name)) return false;
-  const closureField = name === PENDING_FILE ? 'resolved-at' : 'superseded-at';
-  if (getField(block, closureField)) return false;
+  if (STALE_EXEMPT.has(name)) return false;
+  if (getField(block, closureFieldFor(name))) return false;
+  // A supersession-driven category expires by being superseded, never by elapsed
+  // time — an open decision is still in force no matter how old the commit that
+  // verified it. Re-verification pressure comes from Article IX.2 (every skill
+  // re-verifies an entry before citing it), not from the decay sweep.
+  if (SUPERSESSION_DRIVEN.has(name)) return false;
   const stamp = getField(block, 'verified-at');
   if (head && stamp && stamp !== 'HEAD') {
     const dist = commitDistance(root, stamp);
@@ -180,6 +191,29 @@ function renderStandupSection(projectRoot) {
     'Run `/standup` for the full recap + recommendation.',
   ];
   return lines.join('\n');
+}
+
+// Re-exported so a test can prove this reader observes the shared registry rather
+// than keeping its own correct-looking copy — the distinction B2 exists to enforce.
+export { CANONICAL };
+
+// Every constraint whose `state` reads false, paired with the decisions naming it in
+// `rests_on`. Fail-open: a store with no constraints, or an unreadable one, yields []
+// and the index renders exactly as before.
+function suspectDecisions(memDir) {
+  const out = [];
+  try {
+    const { entries } = resolveCategory(memDir, 'constraints');
+    for (const constraint of entries) {
+      const holds = String(constraint.fields.state ?? 'true').trim().toLowerCase();
+      if (holds !== 'false') continue;
+      const dependents = decisionsRestingOn(memDir, constraint.key).map((d) => d.key);
+      if (dependents.length) out.push({ constraint: constraint.key, decisions: dependents });
+    }
+  } catch {
+    return [];
+  }
+  return out;
 }
 
 export function buildIndex({ memDir, projectRoot, sessionSource }) {
@@ -258,6 +292,22 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
     lines.push(`| \`${name}.md\` | ${n} | ${stale} | ${status} |`);
   }
   lines.push(`| \`_pending.md\` | ${pendingCount} | — | ok |`);
+
+  // AC-004's payoff, and the edge that earns `constraints` a category of its own:
+  // when a constraint stops holding, every decision whose rationale rests on it is
+  // suspect. `decisionsRestingOn` existed for a while with nothing walking it, so a
+  // flipped constraint invalidated nothing anywhere a human would see it.
+  const suspect = suspectDecisions(memDir);
+  if (suspect.length) {
+    lines.push('');
+    lines.push('## Decisions resting on a constraint that no longer holds');
+    lines.push('');
+    for (const { constraint, decisions } of suspect) {
+      lines.push(`- \`${constraint}\` flipped — re-examine: ${decisions.map((d) => `\`${d}\``).join(', ')}`);
+    }
+    lines.push('');
+    lines.push('A superseded constraint does not supersede the decisions built on it. Re-check each before citing it.');
+  }
 
   if (staleRecords.length) {
     staleRecords.sort((a, b) => {

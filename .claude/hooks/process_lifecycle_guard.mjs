@@ -21,6 +21,7 @@ import {
   logLine,
 } from './lib/common.mjs';
 import { surfaceScopedMemory } from './lib/scoped-memory.mjs';
+import { surfaceGovernedMemory, renderGovernedHits } from './lib/governed-memory.mjs';
 
 // Phase-artifact prefixes → the workflow phase whose scoped memory should surface
 // before the write. This is the decision-point-injection leg (roadmap T4): a Write
@@ -44,9 +45,40 @@ function phaseForPath(filePath) {
   return null;
 }
 
+// The second trigger (epic D3). Terminal: every branch exits via emitAllow, so the
+// write leg never falls past it.
+function surfaceGovernedMemoryFor(filePath) {
+  const rootDir = join(CLAUDE_DOTDIR, '..');
+  let hits = [];
+  try {
+    hits = surfaceGovernedMemory(filePath, { rootDir });
+  } catch {
+    emitAllow();
+  }
+  if (!hits.length) emitAllow();
+
+  const rendered = renderGovernedHits(hits);
+  const body = rendered.mode === 'verbatim'
+    ? rendered.hits
+      .map((h) => `--- ${h.category}/${h.key} ---\n> ${h.verbatim.split('\n').join('\n> ')}\n\n${h.interpretation}`.trimEnd())
+      .join('\n\n')
+    : `${hits.length} entries govern \`${filePath}\` (walk from \`${rendered.entryPoint}\`):\n${rendered.summary}`;
+
+  emitInfo(`process_lifecycle_guard — governing memory surfaced for \`${filePath}\`:
+
+${body}
+
+CLAUDE.md Article IX clause 7: treat the surfaced entry/entries as binding for this write; prefer verbatim over interpretation when they conflict.`);
+  logLine('process_lifecycle_guard', `surfaced ${hits.length} governing entr${hits.length === 1 ? 'y' : 'ies'} for ${filePath}`);
+  emitAllow();
+}
+
 function surfacePhaseScopedMemory(filePath) {
   const phase = filePath ? phaseForPath(filePath) : null;
-  if (!phase) emitAllow();
+  // No phase prefix used to end the write leg here. It now falls through to the
+  // path-keyed trigger, so editing a SOURCE file surfaces the decisions governing
+  // it — the whole point of ticket C, and done without a 27th hook.
+  if (!phase) surfaceGovernedMemoryFor(filePath);
   const rootDir = join(CLAUDE_DOTDIR, '..');
   const hits = surfaceScopedMemory(phase, { rootDir });
   if (!hits.length) emitAllow();

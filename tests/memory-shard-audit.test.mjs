@@ -16,7 +16,13 @@ const REPO_ROOT = join(dirname(__filename), '..');
 const MEMORY_SHAPE = pathToFileURL(join(REPO_ROOT, '.claude/skills/audit-baseline/memory-shape.mjs')).href;
 const AUDIT = join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs');
 
-const CATEGORIES = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
+// Derived from the registry, never re-listed. This fixture previously hardcoded
+// seven names and asserted the count as a literal, so registering an eighth
+// category turned a correctly-migrated store into a failure. Deriving both the
+// seeded dirs and the expected count from CANONICAL means "a fully migrated store"
+// stays true by construction as categories come and go.
+import { CANONICAL as CATEGORIES } from '../.claude/skills/memory-index/categories.mjs';
+
 const TRAILS = ['_resume', '_thread', '_pending'];
 
 function seedMigratedStore() {
@@ -40,7 +46,7 @@ describe('audit — sharded store shape (AC-006)', () => {
       const { checkMemoryShape } = await import(MEMORY_SHAPE);
       const result = checkMemoryShape(join(root, '.claude/memory'));
       assert.equal(result.ok, true, `migrated store should be valid: ${JSON.stringify(result)}`);
-      assert.equal(result.categories, 7, 'seven category directories recognized');
+      assert.equal(result.categories, CATEGORIES.length, 'every canonical category directory recognized');
       assert.equal(result.trails, 3, 'three continuity trails recognized');
       // AC-006: the check never reaches outside .claude/memory (CC MEMORY.md store).
       assert.ok(!('userMemory' in result), 'the CC session-level MEMORY.md store is not read');

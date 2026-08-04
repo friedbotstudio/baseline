@@ -61,10 +61,10 @@ export async function tryImport(relFromRepo) {
 
 // ─── Foundation: sharded-corpus fixtures (shard-migration-repair) ───
 
-export const CANONICAL_CATEGORIES = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+// Imported, not re-listed: everyShardFile() walks this, so a stale local copy
+// would make every fixture in the suite silently skip a newly added category.
+export { CANONICAL as CANONICAL_CATEGORIES } from '../../.claude/skills/memory-index/categories.mjs';
+import { CANONICAL as CANONICAL_CATEGORIES } from '../../.claude/skills/memory-index/categories.mjs';
 
 // Copy the LIVE .claude/memory into a throwaway root. Every test that exercises
 // real corpus data must go through this — the live store is in its pre-repair

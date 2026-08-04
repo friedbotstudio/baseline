@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOISE_PREFIXES, SKILL_SOP_MARKER, isBoilerplate } from './common.mjs';
+import { decidedKeys } from '../../skills/memory-flush/ledger.mjs';
 
 const SRC_PREFIXES = ['src/', 'lib/', 'app/', 'pkg/', 'internal/', 'cmd/', '.claude/hooks/', '.claude/skills/'];
 const SKIP_PREFIXES = [
@@ -273,6 +274,12 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
     let m;
     while ((m = re.exec(existing)) !== null) existingKeys.add(m[1]);
   }
+  // Ticket D EXTENDS the dedup above rather than adding a second one. The body is
+  // reset by /memory-flush, which throws away the curation the human just did along
+  // with the candidates; the ledger outlives that reset, so a key already promoted
+  // or discarded is not re-offered as fresh (AC-006). Absent ledger → empty set →
+  // byte-identical behavior to before (AC-012).
+  for (const key of decidedKeys({ rootDir: projectRoot })) existingKeys.add(key);
 
   const candidates = []; // [key, category, bodyLines]
 

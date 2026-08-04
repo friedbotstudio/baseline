@@ -6,10 +6,10 @@
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CANONICAL_CATEGORIES = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+// Imported rather than re-listed: line 31 gates on
+// `categories === CANONICAL_CATEGORIES.length`, so a local copy left one entry
+// behind turns a correctly-registered store into an audit FAIL.
+import { CANONICAL as CANONICAL_CATEGORIES } from '../memory-index/categories.mjs';
 
 const CONTINUITY_TRAILS = ['_resume', '_thread', '_pending'];
 

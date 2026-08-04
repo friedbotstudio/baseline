@@ -147,6 +147,34 @@ Apply the canonical entry shape (from `.claude/memory/README.md`):
 - caveat: <optional>
 ```
 
+## Step 4.5 — Record every curation decision in the discard ledger
+
+For **each** candidate resolved in Step 2, promoted or discarded alike, record the decision:
+
+```
+node -e "import('./.claude/skills/memory-flush/ledger.mjs').then(m=>m.recordCuration({key:'<candidate key>',disposition:'promoted'|'discarded'},{rootDir:process.cwd()}))"
+```
+
+This is what makes AC-006 true in the path that actually runs. `memory_stop` already folds `decidedKeys()` into its dedup set, but the ledger stays empty unless this step writes to it, and an unwritten ledger re-offers every candidate you just curated on the very next turn. The behaviour was observed on 2026-08-04: fifteen candidates curated, eleven discarded, all fifteen back within the hour.
+
+The ledger lives OUTSIDE Step 5's reset for exactly this reason. Record before you reset, never after.
+
+**Promoting a constraint** goes through the guarded writer rather than a raw file write, so the category-registration preflight (AC-010) cannot be bypassed:
+
+```
+node -e "import('./.claude/skills/memory-index/constraints.mjs').then(m=>m.writeConstraint('<memDir>','<key>',{state:true,state_verified_at:'<sha>',governs:'<globs>'}))"
+```
+
+## Step 4.6 — Backfill unreachable scopes (on demand)
+
+Rollout prerequisite P2. A fact carrying no `scope:`, or `scope: []`, surfaces at no trigger and is unreachable regardless of how good it is. Run when the store has migrated entries predating the field, or after any bulk import:
+
+```
+node -e "import('./.claude/skills/memory-index/resolve.mjs').then(m=>console.log(JSON.stringify(m.backfillScopeAny({rootDir:process.cwd()}))))"
+```
+
+It stamps `scope: any` on frontmatter only, leaves body prose byte-identical, and reports `{updated:N}`. Idempotent: entries with a real scope are skipped.
+
 ## Step 5 — Reset the pending body
 
 After all promotion/discard/defer decisions are written, **rewrite `_pending.md`** to the empty skeleton:

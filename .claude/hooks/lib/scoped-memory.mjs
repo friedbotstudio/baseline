@@ -6,38 +6,12 @@
 
 import { join } from 'node:path';
 import { asArray } from './frontmatter-parser.mjs';
+import { extractVerbatim, extractInterpretation, firstHook } from './entry-body.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
 
-const CANONICAL_CATEGORIES = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+import { CANONICAL as CANONICAL_CATEGORIES } from '../../skills/memory-index/categories.mjs';
 
-function extractVerbatim(body) {
-  return body
-    .split('\n')
-    .filter((line) => line.trim().startsWith('>'))
-    .map((line) => line.replace(/^\s*>\s?/, ''))
-    .join('\n')
-    .trim();
-}
-
-function extractInterpretation(body) {
-  return body
-    .split('\n')
-    .filter((line) => !line.trim().startsWith('>'))
-    .join('\n')
-    .trim();
-}
-
-function firstHook(body) {
-  for (const line of body.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('>') || trimmed.startsWith('#')) continue;
-    return trimmed.replace(/^-\s*/, '');
-  }
-  return '';
-}
+export { CANONICAL_CATEGORIES };
 
 function scopedFactsIn(entries, category, phase) {
   const hits = [];

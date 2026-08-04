@@ -24,6 +24,11 @@
     "holds": "How this repo writes its tests and lays out its code.",
     "key": "short slug"
   },
+  "constraints": {
+    "owner": "spec · scout",
+    "holds": "Facts about the world this project has to build around, and whether each still holds. When one stops holding, every decision resting on it is suspect.",
+    "key": "short slug"
+  },
   "pending-questions": {
     "owner": "any phase",
     "holds": "Questions a session could not settle, and what each one blocks.",

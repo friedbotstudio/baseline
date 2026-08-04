@@ -34,10 +34,7 @@ export const LIFTABLE_FIELDS = new Set([
 // lifted, or the preamble would carry the key twice.
 export const STRUCTURAL_FIELDS = new Set(['key', 'category', 'scope']);
 
-const CANONICAL_CATEGORIES = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+import { CANONICAL as CANONICAL_CATEGORIES } from './categories.mjs';
 
 export function splitBodyLines(blockBody) {
   const lines = String(blockBody ?? '').split('\n');

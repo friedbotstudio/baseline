@@ -8,10 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { asArray } from '../../hooks/lib/frontmatter-parser.mjs';
 import { resolveCategory } from './lift-fields.mjs';
 
-const CANONICAL_CATEGORIES = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+import { CANONICAL as CANONICAL_CATEGORIES } from './categories.mjs';
 
 export function factIsClosed(frontmatter) {
   return Boolean(frontmatter && (frontmatter['superseded-at'] || frontmatter['resolved-at']));

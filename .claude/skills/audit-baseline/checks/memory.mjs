@@ -4,10 +4,11 @@
 import { existsSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Exported so the docs site's _data/roster.cjs renders the same list this check
-// validates. One oracle, two readers: a category added here appears on the
-// Memory page from the same edit.
-export const CANONICAL = ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog'];
+// Re-exported so the docs site's _data/roster.cjs renders the same list this check
+// validates. The list itself now lives in memory-index/categories.mjs (spec
+// decision B2) — one oracle, every reader.
+export { CANONICAL } from '../../memory-index/categories.mjs';
+import { CANONICAL } from '../../memory-index/categories.mjs';
 
 export function run(ctx) {
   const rows = [];
