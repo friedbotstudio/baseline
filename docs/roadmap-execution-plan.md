@@ -20,6 +20,14 @@ the roll-up of its body.
 
 ## Progress
 
+- **Status (2026-08-04):** HEAD is `6464a58`. **Epic 7 opens** with slices A–D ✅, landed as a five-commit
+  `power` batch (`e7f00de`..`6464a58`). Epic 6 T10 ✅. The measurable outcome is that decisions reading
+  stale went 26 to 0 and whole-store stale 173 to 147, because decision expiry is now supersession-driven
+  rather than time-driven. Open: Epic 7 E and F, Epic 6 T8. The parent epic `living-system-model` stays
+  open while E and F are unbuilt, and closing it later needs the standalone `epic_close.mjs` path, since
+  the fold only fires on an `epic-child` track. T8 is annotated rather than flipped — Epic 7 slice C
+  answers the same surfacing problem by a different mechanism, and calling that "T8 delivered" would be
+  inference, which this file does not do.
 - **Status (2026-07-24):** HEAD is `b6233f5`. No roadmap line-item moved since the 2026-07-21 snapshot —
   the two commits landed since (`f84e4ba` right-size gate scoped to the workflow diff and excluding test
   lines; `b6233f5` sharded-reader test counts derived from the fixture) both harden already-✅ work
@@ -107,5 +115,20 @@ Carried debt. Nothing on the critical path waits for it, so pick items up betwee
 - ✅ T5. Declare a release model in `project.json` (ci/cd model, release branch, trigger, cycle, consumer upgrade cadence) and teach `standup` to read it, so the "can this unreleased pile ship?" question becomes answerable from policy rather than guessed. Backlog `-a4f2`.
 - ✅ T6. Stop the `memory_stop` extractor re-ingesting its own flush reports and mining SKILL.md contract prose. The suppression already existed but was anchored to a 64-character head window, which any re-invocation preamble defeats.
 - ✅ T7. Derive a workflow's `exceptions` from the chosen track's DAG, so no phase skill can declare a prereq its own track is structurally unable to satisfy. Consent gates are never excepted; a track's `internal_phases` are resolved at runtime by the skill that owns them.
-- ⬜ T8. Refine the sharded memory store's decision-point surfacing from coarse category-level `scope:` backfill to precise per-entry scope tags. Backlog `-2902`; per-entry curation as `/memory-flush` re-verifies, so a `docs/specs/**` write surfaces only the genuinely load-bearing lessons rather than a 76-fact bounded index.
+- ⬜ T8. Refine the sharded memory store's decision-point surfacing from coarse category-level `scope:` backfill to precise per-entry scope tags. Backlog `-2902`; per-entry curation as `/memory-flush` re-verifies, so a `docs/specs/**` write surfaces only the genuinely load-bearing lessons rather than a 76-fact bounded index. **Re-read before picking this up.** Epic 7 slice C answers the same surfacing problem from the other side: a second trigger keyed on `governs:` path globs, plus a `load_bearing:` marker, with `scope: any` kept deliberately coarse (epic decision D7 — a per-category default is what produced `scope: [spec]` on decisions and caused the defect in the first place). Left open rather than closed because that is a different mechanism, not this one delivered.
+- ✅ T10. Gate Phase 10 documentation routing on delegate receipts. The routing rule already existed in `document/SKILL.md` prose and was skipped anyway during this cycle's own Phase 10, sending a public page to the `documentation` style guide instead of `technical-writer`. `document-gate.mjs` now recomputes the required surface-to-delegate map from `project.json → document.surfaces` and exits 1 unless every required delegate left a receipt; `prose` gains the reader-level pass it never ran. Backlog `-4a1c` records the remaining limitation: the map is page-granular, so it over-demands on a one-word fix and under-demands when behaviour changes without a page changing.
 - ✅ T9. Fix the consent-expiry edge exposed by the T4 landing: a landing longer than the 900s TTL, plus `/commit` archiving `workflow.json` before the commit, drops workflow-scoped consent to time-window mode and forces a re-grant. Backlog `-7af6`; honor the archived-bundle slug (or raise the scoped TTL for workflow-bound grants).
+
+## Epic 7 — Living system model  🟡  (memory)
+
+Durable architecture memory: a decision graph that reaches whoever is editing the code, and a constraint
+model that can invalidate the reasoning built on top of it. Discovery ran once as an `epic` track and the
+sliced spec lives at `docs/specs/living-system-model.md`. Four of the six slices landed together as a
+`power` batch (`e7f00de`..`6464a58`); the parent epic stays open while E and F are unbuilt.
+
+- ✅ A. Decision node model. `governs:` path anchors, `rests_on:` constraint keys, `load_bearing:`. Decay becomes supersession-driven: a decision expires by being superseded, not by elapsed time, because an open decision is still in force however old the commit that verified it. Stale decisions went 26 to 0, whole-store stale 173 to 147.
+- ✅ B. Constraint model. Eighth canonical category at `.claude/memory/constraints/`, mutable and re-verifiable where a decision is immutable and superseded. A state flip surfaces every decision naming it in `rests_on:` as suspect at session start. Collapsed the canonical category list from nine hardcoded literals to one import; seven of those nine failed silently when a category was added.
+- ✅ C. Index and recall layer. Derived index over `by_path` / `by_constraint` / `by_element`, rebuilt on every read rather than cached, and a second surfacing trigger keyed on path that extends `process_lifecycle_guard` rather than adding a 27th hook. A full build over 239 entries measures 17.5 ms, which settled the epic's build-on-demand question; the HEAD-keyed cache it replaced was both slower and wrong on non-git trees.
+- ✅ D. Capture leg. A discard ledger persisting a curation decision across the `/memory-flush` reset, so a candidate promoted or discarded once is not re-offered as fresh. Extends the existing dedup lifetime in `memory_stop` rather than adding a second dedup.
+- ⬜ E. Workspace structural corpus. A durable C4 and module-level diagram set that each cycle contributes to rather than re-deriving, so `scout` reconciles instead of rediscovering. Flagged OVERSIZED at epic triage and still carries the epic's open questions on workspace merge semantics and diagram authority; the third, index rebuild cost, was answered by C. Split before approval.
+- ⬜ F. Tracking comments. Code annotations naming a decision, constraint or research doc, resolvable by `scout`. Placement is gated on A's `load_bearing:` marker so annotations land where a maintainer would otherwise confidently break something, rather than broadly. Buildable now that A has landed.
