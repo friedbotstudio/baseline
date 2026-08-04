@@ -1,0 +1,235 @@
+{
+  "request": "Build slices A, B, C, D of the approved living-system-model epic as one power batch-sprint. E (workspace structural corpus) and F (tracking comments) stay out of this batch.",
+  "slug": "living-system-model-abcd",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Derives from the approved epic spec docs/specs/living-system-model.md sections '## Slice A' through '## Slice D', the slices[] array in .claude/state/epic/living-system-model.json, and the direction-approval token .claude/state/spec_approvals/living-system-model.approval. Every ticket's AC group is already assigned in that spec's Acceptance criteria table (Slice column). No new surface is being invented.",
+  "track_reason": "power over epic-child: the four tickets share a write surface (.claude/hooks/lib/memory_session_start.mjs is edited by A and B; .claude/memory/README.md by A, B and C) and C depends on A's governs:/load_bearing: fields plus B's constraint keys. Landing them in ONE tree with one integrate and one ordered commit split avoids four sequential cycles re-touching the same files, and collapses four commit-consent gates into one. Human-confirmed batch composition.",
+  "skip_brainstorm": true,
+  "epic": "living-system-model",
+  "epic_spec": "docs/specs/living-system-model.md",
+  "slices": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "tickets": [
+    {
+      "id": "A",
+      "title": "Decision node model",
+      "acs": [
+        "AC-002",
+        "AC-003"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model.md#slice-a",
+      "write_surface": [
+        ".claude/hooks/lib/memory_session_start.mjs",
+        ".claude/memory/README.md",
+        "tests/memory-session-start-head-decay.test.mjs"
+      ],
+      "done_record": "AC-002 and AC-003 pass in tests/memory-session-start-head-decay.test.mjs; decision shards carry governs:/rests_on:/load_bearing:; STALE_EXEMPT_FILES extended so supersession-eligible categories stop aging by time."
+    },
+    {
+      "id": "B",
+      "title": "Constraint model",
+      "acs": [
+        "AC-004",
+        "AC-010"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model.md#slice-b",
+      "write_surface": [
+        ".claude/memory/constraints/",
+        ".claude/hooks/lib/memory_session_start.mjs",
+        ".claude/skills/memory-flush/route.mjs",
+        ".claude/memory/README.md"
+      ],
+      "done_record": "AC-004 (rests_on flip surfaces dependent decisions as suspect) and AC-010 (preflight: constraint write rejected until constraints registered in CANONICAL) pass; route.mjs carries a constraint classification bucket. Satisfies rollout prerequisite P1."
+    },
+    {
+      "id": "C",
+      "title": "Index and recall layer",
+      "acs": [
+        "AC-001",
+        "AC-005",
+        "AC-007",
+        "AC-011"
+      ],
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model.md#slice-c",
+      "write_surface": [
+        ".claude/hooks/process_lifecycle_guard.mjs",
+        ".claude/hooks/lib/governed-memory.mjs",
+        ".claude/skills/memory-index/",
+        "tests/memory-scoped-surface.test.mjs"
+      ],
+      "done_record": "AC-001 (path-triggered surfacing at edit time), AC-005 (structural lookups by_path/by_element/by_constraint), AC-007 (summary + walkable entry point above three hits), AC-011 (preflight: scope: any backfill before the path trigger goes live) pass. No 27th hook — extends process_lifecycle_guard. Satisfies rollout prerequisite P2.",
+      "security_reason": "touches .claude/hooks/** (security.sensitive_globs)"
+    },
+    {
+      "id": "D",
+      "title": "Capture leg",
+      "acs": [
+        "AC-006",
+        "AC-012"
+      ],
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model.md#slice-d",
+      "write_surface": [
+        ".claude/hooks/lib/memory_stop.mjs",
+        ".claude/skills/memory-flush/",
+        "tests/memory-stop-dedup.test.mjs"
+      ],
+      "done_record": "AC-006 (a candidate promoted or discarded at one flush is not re-emitted as fresh) and AC-012 (absent discard ledger degrades cleanly) pass. Extends the existing memory_stop.mjs:262-274,373 dedup lifetime across the /memory-flush reset boundary rather than adding a second dedup. Satisfies rollout prerequisite P3.",
+      "security_reason": "touches .claude/hooks/** (security.sensitive_globs)"
+    },
+    {
+      "id": "E",
+      "title": "Documentation routing gate",
+      "acs": [
+        "AC-015",
+        "AC-016",
+        "AC-017",
+        "AC-018"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model-abcd.md#ticket-e--documentation-routing-gate",
+      "write_surface": [
+        ".claude/skills/document/SKILL.md",
+        ".claude/skills/document/document-gate.mjs",
+        ".claude/skills/prose/SKILL.md",
+        ".claude/project.json",
+        "tests/document-routing-gate.test.mjs"
+      ],
+      "done_record": "AC-015..AC-018 pass; document.surfaces drives routing; document-gate.mjs exits 1 on a missing receipt; prose runs reader-level between the conditional skill and humanizer.",
+      "added_mid_cycle": "Added after /document Phase 10 of this same workflow mis-routed a public-page rewrite to the documentation style guide and skipped the two-register rule. Prose routing in a SKILL.md is skippable; this makes it an exit code."
+    }
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [
+    "epic-child"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1785788587,
+  "updated_at": 1785834717,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "security_followup": {
+    "decision": "fix F-1, F-2, F-3 before integrate",
+    "authorized_by": "user",
+    "cycle": "post-security tdd loop",
+    "resolved": [
+      "F-1 index-io.mjs: ? added to escape class + compile-failure catch; governed-memory.mjs try narrowed to per-entry",
+      "F-2 resolve.mjs: splitFrontmatter() bounds both probe and rewrite to the frontmatter block",
+      "F-3 ledger.mjs: recordCuration rejects /[\\r\\n]/ in key",
+      "F-5 constraints.mjs: writeConstraint reuses assertSafeFactKey from migrate.mjs"
+    ],
+    "tests": "tests/memory-security-followup.test.mjs (6 scenarios, all RED pre-fix)"
+  },
+  "ticket_e_result": {
+    "verdict": "GREEN",
+    "tests": "8/8",
+    "suite": "767 pass / 0 fail",
+    "bugs_found_by_running_it": [
+      "require() in ESM scope — CLI default path was untested (every test passed --paths); 6 green tests, ReferenceError on first real invocation. Fixed + regression test added.",
+      "surface globs too coarse — docs/**/*.md swept the workflow spec, site-src/** swept a JSON data file. Added exclude + tightened match; locked by test."
+    ]
+  },
+  "power_batch_reviews": [
+    {
+      "ticket": "A",
+      "verdict": "CLEAN",
+      "findings": []
+    },
+    {
+      "ticket": "B",
+      "verdict": "NOTED",
+      "findings": [
+        "F-5 LOW writeConstraint key — fixed"
+      ]
+    },
+    {
+      "ticket": "C",
+      "verdict": "NOTED",
+      "findings": [
+        "F-1 MEDIUM glob regex — fixed",
+        "F-2 MEDIUM scope probe — fixed",
+        "F-4 LOW injection-exposure amplification — accepted"
+      ]
+    },
+    {
+      "ticket": "D",
+      "verdict": "NOTED",
+      "findings": [
+        "F-3 MEDIUM ledger row injection — fixed"
+      ]
+    },
+    {
+      "ticket": "E",
+      "verdict": "NOTED",
+      "findings": [
+        "F-6 HIGH slug traversal gate bypass — fixed + regression test"
+      ]
+    }
+  ],
+  "rerun_after_wiring": {
+    "phases": [
+      "simplify",
+      "security",
+      "integrate",
+      "document"
+    ],
+    "result": "all clean",
+    "simplify": "1 cleanup: orphaned gitHead + spawnSync import removed by cache deletion",
+    "security": "no new findings; 3 seams probed; re-review appended to bundle",
+    "integrate": "PASS, fan-out CLEAN",
+    "document": "gate CLEAN; reflective check found memory.njk never documented the invalidation edge — added, measure 3.04 -> 2.43"
+  }
+}
