@@ -19,3 +19,7 @@
 - discarded :: .claude/skills/workspace/conflicts.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/reconcile.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/refs.mjs → landmarks.md
+- promoted :: .claude/skills/workspace/flags.mjs → landmarks.md
+- promoted :: .claude/skills/workspace/seed-elements.mjs → landmarks.md
+- discarded :: .claude/skills/code-structure/SKILL.md → landmarks.md
+- discarded :: backlog → the-plan-is-sound-in-ordering-but-i-2b21

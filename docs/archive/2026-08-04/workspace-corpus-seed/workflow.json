@@ -1,0 +1,142 @@
+{
+  "request": "Seed the workspace structural corpus from LIVE-spec C4 components only, verifying each against the live system and resolving the drifts that verification exposes. Then link elements to decisions/constraints/landmarks by key, add load_bearing-gated tracking annotations at the governed sites, and ship the two feature flags.",
+  "slug": "workspace-corpus-seed",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "living-system-model-ef spec Rollout migration order step 2 ('seed elements from this repo's own C4 diagrams'), archived at docs/archive/2026-08-04/living-system-model-ef/spec.md; Epic 7 slice E in docs/roadmap-execution-plan.md (open); .claude/state/epic/living-system-model.json slices[] E with approved:true and token .claude/state/spec_approvals/living-system-model.approval on disk. Seed source measured this session: 26 Component declarations across 4 live specs; 618 of 644 repo-wide declarations excluded as archived history.",
+  "track_reason": "spec-entry over epic-child: epic-child is semantically exact (this IS slice E's remaining work, and its approval token is present, so it was selectable) but its derived exceptions include 'spec' and 'spec-shippability-review'. This work MUST amend drifted specs — living-system-model's C4 names index/build.mjs and index/summarize.mjs, neither of which was ever built — and must record four decisions (element granularity, anchor convention, whether views are in scope, feature-flag gating). A track with no spec node cannot do either without making those calls silently inside tdd. Same reasoning that ruled out epic-child on living-system-model-ef. chore was rejected because the two feature flags are code and need failing tests, which the chore track skips.",
+  "skip_brainstorm": true,
+  "epic": "living-system-model",
+  "epic_slice": "E",
+  "seed_source": {
+    "policy": "LIVE specs only; archived specs excluded",
+    "live_specs": [
+      "erp-portables",
+      "living-system-model",
+      "mvp-sprint-parallel-cycles",
+      "release-workflow"
+    ],
+    "declarations": 26,
+    "excluded_archived": 618,
+    "filter": "each component verified against the live filesystem; unresolvable ones are omitted rather than seeded"
+  },
+  "verification_findings": [
+    "living-system-model C4: 'buildIndex (index/build.mjs)' and 'summarize (index/summarize.mjs)' NEVER BUILT. Slice C shipped memory-index/resolve.mjs with the index rebuilt on every read, and summarization inlined as renderGovernedHits in governed-memory.mjs. DRIFT — spec must be amended.",
+    "erp-portables: NO DRIFT. Retracted 2026-08-04 during scenario-tick — the spec cites .claude/schemas/workflow-track.v1.json correctly at lines 17 and 536, and its C4 label carries no path at all. The src/schemas/ claim came from the verification probe's own assumed path, not from the spec. Two specs drifted, not three; AC-006 is a regression trap rather than a repair.",
+    "release-workflow C4: all 7 components are GitHub Actions jobs inside .github/workflows/release.yml, not code modules. Granularity differs from the other specs; the spec's anchor convention must account for it.",
+    "mvp-sprint-parallel-cycles: slices D and E still open; its 5 components are internals of .claude/mcp/sprint-channel and need per-component verification before seeding.",
+    "erp-portables: 9 of 12 slices committed (K, L1, L2 unbuilt) — build status is mixed WITHIN a spec, so 'omit unbuilt' cannot be decided per-file. The live-system verification is the filter."
+  ],
+  "confirmed_decisions": [
+    {
+      "question": "Ship memory.workspace.enabled and memory.annotations.enabled in this cycle?",
+      "answer": "Ship both flags now.",
+      "owner": "engineer",
+      "captured_at": "triage",
+      "note": "Seeding makes the corpus non-empty, and at that moment every scout run switches from discovery to reconcile for consumers too, with no opt-out. The flags make it deliberate. Also closes one of the six carried spec gaps from living-system-model-ef."
+    }
+  ],
+  "implement_blocker": {
+    "finding": "The 17 verified declarations resolve to only 14 DISTINCT anchors. Two collision groups: .github/workflows/release.yml is claimed by ci-pre-publish-checks + ci-release + ci-deploy-pages, and .claude/hooks/process_lifecycle_guard.mjs is claimed by phase-trigger + path-trigger.",
+    "why_it_breaks": "detectConflicts compares each op against the PRE-EXISTING corpus, never against sibling ops in the same contribution. Proven by probe: three same-anchor ops write cleanly on first apply, then all three raise duplicate-anchor on the second, and rejection is atomic — so the whole 17-element re-apply writes nothing. The seed would look successful and permanently break idempotence.",
+    "interpretation": "This is the conflict check working correctly. duplicate-anchor exists to catch two contributors describing the same thing under different names, which is exactly what these are. Spec decision D2 said to distinguish such units by `title`, but title is not what detectConflicts reads — D2 was written against a mechanism that does not exist.",
+    "options": {
+      "A_recommended": "14 elements, one per distinct anchor, merged elements titled to name what they cover. Requires amending AC-001 (says 17) + the scenario recipe + a third gate-A approval.",
+      "B_rejected": "17 elements with string-distinct anchors pointing at the same file — games the check and puts a lie in the model.",
+      "C_rejected": "Change conflicts.mjs to permit shared anchors — removes a correct check to fit new data, and edits shipped code from last cycle.",
+      "D_viable": "Defer the seed; land flags + drift repair only. Epic 7 E stays dormant."
+    },
+    "secondary_defect": "Independent of the seed: a single contribution can create a duplicate-anchor state that the same contribution would reject on re-apply. detectConflicts arguably should check ops against each other. Shipped in 6fc019d; needs its own decision.",
+    "landed_so_far": "flags.mjs GREEN (4/4 tests). Seed and drift repair not started."
+  },
+  "open_decisions_for_spec": [
+    "Element granularity — container-level only, or components too. Note: duplicate-anchor fires on EXACT string equality, so nested anchors like .claude/skills/** and .claude/skills/workspace/** coexist without conflict.",
+    "Anchor convention, including how to anchor the release-workflow CI jobs that are not code modules.",
+    "Whether WorkspaceView is in scope — readAll returns {elements, views} and the class diagram declares it, but nothing writes views and no AC covers them.",
+    "Which decisions/constraints/landmarks each element links to via governed_by/rests_on (D4, by key never by copy)."
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "roadmap_sync_result": {
+    "report": { "flipped": ["E7-E"], "promoted": [], "skipped": [], "noop": false, "anomalies": [] },
+    "validation_gate": "PASSED before flipping, per the guard written at triage. Evidence: flag enabled=true, corpus=14 elements, scout mode=reconcile, delta.changed=['memory-index-resolve'] — a 1-element delta from a 14-element corpus. Slice E genuinely delivers; the flip does not overstate.",
+    "why_F_not_flipped": "E7-F is not in roadmap_tasks, and roadmap-sync flips only what is named rather than inferring from the diff. Substantively correct too: F's machinery is built and tested, but memory.annotations.enabled is still false in this repo — the spec's migration order flipped only the workspace flag. F is in exactly the state E was in before this cycle: built, not enabled, not delivering. Flipping it would repeat the overstatement this guard exists to prevent.",
+    "contrast_with_prior_cycle": "living-system-model-ef left roadmap_tasks empty, so sync correctly no-op'd and E stayed open despite work landing. Populating the token at triage is what made this flip possible."
+  },
+  "rollout_executed": {
+    "finding": "FOURTH orphan of the session, caught at /document: SEED_OPS was defined and tested against temp dirs, but nothing had ever applied it to the LIVE store. .claude/memory/workspace/ did not exist and scout still resolved to mode:discovery. Shipping the seed DEFINITION without the seed would have left Epic 7 slice E dormant for a second consecutive cycle — the exact failure this workflow exists to fix.",
+    "step_3_apply_seed": "applyContribution wrote 14 elements, 0 conflicts, 0 unresolved.",
+    "step_4_flip_flag": "memory.workspace.enabled true in THIS repo only (canary). Verified src/project.template.json and obj/template both have the key ABSENT, so workspaceEnabled reads false for every consumer — the fail-safe default holds by absence.",
+    "proof_slice_e_delivers": "scout on the live repo now returns mode:reconcile with delta.changed=['hooks-common-lib'] — a 1-element delta from a 14-element corpus. First time in two cycles the feature has done anything.",
+    "reverified_after": "tree changed during /document (corpus + flag + docs), so last_test_result was re-stamped: audit PASS fails=0 warns=0, 20/20 on the touched test files."
+  },
+  "security_result": {
+    "risk": "LOW",
+    "critical_or_high": 0,
+    "low_accepted": 2,
+    "report": "docs/security/workspace-corpus-seed-2026-08-04.md",
+    "prior_classes_reprobed": "F-1 traversal (closed — removeElement validates before join), F-2 forged frontmatter (closed — 14 seed ops carry no newline-bearing name or value), F-3 ReDoS (not reachable — authored anchors, <=3 wildcards), unbounded key (closed — every target_id is safe-slug shaped)",
+    "note": "No file intersects security.sensitive_globs, so this review was risk-driven rather than glob-triggered — the glob list would not have flagged removeElement's new path construction."
+  },
+  "simplify_result": {
+    "cleaned": 0,
+    "flagged": ["store.mjs at 83 substantive lines vs the ~80 ceiling — NOT split: one cohesive Foundation concern, and splitting would ADD a module to satisfy a soft threshold, against simplify's deletion-over-addition stance. Follow-up if it grows."],
+    "reverify": "skipped — reverify-guard exit 3, tree byte-identical to the binding PASS snapshot (Lever 4b-ii)"
+  },
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "tdd_findings": [
+    "Two SHIPPED defects in contribute.mjs from 6fc019d, both found by this cycle's tests: applyContribution never called resolveRefs (AC-002 unimplementable), and the `remove` verb was a silent no-op that validated the id then deleted nothing. Prior cycle's remove test only exercised the conflict path.",
+    "flags.mjs shipped as an ORPHAN — nothing consumed workspaceEnabled/annotationsEnabled, so AC-003/AC-004 were unsatisfied while their reader tests were green and drift_check reported CLEAN. Wired into scout/SKILL.md (before the reconcile call) and code-structure/SKILL.md (before the load_bearing gate); both wiring tests teeth-proven by mutation.",
+    "THIRD orphan of this session (document-gate without receipts; reconcile/placement without callers; flags without consumers). Every one passed its own unit tests. Rule worth recording: when a cycle adds a gate, assert the CONSUMER calls it, not just that the gate computes correctly.",
+    "contribute.mjs + store.mjs were outside the declared write_set. Proceeded because the approved §Behavior #1 sequence draws contribute -> refs -> resolveRefs; the write_set line omitted the file the approved behavior lives in. Flagged for gate C rather than triggering a fourth gate-A cycle."
+  ],
+  "gate_a_revoked_2": {
+    "resolved": "Re-approved 1785866074 against the amended spec (hash f311366c, re-check MATCH).",
+    "why": "User chose option A: element count 17 -> 14, one element per distinct anchor. The spec was amended to rewrite D2 (an element's identity IS its anchor; same-path declarations merge), add D7 (the corpus addresses at path granularity while specs describe more finely — the gap is recorded), correct AC-001, and document the two collision groups plus the separable detectConflicts defect.",
+    "detected_by": "content-hash re-check — token no longer matches",
+    "unchanged": "Both flags (already GREEN, 4/4), both drift repairs, all other decisions and ACs."
+  },
+  "gate_a_revoked": {
+    "resolved": "Re-approved 1785860394 against the amended spec (hash 6f7d0524, re-check MATCH). The retraction is now inside the approved artifact.",
+    "why": "The spec was amended after approval to retract a false verification finding: erp-portables was reported as drifted on the schema path, but it cites .claude/schemas/ correctly and always did. The src/schemas/ claim came from the verification probe's assumed path, not the spec. Leaving a false finding inside an approved spec would be self-defeating in a cycle whose purpose is correcting specs that do not match reality.",
+    "detected_by": "content-hash re-check — token hash no longer matches the artifact",
+    "what_changed": "Verification result table (erp-portables row now 'no drift' + a post-approval correction note) and AC-006 reworded as a regression trap rather than a repair.",
+    "unchanged": "The 17-element set. The schema element anchors to .claude/schemas/workflow-track.v1.json under either reading, so no seed op moved."
+  },
+  "adopted_assumptions": [
+    "Gate A was granted with both spec Open questions unresolved, so the spec's stated assumptions are adopted: (1) the three spec repairs (AC-005..AC-007) ride THIS diff per D6; (2) mvp-sprint-parallel-cycles contributes 2 file-level elements (server.mjs, handlers.mjs) rather than 5 invented module boundaries or 0. Surface both again at gate C if /tdd changes the picture."
+  ],
+  "roadmap_tasks": [
+    "E7-E"
+  ],
+  "roadmap_tasks_note": "Populated at triage this time. On living-system-model-ef it was left empty, so /roadmap-sync had nothing to flip and correctly no-op'd while Epic 7 E stayed open. E7-E is claimed here because this workflow's whole purpose is to make slice E deliver. If verification shows E still does not deliver end-to-end at Phase 10.6, REMOVE the token rather than flipping a task that would overstate.",
+  "skipped_alternates": [
+    "epic-child",
+    "chore"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1785856516,
+  "updated_at": 1785856516,
+  "rightsize_base": []
+}

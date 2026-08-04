@@ -2,7 +2,12 @@
 
 A tracking annotation is a comment in source code that names the memory entry governing that code. When `scout` reads an annotated file, it resolves the named entry and surfaces its first line, so the reason a piece of code has its shape reaches whoever is about to change it.
 
-A site may be annotated only when the governing decision carries the `load_bearing:` marker described below. In practice that leaves a handful of annotated sites in a repository with hundreds of decisions, which is the intended ratio: annotate where a maintainer would otherwise confidently break something.
+Two gates stand in front of placement, and both must open. The project must set
+`memory.annotations.enabled` to `true` — it ships `false`, so a project that has not opted in gets no
+annotations at all. The governing decision must then carry the `load_bearing:` marker described below.
+In practice the second gate leaves a handful of annotated sites in a repository with hundreds of
+decisions, which is the intended ratio: annotate where a maintainer would otherwise confidently break
+something.
 
 ## Syntax
 
@@ -38,9 +43,15 @@ If the key names no entry, the result carries the key that failed, so the caller
 
 That shape exists so `scout` can report a dangling annotation. An annotation pointing at a deleted or renamed entry asserts that a reason exists and then sends the reader nowhere, which is the one outcome worth being loud about (silence would let it rot indefinitely).
 
+## The feature flag
+
+`annotationsEnabled({rootDir})` in `.claude/skills/workspace/flags.mjs` reads `memory.annotations.enabled` from `.claude/project.json`. The flag ships `false`. Any value that is not the boolean `true` reads as `false`, including an absent key, a `null`, and the string `"true"`. A missing or malformed config also resolves `false` rather than throwing, so a project that never opted in is never interrupted by it.
+
+`code-structure` consults this before considering placement at all. When it reads `false`, nothing is annotated and the marker below is never reached.
+
 ## The placement gate
 
-`annotationPlacementAllowed(memDir, key)` in `.claude/skills/workspace/placement.mjs:33` decides whether a site may be annotated. It returns `true` when the named decision carries `load_bearing: true`. When the marker is absent, and when it reads `false`, placement is declined.
+Once the flag is on, `annotationPlacementAllowed(memDir, key)` in `.claude/skills/workspace/placement.mjs:33` decides whether a site may be annotated. It returns `true` when the named decision carries `load_bearing: true`. When the marker is absent, and when it reads `false`, placement is declined.
 
 The marker records that a named constraint forces the shape, rather than someone having merely chosen it. That distinction is what keeps the annotated set small: most decisions apply somewhere, while only a few describe code a maintainer would break by accident. If you find yourself wanting to annotate broadly, the marker is doing its job by refusing.
 

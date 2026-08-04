@@ -247,6 +247,14 @@
       "enabled": true,
       "activated_at": "2026-07-17",
       "rollback": "node .claude/skills/memory-index/migrate.mjs --reverse"
+    },
+    "workspace": {
+      "enabled": true,
+      "note": "Gates scout reconciliation against the structural corpus. Ships DEFAULT FALSE in src/project.template.json; enabled here because this repository is the canary and its corpus is seeded (rollout step 4). Flip false to roll back — scout returns to discovery and the corpus stays on disk, inert."
+    },
+    "annotations": {
+      "enabled": false,
+      "note": "Gates load_bearing-gated annotation placement by code-structure. Default off, independent of memory.workspace.enabled."
     }
   },
   "plantuml": {

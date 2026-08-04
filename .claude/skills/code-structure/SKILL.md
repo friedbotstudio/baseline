@@ -220,7 +220,16 @@ Code may carry an annotation naming the decision, constraint, or research doc th
 governs its shape — `@decision:<key>`, `@constraint:<key>`, `@research:<path>` —
 resolvable by `scout`. Format and examples: `docs/annotations.md`.
 
-**Placement is gated on the `load_bearing:` marker, not applied broadly:**
+**Annotations are opt-in per project.** Check the feature flag before anything else:
+
+```
+node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.annotationsEnabled({rootDir:process.cwd()})))"
+```
+
+`false` (the default) → place no annotations at all and skip the rest of this
+section. `true` → continue to the placement gate below.
+
+**Placement is then gated on the `load_bearing:` marker, not applied broadly:**
 
 ```
 node -e "import('./.claude/skills/workspace/placement.mjs').then(m=>console.log(m.annotationPlacementAllowed('.claude/memory','<decision-key>')))"

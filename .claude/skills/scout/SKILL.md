@@ -23,9 +23,19 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
 
 # Method
 
-0. **Reconcile against the workspace corpus before discovering anything.** If
-   `.claude/memory/workspace/elements/` holds any element, this scout run is a
-   **reconciliation**, not a rediscovery:
+0. **Reconcile against the workspace corpus before discovering anything.** This step
+   is gated — check the flag FIRST:
+
+   ```
+   node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.workspaceEnabled({rootDir:process.cwd()})))"
+   ```
+
+   `false` (the default, and the value for any project that has not opted in) → skip
+   the rest of this step entirely and go to step 1. A populated corpus must not
+   change scout's behaviour for a project that never asked for it.
+
+   `true` → if `.claude/memory/workspace/elements/` holds any element, this scout run
+   is a **reconciliation**, not a rediscovery:
 
    ```
    node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({memDir:'.claude/memory', touchedPaths:process.argv.slice(1)}))))" <touched paths>

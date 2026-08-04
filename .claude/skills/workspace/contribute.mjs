@@ -7,7 +7,8 @@
 
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { detectConflicts } from './conflicts.mjs';
-import { ensureWorkspace, readAll, writeElement } from './store.mjs';
+import { resolveRefs } from './refs.mjs';
+import { ensureWorkspace, readAll, removeElement, writeElement } from './store.mjs';
 
 const REMOVABLE = 'remove';
 
@@ -21,13 +22,26 @@ export function applyContribution({ memDir, slug, ops = [] } = {}) {
   const conflicts = detectConflicts(elements, ops);
   if (conflicts.length) return { written: [], conflicts };
 
+  // Every named decision/constraint key must resolve BEFORE anything is written
+  // (spec §Behavior #1, epic D4). An element citing a key that names no entry
+  // asserts a governing reason that does not exist, which is worse than carrying
+  // none. Checked across the whole contribution so the refusal stays atomic.
+  const unresolved = ops.flatMap((op) => resolveRefs(memDir, op.fields ?? {}).unresolved);
+  if (unresolved.length) return { written: [], conflicts: [], unresolved };
+
   return { written: applyAll(memDir, elements, ops), conflicts: [] };
 }
 
 function applyAll(memDir, elements, ops) {
   const written = [];
   for (const op of ops) {
-    if (op.verb === REMOVABLE) continue;
+    // A remove used to `continue` here, so it reported success and deleted
+    // nothing — detectConflicts validated the id existed and then the element
+    // stayed on disk forever.
+    if (op.verb === REMOVABLE) {
+      removeElement(memDir, op.target_id);
+      continue;
+    }
     writeElement(memDir, mergedElement(elements, op));
     written.push(op.target_id);
   }

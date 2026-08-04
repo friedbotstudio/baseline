@@ -98,19 +98,14 @@ title Component — release.yml job graph
 Container_Boundary(yaml, "release.yml") {
   Component(trigger, "on.workflow_dispatch", "YAML trigger", "inputs.bump_type: choice [major, minor, patch]")
   Component(concurrency, "concurrency: release-${{ github.workflow }}", "YAML guard", "cancel-in-progress: false")
-  Component(build_verify, "Job: build-verify", "ubuntu-latest", "harden-runner audit, checkout, setup-node, npm version --no-git-tag-version, build:site, publish:check, upload-artifact (bump-diff + pages)")
-  Component(publish_npm, "Job: publish-npm", "ubuntu-latest, needs: build-verify", "permissions: id-token: write, contents: read. harden-runner, checkout, setup-node with registry-url, download bump artifact, npm publish --provenance --access public")
-  Component(deploy_pages, "Job: deploy-pages", "ubuntu-latest, needs: [build-verify, publish-npm]", "permissions: pages: write, id-token: write. environment: github-pages. deploy-pages downloads github-pages artifact and serves")
-  Component(push_bump, "Job: push-bump", "ubuntu-latest, needs: publish-npm", "permissions: contents: write. checkout (full history, fetch main HEAD ref). Restore bumped package.json. git commit + tag + push (fail-on-conflict)")
-  Component(smoke, "Job: install-smoke", "ubuntu-latest, needs: publish-npm", "Wait for registry replication; npx --yes @friedbotstudio/create-baseline@<v> ./target; verify manifest hash match")
+  Component(prechecks, "Job: pre-publish-checks", "ubuntu-latest", "harden-runner, checkout, setup-node, verify-action-shas, npm audit signatures, npm run publish:check (precheck + files-diff + smoke-tarball) — gates publication")
+  Component(release_job, "Job: release", "ubuntu-latest, needs: pre-publish-checks", "permissions: id-token: write, contents: write. semantic-release: bump, publish --provenance, tag and push. Skipped when inputs.mode == docs-only")
+  Component(deploy_pages, "Job: deploy-pages", "ubuntu-latest, needs: release", "permissions: pages: write, id-token: write. environment: github-pages. Runs when github.ref == refs/heads/main, independent of whether a version was cut")
 }
 Rel(trigger, concurrency, "satisfies group constraint")
-Rel(concurrency, build_verify, "schedules")
-Rel(build_verify, publish_npm, "needs:")
-Rel(publish_npm, deploy_pages, "needs:")
-Rel(build_verify, deploy_pages, "needs: (artifact dep)")
-Rel(publish_npm, push_bump, "needs: (parallel with deploy-pages)")
-Rel(publish_npm, smoke, "needs: (parallel with deploy-pages + push-bump)")
+Rel(concurrency, prechecks, "schedules")
+Rel(prechecks, release_job, "needs:")
+Rel(release_job, deploy_pages, "needs:")
 @enduml
 ```
 

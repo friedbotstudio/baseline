@@ -106,16 +106,14 @@ Container_Boundary(surface, "Surfacing leg") {
 }
 
 Container_Boundary(index, "Derived index") {
-  Component(build, "buildIndex", "index/build.mjs", "Walks shards, emits reverse lookups")
-  Component(resolve, "resolveLookup", "index/resolve.mjs", "path to decisions, constraint to dependents")
-  Component(cluster, "summarize", "index/summarize.mjs", "Super-set summary plus walkable graph")
+  Component(resolve, "resolveLookup", "memory-index/resolve.mjs", "Walks shards on every read; path to decisions, constraint to dependents")
+  Component(io, "everyShardPath + matchesGlob", "memory-index/index-io.mjs", "Foundation: shard enumeration and glob matching")
 }
 
 Rel(pathTrig, governed, "Invokes")
 Rel(phaseTrig, scoped, "Invokes")
 Rel(governed, resolve, "Queries")
-Rel(resolve, build, "Rebuilds on miss")
-Rel(cluster, resolve, "Composes")
+Rel(resolve, io, "Enumerates shards via")
 @enduml
 ```
 
@@ -190,9 +188,8 @@ Index --> Governed : decisions[], constraints[]
 alt one to three hits
   Governed --> Guard : verbatim bodies
 else more than three
-  Governed -> Index : summarize(cluster)
-  Index --> Governed : summary + graph entry point
-  Governed --> Guard : summary, walkable
+  Governed -> Governed : renderGovernedHits(hits)
+  Governed --> Guard : summary + walkable entry point
 end
 Guard --> Engineer : emitInfo, never blocks
 @enduml
@@ -335,7 +332,7 @@ Each traces to an intake AC and is assigned to exactly one slice. `Kind` tags en
 
 **ACs**: AC-1, AC-5, AC-7.
 
-**Write surface**: `.claude/hooks/process_lifecycle_guard.mjs`, `.claude/hooks/lib/governed-memory.mjs` (new), `.claude/skills/memory-index/` (index build/resolve/summarize), `tests/memory-scoped-surface.test.mjs`.
+**Write surface**: `.claude/hooks/process_lifecycle_guard.mjs`, `.claude/hooks/lib/governed-memory.mjs` (new), `.claude/skills/memory-index/` (`resolve.mjs` rebuilt-on-read + `index-io.mjs`; summarization is inlined as `renderGovernedHits` in `governed-memory.mjs`), `tests/memory-scoped-surface.test.mjs`.
 
 **Risk**: `security` — touches `.claude/hooks/**`, in `security.sensitive_globs`.
 

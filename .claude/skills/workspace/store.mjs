@@ -5,7 +5,7 @@
 // category (spec §Migration): CANONICAL is untouched, so no reader that walks
 // canonical categories ever sees these files.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { asList } from '../memory-index/categories.mjs';
@@ -84,6 +84,17 @@ export function writeElement(memDir, element) {
   const path = join(dir, `${element.id}.md`);
   writeFileSync(path, renderElement(element), 'utf8');
   return path;
+}
+
+// Foundation owns every filesystem touch, so the delete lives here rather than in
+// contribute.mjs — a Domain module reaching for node:fs directly is the layer
+// violation this split exists to prevent.
+export function removeElement(memDir, id) {
+  assertSafeFactKey(id);
+  const path = join(workspaceDir(memDir), 'elements', `${id}.md`);
+  if (!existsSync(path)) return false;
+  rmSync(path);
+  return true;
 }
 
 function renderElement(element) {
