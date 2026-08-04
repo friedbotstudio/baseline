@@ -13,6 +13,7 @@ Persistent project knowledge that travels with the repo. Loaded into Claude's co
 | `conventions.md` | `scenario`, `implement` | Repo-specific test/code idioms (fixture patterns, naming, layout) |
 | `pending-questions.md` | any phase | Open questions the current session couldn't resolve |
 | `backlog.md` | `/memory-flush` | Future-work intent captured automatically by `memory_stop.mjs` (intent-line extraction from user prompts and assistant text). Stale-exempt. |
+| `constraints.md` | `spec`, `scout` | Facts about the world the project builds around, each with whether it still holds. A flip invalidates every decision resting on it. |
 | `_pending.md` | `memory_stop.mjs` (writes), `/memory-flush` (clears) | Auto-extracted candidates awaiting curation. **Content gitignored**; the file structure is committed. |
 | `_resume.md` | `memory_pre_compact.mjs` + `memory_stop.mjs` (write), `memory_session_start.mjs` (reads), `harness` (reads) | **Continuity** snapshot — last completed phase, next phase due, in-flight files, recent user prompts. Refreshed every turn-end and again before compaction. Re-injected at every session start (compact / clear / resume / startup). **Gitignored** — pure session state, not project knowledge. |
 | `_thread.md` | `shelve_capture.mjs` (appends), `shelve_detect.mjs` (stages candidate via `memory_stop`), `resume_transform.mjs` + `memory_session_start.mjs` (read) | **Durable local thread trail** (CLAUDE.md Art. IX clause 8). One append-only rolling section per shelve: verbatim cues + open questions + in-flight files + next step over the cursor span since the last shelve. Model-internal (Claude Code shelves/resumes; never the human; not a skill/command). **Gitignored content** (pristine structure ships in `src/memory/_thread.template.md`); **excluded from `/memory-flush`'s reset path**, so it survives flushes and `/clear`. Local + durable — neither ephemeral like `_resume.md` nor committed/curated like the canonical seven. |
@@ -85,6 +86,40 @@ Multiple verbatim blocks are allowed (and encouraged) when the user clarifies or
 | `conventions.md` | short slug |
 | `pending-questions.md` | auto-numbered `Q-NNN` |
 | `backlog.md` | `<8-word-kebab-slug>-<4-char-sha256>` (derived by `memory_stop.mjs` from the intent verbatim) |
+
+## Constraints (the eighth category)
+
+A constraint records a fact about the world this project has to build around, together with whether that fact still holds. Two live examples: `no-jvm-available`, `zero-runtime-dependencies`.
+
+| Field | Meaning |
+|---|---|
+| `state:` | Boolean. `true` means the constraint HOLDS. |
+| `state_verified_at:` | Short SHA of the last time `state` was actually checked. |
+| `governs:` | Path globs the constraint bears on. |
+
+It is a category rather than a field on `decisions` because the two lifecycles differ. A decision is immutable and expires by supersession. A constraint is mutable and re-verifiable: its `state` flips when the world changes. A constraint that five decisions depend on would otherwise be copied into all five, and a flip would have no single place to record it.
+
+When a constraint's `state` flips, every decision naming it in `rests_on:` is surfaced as suspect. That edge is why this is a category and not a field.
+
+Three optional fields on `decisions` entries support it:
+
+| Field | Meaning |
+|---|---|
+| `governs:` | Path globs. Anchors the decision to the code it governs, so it surfaces when that code is edited rather than only when a spec is written. |
+| `rests_on:` | Constraint keys this decision's rationale depends on. |
+| `load_bearing:` | Boolean. Absent reads as `false` (incidental), never undefined. |
+
+`scope: any` is a valid scope value. Migrated facts carrying no scope are backfilled to it, so no fact is unreachable.
+
+## Decay
+
+An entry that has gone 30 commits or 30 days without verification is marked stale, and the next phase that touches it re-checks or removes it. Three categories sit outside that rule, for three different reasons.
+
+`decisions` never age out. A decision expires by being superseded, not by elapsed time: an open decision is still in force however old the commit that verified it. Re-verification pressure for decisions comes from the self-healing rule below, not from the decay sweep.
+
+`constraints` do age out, and that is deliberate. `state_verified_at:` records when someone last checked whether the constraint still holds, which is exactly the thing that goes stale.
+
+`backlog` is exempt for its own reason: it holds intent, and intent does not verify against code.
 
 ## Self-healing rules
 
