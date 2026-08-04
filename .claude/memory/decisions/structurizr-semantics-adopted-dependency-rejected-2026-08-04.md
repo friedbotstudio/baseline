@@ -2,8 +2,8 @@
 key: structurizr-semantics-adopted-dependency-rejected-2026-08-04
 category: decisions
 scope: [spec, research]
-source: `docs/research/living-system-model.md` (context7 `/websites/structurizr`, queried 2026-08-04) + `docs/specs/living-system-model.md` → Alternatives considered.
-verified-at: c4999eb
+source: `docs/archive/2026-08-04/living-system-model/research.md` (context7 `/websites/structurizr`, queried 2026-08-04) + `docs/archive/2026-08-04/living-system-model/spec.md` → Alternatives considered. Both paths were under `docs/research/` and `docs/specs/` until the epic closed and its discovery bundle was archived.
+verified-at: 27c18a6
 last-touched: 2026-08-04
 ---
 

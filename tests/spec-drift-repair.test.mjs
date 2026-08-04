@@ -7,7 +7,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { REPO_ROOT } from './helpers/memory-fixtures.mjs';
 
@@ -15,9 +15,27 @@ function liveFile(rel) {
   return readFileSync(join(REPO_ROOT, rel), 'utf8');
 }
 
+// A spec moves to `docs/archive/<date>/<slug>/spec.md` when its workflow lands, and
+// an epic's own spec moves when the epic closes. The repair these tests defend is a
+// property of the DOCUMENT, not of its current directory, so resolve it in either
+// place — otherwise archiving silently turns a regression trap into a broken test,
+// which is how `living-system-model.md` broke this file at epic close.
+function specFile(slug) {
+  const live = join(REPO_ROOT, 'docs/specs', `${slug}.md`);
+  if (existsSync(live)) return readFileSync(live, 'utf8');
+
+  const archiveRoot = join(REPO_ROOT, 'docs/archive');
+  const dates = existsSync(archiveRoot) ? readdirSync(archiveRoot).sort().reverse() : [];
+  for (const date of dates) {
+    const archived = join(archiveRoot, date, slug, 'spec.md');
+    if (existsSync(archived)) return readFileSync(archived, 'utf8');
+  }
+  throw new Error(`spec '${slug}' found neither live at docs/specs/ nor archived under docs/archive/*/${slug}/spec.md`);
+}
+
 describe('spec drift repair', () => {
   it('test_when_living_system_model_spec_read_then_no_unbuilt_index_modules', () => {
-    const spec = liveFile('docs/specs/living-system-model.md');
+    const spec = specFile('living-system-model');
     // Slice C shipped memory-index/resolve.mjs with the index rebuilt on every read,
     // and summarization inlined as renderGovernedHits in governed-memory.mjs.
     // Neither of these modules was ever written.

@@ -123,12 +123,14 @@ Carried debt. Nothing on the critical path waits for it, so pick items up betwee
 
 Durable architecture memory: a decision graph that reaches whoever is editing the code, and a constraint
 model that can invalidate the reasoning built on top of it. Discovery ran once as an `epic` track and the
-sliced spec lives at `docs/specs/living-system-model.md`. Slices A–D landed together as a `power` batch
-(`e7f00de`..`6464a58`), E followed in `4888484`, and F closes the set. All six are built and enabled in
-this repository; every feature ships default-off, so consumer installs are unaffected until they opt in.
-The parent epic's own state file still reads open because its three child cycles ran on `power` and
-`spec-entry` tracks rather than `epic-child`, so the close fold never registered them — closing it needs
-the standalone `epic_close.mjs` path with `children[]` reconstructed first.
+sliced spec is archived at `docs/archive/2026-08-04/living-system-model/spec.md`. Slices A–D landed as a `power` batch
+(`e7f00de`..`6464a58`), E followed in `4888484`, and F landed in `27c18a6`. All six are built and enabled
+in this repository; every feature ships default-off, so consumer installs are unaffected until they opt in.
+
+The epic is closed. Its four child cycles all ran on `power` or `spec-entry` rather than `epic-child`,
+because each needed a spec node that `epic-child` does not carry, so no child ever registered itself and
+the close fold never fired. Closing it took the standalone `epic_close.mjs` path with `children[]`
+reconstructed from the four archived bundles, crediting each slice to the cycle that made it deliver.
 
 - ✅ A. Decision node model. `governs:` path anchors, `rests_on:` constraint keys, `load_bearing:`. Decay becomes supersession-driven: a decision expires by being superseded, not by elapsed time, because an open decision is still in force however old the commit that verified it. Stale decisions went 26 to 0, whole-store stale 173 to 147.
 - ✅ B. Constraint model. Eighth canonical category at `.claude/memory/constraints/`, mutable and re-verifiable where a decision is immutable and superseded. A state flip surfaces every decision naming it in `rests_on:` as suspect at session start. Collapsed the canonical category list from nine hardcoded literals to one import; seven of those nine failed silently when a category was added.
