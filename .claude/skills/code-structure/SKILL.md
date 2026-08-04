@@ -216,9 +216,14 @@ Create directories as needed — do not create empty directories in advance. Whe
 
 ## Tracking annotations (placement is gated, never broad)
 
-Code may carry an annotation naming the decision, constraint, or research doc that
-governs its shape — `@decision:<key>`, `@constraint:<key>`, `@research:<path>` —
-resolvable by `scout`. Format and examples: `docs/annotations.md`.
+Code may carry an annotation naming the memory entry that governs its shape —
+`@decision:<key>`, `@landmine:<key>`, `@constraint:<key>`, and one verb per
+canonical category — resolvable by `scout`. Format and examples:
+`docs/annotations.md`.
+
+`@research:<path>` is **not** a supported form: a research doc is addressed by path
+and the resolver looks entries up by key, so every such reference would resolve as
+dangling. Any unrecognised verb is ignored rather than reported.
 
 **Annotations are opt-in per project.** Check the feature flag before anything else:
 
@@ -232,7 +237,7 @@ section. `true` → continue to the placement gate below.
 **Placement is then gated on the `load_bearing:` marker, not applied broadly:**
 
 ```
-node -e "import('./.claude/skills/workspace/placement.mjs').then(m=>console.log(m.annotationPlacementAllowed('.claude/memory','<decision-key>')))"
+node -e "import('./.claude/skills/workspace/placement.mjs').then(m=>console.log(m.annotationPlacementAllowed('.claude/memory','<entry-key>')))"
 ```
 
 `true` → place the annotation at the governed site. `false` (absent marker or an
@@ -241,12 +246,24 @@ would otherwise confidently break something; annotating broadly is the failure
 mode this gate exists to prevent, because a comment on every file is a comment on
 nothing.
 
-**You may propose a marker; you may not set one.** `proposeLoadBearing({memDir,
-key, rationale})` returns `{written: false}` and hands the engineer your cited
-rationale to judge. It writes only when the engineer passes `confirmed: true`
-(spec decision D5, `owner: engineer`). Do not route around it — the marker decides
-where annotations land in real source, and an unaided wrong call either scatters
-comments or hides the ones that matter.
+The gate reads the marker in **every** canonical category, not just `decisions` —
+a landmine marked `load_bearing` is precisely a seam someone breaks by accident.
+
+**Place only where the entry's `governs:` names a specific file**, never where it
+carries a `**` glob. A glob-governed entry has no single site to annotate, and
+annotating everything it covers is the scatter the marker exists to prevent.
+
+**You may propose a marker; you may not set one.**
+<!-- @decision:load-bearing-marker-requires-engineer-confirmation-2026-08-04 -->
+`proposeLoadBearing({memDir, key, rationale})` returns `{written: false}` and hands
+the engineer your cited rationale to judge. It writes only when the engineer passes
+`confirmed: true` (spec decision D5, `owner: engineer`). Do not route around it —
+the marker decides where annotations land in real source, and an unaided wrong call
+either scatters comments or hides the ones that matter.
+
+The marker lands in the entry's own category. Keys shaped like paths (the landmark
+register uses `<path>:<line>`) are rejected by `assertSafeFactKey` before any path
+is built, so those markers are set by `/memory-flush`, not through this call.
 
 Never annotate a key that does not resolve: `scout` reports a dangling annotation
 rather than skipping it, so a stale reference is louder than no reference.

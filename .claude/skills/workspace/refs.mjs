@@ -4,7 +4,7 @@
 // Copying rationale into the corpus was the rejected alternative: it creates a
 // second thing to keep true, and the store already re-verifies entries.
 
-import { asList } from '../memory-index/categories.mjs';
+import { asList, CANONICAL } from '../memory-index/categories.mjs';
 import { resolveCategory } from '../memory-index/lift-fields.mjs';
 import { firstHook } from '../../hooks/lib/entry-body.mjs';
 
@@ -12,8 +12,33 @@ import { firstHook } from '../../hooks/lib/entry-body.mjs';
 // not a memory key, so routing it through resolveCategory would look up a category
 // that does not exist and report every research annotation as dangling — worse than
 // not supporting it. Narrowed to what is implemented and tested; see the flagged row.
-const ANNOTATION = /^@(decision|constraint):(.+)$/;
-const CATEGORY_FOR = { decision: 'decisions', constraint: 'constraints' };
+const ANNOTATION = /^@([a-z-]+):(.+)$/;
+
+// The verb is the singular of the category, so the map is DERIVED from CANONICAL
+// rather than restated (spec D2). A second hardcoded category list is exactly what
+// slice B collapsed: seven of nine surfaces failed silently when `constraints` was
+// added, because each carried its own copy.
+const IRREGULAR_VERB = { libraries: 'library' };
+
+function verbFor(category) {
+  return IRREGULAR_VERB[category] ?? category.replace(/s$/, '');
+}
+
+const CATEGORY_FOR = Object.fromEntries(CANONICAL.map((c) => [verbFor(c), c]));
+
+// Exported so the totality property is testable, and called at module load so a
+// ninth category added without a verb fails LOUDLY at import rather than silently
+// resolving every one of its annotations as dangling.
+export function assertVerbMapTotal(categories, map = CATEGORY_FOR) {
+  const covered = new Set(Object.values(map));
+  const missing = categories.filter((category) => !covered.has(category));
+  if (missing.length) {
+    throw new Error(`annotation verb map does not cover canonical categor${missing.length > 1 ? 'ies' : 'y'}: ${missing.join(', ')}`);
+  }
+  return true;
+}
+
+assertVerbMapTotal(CANONICAL);
 
 function entriesIn(memDir, category) {
   try {
@@ -46,8 +71,14 @@ export function resolveAnnotation(memDir, ref) {
   if (!match) return { resolved: false, key: null, reason: 'not an annotation' };
 
   const [, verb, rawKey] = match;
+  const category = CATEGORY_FOR[verb];
+  // An unrecognised verb is not a BROKEN annotation, it is not an annotation at
+  // all — `@research:` is the standing example. Reporting it dangling would mark
+  // every one of them stale forever, which is louder than the thing it describes.
+  if (!category) return { resolved: false, key: null, reason: 'not an annotation' };
+
   const key = rawKey.trim();
-  const entry = entriesIn(memDir, CATEGORY_FOR[verb]).find((e) => e.key === key);
+  const entry = entriesIn(memDir, category).find((e) => e.key === key);
   if (!entry) return { resolved: false, key };
 
   return { resolved: true, key, hook: firstHook(entry.body) };

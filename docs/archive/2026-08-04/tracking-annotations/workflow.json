@@ -1,0 +1,187 @@
+{
+  "request": "Deliver Epic 7 slice F (tracking comments): wire scout's annotation-resolution leg so resolveAnnotation has a consumer, widen the load_bearing gate beyond the decisions category, enable memory.annotations.enabled, and place annotations at real governed sites so the slice delivers rather than shipping built-but-inert machinery.",
+  "slug": "tracking-annotations",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/archive/2026-08-04/living-system-model-ef/spec.md AC-008..AC-011 (ticket F) and its Behavior #5/#6 sequences; .claude/state/epic/living-system-model.json slices[] F with approved:true; direction-approval token .claude/state/spec_approvals/living-system-model.approval on disk (2026-08-04); docs/roadmap-execution-plan.md Epic 7 line F still open. The F machinery landed in be48ab9..7f89385 — refs.resolveAnnotation, placement.mjs, docs/annotations.md, tests/annotations-resolve.test.mjs all exist. No new surface is invented; this cycle makes the built surface reachable.",
+  "track_reason": "spec-entry over epic-child: epic-child is semantically exact (slice F is open and its approval token is present, so it was selectable) but its derived exceptions include 'spec' and 'spec-shippability-review'. Three decisions must be recorded rather than made silently inside tdd — (1) how scout DISCOVERS annotations in code, which is entirely unspecified in the ef spec (Behavior #5 draws scout reading an annotation but never says how it finds one); (2) the placement.mjs category scope, which the engineer has ruled a defect and therefore changes shipped code from last cycle; (3) which governed sites get annotated, which is the placement judgment F exists to constrain. The ef spec must also be amended: the marker-scope defect means AC-010 was satisfied against a narrower gate than intended. Same reasoning that routed workspace-corpus-seed to spec-entry over epic-child. tdd-quickfix was rejected for the same reason plus the amendment. chore was rejected because the scout wiring and the widened gate both need failing tests.",
+  "skip_brainstorm": true,
+  "epic": "living-system-model",
+  "epic_slice": "F",
+  "epic_spec": "docs/specs/living-system-model.md",
+  "findings_at_triage": [
+    "ORPHAN (fifth of this epic): refs.resolveAnnotation is unit-green in tests/annotations-resolve.test.mjs, and code-structure/SKILL.md:251 promises 'scout reports a dangling annotation rather than skipping it' — but .claude/skills/scout/SKILL.md contains zero annotation mentions. Nothing calls resolveAnnotation. AC-008/AC-009 passed against the module, never against the consumer. This is the exact class the landmine a-cycle-that-adds-a-gate-must-assert-the-consumer-calls-it records.",
+    "DEFECT (engineer-confirmed at triage): placement.mjs findEntry resolves only resolveCategory(memDir,'decisions'). On disk 23 entries carry load_bearing: — 3 decisions, 9 landmines, 11 landmarks. 20 of 23 markers are unreachable by annotationPlacementAllowed.",
+    "Zero @decision:/@constraint:/@research: annotations exist in source today; memory.annotations.enabled is false. F is in exactly the state E was in before workspace-corpus-seed: built, not enabled, not delivering.",
+    "docs/annotations.md is at docs/ root, not docs/references/ — deliberate, per the landmine docs-references-is-fully-gitignored-so-a-doc-written-there-never-ships. Do not 'fix' the path."
+  ],
+  "confirmed_decisions": [
+    {
+      "question": "placement.mjs reads load_bearing: only from the decisions category, leaving 9 landmines and 11 landmarks with the marker unreachable. Defect or intended?",
+      "answer": "Defect — widen to all categories.",
+      "owner": "engineer",
+      "captured_at": "triage",
+      "note": "Rationale to render into the spec's ## Decisions section during /spec: the marker means the same thing wherever it sits, and a landmine marked load_bearing is precisely where a maintainer would confidently break something. Widens F's scope — placement.mjs changes and needs its own failing test. Also means the ef spec's AC-010 was satisfied against a narrower gate than intended; amend it."
+    },
+    {
+      "question": "Which track for slice F?",
+      "answer": "spec-entry.",
+      "owner": "engineer",
+      "captured_at": "triage",
+      "note": "Confirmed against epic-child and tdd-quickfix alternates."
+    },
+    {
+      "question": "Spec Rollout ordered placement (5) before the flag flip (6), but code-structure gates placement on the flag. Which order?",
+      "answer": "flip the flag first, then place",
+      "owner": "engineer",
+      "captured_at": "scenario-tick",
+      "note": "Spec amended in-place: Decisions gains D8 and the Rollout migration order now reads 5 flip -> 6 place. Safe from the gate-A content re-check, which already ran (hash MATCH) and marked approve-direction completed; the harness never re-runs a completed phase. No AC changed - AC-003 and AC-010 hold under either order."
+    }
+  ],
+  "open_decisions_for_spec": [
+    "How scout DISCOVERS annotations — the ef spec's Behavior #5 draws scout reading an annotation but never specifies the discovery method. Grep over the touched slice's paths, or over the reconcile delta, or over the whole repo. Bounds cost and determines whether AC-008 is reachable on a large tree.",
+    "Which governed sites actually get annotated this cycle. The gate constrains WHERE; something still has to choose. Candidate anchors are the 14 corpus elements and the 3 decisions carrying load_bearing (plus whatever the widened gate admits).",
+    "Whether widening the gate changes the ENGINEER-CONFIRMATION rule per category — proposeLoadBearing writes to decisions/<key>.md by construction; a widened gate needs the category resolved at write time too, or the confirmation path silently mis-targets.",
+    "Whether memory.annotations.enabled flips in this repo only (canary, as workspace.enabled did) or also ships in src/project.template.json. Precedent from workspace-corpus-seed rollout step 4 is canary-only; the consumer default stays false by key absence."
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "roadmap_tasks": [
+    "E7-F"
+  ],
+  "roadmap_tasks_note": "Populated at triage, following the workspace-corpus-seed precedent that made the E flip possible (living-system-model-ef left this empty and roadmap-sync correctly no-op'd). Same guard applies: if verification at Phase 10.6 shows F still does not deliver end-to-end — annotations placed, scout resolving them on a real run — REMOVE the token rather than flipping a task that would overstate.",
+  "skipped_alternates": [
+    "epic-child",
+    "tdd-quickfix",
+    "chore"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1785868655,
+  "updated_at": 1785875599,
+  "rightsize_base": [],
+  "spec_amended_post_approval": {
+    "what": "Decisions D8 added; Rollout migration order steps 5 and 6 swapped.",
+    "why": "Engineer decision at the scenario tick. Leaving the spec contradicting the build is the defect class this epic exists to fix.",
+    "hash_at_approval": "ec1cedccf7370598833d1c78c8ae5fb1c3065ddb7dab55b31764dcc6456e7fa4",
+    "surface_at": "gate C"
+  },
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "tdd_findings": [
+    "The full-suite TAP run reported fail 3 while a concurrently-running spec-reporter run reported fail 0. Neither was authoritative — the failures were CONTENTION between two simultaneous node --test invocations over the same tmpdir fixtures, not real. A clean serial re-run gives 2172/2157 pass/0 fail/15 skipped, exit 0. Worth remembering: this suite is not safe to run concurrently with itself.",
+    "Mutation proof of the two wiring tests DISCRIMINATES correctly, which a single mutation would not have shown: removing the scanAnnotations call reddens BOTH wiring tests; removing only the flag check reddens ONLY the ordering test and correctly leaves the invocation test green.",
+    "A first mutation attempt appeared to pass because the grep pattern omitted the TAP N - separator, so it matched nothing and printed nothing. Silence read as success. Re-run with a corrected pattern gave the real result. A mutation check that prints nothing has not passed.",
+    "D6 eligibility resolved mechanically against the live store: of 23 load_bearing entries, 5 name a specific file in the write set. 2 are decisions (placed, 4 sites) and 3 are landmarks whose keys ARE file paths — annotating placement.mjs with @landmark:.claude/skills/workspace/placement.mjs:1 is a file pointing at its own description, so they were declined. Recorded rather than silently skipped.",
+    "conflicts.mjs was in the declared write_set for an annotation but received none: its governing decision (conflicts-are-reported-never-auto-resolved) governs only ** globs, so D6 excludes it. Write set is permission, not obligation.",
+    "obj/template/ is kept in sync automatically on write — the shipped copies of all six touched skill files matched live, and the manifest sha256 for the new annotations.mjs matched the shipped bytes. No manual manifest refresh was needed."
+  ],
+  "drift_check_result": {
+    "exit": 0,
+    "unresolved": 0,
+    "report": ".claude/state/drift/tracking-annotations.md",
+    "reverify_skip": "exit 3 — tree byte-identical to the binding verify PASS, so model re-reading suppressed (velocity Component 2)",
+    "caveat": "Every AC resolved by LITERAL TOKEN MENTION in a comment — AC-010 matched on the string \"// AC-009, AC-010)\". Landmine drift-check-resolves-acs-by-literal-mention-not-implementation applies. The verdict is correct this cycle, but the independent evidence is the live scan (888 scanned, 4 resolved, 0 dangling), not drift_check."
+  },
+  "simplify_result": {
+    "cleaned": 0,
+    "flagged": [
+      "annotations.mjs is a third direct project.json reader (with flags.mjs and common.mjs projectGet). Collapsing requires exporting flags.mjs private readProjectConfig — a public API change, out of scope. Follow-up spec if a fourth appears."
+    ],
+    "reverify": "skipped — reverify-guard exit 3, tree byte-identical to the binding PASS snapshot (Lever 4b-ii)"
+  },
+  "security_result": {
+    "risk": "LOW",
+    "critical_or_high": 0,
+    "low": 2,
+    "report": "docs/security/tracking-annotations-2026-08-04.md",
+    "findings": [
+      "LOW CWE-22: scanAnnotations files[] param not contained to rootDir (proven by probe: scanned 2 escaped paths). No untrusted caller — git ls-files output cannot escape. Bounded disclosure: annotation tokens only.",
+      "LOW CWE-59: scan follows symlinks out of the repo (reachable on the production path since git ls-files lists symlinks)."
+    ],
+    "prior_classes_reprobed": "F-1 traversal CLOSED (planted hostile declared key; write threw, victim intact). F-2 forged frontmatter CLOSED (one marker in frontmatter, body verbatim, landed in landmines/). F-3 ReDoS NOT REACHABLE (150k chars in 0.24ms; linear pattern, no nested quantifier).",
+    "note": "Risk-driven as well as glob-triggered — the sensitive-glob file changed by one comment line; the real new surface is annotations.mjs reading arbitrary tracked files and shelling to git."
+  },
+  "integrate_result": {
+    "verdict": "PASS",
+    "audit_exit": 0,
+    "suite": "2172 tests / 2157 pass / 0 fail / 15 skipped",
+    "code_review_fanout": {
+      "verdict": "CLEAN",
+      "findings": 0,
+      "blockers": 0,
+      "projection": ".claude/state/checker-fanout-code/tracking-annotations.json"
+    },
+    "smoke": "skipped — no diff path touches a rendered surface (docs/ is not a site source); playwright IS declared, so the skip is condition-3, not capability"
+  },
+  "document_result": {
+    "gate": "CLEAN — 1 surface, receipt present",
+    "delegates": [
+      "technical-writer (docs/annotations.md)"
+    ],
+    "measure": "19.19 -> 0.18 (threshold 4.5, corpus median 0.14). Axes fixed: negationDefPer1k 10.6, emDashPer1k 7.9, openAssertionPct 78.6, parensPer1k 0.9 — all now in band. passivePctSent left at 15.3 (band 18-48, cost 0.18) rather than inflating passive voice to hit a number.",
+    "reader_level": "NO EVIDENCE — vacuous pass. score.mjs greps rendered <p> tags, so a .md file yields \"no prose paragraphs found\" then prints a clean line and exits 0. Landmine reader-level-grades-rendered-html-so-markdown-passes-vacuously, which records this exact page from the prior cycle.",
+    "source_verification": "3 of 8 example annotation keys in the syntax table did NOT resolve (@landmark:memory-scoped-memory, @library:eleventy, @pending-question:Q-002). Written plausibly during implement, caught by technical-writer Step 1. Two replaced with probed-real keys; @pending-question: proved structurally unusable (its key is the full prose question, and a token ends at whitespace) and is now documented as such rather than faked.",
+    "public_site": "No work. The reflective check returned 6 pages matching the scout/code-structure TOKENS, but none makes a claim this change invalidates. The feature also ships OFF for consumers (D7 canary-only), so a public feature-value page would overstate what an install gets.",
+    "reverify": "re-stamped after the doc rewrite — audit PASS fails=0 warns=0"
+  },
+  "roadmap_sync_result": {
+    "report": {
+      "flipped": [
+        "E7-F"
+      ],
+      "promoted": [
+        "Epic 7"
+      ],
+      "skipped": [],
+      "noop": false,
+      "anomalies": []
+    },
+    "validation_gate": "PASSED before flipping, per the guard written at triage. Evidence: annotations flag enabled=true; 4 annotations placed in real source (memory_session_start.mjs, code-structure/SKILL.md, categories.mjs, placement.mjs); live scan 888 scanned / 4 resolved / 0 dangling; scout consumer wired with the flag check strictly before the scan call; src/project.template.json still carries no annotations key so consumers read false. Slice F genuinely delivers — the flip does not overstate.",
+    "epic_7_now": "All six slices A-F flipped. Epic 7 heading promoted to complete.",
+    "prose_repair": {
+      "edited": "Epic 7 section preamble (docs/roadmap-execution-plan.md:126-131) — it still read \"the parent epic stays open while E and F are unbuilt\", two lines above six ✅ markers.",
+      "not_edited": "Status (2026-08-04) block at line 23-30. It is pinned to HEAD 6464a58 and was accurate at that commit; the status list is an append-only log, so rewriting an entry would falsify history. A fresh dated entry is a /standup call.",
+      "verification": "auditRoadmap -> anomalies: []. standup/gather.mjs still parses. 7 Epic headings intact.",
+      "note": "roadmap-sync SKILL.md says do not hand-edit, scoped to the format contract that syncRoadmap enforces. The edited prose carries no status marker."
+    }
+  },
+  "memory_flush_result": {
+    "promoted": 2,
+    "discarded": 0,
+    "deferred": 0,
+    "closed": 0,
+    "stale_reverified": 1,
+    "entries": [
+      "landmarks/.claude/skills/workspace/annotations.mjs:1 (new)",
+      "landmines/a-check-that-measured-nothing-reports-success (new)",
+      "landmines/live-objtemplate-rebuild-races-parallel-test-readers (re-verified + extended with the self-inflicted-second-reader trigger)"
+    ],
+    "no_duplicate": "Test-contention was NOT written as a new landmine — the existing entry covers it. Extended instead with the new trigger its 2026-06-05 structural fix does not cover (that fix removed the WRITER; it cannot stop a second reader you launch yourself)."
+  }
+}

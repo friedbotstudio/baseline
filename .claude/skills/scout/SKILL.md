@@ -51,6 +51,34 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    names every element is a re-derivation — report that as a corpus defect rather
    than passing it off as a delta.
 
+0.5 **Resolve the tracking annotations the code carries.** Gated the same way —
+   check the flag FIRST:
+
+   ```
+   node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.annotationsEnabled({rootDir:process.cwd()})))"
+   ```
+
+   `false` (the default) → skip the rest of this step and go to step 1. `true` →
+   scan and resolve:
+
+   ```
+   node -e "import('./.claude/skills/workspace/annotations.mjs').then(m=>console.log(JSON.stringify(m.scanAnnotations({rootDir:process.cwd(), memDir:'.claude/memory'}),null,1)))"
+   ```
+
+   Report both halves of the result in the scout report's **Constraints** section:
+
+   - `resolved[]` → for every annotation whose governed file is in the slice being
+     touched, surface `file:line` plus the entry's `hook` line. This is the reason
+     the code has its shape, reaching the person about to change it — the whole
+     point of the annotation.
+   - `dangling[]` → report EVERY entry, in or out of the slice. An annotation
+     naming a deleted or renamed entry asserts that a reason exists and then sends
+     the reader nowhere; it is the one case worth being loud about, and silence
+     lets it rot indefinitely.
+
+   The scan reports; it never blocks. A dangling annotation is a finding for the
+   report, not a failed phase.
+
 1. **Identify the nouns and verbs in the task.** Each is a search anchor.
 2. **For each anchor, pick the right tool:**
    - **Structural / navigation questions** ("where does the data on page X come from?", "what component renders Y?", "what wraps Z?", "find the API for this icon/button"): invoke `Skill(code-browser)`. It walks the import graph from the page down to the network boundary and returns flat indexes (`byHook` / `byService` / `byApiCall` / `byComponent`) — far more reliable than keyword grep, which routinely picks up unrelated flows that share a domain word.

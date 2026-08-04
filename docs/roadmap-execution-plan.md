@@ -119,16 +119,20 @@ Carried debt. Nothing on the critical path waits for it, so pick items up betwee
 - ✅ T10. Gate Phase 10 documentation routing on delegate receipts. The routing rule already existed in `document/SKILL.md` prose and was skipped anyway during this cycle's own Phase 10, sending a public page to the `documentation` style guide instead of `technical-writer`. `document-gate.mjs` now recomputes the required surface-to-delegate map from `project.json → document.surfaces` and exits 1 unless every required delegate left a receipt; `prose` gains the reader-level pass it never ran. Backlog `-4a1c` records the remaining limitation: the map is page-granular, so it over-demands on a one-word fix and under-demands when behaviour changes without a page changing.
 - ✅ T9. Fix the consent-expiry edge exposed by the T4 landing: a landing longer than the 900s TTL, plus `/commit` archiving `workflow.json` before the commit, drops workflow-scoped consent to time-window mode and forces a re-grant. Backlog `-7af6`; honor the archived-bundle slug (or raise the scoped TTL for workflow-bound grants).
 
-## Epic 7 — Living system model  🟡  (memory)
+## Epic 7 — Living system model  ✅  (memory)
 
 Durable architecture memory: a decision graph that reaches whoever is editing the code, and a constraint
 model that can invalidate the reasoning built on top of it. Discovery ran once as an `epic` track and the
-sliced spec lives at `docs/specs/living-system-model.md`. Four of the six slices landed together as a
-`power` batch (`e7f00de`..`6464a58`); the parent epic stays open while E and F are unbuilt.
+sliced spec lives at `docs/specs/living-system-model.md`. Slices A–D landed together as a `power` batch
+(`e7f00de`..`6464a58`), E followed in `4888484`, and F closes the set. All six are built and enabled in
+this repository; every feature ships default-off, so consumer installs are unaffected until they opt in.
+The parent epic's own state file still reads open because its three child cycles ran on `power` and
+`spec-entry` tracks rather than `epic-child`, so the close fold never registered them — closing it needs
+the standalone `epic_close.mjs` path with `children[]` reconstructed first.
 
 - ✅ A. Decision node model. `governs:` path anchors, `rests_on:` constraint keys, `load_bearing:`. Decay becomes supersession-driven: a decision expires by being superseded, not by elapsed time, because an open decision is still in force however old the commit that verified it. Stale decisions went 26 to 0, whole-store stale 173 to 147.
 - ✅ B. Constraint model. Eighth canonical category at `.claude/memory/constraints/`, mutable and re-verifiable where a decision is immutable and superseded. A state flip surfaces every decision naming it in `rests_on:` as suspect at session start. Collapsed the canonical category list from nine hardcoded literals to one import; seven of those nine failed silently when a category was added.
 - ✅ C. Index and recall layer. Derived index over `by_path` / `by_constraint` / `by_element`, rebuilt on every read rather than cached, and a second surfacing trigger keyed on path that extends `process_lifecycle_guard` rather than adding a 27th hook. A full build over 239 entries measures 17.5 ms, which settled the epic's build-on-demand question; the HEAD-keyed cache it replaced was both slower and wrong on non-git trees.
 - ✅ D. Capture leg. A discard ledger persisting a curation decision across the `/memory-flush` reset, so a candidate promoted or discarded once is not re-offered as fresh. Extends the existing dedup lifetime in `memory_stop` rather than adding a second dedup.
 - ✅ E. Workspace structural corpus. A durable C4 and module-level diagram set that each cycle contributes to rather than re-deriving, so `scout` reconciles instead of rediscovering. Flagged OVERSIZED at epic triage and still carries the epic's open questions on workspace merge semantics and diagram authority; the third, index rebuild cost, was answered by C. Split before approval.
-- ⬜ F. Tracking comments. Code annotations naming a decision, constraint or research doc, resolvable by `scout`. Placement is gated on A's `load_bearing:` marker so annotations land where a maintainer would otherwise confidently break something, rather than broadly. Buildable now that A has landed.
+- ✅ F. Tracking comments. Code annotations naming a decision, constraint or research doc, resolvable by `scout`. Placement is gated on A's `load_bearing:` marker so annotations land where a maintainer would otherwise confidently break something, rather than broadly. Buildable now that A has landed.

@@ -35,6 +35,7 @@ export const CANONICAL = Object.freeze([
 
 export const PENDING_FILE = 'pending-questions';
 
+// @decision:decay-is-per-category-three-reasons-2026-08-04
 export const STALE_EXEMPT = new Set(['backlog']);
 
 export const SUPERSESSION_DRIVEN = new Set(['decisions']);

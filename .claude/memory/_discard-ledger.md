@@ -23,3 +23,4 @@
 - promoted :: .claude/skills/workspace/seed-elements.mjs → landmarks.md
 - discarded :: .claude/skills/code-structure/SKILL.md → landmarks.md
 - discarded :: backlog → the-plan-is-sound-in-ordering-but-i-2b21
+- promoted :: .claude/skills/workspace/annotations.mjs

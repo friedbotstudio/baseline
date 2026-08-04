@@ -7,17 +7,28 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { join, makeProject, tryImport, writeShard, REPO_ROOT } from './helpers/memory-fixtures.mjs';
-import { readFileSync } from 'node:fs';
+import {
+  join, makeProject, tryImport, writeShard, writeFlatCategory, snapshotTree, REPO_ROOT,
+} from './helpers/memory-fixtures.mjs';
+import { readFileSync, existsSync } from 'node:fs';
 
 const REFS = '.claude/skills/workspace/refs.mjs';
 const PLACEMENT = '.claude/skills/workspace/placement.mjs';
+const CATEGORIES = '.claude/skills/memory-index/categories.mjs';
 
 function seedDecision(memDir, key, fields = {}) {
   return writeShard(memDir, 'decisions', key, {
     key,
     fields: { governs: '.claude/skills/**', ...fields },
     bodyLines: ['- The corpus is authored, not inferred from code.'],
+  });
+}
+
+function seedLandmine(memDir, key, fields = {}) {
+  return writeShard(memDir, 'landmines', key, {
+    key,
+    fields: { governs: '.claude/skills/workspace/store.mjs', ...fields },
+    bodyLines: ['- The trap: a gate can be fully built and called by nothing.'],
   });
 }
 
@@ -114,5 +125,154 @@ describe('F — placement gated on load_bearing', () => {
     });
     assert.equal(confirmed.written, true, 'an engineer-confirmed proposal writes the marker');
     assert.match(readFileSync(shardPath, 'utf8'), /load_bearing:\s*true/, 'confirmed marker must land in frontmatter');
+  });
+});
+
+// Slice F delivery — the marker means the same thing wherever it sits (D1, owner
+// engineer). Measured at triage: 23 markers on disk, of which only 3 are decisions.
+// A gate reading one category left 20 of them authorising nothing.
+describe('F — the load_bearing gate spans every canonical category (AC-004, AC-005, AC-006)', () => {
+  it('test_when_landmine_carries_load_bearing_then_placement_allowed', async () => {
+    const placement = await tryImport(PLACEMENT);
+    assert.ok(placement, `${PLACEMENT} does not exist yet`);
+    const { memDir } = makeProject();
+    seedLandmine(memDir, 'gate-with-no-consumer', { load_bearing: 'true' });
+    seedLandmine(memDir, 'merely-noted');
+
+    assert.equal(
+      placement.annotationPlacementAllowed(memDir, 'gate-with-no-consumer'),
+      true,
+      'a landmine marked load_bearing is precisely where a maintainer would confidently break something',
+    );
+    assert.equal(
+      placement.annotationPlacementAllowed(memDir, 'merely-noted'),
+      false,
+      'widening the gate must not weaken it — an unmarked entry still declines',
+    );
+  });
+
+  it('test_when_landmine_annotation_parsed_then_resolves_with_hook', async () => {
+    const refs = await tryImport(REFS);
+    assert.ok(refs, `${REFS} does not exist yet`);
+    const { memDir } = makeProject();
+    seedLandmine(memDir, 'gate-with-no-consumer', { load_bearing: 'true' });
+
+    const result = refs.resolveAnnotation(memDir, '@landmine:gate-with-no-consumer');
+    assert.equal(
+      result.resolved,
+      true,
+      'widening the placement gate without widening the verb set would authorise an annotation no parser can read',
+    );
+    assert.match(result.hook, /built and called by nothing/, 'the hook line must be surfaced');
+  });
+
+  it('test_when_canonical_category_has_no_verb_then_assertion_throws_naming_it', async () => {
+    const refs = await tryImport(REFS);
+    assert.ok(refs, `${REFS} does not exist yet`);
+    assert.equal(
+      typeof refs.assertVerbMapTotal,
+      'function',
+      'the totality assertion must be exported so it can be exercised; a map that is merely correct today rots silently',
+    );
+
+    const categories = await tryImport(CATEGORIES);
+    assert.doesNotThrow(
+      () => refs.assertVerbMapTotal(categories.CANONICAL),
+      'the shipped map must cover every canonical category',
+    );
+    assert.throws(
+      () => refs.assertVerbMapTotal([...categories.CANONICAL, 'ninth-category']),
+      /ninth-category/,
+      'an unmapped category must fail LOUDLY and name itself — seven of nine surfaces failed silently when constraints was added',
+    );
+  });
+});
+
+describe('F — the marker write follows the entry, not a hardcoded directory (AC-007, AC-008)', () => {
+  it('test_when_engineer_confirms_landmine_marker_then_written_to_landmines_not_decisions', async () => {
+    const placement = await tryImport(PLACEMENT);
+    assert.ok(placement, `${PLACEMENT} does not exist yet`);
+    const { memDir } = makeProject();
+    const shardPath = seedLandmine(memDir, 'gate-with-no-consumer');
+
+    const result = placement.proposeLoadBearing({
+      memDir,
+      key: 'gate-with-no-consumer',
+      rationale: 'governs a seam four cycles broke in a row',
+      confirmed: true,
+    });
+
+    assert.equal(result.written, true);
+    assert.match(readFileSync(shardPath, 'utf8'), /load_bearing:\s*true/, 'the marker lands in the entry that owns it');
+    assert.equal(
+      existsSync(join(memDir, 'decisions', 'gate-with-no-consumer.md')),
+      false,
+      'a widened read gate with an unwidened write target silently fabricates a decisions shard',
+    );
+  });
+
+  it('test_when_confirmed_is_truthy_but_not_boolean_true_then_refused', async () => {
+    const placement = await tryImport(PLACEMENT);
+    assert.ok(placement, `${PLACEMENT} does not exist yet`);
+    const { memDir } = makeProject();
+    const shardPath = seedLandmine(memDir, 'candidate-landmine');
+
+    for (const confirmed of [1, 'true', {}, 'yes']) {
+      const result = placement.proposeLoadBearing({
+        memDir, key: 'candidate-landmine', rationale: 'r', confirmed,
+      });
+      assert.equal(
+        result.written,
+        false,
+        `confirmed: ${JSON.stringify(confirmed)} must be refused — a gate that accepts a truthy accident is not a gate`,
+      );
+      // Without this the test passes vacuously against the decisions-only gate: the
+      // landmine is simply never found, so the confirmation check never runs and a
+      // green result proves nothing about the thing under test.
+      assert.match(
+        String(result.reason),
+        /confirmation/i,
+        `the refusal must be ABOUT confirmation, not a lookup miss (got: ${result.reason})`,
+      );
+    }
+    assert.ok(!/load_bearing:\s*true/.test(readFileSync(shardPath, 'utf8')), 'the shard stays unmarked');
+  });
+
+  it('test_when_key_is_path_shaped_then_rejected_before_any_path_is_constructed', async () => {
+    const placement = await tryImport(PLACEMENT);
+    assert.ok(placement, `${PLACEMENT} does not exist yet`);
+    const { memDir } = makeProject();
+    seedDecision(memDir, 'innocent');
+    const before = snapshotTree(memDir);
+
+    assert.throws(
+      () => placement.proposeLoadBearing({
+        memDir,
+        key: '.claude/skills/workspace/placement.mjs:1',
+        rationale: 'landmark keys are paths',
+        confirmed: true,
+      }),
+      /REJECT, never normalize/,
+      'F-1 (CWE-22) stays closed: a path-shaped key is rejected, never repaired into something writable',
+    );
+    assert.deepEqual(snapshotTree(memDir), before, 'nothing may be written anywhere on the reject path');
+  });
+
+  it('test_when_store_is_flat_then_propose_reports_rather_than_throwing', async () => {
+    const placement = await tryImport(PLACEMENT);
+    assert.ok(placement, `${PLACEMENT} does not exist yet`);
+    const { memDir } = makeProject();
+    writeFlatCategory(memDir, 'decisions', [
+      { key: 'flat-entry', bodyLines: ['- Lives in a flat file, not a shard.'] },
+    ]);
+
+    let result;
+    assert.doesNotThrow(() => {
+      result = placement.proposeLoadBearing({
+        memDir, key: 'flat-entry', rationale: 'r', confirmed: true,
+      });
+    }, 'a flat store must not throw ENOENT on a sharded path that was never going to exist');
+    assert.equal(result.written, false);
+    assert.match(String(result.reason), /flat/i, 'the refusal must name why, so the caller can act on it');
   });
 });

@@ -113,6 +113,7 @@ function splitBlocks(body) {
   return out.map(({ key, block }) => [key, block]);
 }
 
+// @decision:decay-is-per-category-three-reasons-2026-08-04
 function isStale(block, name, head, root) {
   if (STALE_EXEMPT.has(name)) return false;
   if (getField(block, closureFieldFor(name))) return false;
