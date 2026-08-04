@@ -23,6 +23,24 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
 
 # Method
 
+0. **Reconcile against the workspace corpus before discovering anything.** If
+   `.claude/memory/workspace/elements/` holds any element, this scout run is a
+   **reconciliation**, not a rediscovery:
+
+   ```
+   node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({memDir:'.claude/memory', touchedPaths:process.argv.slice(1)}))))" <touched paths>
+   ```
+
+   `mode: "reconcile"` → report the returned `delta` (`changed` / `stale` /
+   `unreferenced`) for the slice being touched and go straight to step 3; the
+   corpus already answers "what is this system". `mode: "discovery"` → the corpus
+   is absent or empty, so fall through to step 1 and scout normally.
+
+   This step is the whole point of the corpus: without it the modules are an
+   orphan nothing calls, and every cycle pays full rediscovery again. A delta that
+   names every element is a re-derivation — report that as a corpus defect rather
+   than passing it off as a delta.
+
 1. **Identify the nouns and verbs in the task.** Each is a search anchor.
 2. **For each anchor, pick the right tool:**
    - **Structural / navigation questions** ("where does the data on page X come from?", "what component renders Y?", "what wraps Z?", "find the API for this icon/button"): invoke `Skill(code-browser)`. It walks the import graph from the page down to the network boundary and returns flat indexes (`byHook` / `byService` / `byApiCall` / `byComponent`) — far more reliable than keyword grep, which routinely picks up unrelated flows that share a domain word.

@@ -1,7 +1,7 @@
 ---
 key: Q-002 — Is `landmarks.md`'s `size-cap: 700` ratified, or a decay-evasion hatch to be reverted to 500?
 category: pending-questions
-scope: []
+scope: any
 raised-on: 2026-07-10
 ---
 

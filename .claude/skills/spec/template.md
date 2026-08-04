@@ -3,6 +3,17 @@
 <!--
 Technical spec. Produced by the `spec` skill.
 
+THIS FILE IS NOT AUTHORITATIVE. It holds skeletons and examples only.
+Diagram authority is split by question (living-system-model-ef decision D3):
+  - WHICH diagram kinds a spec must contain -> .claude/project.json ->
+    artifacts.required_diagrams.spec. That key is what the guard reads; it wins.
+  - THE SYSTEM'S STRUCTURAL MODEL (elements and views) -> .claude/memory/workspace/.
+    Specs REFERENCE the corpus rather than re-deriving it.
+  - THIS FILE -> shape and worked examples for an author. Editing a skeleton here
+    changes no requirement and no model.
+Each location answers a different question; none overrides another. Naming one
+"the" authority would force the other two to lie.
+
 Guard-enforced invariants:
   - Required ## headings (artifact_template_guard):
         Goal, Design, Acceptance criteria, Test plan.

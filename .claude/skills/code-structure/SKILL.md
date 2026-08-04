@@ -214,6 +214,34 @@ Create directories as needed — do not create empty directories in advance. Whe
 - Shared across domains without domain logic of its own → **Foundation**
 - **Domain and Foundation modules do not live inside Orchestration files.** Every module gets its own file in the correct directory.
 
+## Tracking annotations (placement is gated, never broad)
+
+Code may carry an annotation naming the decision, constraint, or research doc that
+governs its shape — `@decision:<key>`, `@constraint:<key>`, `@research:<path>` —
+resolvable by `scout`. Format and examples: `docs/annotations.md`.
+
+**Placement is gated on the `load_bearing:` marker, not applied broadly:**
+
+```
+node -e "import('./.claude/skills/workspace/placement.mjs').then(m=>console.log(m.annotationPlacementAllowed('.claude/memory','<decision-key>')))"
+```
+
+`true` → place the annotation at the governed site. `false` (absent marker or an
+explicit `false`) → **do not place it**. An annotation belongs where a maintainer
+would otherwise confidently break something; annotating broadly is the failure
+mode this gate exists to prevent, because a comment on every file is a comment on
+nothing.
+
+**You may propose a marker; you may not set one.** `proposeLoadBearing({memDir,
+key, rationale})` returns `{written: false}` and hands the engineer your cited
+rationale to judge. It writes only when the engineer passes `confirmed: true`
+(spec decision D5, `owner: engineer`). Do not route around it — the marker decides
+where annotations land in real source, and an unaided wrong call either scatters
+comments or hides the ones that matter.
+
+Never annotate a key that does not resolve: `scout` reports a dangling annotation
+rather than skipping it, so a stale reference is louder than no reference.
+
 ## Applies to
 
 Every language, every stack, every file type you may write or modify. The detection rules are phrased for JSX because of the original UI context, but the signals translate: a Python function with inline SQL, a Go handler with inline JSON decoding, a Rust `main` with inline regex — all the same category of violation. Use the principles; adapt the vocabulary.
