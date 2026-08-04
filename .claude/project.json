@@ -389,5 +389,51 @@
     "hooks": [],
     "mcp_servers": [],
     "swarm_worker_skills": []
+  },
+  "document": {
+    "surfaces": [
+      {
+        "match": [
+          "site-src/**/*.njk"
+        ],
+        "kind": "public-page",
+        "requires": [
+          "technical-writer",
+          "copywriting"
+        ],
+        "reader_target": 11,
+        "note": "Rendered public pages only. site-src/_data/** is JSON/JS data, not prose, and owes no register."
+      },
+      {
+        "match": [
+          "docs/runbooks/**",
+          "docs/references/**",
+          "docs/*.md"
+        ],
+        "exclude": [
+          "docs/roadmap-execution-plan.md"
+        ],
+        "kind": "doc-page",
+        "requires": [
+          "technical-writer"
+        ],
+        "reader_target": 11,
+        "note": "Real documentation pages. docs/{specs,intake,scout,research,security,archive,brief,rca,tasklist,handoff,vision,design,audits,site,init}/ are WORKFLOW ARTIFACTS, not doc surfaces — they are excluded by omission from match. The roadmap is a machine-parsed tracker, not prose."
+      },
+      {
+        "match": [
+          "**/README.md"
+        ],
+        "exclude": [
+          "docs/archive/**",
+          "node_modules/**"
+        ],
+        "kind": "reference-section",
+        "requires": [
+          "prose"
+        ],
+        "reader_target": 11
+      }
+    ]
   }
 }

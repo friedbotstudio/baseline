@@ -38,7 +38,23 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 
 1. **Verify prereq.** `integrate` is in `completed` or `exceptions`. Otherwise stop and say which phase is missing.
 
-2. **Survey the diff.** `git diff --name-status <merge-base>..HEAD`. Classify touched files:
+2. **Classify each surface from config, not from judgment.** Run the gate in preview to get the required surface → delegate map:
+
+   ```
+   node .claude/skills/document/document-gate.mjs --slug <slug>
+   ```
+
+   Its punch list IS this phase's to-do list. The map comes from `project.json → document.surfaces` (glob → `requires[]` + `reader_target`), so routing is a config lookup rather than a per-run decision. This exists because the prose rule below was correct and got skipped anyway: a sentence in a SKILL.md cannot fail a build.
+
+   **After running each delegate, record a receipt** so the gate can verify it:
+
+   ```
+   node -e "import('./.claude/skills/document/receipts.mjs').then(m=>m.recordReceipt({slug:'<slug>',surface:'<path>',delegate:'<technical-writer|copywriting|prose|documentation|technical-tutorials>'}))"
+   ```
+
+   Never hand-write a receipt for work that was not done. The receipt asserts the delegate ran; forging one converts the gate into decoration.
+
+2a. **Survey the diff for anything the config does not cover.** `git diff --name-status <merge-base>..HEAD`. Classify touched files:
    - A page on a documentation surface → `technical-writer` candidate (takes precedence over the two below for that page).
    - Public API / CLI / contract surfaces → `documentation` candidate.
    - New capability a user learns by doing → `technical-tutorials` candidate.
@@ -68,6 +84,16 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 5. **README surface check.** If the root `README.md` or any top-level doc claims behavior the diff changed, update it — route through `prose` so the copy gets humanized.
 
 6. **Scrub.** No `TODO` / `FIXME` / `HACK` / `XXX` in files this phase touched. Seed.md forbids them; humanizer doesn't catch them.
+
+6a. **Run the gate. It decides whether this phase is done.**
+
+   ```
+   node .claude/skills/document/document-gate.mjs --slug <slug>
+   ```
+
+   Exit 0 → every required delegate left a receipt; proceed to step 7. Exit 1 → the phase is **not** complete: run the named delegate for the named surface, or correct `project.json → document.surfaces` if the obligation is genuinely wrong. Correcting the config is a legitimate outcome — a false obligation trains people to override the gate, which destroys it — but it is a config edit with a reason, never a hand-written receipt.
+
+   Do not append `"document"` to `completed` while the gate exits 1.
 
 7. **Append `"document"` to `.claude/state/workflow.json → completed`.**
 

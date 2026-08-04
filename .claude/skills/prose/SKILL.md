@@ -59,6 +59,15 @@ Stop and ask if any are unclear.
 1. **Draft from source material only.** Vary sentence length and rhythm. Use first person when register supports it. Acknowledge complexity where real. Be specific — real numbers, real names, real behaviors.
 2. **Run the pre-draft checklist over your draft.** Read the draft once with the forbidden-pattern list active. Cut every hit before moving to step 3. This is the cheap pass; it removes 80% of what humanizer would otherwise reject.
 3. **Apply the conditional skill the caller named** via `Skill(...)`. Use its output as your working draft.
+3.5. **Run the reader-level pass** — `Skill(reader-level)`, then score it:
+
+   ```
+   node .claude/skills/reader-level/score.mjs --target <caller's target, default 11> <file>
+   ```
+
+   **This step runs BEFORE humanizer, never after.** The order is load-bearing, not stylistic: simplifying after de-slopping reintroduces phrasing the de-slop pass already removed, so humanizer has to run twice and the second run flattens the prose (`technical-writer` Step 4 documents the same constraint for the page path).
+
+   **Target 11, not reader-level's default of 9.** `reader-level` is a *ceiling* — it catches prose pitched above the reader. Professional documentation measures around grade 10.7, so a target of 9 drives the text below that band and strips the qualifying clauses that carry the meaning. The caller supplies the target from `project.json → document.surfaces[].reader_target`; use 11 when none is given. Marketing and landing copy is the one register that legitimately sits lower — take the caller's target there.
 4. **Invoke `Skill(humanizer)` with the entire working draft.** Use humanizer's output verbatim. Do not paraphrase; do not cherry-pick its suggestions. If humanizer changes something you intended to keep, you may either accept the change or invoke humanizer again with explicit guidance — you may not silently revert.
 5. **Self-audit grep the final text.** Apply these mechanical checks in your head before declaring done:
    - Em-dash count per paragraph: 0 or 1, never 2+.
