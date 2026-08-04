@@ -1,7 +1,7 @@
 ---
 key: gate-taxonomy-then-debugging-skill-then-v2-9008
 category: backlog
-scope: []
+scope: any
 source: assistant-deferral
 status: open
 raised-on: 2026-06-05

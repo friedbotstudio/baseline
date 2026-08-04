@@ -1,7 +1,7 @@
 ---
 key: skill-arguments-mined-as-user-instruction-d10-residual-4a19
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (observed at gate C, post-fix)

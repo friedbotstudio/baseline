@@ -1,7 +1,7 @@
 ---
 key: scope-backfill-coarse-refine-per-entry-2902
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-07-17
 raised-in-context: memory-decision-point-redesign

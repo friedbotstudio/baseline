@@ -1,7 +1,7 @@
 ---
 key: sprint-channel-lock-stale-ttl-recovery-medium
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-06-23
 raised-in-context: sprint-channel-mcp

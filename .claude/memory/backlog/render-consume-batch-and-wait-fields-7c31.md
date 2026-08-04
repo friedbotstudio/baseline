@@ -1,7 +1,7 @@
 ---
 key: render-consume-batch-and-wait-fields-7c31
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-07-19
 raised-in-context: timing-instrument-repair

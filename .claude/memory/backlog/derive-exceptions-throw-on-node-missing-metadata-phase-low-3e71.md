@@ -1,7 +1,7 @@
 ---
 key: derive-exceptions-throw-on-node-missing-metadata-phase-low-3e71
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (`/security` T2 LOW)

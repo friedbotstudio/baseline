@@ -1,0 +1,197 @@
+{
+  "request": "Resume the living-system-model epic as a power batch-sprint over the remaining slices E (workspace structural corpus) and F (tracking comments). E is split during the spec phase per its OVERSIZED flag.",
+  "slug": "living-system-model-ef",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/specs/living-system-model.md ## Slice E (L352) and ## Slice F (L360); AC table rows AC-008 (Slice E) and AC-009 (Slice F) at L310-311; .claude/state/epic/living-system-model.json slices[] E and F, approved: true; direction-approval token .claude/state/spec_approvals/living-system-model.approval (2026-08-04). Both slices derive from the approved sliced spec; no new surface is invented. E carries two open questions the epic explicitly deferred to its own child cycle (workspace merge semantics, diagram authority), which the power track resolves in its spec node.",
+  "track_reason": "power over epic-child: epic-child has NO spec node, and slice E was flagged OVERSIZED at epic triage with the binding instruction \"Revisit at /spec; if it does not fit one child, split before approval\". A track without a spec phase structurally cannot execute that instruction, so epic-child does not cover E's risk. Power also amortizes the shared write surface — E and F both write .claude/skills/scout/SKILL.md — avoiding two sequential cycles re-touching the same file and a merge to reconcile. Batch-yield exposure is low this cycle: neither ticket's write surface intersects security.sensitive_globs, unlike C and D last cycle. Human-confirmed batch composition.",
+  "skip_brainstorm": true,
+  "epic": "living-system-model",
+  "epic_spec": "docs/specs/living-system-model.md",
+  "slices": [
+    "E",
+    "F"
+  ],
+  "sprint_proposal": ".claude/state/sprint/living-system-model-ef/proposal.json",
+  "tickets": [
+    {
+      "id": "E1",
+      "title": "Workspace store and element schema",
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-012"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model-ef.md#ticket-split",
+      "write_surface": [
+        ".claude/memory/workspace/",
+        ".claude/skills/workspace/store.mjs",
+        ".claude/skills/workspace/refs.mjs",
+        ".claude/project.json"
+      ],
+      "done_record": "AC-001 (element round-trips with resolving refs), AC-002 (unresolved key reported, element NOT written), AC-012 (absent workspace dir is a preflight error, no partial store) pass. CANONICAL stays at 8 categories — the corpus is deliberately not a ninth."
+    },
+    {
+      "id": "E2",
+      "title": "Contribution and merge semantics",
+      "acs": [
+        "AC-003",
+        "AC-004",
+        "AC-005"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model-ef.md#ticket-split",
+      "write_surface": [
+        ".claude/skills/workspace/contribute.mjs",
+        ".claude/skills/workspace/conflicts.mjs"
+      ],
+      "done_record": "AC-003 (two disjoint contributions both survive), AC-004 (duplicate-anchor conflict reported, contribution rejected atomically), AC-005 (unknown-id conflict rather than silent no-op) pass. Resolves the epic's workspace-merge-semantics open question per spec decisions D1/D2."
+    },
+    {
+      "id": "E3",
+      "title": "Scout reconciliation",
+      "acs": [
+        "AC-006",
+        "AC-007"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model-ef.md#ticket-split",
+      "write_surface": [
+        ".claude/skills/workspace/reconcile.mjs",
+        ".claude/skills/scout/SKILL.md"
+      ],
+      "done_record": "AC-006 (delta for the touched slice, not a full re-derivation — the literal upstream epic AC-008) and AC-007 (absent corpus falls back to discovery, never throws) pass."
+    },
+    {
+      "id": "F",
+      "title": "Tracking comments",
+      "acs": [
+        "AC-008",
+        "AC-009",
+        "AC-010",
+        "AC-011"
+      ],
+      "risk": [
+        "document"
+      ],
+      "spec_anchor": "docs/specs/living-system-model-ef.md#ticket-split",
+      "write_surface": [
+        ".claude/skills/scout/SKILL.md",
+        ".claude/skills/code-structure/SKILL.md",
+        "docs/references/annotations.md"
+      ],
+      "done_record": "AC-008 (annotation resolves, hook surfaced), AC-009 (deleted target reported unresolved, not skipped), AC-010 (non-load_bearing entry declined), AC-011 (unconfirmed load_bearing: marker NOT written — spec decision D5, owner engineer) pass.",
+      "depends_on": "A (load_bearing: marker) and B (constraint nodes) — both landed in living-system-model-abcd (e7f00de..6464a58)."
+    }
+  ],
+  "ticket_split_resolved": {
+    "note": "Ticket E's OVERSIZED split instruction was executed in the spec phase and approved at gate A (token hash 0d31b9a0, content re-check MATCH on resume). tickets[] above was reconciled from the triage-time 2 (E, F) to the approved 4. /security runs once per ticket against this set.",
+    "before": ["E", "F"],
+    "after": ["E1", "E2", "E3", "F"],
+    "approved_at_gate": "approve-direction"
+  },
+  "confirmed_decisions": [
+    {
+      "question": "May Claude set load_bearing: unaided, or does it require engineer confirmation? (epic open question, gates slice F's placement rule)",
+      "answer": "Engineer confirms each one — Claude proposes load_bearing: true with cited rationale; the engineer confirms before it sticks.",
+      "owner": "engineer",
+      "captured_at": "triage",
+      "note": "Render into the spec's ## Decisions section during /spec. Keeps annotation placement conservative, matching F's design intent: annotations go where a maintainer would otherwise confidently break something, not broadly."
+    }
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "roadmap_sync_result": {
+    "report": { "flipped": [], "promoted": [], "skipped": [], "noop": true, "anomalies": [] },
+    "why_noop": "workflow.json → roadmap_tasks[] was never populated. /triage should have written the validated E<epic>-<taskId> tokens for this spec-derived request against Epic 7 E and F; it did not, so the deterministic sync had nothing to flip. roadmap-sync SHALL NOT infer which task shipped from the diff, and SHALL NOT hand-edit the roadmap, so a no-op is the correct outcome rather than a workaround.",
+    "substantive_note": "Flipping E to ✅ would in any case overstate: the workspace feature is not reachable by a default install (no corpus shipped in the template, no seeding step, and the two feature flags the spec declared were never added because no AC backed them). F is usable today. Deciding E's roadmap state is a human call, tied to the still-open question of whether E1–E3 should become its own epic."
+  },
+  "power_batch_reviews": [
+    { "ticket": "E1", "verdict": "NOTED", "findings": ["F-2 MEDIUM forged frontmatter — fixed"] },
+    { "ticket": "E2", "verdict": "NOTED", "findings": ["F-2 inherited via op.fields — fixed"] },
+    { "ticket": "E3", "verdict": "NOTED", "findings": ["F-3 MEDIUM ReDoS via anchor — fixed", "F-4 LOW shell interpolation in scout SKILL.md — accepted"] },
+    { "ticket": "F", "verdict": "BLOCKER-RESOLVED", "findings": ["F-1 HIGH CWE-22 traversal in load_bearing gate — fixed + 2 regression tests"] }
+  ],
+  "security_followup": {
+    "decision": "fix F-1, F-2, F-3 before integrate; accept F-4 LOW",
+    "authorized_by": "user",
+    "cycle": "post-security fix loop",
+    "resolved": [
+      "F-1 placement.mjs: assertSafeFactKey(key) before findEntry and before any path construction",
+      "F-2 migrate.mjs: new assertSafeFieldValue(name,value); applied in store.mjs renderElement and constraints.mjs renderConstraint",
+      "F-3 index-io.mjs: MAX_WILDCARDS=12 cap; over-cap matches nothing, same register as the cannot-compile branch"
+    ],
+    "out_of_write_set": "constraints.mjs renderConstraint — PRE-EXISTING shipped hole proved by probe; same one-line rule as its twin, fixed rather than left standing. Called out, not absorbed.",
+    "tests": "tests/workspace-security-followup.test.mjs (7 scenarios, all RED pre-fix)",
+    "suite_after": "2141 tests / 2126 pass / 0 fail"
+  },
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [
+    "epic-child",
+    "power-with-t8"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1785841175,
+  "updated_at": 1785841175,
+  "rightsize_base": [
+    ".claude/memory/backlog/annotate-test-files-with-covered-acs-c2a1.md",
+    ".claude/memory/backlog/baseline-v1-thought-compiler-agent-team-plan-mode-9d4c.md",
+    ".claude/memory/backlog/derive-exceptions-throw-on-node-missing-metadata-phase-low-3e71.md",
+    ".claude/memory/backlog/document-gate-change-granularity-4a1c.md",
+    ".claude/memory/backlog/gate-taxonomy-then-debugging-skill-then-v2-9008.md",
+    ".claude/memory/backlog/render-consume-batch-and-wait-fields-7c31.md",
+    ".claude/memory/backlog/scope-backfill-coarse-refine-per-entry-2902.md",
+    ".claude/memory/backlog/skill-arguments-mined-as-user-instruction-d10-residual-4a19.md",
+    ".claude/memory/backlog/split-memory-stop-lib-440-lines-8c3d.md",
+    ".claude/memory/backlog/sprint-channel-lock-stale-ttl-recovery-medium.md",
+    ".claude/memory/landmarks/claude-hooks-lib-memory-session-start-mjs-1.md",
+    ".claude/memory/landmarks/memory-scoped-memory.md",
+    ".claude/memory/pending-questions/q-002-is-landmarks-md-s-size-cap-700-ratified-or-a-decay-evasion-hatch-to-be-reverted-to-500.md",
+    ".claude/memory/_discard-ledger.md",
+    ".claude/memory/landmarks/claude-hooks-lib-governed-memory-mjs-51.md",
+    ".claude/memory/landmarks/claude-hooks-process-lifecycle-guard-mjs-50.md",
+    ".claude/memory/landmarks/claude-skills-memory-flush-ledger-mjs-54.md",
+    ".claude/memory/landmarks/claude-skills-memory-index-constraints-mjs-41.md",
+    ".claude/memory/landmarks/claude-skills-memory-index-index-io-mjs-12.md",
+    ".claude/memory/landmarks/claude-skills-memory-index-resolve-mjs-59.md",
+    ".claude/memory/landmines/discard-ledger-is-inert-until-memory-flush-step-4-5-runs.md",
+    ".claude/memory/landmines/governs-globs-under-a-phase-prefix-never-surface.md"
+  ]
+}

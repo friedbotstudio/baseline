@@ -1,7 +1,7 @@
 ---
 key: split-memory-stop-lib-440-lines-8c3d
 category: backlog
-scope: []
+scope: any
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (`/simplify` flagged)

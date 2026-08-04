@@ -1,0 +1,39 @@
+{
+  "sprint": "living-system-model-ef",
+  "features": [
+    {
+      "id": "E7-E",
+      "epic": "epic-7-living-system-model",
+      "priority": "1",
+      "done_record": "AC-008 passes: a cycle touching one slice makes scout reconcile workspace elements and report a delta rather than re-deriving the system. .claude/memory/workspace/ holds C4 elements and views as plain files referencing decisions/ and constraints/ by key (D4). Diagram authority is named in exactly ONE location, resolving the three-way split across project.json artifacts.required_diagrams.spec, spec/template.md, and the new workspace.",
+      "edge_tests": [
+        "Two disjoint slices contribute elements; assert both survive the extension (spec test plan, AC-8)",
+        "Two slices add the same element under different names; assert the semantic conflict is reported, not committed silently by textual git merge (open question: workspace merge semantics)",
+        "Workspace absent or unmigrated; assert scout falls back to discovery and never throws"
+      ],
+      "wiring_test": "A real cycle writes to the workspace and the next scout reconciles against it — assert the reconciliation path is invoked from scout/SKILL.md, not merely present as an unreferenced module (same orphan class as document-gate shipping without receipts)"
+    },
+    {
+      "id": "E7-F",
+      "epic": "epic-7-living-system-model",
+      "priority": "2",
+      "done_record": "AC-009 passes: code carrying an annotation naming a decision, constraint or research doc resolves through scout; placement is gated on slice A load_bearing: marker rather than applied broadly.",
+      "edge_tests": [
+        "Annotation naming a deleted entry; assert reported unresolved, not silently skipped (spec test plan, AC-9)",
+        "Annotation candidate on a non-load_bearing entry; assert the placement rule declines it",
+        "Malformed or truncated annotation; assert scout reports rather than throws"
+      ],
+      "wiring_test": "code-structure/SKILL.md places an annotation and scout/SKILL.md resolves it in the same cycle — assert the producer and consumer halves are both wired"
+    }
+  ],
+  "validation": {
+    "valid": true,
+    "errors": []
+  },
+  "excluded": [
+    {
+      "id": "E6-T8",
+      "reason": "ready by dependency (E7-C done) but not spec-committed — no spec chapter, only roadmap line T8 + backlog key -2902; different epic, breaks batch cohesion"
+    }
+  ]
+}
