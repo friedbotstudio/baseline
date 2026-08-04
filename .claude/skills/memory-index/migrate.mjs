@@ -52,6 +52,21 @@ export function assertSafeFactKey(slug) {
   return slug;
 }
 
+// Frontmatter is line-delimited, so a newline anywhere in a rendered field forges
+// real fields — `title: x\nload_bearing: true` yields a genuine load_bearing entry
+// that every reader believes. Applies to the NAME as well as the value: both are
+// interpolated. Same bound recordCuration puts on the line-delimited ledger, and
+// the same register as assertSafeFactKey — REJECT, never normalize, because
+// stripping the newline would silently store something the author did not write.
+export function assertSafeFieldValue(name, value) {
+  for (const [what, text] of [['name', name], ['value', value]]) {
+    if (/[\r\n]/.test(String(text))) {
+      throw new Error(`unsafe field ${what} (REJECT, never normalize): ${JSON.stringify(String(text).slice(0, 80))}`);
+    }
+  }
+  return value;
+}
+
 export function factKeyFromHeading(heading) {
   const slug = heading.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   return assertSafeFactKey(slug);

@@ -17,7 +17,7 @@ import { join } from 'node:path';
 
 import { CANONICAL, asList } from './categories.mjs';
 import { resolveCategory } from './lift-fields.mjs';
-import { assertSafeFactKey } from './migrate.mjs';
+import { assertSafeFactKey, assertSafeFieldValue } from './migrate.mjs';
 
 export class UnregisteredCategoryError extends Error {
   constructor(message) {
@@ -56,13 +56,19 @@ export function writeConstraint(memDir, key, fields = {}, { canonical = CANONICA
   return path;
 }
 
+// `state` is coerced to a boolean so it cannot carry a newline; `key` is bounded by
+// assertSafeFactKey. `state_verified_at` and `governs` were interpolated raw and
+// forged real frontmatter fields — the same F-2 hole as writeElement, found here by
+// probe during the living-system-model-ef review.
 function renderConstraint(key, fields) {
+  const verifiedAt = assertSafeFieldValue('state_verified_at', fields.state_verified_at ?? 'unverified');
+  const governs = assertSafeFieldValue('governs', asList(fields.governs).join(','));
   const frontmatter = [
     `key: ${key}`,
     'category: constraints',
     `state: ${fields.state === true || String(fields.state) === 'true'}`,
-    `state_verified_at: ${fields.state_verified_at ?? 'unverified'}`,
-    `governs: ${asList(fields.governs).join(',')}`,
+    `state_verified_at: ${verifiedAt}`,
+    `governs: ${governs}`,
   ];
   return `---\n${frontmatter.join('\n')}\n---\n\n${fields.body ?? ''}\n`;
 }
