@@ -1,0 +1,3 @@
+!startsub surfacing_triggers
+Component(surfacing_triggers, ".claude/hooks/process_lifecycle_guard.mjs", "component", "Memory surfacing triggers — phase-scoped and path-governed")
+!endsub

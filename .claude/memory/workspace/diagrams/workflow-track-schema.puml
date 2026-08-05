@@ -1,0 +1,3 @@
+!startsub workflow_track_schema
+Component(workflow_track_schema, ".claude/schemas/workflow-track.v1.json", "component", "Workflow track JSON schema")
+!endsub

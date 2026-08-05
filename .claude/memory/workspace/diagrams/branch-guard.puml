@@ -1,0 +1,3 @@
+!startsub branch_guard
+Component(branch_guard, ".claude/hooks/branch_guard.mjs", "component", "Branch guard hook")
+!endsub

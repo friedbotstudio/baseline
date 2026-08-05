@@ -1,0 +1,3 @@
+!startsub memory_index_resolve
+Component(memory_index_resolve, ".claude/skills/memory-index/resolve.mjs", "component", "Derived reverse index, rebuilt on read")
+!endsub

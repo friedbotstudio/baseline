@@ -1,0 +1,3 @@
+!startsub scoped_memory
+Component(scoped_memory, ".claude/hooks/lib/scoped-memory.mjs", "component", "Phase-scoped fact surfacing")
+!endsub

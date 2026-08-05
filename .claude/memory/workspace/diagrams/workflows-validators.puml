@@ -1,0 +1,3 @@
+!startsub workflows_validators
+Component(workflows_validators, ".claude/skills/triage/workflows-validator-*.js", "component", "Workflow track invariant and predicate validators")
+!endsub

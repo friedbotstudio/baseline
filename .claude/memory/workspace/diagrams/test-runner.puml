@@ -1,0 +1,3 @@
+!startsub test_runner
+Component(test_runner, ".claude/hooks/test_runner.mjs", "component", "Test runner hook")
+!endsub

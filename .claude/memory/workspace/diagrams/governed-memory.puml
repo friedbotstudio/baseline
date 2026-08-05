@@ -1,0 +1,3 @@
+!startsub governed_memory
+Component(governed_memory, ".claude/hooks/lib/governed-memory.mjs", "component", "Path-keyed surfacing over governs: anchors")
+!endsub

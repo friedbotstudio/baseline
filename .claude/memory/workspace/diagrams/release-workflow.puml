@@ -1,0 +1,3 @@
+!startsub release_workflow
+Component(release_workflow, ".github/workflows/release.yml", "component", "Release CI — pre-publish-checks, release, deploy-pages")
+!endsub

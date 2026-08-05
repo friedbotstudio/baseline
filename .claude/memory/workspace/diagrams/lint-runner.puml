@@ -1,0 +1,3 @@
+!startsub lint_runner
+Component(lint_runner, ".claude/hooks/lint_runner.mjs", "component", "Lint runner hook")
+!endsub
