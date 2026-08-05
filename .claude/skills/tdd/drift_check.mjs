@@ -36,7 +36,12 @@ import { pathToFileURL } from 'node:url';
 // exclusion every AC self-satisfies against the spec document and drift-check
 // becomes a trivial always-pass. `docs/archive/` is excluded for the same reason
 // (archived specs from prior workflows carry the same AC-id rows).
-const EXCLUDED_DIFF_PREFIXES = ['docs/specs/', 'docs/archive/'];
+// `.claude/state/` holds this checker's OWN report, whose every row contains an AC
+// id verbatim. Without the exclusion a second run scores each id against the first
+// run's output and the gate silently turns green — a checker that certifies itself.
+// It never bit this repo only because `.claude/state/` is gitignored here; a
+// consumer project without that ignore would see every AC resolve on re-run.
+const EXCLUDED_DIFF_PREFIXES = ['docs/specs/', 'docs/archive/', '.claude/state/'];
 
 function isExcludedDiffPath(relPath) {
   return EXCLUDED_DIFF_PREFIXES.some(prefix => relPath.startsWith(prefix));
@@ -129,9 +134,34 @@ function parseDesignCalls(specText) {
   return rows;
 }
 
+// A file-header comment naming a span — `(AC-004..AC-008)` — is the natural way to
+// annotate a file covering a whole ticket, but a literal-substring match resolves
+// only the two endpoints and reports every id BETWEEN them as unimplemented. That
+// was 9 of 23 ACs on one real workflow, all of them genuinely tested. A drift
+// signal wrong that often trains the reader to skip it.
+const AC_SPAN_RE = /AC-(\d+)\s*\.\.\s*AC-(\d+)/g;
+const AC_ID_RE = /^AC-(\d+)$/;
+
+// A REVERSED span (`AC-008..AC-004`) is malformed, not a range: expanding it would
+// resolve ids the author never claimed, turning a weak signal into a false one.
+function spanCovers(line, number) {
+  for (const [, lo, hi] of line.matchAll(AC_SPAN_RE)) {
+    const low = Number(lo);
+    const high = Number(hi);
+    if (low <= high && number >= low && number <= high) return true;
+  }
+  return false;
+}
+
+function lineReferences(line, itemId) {
+  if (line.includes(itemId)) return true;
+  const asAc = AC_ID_RE.exec(itemId);
+  return asAc ? spanCovers(line, Number(asAc[1])) : false;
+}
+
 function scoreAgainstDiff(itemId, diffAdded) {
   for (const ln of diffAdded) {
-    if (ln.includes(itemId)) {
+    if (lineReferences(ln, itemId)) {
       let snippet = ln.trim();
       if (snippet.length > 120) snippet = snippet.slice(0, 117) + '...';
       return ['resolved', `found in diff: ${snippet}`];
