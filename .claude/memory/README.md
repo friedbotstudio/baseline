@@ -142,6 +142,28 @@ An entry is **refused** when a body bullet's name is liftable and the frontmatte
 
 **Sweeps are gated on a repaired store.** `sweep.mjs` refuses *every* mode while any allowlisted bullet is still stranded — including `stamp-closure` (fired automatically by `/commit`) and `auto-close` (fired by `/memory-flush`). The remedy is the `--relift` command above, and the error names it. The guard exists because an unrepaired store makes its two readers disagree: the session-start index reads frontmatter only, while `sweep.mjs` reads frontmatter *and* body, so they report different stale counts. Curating against the larger set while every other surface believes the smaller one churns entries without fixing the invisibility.
 
+## Workspace corpus (architecture map)
+
+`.claude/memory/workspace/` holds a structural model of the system. `scout` reconciles against it instead of rediscovering the system each cycle. It lives under `.claude/memory/` but is not a ninth canonical category: `CANONICAL` stays at eight, and `everyShardFile()` never walks it.
+
+The layer is gated behind `memory.architecture_map.enabled`. That flag defaults to false and is absent from the shipped template, so a consumer install reads false and behaves as it did before until it opts in.
+
+| Directory | Holds | Count |
+|---|---|---|
+| `elements/` | component records, each anchored to a path or a glob | 14 |
+| `concepts/` | cross-cutting concept nodes, no anchor | 15 |
+| `diagrams/` | one PlantUML shard per element | 14 |
+
+Granularity comes from the anchor's shape, not from a declared field: no anchor is a concept, a glob is a subsystem, a file path is a component. A concept therefore never carries an anchor. One that leaked an anchor would read as a component.
+
+Elements gained three fields. `anchor_digest` is a sha256-12 over the anchored file's structural interface rather than its bytes: exported symbols for `.mjs`, sorted key paths for `.json`, heading structure for `.md`. A comment edit or a prose rewrite leaves the diagram alone. A renamed export marks it stale. `shard` names the diagram fragment, and `granularity` records what the anchor resolved to.
+
+Edges are derived, never authored. Four scanners read the working tree: relative imports, `.claude/state/` path literals, `projectGet()` config keys, and `Skill()` calls in prose. Each edge carries `provenance: derived`, so no edge rests on a claim a scanner could not check.
+
+A shard delimits its model with `!startsub <id>`. Hyphens become underscores because PlantUML rejects a hyphen in a sub name. Views compose matching shards on demand and are never written; `readAll().views` stays empty.
+
+Design rationale and the decision record live in `docs/specs/architecture-map.md`.
+
 ## Bounding rules
 
 - In the **flat** shape, each canonical file has `size-cap: <N>` in frontmatter (default 500 lines). When a skill writes and exceeds, it must prune the oldest unverified entries in the same write. Working-set discipline. The **sharded** shape has no per-file cap (one fact per file).

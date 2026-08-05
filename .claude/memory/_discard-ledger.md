@@ -32,3 +32,14 @@
 - promoted :: .claude/hooks/lib/memory_stop.mjs → landmarks.md
 - discarded :: backlog → if-you-want-the-wording-re-examined-the-e8ca
 - promoted :: backlog → simplify-prereq-omits-exceptions-escape-7b56
+- discarded :: backlog → that-s-open-backlog-commit-consent-token-is-dd2d
+- promoted :: PlantUML → libraries.md
+- discarded :: .claude/skills/workspace/render.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/shards.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/edges.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/concepts.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/roll.mjs → landmarks.md
+- discarded :: backlog → want-me-to-add-it-or-and-continue-161a
+- discarded :: backlog → the-fix-is-one-line-with-direct-in-4132
+- discarded :: backlog → with-this-evidence-the-reproduction-is-now-recorded-98c0
+- discarded :: backlog → my-recommendation-is-eb6c
