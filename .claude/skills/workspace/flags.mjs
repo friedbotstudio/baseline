@@ -38,3 +38,11 @@ export function workspaceEnabled({ rootDir } = {}) {
 export function annotationsEnabled({ rootDir } = {}) {
   return rootDir ? flagAt(rootDir, 'annotations') : false;
 }
+
+// Gates the concept layer, the derived edge classes, and the session-start concept
+// map. Separate from `workspace` because seeding a corpus and reasoning over it at
+// three resolutions are different opt-ins: a project can want scout reconciliation
+// without changing what its session-start payload says.
+export function architectureMapEnabled({ rootDir } = {}) {
+  return rootDir ? flagAt(rootDir, 'architecture_map') : false;
+}

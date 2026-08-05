@@ -11,10 +11,35 @@ import { join } from 'node:path';
 import { asList } from '../memory-index/categories.mjs';
 import { assertSafeFactKey, assertSafeFieldValue } from '../memory-index/migrate.mjs';
 
-const LIST_FIELDS = new Set(['governed_by', 'rests_on', 'includes']);
+const LIST_FIELDS = new Set(['governed_by', 'rests_on', 'includes', 'members']);
 
 function workspaceDir(memDir) {
   return join(memDir, 'workspace');
+}
+
+// A `..` segment in an anchor or a member id escapes the tree the corpus is
+// contracted to describe. REJECT, never normalize — the same register as
+// assertSafeFactKey, and for the same reason: silently rewriting the path would
+// read a different file than the author named.
+export function assertNoTraversal(rel) {
+  const text = String(rel ?? '');
+  if (text.split(/[\\/]/).includes('..')) {
+    throw new Error(`unsafe path traversal (REJECT, never normalize): ${JSON.stringify(text)}`);
+  }
+  return text;
+}
+
+// Reading the WORKING TREE, not the corpus. It lives here because this module is
+// the skill's only filesystem surface; a Domain scanner reaching for node:fs is
+// the layer violation that split exists to prevent.
+export function readSourceText(rootDir, rel) {
+  assertNoTraversal(rel);
+  const path = join(rootDir, rel);
+  try {
+    return statSync(path).isFile() ? readFileSync(path, 'utf8') : null;
+  } catch {
+    return null;
+  }
 }
 
 // Preflight only — deliberately does NOT create. AC-012: an absent workspace is a
@@ -55,6 +80,19 @@ function parseEntry(text) {
   return fields.id ? { ...fields, body: split.body } : null;
 }
 
+export function readRecords(memDir, kind) {
+  return readCollection(memDir, kind);
+}
+
+// Enumerating shard FILES is a different question from enumerating element
+// RECORDS: an orphan shard is precisely a file with no record behind it, so it can
+// only be found by listing the directory.
+export function listWorkspaceFiles(memDir, kind, ext) {
+  const dir = join(workspaceDir(memDir), kind);
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  return readdirSync(dir).filter((name) => name.endsWith(ext)).sort();
+}
+
 function readCollection(memDir, kind) {
   const dir = join(workspaceDir(memDir), kind);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
@@ -78,11 +116,19 @@ export function readAll(memDir) {
 }
 
 export function writeElement(memDir, element) {
-  assertSafeFactKey(element?.id);
-  const dir = join(workspaceDir(memDir), 'elements');
+  return writeRecord(memDir, 'elements', element, ['kind', 'title', 'anchor']);
+}
+
+// `order` names the fields that lead the frontmatter and get a default. A concept
+// passes ['kind','title','members'] and therefore never renders an `anchor:` —
+// granularity is derived from anchor SHAPE (spec D1), so a concept carrying an
+// empty anchor would be read as a component.
+export function writeRecord(memDir, kind, record, order) {
+  assertSafeFactKey(record?.id);
+  const dir = join(workspaceDir(memDir), kind);
   mkdirSync(dir, { recursive: true });
-  const path = join(dir, `${element.id}.md`);
-  writeFileSync(path, renderElement(element), 'utf8');
+  const path = join(dir, `${record.id}.md`);
+  writeFileSync(path, renderRecord(record, order), 'utf8');
   return path;
 }
 
@@ -97,11 +143,16 @@ export function removeElement(memDir, id) {
   return true;
 }
 
-function renderElement(element) {
-  const { id, kind = 'component', title = id, anchor = '', body = '', ...rest } = element;
-  const fields = [['kind', kind], ['title', title], ['anchor', anchor]];
-  for (const [name, value] of Object.entries(rest)) {
-    fields.push([name, Array.isArray(value) ? value.join(',') : value]);
+const RECORD_DEFAULTS = { kind: 'component', anchor: '', members: [] };
+
+function renderRecord(record, order = ['kind', 'title', 'anchor']) {
+  const { id, body = '', ...given } = record;
+  const fields = order.map((name) => [
+    name,
+    given[name] ?? (name === 'title' ? id : RECORD_DEFAULTS[name] ?? ''),
+  ]);
+  for (const [name, value] of Object.entries(given)) {
+    if (!order.includes(name)) fields.push([name, value]);
   }
   // `id` is already bounded by assertSafeFactKey; every other name and value is
   // interpolated straight into line-delimited frontmatter (security review F-2).

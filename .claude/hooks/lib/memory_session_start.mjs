@@ -10,6 +10,8 @@ import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { readMostRecentMarkdown, readWorkingThread } from './thread_store.mjs';
+import { architectureMapEnabled } from '../../skills/workspace/flags.mjs';
+import { readConcepts } from '../../skills/workspace/concepts.mjs';
 import { gatherSync } from '../../skills/standup/gather.mjs';
 import { parseFrontmatter } from './frontmatter-parser.mjs';
 
@@ -215,6 +217,31 @@ function suspectDecisions(memDir) {
     return [];
   }
   return out;
+}
+
+// The architecture map at session start: what the system IS, at the one resolution
+// small enough to carry in context. Replaces spending that budget on a stale-count
+// table, which says how much memory exists but nothing about the system's shape.
+//
+// Fail-open and flag-gated: absent flag, absent corpus, or any read error yields ''
+// and the index renders exactly as it does today, so a consumer install that never
+// opted in sees a byte-identical payload.
+export function renderConceptMap(memDir, { rootDir = process.cwd() } = {}) {
+  let concepts = [];
+  try {
+    if (!architectureMapEnabled({ rootDir })) return '';
+    concepts = readConcepts(memDir);
+  } catch {
+    return '';
+  }
+  if (!concepts.length) return '';
+
+  const lines = ['## Architecture map — concepts', ''];
+  for (const concept of [...concepts].sort((a, b) => a.id.localeCompare(b.id))) {
+    lines.push(`- \`${concept.id}\` — ${concept.title} (${concept.members.length} elements)`);
+  }
+  lines.push('', 'Ask by concept to descend; ask by touched path to walk up. The map routes; the code witnesses.');
+  return lines.join('\n');
 }
 
 export function buildIndex({ memDir, projectRoot, sessionSource }) {
