@@ -252,6 +252,10 @@
       "enabled": true,
       "note": "Gates scout reconciliation against the structural corpus. Ships DEFAULT FALSE in src/project.template.json; enabled here because this repository is the canary and its corpus is seeded (rollout step 4). Flip false to roll back — scout returns to discovery and the corpus stays on disk, inert."
     },
+    "architecture_map": {
+      "enabled": true,
+      "note": "Gates the concept layer, the four derived edge classes, and the session-start concept map. Ships ABSENT from src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D9). Flip false to roll back — by_concept lookups return [], renderConceptMap returns '', and the concepts/ and diagrams/ directories stay on disk, inert."
+    },
     "annotations": {
       "enabled": true,
       "note": "Gates load_bearing-gated annotation placement by code-structure and annotation resolution by scout. Ships ABSENT in src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D7). Flip false to roll back — scout skips the scan, code-structure places nothing, and annotations already in source become inert text."
