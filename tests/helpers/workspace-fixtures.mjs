@@ -45,3 +45,49 @@ export function seedCorpus(memDir, count) {
   }
   return paths;
 }
+
+// ─── architecture-map: concept layer + diagram shards ───
+//
+// Concepts sit BESIDE elements, not above them in the same directory: a concept
+// carries no anchor (spec D1), so a reader that finds one in elements/ would
+// classify it by anchor shape and get `component`. Separate directories keep the
+// "granularity is derived from anchor shape" rule total.
+
+export function makeConcepts(memDir) {
+  const dir = join(memDir, 'workspace', 'concepts');
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+export function writeWorkspaceConcept(memDir, id, fields = {}, bodyLines = []) {
+  const dir = makeConcepts(memDir);
+  const { title = id, members = [], ...rest } = fields;
+  const preamble = [
+    `id: ${id}`,
+    'kind: concept',
+    `title: ${title}`,
+    `members: ${Array.isArray(members) ? members.join(',') : members}`,
+    ...Object.entries(rest).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(',') : v}`),
+  ];
+  const path = join(dir, `${id}.md`);
+  writeFileSync(path, `---\n${preamble.join('\n')}\n---\n\n${bodyLines.join('\n')}\n`, 'utf8');
+  return path;
+}
+
+export function makeDiagrams(memDir) {
+  const dir = join(memDir, 'workspace', 'diagrams');
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// A shard is a PlantUML fragment whose model is delimited by `!startsub <id>`.
+// The section name IS the join key to the element record (spec D6), so the
+// default writes `id` into both places — a test that wants an ORPHAN passes an
+// explicit `section` that no element matches.
+export function writeWorkspaceShard(memDir, id, { section = id, lines = [] } = {}) {
+  const dir = makeDiagrams(memDir);
+  const body = lines.length ? lines : [`Component(${id}, "${id}", "Node ESM", "fixture")`];
+  const path = join(dir, `${id}.puml`);
+  writeFileSync(path, `!startsub ${section}\n${body.join('\n')}\n!endsub\n`, 'utf8');
+  return path;
+}
