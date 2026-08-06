@@ -254,7 +254,63 @@
     },
     "architecture_map": {
       "enabled": true,
-      "note": "Gates the concept layer, the four derived edge classes, and the session-start concept map. Ships ABSENT from src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D9). Flip false to roll back — by_concept lookups return [], renderConceptMap returns '', and the concepts/ and diagrams/ directories stay on disk, inert."
+      "note": "Gates the concept layer, the four derived edge classes, and the session-start concept map. Ships ABSENT from src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D9). Flip false to roll back — by_concept lookups return [], renderConceptMap returns '', and the concepts/ and diagrams/ directories stay on disk, inert.",
+      "governed_surface": {
+        "roots": [
+          ".claude/hooks/",
+          ".claude/skills/",
+          ".claude/commands/",
+          ".claude/schemas/",
+          ".claude/mcp/",
+          ".github/workflows/",
+          "src/"
+        ],
+        "codeExtensions": [
+          ".mjs",
+          ".js",
+          ".json",
+          ".yml"
+        ],
+        "alwaysIncluded": [
+          ".claude/commands/"
+        ],
+        "excludedSegments": [
+          "tests/",
+          "test/",
+          "fixtures/"
+        ],
+        "excludedTrees": [
+          ".claude/skills/impeccable/",
+          ".claude/skills/copywriting/evals/",
+          ".claude/skills/optimize-seo/scripts/"
+        ]
+      },
+      "witnesses": {
+        "c4_context": {
+          "witness": "anchor-digest"
+        },
+        "c4_container": {
+          "witness": "anchor-digest"
+        },
+        "c4_component": {
+          "witness": "anchor-digest"
+        },
+        "class": {
+          "witness": "anchor-digest"
+        },
+        "dependency_graph": {
+          "witness": "anchor-digest"
+        },
+        "sequence": {
+          "witness": "test"
+        },
+        "activity": {
+          "witness": "test"
+        },
+        "state_machine": {
+          "witness": "test"
+        }
+      }
     },
     "annotations": {
       "enabled": true,
