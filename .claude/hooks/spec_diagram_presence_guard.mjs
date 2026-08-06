@@ -12,7 +12,8 @@
 // A fenced ```plantuml``` block counts if it contains the literal marker OR
 // any line matches any regex in any_of. Prose mentions don't satisfy.
 
-import { basename, relative } from 'node:path';
+import { existsSync } from 'node:fs';
+import { basename, join, relative } from 'node:path';
 import {
   CLAUDE_PROJECT_ROOT,
   readPayload,
@@ -22,7 +23,8 @@ import {
   emitBlock,
   computeProposedContent,
 } from './lib/common.mjs';
-import { resolveProfile } from './lib/write-set-profile.mjs';
+import { assertSafeSlug } from './lib/slug.mjs';
+import { referenceTokens, resolveProfile } from './lib/write-set-profile.mjs';
 
 const payload = await readPayload();
 
@@ -66,6 +68,41 @@ for (const [kind, rule] of Object.entries(required)) {
   const need = Number.isFinite(rule.min) ? Math.trunc(rule.min) : 1;
   const found = blocks.filter((b) => blockMatches(b, rule)).length;
   if (found < need) missing.push({ kind, need, found });
+}
+
+// Spec-as-diff: a reference to a corpus element stands in for the STRUCTURAL kinds,
+// which are exactly what the corpus models. Behavioural kinds still have to be drawn
+// — a sequence describes this change, not the system's standing shape.
+const STRUCTURAL_KINDS = new Set(['c4_context', 'c4_container', 'c4_component']);
+const references = referenceTokens(content)
+  .map((token) => /^@ref\s+element:([a-z0-9][a-z0-9-]*)$/.exec(token.trim()))
+  .filter(Boolean)
+  .map((match) => match[1]);
+
+if (references.length) {
+  const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const unresolved = references.filter((id) => {
+    // REJECT before building a path (CWE-22); the regex above already bounds the id,
+    // so this is the second gate rather than the only one.
+    try {
+      assertSafeSlug(id, 'corpus reference');
+    } catch {
+      return true;
+    }
+    return !existsSync(join(projectRoot, 'docs', 'system', 'elements', `${id}.md`));
+  });
+
+  if (unresolved.length) {
+    emitBlock(
+      `Spec Diagram Presence Guard: '${rel}' references corpus elements that do not exist: ${unresolved.join(', ')}.\n`
+      + 'A reference stands in for a diagram, so an unresolvable one leaves the spec claiming a model that is not there.\n'
+      + 'Check docs/system/elements/ for the element id, or draw the diagram instead.',
+    );
+  }
+
+  for (let i = missing.length - 1; i >= 0; i -= 1) {
+    if (STRUCTURAL_KINDS.has(missing[i].kind)) missing.splice(i, 1);
+  }
 }
 
 if (missing.length === 0) emitAllow();

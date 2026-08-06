@@ -226,11 +226,11 @@ function suspectDecisions(memDir) {
 // Fail-open and flag-gated: absent flag, absent corpus, or any read error yields ''
 // and the index renders exactly as it does today, so a consumer install that never
 // opted in sees a byte-identical payload.
-export function renderConceptMap(memDir, { rootDir = process.cwd() } = {}) {
+export function renderConceptMap(specDir, { rootDir = process.cwd() } = {}) {
   let concepts = [];
   try {
     if (!architectureMapEnabled({ rootDir })) return '';
-    concepts = readConcepts(memDir);
+    concepts = readConcepts(specDir);
   } catch {
     return '';
   }

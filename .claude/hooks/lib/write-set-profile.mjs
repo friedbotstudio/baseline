@@ -70,10 +70,30 @@ function coversEntirely(profile, writeSetPaths) {
     && writeSetPaths.every((p) => matchesAnyGlob(p, profile.when));
 }
 
+// A spec may satisfy the structural diagram kinds by REFERENCING a corpus element
+// instead of redrawing it. Only the SYNTAX is judged here: resolving the id needs
+// the corpus, and this module is deliberately stdlib-only.
+//
+// A malformed reference forces the full set rather than throwing. An author who
+// meant to reference something and mistyped it must not get a QUIETER requirement
+// than one who referenced nothing at all — that would make a typo the cheapest way
+// to thin a spec.
+const REF_TOKEN = /@ref\b[^\n`]*/g;
+const REF_WELL_FORMED = /^@ref\s+element:[a-z0-9][a-z0-9-]*$/;
+
+export function referenceTokens(content) {
+  return String(content).match(REF_TOKEN) ?? [];
+}
+
+export function hasMalformedReference(content) {
+  return referenceTokens(content).some((token) => !REF_WELL_FORMED.test(token.trim()));
+}
+
 export function resolveProfile(content, projectGet) {
   const fullSet = () => ({ id: 'full', required_diagrams: projectGet('.artifacts.required_diagrams.spec') });
   try {
     if (projectGet('.artifacts.compression.enabled') === false) return fullSet();
+    if (hasMalformedReference(content)) return fullSet();
 
     const writeSetPaths = extractWriteSet(content);
     if (writeSetPaths.length === 0) return fullSet();
