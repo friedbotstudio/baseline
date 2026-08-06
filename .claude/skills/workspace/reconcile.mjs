@@ -13,14 +13,17 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { matchesGlob } from '../memory-index/index-io.mjs';
+import { findOrphanShards } from './render.mjs';
+import { readShard } from './shards.mjs';
 import { assertNoTraversal, readAll } from './store.mjs';
+import { bindingFor, isCitable } from './witness.mjs';
 
 const DISCOVERY = { mode: 'discovery', delta: null };
 
-export function reconcile({ memDir, touchedPaths = [] } = {}) {
+export function reconcile({ specDir, touchedPaths = [] } = {}) {
   let elements = [];
   try {
-    elements = readAll(memDir).elements;
+    elements = readAll(specDir).elements;
   } catch {
     return DISCOVERY;
   }
@@ -126,16 +129,77 @@ function verdict(element, rootDir) {
   return { element_id: element.id, state: 'moved', detail: 'interface unchanged' };
 }
 
-export function classify(memDir, { rootDir = process.cwd() } = {}) {
-  const elements = readAll(memDir).elements;
+// The witness dimension is ADDITIVE over the three-case verdict above. A shard with
+// no `' @kind` binds `none` and keeps today's behaviour byte-for-byte, so every
+// element authored before the registry existed classifies exactly as it did.
+//
+// A `none` witness excuses the DIAGRAM, never the anchor: an element pointing at a
+// file that is not there is still dangling, because that is a broken route, not an
+// unfalsifiable drawing.
+function withWitness(base, element, specDir, rootDir) {
+  const shard = readShard(specDir, element.id);
+  const { witness, target } = bindingFor(shard?.kind, { rootDir });
+  const decorated = { ...base, witness, citable: isCitable(witness) };
+
+  // No shard, or a shard that declares no kind, keeps today's verdict untouched.
+  // Only a shard that EXPLICITLY declares an unwitnessed kind gets the override —
+  // otherwise every element authored before the registry existed would have its
+  // digest-derived `stale` rewritten to `moved`, which is the drift the digest
+  // exists to catch being laundered by the very feature meant to sharpen it.
+  if (!shard?.kind) return decorated;
+
+  if (witness === 'none') {
+    return base.state === 'dangling'
+      ? decorated
+      : { ...decorated, state: 'moved', detail: `unwitnessed (${shard.kind}); routes but is not evidence` };
+  }
+
+  if (witness === 'test') {
+    const named = shard?.witnessTest ?? target;
+    if (!named) {
+      return { ...decorated, state: 'stale', detail: `kind ${shard.kind} binds a test witness but the shard names none` };
+    }
+    if (!existsSync(join(rootDir, named))) {
+      return { ...decorated, state: 'stale', detail: `witness test does not resolve: ${named}` };
+    }
+  }
+
+  return decorated;
+}
+
+export function classify(specDir, { rootDir = process.cwd() } = {}) {
+  const elements = readAll(specDir).elements;
   // Validate EVERY anchor before touching the filesystem. A traversal must fail as
   // a traversal, not as whatever the escaped path happens to contain.
   for (const element of elements) assertNoTraversal(element.anchor ?? '');
-  return elements.map((element) => verdict(element, rootDir));
+  return elements.map((element) => withWitness(verdict(element, rootDir), element, specDir, rootDir));
 }
 
-export function composableElements(memDir, options = {}) {
-  return classify(memDir, options)
+// Records are one file per entity with no shared index, so a textual git merge is
+// correct for the common case and no merge driver is needed. What a merge CAN
+// produce is two records claiming one anchor — each branch derived the same anchor
+// under a different id — and a shard whose record went the other way.
+//
+// REPORTS ONLY. Two meanings sharing one anchor cannot be told apart mechanically,
+// so auto-resolving destroys one of them; the same rule conflicts.mjs already
+// applies to contributions.
+export function repairAfterMerge({ specDir } = {}) {
+  const byAnchor = new Map();
+  for (const element of readAll(specDir).elements) {
+    if (!element.anchor) continue;
+    if (!byAnchor.has(element.anchor)) byAnchor.set(element.anchor, []);
+    byAnchor.get(element.anchor).push(element.id);
+  }
+
+  const duplicateAnchors = [...byAnchor.entries()]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([anchor, ids]) => ({ anchor, ids: [...ids].sort() }));
+
+  return { duplicateAnchors, orphanShards: findOrphanShards(specDir) };
+}
+
+export function composableElements(specDir, options = {}) {
+  return classify(specDir, options)
     .filter((v) => v.state !== 'dangling')
     .map((v) => v.element_id);
 }

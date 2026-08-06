@@ -39,7 +39,7 @@ export const SKILL_CATEGORIES = {
   sharedGlobals: 10,
   audit: 1,
   altTracks: 2,
-  maintenance: 2,
+  maintenance: 3,
   sprint: 5,
   roadmap: 2,
 };

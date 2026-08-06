@@ -14,10 +14,10 @@
 import { architectureMapEnabled } from '../workspace/flags.mjs';
 import { classify } from '../workspace/reconcile.mjs';
 
-export function listStale({ memDir, rootDir = process.cwd() } = {}) {
+export function listStale({ specDir, rootDir = process.cwd() } = {}) {
   if (!architectureMapEnabled({ rootDir })) return [];
   try {
-    return classify(memDir, { rootDir })
+    return classify(specDir, { rootDir })
       .filter((verdict) => verdict.state === 'stale')
       .map((verdict) => ({ id: verdict.element_id, detail: verdict.detail }));
   } catch {

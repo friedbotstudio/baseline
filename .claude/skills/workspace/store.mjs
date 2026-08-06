@@ -1,8 +1,7 @@
 // Foundation — corpus record IO. Reads and writes the files the model OWNS.
 //
-// The corpus lives UNDER .claude/memory/ but is deliberately NOT a ninth canonical
-// category (spec §Migration): CANONICAL is untouched, so no reader that walks
-// canonical categories ever sees these files.
+// The corpus is a docs/ SPEC artifact, not a ninth canonical category: CANONICAL is
+// untouched and no reader that walks canonical categories ever sees these files.
 //
 // Two responsibilities were split out rather than left here: the working tree the
 // model points AT (tree.mjs) and the record wire format (record-codec.mjs). This
@@ -13,42 +12,40 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { assertSafeFactKey } from '../memory-index/migrate.mjs';
+import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseEntry, renderRecord } from './record-codec.mjs';
 
 export { assertNoTraversal, readSourceText, walkFiles } from './tree.mjs';
 export { splitFrontmatter } from './record-codec.mjs';
 
-function workspaceDir(memDir) {
-  return join(memDir, 'workspace');
-}
+// The corpus root IS specDir. There is no intermediate segment to join now that
+// the model lives at docs/system/ rather than inside a memory subdirectory.
 
 // Preflight only — deliberately does NOT create. AC-012: an absent workspace is a
 // reported error, never a directory quietly conjured mid-contribution, because a
 // half-initialized store is worse than none.
-export function ensureWorkspace(memDir) {
-  const dir = workspaceDir(memDir);
-  if (!existsSync(dir) || !statSync(dir).isDirectory()) {
-    return { ready: false, reason: `workspace not initialized at ${dir}` };
+export function ensureWorkspace(specDir) {
+  if (!existsSync(specDir) || !statSync(specDir).isDirectory()) {
+    return { ready: false, reason: `workspace not initialized at ${specDir}` };
   }
   return { ready: true };
 }
 
-export function readRecords(memDir, kind) {
-  return readCollection(memDir, kind);
+export function readRecords(specDir, kind) {
+  return readCollection(specDir, kind);
 }
 
 // Enumerating shard FILES is a different question from enumerating element
 // RECORDS: an orphan shard is precisely a file with no record behind it, so it can
 // only be found by listing the directory.
-export function listWorkspaceFiles(memDir, kind, ext) {
-  const dir = join(workspaceDir(memDir), kind);
+export function listWorkspaceFiles(specDir, kind, ext) {
+  const dir = join(specDir, kind);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
   return readdirSync(dir).filter((name) => name.endsWith(ext)).sort();
 }
 
-function readCollection(memDir, kind) {
-  const dir = join(workspaceDir(memDir), kind);
+function readCollection(specDir, kind) {
+  const dir = join(specDir, kind);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
   const out = [];
   for (const name of readdirSync(dir)) {
@@ -65,10 +62,10 @@ function readCollection(memDir, kind) {
   return out;
 }
 
-export function readAll(memDir) {
+export function readAll(specDir) {
   return {
-    elements: readCollection(memDir, 'elements').map(withGranularity),
-    views: readCollection(memDir, 'views'),
+    elements: readCollection(specDir, 'elements').map(withGranularity),
+    views: readCollection(specDir, 'views'),
   };
 }
 
@@ -88,15 +85,15 @@ function withGranularity(element) {
 // it is the one field that cannot be re-derived at read time.
 const DERIVED_FIELDS = ['granularity', 'shard'];
 
-export function writeElement(memDir, element) {
+export function writeElement(specDir, element) {
   const persisted = { ...element };
   for (const field of DERIVED_FIELDS) delete persisted[field];
-  return writeRecord(memDir, 'elements', persisted, ['kind', 'title', 'anchor']);
+  return writeRecord(specDir, 'elements', persisted, ['kind', 'title', 'anchor']);
 }
 
-export function writeRecord(memDir, kind, record, order) {
-  assertSafeFactKey(record?.id);
-  const dir = join(workspaceDir(memDir), kind);
+export function writeRecord(specDir, kind, record, order) {
+  assertSafeSlug(record?.id, 'element id');
+  const dir = join(specDir, kind);
   mkdirSync(dir, { recursive: true });
   const path = join(dir, `${record.id}.md`);
   writeFileSync(path, renderRecord(record, order), 'utf8');
@@ -106,9 +103,9 @@ export function writeRecord(memDir, kind, record, order) {
 // Foundation owns every filesystem touch, so the delete lives here rather than in
 // contribute.mjs — a Domain module reaching for node:fs directly is the layer
 // violation this split exists to prevent.
-export function removeElement(memDir, id) {
-  assertSafeFactKey(id);
-  const path = join(workspaceDir(memDir), 'elements', `${id}.md`);
+export function removeElement(specDir, id) {
+  assertSafeSlug(id, 'element id');
+  const path = join(specDir, 'elements', `${id}.md`);
   if (!existsSync(path)) return false;
   rmSync(path);
   return true;

@@ -7,7 +7,7 @@
 // anything noticing.
 
 import { matchesGlob } from '../memory-index/index-io.mjs';
-import { GOVERNED_SURFACE } from './seed-map.mjs';
+import { resolveGovernedSurface } from './surface.mjs';
 import { readAll, walkFiles } from './store.mjs';
 
 // Re-exported rather than re-derived: a second glob implementation in the tests
@@ -16,28 +16,34 @@ export function anchorMatches(anchor, path) {
   return matchesGlob(anchor, path);
 }
 
-function underGovernedRoot(path) {
+function underGovernedRoot(path, GOVERNED_SURFACE) {
   return GOVERNED_SURFACE.roots.some((root) => path.startsWith(root));
 }
 
-function isCode(path) {
+function isCode(path, GOVERNED_SURFACE) {
   return GOVERNED_SURFACE.codeExtensions.some((ext) => path.endsWith(ext))
     || GOVERNED_SURFACE.alwaysIncluded.some((root) => path.startsWith(root));
 }
 
 // Prose has no exported interface to digest and fixtures are test data, not
 // modelled subjects — both would be permanent coverage gaps nobody can close.
-function isExcluded(path) {
+function isExcluded(path, GOVERNED_SURFACE) {
   return GOVERNED_SURFACE.excludedSegments.some((seg) => path.includes(`/${seg}`) || path.startsWith(seg))
     || GOVERNED_SURFACE.excludedTrees.some((tree) => path.startsWith(tree));
 }
 
 export function governedFiles({ rootDir = process.cwd() } = {}) {
-  return walkFiles(rootDir).filter((path) => underGovernedRoot(path) && isCode(path) && !isExcluded(path));
+  // Resolved per call, not imported at module scope: the surface is now a property
+  // of the project being modelled, and a caller may be working on a tree that is
+  // not its own (/spec-sync on a consumer repo, a test on a tmpdir).
+  const surface = resolveGovernedSurface({ rootDir });
+  return walkFiles(rootDir).filter(
+    (path) => underGovernedRoot(path, surface) && isCode(path, surface) && !isExcluded(path, surface),
+  );
 }
 
-export function findGaps({ memDir, rootDir = process.cwd() } = {}) {
-  const anchors = readAll(memDir).elements.map((element) => element.anchor).filter(Boolean);
+export function findGaps({ specDir, rootDir = process.cwd() } = {}) {
+  const anchors = readAll(specDir).elements.map((element) => element.anchor).filter(Boolean);
   if (!anchors.length) return [];
   return governedFiles({ rootDir })
     .filter((path) => !anchors.some((anchor) => anchorMatches(anchor, path)))

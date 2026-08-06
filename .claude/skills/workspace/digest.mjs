@@ -16,8 +16,8 @@ import { join } from 'node:path';
 import { digestFor } from './reconcile.mjs';
 import { assertNoTraversal, readAll, writeElement } from './store.mjs';
 
-function elementById(memDir, id) {
-  return readAll(memDir).elements.find((element) => element.id === id) ?? null;
+function elementById(specDir, id) {
+  return readAll(specDir).elements.find((element) => element.id === id) ?? null;
 }
 
 // A glob names a family, not a file, so there is no single interface to digest —
@@ -26,8 +26,8 @@ function digestable(anchor) {
   return Boolean(anchor) && !anchor.includes('*');
 }
 
-export function stampElement(memDir, id, { rootDir = process.cwd() } = {}) {
-  const element = elementById(memDir, id);
+export function stampElement(specDir, id, { rootDir = process.cwd() } = {}) {
+  const element = elementById(specDir, id);
   if (!element) return { id, digest: null, state: 'unknown' };
 
   const anchor = assertNoTraversal(element.anchor ?? '');
@@ -38,18 +38,18 @@ export function stampElement(memDir, id, { rootDir = process.cwd() } = {}) {
   // not there — strictly worse than carrying no digest at all.
   if (digest === null) return { id, digest: null, state: 'dangling' };
 
-  writeElement(memDir, { ...element, anchor_digest: digest });
+  writeElement(specDir, { ...element, anchor_digest: digest });
   return { id, digest, state: 'fresh' };
 }
 
-export function stampAll(memDir, ids, options = {}) {
+export function stampAll(specDir, ids, options = {}) {
   if (!Array.isArray(ids)) {
     throw new Error('stampAll requires an explicit id list — there is no stamp-everything default (spec D3)');
   }
   const stamped = [];
   const dangling = [];
   for (const id of ids) {
-    const result = stampElement(memDir, id, options);
+    const result = stampElement(specDir, id, options);
     if (result.state === 'fresh') stamped.push(id);
     else if (result.state === 'dangling') dangling.push(id);
   }

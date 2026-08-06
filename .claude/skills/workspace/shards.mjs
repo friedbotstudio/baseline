@@ -9,7 +9,19 @@
 import { listWorkspaceFiles, readRecords, readSourceText } from './store.mjs';
 
 const SECTION = /^!startsub\s+([A-Za-z0-9_-]+)\s*$/m;
-const SHARD_DIR = 'workspace/diagrams';
+const SHARD_DIR = 'diagrams';
+
+// A shard declares its kind, and the test that witnesses it, in PlantUML comments —
+// the same `' @kind <x>` form the dependency-graph rule already uses. Reusing that
+// convention keeps the corpus to ONE annotation syntax; a frontmatter block would
+// not survive a `.puml` round-trip through any PlantUML tool anyway.
+const KIND = /^'\s*@kind\s+([A-Za-z0-9_-]+)\s*$/m;
+const WITNESS_TEST = /^'\s*@witness\s+(\S+)\s*$/m;
+
+function annotation(text, pattern) {
+  const match = pattern.exec(text);
+  return match ? match[1] : null;
+}
 
 // PlantUML rejects a hyphen in a `!startsub` name ("Bad sub name"), and element ids
 // are kebab-case by assertSafeFactKey — so a section name is the id with hyphens
@@ -23,31 +35,37 @@ function shardRel(elementId) {
   return `${SHARD_DIR}/${elementId}.puml`;
 }
 
-// `memDir` is the root the shard path is relative to, so readSourceText's traversal
+// `specDir` is the root the shard path is relative to, so readSourceText's traversal
 // guard covers shard reads exactly as it covers source reads.
-export function readShard(memDir, elementId) {
-  const text = readSourceText(memDir, shardRel(elementId));
+export function readShard(specDir, elementId) {
+  const text = readSourceText(specDir, shardRel(elementId));
   if (text === null) return null;
   const match = SECTION.exec(text);
   if (!match) return null;
-  return { path: shardRel(elementId), section: match[1], body: text };
+  return {
+    path: shardRel(elementId),
+    section: match[1],
+    body: text,
+    kind: annotation(text, KIND),
+    witnessTest: annotation(text, WITNESS_TEST),
+  };
 }
 
 // Advisory, never an error: an element with no diagram is a gap in illustration,
 // not a broken model. Reporting it as a failure would make every new element a
 // build break before anyone had drawn it.
-export function findUnillustrated(memDir) {
-  return readRecords(memDir, 'elements')
-    .filter((element) => readShard(memDir, element.id) === null)
+export function findUnillustrated(specDir) {
+  return readRecords(specDir, 'elements')
+    .filter((element) => readShard(specDir, element.id) === null)
     .map((element) => element.id);
 }
 
 // Every shard file on disk with the section it declares — the file-side view the
 // orphan check needs, since an orphan by definition has no record to enumerate.
-export function everyShardSection(memDir) {
+export function everyShardSection(specDir) {
   const out = [];
-  for (const name of listWorkspaceFiles(memDir, 'diagrams', '.puml')) {
-    const text = readSourceText(memDir, `${SHARD_DIR}/${name}`);
+  for (const name of listWorkspaceFiles(specDir, 'diagrams', '.puml')) {
+    const text = readSourceText(specDir, `${SHARD_DIR}/${name}`);
     const match = text === null ? null : SECTION.exec(text);
     if (match) out.push({ file: name, section: match[1] });
   }

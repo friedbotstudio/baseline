@@ -8,9 +8,8 @@
 // Rejection is ATOMIC, in the same register as applyContribution: a corpus holding
 // half a map reflects an intent no author had and no reviewer approved.
 
-import { writeConcept } from './concepts.mjs';
+import { conceptTitles, readConceptMap, writeConcept } from './concepts.mjs';
 import { anchorMatches, governedFiles } from './coverage.mjs';
-import { CONCEPT_ANCHORS, CONCEPT_TITLES } from './seed-map.mjs';
 import { readAll, writeElement } from './store.mjs';
 
 function declarationsOf(map) {
@@ -64,17 +63,21 @@ function merged(existing, element) {
   };
 }
 
-export function materialize({ memDir, rootDir = process.cwd(), map = CONCEPT_ANCHORS } = {}) {
-  const elements = elementsByAnchor(declarationsOf(map));
+export function materialize({ specDir, rootDir = process.cwd(), map = null } = {}) {
+  // The authored map now lives in the concept FILES, so it is read from the corpus
+  // rather than imported from a shipped constant a consumer could not edit.
+  const authored = map ?? readConceptMap(specDir);
+  const elements = elementsByAnchor(declarationsOf(authored));
   assertEveryAnchorResolves(elements, rootDir);
 
-  const existingById = new Map(readAll(memDir).elements.map((el) => [el.id, el]));
+  const existingById = new Map(readAll(specDir).elements.map((el) => [el.id, el]));
   const written = elements.map((element) =>
-    writeElement(memDir, merged(existingById.get(element.id), element)));
+    writeElement(specDir, merged(existingById.get(element.id), element)));
 
+  const titles = conceptTitles(specDir);
   const members = membershipOf(elements);
   for (const [concept, ids] of members) {
-    const result = writeConcept(memDir, concept, { title: CONCEPT_TITLES[concept] ?? concept, members: ids });
+    const result = writeConcept(specDir, concept, { title: titles[concept] ?? concept, members: ids });
     if (!result.written) {
       throw new Error(`concept ${concept} names unresolvable members: ${(result.unresolved ?? []).join(', ')}`);
     }

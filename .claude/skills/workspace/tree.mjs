@@ -8,15 +8,24 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-// A `..` segment in an anchor or a member id escapes the tree the corpus is
-// contracted to describe. REJECT, never normalize — the same register as
-// assertSafeFactKey, and for the same reason: silently rewriting the path would
-// read a different file than the author named.
+// An anchor that escapes the tree the corpus is contracted to describe. REJECT,
+// never normalize — silently rewriting the path would read a different file than
+// the author named.
+//
+// Two spellings of the same intent, both previously unguarded (backlog -7e51): a
+// `..` segment was refused loudly while a LEADING SEPARATOR was quietly
+// reinterpreted, because `join('.', '/etc/passwd')` yields `etc/passwd`. A drive
+// or UNC prefix is the Windows spelling of the same escape. Anchors are contracted
+// to be repo-relative, so no legitimate anchor is affected.
+const ABSOLUTE_PREFIX = /^([\\/]|[A-Za-z]:)/;
+
 export function assertNoTraversal(rel) {
   const text = String(rel ?? '');
-  if (text.split(/[\\/]/).includes('..')) {
+  const reject = () => {
     throw new Error(`unsafe path traversal (REJECT, never normalize): ${JSON.stringify(text)}`);
-  }
+  };
+  if (text.split(/[\\/]/).includes('..')) reject();
+  if (ABSOLUTE_PREFIX.test(text)) reject();
   return text;
 }
 

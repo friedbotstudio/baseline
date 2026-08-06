@@ -16,15 +16,15 @@ const CANDIDATE_FIELDS = ['anchor_digest', 'shard', 'granularity'];
 // presence would prove nothing about what the file on disk carries.
 const NON_FIELD_KEYS = new Set(['id', 'kind', 'title', 'anchor', 'body', 'granularity']);
 
-function documentedFields(memDir) {
-  const text = readSourceText(memDir, 'README.md');
+function documentedFields(specDir) {
+  const text = readSourceText(specDir, 'README.md');
   if (text === null) return null;
   return CANDIDATE_FIELDS.filter((field) => text.includes(`\`${field}\``));
 }
 
-function persistedFields(memDir) {
+function persistedFields(specDir) {
   const persisted = new Set();
-  for (const element of readAll(memDir).elements) {
+  for (const element of readAll(specDir).elements) {
     for (const name of Object.keys(element)) {
       if (!NON_FIELD_KEYS.has(name)) persisted.add(name);
     }
@@ -32,13 +32,13 @@ function persistedFields(memDir) {
   return persisted;
 }
 
-export function checkReadmeFields({ memDir } = {}) {
-  const documented = documentedFields(memDir);
+export function checkReadmeFields({ specDir } = {}) {
+  const documented = documentedFields(specDir);
   // Fail-open on an absent README, matching every other memory consumer: a project
   // that ships no README has made no claim to contradict.
   if (documented === null) return { ok: true, overclaimed: [] };
 
-  const persisted = persistedFields(memDir);
+  const persisted = persistedFields(specDir);
   const overclaimed = documented.filter((field) => !persisted.has(field));
   return { ok: overclaimed.length === 0, overclaimed };
 }

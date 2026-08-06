@@ -22,9 +22,9 @@ const HEADER = ['@startuml', '!include <C4/C4_Component>'];
 // A section naming no element is refused rather than included: the corpus cannot
 // say what it describes, and a diagram that silently shows an unknown box is worse
 // than one that reports the gap.
-export function findOrphanShards(memDir) {
-  const known = new Set(readRecords(memDir, 'elements').map((el) => el.id));
-  return everyShardSection(memDir)
+export function findOrphanShards(specDir) {
+  const known = new Set(readRecords(specDir, 'elements').map((el) => el.id));
+  return everyShardSection(specDir)
     .filter(({ section }) => !known.has(elementIdFromSection(section)))
     .map(({ file, section }) => `${file}!${section}`);
 }
@@ -36,7 +36,7 @@ function orderElements(ids, weights) {
   return [...ids].sort((a, b) => (weights[b] ?? 0) - (weights[a] ?? 0) || a.localeCompare(b));
 }
 
-export function composeView(memDir, { elements = [], weights = null, title = 'workspace view' } = {}) {
+export function composeView(specDir, { elements = [], weights = null, title = 'workspace view' } = {}) {
   // Security review 2026-08-05 (MEDIUM): an unvalidated newline here forged
   // arbitrary PlantUML directives into the generated document. Same rule, same
   // helper, and the same REJECT-never-normalize register that already bounds every
@@ -45,7 +45,7 @@ export function composeView(memDir, { elements = [], weights = null, title = 'wo
   assertSafeFieldValue('title', title);
   const lines = [...HEADER, `title ${title}`];
   for (const id of orderElements(elements, weights)) {
-    const shard = readShard(memDir, id);
+    const shard = readShard(specDir, id);
     if (!shard) continue;
     lines.push(`!includesub ${shard.path}!${shard.section}`);
   }
@@ -56,19 +56,19 @@ export function composeView(memDir, { elements = [], weights = null, title = 'wo
 // The remote PlantUML server is deliberately NOT a fallback: it cannot resolve the
 // local !includesub paths this composition depends on, so a fallback would render
 // a silently different — and emptier — diagram than the one asked for.
-export function generateView(memDir, query = {}, { jarPath } = {}) {
+export function generateView(specDir, query = {}, { jarPath } = {}) {
   if (!jarPath || !existsSync(jarPath)) {
     throw new Error(`plantuml jar not found at ${jarPath} — local rendering is required for !includesub composition`);
   }
-  const wrapper = composeView(memDir, query);
+  const wrapper = composeView(specDir, query);
   // `-pipe` gives PlantUML no base directory, so the wrapper's relative
   // `!includesub` paths resolve against the process working directory — running
-  // from memDir is what makes them resolve. The jar path is made absolute FIRST,
+  // from specDir is what makes them resolve. The jar path is made absolute FIRST,
   // because that same cwd switch would otherwise resolve a relative jar against
-  // memDir and turn `.claude/bin/plantuml.jar` into "Unable to access jarfile".
+  // specDir and turn `.claude/bin/plantuml.jar` into "Unable to access jarfile".
   const result = spawnSync('java', ['-jar', resolve(jarPath), '-tsvg', '-pipe'], {
     input: wrapper,
-    cwd: memDir,
+    cwd: specDir,
     maxBuffer: 32 * 1024 * 1024,
   });
   if (result.error) throw new Error(`plantuml render failed to start: ${result.error.message}`);

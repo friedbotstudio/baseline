@@ -59,16 +59,16 @@ function structural({ key, category }) {
   return { key, category };
 }
 
-// The architecture-map layer is additive and OPT-IN. `memDir` is passed only by the
+// The architecture-map layer is additive and OPT-IN. `specDir` is passed only by the
 // new consumers, so every historical `(kind, needle, {rootDir})` call site keeps its
 // exact return SHAPE — a bare array — and is untouched by this extension.
-function conceptLayer(memDir, rootDir) {
-  if (!memDir || !architectureMapEnabled({ rootDir })) return null;
-  return { concepts: readConcepts(memDir), elements: readAll(memDir).elements };
+function conceptLayer(specDir, rootDir) {
+  if (!specDir || !architectureMapEnabled({ rootDir })) return null;
+  return { concepts: readConcepts(specDir), elements: readAll(specDir).elements };
 }
 
-function resolveConcept(needle, { rootDir, memDir }) {
-  const layer = conceptLayer(memDir, rootDir);
+function resolveConcept(needle, { rootDir, specDir }) {
+  const layer = conceptLayer(specDir, rootDir);
   if (!layer) return [];
   const concept = layer.concepts.find((c) => c.id === needle);
   if (!concept) return [];
@@ -80,8 +80,8 @@ function resolveConcept(needle, { rootDir, memDir }) {
 
 // The maintenance direction: enter at a touched path, match the file anchor first,
 // then the enclosing globs, then walk UP to the concepts that own what matched.
-function resolveTouchedPath(needle, { rootDir, memDir }) {
-  const layer = conceptLayer(memDir, rootDir);
+function resolveTouchedPath(needle, { rootDir, specDir }) {
+  const layer = conceptLayer(specDir, rootDir);
   if (!layer) return [];
   const exact = layer.elements.filter((el) => el.anchor === needle);
   const enclosing = layer.elements.filter((el) => el.anchor !== needle && matchesGlob(el.anchor, needle));
@@ -93,10 +93,10 @@ function resolveTouchedPath(needle, { rootDir, memDir }) {
   };
 }
 
-export function resolveLookup(kind, needle, { rootDir, memDir } = {}) {
+export function resolveLookup(kind, needle, { rootDir, specDir } = {}) {
   if (!LOOKUP_KINDS.has(kind) || !rootDir || !needle) return [];
-  if (kind === 'by_concept') return resolveConcept(needle, { rootDir, memDir });
-  if (kind === 'by_path' && memDir) return resolveTouchedPath(needle, { rootDir, memDir });
+  if (kind === 'by_concept') return resolveConcept(needle, { rootDir, specDir });
+  if (kind === 'by_path' && specDir) return resolveTouchedPath(needle, { rootDir, specDir });
   const { entries } = currentIndex(rootDir);
   if (kind === 'by_constraint') {
     return entries.filter((e) => e.rests_on.includes(needle)).map(structural);
