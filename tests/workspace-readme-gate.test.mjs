@@ -17,9 +17,9 @@ import { makeWorkspace, writeWorkspaceElement } from './helpers/workspace-fixtur
 
 const README_GATE = '.claude/skills/workspace/readme-gate.mjs';
 
-function writeReadme(memDir, documentedFields) {
+function writeReadme(specDir, documentedFields) {
   const rows = documentedFields.map((f) => `\`${f}\` records something about the element.`).join('\n');
-  writeFileSync(join(memDir, 'README.md'),
+  writeFileSync(join(specDir, 'README.md'),
     `# memory\n\n## Workspace corpus (architecture map)\n\nElements carry these fields.\n\n${rows}\n`, 'utf8');
 }
 
@@ -27,12 +27,12 @@ describe('README field claims match disk', () => {
   it('test_when_readme_documents_absent_field_then_docs_gate_fails', async () => {
     const gate = await tryImport(README_GATE);
     assert.ok(gate, `${README_GATE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/a.mjs', anchor_digest: 'abc123def456' });
-    writeReadme(memDir, ['anchor_digest', 'shard', 'granularity']);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/a.mjs', anchor_digest: 'abc123def456' });
+    writeReadme(specDir, ['anchor_digest', 'shard', 'granularity']);
 
-    const result = gate.checkReadmeFields({ memDir });
+    const result = gate.checkReadmeFields({ specDir });
 
     assert.equal(result.ok, false);
     assert.ok(result.undocumented === undefined || Array.isArray(result.undocumented));
@@ -43,12 +43,12 @@ describe('README field claims match disk', () => {
   it('test_when_readme_matches_disk_then_docs_gate_passes', async () => {
     const gate = await tryImport(README_GATE);
     assert.ok(gate, `${README_GATE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/a.mjs', anchor_digest: 'abc123def456' });
-    writeReadme(memDir, ['anchor_digest']);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/a.mjs', anchor_digest: 'abc123def456' });
+    writeReadme(specDir, ['anchor_digest']);
 
-    const result = gate.checkReadmeFields({ memDir });
+    const result = gate.checkReadmeFields({ specDir });
 
     assert.equal(result.ok, true, 'documenting exactly what is persisted passes');
     assert.deepEqual(result.overclaimed, []);
@@ -58,7 +58,7 @@ describe('README field claims match disk', () => {
     const gate = await tryImport(README_GATE);
     assert.ok(gate, `${README_GATE} does not exist yet`);
 
-    const result = gate.checkReadmeFields({ memDir: join(REPO_ROOT, '.claude', 'memory') });
+    const result = gate.checkReadmeFields({ specDir: join(REPO_ROOT, 'docs', 'system') });
 
     assert.equal(result.ok, true,
       `the shipped README overclaims: ${JSON.stringify(result.overclaimed)}`);
@@ -67,10 +67,10 @@ describe('README field claims match disk', () => {
   it('test_when_readme_absent_then_gate_is_inert', async () => {
     const gate = await tryImport(README_GATE);
     assert.ok(gate, `${README_GATE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
 
-    const result = gate.checkReadmeFields({ memDir });
+    const result = gate.checkReadmeFields({ specDir });
 
     assert.equal(result.ok, true, 'fail-open on an absent README, matching every other memory consumer');
   });

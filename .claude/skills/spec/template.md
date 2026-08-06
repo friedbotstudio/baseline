@@ -7,7 +7,7 @@ THIS FILE IS NOT AUTHORITATIVE. It holds skeletons and examples only.
 Diagram authority is split by question (living-system-model-ef decision D3):
   - WHICH diagram kinds a spec must contain -> .claude/project.json ->
     artifacts.required_diagrams.spec. That key is what the guard reads; it wins.
-  - THE SYSTEM'S STRUCTURAL MODEL (elements and views) -> .claude/memory/workspace/.
+  - THE SYSTEM'S STRUCTURAL MODEL (elements and views) -> docs/system/.
     Specs REFERENCE the corpus rather than re-deriving it.
   - THIS FILE -> shape and worked examples for an author. Editing a skeleton here
     changes no requirement and no model.
@@ -50,6 +50,22 @@ Approval is a token written by /approve-direction.
 ## Design
 
 Diagrams are the contract. Prose is only for things a diagram cannot say.
+
+**A spec is a diff against the central system spec.** The structural kinds — C4
+Context, Container, Component — describe the system's standing shape, which
+`docs/system/` already models. Satisfy them by REFERENCING an element instead of
+redrawing it:
+
+```
+@ref element:<element-id>
+```
+
+One resolvable reference satisfies all three structural kinds. The behavioural
+kinds (sequence, class, dependency graph) still have to be drawn here — they
+describe THIS change, not the standing shape. A reference naming an element that
+does not exist is refused by `spec_diagram_presence_guard`, and a malformed one
+falls back to requiring the full diagram set: a typo must never buy a quieter spec
+than referencing nothing at all. Element ids live in `docs/system/elements/`.
 
 ### C4 — System context
 

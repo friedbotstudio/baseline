@@ -29,22 +29,22 @@ const JVM_SKIP = process.env.PLANTUML_TESTS
   ? (hasJava() ? false : 'PLANTUML_TESTS=1 set but no java on PATH')
   : 'set PLANTUML_TESTS=1 to run JVM-spawning PlantUML tests';
 
-function seedTwoShards(memDir) {
-  makeWorkspace(memDir);
-  writeWorkspaceElement(memDir, 'alpha', { anchor: 'a/**', shard: 'diagrams/alpha.puml' });
-  writeWorkspaceElement(memDir, 'beta', { anchor: 'b/**', shard: 'diagrams/beta.puml' });
-  writeWorkspaceShard(memDir, 'alpha');
-  writeWorkspaceShard(memDir, 'beta');
+function seedTwoShards(specDir) {
+  makeWorkspace(specDir);
+  writeWorkspaceElement(specDir, 'alpha', { anchor: 'a/**', shard: 'diagrams/alpha.puml' });
+  writeWorkspaceElement(specDir, 'beta', { anchor: 'b/**', shard: 'diagrams/beta.puml' });
+  writeWorkspaceShard(specDir, 'alpha');
+  writeWorkspaceShard(specDir, 'beta');
 }
 
 describe('C — shards and views', () => {
   it('test_when_shards_composed_then_wrapper_includes_each_section', async () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    seedTwoShards(memDir);
+    const { specDir } = makeProject();
+    seedTwoShards(specDir);
 
-    const wrapper = render.composeView(memDir, { elements: ['alpha', 'beta'] });
+    const wrapper = render.composeView(specDir, { elements: ['alpha', 'beta'] });
     assert.match(wrapper, /!includesub .*alpha\.puml!alpha/, 'the wrapper must pull alpha in by its section name');
     assert.match(wrapper, /!includesub .*beta\.puml!beta/, 'the wrapper must pull beta in by its section name');
     assert.match(wrapper, /@startuml[\s\S]*@enduml/, 'the composed document must be a complete diagram');
@@ -54,28 +54,28 @@ describe('C — shards and views', () => {
     const render = await tryImport(RENDER);
     const store = await tryImport('.claude/skills/workspace/store.mjs');
     assert.ok(render && store, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    seedTwoShards(memDir);
-    const before = readdirSync(makeDiagrams(memDir)).sort();
+    const { specDir } = makeProject();
+    seedTwoShards(specDir);
+    const before = readdirSync(makeDiagrams(specDir)).sort();
 
-    render.composeView(memDir, { elements: ['alpha', 'beta'] });
+    render.composeView(specDir, { elements: ['alpha', 'beta'] });
 
-    assert.deepEqual(readdirSync(makeDiagrams(memDir)).sort(), before, 'composing a view must write NO file');
-    assert.deepEqual(store.readAll(memDir).views, [], 'readAll().views stays empty — epic decision D3');
+    assert.deepEqual(readdirSync(makeDiagrams(specDir)).sort(), before, 'composing a view must write NO file');
+    assert.deepEqual(store.readAll(specDir).views, [], 'readAll().views stays empty — epic decision D3');
   });
 
   it('test_when_startsub_has_no_element_then_composition_refused_as_orphan', async () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'alpha', { anchor: 'a/**', shard: 'diagrams/alpha.puml' });
-    writeWorkspaceShard(memDir, 'alpha');
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'alpha', { anchor: 'a/**', shard: 'diagrams/alpha.puml' });
+    writeWorkspaceShard(specDir, 'alpha');
     // A shard whose section names an element that does not exist.
-    writeWorkspaceShard(memDir, 'ghost', { section: 'deleted-element' });
+    writeWorkspaceShard(specDir, 'ghost', { section: 'deleted-element' });
 
-    const report = render.composeView(memDir, { elements: ['alpha'], includeOrphanReport: true });
-    const orphans = typeof report === 'string' ? render.findOrphanShards(memDir) : report.orphans;
+    const report = render.composeView(specDir, { elements: ['alpha'], includeOrphanReport: true });
+    const orphans = typeof report === 'string' ? render.findOrphanShards(specDir) : report.orphans;
     assert.ok(
       orphans.some((o) => String(o).includes('deleted-element')),
       'a !startsub naming no element must be REPORTED as an orphan, never silently included',
@@ -85,27 +85,27 @@ describe('C — shards and views', () => {
   it('test_when_element_has_no_shard_then_reported_unillustrated_not_error', async () => {
     const shards = await tryImport(SHARDS);
     assert.ok(shards, `${SHARDS} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'lonely', { anchor: 'c/**' });
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'lonely', { anchor: 'c/**' });
 
-    assert.equal(shards.readShard(memDir, 'lonely'), null, 'an element with no shard reads as null, never throws');
-    const unillustrated = shards.findUnillustrated(memDir);
+    assert.equal(shards.readShard(specDir, 'lonely'), null, 'an element with no shard reads as null, never throws');
+    const unillustrated = shards.findUnillustrated(specDir);
     assert.ok(unillustrated.includes('lonely'), 'an element with no shard is reported unillustrated (advisory)');
   });
 
   it('test_when_view_spans_mixed_weights_then_elements_ordered_descending', async () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
     for (const id of ['light', 'heavy', 'middle']) {
-      writeWorkspaceElement(memDir, id, { anchor: `${id}/**`, shard: `diagrams/${id}.puml` });
-      writeWorkspaceShard(memDir, id);
+      writeWorkspaceElement(specDir, id, { anchor: `${id}/**`, shard: `diagrams/${id}.puml` });
+      writeWorkspaceShard(specDir, id);
     }
-    writeWorkspaceConcept(memDir, 'target', { members: ['light', 'heavy', 'middle'] });
+    writeWorkspaceConcept(specDir, 'target', { members: ['light', 'heavy', 'middle'] });
 
-    const wrapper = render.composeView(memDir, {
+    const wrapper = render.composeView(specDir, {
       elements: ['light', 'heavy', 'middle'],
       weights: { light: 1, heavy: 3, middle: 2 },
     });
@@ -121,12 +121,12 @@ describe('C — shards and views', () => {
   it('test_when_jar_absent_then_error_surfaced_without_remote_fallback', async () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    seedTwoShards(memDir);
+    const { specDir } = makeProject();
+    seedTwoShards(specDir);
 
     let threw = null;
     try {
-      render.generateView(memDir, { elements: ['alpha', 'beta'] }, { jarPath: join(memDir, 'no-such.jar') });
+      render.generateView(specDir, { elements: ['alpha', 'beta'] }, { jarPath: join(specDir, 'no-such.jar') });
     } catch (e) {
       threw = e;
     }
@@ -146,21 +146,21 @@ describe('C — shards and views', () => {
   it('test_when_title_carries_a_newline_then_composition_is_refused', async () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
-    const { memDir } = makeProject();
-    seedTwoShards(memDir);
+    const { specDir } = makeProject();
+    seedTwoShards(specDir);
 
     assert.throws(
-      () => render.composeView(memDir, { elements: ['alpha'], title: 'x\n!include /etc/passwd' }),
+      () => render.composeView(specDir, { elements: ['alpha'], title: 'x\n!include /etc/passwd' }),
       /unsafe field/i,
       'a newline in title must be REJECTED, never normalized — it forges directives',
     );
     assert.throws(
-      () => render.composeView(memDir, { elements: ['alpha'], title: 'x\r!include /etc/passwd' }),
+      () => render.composeView(specDir, { elements: ['alpha'], title: 'x\r!include /etc/passwd' }),
       /unsafe field/i,
       'a carriage return forges directives just as a newline does',
     );
     assert.doesNotThrow(
-      () => render.composeView(memDir, { elements: ['alpha'], title: 'memory-model — surfacing' }),
+      () => render.composeView(specDir, { elements: ['alpha'], title: 'memory-model — surfacing' }),
       'an ordinary single-line title must still compose',
     );
   });
@@ -169,10 +169,10 @@ describe('C — shards and views', () => {
     const render = await tryImport(RENDER);
     assert.ok(render, `${RENDER} does not exist yet`);
     assert.ok(existsSync(JAR), `vendored jar missing at ${JAR}`);
-    const { memDir } = makeProject();
-    seedTwoShards(memDir);
+    const { specDir } = makeProject();
+    seedTwoShards(specDir);
 
-    const svg = render.generateView(memDir, { elements: ['alpha', 'beta'] }, { jarPath: JAR });
+    const svg = render.generateView(specDir, { elements: ['alpha', 'beta'] }, { jarPath: JAR });
     const text = Buffer.isBuffer(svg) ? svg.toString('utf8') : String(svg);
     assert.match(text, /<svg/i, 'the local jar must return rendered SVG for a composed view');
   });

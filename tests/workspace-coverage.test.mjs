@@ -23,9 +23,9 @@ const STALE = '.claude/skills/memory-flush/stale-elements.mjs';
 async function materializedCorpus() {
   const materialize = await tryImport(MATERIALIZE);
   if (!materialize) return null;
-  const { root, memDir } = makeProject();
-  materialize.materialize({ memDir, rootDir: REPO_ROOT });
-  return { root, memDir };
+  const { root, specDir } = makeProject();
+  materialize.materialize({ specDir, rootDir: REPO_ROOT });
+  return { root, specDir };
 }
 
 describe('governed-surface coverage', () => {
@@ -35,7 +35,7 @@ describe('governed-surface coverage', () => {
     const ctx = await materializedCorpus();
     assert.ok(ctx, `${MATERIALIZE} does not exist yet`);
 
-    const gaps = coverage.findGaps({ memDir: ctx.memDir, rootDir: REPO_ROOT });
+    const gaps = coverage.findGaps({ specDir: ctx.specDir, rootDir: REPO_ROOT });
 
     assert.deepEqual(gaps.map((g) => g.path), [],
       'a governed file routing to no element is a question the map cannot answer');
@@ -68,7 +68,7 @@ describe('governed-surface coverage', () => {
     const reconcile = await tryImport('.claude/skills/workspace/reconcile.mjs');
     assert.ok(reconcile, 'reconcile.mjs does not exist yet');
 
-    const verdicts = reconcile.classify(ctx.memDir, { rootDir: REPO_ROOT });
+    const verdicts = reconcile.classify(ctx.specDir, { rootDir: REPO_ROOT });
     const dangling = verdicts.filter((v) => v.state === 'dangling').map((v) => v.element_id);
 
     assert.deepEqual(dangling, [], 'rollout prerequisite 1: no dangling anchor before any consumer reads the layer');
@@ -77,11 +77,11 @@ describe('governed-surface coverage', () => {
   it('test_when_flag_off_then_stale_listing_is_empty', async () => {
     const stale = await tryImport(STALE);
     assert.ok(stale, `${STALE} does not exist yet`);
-    const { root, memDir } = makeProject();
+    const { root, specDir } = makeProject();
     writeFileSync(join(root, '.claude', 'project.json'),
       JSON.stringify({ memory: { architecture_map: { enabled: false } } }), 'utf8');
 
-    assert.deepEqual(stale.listStale({ memDir, rootDir: root }), [],
+    assert.deepEqual(stale.listStale({ specDir, rootDir: root }), [],
       'flag off is byte-identical to pre-backfill behaviour');
   });
 });

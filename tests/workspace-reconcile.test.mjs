@@ -18,10 +18,10 @@ describe('E3 — scout reconciliation', () => {
   it('test_when_slice_touches_two_of_twenty_anchors_then_delta_names_only_those_two', async () => {
     const rec = await tryImport(RECONCILE);
     assert.ok(rec, `${RECONCILE} does not exist yet`);
-    const { memDir } = makeProject();
-    seedCorpus(memDir, 20);
+    const { specDir } = makeProject();
+    seedCorpus(specDir, 20);
 
-    const result = rec.reconcile({ memDir, touchedPaths: ['area-3/file.mjs', 'area-11/other.mjs'] });
+    const result = rec.reconcile({ specDir, touchedPaths: ['area-3/file.mjs', 'area-11/other.mjs'] });
 
     assert.equal(result.mode, 'reconcile', 'a populated corpus must reconcile, not re-derive');
     assert.deepEqual(
@@ -37,13 +37,13 @@ describe('E3 — scout reconciliation', () => {
     assert.ok(rec, `${RECONCILE} does not exist yet`);
 
     const noDir = makeProject();
-    const absent = rec.reconcile({ memDir: noDir.memDir, touchedPaths: ['anything/x.mjs'] });
+    const absent = rec.reconcile({ specDir: noDir.specDir, touchedPaths: ['anything/x.mjs'] });
     assert.equal(absent.mode, 'discovery', 'absent corpus must fall back to discovery');
     assert.equal(absent.delta, null);
 
     const emptyDir = makeProject();
-    makeWorkspace(emptyDir.memDir);
-    const empty = rec.reconcile({ memDir: emptyDir.memDir, touchedPaths: ['anything/x.mjs'] });
+    makeWorkspace(emptyDir.specDir);
+    const empty = rec.reconcile({ specDir: emptyDir.specDir, touchedPaths: ['anything/x.mjs'] });
     assert.equal(empty.mode, 'discovery', 'empty corpus must also fall back to discovery');
   });
 
@@ -57,9 +57,9 @@ describe('E3 — scout reconciliation', () => {
       { count: 5, expected: 'reconcile' },
     ];
     for (const { count, expected } of cases) {
-      const { memDir } = makeProject();
-      seedCorpus(memDir, count);
-      const result = rec.reconcile({ memDir, touchedPaths: ['area-0/f.mjs'] });
+      const { specDir } = makeProject();
+      seedCorpus(specDir, count);
+      const result = rec.reconcile({ specDir, touchedPaths: ['area-0/f.mjs'] });
       assert.equal(result.mode, expected, `corpus of ${count} should resolve to ${expected}`);
     }
   });

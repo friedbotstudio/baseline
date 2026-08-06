@@ -26,11 +26,19 @@ export function makeProject() {
   const root = mkdtempSync(join(tmpdir(), 'memcap23-'));
   const memDir = join(root, '.claude', 'memory');
   const stateDir = join(root, '.claude', 'state');
+  // The central system spec is a docs/ artifact, not a memory category — so it gets
+  // its own root here rather than a subdirectory of memDir. Fixtures that seed a
+  // corpus take specDir; fixtures that seed canonical categories take memDir, and
+  // conflating them is what silently repoints annotation/load_bearing resolution.
+  const specDir = join(root, 'docs', 'system');
   mkdirSync(memDir, { recursive: true });
   mkdirSync(stateDir, { recursive: true });
+  // specDir is deliberately NOT created: `store.ensureWorkspace` preflights an
+  // absent corpus and must never conjure one, so a fixture that pre-creates it
+  // would make that contract untestable. `makeWorkspace(specDir)` creates it.
   const pending = join(memDir, '_pending.md');
   writeFileSync(pending, PENDING_SKELETON, 'utf8');
-  return { root, memDir, stateDir, pending };
+  return { root, memDir, specDir, stateDir, pending };
 }
 
 export function writeTranscript(root, userTexts) {
@@ -69,12 +77,19 @@ import { CANONICAL as CANONICAL_CATEGORIES } from '../../.claude/skills/memory-i
 // Copy the LIVE .claude/memory into a throwaway root. Every test that exercises
 // real corpus data must go through this — the live store is in its pre-repair
 // state and a mutating test would corrupt the data the repair exists to fix.
+// Copies BOTH roots: canonical memory (where `governed_by` / `rests_on` keys
+// resolve) and the corpus (where element records live). A contribution touches
+// both — it writes to the corpus but validates its refs against memory — so a
+// fixture that copied only one would make ref-refusal tests pass vacuously.
 export function copyLiveCorpus(prefix = 'memcorpus-') {
   const root = mkdtempSync(join(tmpdir(), prefix));
   const memDir = join(root, '.claude', 'memory');
+  const specDir = join(root, 'docs', 'system');
   mkdirSync(join(root, '.claude'), { recursive: true });
+  mkdirSync(join(root, 'docs'), { recursive: true });
   cpSync(join(REPO_ROOT, '.claude', 'memory'), memDir, { recursive: true });
-  return { root, memDir };
+  cpSync(join(REPO_ROOT, 'docs', 'system'), specDir, { recursive: true });
+  return { root, memDir, specDir };
 }
 
 // Build a sharded fact file. `fields` land in frontmatter; `bodyLines` land verbatim.

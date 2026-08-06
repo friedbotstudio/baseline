@@ -18,18 +18,18 @@ import { makeWorkspace, writeWorkspaceShard } from './helpers/workspace-fixtures
 const STORE = '.claude/skills/workspace/store.mjs';
 const SHARDS = '.claude/skills/workspace/shards.mjs';
 
-function rawElement(memDir, id) {
-  return readFileSync(join(memDir, 'workspace', 'elements', `${id}.md`), 'utf8');
+function rawElement(specDir, id) {
+  return readFileSync(join(specDir, 'elements', `${id}.md`), 'utf8');
 }
 
 describe('derived fields are not persisted', () => {
   it('test_when_write_element_given_derived_fields_then_they_are_dropped', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
 
-    store.writeElement(memDir, {
+    store.writeElement(specDir, {
       id: 'subject',
       kind: 'component',
       title: 'Subject',
@@ -38,7 +38,7 @@ describe('derived fields are not persisted', () => {
       shard: 'diagrams/subject.puml',
     });
 
-    const raw = rawElement(memDir, 'subject');
+    const raw = rawElement(specDir, 'subject');
     assert.doesNotMatch(raw, /^granularity:/m, 'granularity is derived from anchor shape, never stored');
     assert.doesNotMatch(raw, /^shard:/m, 'the shard path is derived by convention, never stored');
     assert.match(raw, /^anchor: lib\/thing\.mjs$/m, 'the anchor — which is authored — still persists');
@@ -47,12 +47,12 @@ describe('derived fields are not persisted', () => {
   it('test_when_read_after_write_then_granularity_derives_from_anchor_shape', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    store.writeElement(memDir, { id: 'filey', kind: 'component', title: 'Filey', anchor: 'lib/thing.mjs' });
-    store.writeElement(memDir, { id: 'globby', kind: 'component', title: 'Globby', anchor: 'lib/**' });
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    store.writeElement(specDir, { id: 'filey', kind: 'component', title: 'Filey', anchor: 'lib/thing.mjs' });
+    store.writeElement(specDir, { id: 'globby', kind: 'component', title: 'Globby', anchor: 'lib/**' });
 
-    const byId = Object.fromEntries(store.readAll(memDir).elements.map((e) => [e.id, e]));
+    const byId = Object.fromEntries(store.readAll(specDir).elements.map((e) => [e.id, e]));
 
     assert.equal(byId.filey.granularity, 'component', 'a file anchor resolves to component');
     assert.equal(byId.globby.granularity, 'subsystem', 'a glob anchor resolves to subsystem');
@@ -61,28 +61,28 @@ describe('derived fields are not persisted', () => {
   it('test_when_shard_exists_then_path_derives_by_convention', async () => {
     const shards = await tryImport(SHARDS);
     assert.ok(shards, `${SHARDS} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceShard(memDir, 'subject');
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceShard(specDir, 'subject');
 
-    const shard = shards.readShard(memDir, 'subject');
+    const shard = shards.readShard(specDir, 'subject');
 
-    assert.equal(shard.path, 'workspace/diagrams/subject.puml',
+    assert.equal(shard.path, 'diagrams/subject.puml',
       'no stored field participates — the id alone determines the path');
   });
 
   it('test_when_anchor_digest_supplied_then_it_is_preserved', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
 
-    store.writeElement(memDir, {
+    store.writeElement(specDir, {
       id: 'subject', kind: 'component', title: 'Subject',
       anchor: 'lib/thing.mjs', anchor_digest: 'abc123def456',
     });
 
-    assert.match(rawElement(memDir, 'subject'), /^anchor_digest: abc123def456$/m,
+    assert.match(rawElement(specDir, 'subject'), /^anchor_digest: abc123def456$/m,
       'the digest is the one field that CANNOT be derived at read — it is the stored half of the comparison');
   });
 });

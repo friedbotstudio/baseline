@@ -14,18 +14,21 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { makeProject, tryImport, snapshotTree, REPO_ROOT } from './helpers/memory-fixtures.mjs';
+import { copyLiveCorpus, makeProject, tryImport, snapshotTree, REPO_ROOT } from './helpers/memory-fixtures.mjs';
 
 const MATERIALIZE = '.claude/skills/workspace/materialize.mjs';
-const SEED_MAP = '.claude/skills/workspace/seed-map.mjs';
+const SPEC_DIR = 'docs/system';
 const CONCEPTS = '.claude/skills/workspace/concepts.mjs';
 
+// The authored map now lives in the concept FILES, so the fixture must carry them:
+// an empty specDir yields an empty map and materializes nothing. It used to work
+// because the map came from a shipped constant independent of the corpus.
 async function materializeInto() {
   const materialize = await tryImport(MATERIALIZE);
   if (!materialize) return null;
-  const { memDir } = makeProject();
-  const result = materialize.materialize({ memDir, rootDir: REPO_ROOT });
-  return { materialize, memDir, result };
+  const { specDir } = copyLiveCorpus('wsmaterialize-');
+  const result = materialize.materialize({ specDir, rootDir: REPO_ROOT });
+  return { materialize, specDir, result };
 }
 
 describe('materialize the authored concept map', () => {
@@ -35,7 +38,7 @@ describe('materialize the authored concept map', () => {
     const concepts = await tryImport(CONCEPTS);
     assert.ok(concepts, `${CONCEPTS} does not exist yet`);
 
-    const all = concepts.readConcepts(ctx.memDir);
+    const all = concepts.readConcepts(ctx.specDir);
 
     assert.equal(all.length, 15, 'the concept set ships at 15 nodes');
     const empty = all.filter((c) => !(c.members || []).length).map((c) => c.id);
@@ -49,9 +52,9 @@ describe('materialize the authored concept map', () => {
     assert.ok(concepts, `${CONCEPTS} does not exist yet`);
 
     const missing = [];
-    for (const concept of concepts.readConcepts(ctx.memDir)) {
+    for (const concept of concepts.readConcepts(ctx.specDir)) {
       for (const member of concept.members || []) {
-        if (!existsSync(join(ctx.memDir, 'workspace', 'elements', `${member}.md`))) {
+        if (!existsSync(join(ctx.specDir, 'elements', `${member}.md`))) {
           missing.push(`${concept.id} -> ${member}`);
         }
       }
@@ -65,52 +68,52 @@ describe('materialize the authored concept map', () => {
     const concepts = await tryImport(CONCEPTS);
     assert.ok(concepts, `${CONCEPTS} does not exist yet`);
 
-    const owning = concepts.readConcepts(ctx.memDir)
+    const owning = concepts.readConcepts(ctx.specDir)
       .filter((c) => (c.members || []).includes('git-commit-guard'))
       .map((c) => c.id)
       .sort();
 
     assert.deepEqual(owning, ['consent-gates', 'git-policy'],
       "ticket A's own done_record names this case; it was unrealized until now");
-    assert.ok(existsSync(join(ctx.memDir, 'workspace', 'elements', 'git-commit-guard.md')),
+    assert.ok(existsSync(join(ctx.specDir, 'elements', 'git-commit-guard.md')),
       'exactly one element file backs both memberships');
   });
 
   it('test_when_member_unresolvable_then_materialization_aborts_atomically', async () => {
     const materialize = await tryImport(MATERIALIZE);
     assert.ok(materialize, `${MATERIALIZE} does not exist yet`);
-    const { memDir } = makeProject();
-    const before = snapshotTree(memDir);
+    const { specDir } = makeProject();
+    const before = snapshotTree(specDir);
 
     const badMap = { 'broken-concept': [{ id: 'nope', anchor: 'does/not/exist/anywhere.mjs', title: 'Nope' }] };
     assert.throws(
-      () => materialize.materialize({ memDir, rootDir: REPO_ROOT, map: badMap }),
+      () => materialize.materialize({ specDir, rootDir: REPO_ROOT, map: badMap }),
       /unresolvable|dangling|nope/i,
     );
 
-    assert.deepEqual(snapshotTree(memDir), before,
+    assert.deepEqual(snapshotTree(specDir), before,
       'a partial corpus reflects an intent no contributor had and no reviewer approved');
   });
 
   it('test_when_materialize_runs_twice_then_second_run_is_noop', async () => {
     const ctx = await materializeInto();
     assert.ok(ctx, `${MATERIALIZE} does not exist yet`);
-    const afterFirst = snapshotTree(ctx.memDir);
+    const afterFirst = snapshotTree(ctx.specDir);
 
-    ctx.materialize.materialize({ memDir: ctx.memDir, rootDir: REPO_ROOT });
+    ctx.materialize.materialize({ specDir: ctx.specDir, rootDir: REPO_ROOT });
 
-    assert.deepEqual(snapshotTree(ctx.memDir), afterFirst, 'materialization is idempotent');
+    assert.deepEqual(snapshotTree(ctx.specDir), afterFirst, 'materialization is idempotent');
   });
 
   it('test_when_map_read_then_every_declared_anchor_resolves', async () => {
-    const seedMap = await tryImport(SEED_MAP);
-    assert.ok(seedMap, `${SEED_MAP} does not exist yet`);
+    const concepts = await tryImport('.claude/skills/workspace/concepts.mjs');
+    assert.ok(concepts, 'concepts.mjs does not exist yet');
     const coverage = await tryImport('.claude/skills/workspace/coverage.mjs');
     assert.ok(coverage, 'coverage.mjs does not exist yet');
 
     const governed = coverage.governedFiles({ rootDir: REPO_ROOT });
     const dangling = [];
-    for (const [concept, rows] of Object.entries(seedMap.CONCEPT_ANCHORS)) {
+    for (const [concept, rows] of Object.entries(concepts.readConceptMap(SPEC_DIR))) {
       for (const row of rows) {
         if (!governed.some((f) => coverage.anchorMatches(row.anchor, f))) dangling.push(`${concept}:${row.anchor}`);
       }

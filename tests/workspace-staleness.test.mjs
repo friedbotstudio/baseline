@@ -24,13 +24,13 @@ function writeAnchored(root, rel, lines) {
 // Digest the file, register an element carrying that digest, then rewrite the file
 // and re-classify. Returns the verdict state for the element.
 async function reclassify(reconcile, { rel, before, after }) {
-  const { root, memDir } = makeProject();
-  makeWorkspace(memDir);
+  const { root, specDir } = makeProject();
+  makeWorkspace(specDir);
   writeAnchored(root, rel, before);
   const digest = reconcile.digestFor(join(root, rel));
-  writeWorkspaceElement(memDir, 'subject', { anchor: rel, anchor_digest: digest });
+  writeWorkspaceElement(specDir, 'subject', { anchor: rel, anchor_digest: digest });
   writeAnchored(root, rel, after);
-  const verdicts = reconcile.classify(memDir, { rootDir: root });
+  const verdicts = reconcile.classify(specDir, { rootDir: root });
   return (verdicts.find((v) => v.element_id === 'subject') || {}).state;
 }
 
@@ -104,29 +104,29 @@ describe('D — three-case staleness', () => {
   it('test_when_anchor_matches_nothing_then_dangling_and_excluded', async () => {
     const reconcile = await tryImport(RECONCILE);
     assert.ok(reconcile, `${RECONCILE} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     const abs = writeAnchored(root, 'lib/gone.mjs', ['export const g = 1;']);
     const digest = reconcile.digestFor(abs);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/gone.mjs', anchor_digest: digest });
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/gone.mjs', anchor_digest: digest });
     rmSync(abs);
 
-    const verdicts = reconcile.classify(memDir, { rootDir: root });
+    const verdicts = reconcile.classify(specDir, { rootDir: root });
     const v = verdicts.find((x) => x.element_id === 'subject');
     assert.equal(v.state, 'dangling', 'an anchor matching nothing is dangling, fail-closed');
-    assert.ok(reconcile.composableElements(memDir, { rootDir: root }).every((e) => e !== 'subject'),
+    assert.ok(reconcile.composableElements(specDir, { rootDir: root }).every((e) => e !== 'subject'),
       'a dangling element must be excluded from view composition');
   });
 
   it('test_when_anchor_glob_has_traversal_then_rejected_before_read', async () => {
     const reconcile = await tryImport(RECONCILE);
     assert.ok(reconcile, `${RECONCILE} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'escaper', { anchor: '../../etc/**' });
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'escaper', { anchor: '../../etc/**' });
 
     assert.throws(
-      () => reconcile.classify(memDir, { rootDir: root }),
+      () => reconcile.classify(specDir, { rootDir: root }),
       /traversal|unsafe/i,
       'a traversal anchor must be REJECTED, never normalized, and before any filesystem read',
     );

@@ -25,94 +25,94 @@ function writeAnchored(root, rel, lines) {
   return abs;
 }
 
-function frontmatterOf(memDir, id) {
-  return readFileSync(join(memDir, 'workspace', 'elements', `${id}.md`), 'utf8');
+function frontmatterOf(specDir, id) {
+  return readFileSync(join(specDir, 'elements', `${id}.md`), 'utf8');
 }
 
 describe('digest stamping', () => {
   it('test_when_anchor_resolves_then_digest_is_persisted', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     writeAnchored(root, 'lib/thing.mjs', ['export function alpha() { return 1; }']);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/thing.mjs' });
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/thing.mjs' });
 
-    const result = digest.stampElement(memDir, 'subject', { rootDir: root });
+    const result = digest.stampElement(specDir, 'subject', { rootDir: root });
 
     assert.match(result.digest, /^[0-9a-f]{12}$/, 'digest is sha256 truncated to 12 hex chars');
-    assert.match(frontmatterOf(memDir, 'subject'), /^anchor_digest: [0-9a-f]{12}$/m,
+    assert.match(frontmatterOf(specDir, 'subject'), /^anchor_digest: [0-9a-f]{12}$/m,
       'the digest is persisted into the element frontmatter, not just returned');
   });
 
   it('test_when_anchor_is_dangling_then_no_digest_and_reported', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'ghost', { anchor: 'lib/never-existed.mjs' });
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'ghost', { anchor: 'lib/never-existed.mjs' });
 
-    const result = digest.stampElement(memDir, 'ghost', { rootDir: root });
+    const result = digest.stampElement(specDir, 'ghost', { rootDir: root });
 
     assert.equal(result.digest, null);
     assert.equal(result.state, 'dangling');
-    assert.doesNotMatch(frontmatterOf(memDir, 'ghost'), /anchor_digest:/,
+    assert.doesNotMatch(frontmatterOf(specDir, 'ghost'), /anchor_digest:/,
       'a digest over a missing file would assert the model matches code that is not there');
   });
 
   it('test_when_anchor_contains_traversal_then_throws_before_read', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'evil', { anchor: '../../etc/passwd' });
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'evil', { anchor: '../../etc/passwd' });
 
-    assert.throws(() => digest.stampElement(memDir, 'evil', { rootDir: root }), /traversal|\.\./i,
+    assert.throws(() => digest.stampElement(specDir, 'evil', { rootDir: root }), /traversal|\.\./i,
       'CWE-22: the anchor is frontmatter content, so it is rejected before any path is built');
   });
 
   it('test_when_stamp_all_called_without_ids_then_throws', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     writeAnchored(root, 'lib/a.mjs', ['export const a = 1;']);
-    writeWorkspaceElement(memDir, 'a', { anchor: 'lib/a.mjs' });
-    const before = frontmatterOf(memDir, 'a');
+    writeWorkspaceElement(specDir, 'a', { anchor: 'lib/a.mjs' });
+    const before = frontmatterOf(specDir, 'a');
 
-    assert.throws(() => digest.stampAll(memDir, undefined, { rootDir: root }), /explicit|id list|required/i,
+    assert.throws(() => digest.stampAll(specDir, undefined, { rootDir: root }), /explicit|id list|required/i,
       'D3: there is no stamp-everything entry point to reach for');
-    assert.equal(frontmatterOf(memDir, 'a'), before, 'the refusal leaves every element untouched');
+    assert.equal(frontmatterOf(specDir, 'a'), before, 'the refusal leaves every element untouched');
   });
 
   it('test_when_stamp_all_given_ids_then_only_those_are_stamped', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     writeAnchored(root, 'lib/a.mjs', ['export const a = 1;']);
     writeAnchored(root, 'lib/b.mjs', ['export const b = 2;']);
-    writeWorkspaceElement(memDir, 'a', { anchor: 'lib/a.mjs' });
-    writeWorkspaceElement(memDir, 'b', { anchor: 'lib/b.mjs' });
+    writeWorkspaceElement(specDir, 'a', { anchor: 'lib/a.mjs' });
+    writeWorkspaceElement(specDir, 'b', { anchor: 'lib/b.mjs' });
 
-    const result = digest.stampAll(memDir, ['a'], { rootDir: root });
+    const result = digest.stampAll(specDir, ['a'], { rootDir: root });
 
     assert.deepEqual(result.stamped, ['a']);
-    assert.match(frontmatterOf(memDir, 'a'), /anchor_digest:/);
-    assert.doesNotMatch(frontmatterOf(memDir, 'b'), /anchor_digest:/,
+    assert.match(frontmatterOf(specDir, 'a'), /anchor_digest:/);
+    assert.doesNotMatch(frontmatterOf(specDir, 'b'), /anchor_digest:/,
       'an unreviewed element keeps no digest, so it keeps surfacing as stale');
   });
 
   it('test_when_stamped_twice_with_unchanged_source_then_digest_is_identical', async () => {
     const digest = await tryImport(DIGEST);
     assert.ok(digest, `${DIGEST} does not exist yet`);
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     writeAnchored(root, 'lib/thing.mjs', ['export function alpha() { return 1; }']);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/thing.mjs' });
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/thing.mjs' });
 
-    const first = digest.stampElement(memDir, 'subject', { rootDir: root }).digest;
-    const second = digest.stampElement(memDir, 'subject', { rootDir: root }).digest;
+    const first = digest.stampElement(specDir, 'subject', { rootDir: root }).digest;
+    const second = digest.stampElement(specDir, 'subject', { rootDir: root }).digest;
 
     assert.equal(first, second, 'stamping is idempotent — re-running a curation pass is not a change');
   });
@@ -135,15 +135,15 @@ describe('staleness is reachable through the production stamping path', () => {
     assert.ok(digest, `${DIGEST} does not exist yet`);
     const reconcile = await tryImport('.claude/skills/workspace/reconcile.mjs');
     assert.ok(reconcile, 'reconcile.mjs does not exist yet');
-    const { root, memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { root, specDir } = makeProject();
+    makeWorkspace(specDir);
     writeAnchored(root, 'lib/thing.mjs', ['export function alpha() { return 1; }']);
-    writeWorkspaceElement(memDir, 'subject', { anchor: 'lib/thing.mjs' });
+    writeWorkspaceElement(specDir, 'subject', { anchor: 'lib/thing.mjs' });
 
-    digest.stampElement(memDir, 'subject', { rootDir: root });
-    const before = reconcile.classify(memDir, { rootDir: root }).find((v) => v.element_id === 'subject');
+    digest.stampElement(specDir, 'subject', { rootDir: root });
+    const before = reconcile.classify(specDir, { rootDir: root }).find((v) => v.element_id === 'subject');
     writeAnchored(root, 'lib/thing.mjs', ['export function renamed() { return 1; }']);
-    const after = reconcile.classify(memDir, { rootDir: root }).find((v) => v.element_id === 'subject');
+    const after = reconcile.classify(specDir, { rootDir: root }).find((v) => v.element_id === 'subject');
 
     assert.notEqual(before.state, 'stale', 'freshly stamped, the element is not stale');
     assert.equal(after.state, 'stale', 'no hand-written digest anywhere — the production path made this reachable');

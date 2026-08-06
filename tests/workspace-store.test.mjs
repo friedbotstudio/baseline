@@ -22,11 +22,11 @@ describe('E1 — element write and key resolution', () => {
   it('test_when_element_with_resolving_refs_added_then_round_trips', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { memDir, specDir } = makeProject();
+    makeWorkspace(specDir);
     seedGovernedDecision(memDir, 'd-one');
 
-    store.writeElement(memDir, {
+    store.writeElement(specDir, {
       id: 'workspace-skill',
       kind: 'component',
       title: 'Workspace skill',
@@ -34,7 +34,7 @@ describe('E1 — element write and key resolution', () => {
       governed_by: ['d-one'],
     });
 
-    const { elements } = store.readAll(memDir);
+    const { elements } = store.readAll(specDir);
     const found = elements.find((e) => e.id === 'workspace-skill');
     assert.ok(found, 'element did not round-trip through readAll');
     assert.equal(found.anchor, '.claude/skills/workspace/**');
@@ -44,52 +44,52 @@ describe('E1 — element write and key resolution', () => {
   it('test_when_element_id_is_unsafe_then_rejected_no_path_escape', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
 
     for (const bad of ['../escape', '', 'has space', 'Ünicode']) {
       assert.throws(
-        () => store.writeElement(memDir, { id: bad, kind: 'component', anchor: 'x/**' }),
+        () => store.writeElement(specDir, { id: bad, kind: 'component', anchor: 'x/**' }),
         /unsafe/i,
         `id ${JSON.stringify(bad)} should be rejected, never normalized`,
       );
     }
-    assert.equal(readdirSync(join(memDir, 'workspace', 'elements')).length, 0, 'no file may be written for a rejected id');
+    assert.equal(readdirSync(join(specDir, 'elements')).length, 0, 'no file may be written for a rejected id');
   });
 
   it('test_when_element_references_missing_constraint_key_then_reported_and_not_written', async () => {
     const refs = await tryImport(REFS);
     const store = await tryImport(STORE);
     assert.ok(refs && store, `${REFS} / ${STORE} do not exist yet`);
-    const { memDir } = makeProject();
-    makeWorkspace(memDir);
+    const { memDir, specDir } = makeProject();
+    makeWorkspace(specDir);
 
     const report = refs.resolveRefs(memDir, { governed_by: [], rests_on: ['no-such-constraint'] });
     assert.deepEqual(report.unresolved, ['no-such-constraint'], 'the missing key must be named in the report');
-    assert.equal(readdirSync(join(memDir, 'workspace', 'elements')).length, 0, 'element must NOT be written when a ref is unresolved');
+    assert.equal(readdirSync(join(specDir, 'elements')).length, 0, 'element must NOT be written when a ref is unresolved');
   });
 
   it('test_when_workspace_dir_absent_then_preflight_error_and_no_partial_store', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
+    const { specDir } = makeProject();
 
-    const ready = store.ensureWorkspace(memDir);
+    const ready = store.ensureWorkspace(specDir);
     assert.equal(ready.ready, false, 'absent workspace must report not-ready');
     assert.match(ready.reason, /workspace/i, 'the preflight error must name the workspace');
-    assert.equal(existsSync(join(memDir, 'workspace')), false, 'preflight must not create a partial store');
+    assert.equal(existsSync(specDir), false, 'preflight must not create a partial store');
   });
 
   it('test_when_element_frontmatter_malformed_then_entry_skipped_siblings_read', async () => {
     const store = await tryImport(STORE);
     assert.ok(store, `${STORE} does not exist yet`);
-    const { memDir } = makeProject();
-    const dir = makeWorkspace(memDir);
-    writeWorkspaceElement(memDir, 'good-one', { anchor: 'a/**' });
-    writeWorkspaceElement(memDir, 'good-two', { anchor: 'b/**' });
+    const { specDir } = makeProject();
+    const dir = makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'good-one', { anchor: 'a/**' });
+    writeWorkspaceElement(specDir, 'good-two', { anchor: 'b/**' });
     writeFileSync(join(dir, 'broken.md'), 'no frontmatter at all\n', 'utf8');
 
-    const { elements } = store.readAll(memDir);
+    const { elements } = store.readAll(specDir);
     const ids = elements.map((e) => e.id).sort();
     assert.deepEqual(ids, ['good-one', 'good-two'], 'a malformed element must be skipped per-entry, siblings still read');
   });
