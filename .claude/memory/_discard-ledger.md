@@ -53,3 +53,11 @@
 - discarded :: .claude/skills/workspace/record-codec.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/tree.mjs → landmarks.md
 - discarded :: .claude/skills/memory-flush/stale-elements.mjs → landmarks.md
+- promoted :: backlog → my-recommendation-in-the-plan-is-one-writer-4d39
+- promoted :: .claude/skills/workspace/identity.mjs → landmarks.md
+- promoted :: .claude/skills/workspace/surface.mjs → landmarks.md
+- promoted :: .claude/skills/workspace/witness.mjs → landmarks.md
+- promoted :: .claude/skills/spec-sync/SKILL.md → landmarks.md
+- promoted :: .claude/skills/workspace/sync.mjs → landmarks.md
+- promoted :: backlog → spec-extract-interface-digest-mjs-and-repoint-importers-b986
+- promoted :: backlog → the-fix-is-one-line-assertnotraversal-named-before-2afb

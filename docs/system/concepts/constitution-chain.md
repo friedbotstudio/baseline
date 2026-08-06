@@ -1,0 +1,9 @@
+---
+id: constitution-chain
+kind: concept
+title: Constitution chain
+anchors: audit-baseline-checks=.claude/skills/audit-baseline/checks/*.mjs,audit-baseline-helpers=.claude/skills/audit-baseline/*.mjs,manifest-cli=src/cli/manifest.js,surface-cli=src/cli/surface.js
+members: audit-baseline-helpers,manifest-cli,surface-cli,audit-baseline-checks
+---
+
+

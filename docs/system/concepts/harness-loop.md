@@ -1,0 +1,9 @@
+---
+id: harness-loop
+kind: concept
+title: Harness loop
+anchors: harness-checkers=.claude/skills/harness/checkers/*.mjs,harness-continuation=.claude/hooks/harness_continuation.mjs,harness-helpers=.claude/skills/harness/*.mjs,phase-timer=.claude/hooks/phase_timer.mjs,timing-lib=.claude/hooks/lib/timing.mjs,workflow-migrator=.claude/skills/harness/workflow-migrator.js
+members: harness-helpers,workflow-migrator,harness-continuation,phase-timer,timing-lib,harness-checkers
+---
+
+

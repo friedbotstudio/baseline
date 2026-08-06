@@ -34,11 +34,11 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    the rest of this step entirely and go to step 1. A populated corpus must not
    change scout's behaviour for a project that never asked for it.
 
-   `true` → if `.claude/memory/workspace/elements/` holds any element, this scout run
+   `true` → if `docs/system/elements/` holds any element, this scout run
    is a **reconciliation**, not a rediscovery:
 
    ```
-   node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({memDir:'.claude/memory', touchedPaths:process.argv.slice(1)}))))" <touched paths>
+   node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({specDir:'docs/system', touchedPaths:process.argv.slice(1)}))))" <touched paths>
    ```
 
    `mode: "reconcile"` → report the returned `delta` (`changed` / `stale` /

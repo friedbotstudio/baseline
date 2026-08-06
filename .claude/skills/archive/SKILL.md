@@ -46,8 +46,20 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 
 4. **Do NOT move `workflow.json`.** `/commit` archives it as its first step so the phase ordering is preserved until the end.
 
-4. Append `"archive"` to `workflow.json → completed`.
-5. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`."
+5. **Fold the landing back into the central system spec** (gated by `memory.architecture_map.enabled`; skip when false). This is what keeps `docs/system/` true to what is on disk instead of drifting the moment the next cycle ships:
+
+   ```
+   node -e "import('./.claude/skills/workspace/contribute.mjs').then(m=>console.log(JSON.stringify(m.syncBack({specDir:'docs/system', memDir:'.claude/memory', rootDir:process.cwd(), slug:'<slug>', touchedPaths:JSON.parse(process.argv[1])}),null,1)))" '["<path>","<path>",...]'
+   ```
+
+   **Pass the paths as one quoted JSON array, never as bare space-separated words.** The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces, matches no anchor, and `syncBack` returns `{applied:[],proposed:[]}` — indistinguishable from an honest "nothing relevant changed". A single quoted argument is immune to word-splitting in both zsh and bash. Verify the count before trusting an empty result: if the landing touched governed-surface files and `applied` is empty, the paths did not arrive.
+
+   Scope the list to the **governed surface** (`memory.architecture_map.governed_surface`) — its roots, its code extensions, minus its excluded segments and trees. Corpus files under `docs/system/` are the model itself, not governed surface, so a relocation of the corpus contributes no touched paths.
+
+   It re-stamps **only** the elements anchored to paths this landing actually touched, and returns everything else as `proposed`. Anything a scanner cannot check — a rationale link, a behavioural diagram, a concept-membership change — is a proposal for a curator, never a write. There is no bulk-refresh path: re-stamping untouched elements would make the model permanently green and launder the drift the digest exists to catch.
+
+6. Append `"archive"` to `workflow.json → completed`.
+7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`."
 
 ## Constraints
 

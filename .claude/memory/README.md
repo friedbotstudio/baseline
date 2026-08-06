@@ -142,37 +142,9 @@ An entry is **refused** when a body bullet's name is liftable and the frontmatte
 
 **Sweeps are gated on a repaired store.** `sweep.mjs` refuses *every* mode while any allowlisted bullet is still stranded — including `stamp-closure` (fired automatically by `/commit`) and `auto-close` (fired by `/memory-flush`). The remedy is the `--relift` command above, and the error names it. The guard exists because an unrepaired store makes its two readers disagree: the session-start index reads frontmatter only, while `sweep.mjs` reads frontmatter *and* body, so they report different stale counts. Curating against the larger set while every other surface believes the smaller one churns entries without fixing the invisibility.
 
-## Workspace corpus (architecture map)
+## Central system spec (moved)
 
-`.claude/memory/workspace/` holds a structural model of the system. `scout` reconciles against it instead of rediscovering it each cycle. It lives under `.claude/memory/` but is not a ninth canonical category: `CANONICAL` stays at eight, and `everyShardFile()` never walks it.
-
-The layer is gated behind `memory.architecture_map.enabled`. That flag defaults to false and ships absent from the template. So a consumer install reads false and behaves as it did before, until it opts in.
-
-| Directory | Holds | Count |
-|---|---|---|
-| `elements/` | component records, each anchored to a path or a glob | 112 |
-| `concepts/` | cross-cutting concept nodes, no anchor | 15 |
-| `diagrams/` | one PlantUML shard per element | 112 |
-
-Elements are materialized from the authored concept-to-anchor map in `.claude/skills/workspace/seed-map.mjs`, the one hand-edited list. To add an element, add its anchor there and run the materializer again. Do not write a record by hand. Which concept declared an anchor decides where that element belongs. An anchor declared by two concepts yields one element in both.
-
-Coverage is total over the governed surface. Every code file under `.claude/hooks/`, `.claude/skills/`, `.claude/commands/`, `.claude/schemas/`, `.claude/mcp/`, `.github/workflows/` and `src/` resolves to at least one element. Third-party-authored trees are excluded: the baseline ships and hash-protects them, but they are not ours to model.
-
-Granularity comes from the anchor's shape, not from a declared field: no anchor is a concept, a glob is a subsystem, a file path is a component. So a concept never carries an anchor. One that leaked an anchor would read as a component.
-
-Beyond its identity and anchor, an element stores exactly one field. `anchor_digest` is a sha256-12 over the anchored file's structural interface rather than its bytes: exported symbols for `.mjs`, sorted key paths for `.json`, heading structure for `.md`. A comment edit or a prose rewrite leaves the diagram alone, while a renamed export marks it stale.
-
-Storing only that one field is a rule, not an omission. Granularity is read off the anchor's shape, and a shard's path is `diagrams/<id>.puml` by convention. Persisting either would create a second source of truth that can disagree with the first. A digest is different in kind. Comparing a stored value against a fresh one is the mechanism itself, so it cannot be derived at read time. `readme-gate.mjs` fails when this section names a field, in backticks, that no element carries.
-
-Staleness is detected mechanically and repaired by hand. `/memory-flush` lists drifted elements, and a digest is re-stamped only for an element whose record and shard a curator actually reviewed. `stampAll` refuses to run without an explicit id list, so no bulk-refresh path exists. A bulk refresh would leave every element permanently fresh and hide the drift the digest exists to catch.
-
-A glob-anchored element is never stale. It names a family rather than a file, so there is no single interface to digest, and reconciliation reports it as moved instead.
-
-Edges are derived, never authored. Four scanners read the working tree: relative imports, `.claude/state/` path literals, `projectGet()` config keys, and `Skill()` calls in prose. Each edge carries `provenance: derived`, so no edge rests on a claim a scanner could not check.
-
-A shard delimits its model with `!startsub <id>`. Hyphens become underscores because PlantUML rejects a hyphen in a sub name. Views compose matching shards on demand and are never written; `readAll().views` stays empty.
-
-Design rationale and the decision record live in `docs/archive/2026-08-05/architecture-map/spec.md` for the machinery and `docs/specs/workspace-corpus-backfill.md` for the coverage rule and the curation gate.
+The structural corpus that used to live here moved to `docs/system/`. It is a spec artifact rather than memory, so `CANONICAL` stays at eight categories and `everyShardFile()` never walks it. It is documented in `docs/system/README.md`; genesis `docs/init/seed.md` §4.8.
 
 ## Bounding rules
 

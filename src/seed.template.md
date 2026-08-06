@@ -113,7 +113,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   │   └── lib/common.mjs      # shared helpers (Node ESM)
 │   ├── agents/                 # 1 subagent: swarm-worker (rendered from src/agents/swarm-worker.template.md)
 │   ├── commands/               # 5 consent/bootstrap gates (user-only — structurally)
-│   ├── skills/                 # 56 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (10) + audit (1) + alt tracks (2) + maintenance (2) + sprint (5) + roadmap (2)
+│   ├── skills/                 # 57 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (10) + audit (1) + alt tracks (2) + maintenance (3) + sprint (5) + roadmap (2)
 │   ├── memory/                 # project memory: 7 canonical categories (flat <name>.md OR sharded <category>/<key>.md when memory.sharded_store activated) + _pending.md + _resume.md + _thread.md (all gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
 ├── src/                        # pristine ship-time templates (overlay source for `npx @friedbotstudio/create-baseline`)
@@ -126,6 +126,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   └── memory/<7 canonical>.template.md
 └── docs/
     ├── init/seed.md            # this file
+    ├── system/                 # central system spec — docs/system/{concepts,elements,diagrams}/ (§4.8)
     ├── intake/  brd/  scout/  research/  specs/  rca/  security/  site/
     │                           # produced artifacts (NOT templates — those live in skills)
     ├── specs/_rendered/<slug>/ # build output from /spec-render
@@ -212,7 +213,7 @@ Full charter narrative, the corroboration grounding, and the graduation rational
 
 §4.2 and §II.A govern the **intra-session** axis (one session: decisions in main context, the lone subagent executes pre-decided recipes). The **inter-session** axis — multiple peer Claude Code sessions coordinating on one body of work — is a separate concern, governed by **CLAUDE.md Article X** (a new, additive article; Article II is byte-unchanged). A **peer** is a full Claude Code session (a complete baseline instance with its own subagents/parallel agents); the subagent count (1) is a per-session property, orthogonal to this charter. An **org-team** is a flat pod of up to four peers over the MCP broker pool, one wearing the **lead** hat. Each peer decides its own in-lane implementation choices in its own main context and escalates un-decidable or cross-lane forks peer→lead→human (`yield_fork` for task-bound forks, `ask_lead`/`answer_peer` for free-form queries over the broker). The model is opt-in (`velocity.org_mode.enabled`, default off), requires git, and runs through the selectable `org` track with `org-dispatch` as the Phase-6 engine — graduating and superseding the retired `sprint-dispatch` prototype and the `mvp-sprint-parallel-cycles` Slice E reserved-charter slot. The default 11-phase pipeline is unchanged; consent gates and human-as-final-authority stay structural. Full rule table: annex `.claude/CONSTITUTION.md §5.6`.
 
-### §4.3 Skills (56)
+### §4.3 Skills (57)
 
 Each at `.claude/skills/<name>/SKILL.md`, frontmatter `name` + `description`, plus optional `template.md` (artifact skills) or helper scripts.
 
@@ -298,6 +299,7 @@ Each vendored shared global ships with its own `LICENSE` + `NOTICE` alongside th
 - `standup` — read-only release + backlog recap with a next-pickup recommendation.
 - `commit-planner` — split a dirty tree into single-concern Conventional Commits; read-only until the plan is approved.
 - `retrospective` — convert a cycle's recurring friction into landmine entries plus graduation candidates up the enforcement funnel.
+- `spec-sync` — bootstrap the central system spec (§4.8) for a repository that has never had one: scan the governed surface, propose a concept map, materialize only after a human confirms it. Membership is authored, so the confirmation step has no skip.
 
 **Maintenance (2)**:
 - `gitignore` — generate or repair `.gitignore`, composing the baseline must-ignore set with optional gitignore.io enrichment; merges add-only.
@@ -365,6 +367,24 @@ Every `docs/specs/<slug>.md` must contain these inside ````plantuml```` fences; 
 - **Dependency graph** — directed, acyclic. First line is the comment `' @kind dependency-graph` to identify the block.
 
 Configured at `project.json → artifacts.required_diagrams.spec`.
+
+### §4.8 Central system spec (`docs/system/`)
+
+The durable structural model of the system. `scout` reconciles against it instead of rediscovering the codebase each cycle, and a per-work spec **references** an element rather than re-deriving it (§9).
+
+| Directory | Holds |
+|---|---|
+| `docs/system/concepts/` | authored concept nodes, one file per concept, anchors in frontmatter |
+| `docs/system/elements/` | element records materialized from those anchors, one file per element |
+| `docs/system/diagrams/` | one PlantUML shard per element, delimited by `!startsub <id>` |
+
+It is a **spec artifact, not memory**: it lives under `docs/`, the canonical memory category list never walks it, and it is reviewed rather than self-healing. Helpers live at `.claude/skills/workspace/` (materialize, reconcile, digest, edges, coverage, contribute); the governed surface and the diagram-kind witness registry are configured in `project.json`.
+
+Three flags gate the layer, all default-off and absent from the shipped template so a consumer install is inert until it opts in: `memory.workspace.enabled` (scout reconciliation), `memory.architecture_map.enabled` (concept layer, derived edges, session-start concept map), `memory.annotations.enabled` (code annotations resolvable by `scout`).
+
+Records are one file per entity with no on-disk aggregate index — the index is rebuilt on read — so concurrent contributions merge textually. Element ids derive from the anchor, so two branches deriving the same anchor produce the same file. Staleness is decided by a declared witness (`anchor-digest`, a named `test`, or `none`), never by a clock; a witness-less diagram is permitted but never citable as evidence.
+
+A project that is not this one bootstraps its own corpus with `/spec-sync`, which proposes a concept map from a scan and materializes only after a human confirms it.
 
 ---
 
@@ -501,6 +521,8 @@ Three read-only spec-review skills run before implementation (in main context �
 - `spec-diagram-review` — cross-consistency (C4 ↔ dependency graph ↔ class diagram ↔ DDL).
 - `spec-traceability-review` — every spec AC traces to a real upstream AC.
 
+**A spec is a diff against the central system spec.** The structural model is not re-derived per cycle: `docs/system/` (§4.8) holds it once, and a spec satisfies a required diagram kind by referencing an element rather than redrawing it. Diagram authority stays split by question and no location overrides another — `project.json → artifacts.required_diagrams.spec` decides which kinds a spec must carry, `docs/system/` owns the structural model, and `.claude/skills/spec/template.md` owns author-facing shape.
+
 ---
 
 ## §10 — Writing discipline
@@ -606,6 +628,8 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 
 **Archive is append-only.** A bundle directory at `<date>/<slug>/` is never overwritten; the script refuses if a target file already exists. Re-runs only land new slugs.
 
+**Archive also syncs the central system spec.** `/archive` folds the landed change back into `docs/system/` (§4.8) so the model stays true to what is on disk: records and derived edges are applied for the anchors this diff actually touched, and a digest is re-stamped only for those. Anything a scanner cannot check — rationale links, behavioural diagrams, concept membership — is proposed for curation rather than written. There is no bulk-refresh path; re-stamping every element would make the model permanently green and launder the drift the digest exists to catch.
+
 ---
 
 ## §13 — Rebuild protocol
@@ -620,7 +644,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 
 **Step 4:** Write `src/agents/swarm-worker.template.md` (canonical-body store, per §4.2) — the only subagent template. Then render `.claude/agents/swarm-worker.md` from it with default tokens. The template carries four tokens — `{{NAME}}`, `{{DESCRIPTION}}`, `{{SKILLS}}`, `{{ROLE_LINE}}`. Default `SKILLS` is the YAML list block `  - scenario\n  - implement` (the worker's two mandatory sub-skills). Render-parity holds at this stage. `/init-project` later re-renders the worker with stack-aware tokens when the recommender flags stack-specific skills to preload via `additions.swarm_worker_skills`.
 
-**Step 5:** Write `.claude/skills/` for the 56 skills (§4.3) — 42 workflow/worker/orchestration/memory/alt-track/sprint/roadmap skills you author (the +12 over 29 are the `brainstorm` phase helper, the `standup` generator, the `commit-planner` + `retrospective` cycle generators, the `gitignore` setup skill, the `sprint-plan` + `sprint-oracle` + `org-dispatch` sprint/org skills, the `sprint-planner` next-sprint selector, the `power` batch-sprint track skill, and the `roadmap-planner` + `roadmap-sync` roadmap skills) plus 10 shared globals plus 1 navigation skill plus 1 audit skill plus 2 maintenance skills. The breakdown: artifact drafting (4) + workflow phases (10) + phase workers (5: `scenario`, `implement`, `verify`, `prose`, `design-ui`) + spec helpers (5: `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review`, `spec-rollout-enforceability-review`) + orchestration (3: `harness`, `swarm-plan`, `swarm-dispatch`) + memory (1: `memory-flush`) + navigation (1: `code-browser`) + phase helpers (1: `brainstorm`) + generators (4: `whatsnew`, `standup`, `commit-planner`, `retrospective`) + shared globals (10: `claude-automation-recommender`, `code-structure`, `humanizer`, `documentation`, `technical-tutorials`, `copywriting`, `impeccable`, `reader-level`, `technical-writing`, `technical-writer`) + drift defender (1: `audit-baseline`) + alternate tracks (2: `chore`, `power`) + maintenance (2: `upgrade-project`, `gitignore`) + sprint/org (5: `sprint-plan`, `sprint-oracle`, `sprint-planner`, `org-dispatch`, `companion`) + roadmap (2: `roadmap-planner`, `roadmap-sync`). The vendored `claude-automation-recommender` (Apache 2.0, from `claude-code-setup`), the writing/quality globals, and the design global ship unchanged with their licenses intact. Artifact skills (intake, brd, spec, rca) each ship a `template.md`. Helper scripts: swarm-plan gets `validate.mjs`, swarm-dispatch gets `swarm_merge.mjs`, spec-render gets `render.mjs`, spec-lint gets `lint.mjs`, archive gets `archive.sh`, audit-baseline gets `audit.mjs`, code-browser gets `discover.mjs` + `walk.mjs`. All helper scripts `chmod +x`.
+**Step 5:** Write `.claude/skills/` for the 57 skills (§4.3) — 42 workflow/worker/orchestration/memory/alt-track/sprint/roadmap skills you author (the +12 over 29 are the `brainstorm` phase helper, the `standup` generator, the `commit-planner` + `retrospective` cycle generators, the `gitignore` setup skill, the `sprint-plan` + `sprint-oracle` + `org-dispatch` sprint/org skills, the `sprint-planner` next-sprint selector, the `power` batch-sprint track skill, and the `roadmap-planner` + `roadmap-sync` roadmap skills) plus 10 shared globals plus 1 navigation skill plus 1 audit skill plus 3 maintenance skills. The breakdown: artifact drafting (4) + workflow phases (10) + phase workers (5: `scenario`, `implement`, `verify`, `prose`, `design-ui`) + spec helpers (5: `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review`, `spec-rollout-enforceability-review`) + orchestration (3: `harness`, `swarm-plan`, `swarm-dispatch`) + memory (1: `memory-flush`) + navigation (1: `code-browser`) + phase helpers (1: `brainstorm`) + generators (4: `whatsnew`, `standup`, `commit-planner`, `retrospective`) + shared globals (10: `claude-automation-recommender`, `code-structure`, `humanizer`, `documentation`, `technical-tutorials`, `copywriting`, `impeccable`, `reader-level`, `technical-writing`, `technical-writer`) + drift defender (1: `audit-baseline`) + alternate tracks (2: `chore`, `power`) + maintenance (3: `upgrade-project`, `gitignore`, `spec-sync`) + sprint/org (5: `sprint-plan`, `sprint-oracle`, `sprint-planner`, `org-dispatch`, `companion`) + roadmap (2: `roadmap-planner`, `roadmap-sync`). The vendored `claude-automation-recommender` (Apache 2.0, from `claude-code-setup`), the writing/quality globals, and the design global ship unchanged with their licenses intact. Artifact skills (intake, brd, spec, rca) each ship a `template.md`. Helper scripts: swarm-plan gets `validate.mjs`, swarm-dispatch gets `swarm_merge.mjs`, spec-render gets `render.mjs`, spec-lint gets `lint.mjs`, archive gets `archive.sh`, audit-baseline gets `audit.mjs`, code-browser gets `discover.mjs` + `walk.mjs`. All helper scripts `chmod +x`.
 
 **Step 6:** Write `.claude/commands/*.md` for the 6 commands (§4.4) — four consent gates plus the bootstrap and doctor. All carry `disable-model-invocation: true` as belt-and-braces; structural user-only is enforced by their directory.
 
