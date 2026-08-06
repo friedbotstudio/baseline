@@ -61,3 +61,4 @@
 - promoted :: .claude/skills/workspace/sync.mjs → landmarks.md
 - promoted :: backlog → spec-extract-interface-digest-mjs-and-repoint-importers-b986
 - promoted :: backlog → the-fix-is-one-line-assertnotraversal-named-before-2afb
+- discarded :: backlog → the-fix-is-to-isolate-both-writers-build-cfcc

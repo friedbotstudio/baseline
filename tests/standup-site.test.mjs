@@ -22,24 +22,26 @@
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ensureSiteBuilt, renderedPath } from './helpers/site-build.mjs';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 // ---- Foundation: paths, build, readers --------------------------------
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(REPO_ROOT, 'obj/site');
 const FLUFF = /\b(seamless|powerful|revolutionary|effortless)\b/i;
 const EM_DASH = /—|&mdash;|&#8212;|&#x2014;/i;
 
+// The build goes to this process's own output dir (helpers/site-build.mjs), never
+// the live obj/site that audit-baseline reads concurrently.
 function buildSite() {
-  execFileSync('npm', ['run', 'build:site'], { cwd: REPO_ROOT, stdio: 'pipe' });
+  ensureSiteBuilt();
 }
 
 function readBuilt(rel) {
-  const p = join(OUT, rel);
+  const p = renderedPath(rel);
   return existsSync(p) ? readFileSync(p, 'utf8') : null;
 }
 
@@ -72,7 +74,7 @@ before(() => {
 
 describe('standup site — page emitted', () => {
   it('test_when_site_built_then_standup_page_emitted', () => {
-    assert.ok(existsSync(join(OUT, 'standup/index.html')), 'obj/site/standup/index.html must be emitted');
+    assert.ok(existsSync(renderedPath('standup/index.html')), 'standup/index.html must be emitted');
   });
 });
 
@@ -148,7 +150,6 @@ describe('standup site — reduced motion', () => {
 
 describe('standup site — audit neutrality', () => {
   it('test_when_audit_after_change_then_exit_zero', () => {
-    execFileSync('node', ['.claude/skills/audit-baseline/audit.mjs'], { cwd: REPO_ROOT, stdio: 'pipe' });
-    // execFileSync throws on non-zero exit; reaching here means audit exited 0.
+    runRepoAudit({ label: 'standup-site' });
   });
 });

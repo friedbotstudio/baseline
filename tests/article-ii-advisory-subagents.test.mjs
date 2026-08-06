@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 // erp-portables slice A (AC-001) — Article II §4.2-A: read-only advisory
 // subagents. The amendment re-scopes Article II's delegation ban from
@@ -100,7 +100,10 @@ test('test_when_amended_then_constitution_mirrors_stay_in_lockstep', () => {
 });
 
 test('test_when_full_change_then_audit_baseline_passes', () => {
-  // Exit 0 = PASS. A non-zero exit throws with the audit's FAIL output.
-  const out = execFileSync('node', ['.claude/skills/audit-baseline/audit.mjs'], { cwd: ROOT, encoding: 'utf8' });
+  // Exit 0 = PASS. A non-zero exit throws with the FAIL rows AND writes the full
+  // payload to .claude/state/logs/ — the bare execFileSync this replaced lost it
+  // to reporter truncation (backlog: full-suite-intermittently-fails-three-
+  // audit-spawning-tests).
+  const out = runRepoAudit({ label: 'article-ii-advisory-subagents' });
   assert.match(out, /PASS|OK/i, 'audit-baseline reports PASS after the amendment + template rebuild');
 });

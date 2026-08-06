@@ -17,9 +17,11 @@ import { spawnSync } from 'node:child_process';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// Clone only (rsync, no build) into a fresh tmp PKG_ROOT. Internal factoring
-// shared by cloneAndBuild; not exported (no external consumer).
-async function cloneRepo(label) {
+// Clone only (rsync, no build) into a fresh tmp PKG_ROOT. Exported for the
+// callers that run their OWN build variant in the clone (manifest-refresh drives
+// `build-template.sh --manifest-only`, which cloneAndBuild's default build is
+// not) — the clone is the isolation; the build flags are the caller's business.
+export async function cloneRepo(label) {
   const tmp = await mkdtemp(join(tmpdir(), label));
   const rsync = spawnSync('rsync', [
     '-a',

@@ -33,11 +33,40 @@ default run is reliable. The always-on packaging smoke
 running `npm pack --dry-run --ignore-scripts`, which skips `prepack` entirely and
 therefore never rebuilds the live tree.
 
-The invariant is enforced by `tests/no-live-objtemplate-reads.test.mjs`: it fails
-if any default-tier test executes a build or `npm pack` against the live
-`obj/template` without isolation or a `PUBLISH_TESTS` gate. The scan strips
-comments first, so a test that only mentions `npm pack` in a comment is not
-mistaken for a writer.
+The invariant is enforced by `tests/no-live-objtemplate-reads.test.mjs`. It fails
+if any default-tier test executes a build or `npm pack` against a live `obj/`
+tree without isolation or a `PUBLISH_TESTS` gate.
+
+Because comments are stripped before the scan, a test that merely mentions a
+build in prose can never be mistaken for a writer. The scan will also follow a
+build script reached through a constant: binding the path to a variable and
+executing that hides nothing. It reads the shared helpers as well as the test
+files. A build moved behind a helper writes the same tree while staying invisible
+to a `*.test.mjs`-only scan.
+
+### The second live tree
+
+To see what the audit can race against, look at what its checks read.
+`checks/context.mjs:37` loads the manifest from `obj/template`. Five rendered
+pages are read out of `obj/site` by `checks/docsite-drift.mjs`: the index, plus
+the hook, workflow, skill and MCP rosters. Under a parallel run both trees are
+shared mutable state, so any test that rebuilds either one will race every
+sibling test running the audit against it.
+
+When only the first tree was true, site builds sat outside the writer scan. The
+docsite check landed afterwards. Nothing noticed, because the exclusion was
+already written down and looked deliberate.
+
+A site-consuming test should therefore render into a directory of its own,
+through `tests/helpers/site-build.mjs`. `buildSiteIsolated` hands eleventy an
+`--output` and a fresh temp dir; `ensureSiteBuilt` does that once per test
+process. No clone is needed. The flag overrides `dir.output` from the eleventy
+config, and `site-src/` stays read-only during a run, so only the write target
+must move.
+
+Before relying on that, note one consequence. The live `obj/site` is
+only as fresh as your last explicit build. Should the audit report a docsite page
+missing roster names, suspect a stale tree first. The FAIL detail will say so.
 
 ### CI parity
 
@@ -53,6 +82,14 @@ Tests that read the shipped `obj/template` tree build their own isolated copy in
 a temp dir via `tests/helpers/clone-and-build.mjs` (`cloneAndBuild`), rather than
 reading the live `obj/template` that real builds rebuild. Follow that pattern for
 any new test that needs the built tree.
+
+To drive a build *variant*, clone as well and supply your own flags. `cloneRepo`
+is exported for those cases.
+
+`--manifest-only` is an incremental refresh. It skips the stages that create
+`obj/template/docs/init`, so it must run over a template tree that already
+exists. `tests/manifest-refresh.test.mjs` therefore takes a full `cloneAndBuild`
+first.
 
 ### The build lock is keyed per target
 

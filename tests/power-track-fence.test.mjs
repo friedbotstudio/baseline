@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const HERE = path.dirname(__filename);
@@ -106,13 +107,7 @@ describe('the baseline audit stays green after the fence lands', () => {
   // AC-009 — the drift oracle and CI both gate on this; assert it directly rather
   // than trusting that `integrate` will notice.
   it('test_when_audit_baseline_runs_then_it_exits_zero', () => {
-    const audit = path.join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs');
-    const result = spawnSync('node', [audit], { cwd: REPO_ROOT, encoding: 'utf8' });
-    assert.equal(
-      result.status,
-      0,
-      `audit-baseline must exit 0\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
-    );
+    runRepoAudit({ label: 'power-track-fence' });
   });
 });
 

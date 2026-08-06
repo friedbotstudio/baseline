@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(REPO_ROOT, rel), 'utf8');
@@ -21,10 +21,8 @@ const read = (rel) => readFileSync(resolve(REPO_ROOT, rel), 'utf8');
 
 describe('AC-10 audit-baseline governance counts unchanged', () => {
   it('test_when_audit_baseline_runs_then_counts_unchanged', () => {
-    const r = spawnSync('node', [resolve(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs')], { encoding: 'utf8' });
-    const out = (r.stdout || '') + (r.stderr || '');
-    // audit must still PASS overall (exit 0) — no count drift introduced.
-    assert.equal(r.status, 0, `audit-baseline must exit 0 (counts unchanged); output:\n${out}`);
+    // Throws with the FAIL rows + a capture-log path when the audit exits non-zero.
+    const out = runRepoAudit({ label: 'thread-shelving-governance' });
     // and must not report a skill/command/agent/hook count mismatch.
     assert.equal(/count mismatch|expected \d+ (skills|commands|agents|hooks)/i.test(out), false,
       `audit-baseline reported a count mismatch:\n${out}`);

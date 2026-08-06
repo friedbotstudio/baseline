@@ -97,7 +97,10 @@ export function run(ctx) {
       missing.length === 0 ? 'PASS' : 'FAIL',
       missing.length === 0
         ? `${expected.length} listed`
-        : `missing: ${missing.join(', ')}`,
+        // The test suite builds the site into its own output dir, so obj/site is
+        // only as fresh as the last explicit build — name the command rather
+        // than leaving a stale tree looking like a template bug.
+        : `missing: ${missing.join(', ')} — stale? run npm run build:site`,
     );
   }
 

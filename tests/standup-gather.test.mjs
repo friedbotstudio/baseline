@@ -22,6 +22,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, copyFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 // ---- Foundation: paths + module loader ---------------------------------
 
@@ -230,8 +231,8 @@ describe('standup gather — determinism', () => {
 describe('standup governance — audit reconciles at 41', () => {
   it('test_when_skill_and_helper_land_then_audit_baseline_exits_zero_at_41', () => {
     // AC-008. Exercises the live repo (not a fixture): the count cascade must reconcile.
-    execFileSync('node', ['.claude/skills/audit-baseline/audit.mjs'], { cwd: REPO_ROOT, stdio: 'pipe' });
-    // execFileSync throws on non-zero exit; reaching here means audit exited 0.
+    // Throws on non-zero exit, capturing the audit's output to .claude/state/logs/.
+    runRepoAudit({ label: 'standup-gather' });
   });
 });
 

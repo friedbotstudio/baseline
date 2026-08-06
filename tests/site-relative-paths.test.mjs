@@ -6,43 +6,30 @@
 //
 // Unit tests for the underlying `relUrl` function live at tests/rel-url.test.mjs.
 //
-// The smoke test invokes the build before walking — slower but reliable.
-// Skip the build step (when iterating locally and obj/site/ is fresh) by
-// setting SITE_RELATIVE_PATHS_SKIP_BUILD=1.
+// The smoke test builds before walking — slower but reliable. The build goes to
+// this process's own output dir via helpers/site-build.mjs, never the live
+// obj/site, which audit-baseline reads concurrently. Skip the build (when
+// iterating locally against a tree you just built) with SITE_SKIP_BUILD=1.
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SITE_DIR = path.join(REPO_ROOT, 'obj/site');
-const skipBuild = process.env.SITE_RELATIVE_PATHS_SKIP_BUILD === '1';
+import { ensureSiteBuilt, renderedPath, htmlFilesIn } from './helpers/site-build.mjs';
 
 describe('site smoke — built artifact has no internal leading-slash refs', () => {
   before(() => {
-    if (skipBuild) return;
-    const result = spawnSync('npm', ['run', 'build:site'], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-      timeout: 60_000,
-    });
-    if (result.status !== 0) {
-      throw new Error(
-        `npm run build:site failed (exit ${result.status})\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
-      );
-    }
+    ensureSiteBuilt();
   });
 
   it('test_when_obj_site_html_walked_then_no_link_or_script_or_a_or_img_uses_internal_leading_slash', () => {
+    const siteDir = renderedPath('.');
     assert.ok(
-      existsSync(SITE_DIR),
-      `obj/site/ does not exist; run \`npm run build:site\` (or unset SITE_RELATIVE_PATHS_SKIP_BUILD=1)`
+      existsSync(siteDir),
+      `the rendered site is missing; unset SITE_SKIP_BUILD=1 or run \`npm run build:site\``
     );
-    const htmlFiles = walkHtml(SITE_DIR);
-    assert.ok(htmlFiles.length > 0, `obj/site/ contained no .html files`);
+    const htmlFiles = htmlFilesIn(siteDir);
+    assert.ok(htmlFiles.length > 0, `the rendered site contained no .html files`);
 
     // Match href= or src= whose value starts with `/` followed by a
     // non-slash, non-fragment character. Captures things like:
@@ -54,7 +41,7 @@ describe('site smoke — built artifact has no internal leading-slash refs', () 
     const offenders = [];
     for (const file of htmlFiles) {
       const text = readFileSync(file, 'utf8');
-      const rel = path.relative(REPO_ROOT, file);
+      const rel = path.relative(siteDir, file);
       for (const m of text.matchAll(RE)) {
         const lineNo = text.slice(0, m.index).split('\n').length;
         offenders.push(`${rel}:${lineNo}: ${m[1]}="${m[2]}"`);
@@ -67,17 +54,3 @@ describe('site smoke — built artifact has no internal leading-slash refs', () 
     );
   });
 });
-
-function walkHtml(dir) {
-  const out = [];
-  for (const name of readdirSync(dir)) {
-    const full = path.join(dir, name);
-    const st = statSync(full);
-    if (st.isDirectory()) {
-      out.push(...walkHtml(full));
-    } else if (name.endsWith('.html')) {
-      out.push(full);
-    }
-  }
-  return out;
-}

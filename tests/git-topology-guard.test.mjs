@@ -24,6 +24,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
@@ -246,8 +247,7 @@ describe('§Behavior #8 — audit obligations (AC-012)', () => {
   const readRepo = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8');
 
   it('test_when_audit_baseline_runs_then_exit0', () => {
-    const r = spawnSync('node', [join(REPO_ROOT, '.claude/skills/audit-baseline/audit.mjs')], { encoding: 'utf8', cwd: REPO_ROOT });
-    assert.equal(r.status, 0, `audit-baseline must exit 0; got ${r.status}\n${(r.stdout || '').slice(-500)}`);
+    runRepoAudit({ label: 'git-topology-guard' });
   });
 
   it('test_when_top_level_hooks_counted_then_matches_declared_roster', () => {

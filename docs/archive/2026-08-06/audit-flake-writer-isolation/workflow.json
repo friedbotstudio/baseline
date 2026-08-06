@@ -1,0 +1,46 @@
+{
+  "request": "Fix the intermittent audit-baseline test failures: isolate the default-tier live-tree writers (build-template.sh --manifest-only in manifest-refresh.test.mjs, npm run build:site in the site tests) so they stop racing the audit's reads of obj/template/.claude/manifest.json and obj/site/**; close the two blind spots in tests/no-live-objtemplate-reads.test.mjs (variable-indirected build invocations; build:site excluded despite docsite-drift.mjs now reading obj/site); and add failure-capture instrumentation so a surviving mechanism is caught with evidence next time.",
+  "slug": "audit-flake-writer-isolation",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "The mitigation already exists in-repo: landmine `live-objtemplate-rebuild-races-parallel-test-readers` prescribes it (mitigations 1 and 2); `tests/build-template.test.mjs` + `tests/build-template-build-id.test.mjs` + `tests/template-payload.test.mjs` isolate live builds via the PKG_ROOT override into a mkdtemp root; `tests/helpers/clone-and-build.mjs` is the shipped isolation helper; the 2026-06-05 reduce-test-suite-runtime landing gated the npm-pack writers behind PUBLISH_TESTS and added `tests/no-live-objtemplate-reads.test.mjs` as the regression guard. This change copies that pattern onto two writers the guard misses. Backlog key: full-suite-intermittently-fails-three-audit-spawning-tests.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "full-suite-intermittently-fails-three-audit-spawning-tests"
+  ],
+  "created_at": 1786036070,
+  "updated_at": 1786036070,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}

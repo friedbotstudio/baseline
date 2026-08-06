@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { runRepoAudit } from './helpers/audit-repo.mjs';
 import { REPO_ROOT } from './helpers/epic-close-fixture.mjs';
 import { EXPECTED_HOOKS } from '../.claude/skills/audit-baseline/expected-baseline.mjs';
 
@@ -19,11 +19,9 @@ const read = (rel) => fs.readFile(path.join(REPO_ROOT, rel), 'utf8');
 
 describe('epic-close governance — counts + mirror (AC-007)', () => {
   it('test_when_audit_baseline_runs_then_it_passes', () => {
-    // audit-baseline is read-only; exit 0 == PASS. execFileSync throws on non-zero.
-    execFileSync('node', ['.claude/skills/audit-baseline/audit.mjs'], {
-      cwd: REPO_ROOT,
-      encoding: 'utf8',
-    });
+    // audit-baseline is read-only; exit 0 == PASS. runRepoAudit throws on
+    // non-zero AND captures the audit's own output to .claude/state/logs/.
+    runRepoAudit({ label: 'epic-close-governance' });
   });
 
   it('test_when_counts_derived_then_skills_and_hooks_match_declarations', async () => {
