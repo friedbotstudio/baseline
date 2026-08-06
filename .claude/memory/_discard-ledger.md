@@ -62,3 +62,4 @@
 - promoted :: backlog → spec-extract-interface-digest-mjs-and-repoint-importers-b986
 - promoted :: backlog → the-fix-is-one-line-assertnotraversal-named-before-2afb
 - discarded :: backlog → the-fix-is-to-isolate-both-writers-build-cfcc
+- discarded :: .claude/skills/audit-baseline/checks/hook-decision-paths.mjs → landmarks.md

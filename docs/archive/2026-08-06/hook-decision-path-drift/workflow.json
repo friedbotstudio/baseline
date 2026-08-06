@@ -1,0 +1,46 @@
+{
+  "request": "Close all three action items of RCA docs/rca/2026-08-06-harness-continuation-false-misfire.md. AI-01: reconcile the harness_continuation description in CLAUDE.md Article VIII, .claude/CONSTITUTION.md:124, and .claude/skills/harness/SKILL.md against docs/init/seed.md — describe the disjunctive gate (Path A + Path B consent-resume) and delete the \"silent otherwise\" / \"Silent on any rung fail\" claims. AI-02: add an audit-baseline check that fails when a hook's governance-doc description omits a decision path the hook implements. AI-03: record the diagnosis-order landmine (implementation + seed.md before the constitution layer when a hook's behavior contradicts the docs).",
+  "slug": "hook-decision-path-drift",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Derives from docs/rca/2026-08-06-harness-continuation-false-misfire.md action items AI-01, AI-02, AI-03. The authoritative source text for the reconciliation is docs/init/seed.md:145 (§4.1 hook narrative), :175 (hook table row), and :467 (Safety net + consent-resume), all of which already document Path A and Path B correctly. The drifted copies are CLAUDE.md Article VIII's hook table row, .claude/CONSTITUTION.md:124, and .claude/skills/harness/SKILL.md's \"The safety net\" section. The implementation is .claude/hooks/harness_continuation.mjs:8-20 (header contract) and :100-109 (the disjunctive gate).",
+  "track_reason": "Leaner tracks cannot carry AI-02. The chore track derives `tdd` into its exceptions and skips /scenario + /implement, so it structurally cannot deliver an audit-baseline check — which is code with a testable contract. Human chose one landing over two sequential workflows (AskUserQuestion, 2026-08-06).",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786041614,
+  "updated_at": 1786041614,
+  "rightsize_base": [
+    ".claude/output-styles/",
+    "docs/rca/2026-08-06-harness-continuation-false-misfire.md"
+  ]
+}

@@ -30,6 +30,7 @@ import { run as crossDocCounts } from './checks/cross-doc-counts.mjs';
 import { run as quickfixInvariants } from './checks/quickfix-invariants.mjs';
 import { run as derivedCountSurfaces } from './checks/derived-count-surfaces.mjs';
 import { run as docsiteDrift } from './checks/docsite-drift.mjs';
+import { run as hookDecisionPaths } from './checks/hook-decision-paths.mjs';
 
 export {
   checkSurfaceCount, checkByCategorySum,
@@ -81,6 +82,7 @@ const CHECKS = [
   counts, skillOwnership, constitution, memory, srcTemplatesA, srcTemplatesB,
   helperScripts, settingsWiring, projectJson, mcpServers, licenses, designUiSurface,
   crossDocCounts, quickfixInvariants, derivedCountSurfaces, docsiteDrift,
+  hookDecisionPaths,
 ];
 const results = [];
 for (const check of CHECKS) results.push(...check(ctx));

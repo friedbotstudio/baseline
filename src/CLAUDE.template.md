@@ -111,7 +111,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 - You SHALL NOT self-approve at any consent gate. You SHALL NOT simulate approval. You SHALL NOT write approval tokens directly.
 - Every successful phase invocation SHALL `TaskUpdate` to `completed`, append the phase name to `workflow.json → completed`, and refresh marker + `harness_state` (marker FIRST) before continuing.
 - `workflow.json → completed` is the durable truth across sessions; the TaskList is session-bound. When they disagree, trust `workflow.json` and re-seed.
-- The `harness_continuation` Stop hook is a safety net, not the primary driver. A healthy `Skill(harness)` invocation runs to a clean exit on its own; the hook re-fires only when the loop was interrupted mid-flow with `state: "continue"` + marker present.
+- The `harness_continuation` Stop hook is not the driver — the loop is. Path A re-fires a loop interrupted mid-flow (`state: "continue"` + marker); Path B re-fires once the human satisfies a consent gate. (annex)
 
 **Integrate-failure decision tree.** When `/integrate` fails inside the loop, you SHALL classify:
 
@@ -220,7 +220,7 @@ The 26 hooks in `.claude/hooks/` are the structural enforcement of this constitu
 | `phase_timer` | PostToolUse / Edit\|Write\|MultiEdit + Bash | Art. V | Observe-only; stamps per-phase timing on `completed[]` growth, incl. Bash-driven `workflow.json` writes. Never blocks or mutates. |
 | `memory_session_start` | SessionStart | Art. III, IX | Inject memory index + resume snapshot at session start |
 | `memory_stop` | Stop | Art. IX | Auto-extract memory candidates each turn-end |
-| `harness_continuation` | Stop | Art. V | Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex) |
+| `harness_continuation` | Stop | Art. V | Disjunctive gate: Path A re-fires mid-flow, Path B after consent; never writes consent. (annex) |
 | `memory_pre_compact` | PreCompact | Art. IX | Capture resume snapshot before context compaction |
 | `consent_gate_grant` | UserPromptSubmit | Art. IV gates A/B/C, Art. VII | Detect consent commands in user input and write the gate marker, OUTSIDE Claude's tool boundary |
 

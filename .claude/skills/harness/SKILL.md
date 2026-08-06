@@ -38,7 +38,12 @@ Exactly three fields. No `written_at`, no `tick_count` — those tunables were r
 
 ### The safety net
 
-The `harness_continuation` Stop hook (Article VIII) is a safety net only. Its three-rung gate (`stop_hook_active` absent → `.harness_active` marker exists → `state == "continue"`) emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` **only when the loop exited mid-flow** without writing `yielded`/`done` — i.e., the loop iteration completed an arm-but-did-not-exit-cleanly path. In normal operation (loop runs to gate/failure/done), the hook sees `state != continue` or marker absent, stays silent, and the turn ends naturally. The hook is unchanged by the internal-loop redesign; what changed is the harness skill, which now exits the loop with `yielded`/`done` in the common case, leaving the hook quiescent.
+The `harness_continuation` Stop hook (Article VIII) is a **disjunctive** gate with two emission paths, neither of which is the primary phase-driver — the loop is. Both are gated by rung 1 (`stop_hook_active` absent on the payload).
+
+- **Path A — the safety net** (rungs 2+3): `.harness_active` marker exists AND `state == "continue"`. It emits `{"decision":"block","reason":"…invoke Skill(harness)…"}` **only when the loop exited mid-flow** without writing `yielded`/`done` — the arm-but-did-not-exit-cleanly path. When the loop runs to gate/failure/done, Path A sees `state != continue` or the marker absent and stays silent.
+- **Path B — consent-resume** (rung 4): `state == "yielded"` AND `workflow.json` parses AND a consent/approval token (`commit_consent`, `push_consent`, `spec_approvals/<slug>.approval`, `swarm_approvals/<slug>.approval`) has mtime newer than `harness_state`. This is the **normal case at a satisfied gate**: the user's just-typed `/grant-commit` (or `/approve-direction`, `/approve-swarm`, `/grant-push`) resumes the workflow on the same turn, with no second `/harness`. A gate that is still *pending* has no fresh token, so Path B cannot fire early.
+
+Expect Path B to fire every time you resume from a consent gate — it is not a misfire. The hook logs which path it took to `.claude/state/logs/harness_continuation.log`; read that before diagnosing. Authoritative text: `seed.md` §4.1 + §4.2. Drift history: `docs/rca/2026-08-06-harness-continuation-false-misfire.md`.
 
 ### Marker-then-state ordering (every state-write)
 
