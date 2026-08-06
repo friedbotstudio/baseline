@@ -2,7 +2,7 @@
 key: assertnotraversal-rejects-dotdot-but-normalizes-absolute-anchors-7e51
 category: backlog
 scope: [security, tdd]
-status: open
+status: picked-up
 raised-on: 2026-08-06
 raised-in-context: workspace-corpus-backfill (`/security` LOW finding, OWASP A04 / CWE-22)
 source: assistant-deferral
@@ -10,6 +10,7 @@ estimated-effort: small (one guard clause in tree.mjs + a test; no consumer chan
 verified-at: 571b6a3
 last-touched: 2026-08-06
 caveat: this is a CONSISTENCY fix, not an exposure fix. Probed 2026-08-06: an anchor of `/etc/passwd` under rootDir `.` resolves to `etc/passwd` and returns `state: "dangling"` — nothing reads outside the tree today. Do not let the low severity turn into "wontfix"; the value is that the stated rule becomes true.
+superseded-at: 2026-08-06
 ---
 
 - Intent: `assertNoTraversal` (now `.claude/skills/workspace/tree.mjs`) rejects a `..` segment but says nothing about a leading `/`. Node's `join('.', '/etc/passwd')` yields `etc/passwd`, so an absolute anchor is silently rewritten into a different path than the author wrote.

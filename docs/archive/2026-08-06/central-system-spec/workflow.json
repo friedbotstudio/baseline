@@ -1,0 +1,247 @@
+{
+  "request": "Central system spec — relocate the workspace corpus from .claude/memory/workspace/ to docs/system/ and make it the system's source-of-truth diagram-driven spec. Seven tickets: A1 genesis amendment (seed.md/CLAUDE.md + three superseding decisions), A2 relocation + reader repointing + consumer-template fix, B consumer-general authoring surface, C diagram-kind + witness registry, D spec-as-diff, E /archive sync-back, F /spec-sync brownfield command + git merge semantics. Approved plan at .config/plans/very-well-i-accept-sprightly-clover.md.",
+  "slug": "central-system-spec",
+  "track_id": "power",
+  "novelty": "novel",
+  "novelty_evidence": "Searched docs/init/seed.md for architecture_map|workspace|corpus|concept layer|anchor_digest|seed-map -> zero hits: the corpus has no genesis entry, so a docs/-sited central spec has no precedent to copy. No existing diagram-kind or witness registry anywhere in the tree; no /spec-sync precedent command. Partially spec-derived: the unwired write leg (.claude/skills/workspace/contribute.mjs -> applyContribution, zero callers) and the merge-semantics open question at docs/archive/2026-08-04/living-system-model/spec.md:351 (slice E) are carried items, not new surface.",
+  "track_reason": "Human-selected at triage (2026-08-06) over the epic track. Power amortizes the mechanical phases once across the batch and reuses the epic sliced-spec shape, while security still runs per ticket and /commit splits the tree into ordered Conventional Commits under one workflow-scoped grant. Accepted consequence: intake, scout and research are excepted by the power DAG — the blast-radius discovery they would have produced was done in the triage conversation (68% archived-spec coverage gap over 526 governed files; the obj/template manifest carrying 239 baseline-model files; the eight corpus readers; seed-map.mjs as the single git conflict hot spot) and lands in the spec instead.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "tickets": [
+    {
+      "id": "A1",
+      "title": "Genesis amendment: seed.md + CLAUDE.md + three superseding decisions",
+      "write_surface": [
+        "docs/init/seed.md",
+        "src/seed.template.md",
+        "CLAUDE.md",
+        "src/CLAUDE.template.md",
+        ".claude/CONSTITUTION.md",
+        ".claude/memory/decisions/**"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ],
+      "notes": "Article I.4 ordering: seed.md first, then CLAUDE.md, then implementation. Byte-equal mirrors. CLAUDE.md 40,000-char cap enforced by audit-baseline. Supersedes architecture-map D2 (kind exclusion -> witness rule), clarifies D3 (no stored views applies to composed views, not authored records), narrows D8 (only witness-less diagrams are non-citable). Blocks every other ticket."
+    },
+    {
+      "id": "A2",
+      "title": "Relocate the corpus to docs/system/ and repoint every reader",
+      "write_surface": [
+        "docs/system/**",
+        ".claude/memory/workspace/**",
+        ".claude/memory/README.md",
+        ".claude/hooks/lib/memory_session_start.mjs",
+        ".claude/skills/memory-index/resolve.mjs",
+        ".claude/skills/workspace/*.mjs",
+        ".claude/skills/scout/SKILL.md",
+        ".claude/skills/memory-flush/SKILL.md",
+        ".claude/skills/code-structure/SKILL.md",
+        ".claude/skills/spec/template.md",
+        "tests/workspace-*.test.mjs"
+      ],
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009"
+      ],
+      "notes": "239 files move. obj/template/docs ships only init/, so the relocation removes the corpus from the shipped manifest and fixes consumer contamination plus the 112 BINARY_PROMPT upgrade prompts as a side effect. 13 helpers take memDir -> rename to specDir; store.mjs workspaceDir() is the single join point. Hoist assertSafeFactKey out of memory-index/migrate.mjs (layer inversion). Move the corpus README section and repoint readme-gate.mjs. Picks up backlog -7e51 (assertNoTraversal absolute-anchor consistency) since tree.mjs is rethreaded here."
+    },
+    {
+      "id": "B",
+      "title": "Consumer-general authoring surface",
+      "write_surface": [
+        ".claude/project.json",
+        ".claude/skills/workspace/seed-map.mjs",
+        ".claude/skills/workspace/coverage.mjs",
+        ".claude/skills/workspace/materialize.mjs",
+        "docs/system/concepts/**",
+        "tests/workspace-*.test.mjs"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-010",
+        "AC-011",
+        "AC-012"
+      ],
+      "notes": "GOVERNED_SURFACE moves to project.json so a non-baseline stack can declare its own roots/extensions/exclusions. CONCEPT_ANCHORS becomes one authored file per concept, deleting seed-map.mjs as a shipped hand-edited file — this removes the Article XII hash-drift blocker and the git conflict hot spot in one change. D5 is preserved: the authored map becomes a directory. Deterministic element ids derived from the anchor land here; /spec-sync depends on them."
+    },
+    {
+      "id": "C",
+      "title": "Diagram-kind and witness registry",
+      "write_surface": [
+        ".claude/project.json",
+        ".claude/skills/workspace/digest.mjs",
+        ".claude/skills/workspace/shards.mjs",
+        ".claude/skills/workspace/reconcile.mjs",
+        "tests/workspace-*.test.mjs"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-013",
+        "AC-014",
+        "AC-015",
+        "AC-016"
+      ],
+      "notes": "A shard declares a kind; each kind declares a witness: anchor-digest (C4 component/container, class, dependency graph), test (sequence, activity, state machine), or none (BPMN, timing, use-case). Mirrors the existing artifacts.diagram_profiles[].when config precedent. The none tier is what makes the corpus usable for project types baseline is not — permitted, marked unwitnessed, never citable under amended D8."
+    },
+    {
+      "id": "D",
+      "title": "Spec-as-diff: a spec satisfies a kind by referencing a corpus element",
+      "write_surface": [
+        ".claude/hooks/lib/write-set-profile.mjs",
+        ".claude/hooks/spec_diagram_presence_guard.mjs",
+        ".claude/skills/spec/SKILL.md",
+        ".claude/skills/spec/template.md",
+        "tests/**"
+      ],
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-017",
+        "AC-018"
+      ],
+      "notes": "spec_diagram_presence_guard.mjs:44 already routes through resolveProfile(content, projectGet), which fails open on every uncertain case — extend the resolver, not the guard. spec/SKILL.md has no corpus reference today; template.md:10-11 already declares the intent (\"Specs REFERENCE the corpus rather than re-deriving it\"), unenforced. Diagram authority stays the deliberate three-way split at template.md:8-15."
+    },
+    {
+      "id": "E",
+      "title": "/archive sync-back: fold the landed diff into the central spec",
+      "write_surface": [
+        ".claude/skills/archive/SKILL.md",
+        ".claude/skills/workspace/contribute.mjs",
+        ".claude/skills/workspace/reconcile.mjs",
+        "tests/workspace-contribute.test.mjs"
+      ],
+      "risk": [
+        "document"
+      ],
+      "acs": [
+        "AC-019",
+        "AC-020"
+      ],
+      "notes": "applyContribution exists with tests and zero callers. Wire it into Phase 10.5, which runs on every committing track. Split by checkability, honoring D3: auto-apply what a scanner verifies (new/removed elements, derived edges, digest re-stamps for anchors the landed diff actually touched); propose for curation what it cannot (rationale links, behavioral diagrams, concept membership). stampAll already refuses to run without an explicit id list, so bulk refresh stays forbidden."
+    },
+    {
+      "id": "F",
+      "title": "/spec-sync brownfield command and git merge semantics",
+      "write_surface": [
+        ".claude/commands/spec-sync.md",
+        ".claude/skills/workspace/materialize.mjs",
+        ".claude/skills/workspace/reconcile.mjs",
+        ".claude/skills/workspace/conflicts.mjs",
+        ".claude/skills/workspace/edges.mjs",
+        "tests/**"
+      ],
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "acs": [
+        "AC-021",
+        "AC-022",
+        "AC-023",
+        "AC-024"
+      ],
+      "notes": "Derive-then-curate, re-runnable: scan and cluster -> human confirms the concept map (always, never skipped) -> materialize -> derive edges + stamp digests -> report coverage gaps. Closes the epic's open merge-semantics question (docs/archive/2026-08-04/living-system-model/spec.md:351): file-per-record with no on-disk aggregate index already makes textual git merge correct, B removes the one shared file, deterministic ids make concurrent derivation converge, and reconcile.mjs gains a post-merge repair pass that reports duplicate anchors and orphan shards rather than auto-resolving. Corpus writes route through /archive on the primary tree so swarm waves never race."
+    }
+  ],
+  "source_backlog_keys": [
+    "assertnotraversal-rejects-dotdot-but-normalizes-absolute-anchors-7e51"
+  ],
+  "created_at": 1786008081,
+  "updated_at": 1786026870,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "scenario",
+    "implement",
+    "scenario",
+    "implement",
+    "scenario",
+    "implement",
+    "scenario",
+    "implement",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": [
+    {
+      "ticket": "A1",
+      "verdict": "CLEAN"
+    },
+    {
+      "ticket": "A2",
+      "verdict": "CLEAN"
+    },
+    {
+      "ticket": "B",
+      "verdict": "CLEAN"
+    },
+    {
+      "ticket": "C",
+      "verdict": "MEDIUM",
+      "finding": "witness-test path from shard content bypasses assertNoTraversal (reconcile.mjs:158-163)"
+    },
+    {
+      "ticket": "D",
+      "verdict": "CLEAN"
+    },
+    {
+      "ticket": "E",
+      "verdict": "CLEAN"
+    },
+    {
+      "ticket": "F",
+      "verdict": "CLEAN"
+    }
+  ]
+}

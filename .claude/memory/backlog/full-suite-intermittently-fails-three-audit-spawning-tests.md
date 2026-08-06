@@ -7,6 +7,7 @@ raised-in-context: architecture-map
 source: assistant-deferral
 verified-at: 35212e8
 last-touched: 2026-08-05
+scope: any
 ---
 
 > "The first full-suite run after these edits reported 3 failures. Three subsequent runs are clean at 2199 pass / 0 fail. I didn't capture the failing names, so I can't tell you what they were." — later captured, second occurrence.
