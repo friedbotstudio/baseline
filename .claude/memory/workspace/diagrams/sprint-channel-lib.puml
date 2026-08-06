@@ -1,0 +1,3 @@
+!startsub sprint_channel_lib
+Component(sprint_channel_lib, ".claude/mcp/sprint-channel/lib/*.mjs", "subsystem", "Sprint channel store, lock, schema")
+!endsub

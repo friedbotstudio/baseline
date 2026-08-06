@@ -1,0 +1,3 @@
+!startsub spec_review_helpers
+Component(spec_review_helpers, ".claude/skills/spec-*/*.mjs", "subsystem", "Spec review oracles (lint, diagram, traceability, rollout, shippability, render)")
+!endsub

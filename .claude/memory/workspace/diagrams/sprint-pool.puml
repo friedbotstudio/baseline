@@ -1,0 +1,3 @@
+!startsub sprint_pool
+Component(sprint_pool, ".claude/mcp/sprint-pool/*.mjs", "subsystem", "Sprint pool registrar and handlers")
+!endsub

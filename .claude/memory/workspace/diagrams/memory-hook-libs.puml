@@ -1,0 +1,3 @@
+!startsub memory_hook_libs
+Component(memory_hook_libs, ".claude/hooks/lib/memory_*.mjs", "subsystem", "Memory hook libraries")
+!endsub

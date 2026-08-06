@@ -1,0 +1,3 @@
+!startsub memory_stop
+Component(memory_stop, ".claude/hooks/memory_stop.mjs", "component", "Turn-end candidate extraction")
+!endsub

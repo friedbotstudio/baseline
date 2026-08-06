@@ -1,0 +1,3 @@
+!startsub harness_checkers
+Component(harness_checkers, ".claude/skills/harness/checkers/*.mjs", "subsystem", "Harness oracle checkers")
+!endsub

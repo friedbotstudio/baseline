@@ -1,0 +1,3 @@
+!startsub entry_body_lib
+Component(entry_body_lib, ".claude/hooks/lib/entry-body.mjs", "component", "Memory entry body shape")
+!endsub

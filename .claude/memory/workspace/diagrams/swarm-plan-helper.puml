@@ -1,0 +1,3 @@
+!startsub swarm_plan_helper
+Component(swarm_plan_helper, ".claude/skills/swarm-plan/*.mjs", "subsystem", "Swarm wave scheduler")
+!endsub

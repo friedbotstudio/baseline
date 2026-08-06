@@ -1,0 +1,3 @@
+!startsub cli_tui
+Component(cli_tui, "src/cli/tui/*.js", "subsystem", "Installer TUI")
+!endsub

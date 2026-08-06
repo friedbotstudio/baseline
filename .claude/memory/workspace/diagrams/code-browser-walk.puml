@@ -1,0 +1,3 @@
+!startsub code_browser_walk
+Component(code_browser_walk, ".claude/skills/code-browser/*.mjs", "subsystem", "Universal navigation walk")
+!endsub

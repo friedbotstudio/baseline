@@ -1,0 +1,3 @@
+!startsub spec_content_hash
+Component(spec_content_hash, ".claude/hooks/lib/spec-content-hash.mjs", "component", "Approved-artifact content hash")
+!endsub

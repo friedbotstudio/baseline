@@ -1,0 +1,3 @@
+!startsub timing_lib
+Component(timing_lib, ".claude/hooks/lib/timing.mjs", "component", "Timing ledger")
+!endsub

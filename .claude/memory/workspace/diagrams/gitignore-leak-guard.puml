@@ -1,0 +1,3 @@
+!startsub gitignore_leak_guard
+Component(gitignore_leak_guard, ".claude/hooks/gitignore_leak_guard.mjs", "component", "Commit leak guard")
+!endsub

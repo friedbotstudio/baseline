@@ -1,0 +1,3 @@
+!startsub memory_index_helpers
+Component(memory_index_helpers, ".claude/skills/memory-index/*.mjs", "subsystem", "Memory index build, migrate, constraints")
+!endsub

@@ -1,0 +1,3 @@
+!startsub power_commit_split
+Component(power_commit_split, ".claude/skills/power/*.mjs", "subsystem", "Power batch commit split")
+!endsub

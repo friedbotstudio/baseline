@@ -1,0 +1,3 @@
+!startsub phase_timer
+Component(phase_timer, ".claude/hooks/phase_timer.mjs", "component", "Per-phase timing observer")
+!endsub

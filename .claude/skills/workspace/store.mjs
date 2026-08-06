@@ -1,45 +1,26 @@
-// Foundation — the only module in this skill that touches the filesystem or
-// parses frontmatter. Everything else composes it.
+// Foundation — corpus record IO. Reads and writes the files the model OWNS.
 //
 // The corpus lives UNDER .claude/memory/ but is deliberately NOT a ninth canonical
 // category (spec §Migration): CANONICAL is untouched, so no reader that walks
 // canonical categories ever sees these files.
+//
+// Two responsibilities were split out rather than left here: the working tree the
+// model points AT (tree.mjs) and the record wire format (record-codec.mjs). This
+// module now answers exactly one question — what is in the corpus, and how does a
+// record get there. The re-exports below keep every existing importer working; the
+// split moved code, not contracts.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { asList } from '../memory-index/categories.mjs';
-import { assertSafeFactKey, assertSafeFieldValue } from '../memory-index/migrate.mjs';
+import { assertSafeFactKey } from '../memory-index/migrate.mjs';
+import { parseEntry, renderRecord } from './record-codec.mjs';
 
-const LIST_FIELDS = new Set(['governed_by', 'rests_on', 'includes', 'members']);
+export { assertNoTraversal, readSourceText, walkFiles } from './tree.mjs';
+export { splitFrontmatter } from './record-codec.mjs';
 
 function workspaceDir(memDir) {
   return join(memDir, 'workspace');
-}
-
-// A `..` segment in an anchor or a member id escapes the tree the corpus is
-// contracted to describe. REJECT, never normalize — the same register as
-// assertSafeFactKey, and for the same reason: silently rewriting the path would
-// read a different file than the author named.
-export function assertNoTraversal(rel) {
-  const text = String(rel ?? '');
-  if (text.split(/[\\/]/).includes('..')) {
-    throw new Error(`unsafe path traversal (REJECT, never normalize): ${JSON.stringify(text)}`);
-  }
-  return text;
-}
-
-// Reading the WORKING TREE, not the corpus. It lives here because this module is
-// the skill's only filesystem surface; a Domain scanner reaching for node:fs is
-// the layer violation that split exists to prevent.
-export function readSourceText(rootDir, rel) {
-  assertNoTraversal(rel);
-  const path = join(rootDir, rel);
-  try {
-    return statSync(path).isFile() ? readFileSync(path, 'utf8') : null;
-  } catch {
-    return null;
-  }
 }
 
 // Preflight only — deliberately does NOT create. AC-012: an absent workspace is a
@@ -51,33 +32,6 @@ export function ensureWorkspace(memDir) {
     return { ready: false, reason: `workspace not initialized at ${dir}` };
   }
   return { ready: true };
-}
-
-// Split a file into [frontmatter lines, body]. Bounded to the leading block: an
-// unanchored scan would read a BODY line shaped like a field as frontmatter, the
-// same defect security review F-2 found in resolve.mjs.
-export function splitFrontmatter(text) {
-  const lines = String(text).split('\n');
-  if (lines[0]?.trim() !== '---') return null;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') {
-      return { front: lines.slice(1, i), body: lines.slice(i + 1).join('\n') };
-    }
-  }
-  return null;
-}
-
-function parseEntry(text) {
-  const split = splitFrontmatter(text);
-  if (!split) return null;
-  const fields = {};
-  for (const line of split.front) {
-    const match = /^([A-Za-z_][A-Za-z0-9_-]*):(.*)$/.exec(line);
-    if (!match) continue;
-    const [, name, raw] = match;
-    fields[name] = LIST_FIELDS.has(name) ? asList(raw) : raw.trim();
-  }
-  return fields.id ? { ...fields, body: split.body } : null;
 }
 
 export function readRecords(memDir, kind) {
@@ -112,17 +66,34 @@ function readCollection(memDir, kind) {
 }
 
 export function readAll(memDir) {
-  return { elements: readCollection(memDir, 'elements'), views: readCollection(memDir, 'views') };
+  return {
+    elements: readCollection(memDir, 'elements').map(withGranularity),
+    views: readCollection(memDir, 'views'),
+  };
 }
+
+// Granularity is a FUNCTION of anchor shape, never a stored field (spec D1). A
+// glob names a family, a path names one file, and an absent anchor names nothing
+// on disk — so the three cases are readable off the anchor alone.
+function withGranularity(element) {
+  const anchor = element.anchor ?? '';
+  if (!anchor) return { ...element, granularity: 'concept' };
+  return { ...element, granularity: anchor.includes('*') ? 'subsystem' : 'component' };
+}
+
+// Both are derivable at read — granularity from the anchor above, the shard path
+// by convention in shards.mjs — so persisting either would create a second source
+// of truth that can disagree with the first. `anchor_digest` is deliberately NOT
+// here: comparing a STORED digest against a fresh one is the whole mechanism, so
+// it is the one field that cannot be re-derived at read time.
+const DERIVED_FIELDS = ['granularity', 'shard'];
 
 export function writeElement(memDir, element) {
-  return writeRecord(memDir, 'elements', element, ['kind', 'title', 'anchor']);
+  const persisted = { ...element };
+  for (const field of DERIVED_FIELDS) delete persisted[field];
+  return writeRecord(memDir, 'elements', persisted, ['kind', 'title', 'anchor']);
 }
 
-// `order` names the fields that lead the frontmatter and get a default. A concept
-// passes ['kind','title','members'] and therefore never renders an `anchor:` —
-// granularity is derived from anchor SHAPE (spec D1), so a concept carrying an
-// empty anchor would be read as a component.
 export function writeRecord(memDir, kind, record, order) {
   assertSafeFactKey(record?.id);
   const dir = join(workspaceDir(memDir), kind);
@@ -141,25 +112,4 @@ export function removeElement(memDir, id) {
   if (!existsSync(path)) return false;
   rmSync(path);
   return true;
-}
-
-const RECORD_DEFAULTS = { kind: 'component', anchor: '', members: [] };
-
-function renderRecord(record, order = ['kind', 'title', 'anchor']) {
-  const { id, body = '', ...given } = record;
-  const fields = order.map((name) => [
-    name,
-    given[name] ?? (name === 'title' ? id : RECORD_DEFAULTS[name] ?? ''),
-  ]);
-  for (const [name, value] of Object.entries(given)) {
-    if (!order.includes(name)) fields.push([name, value]);
-  }
-  // `id` is already bounded by assertSafeFactKey; every other name and value is
-  // interpolated straight into line-delimited frontmatter (security review F-2).
-  const front = [`id: ${id}`];
-  for (const [name, value] of fields) {
-    assertSafeFieldValue(name, value);
-    front.push(`${name}: ${value}`);
-  }
-  return `---\n${front.join('\n')}\n---\n\n${body}\n`;
 }

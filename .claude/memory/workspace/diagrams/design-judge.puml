@@ -1,0 +1,3 @@
+!startsub design_judge
+Component(design_judge, ".claude/skills/harness/design-judge.mjs", "component", "Design judge scoring")
+!endsub

@@ -1,0 +1,3 @@
+!startsub consent_commands
+Component(consent_commands, ".claude/commands/*.md", "subsystem", "Consent slash commands (user-typed)")
+!endsub

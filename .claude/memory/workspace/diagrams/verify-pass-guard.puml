@@ -1,0 +1,3 @@
+!startsub verify_pass_guard
+Component(verify_pass_guard, ".claude/hooks/verify_pass_guard.mjs", "component", "Verify verdict guard")
+!endsub

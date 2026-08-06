@@ -1,0 +1,3 @@
+!startsub plantuml_syntax_guard
+Component(plantuml_syntax_guard, ".claude/hooks/plantuml_syntax_guard.mjs", "component", "PlantUML parse guard")
+!endsub

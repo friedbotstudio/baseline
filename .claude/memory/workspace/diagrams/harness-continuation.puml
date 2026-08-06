@@ -1,0 +1,3 @@
+!startsub harness_continuation
+Component(harness_continuation, ".claude/hooks/harness_continuation.mjs", "component", "Harness Stop-hook safety net")
+!endsub

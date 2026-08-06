@@ -1,0 +1,3 @@
+!startsub sprint_plan_helper
+Component(sprint_plan_helper, ".claude/skills/sprint-plan/*.mjs", "subsystem", "Sprint manifest decomposition")
+!endsub

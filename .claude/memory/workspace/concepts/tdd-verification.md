@@ -1,8 +1,8 @@
 ---
 id: tdd-verification
 kind: concept
-title: TDD and verification substrate
-members: test-runner,lint-runner
+title: Tdd verification
+members: test-runner,lint-runner,tdd-order-guard,verify-pass-guard,tdd-helpers,simplify-helpers,code-structure-oracle,code-browser-walk
 ---
 
 

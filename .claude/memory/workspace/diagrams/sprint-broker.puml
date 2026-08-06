@@ -1,0 +1,3 @@
+!startsub sprint_broker
+Component(sprint_broker, ".claude/mcp/sprint-broker/*.mjs", "subsystem", "Sprint broker transport")
+!endsub

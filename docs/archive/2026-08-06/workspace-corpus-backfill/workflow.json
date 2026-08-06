@@ -1,0 +1,54 @@
+{
+  "request": "Backfill the workspace corpus: stamp anchor_digest/shard/granularity across elements, add elements for the uncovered surface, and populate the 7 empty concept nodes with resolvable members.",
+  "slug": "workspace-corpus-backfill",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/archive/2026-08-05/architecture-map/spec.md — Migration steps 2-4 specify anchor_digest/shard/granularity on every element and were never executed (0 of 14 carry them); D7/D11 fix digest semantics, D1 granularity derivation, D6 the shard join; ticket A done_record names the concept-membership requirement including the git_commit_guard multi-membership example, which is unrealized (consent-gates has 0 members). reconcile.digestFor() ships and is tested at tests/workspace-staleness.test.mjs:31.",
+  "track_reason": "Heavier than tdd-quickfix because choosing which new elements exist and which concept each joins is an authored-partition decision; the prior cycle settled exactly that class at gate A (architecture-map D10, owner: engineer). tdd-quickfix carries no gate A, so the partition would land unreviewed. Also carries one genuinely undecided design point — the digest re-stamp call site — which the user routed to /spec Decisions for gate-A review.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1785964383,
+  "updated_at": 1786002612,
+  "rightsize_base": [],
+  "recorded_assumptions": [
+    {
+      "id": "skill-owner-annotation",
+      "asked": "Fix the 6 baseline skills missing owner: baseline now, or defer?",
+      "user_answer": "fix now inside this cycle",
+      "adopted": "DEFER to its own cycle",
+      "why": "After the user answered, measurement showed the fix is not 6 file edits: derive-counts.mjs:80 derives the baseline skill count from owner: baseline, so annotating 6 skills moves the derived total 56 -> 62 and turns 5 passing audit checks red (byCategory sum, CLAUDE.md/README/seed.md count claims, docsite skills list). seed.md does not mention 4 of the 6 at all, so it needs a genesis amendment first per Article I.4. Also docs/vision/living-system-model.md Part 4 records that promoting faithful-capture is explicitly a separate decision. Outside this spec write_set; would fail /integrate on ACs unrelated to this spec.",
+      "surface_at": "grant-commit"
+    }
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

@@ -1,0 +1,3 @@
+!startsub destructive_cmd_guard
+Component(destructive_cmd_guard, ".claude/hooks/destructive_cmd_guard.mjs", "component", "Destructive command guard")
+!endsub

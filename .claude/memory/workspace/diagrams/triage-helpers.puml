@@ -1,0 +1,3 @@
+!startsub triage_helpers
+Component(triage_helpers, ".claude/skills/triage/*.mjs", "subsystem", "Triage classification and exception derivation")
+!endsub

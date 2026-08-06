@@ -1,0 +1,3 @@
+!startsub direction_approval_guard
+Component(direction_approval_guard, ".claude/hooks/direction_approval_guard.mjs", "component", "Gate A guard")
+!endsub

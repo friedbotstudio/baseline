@@ -1,0 +1,3 @@
+!startsub roadmap_planner_scripts
+Component(roadmap_planner_scripts, ".claude/skills/roadmap-planner/scripts/*.mjs", "subsystem", "Roadmap dependency-graph engine")
+!endsub

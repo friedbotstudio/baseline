@@ -1,0 +1,3 @@
+!startsub approval_anchor
+Component(approval_anchor, ".claude/hooks/lib/approval-anchor.mjs", "component", "Approval provenance anchor")
+!endsub

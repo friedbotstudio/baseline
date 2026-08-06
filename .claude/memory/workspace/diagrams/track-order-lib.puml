@@ -1,0 +1,3 @@
+!startsub track_order_lib
+Component(track_order_lib, ".claude/hooks/lib/track-order.mjs", "component", "Phase ordering table")
+!endsub

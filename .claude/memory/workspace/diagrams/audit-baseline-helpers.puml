@@ -1,0 +1,3 @@
+!startsub audit_baseline_helpers
+Component(audit_baseline_helpers, ".claude/skills/audit-baseline/*.mjs", "subsystem", "Baseline drift audit")
+!endsub

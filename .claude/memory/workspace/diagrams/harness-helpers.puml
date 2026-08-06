@@ -1,0 +1,3 @@
+!startsub harness_helpers
+Component(harness_helpers, ".claude/skills/harness/*.mjs", "subsystem", "Harness loop, gates, plan state and notifier")
+!endsub

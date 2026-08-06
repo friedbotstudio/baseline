@@ -1,0 +1,3 @@
+!startsub reader_level_helper
+Component(reader_level_helper, ".claude/skills/reader-level/*.mjs", "subsystem", "Reading level measurement")
+!endsub

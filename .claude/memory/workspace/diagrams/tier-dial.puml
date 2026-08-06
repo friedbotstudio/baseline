@@ -1,0 +1,3 @@
+!startsub tier_dial
+Component(tier_dial, ".claude/hooks/lib/tier-dial.mjs", "component", "Governance class floor")
+!endsub

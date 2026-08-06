@@ -1,0 +1,3 @@
+!startsub memory_session_start
+Component(memory_session_start, ".claude/hooks/memory_session_start.mjs", "component", "Session-start memory injection")
+!endsub

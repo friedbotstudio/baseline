@@ -1,0 +1,3 @@
+!startsub gitignore_baseline
+Component(gitignore_baseline, ".claude/skills/gitignore/*.json", "subsystem", "Baseline must-ignore set")
+!endsub

@@ -1,0 +1,3 @@
+!startsub code_structure_oracle
+Component(code_structure_oracle, ".claude/skills/code-structure/*.mjs", "subsystem", "Code structure oracle")
+!endsub

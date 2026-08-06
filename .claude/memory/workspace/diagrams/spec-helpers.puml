@@ -1,0 +1,3 @@
+!startsub spec_helpers
+Component(spec_helpers, ".claude/skills/spec/*.mjs", "subsystem", "Spec evidence ladder and decision capture")
+!endsub

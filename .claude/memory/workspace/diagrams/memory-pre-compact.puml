@@ -1,0 +1,3 @@
+!startsub memory_pre_compact
+Component(memory_pre_compact, ".claude/hooks/memory_pre_compact.mjs", "component", "Pre-compaction resume snapshot")
+!endsub

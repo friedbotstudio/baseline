@@ -1,0 +1,3 @@
+!startsub workspace_corpus
+Component(workspace_corpus, ".claude/skills/workspace/*.mjs", "subsystem", "Architecture map corpus engine")
+!endsub

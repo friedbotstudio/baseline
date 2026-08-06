@@ -1,0 +1,3 @@
+!startsub skill_probe_lib
+Component(skill_probe_lib, ".claude/skills/lib/*.mjs", "subsystem", "Shared skill probe library")
+!endsub

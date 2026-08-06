@@ -1,0 +1,3 @@
+!startsub roadmap_sync_helper
+Component(roadmap_sync_helper, ".claude/skills/roadmap-sync/*.mjs", "subsystem", "Roadmap status sync")
+!endsub

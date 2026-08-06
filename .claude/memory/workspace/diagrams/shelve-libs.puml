@@ -1,0 +1,3 @@
+!startsub shelve_libs
+Component(shelve_libs, ".claude/hooks/lib/shelve_*.mjs", "subsystem", "Thread shelve capture and detection")
+!endsub

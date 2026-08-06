@@ -1,0 +1,3 @@
+!startsub plantuml_cli
+Component(plantuml_cli, "src/cli/plantuml.js", "component", "PlantUML jar resolution")
+!endsub

@@ -1,0 +1,3 @@
+!startsub security_helper
+Component(security_helper, ".claude/skills/security/*.mjs", "subsystem", "Security review helper")
+!endsub

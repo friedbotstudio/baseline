@@ -1,0 +1,3 @@
+!startsub commit_planner_helper
+Component(commit_planner_helper, ".claude/skills/commit-planner/*.mjs", "subsystem", "Commit split planner")
+!endsub

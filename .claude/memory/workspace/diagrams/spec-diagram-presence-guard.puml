@@ -1,0 +1,3 @@
+!startsub spec_diagram_presence_guard
+Component(spec_diagram_presence_guard, ".claude/hooks/spec_diagram_presence_guard.mjs", "component", "Required diagram kinds guard")
+!endsub

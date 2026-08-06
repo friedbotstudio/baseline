@@ -1,0 +1,3 @@
+!startsub swarm_approval_guard
+Component(swarm_approval_guard, ".claude/hooks/swarm_approval_guard.mjs", "component", "Gate B guard")
+!endsub

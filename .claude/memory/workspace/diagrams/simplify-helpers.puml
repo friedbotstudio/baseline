@@ -1,0 +1,3 @@
+!startsub simplify_helpers
+Component(simplify_helpers, ".claude/skills/simplify/*.mjs", "subsystem", "Simplify oracle and reverify guard")
+!endsub

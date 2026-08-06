@@ -7,9 +7,9 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { join, makeProject, tryImport } from './helpers/memory-fixtures.mjs';
+import { copyLiveCorpus, join, makeProject, tryImport } from './helpers/memory-fixtures.mjs';
 import { makeWorkspace, writeWorkspaceElement } from './helpers/workspace-fixtures.mjs';
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
 const CONTRIBUTE = '.claude/skills/workspace/contribute.mjs';
 const CONFLICTS = '.claude/skills/workspace/conflicts.mjs';
@@ -20,6 +20,30 @@ function elementIds(memDir) {
 }
 
 describe('E2 — contribution and merge semantics', () => {
+  // Ported from the retired workspace-seed suite: it never exercised SEED_OPS, and
+  // it is the only coverage of resolveRefs refusal (D4 — an element may not assert
+  // a governing reason that does not exist). The live corpus is copied so real
+  // decision keys resolve and the refusal is provably about the invented one.
+  it('test_when_element_names_unresolvable_governed_by_then_refused', async () => {
+    const contribute = await tryImport(CONTRIBUTE);
+    assert.ok(contribute, `${CONTRIBUTE} does not exist yet`);
+    const { memDir } = copyLiveCorpus('wscontrib-bad-');
+    makeWorkspace(memDir);
+
+    const result = contribute.applyContribution({
+      memDir,
+      slug: 'contribute-test',
+      ops: [{ verb: 'add', target_id: 'bogus-element', fields: { kind: 'component', anchor: 'x/**', governed_by: 'no-such-decision' } }],
+    });
+
+    assert.equal(result.written.length, 0, 'an element naming an unresolvable key must not be written');
+    assert.equal(
+      existsSync(join(memDir, 'workspace', 'elements', 'bogus-element.md')),
+      false,
+      'nothing may reach disk — an invented key blocks its own element (D4)',
+    );
+  });
+
   it('test_when_two_disjoint_slices_contribute_then_both_survive', async () => {
     const contribute = await tryImport(CONTRIBUTE);
     assert.ok(contribute, `${CONTRIBUTE} does not exist yet`);

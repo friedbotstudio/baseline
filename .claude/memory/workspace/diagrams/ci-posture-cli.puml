@@ -1,0 +1,3 @@
+!startsub ci_posture_cli
+Component(ci_posture_cli, "src/cli/ci-posture.js", "component", "CI posture detection")
+!endsub

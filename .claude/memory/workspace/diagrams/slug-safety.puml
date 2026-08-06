@@ -1,0 +1,3 @@
+!startsub slug_safety
+Component(slug_safety, ".claude/hooks/lib/slug.mjs", "component", "Slug validation and canonicalization")
+!endsub

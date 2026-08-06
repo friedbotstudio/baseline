@@ -1,0 +1,3 @@
+!startsub project_json_cli
+Component(project_json_cli, "src/cli/project-json.js", "component", "project.json reader and writer")
+!endsub

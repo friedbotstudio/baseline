@@ -1,0 +1,3 @@
+!startsub document_helpers
+Component(document_helpers, ".claude/skills/document/*.mjs", "subsystem", "Document phase gate and receipts")
+!endsub

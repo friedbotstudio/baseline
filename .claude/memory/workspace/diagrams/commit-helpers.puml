@@ -1,0 +1,3 @@
+!startsub commit_helpers
+Component(commit_helpers, ".claude/skills/commit/*.mjs", "subsystem", "Commit phase helpers")
+!endsub

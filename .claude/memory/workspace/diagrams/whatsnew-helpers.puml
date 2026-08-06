@@ -1,0 +1,3 @@
+!startsub whatsnew_helpers
+Component(whatsnew_helpers, ".claude/skills/whatsnew/*.mjs", "subsystem", "Whats-new fragment routing")
+!endsub

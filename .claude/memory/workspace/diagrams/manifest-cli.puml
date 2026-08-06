@@ -1,0 +1,3 @@
+!startsub manifest_cli
+Component(manifest_cli, "src/cli/manifest.js", "component", "Baseline manifest builder")
+!endsub

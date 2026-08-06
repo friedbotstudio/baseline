@@ -1,0 +1,3 @@
+!startsub cli_core
+Component(cli_core, "src/cli/*.js", "subsystem", "Installer CLI core")
+!endsub

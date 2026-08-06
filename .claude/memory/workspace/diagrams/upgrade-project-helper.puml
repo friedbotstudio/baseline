@@ -1,0 +1,3 @@
+!startsub upgrade_project_helper
+Component(upgrade_project_helper, ".claude/skills/upgrade-project/*.mjs", "subsystem", "Staged upgrade reconciliation")
+!endsub

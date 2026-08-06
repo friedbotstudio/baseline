@@ -1,0 +1,3 @@
+!startsub closure_check_lib
+Component(closure_check_lib, ".claude/hooks/lib/closure-check.mjs", "component", "Backlog closure stamp check")
+!endsub

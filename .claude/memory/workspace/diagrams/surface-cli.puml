@@ -1,0 +1,3 @@
+!startsub surface_cli
+Component(surface_cli, "src/cli/surface.js", "component", "Shipped surface enumeration")
+!endsub

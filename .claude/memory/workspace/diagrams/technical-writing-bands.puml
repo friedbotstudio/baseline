@@ -1,0 +1,3 @@
+!startsub technical_writing_bands
+Component(technical_writing_bands, ".claude/skills/technical-writing/*.json", "subsystem", "Measured corpus bands")
+!endsub

@@ -1,0 +1,3 @@
+!startsub track_guard
+Component(track_guard, ".claude/hooks/track_guard.mjs", "component", "Phase ordering guard")
+!endsub

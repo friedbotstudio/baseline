@@ -1,0 +1,3 @@
+!startsub spec_design_calls_guard
+Component(spec_design_calls_guard, ".claude/hooks/spec_design_calls_guard.mjs", "component", "UI spec design-calls guard")
+!endsub

@@ -1,0 +1,3 @@
+!startsub consent_gate_grant
+Component(consent_gate_grant, ".claude/hooks/consent_gate_grant.mjs", "component", "Consent marker writer (UserPromptSubmit)")
+!endsub

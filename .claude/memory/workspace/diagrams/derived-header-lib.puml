@@ -1,0 +1,3 @@
+!startsub derived_header_lib
+Component(derived_header_lib, ".claude/hooks/lib/derived-header.mjs", "component", "Derived index header")
+!endsub

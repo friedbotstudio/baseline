@@ -1,0 +1,3 @@
+!startsub design_calls_lib
+Component(design_calls_lib, ".claude/hooks/lib/design-calls.mjs", "component", "Design calls row rule")
+!endsub

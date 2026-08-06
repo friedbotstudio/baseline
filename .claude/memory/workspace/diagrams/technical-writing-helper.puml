@@ -1,0 +1,3 @@
+!startsub technical_writing_helper
+Component(technical_writing_helper, ".claude/skills/technical-writing/*.mjs", "subsystem", "Corpus profile targets")
+!endsub

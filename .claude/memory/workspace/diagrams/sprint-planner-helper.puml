@@ -1,0 +1,3 @@
+!startsub sprint_planner_helper
+Component(sprint_planner_helper, ".claude/skills/sprint-planner/*.mjs", "subsystem", "Next-sprint proposal")
+!endsub

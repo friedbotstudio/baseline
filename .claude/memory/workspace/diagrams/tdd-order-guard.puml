@@ -1,0 +1,3 @@
+!startsub tdd_order_guard
+Component(tdd_order_guard, ".claude/hooks/tdd_order_guard.mjs", "component", "Test-before-source guard")
+!endsub

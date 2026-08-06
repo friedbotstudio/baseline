@@ -43,3 +43,13 @@
 - discarded :: backlog → the-fix-is-one-line-with-direct-in-4132
 - discarded :: backlog → with-this-evidence-the-reproduction-is-now-recorded-98c0
 - discarded :: backlog → my-recommendation-is-eb6c
+- discarded :: backlog → but-the-fix-is-a-constitutional-amendment-not-1e44
+- discarded :: backlog → the-fix-is-one-comment-line-naming-ac-a3d8
+- discarded :: backlog → spec-6c85
+- discarded :: .claude/skills/workspace/materialize.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/digest.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/coverage.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/readme-gate.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/record-codec.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/tree.mjs → landmarks.md
+- discarded :: .claude/skills/memory-flush/stale-elements.mjs → landmarks.md

@@ -1,8 +1,8 @@
 ---
 id: harness-loop
 kind: concept
-title: Harness orchestration loop
-members: 
+title: Harness loop
+members: harness-helpers,workflow-migrator,harness-continuation,phase-timer,timing-lib,harness-checkers
 ---
 
 

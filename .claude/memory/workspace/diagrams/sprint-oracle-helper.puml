@@ -1,0 +1,3 @@
+!startsub sprint_oracle_helper
+Component(sprint_oracle_helper, ".claude/skills/sprint-oracle/*.mjs", "subsystem", "Sprint completeness oracle")
+!endsub

@@ -1,0 +1,3 @@
+!startsub standup_helper
+Component(standup_helper, ".claude/skills/standup/*.mjs", "subsystem", "Release and backlog recap")
+!endsub

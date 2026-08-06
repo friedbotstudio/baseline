@@ -1,0 +1,3 @@
+!startsub companion_watch
+Component(companion_watch, ".claude/skills/companion/*.mjs", "subsystem", "Companion peer loop")
+!endsub

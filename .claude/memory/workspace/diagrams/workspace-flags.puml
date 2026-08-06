@@ -1,0 +1,3 @@
+!startsub workspace_flags
+Component(workspace_flags, ".claude/skills/workspace/flags.mjs", "component", "Architecture map feature flags")
+!endsub

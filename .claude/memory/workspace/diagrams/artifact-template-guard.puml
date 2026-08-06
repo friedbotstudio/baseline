@@ -1,0 +1,3 @@
+!startsub artifact_template_guard
+Component(artifact_template_guard, ".claude/hooks/artifact_template_guard.mjs", "component", "Artifact required-section guard")
+!endsub

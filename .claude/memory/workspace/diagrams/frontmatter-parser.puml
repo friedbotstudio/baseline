@@ -1,0 +1,3 @@
+!startsub frontmatter_parser
+Component(frontmatter_parser, ".claude/hooks/lib/frontmatter-parser.mjs", "component", "Frontmatter parser")
+!endsub

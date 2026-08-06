@@ -1,0 +1,3 @@
+!startsub sprint_plan_manifest
+Component(sprint_plan_manifest, ".claude/skills/sprint-plan/*.json", "subsystem", "Sprint manifest template")
+!endsub

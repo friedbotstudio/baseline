@@ -1,0 +1,3 @@
+!startsub ci_automation
+Component(ci_automation, ".github/workflows/*.yml", "subsystem", "CI automation workflows")
+!endsub

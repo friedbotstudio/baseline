@@ -1,0 +1,3 @@
+!startsub env_guard
+Component(env_guard, ".claude/hooks/env_guard.mjs", "component", "Env file write guard")
+!endsub

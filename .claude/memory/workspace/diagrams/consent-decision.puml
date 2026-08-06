@@ -1,0 +1,3 @@
+!startsub consent_decision
+Component(consent_decision, ".claude/hooks/lib/consent-decision.mjs", "component", "Consent decision resolver")
+!endsub

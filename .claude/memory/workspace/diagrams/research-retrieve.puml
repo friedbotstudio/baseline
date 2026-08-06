@@ -1,0 +1,3 @@
+!startsub research_retrieve
+Component(research_retrieve, ".claude/skills/research/*.mjs", "subsystem", "Research retrieval")
+!endsub

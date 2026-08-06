@@ -1,0 +1,3 @@
+!startsub brainstorm_helpers
+Component(brainstorm_helpers, ".claude/skills/brainstorm/*.mjs", "subsystem", "Entry-phase brainstorm discipline")
+!endsub

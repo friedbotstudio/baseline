@@ -1,0 +1,3 @@
+!startsub setup_guard
+Component(setup_guard, ".claude/hooks/setup_guard.mjs", "component", "Unconfigured-project advisory guard")
+!endsub

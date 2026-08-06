@@ -1,0 +1,3 @@
+!startsub tdd_helpers
+Component(tdd_helpers, ".claude/skills/tdd/*.mjs", "subsystem", "TDD drift-check and pointer resolution")
+!endsub

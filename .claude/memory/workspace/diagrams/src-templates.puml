@@ -1,0 +1,3 @@
+!startsub src_templates
+Component(src_templates, "src/*.json", "subsystem", "Shipped template config")
+!endsub

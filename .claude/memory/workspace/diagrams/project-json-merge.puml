@@ -1,0 +1,3 @@
+!startsub project_json_merge
+Component(project_json_merge, "src/cli/project-json-merge.js", "component", "project.json three-way merge")
+!endsub

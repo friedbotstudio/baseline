@@ -1,0 +1,3 @@
+!startsub resume_libs
+Component(resume_libs, ".claude/hooks/lib/resume_*.mjs", "subsystem", "Resume snapshot transform and writer")
+!endsub
