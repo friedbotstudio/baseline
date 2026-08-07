@@ -6,7 +6,10 @@
 // PlantUML parser and makes drift detectable BOTH ways — a section with no element
 // is an orphan, an element with no shard is unillustrated.
 
-import { listWorkspaceFiles, readRecords, readSourceText } from './store.mjs';
+import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
+import { assertSafeFieldValue } from '../memory-index/migrate.mjs';
+import { architectureMapEnabled } from './flags.mjs';
+import { listWorkspaceFiles, readRecords, readSourceText, writeWorkspaceFile } from './store.mjs';
 
 const SECTION = /^!startsub\s+([A-Za-z0-9_-]+)\s*$/m;
 const SHARD_DIR = 'diagrams';
@@ -31,8 +34,69 @@ export function elementIdFromSection(section) {
   return String(section).replace(/_/g, '-');
 }
 
+// The inverse of elementIdFromSection. All 112 live shards are written this way,
+// and the map stays injective because an id can never contain an underscore.
+function sectionFromElementId(elementId) {
+  return elementId.replace(/-/g, '_');
+}
+
 function shardRel(elementId) {
   return `${SHARD_DIR}/${elementId}.puml`;
+}
+
+// Everything interpolated into a `Component(...)` argument. assertSafeFieldValue
+// bounds newlines — which forge a whole directive — but a double quote closes the
+// argument early and appends attacker-chosen ones (`ok", "X` turns Component/3 into
+// Component/5). PlantUML has no portable escape for a quote inside a macro argument,
+// so this REJECTS rather than normalizes: a rewritten label renders as something
+// other than what the caller named. Guarded here, not in assertSafeFieldValue, whose
+// other callers are frontmatter fields where a quote is legitimate.
+function quotedArgument(name, value) {
+  if (String(value).includes('"')) {
+    throw new Error(`unsafe field ${name} (REJECT, never normalize): a quote escapes the C4 argument`);
+  }
+  return assertSafeFieldValue(name, value);
+}
+
+// An unwritable shard is worse than an absent one: `witness.bindingFor` reads the
+// kind off the shard, so a shard with no kind binds `none` and quietly demotes its
+// element to unwitnessed. Refusing here is what keeps that state deliberate.
+function requireKind(kind) {
+  if (!kind) throw new Error('writeDiagramShard: a shard must declare its kind — refusing to write an unwitnessable shard');
+  return quotedArgument('kind', kind);
+}
+
+// D3 — the annotations sit INSIDE the block. `!includesub file.puml!NAME` pulls in
+// only the block's content (verified: https://plantuml.com/en/preprocessing), so an
+// annotation above `!startsub` is dropped at exactly the moment a view composes it.
+function shardText(section, { kind, witnessTest, label }) {
+  const lines = [`!startsub ${section}`, `' @kind ${kind}`];
+  if (witnessTest !== null) lines.push(`' @witness ${witnessTest}`);
+  lines.push(`Component(${section}, "${label}", "${kind}")`, '!endsub');
+  return lines.join('\n') + '\n';
+}
+
+// The corpus's shard writer. Idempotent by construction: the output is a pure
+// function of the arguments, so re-running a backfill rewrites identical bytes.
+//
+// Every interpolated field goes through assertSafeFieldValue for the same reason
+// render.composeView validates its title: a newline forges an arbitrary PlantUML
+// directive into the composed document (the MEDIUM finding fixed one layer up).
+//
+// The flag gate runs BEFORE id validation on purpose (§Behavior #13): an opted-out
+// project gets an empty result and no throw, and neither branch constructs a path,
+// so ordering the gate first costs nothing and makes inertness total.
+export function writeDiagramShard(specDir, elementId, { kind, witnessTest = null, label = null, rootDir = process.cwd() } = {}) {
+  if (!architectureMapEnabled({ rootDir })) return { path: null, written: false };
+  assertSafeSlug(elementId, 'element id');
+  const section = sectionFromElementId(elementId);
+  const text = shardText(section, {
+    kind: requireKind(kind),
+    witnessTest: witnessTest === null ? null : assertSafeFieldValue('witnessTest', witnessTest),
+    label: quotedArgument('label', label ?? elementId),
+  });
+  writeWorkspaceFile(specDir, SHARD_DIR, `${elementId}.puml`, text);
+  return { path: shardRel(elementId), written: true };
 }
 
 // `specDir` is the root the shard path is relative to, so readSourceText's traversal

@@ -14,6 +14,7 @@ import { join } from 'node:path';
 
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseEntry, renderRecord } from './record-codec.mjs';
+import { assertNoTraversal } from './tree.mjs';
 
 export { assertNoTraversal, readSourceText, walkFiles } from './tree.mjs';
 export { splitFrontmatter } from './record-codec.mjs';
@@ -42,6 +43,24 @@ export function listWorkspaceFiles(specDir, kind, ext) {
   const dir = join(specDir, kind);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
   return readdirSync(dir).filter((name) => name.endsWith(ext)).sort();
+}
+
+// The corpus's only raw-file writer, sited beside listWorkspaceFiles because the
+// two answer the same question from opposite ends — what is in a corpus
+// subdirectory, and how does something get there. A record goes through
+// writeRecord; a `.puml` shard is not a record and has no frontmatter, so it
+// needs the primitive rather than the codec. Keeping it here is what lets
+// shards.mjs stay a Domain module with no node:fs of its own.
+export function writeWorkspaceFile(specDir, kind, name, text) {
+  // The read side (tree.readSourceText) has always opened with this; the write side
+  // is where an escaped segment gets a `mkdirSync -r` behind it, so it guards too.
+  assertNoTraversal(kind);
+  assertNoTraversal(name);
+  const dir = join(specDir, kind);
+  mkdirSync(dir, { recursive: true });
+  const path = join(dir, name);
+  writeFileSync(path, text, 'utf8');
+  return path;
 }
 
 function readCollection(specDir, kind) {

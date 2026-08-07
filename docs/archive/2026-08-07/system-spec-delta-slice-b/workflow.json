@@ -1,0 +1,58 @@
+{
+  "request": "Slice B of the system-spec-delta epic (C2-3): add `writeDiagramShard` to `.claude/skills/workspace/shards.mjs` — kind annotation placed inside the `!startsub` block (D3), kebab-id validation before any path is constructed — and add the new baseline-owned `/system-reconcile` skill: a seven-section report (gaps, stale, dangling, duplicate anchors, orphan shards, unillustrated, missing kind annotation) that repairs only what a human confirms and exports no writer reachable from a workflow phase (D9). Both inert when `memory.architecture_map.enabled` is false. Includes the 57 -> 58 skill-count bump across CLAUDE.md, src/CLAUDE.template.md, docs/init/seed.md, src/seed.template.md, README.md, the docs site, project.json, and obj/template/.claude/manifest.json.",
+  "slug": "system-spec-delta-slice-b",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "B",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-B"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice B in docs/specs/system-spec-delta.md (## Slice B, lines 616-624) and .claude/state/epic/system-spec-delta.json slices[1], carrying ACs AC-007/AC-008/AC-013, an explicit write surface, and 'Depends on: nothing'. The epic's gate-A token is on disk at .claude/state/spec_approvals/system-spec-delta.approval (2026-08-07); slice A landed as 17f1fa0 and is recorded committed in the epic state's children[].",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); seed.md 18.9 — one epic approval covers all slices",
+    "security": "escalated by slice B risk[] — reconcile-report.mjs parses untrusted-shaped corpus input and writeDiagramShard constructs filesystem paths from caller-supplied ids",
+    "simplify": "escalated by slice B risk[] — spans a shared helper, a new skill dir, project.json, and six governance mirrors",
+    "document": "escalated by slice B risk[] — ships a new user-facing skill plus the 57 -> 58 count across the docs site and README"
+  },
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786091054,
+  "updated_at": 1786095928,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

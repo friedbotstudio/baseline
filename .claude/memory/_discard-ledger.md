@@ -67,3 +67,5 @@
 - discarded :: .claude/skills/spec-lint/SKILL.md → landmarks.md
 - promoted :: .claude/skills/workspace/delta.mjs → landmarks.md
 - discarded :: drift_check is vacuous on every epic-child → landmines.md
+- promoted :: .claude/skills/system-reconcile/reconcile-report.mjs → landmarks.md
+- discarded :: .claude/skills/system-reconcile/SKILL.md → landmarks.md

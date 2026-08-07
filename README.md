@@ -46,7 +46,7 @@ The baseline is that opinion, written down and enforced below the layer Claude c
 
 ## What this is
 
-A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **57 skills**, **1 subagent**, **9 workflow tracks**, and **4 consent gates** you type yourself.
+A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **58 skills**, **1 subagent**, **9 workflow tracks**, and **4 consent gates** you type yourself.
 
 The hooks run as separate processes, outside Claude's tool boundary, before the tool call resolves. So _"don't push"_, _"don't `--amend`"_, _"don't self-approve specs"_ stop being instructions Claude may follow and become operations it cannot perform. It cannot disable a hook with a flag, cannot write its own consent marker, and cannot reorder a phase without an exception `/triage` records on disk.
 
@@ -99,7 +99,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 | What | Count | Where it lives |
 | --- | ---: | --- |
 | **Hooks** on PreToolUse, PostToolUse, SessionStart, Stop, PreCompact, and UserPromptSubmit | 26 | `.claude/hooks/` |
-| **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 57 | `.claude/skills/` |
+| **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 58 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — three workflow-phase gates plus `/grant-push` at runtime. All user-typed, all structurally un-invokable by Claude | 3 + 1 | `consent_gate_grant` UserPromptSubmit hook |
