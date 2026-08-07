@@ -1,0 +1,58 @@
+{
+  "request": "Slice E of the system-spec-delta epic (C2-5): research retrieves structurally over the corpus. Add a precise lane to /research Step 0 — each scout-touched path resolves via resolveLookup('by_path', ...) with a specDir to elements, and each element's source_spec: names the archived spec that authored it. Those hits are tagged via: \"source_spec\" and ranked above term-overlap hits, which still return tagged via: \"terms\" — per D5 a labelled lane ranked above term overlap, not a replacement, because only 14 of 112 elements carry source_spec:. Also fix retrieve.mjs emitting unescaped control characters from excerpt text, which breaks JSON.parse of its stdout (observed on this epic's own Step 0).",
+  "slug": "system-spec-delta-slice-e",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "E",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-E"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice E in docs/specs/system-spec-delta.md (## Slice E) and .claude/state/epic/system-spec-delta.json slices[4], carrying AC-011, the write surface .claude/skills/research/retrieve.mjs + .claude/skills/research/SKILL.md + tests/, and 'Depends on: nothing'. Decision D5 in the same spec fixes the lane's shape (labelled lane ranked above term overlap, not a replacement). The epic's gate-A token is on disk at .claude/state/spec_approvals/system-spec-delta.approval. AC-011's behavior contract is written out at §Behavior #11.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); seed.md 18.9 — one epic approval covers all slices",
+    "security": "excepted — slice E risk[] does not escalate security, and the write surface touches no auth path, no network IO boundary, and nothing under security.sensitive_globs (.claude/skills/research/** is not listed). Carried forward as an IMPLEMENTATION CONSTRAINT rather than a phase: the new lane constructs a read path from file content (an element's source_spec: value), so that value is validated to resolve under docs/archive/ before any read, the same class of guard assertSafeSlug provides in slice A.",
+    "simplify": "escalated by slice E risk[] — the change adds a second ranked lane beside the existing term-overlap path, so two code paths merge into one ordered result and the seam wants a cleanup pass",
+    "document": "escalated by slice E risk[] — .claude/skills/research/SKILL.md documents Step 0's retrieval contract and must state the two lanes and their ranking"
+  },
+  "completed": [
+    "tdd",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786121115,
+  "updated_at": 1786124096,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

@@ -28,7 +28,23 @@ For any library you intend to cite, verify its API against current documentation
 
 # Method
 
-0. **Retrieve prior art before deriving.** Run `node .claude/skills/research/retrieve.mjs --slug <slug> --terms "<intake topics + scout touched modules>"`. It scans the archive (`docs/archive/**/research.md`, `spec.md`) and the decision corpus (`decisions.md`, `libraries.md`) for term overlap and returns ranked `hits` with a `path` + `matchedTerms` per source. For every hit you reuse, cite its `path`; consume `docs/scout/<slug>.md` when present; then derive only the genuine **delta** not already covered. Empty archive → no hits → derive fresh as below.
+0. **Retrieve prior art before deriving.** Run:
+
+   ```
+   node .claude/skills/research/retrieve.mjs --slug <slug> --terms "<intake topics + scout touched modules>" \
+     --touched '["<scout-touched path>","<scout-touched path>"]' --spec-dir docs/system 2>/dev/null
+   ```
+
+   Two lanes answer, and the `via` field on every hit says which one did.
+
+   - **`via: "source_spec"` — the structural lane.** Each `--touched` path walks up through `docs/system/` to the elements that govern it; an element carrying `source_spec:` names the archived spec that authored it. These are provenance, not word overlap, so they rank **above** every term hit.
+   - **`via: "terms"` — the term lane.** Scans `docs/archive/**/{research,spec}.md` plus the `decisions` and `libraries` memory categories for overlap with `--terms`, returning `score` + `matchedTerms` per source. It runs unchanged whether or not the structural lane finds anything: only a minority of elements carry `source_spec:`, so the structural lane alone answers a minority of questions.
+
+   Read `structuralUnresolved` too — an element that names a `source_spec:` with no archived spec on disk is reported there rather than dropped, so a thin structural result is visible instead of silent. `summary` carries the counts, so stdout alone is enough; `--touched` takes **one quoted JSON array** (zsh does not word-split).
+
+   Pass `--touched` only when `docs/scout/<slug>.md` exists — its touched-path list is the input. Without it, or with `memory.architecture_map.enabled` off, the structural lane is inert and the term lane behaves exactly as before.
+
+   For every hit you reuse, cite its `path`; consume `docs/scout/<slug>.md` when present; then derive only the genuine **delta** not already covered. Empty archive → no hits → derive fresh as below.
 1. **Identify libraries and frameworks** the solution would likely touch.
 2. **Verify each library API** against current docs (context7 default, above).
 3. **For each candidate**, evaluate against:
@@ -48,7 +64,7 @@ Write the memo to `docs/research/<slug>.md`. Format:
 # Pattern Research — <task>
 
 ## Prior art (retrieved)
-<Reused prior findings from `retrieve.mjs`, each cited to its source path (e.g. `docs/archive/<date>/<slug>/research.md`). State the delta: which parts are already answered upstream vs. newly derived below. Empty when the archive had no relevant hits.>
+<Reused prior findings from `retrieve.mjs`, each cited to its source path (e.g. `docs/archive/<date>/<slug>/research.md`) and labelled with the lane that found it — `via: source_spec` is the spec that authored a touched path, `via: terms` is word overlap. State the delta: which parts are already answered upstream vs. newly derived below. Empty when the archive had no relevant hits.>
 
 ## Candidate A: <short name>
 - **Summary**: <1–2 sentences>
