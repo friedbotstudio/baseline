@@ -1,0 +1,40 @@
+{
+  "request": "Cycle 2 of the central-system-spec plan: a spec declares its delta against docs/system/, archive verifies that delta against the landed diff, a /system-reconcile skill repairs the corpus, the witness registry stops being inert, research retrieves through the corpus, and the constitution records the recall rule.",
+  "slug": "system-spec-delta",
+  "track_id": "epic",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved plan file .config/plans/i-guess-earlier-we-synthetic-moth.md, Cycle 2 sections C2-1..C2-6, each naming concrete helpers and call sites. Its Cycle 1 landed as 9790ff3, whose defects (dead recall paths, guard/lint divergence) are the direct predecessors of this scope. Three Cycle-1 memory entries also feed it: swarm-heuristic-counts-zero-components-for-any-ref-spec-4d21, advisory-block-interpolates-an-unsanitised-file-path-8c7e, spec-lint-omits-the-slug-guard-the-diagram-guard-applies-b93f.",
+  "track_reason": "Heavier than spec-entry, which Cycle 1 used for six changes in one commit. Cycle 2's six pieces are separately committable and carry a real dependency order: the shard writer (slice B) must exist before archive can write a shard (slice C), and the delta section (slice A) must exist before archive can verify a delta (slice C). It also lands a new skill, a required-section change affecting every future spec, a 112-file mechanical backfill and a constitutional amendment under an 84-char budget — coupling those into one revert unit is the risk epic exists to avoid. Six slices >= epic.min_slices of 3, so the rule prefers epic over intake-full.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "integrate",
+    "org-dispatch",
+    "roadmap-sync",
+    "security",
+    "simplify",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786081200,
+  "updated_at": 1786084553,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}
