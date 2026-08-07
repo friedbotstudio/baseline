@@ -232,14 +232,16 @@ The memory system at `.claude/memory/` accumulates project facts across sessions
 
 1. Treat the seven canonical categories (`landmarks`, `libraries`, `decisions`, `landmines`, `conventions`, `pending-questions`, `backlog`), flat or sharded, as long-term project memory. Each entry has a stable key per the schema in `.claude/memory/README.md`.
 2. **Re-verify before citing.** Every skill that cites a memory entry SHALL re-verify it (file exists, symbol still at named line, library version still pinned). Failed verification → you SHALL correct or delete the entry in the same run before proceeding.
-3. Treat `_pending.md` as the auto-extraction inbox (written by `memory_stop`). Promote candidates to canonical files only via `/memory-flush`. You SHALL NOT write directly into canonical memory files outside the natural byproduct of phase skills.
-4. Treat `_resume.md` as the cross-session continuity snapshot (refreshed every turn-end and before compaction). It is **session memory**, not project memory.
-5. Respect `size-cap: 500` per canonical file **in the flat shape** (prune oldest unverified on overflow); the sharded shape has no per-file cap. Entries unverified for ≥ 30 commits or ≥ 30 days are stale; the next phase that touches them re-verifies or deletes.
+3. Treat `_pending.md` as the auto-extraction inbox. Promote candidates to canonical files only via `/memory-flush`; you SHALL NOT write canonical files directly. Mechanics + the phase-skill carve-out: annex.
+4. Treat `_resume.md` as the cross-session continuity snapshot. It is **session memory**, not project memory; refresh cadence: annex.
+5. Respect `size-cap: 500` per canonical file **in the flat shape**. Entries unverified for ≥ 30 commits or ≥ 30 days are stale. Overflow, shard-shape and decay handling: annex.
 6. **Preserve verbatim.** Memory entries with `source: user-instruction` or `source: user-feedback` SHALL include a `verbatim:` blockquote of the user's actual words. The verbatim is canonical; the entry body is Claude's interpretation. When verbatim and interpretation conflict, **verbatim wins**, and you SHALL surface the conflict to the user before acting on the interpretation. `/memory-flush` SHALL reject promotions to canonical files that lack a required verbatim. Schema: `.claude/memory/README.md → Source provenance`.
 7. **Respect advisory memory hooks.** Advisory PreToolUse hooks (e.g., `process_lifecycle_guard`) surface relevant memory entries inline before matching tool calls. You SHALL read the surfaced verbatim before executing the matched command, and SHALL treat it as binding for the current operation.
 8. **Durable local thread trail.** `.claude/memory/_thread.md` is a third memory class — **local + durable**: gitignored content, and OUTSIDE `/memory-flush`'s reset path, so a shelved thread survives flushes and `/clear`. Claude Code (never the human) shelves and resumes it. Detail: `.claude/CONSTITUTION.md` (annex).
 
 9. **The central system spec is not memory.** The structural model lives at `docs/system/`: a reviewed spec artifact the canonical list never walks. Gated by `memory.architecture_map.enabled`. Genesis: `seed.md §4.8`.
+
+10. **Recall before rediscovering.** Before scouting or specifying, descend by concept or walk up from the touched paths. The map routes; the code witnesses. An unwitnessed shard is never evidence.
 
 Memory accelerates triage. It NEVER authorizes a skip.
 

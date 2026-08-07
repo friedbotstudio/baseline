@@ -135,6 +135,24 @@ The build script `scripts/build-manifest.mjs` reads each SKILL.md's `owner:` val
 
 *Relocated 2026-07-09 (`forbidden-git-ops-spellings`).* Article XII in `CLAUDE.md` previously restated the manifest paths, the `<target>/.claude/.baseline-manifest.json` distinction, the `hash mismatch at <path>` / `baseline skill missing` FAIL strings, and the non-goals — all of which this section already carried verbatim. Per Art. I.6 the duplication was removed from the always-loaded file, leaving every SHALL clause intact. No rule lost binding force; ~1.4k bytes returned to the `CLAUDE.md` budget.
 
+### The auto-extraction inbox (Article IX clause 3)
+
+*Relocated 2026-08-08 (`system-spec-delta` slice F).* Clause 3's binding kernel stays in `CLAUDE.md`; the mechanics live here. Per Art. I.6 the narration moved so the always-loaded file kept room for the clause 10 recall rule without either size ceiling moving.
+
+`_pending.md` is written by the `memory_stop` Stop hook, which appends candidates at every turn-end. It is a passive collector: the hook proposes, `/memory-flush` disposes. Promotion to a canonical file happens only through `/memory-flush`, where a human-curated decision adds the `verified-at:` stamp that makes an entry self-healing.
+
+The prohibition on writing canonical files directly carries one carve-out: the **natural byproduct of phase skills**. A phase that legitimately learns a fact of its own kind records it as it works — `scout` writes landmarks because it just mapped the code, `research` writes libraries because it just pinned a version. That is the fact landing next to the work that produced it, while the reason for it is still fresh, and it is not the same act as promoting an unverified candidate out of the inbox.
+
+`_resume.md` (clause 4) is refreshed at every turn-end by `memory_stop` and again by `memory_pre_compact` before context compaction, so a resumed or compacted session opens on the same footing.
+
+### Canonical-file size cap and decay (Article IX clause 5)
+
+*Relocated 2026-08-08 (`system-spec-delta` slice F), same rationale as clause 3 above.* The binding rule — `size-cap: 500` in the flat shape, and the 30-commit / 30-day staleness threshold — stays in `CLAUDE.md`.
+
+On overflow in the flat shape, **prune oldest unverified** entries first: an entry that has never been re-verified is the cheapest thing to lose, and pruning by age alone would evict facts that are still true and still cited. The **sharded shape has no per-file cap** — one fact per file means the cap has nothing to bound, and the decay predicate does the work the cap used to do.
+
+Staleness is not deletion. An entry past the threshold is *flagged*, and the next phase that touches it re-verifies or deletes it — self-healing at the point of use rather than by a sweep that no one reads. `/memory-flush` Step 0c surfaces the stale set on demand for the same treatment.
+
 ### Durable local thread trail (Article IX clause 8)
 
 `.claude/memory/_thread.md` is a third, **local + durable** memory class for cross-session conversation continuity — distinct from the committed/curated canonical seven and from the overwritten-every-turn `_resume.md`. Its content is gitignored (only `src/memory/_thread.template.md` ships) and it is excluded from `/memory-flush`'s reset path, so a shelved thread survives a flush or `/clear`.

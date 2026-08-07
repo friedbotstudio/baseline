@@ -1,0 +1,71 @@
+{
+  "request": "Slice F of the system-spec-delta epic (C2-6): the constitutional amendment. Records the recall rule now that Cycle 1 made it true, promotes the System delta from a reference affordance to a required spec section, and states that archive verifies a declared delta rather than only re-stamping. Per D8 the Art. I.4 ordering is intra-slice: seed.md first, then CLAUDE.md, then the mirrors. Edits: seed.md §4.8 (the recall clause; the session-start concept map claim is now true), seed.md §9 (the delta is a required spec section, not only a reference affordance), seed.md §12 (archive verifies a declared delta rather than only re-stamping), and CLAUDE.md Article IX clause 10 (before scouting or specifying, descend by concept or walk up from the touched paths before rediscovering; the map routes, the code witnesses; an unwitnessed shard routes and is never evidence). This is the epic's last open slice; its commit closes the epic.",
+  "slug": "system-spec-delta-slice-f",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "F",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-F"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice F in docs/specs/system-spec-delta.md (## Slice F) and .claude/state/epic/system-spec-delta.json slices[5], carrying AC-012, the write surface docs/init/seed.md + src/seed.template.md + CLAUDE.md + src/CLAUDE.template.md + .claude/CONSTITUTION.md + tests/, and 'Depends on: nothing — it records doctrine rather than authorizing new behaviour (D8)'. AC-012's full pass condition is written out at §Behavior #12, and Rollout prerequisite 1 names the exact relocation source that pays the character budget. The epic's gate-A token is on disk at .claude/state/spec_approvals/system-spec-delta.approval. Cycle 1 landed as 9790ff3, which is what makes the §4.8 recall clause true rather than aspirational.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); seed.md 18.9 — one epic approval covers all slices",
+    "security": "excepted — slice F risk[] does not escalate security, and the diff carries no executable surface at all: five prose/governance files plus tests. No auth, no IO boundary, no untrusted-input parsing, nothing under security.sensitive_globs.",
+    "simplify": "excepted — slice F risk[] does not escalate simplify, and the phase is a mechanical code pass (dead code, duplication, layer violations) with no purchase on constitutional prose. The real integrity checks here are audit-baseline exit 0 and the two mirror byte-equality tests, both of which run at integrate.",
+    "document": "escalated by slice F risk[] and human-confirmed at triage (2026-08-08) — the amendment changes what CLAUDE.md and seed.md claim about recall, the delta section, and archive's behaviour, and the public site describes harness behaviour, so the reflective public-site check must get a chance to fire."
+  },
+  "budget_constraint": {
+    "note": "CRITICAL — the trap has fired twice, the second time with the landmine already on disk. RELOCATE BEFORE ADDING.",
+    "measured_at_triage": "2026-08-08, HEAD f0ecb03",
+    "claude_md_chars": 38716,
+    "claude_md_chars_ceiling": 38800,
+    "claude_md_chars_slack": 84,
+    "claude_md_bytes": 38943,
+    "claude_md_bytes_ceiling": 39000,
+    "claude_md_bytes_slack": 57,
+    "mirror_byte_equal_at_triage": true,
+    "relocation_source": "Rollout prerequisite 1 — move the Article IX clause 3 narration (the _pending.md inbox mechanics) and the clause 5 narration (the flat-shape size-cap rationale) to .claude/CONSTITUTION.md BEFORE clause 10 is added.",
+    "unit_warning": "The two ceilings do not move together. An em dash is 1 char but 3 bytes, so byte slack exhausts first; measure both after every edit."
+  },
+  "completed": [
+    "tdd",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786129900,
+  "updated_at": 1786131382,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

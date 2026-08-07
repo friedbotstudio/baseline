@@ -385,6 +385,8 @@ Three flags gate the layer, all default-off and absent from the shipped template
 
 Records are one file per entity with no on-disk aggregate index — the index is rebuilt on read — so concurrent contributions merge textually. Element ids derive from the anchor, so two branches deriving the same anchor produce the same file. Staleness is decided by a declared witness (`anchor-digest`, a named `test`, or `none`), never by a clock; a witness-less diagram is permitted but never citable as evidence.
 
+**Recall precedes rediscovery.** Two entry points reach the model, and both are live rather than pending: descend by concept, or walk up from a touched path to the element that anchors it. Session start injects the concept map; `process_lifecycle_guard`'s write leg surfaces the corpus location for the path being written. Before scouting or specifying, take one of those two routes before rediscovering the codebase. The map routes; the code witnesses. An unwitnessed shard routes and is never evidence.
+
 A project that is not this one bootstraps its own corpus with `/spec-sync`, which proposes a concept map from a scan and materializes only after a human confirms it.
 
 ---
@@ -522,7 +524,7 @@ Three read-only spec-review skills run before implementation (in main context �
 - `spec-diagram-review` — cross-consistency (C4 ↔ dependency graph ↔ class diagram ↔ DDL).
 - `spec-traceability-review` — every spec AC traces to a real upstream AC.
 
-**A spec is a diff against the central system spec.** The structural model is not re-derived per cycle: `docs/system/` (§4.8) holds it once, and a spec satisfies a required diagram kind by referencing an element rather than redrawing it. Diagram authority stays split by question and no location overrides another — `project.json → artifacts.required_diagrams.spec` decides which kinds a spec must carry, `docs/system/` owns the structural model, and `.claude/skills/spec/template.md` owns author-facing shape.
+**A spec is a diff against the central system spec.** The structural model is not re-derived per cycle: `docs/system/` (§4.8) holds it once, and a spec satisfies a required diagram kind by referencing an element rather than redrawing it. Every spec carries a **required** `## System delta` section stating what the work adds, changes or removes against that model, in the corpus's own op vocabulary; `*(none)*` is the sole legal empty body. The element reference and the delta are complements rather than alternatives — the reference answers a structural diagram kind, the delta states the change. Diagram authority stays split by question and no location overrides another — `project.json → artifacts.required_diagrams.spec` decides which kinds a spec must carry, `docs/system/` owns the structural model, and `.claude/skills/spec/template.md` owns author-facing shape.
 
 ---
 
@@ -629,7 +631,7 @@ Seed-level requirement: no stale workflow artifacts in the working tree after co
 
 **Archive is append-only.** A bundle directory at `<date>/<slug>/` is never overwritten; the script refuses if a target file already exists. Re-runs only land new slugs.
 
-**Archive also syncs the central system spec.** `/archive` folds the landed change back into `docs/system/` (§4.8) so the model stays true to what is on disk: records and derived edges are applied for the anchors this diff actually touched, and a digest is re-stamped only for those. Anything a scanner cannot check — rationale links, behavioural diagrams, concept membership — is proposed for curation rather than written. There is no bulk-refresh path; re-stamping every element would make the model permanently green and launder the drift the digest exists to catch.
+**Archive verifies the spec's declared delta, then folds it into `docs/system/` (§4.8).** `/archive` parses the spec's `## System delta` (§9), checks each row against the landed diff scoped to the governed surface, and applies only the rows the diff **confirms** — a declared row the diff cannot confirm writes nothing and is reported as drift, and a governed path no row claims is reported as an unclaimed coverage gap. This is what makes the fold evidence rather than a re-stamp. For confirmed rows the model stays true to what is on disk: records and derived edges are applied for the anchors this diff actually touched, and a digest is re-stamped only for those. Anything a scanner cannot check — rationale links, behavioural diagrams, concept membership — is proposed for curation rather than written. There is no bulk-refresh path; re-stamping every element would make the model permanently green and launder the drift the digest exists to catch.
 
 ---
 
