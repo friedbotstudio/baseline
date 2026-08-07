@@ -1,3 +1,4 @@
 !startsub audit_baseline_checks
+' @kind c4_component
 Component(audit_baseline_checks, ".claude/skills/audit-baseline/checks/*.mjs", "subsystem", "Per-surface baseline audit checks")
 !endsub

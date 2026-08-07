@@ -1,3 +1,4 @@
 !startsub timing_lib
+' @kind c4_component
 Component(timing_lib, ".claude/hooks/lib/timing.mjs", "component", "Timing ledger")
 !endsub

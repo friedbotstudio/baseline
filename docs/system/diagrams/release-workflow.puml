@@ -1,3 +1,4 @@
 !startsub release_workflow
+' @kind c4_component
 Component(release_workflow, ".github/workflows/release.yml", "component", "Release CI — pre-publish-checks, release, deploy-pages")
 !endsub

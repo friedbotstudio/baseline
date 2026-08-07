@@ -1,3 +1,4 @@
 !startsub code_structure_oracle
+' @kind c4_component
 Component(code_structure_oracle, ".claude/skills/code-structure/*.mjs", "subsystem", "Code structure oracle")
 !endsub

@@ -1,3 +1,4 @@
 !startsub ci_automation
+' @kind c4_component
 Component(ci_automation, ".github/workflows/*.yml", "subsystem", "CI automation workflows")
 !endsub

@@ -1,3 +1,4 @@
 !startsub sprint_oracle_helper
+' @kind c4_component
 Component(sprint_oracle_helper, ".claude/skills/sprint-oracle/*.mjs", "subsystem", "Sprint completeness oracle")
 !endsub

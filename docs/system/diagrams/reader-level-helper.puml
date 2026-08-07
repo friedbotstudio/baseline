@@ -1,3 +1,4 @@
 !startsub reader_level_helper
+' @kind c4_component
 Component(reader_level_helper, ".claude/skills/reader-level/*.mjs", "subsystem", "Reading level measurement")
 !endsub

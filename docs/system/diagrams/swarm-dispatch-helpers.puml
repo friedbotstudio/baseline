@@ -1,3 +1,4 @@
 !startsub swarm_dispatch_helpers
+' @kind c4_component
 Component(swarm_dispatch_helpers, ".claude/skills/swarm-dispatch/*.mjs", "subsystem", "Swarm wave audit and merge")
 !endsub

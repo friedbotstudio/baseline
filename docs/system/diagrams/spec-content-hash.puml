@@ -1,3 +1,4 @@
 !startsub spec_content_hash
+' @kind c4_component
 Component(spec_content_hash, ".claude/hooks/lib/spec-content-hash.mjs", "component", "Approved-artifact content hash")
 !endsub

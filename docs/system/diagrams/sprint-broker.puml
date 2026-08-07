@@ -1,3 +1,4 @@
 !startsub sprint_broker
+' @kind c4_component
 Component(sprint_broker, ".claude/mcp/sprint-broker/*.mjs", "subsystem", "Sprint broker transport")
 !endsub

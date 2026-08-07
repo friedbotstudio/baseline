@@ -1,3 +1,4 @@
 !startsub tdd_order_guard
+' @kind c4_component
 Component(tdd_order_guard, ".claude/hooks/tdd_order_guard.mjs", "component", "Test-before-source guard")
 !endsub

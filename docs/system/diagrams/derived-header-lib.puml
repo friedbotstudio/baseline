@@ -1,3 +1,4 @@
 !startsub derived_header_lib
+' @kind c4_component
 Component(derived_header_lib, ".claude/hooks/lib/derived-header.mjs", "component", "Derived index header")
 !endsub

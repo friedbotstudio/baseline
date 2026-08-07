@@ -1,3 +1,4 @@
 !startsub surface_cli
+' @kind c4_component
 Component(surface_cli, "src/cli/surface.js", "component", "Shipped surface enumeration")
 !endsub

@@ -1,3 +1,4 @@
 !startsub workflows_validator_entry
+' @kind c4_component
 Component(workflows_validator_entry, ".claude/skills/triage/workflows-validator.js", "component", "Workflow track validator entry point")
 !endsub

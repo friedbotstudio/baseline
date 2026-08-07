@@ -1,3 +1,4 @@
 !startsub branch_guard
+' @kind c4_component
 Component(branch_guard, ".claude/hooks/branch_guard.mjs", "component", "Branch guard hook")
 !endsub

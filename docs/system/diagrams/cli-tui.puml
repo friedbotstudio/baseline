@@ -1,3 +1,4 @@
 !startsub cli_tui
+' @kind c4_component
 Component(cli_tui, "src/cli/tui/*.js", "subsystem", "Installer TUI")
 !endsub

@@ -1,3 +1,4 @@
 !startsub project_json_merge
+' @kind c4_component
 Component(project_json_merge, "src/cli/project-json-merge.js", "component", "project.json three-way merge")
 !endsub

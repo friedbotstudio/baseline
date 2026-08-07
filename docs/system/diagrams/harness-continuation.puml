@@ -1,3 +1,4 @@
 !startsub harness_continuation
+' @kind c4_component
 Component(harness_continuation, ".claude/hooks/harness_continuation.mjs", "component", "Harness Stop-hook safety net")
 !endsub

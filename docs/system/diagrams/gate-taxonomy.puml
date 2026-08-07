@@ -1,3 +1,4 @@
 !startsub gate_taxonomy
+' @kind c4_component
 Component(gate_taxonomy, ".claude/hooks/lib/gate-taxonomy.mjs", "component", "Advisory gate classifier")
 !endsub

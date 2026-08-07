@@ -1,3 +1,4 @@
 !startsub frontmatter_parser
+' @kind c4_component
 Component(frontmatter_parser, ".claude/hooks/lib/frontmatter-parser.mjs", "component", "Frontmatter parser")
 !endsub

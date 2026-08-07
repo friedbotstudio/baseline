@@ -1,3 +1,4 @@
 !startsub memory_session_start
+' @kind c4_component
 Component(memory_session_start, ".claude/hooks/memory_session_start.mjs", "component", "Session-start memory injection")
 !endsub

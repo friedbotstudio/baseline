@@ -1,3 +1,4 @@
 !startsub workflow_migrator
+' @kind c4_component
 Component(workflow_migrator, ".claude/skills/harness/workflow-migrator.js", "component", "Pre-section-18 workflow.json migrator")
 !endsub

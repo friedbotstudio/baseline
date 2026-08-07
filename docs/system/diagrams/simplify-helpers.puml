@@ -1,3 +1,4 @@
 !startsub simplify_helpers
+' @kind c4_component
 Component(simplify_helpers, ".claude/skills/simplify/*.mjs", "subsystem", "Simplify oracle and reverify guard")
 !endsub

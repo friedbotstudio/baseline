@@ -1,3 +1,4 @@
 !startsub technical_writing_bands
+' @kind c4_component
 Component(technical_writing_bands, ".claude/skills/technical-writing/*.json", "subsystem", "Measured corpus bands")
 !endsub

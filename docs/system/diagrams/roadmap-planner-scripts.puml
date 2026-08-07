@@ -1,3 +1,4 @@
 !startsub roadmap_planner_scripts
+' @kind c4_component
 Component(roadmap_planner_scripts, ".claude/skills/roadmap-planner/scripts/*.mjs", "subsystem", "Roadmap dependency-graph engine")
 !endsub

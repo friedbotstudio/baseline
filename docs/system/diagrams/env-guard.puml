@@ -1,3 +1,4 @@
 !startsub env_guard
+' @kind c4_component
 Component(env_guard, ".claude/hooks/env_guard.mjs", "component", "Env file write guard")
 !endsub

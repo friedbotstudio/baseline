@@ -1,3 +1,4 @@
 !startsub org_dispatch_helpers
+' @kind c4_component
 Component(org_dispatch_helpers, ".claude/skills/org-dispatch/*.mjs", "subsystem", "Org peer selection and yield arbitration")
 !endsub

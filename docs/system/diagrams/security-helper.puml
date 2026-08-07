@@ -1,3 +1,4 @@
 !startsub security_helper
+' @kind c4_component
 Component(security_helper, ".claude/skills/security/*.mjs", "subsystem", "Security review helper")
 !endsub

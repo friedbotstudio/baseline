@@ -1,3 +1,4 @@
 !startsub verify_pass_guard
+' @kind c4_component
 Component(verify_pass_guard, ".claude/hooks/verify_pass_guard.mjs", "component", "Verify verdict guard")
 !endsub

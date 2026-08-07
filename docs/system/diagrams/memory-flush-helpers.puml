@@ -1,3 +1,4 @@
 !startsub memory_flush_helpers
+' @kind c4_component
 Component(memory_flush_helpers, ".claude/skills/memory-flush/*.mjs", "subsystem", "Flush sweep, routing, ledger")
 !endsub

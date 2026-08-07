@@ -1,3 +1,4 @@
 !startsub write_set_profile
+' @kind c4_component
 Component(write_set_profile, ".claude/hooks/lib/write-set-profile.mjs", "component", "Write-set diagram profile resolver")
 !endsub

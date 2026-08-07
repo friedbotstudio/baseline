@@ -1,3 +1,4 @@
 !startsub approval_anchor
+' @kind c4_component
 Component(approval_anchor, ".claude/hooks/lib/approval-anchor.mjs", "component", "Approval provenance anchor")
 !endsub

@@ -1,0 +1,58 @@
+{
+  "request": "Slice D of the system-spec-delta epic (C2-4): backfill the kind annotation across every shard in docs/system/diagrams/. Run /system-reconcile's missing-kind report to name the backfill set — shards writeDiagramShard authored since slice B are annotated at birth and are excluded — then write each named shard's real kind through writeDiagramShard, deriving the kind from what the shard already declares structurally (a Component(...) line -> c4_component, and so on). Genuinely ambiguous shards stay unannotated and are reported rather than guessed, and the unannotated remainder is recorded in the slice's commit message. Data backfill against an already-correct reader (shards.mjs:19); no reader change.",
+  "slug": "system-spec-delta-slice-d",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "D",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-D"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice D in docs/specs/system-spec-delta.md (## Slice D) and .claude/state/epic/system-spec-delta.json slices[3], carrying AC-010, the write surface docs/system/diagrams/** + tests/, and 'Depends on: slice B (writeDiagramShard)'. That dependency is landed as db121a1 and recorded committed in the epic state's children[]. The epic's gate-A token is on disk at .claude/state/spec_approvals/system-spec-delta.approval. The slice's count-free amendment (AC-010 and the regression trap stated as quantifiers) landed in the prerequisite workflow readme-count-gate, commit 9235a23.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); seed.md 18.9 — one epic approval covers all slices",
+    "security": "excepted — slice D risk[] does not escalate security; the write surface is docs/system/diagrams/** data only, no auth, no IO boundary, no untrusted-input parsing, and no reader change",
+    "simplify": "escalated by slice D risk[] — a corpus-wide mechanical backfill whose diff spans every shard file",
+    "document": "human-elected at triage (2026-08-07) over the slice's risk[] — the backfill flips the witness registry from inert to live, which is worth recording in the corpus README"
+  },
+  "completed": [
+    "tdd",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786110000,
+  "updated_at": 1786110000,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}

@@ -1,3 +1,4 @@
 !startsub code_browser_walk
+' @kind c4_component
 Component(code_browser_walk, ".claude/skills/code-browser/*.mjs", "subsystem", "Universal navigation walk")
 !endsub

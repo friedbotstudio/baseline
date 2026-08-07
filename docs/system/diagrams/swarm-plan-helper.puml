@@ -1,3 +1,4 @@
 !startsub swarm_plan_helper
+' @kind c4_component
 Component(swarm_plan_helper, ".claude/skills/swarm-plan/*.mjs", "subsystem", "Swarm wave scheduler")
 !endsub

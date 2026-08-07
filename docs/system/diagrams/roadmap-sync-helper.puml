@@ -1,3 +1,4 @@
 !startsub roadmap_sync_helper
+' @kind c4_component
 Component(roadmap_sync_helper, ".claude/skills/roadmap-sync/*.mjs", "subsystem", "Roadmap status sync")
 !endsub

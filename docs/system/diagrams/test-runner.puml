@@ -1,3 +1,4 @@
 !startsub test_runner
+' @kind c4_component
 Component(test_runner, ".claude/hooks/test_runner.mjs", "component", "Test runner hook")
 !endsub

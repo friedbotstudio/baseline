@@ -1,3 +1,4 @@
 !startsub research_retrieve
+' @kind c4_component
 Component(research_retrieve, ".claude/skills/research/*.mjs", "subsystem", "Research retrieval")
 !endsub

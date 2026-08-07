@@ -1,3 +1,4 @@
 !startsub cli_core
+' @kind c4_component
 Component(cli_core, "src/cli/*.js", "subsystem", "Installer CLI core")
 !endsub

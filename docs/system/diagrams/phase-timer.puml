@@ -1,3 +1,4 @@
 !startsub phase_timer
+' @kind c4_component
 Component(phase_timer, ".claude/hooks/phase_timer.mjs", "component", "Per-phase timing observer")
 !endsub

@@ -1,3 +1,4 @@
 !startsub sprint_plan_manifest
+' @kind c4_component
 Component(sprint_plan_manifest, ".claude/skills/sprint-plan/*.json", "subsystem", "Sprint manifest template")
 !endsub

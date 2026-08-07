@@ -1,3 +1,4 @@
 !startsub plantuml_syntax_guard
+' @kind c4_component
 Component(plantuml_syntax_guard, ".claude/hooks/plantuml_syntax_guard.mjs", "component", "PlantUML parse guard")
 !endsub

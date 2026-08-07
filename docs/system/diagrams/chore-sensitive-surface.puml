@@ -1,3 +1,4 @@
 !startsub chore_sensitive_surface
+' @kind c4_component
 Component(chore_sensitive_surface, ".claude/skills/chore/*.mjs", "subsystem", "Chore conditional-phase triggers")
 !endsub

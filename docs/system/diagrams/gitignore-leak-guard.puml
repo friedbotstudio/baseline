@@ -1,3 +1,4 @@
 !startsub gitignore_leak_guard
+' @kind c4_component
 Component(gitignore_leak_guard, ".claude/hooks/gitignore_leak_guard.mjs", "component", "Commit leak guard")
 !endsub

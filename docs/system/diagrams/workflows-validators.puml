@@ -1,3 +1,4 @@
 !startsub workflows_validators
+' @kind c4_component
 Component(workflows_validators, ".claude/skills/triage/workflows-validator-*.js", "component", "Workflow track invariant and predicate validators")
 !endsub

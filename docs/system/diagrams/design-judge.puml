@@ -1,3 +1,4 @@
 !startsub design_judge
+' @kind c4_component
 Component(design_judge, ".claude/skills/harness/design-judge.mjs", "component", "Design judge scoring")
 !endsub

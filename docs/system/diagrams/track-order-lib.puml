@@ -1,3 +1,4 @@
 !startsub track_order_lib
+' @kind c4_component
 Component(track_order_lib, ".claude/hooks/lib/track-order.mjs", "component", "Phase ordering table")
 !endsub

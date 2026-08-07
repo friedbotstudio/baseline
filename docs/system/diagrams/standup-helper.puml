@@ -1,3 +1,4 @@
 !startsub standup_helper
+' @kind c4_component
 Component(standup_helper, ".claude/skills/standup/*.mjs", "subsystem", "Release and backlog recap")
 !endsub

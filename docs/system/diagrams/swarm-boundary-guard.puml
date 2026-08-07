@@ -1,3 +1,4 @@
 !startsub swarm_boundary_guard
+' @kind c4_component
 Component(swarm_boundary_guard, ".claude/hooks/swarm_boundary_guard.mjs", "component", "Write-set discipline guard")
 !endsub

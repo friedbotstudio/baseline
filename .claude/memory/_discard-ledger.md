@@ -74,3 +74,4 @@
 - discarded :: .claude/skills/tdd/drift_check.mjs → landmarks.md
 - discarded :: .claude/hooks/lib/pinned-spec.mjs → landmarks.md
 - promoted :: backlog → listworkspacefiles-lacks-traversal-guard-3529
+- discarded :: backlog → the-fix-is-one-line-tolerate-the-absent-5033

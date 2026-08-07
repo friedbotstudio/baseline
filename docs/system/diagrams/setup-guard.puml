@@ -1,3 +1,4 @@
 !startsub setup_guard
+' @kind c4_component
 Component(setup_guard, ".claude/hooks/setup_guard.mjs", "component", "Unconfigured-project advisory guard")
 !endsub

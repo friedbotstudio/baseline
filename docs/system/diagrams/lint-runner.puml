@@ -1,3 +1,4 @@
 !startsub lint_runner
+' @kind c4_component
 Component(lint_runner, ".claude/hooks/lint_runner.mjs", "component", "Lint runner hook")
 !endsub

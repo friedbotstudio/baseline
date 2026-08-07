@@ -1,3 +1,4 @@
 !startsub consent_decision
+' @kind c4_component
 Component(consent_decision, ".claude/hooks/lib/consent-decision.mjs", "component", "Consent decision resolver")
 !endsub

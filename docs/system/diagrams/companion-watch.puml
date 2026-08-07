@@ -1,3 +1,4 @@
 !startsub companion_watch
+' @kind c4_component
 Component(companion_watch, ".claude/skills/companion/*.mjs", "subsystem", "Companion peer loop")
 !endsub

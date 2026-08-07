@@ -1,3 +1,4 @@
 !startsub slug_safety
+' @kind c4_component
 Component(slug_safety, ".claude/hooks/lib/slug.mjs", "component", "Slug validation and canonicalization")
 !endsub

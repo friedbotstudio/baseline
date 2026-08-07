@@ -1,3 +1,4 @@
 !startsub commit_helpers
+' @kind c4_component
 Component(commit_helpers, ".claude/skills/commit/*.mjs", "subsystem", "Commit phase helpers")
 !endsub

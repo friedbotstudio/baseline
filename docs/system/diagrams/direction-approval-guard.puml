@@ -1,3 +1,4 @@
 !startsub direction_approval_guard
+' @kind c4_component
 Component(direction_approval_guard, ".claude/hooks/direction_approval_guard.mjs", "component", "Gate A guard")
 !endsub

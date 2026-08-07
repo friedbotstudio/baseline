@@ -1,3 +1,4 @@
 !startsub memory_hook_libs
+' @kind c4_component
 Component(memory_hook_libs, ".claude/hooks/lib/memory_*.mjs", "subsystem", "Memory hook libraries")
 !endsub

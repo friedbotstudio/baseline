@@ -1,3 +1,4 @@
 !startsub swarm_approval_guard
+' @kind c4_component
 Component(swarm_approval_guard, ".claude/hooks/swarm_approval_guard.mjs", "component", "Gate B guard")
 !endsub

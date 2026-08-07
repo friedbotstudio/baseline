@@ -1,3 +1,4 @@
 !startsub git_commit_guard
+' @kind c4_component
 Component(git_commit_guard, ".claude/hooks/git_commit_guard.mjs", "component", "Gate C and branch-aware commit guard")
 !endsub

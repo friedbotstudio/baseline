@@ -1,3 +1,4 @@
 !startsub epic_approval_guard
+' @kind c4_component
 Component(epic_approval_guard, ".claude/hooks/epic_approval_guard.mjs", "component", "Epic approval flip guard")
 !endsub

@@ -1,3 +1,4 @@
 !startsub ci_posture_cli
+' @kind c4_component
 Component(ci_posture_cli, "src/cli/ci-posture.js", "component", "CI posture detection")
 !endsub

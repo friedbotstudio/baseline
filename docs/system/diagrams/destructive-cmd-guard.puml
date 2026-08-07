@@ -1,3 +1,4 @@
 !startsub destructive_cmd_guard
+' @kind c4_component
 Component(destructive_cmd_guard, ".claude/hooks/destructive_cmd_guard.mjs", "component", "Destructive command guard")
 !endsub

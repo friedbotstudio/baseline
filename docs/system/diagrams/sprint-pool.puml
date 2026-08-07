@@ -1,3 +1,4 @@
 !startsub sprint_pool
+' @kind c4_component
 Component(sprint_pool, ".claude/mcp/sprint-pool/*.mjs", "subsystem", "Sprint pool registrar and handlers")
 !endsub

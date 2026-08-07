@@ -1,3 +1,4 @@
 !startsub track_guard
+' @kind c4_component
 Component(track_guard, ".claude/hooks/track_guard.mjs", "component", "Phase ordering guard")
 !endsub

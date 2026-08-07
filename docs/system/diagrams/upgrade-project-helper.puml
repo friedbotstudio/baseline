@@ -1,3 +1,4 @@
 !startsub upgrade_project_helper
+' @kind c4_component
 Component(upgrade_project_helper, ".claude/skills/upgrade-project/*.mjs", "subsystem", "Staged upgrade reconciliation")
 !endsub

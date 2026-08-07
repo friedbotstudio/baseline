@@ -1,3 +1,4 @@
 !startsub plantuml_cli
+' @kind c4_component
 Component(plantuml_cli, "src/cli/plantuml.js", "component", "PlantUML jar resolution")
 !endsub

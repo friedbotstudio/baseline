@@ -1,3 +1,4 @@
 !startsub tdd_helpers
+' @kind c4_component
 Component(tdd_helpers, ".claude/skills/tdd/*.mjs", "subsystem", "TDD drift-check and pointer resolution")
 !endsub

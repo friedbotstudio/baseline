@@ -1,3 +1,4 @@
 !startsub manifest_cli
+' @kind c4_component
 Component(manifest_cli, "src/cli/manifest.js", "component", "Baseline manifest builder")
 !endsub

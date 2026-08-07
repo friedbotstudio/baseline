@@ -1,3 +1,4 @@
 !startsub hooks_common_lib
+' @kind c4_component
 Component(hooks_common_lib, ".claude/hooks/lib/common.mjs", "component", "Shared hook library — branch and consent predicates")
 !endsub

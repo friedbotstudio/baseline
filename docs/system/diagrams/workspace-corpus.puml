@@ -1,3 +1,4 @@
 !startsub workspace_corpus
+' @kind c4_component
 Component(workspace_corpus, ".claude/skills/workspace/*.mjs", "subsystem", "Architecture map corpus engine")
 !endsub

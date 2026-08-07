@@ -66,13 +66,25 @@ function requireKind(kind) {
   return quotedArgument('kind', kind);
 }
 
+// C4's `techn` argument and the diagram kind are different axes, and conflating
+// them loses data: 51 shards in this corpus declare `subsystem` there while their
+// element record reads `kind: component`, and that distinction exists nowhere else
+// on disk. `technology` therefore defaults to the kind — which keeps every shard
+// written before the backfill byte-identical — and `descr` is emitted only when the
+// caller has one, so the three- and four-argument forms stay distinguishable.
+function componentLine(section, { label, technology, description }) {
+  const args = [section, `"${label}"`, `"${technology}"`];
+  if (description !== null) args.push(`"${description}"`);
+  return `Component(${args.join(', ')})`;
+}
+
 // D3 — the annotations sit INSIDE the block. `!includesub file.puml!NAME` pulls in
 // only the block's content (verified: https://plantuml.com/en/preprocessing), so an
 // annotation above `!startsub` is dropped at exactly the moment a view composes it.
-function shardText(section, { kind, witnessTest, label }) {
+function shardText(section, { kind, witnessTest, ...component }) {
   const lines = [`!startsub ${section}`, `' @kind ${kind}`];
   if (witnessTest !== null) lines.push(`' @witness ${witnessTest}`);
-  lines.push(`Component(${section}, "${label}", "${kind}")`, '!endsub');
+  lines.push(componentLine(section, component), '!endsub');
   return lines.join('\n') + '\n';
 }
 
@@ -86,14 +98,19 @@ function shardText(section, { kind, witnessTest, label }) {
 // The flag gate runs BEFORE id validation on purpose (§Behavior #13): an opted-out
 // project gets an empty result and no throw, and neither branch constructs a path,
 // so ordering the gate first costs nothing and makes inertness total.
-export function writeDiagramShard(specDir, elementId, { kind, witnessTest = null, label = null, rootDir = process.cwd() } = {}) {
+export function writeDiagramShard(specDir, elementId, {
+  kind, witnessTest = null, label = null, technology = null, description = null, rootDir = process.cwd(),
+} = {}) {
   if (!architectureMapEnabled({ rootDir })) return { path: null, written: false };
   assertSafeSlug(elementId, 'element id');
   const section = sectionFromElementId(elementId);
+  const safeKind = requireKind(kind);
   const text = shardText(section, {
-    kind: requireKind(kind),
+    kind: safeKind,
     witnessTest: witnessTest === null ? null : assertSafeFieldValue('witnessTest', witnessTest),
     label: quotedArgument('label', label ?? elementId),
+    technology: technology === null ? safeKind : quotedArgument('technology', technology),
+    description: description === null ? null : quotedArgument('description', description),
   });
   writeWorkspaceFile(specDir, SHARD_DIR, `${elementId}.puml`, text);
   return { path: shardRel(elementId), written: true };

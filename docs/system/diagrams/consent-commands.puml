@@ -1,3 +1,4 @@
 !startsub consent_commands
+' @kind c4_component
 Component(consent_commands, ".claude/commands/*.md", "subsystem", "Consent slash commands (user-typed)")
 !endsub

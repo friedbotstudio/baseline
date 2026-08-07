@@ -1,3 +1,4 @@
 !startsub workspace_flags
+' @kind c4_component
 Component(workspace_flags, ".claude/skills/workspace/flags.mjs", "component", "Architecture map feature flags")
 !endsub

@@ -1,3 +1,4 @@
 !startsub commit_planner_helper
+' @kind c4_component
 Component(commit_planner_helper, ".claude/skills/commit-planner/*.mjs", "subsystem", "Commit split planner")
 !endsub

@@ -1,3 +1,4 @@
 !startsub memory_pre_compact
+' @kind c4_component
 Component(memory_pre_compact, ".claude/hooks/memory_pre_compact.mjs", "component", "Pre-compaction resume snapshot")
 !endsub

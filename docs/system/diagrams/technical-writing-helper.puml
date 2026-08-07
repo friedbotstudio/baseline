@@ -1,3 +1,4 @@
 !startsub technical_writing_helper
+' @kind c4_component
 Component(technical_writing_helper, ".claude/skills/technical-writing/*.mjs", "subsystem", "Corpus profile targets")
 !endsub

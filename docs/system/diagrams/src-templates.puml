@@ -1,3 +1,4 @@
 !startsub src_templates
+' @kind c4_component
 Component(src_templates, "src/*.json", "subsystem", "Shipped template config")
 !endsub

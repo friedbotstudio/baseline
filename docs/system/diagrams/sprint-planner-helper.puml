@@ -1,3 +1,4 @@
 !startsub sprint_planner_helper
+' @kind c4_component
 Component(sprint_planner_helper, ".claude/skills/sprint-planner/*.mjs", "subsystem", "Next-sprint proposal")
 !endsub

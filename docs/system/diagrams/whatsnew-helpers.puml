@@ -1,3 +1,4 @@
 !startsub whatsnew_helpers
+' @kind c4_component
 Component(whatsnew_helpers, ".claude/skills/whatsnew/*.mjs", "subsystem", "Whats-new fragment routing")
 !endsub

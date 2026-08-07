@@ -1,3 +1,4 @@
 !startsub thread_store
+' @kind c4_component
 Component(thread_store, ".claude/hooks/lib/thread_store.mjs", "component", "Durable local thread trail")
 !endsub

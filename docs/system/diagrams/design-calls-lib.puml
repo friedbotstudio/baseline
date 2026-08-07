@@ -1,3 +1,4 @@
 !startsub design_calls_lib
+' @kind c4_component
 Component(design_calls_lib, ".claude/hooks/lib/design-calls.mjs", "component", "Design calls row rule")
 !endsub

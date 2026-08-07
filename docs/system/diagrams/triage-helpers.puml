@@ -1,3 +1,4 @@
 !startsub triage_helpers
+' @kind c4_component
 Component(triage_helpers, ".claude/skills/triage/*.mjs", "subsystem", "Triage classification and exception derivation")
 !endsub

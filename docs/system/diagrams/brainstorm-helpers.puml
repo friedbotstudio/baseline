@@ -1,3 +1,4 @@
 !startsub brainstorm_helpers
+' @kind c4_component
 Component(brainstorm_helpers, ".claude/skills/brainstorm/*.mjs", "subsystem", "Entry-phase brainstorm discipline")
 !endsub

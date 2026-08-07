@@ -1,3 +1,4 @@
 !startsub gitignore_baseline
+' @kind c4_component
 Component(gitignore_baseline, ".claude/skills/gitignore/*.json", "subsystem", "Baseline must-ignore set")
 !endsub
