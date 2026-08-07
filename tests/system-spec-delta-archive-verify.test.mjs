@@ -549,4 +549,73 @@ describe('slice C wiring — /archive Step 5 calls the verifier and Step 5.5 onl
     assert.match(text, /quoted JSON array/, 'the zsh word-splitting warning must survive the rewrite');
     assert.match(text, /memory\.architecture_map\.enabled/, 'the flag gate must still scope the corpus block');
   });
+
+  it('test_when_archive_sop_is_read_then_delta_verification_precedes_the_move', () => {
+    const text = readFileSync(ARCHIVE_SKILL, 'utf8');
+    const verifyAt = text.indexOf('verifyAndApplyDelta');
+    const moveAt = text.indexOf('archive.sh');
+
+    // Presence is asserted BEFORE the comparison on purpose. A rename would leave
+    // both at -1, and `-1 < -1` is false, so the order check would fail for the
+    // wrong reason — or worse, a single rename would leave one at -1 and pass
+    // vacuously. That is the same "an absent thing reads like a present one"
+    // ambiguity this whole scenario set exists to close.
+    assert.notEqual(verifyAt, -1, 'the SOP must still invoke verifyAndApplyDelta');
+    assert.notEqual(moveAt, -1, 'the SOP must still invoke archive.sh');
+
+    assert.ok(
+      verifyAt < moveAt,
+      'the delta verification must run BEFORE archive.sh moves docs/specs/<slug>.md into the bundle — '
+      + 'after the move resolveSpecPath returns null and the whole System delta table goes unread',
+    );
+  });
+});
+
+// ─── An unreadable spec is not an empty one ───
+
+describe('an unresolvable spec is reported, not silently read as a spec that declared nothing', () => {
+  it('test_when_the_spec_cannot_be_resolved_then_spec_missing_is_true', async () => {
+    const delta = await loadDelta();
+    const project = makeFlaggedProject('on');
+    seedCorpus(project);
+    // Deliberately NO writeSpecWithDelta: docs/specs/<SLUG>.md never exists, so
+    // resolveSpecPath returns null. This is the state /archive Step 5 was left in
+    // when Step 3 moved the spec into the bundle before Step 5 ever read it.
+    const result = runStep5(delta, project, ['src/alpha.mjs']);
+
+    assert.equal(result.specMissing, true, 'an unreadable spec must say so');
+    assert.equal(result.inputEmpty, false, 'touchedPaths was populated — specMissing is the only flag that should fire');
+
+    // These three are byte-identical to an honest "the spec declared nothing".
+    // Without the flag above, the caller cannot tell the two apart, and a real
+    // declared row goes unverified while the run reports clean.
+    assert.deepEqual(result.confirmed, [], 'nothing can be confirmed from a spec that was never read');
+    assert.deepEqual(result.drift, [], 'no rows were parsed, so none can be drift');
+    assert.deepEqual(result.unclaimed, [], 'unclaimed is computed against parsed rows');
+  });
+
+  it('test_when_the_spec_resolves_but_matches_nothing_then_spec_missing_is_false', async () => {
+    const delta = await loadDelta();
+
+    const withSpec = makeFlaggedProject('on');
+    seedCorpus(withSpec);
+    writeGovernedFile(withSpec.root, ADD_FOO.anchor);
+    writeSpecWithDelta(withSpec.root, SLUG, [ADD_FOO]);
+    const readable = runStep5(delta, withSpec, ['src/alpha.mjs']);
+
+    const withoutSpec = makeFlaggedProject('on');
+    seedCorpus(withoutSpec);
+    const unreadable = runStep5(delta, withoutSpec, ['src/alpha.mjs']);
+
+    assert.equal(readable.specMissing, false, 'a spec that was read is not missing, even when no row confirms');
+    assert.ok(readable.drift.length > 0, 'the declared row must surface as drift, which proves it was parsed');
+
+    // The same rule the inputEmpty pair above encodes: two opposite situations must
+    // be distinguishable by shape, not only by array length.
+    assert.notDeepEqual(
+      readable,
+      unreadable,
+      'a spec that parsed to no matches and a spec that could not be read must not share a return shape',
+    );
+  });
 });

@@ -1,0 +1,42 @@
+{
+  "request": "Fix the /archive Step 5 ordering defect. Step 5 (verifyAndApplyDelta) runs after Step 3 (archive.sh), which git-mv's docs/specs/<slug>.md into the archive bundle; resolveSpecPath then returns null and delta.mjs:285 falls through to parseDelta('') — producing an all-empty verdict indistinguishable from a spec that declared no delta, so a real drift would archive silently green. Two-part fix: (1) reorder Step 5 before Step 3 in .claude/skills/archive/SKILL.md with an explicit before-Step-3 warning mirroring the one Step 2 already carries for the approval token, pinned by a structural test; (2) report a specMissing flag from verifyAndApplyDelta when the spec cannot be resolved, mirroring the existing inputEmpty flag, so the failure stays loud even if the ordering is ever changed back.",
+  "slug": "archive-delta-ordering",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "delta.mjs:185 and :275-276 already carry `inputEmpty` as the established precedent for distinguishing a broken input from an honest empty result, tested at tests/system-spec-delta-archive-verify.test.mjs:230-231. The comment at delta.mjs:280-284 documents this exact failure class being closed once already for the epic-child pin case. .claude/state/tdd/system-spec-delta-slice-c.json:13 records the governing principle verbatim: the two results must be 'distinguishable by shape, not only by array length'. Observed instance recorded in landmine archive-step-5-reads-the-spec-after-step-3-has-moved-it during the ship-baseline-output-style landing (commit 6fdd6ee). Step 2 of the same SOP is the ordering-warning precedent to copy.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "cli-copy-review"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786135915,
+  "updated_at": 1786135915,
+  "rightsize_base": []
+}

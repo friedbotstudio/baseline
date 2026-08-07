@@ -271,9 +271,24 @@ const nothingAtAll = () => ({ confirmed: [], drift: [], unclaimed: [], ...nothin
 // an opted-out project gets an empty result and no throw, and neither branch
 // constructs a path, so ordering the gate first costs nothing and makes inertness
 // total.
+// Two different absences reach `parseDelta` as the same empty string: no path
+// resolved, and a path that resolved but could not be read. Either way the table
+// was never seen, which is not the same thing as a table with no rows — so which
+// happened is returned rather than discarded.
+function readSpecText({ rootDir, slug }) {
+  const { rel } = resolveSpecPath({ rootDir, slug });
+  if (rel === null) return { specText: '', specMissing: true };
+  const specText = readSourceText(rootDir, rel);
+  return specText == null
+    ? { specText: '', specMissing: true }
+    : { specText, specMissing: false };
+}
+
 export function verifyAndApplyDelta({ slug, specDir, rootDir = process.cwd(), touchedPaths = [] } = {}) {
   const inputEmpty = touchedPaths.length === 0;
-  if (!architectureMapEnabled({ rootDir })) return { ...nothingAtAll(), inputEmpty };
+  // An opted-out project never looked for a spec, so it cannot report one missing.
+  // `false` is the neutral value here, matching the empty arrays around it.
+  if (!architectureMapEnabled({ rootDir })) return { ...nothingAtAll(), inputEmpty, specMissing: false };
 
   assertSafeSlug(slug, 'delta workflow slug');
   // An epic-child has no spec at its own slug; its delta lives in the epic spec its
@@ -281,10 +296,13 @@ export function verifyAndApplyDelta({ slug, specDir, rootDir = process.cwd(), to
   // and therefore an all-empty verdict — indistinguishable from a landing that
   // declared nothing, which is how a real declared delta goes silently unapplied.
   //
+  // The same shape hid a second cause: `/archive` read the spec after the move had
+  // already relocated it, and the unread table was reported as a clean run.
+  //
   // parseDelta runs over the WHOLE resolved spec: `## System delta` is a top-level
   // section, not a per-slice one, so the slice id does not scope it.
-  const { rel } = resolveSpecPath({ rootDir, slug });
-  const { rows } = parseDelta(rel === null ? '' : readSourceText(rootDir, rel) ?? '');
+  const { specText, specMissing } = readSpecText({ rootDir, slug });
+  const { rows } = parseDelta(specText);
   const verdict = verifyDelta({ rows, touchedPaths, specDir, rootDir });
-  return { ...verdict, ...applyDelta({ confirmed: verdict.confirmed, specDir, rootDir }) };
+  return { ...verdict, ...applyDelta({ confirmed: verdict.confirmed, specDir, rootDir }), specMissing };
 }
