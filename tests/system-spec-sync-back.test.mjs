@@ -12,7 +12,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -61,7 +61,21 @@ describe('E — the landed change folds back into the central spec', () => {
     const [touched, untouched] = twoFileAnchoredElements(specDir);
     assert.ok(touched && untouched, 'the live corpus must supply two file-anchored elements');
 
+    // Stale the touched element's digest so the re-stamp has something to DO. This
+    // used to assert byte-inequality against the unmodified copy, which passed only
+    // because `renderRecord` re-framed an already-framed body and appended two blank
+    // lines on every write — the element "changed" whether or not it was stamped
+    // (landmine `materialize-appends-blank-lines-every-run`, fixed 2026-08-07). With
+    // the writer idempotent, re-stamping a current digest is correctly a no-op, so
+    // byte-inequality no longer witnesses anything. A moved digest does.
+    const STALE = '000000000000';
+    writeFileSync(
+      elementPath(specDir, touched.id),
+      readElement(specDir, touched.id).replace(/^anchor_digest:.*$/m, `anchor_digest: ${STALE}`),
+      'utf8',
+    );
     const before = { touched: readElement(specDir, touched.id), untouched: readElement(specDir, untouched.id) };
+    assert.match(before.touched, new RegExp(`anchor_digest: ${STALE}`), 'sanity: the fixture is staled');
 
     const result = contribute.syncBack({
       specDir, memDir, rootDir: root, slug: 'central-system-spec', touchedPaths: [touched.anchor],
@@ -71,8 +85,9 @@ describe('E — the landed change folds back into the central spec', () => {
     assert.ok(result.applied.includes(touched.id),
       `the element anchored to the touched path must be re-stamped; applied: ${JSON.stringify(result.applied)}`);
 
-    assert.notEqual(readElement(specDir, touched.id), before.touched,
-      'the touched element must actually change — a no-op sync-back records nothing');
+    const after = readElement(specDir, touched.id);
+    assert.notEqual(after, before.touched, 'the touched element must actually change — a no-op sync-back records nothing');
+    assert.ok(!after.includes(STALE), 'and the stale digest must be gone, not merely rewritten alongside');
 
     // The real assertion: everything the landing did not touch is byte-identical.
     assert.equal(readElement(specDir, untouched.id), before.untouched,

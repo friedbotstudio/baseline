@@ -1,0 +1,44 @@
+{
+  "request": "Two recorded defects, both surfaced while landing system-spec-delta slice C, both with a prescribed fix. (1) Epic-child pin resolution: `.claude/skills/tdd/drift_check.mjs` and `.claude/skills/workspace/delta.mjs` both resolve a spec at `docs/specs/<slug>.md` only. An epic-child has no spec at its own slug — its contract is the pin `docs/specs/<epic>.md#slice-<id>` — so both exit vacuously green on every epic-child, drift_check with 'no spec; skipped' and verifyAndApplyDelta with an all-empty verdict indistinguishable from a landing that declared nothing. Teach both to read `workflow.json → pinned_artifacts.spec`, strip the `#slice-<id>` fragment, load that file, and scope to the named `## Slice <id>` section, via ONE shared resolver copied from `track_guard.mjs:59-66` rather than a third independent implementation. Distinguish 'no spec anywhere' (chore, genuinely skip) from 'spec exists but not at this slug' (epic-child, resolve the pin) — collapsing those two branches is what produced the defect. (2) Delta anchor backticks: the shipped spec template writes delta anchors in backticks, `parseDelta` keeps the cell verbatim, and `anchorMatches` then fails with `falls outside the governed surface` — an error naming the wrong cause. Strip surrounding backticks in the cell reader so both forms work; the template stays as written.",
+  "slug": "epic-child-pin-and-delta-backticks",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Two landmine entries on disk, each carrying an explicit prescribed fix rather than only a symptom. `.claude/memory/landmines/drift-check-does-not-resolve-epic-child-pinned-specs.md` (load_bearing: true) records three consecutive vacuous greens — erp-portables-slice-a 2026-07-03, system-spec-delta slices A and B 2026-08-07 — plus the second component found on slice C, and names the fix: 'teach drift_check.mjs to read workflow.json -> pinned_artifacts.spec, strip the #slice-<id> fragment, load that file, and scope the AC scan to the named ## Slice <id> section', with 'Copy the guard's resolution, do not invent a third one'. `.claude/memory/landmines/spec-template-backticks-an-anchor-spec-lint-rejects.md` records the second defect with a measured before/after (FAIL with backticks, `system_delta PASS 1 delta row(s) resolve` without) and names both fix options; the maintainer chose the parseDelta strip on 2026-08-07. Both landed in commit 02412dc.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786101900,
+  "updated_at": 1786106139,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

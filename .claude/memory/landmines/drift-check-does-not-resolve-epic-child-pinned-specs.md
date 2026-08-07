@@ -4,8 +4,9 @@ category: landmines
 scope: [scout, spec, tdd, security, integrate]
 governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/SKILL.md,.claude/skills/workspace/delta.mjs
 load_bearing: true
-verified-at: db121a1
+verified-at: 02412dc
 last-touched: 2026-08-07
+superseded-at: 2026-08-07
 ---
 
 - Path: `.claude/skills/tdd/drift_check.mjs` (spec resolution) vs `workflow.json → pinned_artifacts.spec` on `epic-child` tracks.
@@ -17,4 +18,5 @@ last-touched: 2026-08-07
 - Note the asymmetry that makes this durable: `track_guard.mjs:57` DOES read `pinned_artifacts` and refuses every write when the pins do not resolve. So one workflow now has one component that understands epic-child pinning and TWO that do not. Copy the guard's resolution, do not invent a third one.
 - Mitigation until fixed: on epic-child tracks, treat the drift-check-tick as vacuous and judge the slice ACs against the binding verify/integrate oracles manually in main context. Say so in the phase report — a silent vacuous pass reads as a real one.
 - Real fix (small): teach `drift_check.mjs` to read `workflow.json → pinned_artifacts.spec`, strip the `#slice-<id>` fragment, load that file, and scope the AC scan to the named `## Slice <id>` section. Distinguish "no spec anywhere" (chore, genuinely skip) from "spec exists but not at this slug" (epic-child, resolve the pin) — collapsing those two into one branch is what produced the defect.
+- **Resolution 2026-08-07, workflow `epic-child-pin-and-delta-backticks`.** Both components fixed together, as this entry demanded. `.claude/hooks/lib/pinned-spec.mjs` is now the one resolver — `resolveSpecPath` returns `{path, rel, sliceId, source}` where `source: null` means no spec ANYWHERE (chore, genuine skip) and `source: 'pin'` means one exists but not at this slug. `drift_check` and `verifyAndApplyDelta` both call it; `track_guard` is untouched and stays the reference. One thing the entry's own prescription would have got WRONG: it said "scope the AC scan to the named `## Slice <id>` section", but `AC_ROW_RE` matches the spec's top-level AC *table* and a slice section carries no table rows — only a `- **ACs**:` bullet. Scoping the regex to the section text matches zero rows and reports clean, which is the same vacuous green one layer deeper. `sliceAcIds` reads the bullet and the top-level table is filtered by it. Verified against the live epic spec: all six slices' ids derived independently and matched `.claude/state/epic/system-spec-delta.json` exactly.
 - Sibling, different mechanism: [[drift-check-resolves-acs-by-literal-mention-not-implementation]] is a check that runs and mis-scores; this is a check that never runs at all. Same family as [[a-check-that-measured-nothing-reports-success]].

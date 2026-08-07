@@ -71,3 +71,5 @@
 - discarded :: .claude/skills/system-reconcile/SKILL.md → landmarks.md
 - promoted :: backlog → skills-njk-iv-contradicts-claude-md-it-grids-b995
 - discarded :: backlog → spec-not-this-slice-d139
+- discarded :: .claude/skills/tdd/drift_check.mjs → landmarks.md
+- discarded :: .claude/hooks/lib/pinned-spec.mjs → landmarks.md

@@ -17,8 +17,7 @@
 // The verbs are the corpus's existing op vocabulary, not a new one
 // (`conflicts-are-reported-never-auto-resolved-2026-08-04`).
 
-import { join } from 'node:path';
-
+import { resolveSpecPath } from '../../hooks/lib/pinned-spec.mjs';
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { readConcepts, writeConcept } from './concepts.mjs';
 import { anchorMatches, governedFiles } from './coverage.mjs';
@@ -43,7 +42,6 @@ const COLUMNS = ['verb', 'elementId', 'anchor', 'concept', 'kind'];
 // would delete a record on the strength of a table row.
 const GROWTH_VERBS = new Set(['add', 'change']);
 
-const SPEC_DIR = 'docs/specs';
 const ANCHOR_SEPARATOR = ',';
 
 function sectionBody(specText) {
@@ -51,8 +49,19 @@ function sectionBody(specText) {
   return match ? match[1].trim() : null;
 }
 
+// Surrounding backticks are markdown decoration, not content. The shipped spec
+// template writes delta anchors backticked (`spec/template.md:279`), every other
+// path-bearing field in a spec is conventionally backticked too, and keeping them
+// meant the anchor never matched a governed path — `spec-lint` then reported
+// `falls outside the governed surface`, an error naming the governed surface when
+// the cause was two characters. Anchored to the ENDS only: an interior backtick is
+// part of the value and is never rewritten.
+function undecorate(cell) {
+  return cell.replace(/^`(.*)`$/s, '$1').trim();
+}
+
 function splitCells(line) {
-  return line.trim().replace(/^\|/, '').replace(/\|\s*$/, '').split('|').map((c) => c.trim());
+  return line.trim().replace(/^\|/, '').replace(/\|\s*$/, '').split('|').map((c) => undecorate(c.trim()));
 }
 
 function isTableLine(line) {
@@ -267,7 +276,15 @@ export function verifyAndApplyDelta({ slug, specDir, rootDir = process.cwd(), to
   if (!architectureMapEnabled({ rootDir })) return { ...nothingAtAll(), inputEmpty };
 
   assertSafeSlug(slug, 'delta workflow slug');
-  const { rows } = parseDelta(readSourceText(rootDir, join(SPEC_DIR, `${slug}.md`)) ?? '');
+  // An epic-child has no spec at its own slug; its delta lives in the epic spec its
+  // `pinned_artifacts.spec` names. Resolving by slug alone returned an empty table
+  // and therefore an all-empty verdict — indistinguishable from a landing that
+  // declared nothing, which is how a real declared delta goes silently unapplied.
+  //
+  // parseDelta runs over the WHOLE resolved spec: `## System delta` is a top-level
+  // section, not a per-slice one, so the slice id does not scope it.
+  const { rel } = resolveSpecPath({ rootDir, slug });
+  const { rows } = parseDelta(rel === null ? '' : readSourceText(rootDir, rel) ?? '');
   const verdict = verifyDelta({ rows, touchedPaths, specDir, rootDir });
   return { ...verdict, ...applyDelta({ confirmed: verdict.confirmed, specDir, rootDir }) };
 }
