@@ -2,9 +2,9 @@
 key: drift-check-does-not-resolve-epic-child-pinned-specs
 category: landmines
 scope: [scout, spec, tdd, security, integrate]
-governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/SKILL.md
+governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/SKILL.md,.claude/skills/workspace/delta.mjs
 load_bearing: true
-verified-at: 17f1fa0
+verified-at: db121a1
 last-touched: 2026-08-07
 ---
 
@@ -13,7 +13,8 @@ last-touched: 2026-08-07
 - First observed 2026-07-03 (`erp-portables-slice-a`, the first epic-child through the tdd worker chain).
 - **Re-confirmed 2026-08-07 on `system-spec-delta-slice-a`, unchanged.** Still exits 0 with `no spec; skipped`. The 2026-07-03 mitigation was applied and worked: the slice's three ACs were judged by hand in main context against the write surface, and actual drift was zero — so the green was correct **by luck, not by measurement**. That is the whole hazard. A future child with real drift gets the identical green.
 - **Re-confirmed again 2026-08-07 on `system-spec-delta-slice-b`, second consecutive child, unchanged.** Identical `no spec; skipped`, exit 0. The mitigation was applied again and this time it *earned its keep*: judging AC-013 by hand surfaced that the criterion also names "any `delta` export", which `parseDelta` satisfies only vacuously (it is pure, takes no `rootDir`, and so cannot consult the flag) — a gap the vacuous checker would never have raised, and which slice C now has to carry. Two children, two vacuous greens; the third should not be run on the mitigation alone.
-- Note the asymmetry that makes this durable: `track_guard.mjs:57` DOES read `pinned_artifacts` and refuses every write when the pins do not resolve. So the same workflow has one component that understands epic-child pinning and another that does not. Copy the guard's resolution, do not invent a second one.
+- **Second component, same defect, found 2026-08-07 on `system-spec-delta-slice-c`.** `workspace/delta.mjs → verifyAndApplyDelta` resolves the spec at `docs/specs/<slug>.md` and nowhere else, so `/archive` Step 5 on ANY epic-child reads no spec, parses no delta table, and can never confirm a row. It reports `{confirmed:[],drift:[],unclaimed:[]}` — indistinguishable from a landing that genuinely declared nothing. Harmless on slice C only because the epic spec predates the `## System delta` requirement and carries no such section; a later epic that DOES declare one gets its whole delta silently ignored. The fix is the same three lines as the drift_check fix, so **do both at once** — fixing one and not the other leaves the failure in place while making it look addressed.
+- Note the asymmetry that makes this durable: `track_guard.mjs:57` DOES read `pinned_artifacts` and refuses every write when the pins do not resolve. So one workflow now has one component that understands epic-child pinning and TWO that do not. Copy the guard's resolution, do not invent a third one.
 - Mitigation until fixed: on epic-child tracks, treat the drift-check-tick as vacuous and judge the slice ACs against the binding verify/integrate oracles manually in main context. Say so in the phase report — a silent vacuous pass reads as a real one.
 - Real fix (small): teach `drift_check.mjs` to read `workflow.json → pinned_artifacts.spec`, strip the `#slice-<id>` fragment, load that file, and scope the AC scan to the named `## Slice <id>` section. Distinguish "no spec anywhere" (chore, genuinely skip) from "spec exists but not at this slug" (epic-child, resolve the pin) — collapsing those two into one branch is what produced the defect.
 - Sibling, different mechanism: [[drift-check-resolves-acs-by-literal-mention-not-implementation]] is a check that runs and mis-scores; this is a check that never runs at all. Same family as [[a-check-that-measured-nothing-reports-success]].

@@ -40,6 +40,18 @@ export function parseEntry(text) {
   return fields.id ? { ...fields, body: split.body } : null;
 }
 
+// The frame around the body is fixed, so the body itself must not carry a copy of
+// it. `parseEntry` hands back everything after the closing `---`, padding included,
+// and re-framing that padded body is what made `render(parse(x)) !== x`: every
+// `materialize` run appended two blank lines to every element it rewrote, whether
+// or not it changed (landmine `materialize-appends-blank-lines-every-run` — one run
+// over the live corpus produced 224 whitespace insertions across 112 untouched
+// files). Monotonic growth that no test caught and no rendered diff showed, which
+// is what made a corpus diff useless as evidence of what a landing changed.
+function framedBody(body) {
+  return String(body).replace(/^\n+/, '').replace(/\s+$/, '');
+}
+
 // `order` names the fields that lead the frontmatter and get a default. A concept
 // passes ['kind','title','members'] and therefore never renders an `anchor:` —
 // granularity is derived from anchor SHAPE (spec D1), so a concept carrying an
@@ -60,5 +72,5 @@ export function renderRecord(record, order = ['kind', 'title', 'anchor']) {
     assertSafeFieldValue(name, value);
     front.push(`${name}: ${value}`);
   }
-  return `---\n${front.join('\n')}\n---\n\n${body}\n`;
+  return `---\n${front.join('\n')}\n---\n\n${framedBody(body)}\n`;
 }

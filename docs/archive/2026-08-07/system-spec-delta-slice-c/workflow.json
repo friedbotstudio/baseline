@@ -1,0 +1,60 @@
+{
+  "request": "Slice C of the system-spec-delta epic (C2-2): make `/archive` verify the declared `## System delta` against the landed diff before applying anything. Replace Step 5's bare `contribute.syncBack` re-stamp with verify-then-apply through one entry point (D1) in `.claude/skills/workspace/delta.mjs` — `verifyDelta` confirms each parsed row against the landed diff scoped to the governed surface, `applyDelta` applies only confirmed rows (append anchor, re-run materialize, stampElement, write the shard via slice B's `writeDiagramShard`), and `verifyAndApplyDelta` composes them. Unconfirmed rows come back in `drift` with nothing written; governed paths no row claims and no element anchors come back in `unclaimed` with nothing written. Every return distinguishes `inputEmpty` from a no-match result. Step 5.5 invokes `/system-reconcile` report-only so the corpus is byte-identical between Step 5 completing and the workflow ending. Whole path is inert when `memory.architecture_map.enabled` is false or absent.",
+  "slug": "system-spec-delta-slice-c",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "C",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-C"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice C in docs/specs/system-spec-delta.md (## Slice C, lines 636-644) and .claude/state/epic/system-spec-delta.json slices[2], carrying ACs AC-004/AC-005/AC-006/AC-009/AC-014, an explicit write surface, and 'Depends on: slice A (parseDelta), slice B (writeDiagramShard)'. Both dependencies are landed and recorded committed in the epic state's children[] — slice A as 17f1fa0, slice B as db121a1. The epic's gate-A token is on disk at .claude/state/spec_approvals/system-spec-delta.approval.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); seed.md 18.9 — one epic approval covers all slices",
+    "security": "escalated by slice C risk[] — verifyDelta reads row-supplied anchors and applyDelta constructs corpus shard paths from them, so a delta row is a path-construction input reaching the filesystem",
+    "simplify": "escalated by slice C risk[] — three new exported entry points in a shared helper plus a rewrite of two archive SOP steps",
+    "document": "escalated by slice C risk[] — changes the documented behavior of /archive Steps 5 and 5.5"
+  },
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786097400,
+  "updated_at": 1786100380,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "rightsize_base": [
+    ".claude/memory/_discard-ledger.md",
+    ".claude/memory/backlog/skills-njk-iv-contradicts-claude-md-it-grids-b995.md",
+    ".claude/output-styles/"
+  ]
+}

@@ -46,20 +46,37 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 
 4. **Do NOT move `workflow.json`.** `/commit` archives it as its first step so the phase ordering is preserved until the end.
 
-5. **Fold the landing back into the central system spec** (gated by `memory.architecture_map.enabled`; skip when false). This is what keeps `docs/system/` true to what is on disk instead of drifting the moment the next cycle ships:
+5. **Verify the spec's declared delta against the landed diff, then apply only what it confirms** (gated by `memory.architecture_map.enabled`; skip the whole of Steps 5 and 5.5 when false). This is what keeps `docs/system/` true to what is on disk instead of drifting the moment the next cycle ships:
 
    ```
-   node -e "import('./.claude/skills/workspace/contribute.mjs').then(m=>console.log(JSON.stringify(m.syncBack({specDir:'docs/system', memDir:'.claude/memory', rootDir:process.cwd(), slug:'<slug>', touchedPaths:JSON.parse(process.argv[1])}),null,1)))" '["<path>","<path>",...]'
+   node -e "import('./.claude/skills/workspace/delta.mjs').then(m=>console.log(JSON.stringify(m.verifyAndApplyDelta({slug:'<slug>', specDir:'docs/system', memDir:'.claude/memory', rootDir:process.cwd(), touchedPaths:JSON.parse(process.argv[1])}),null,1)))" '["<path>","<path>",...]'
    ```
 
-   **Pass the paths as one quoted JSON array, never as bare space-separated words.** The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces, matches no anchor, and `syncBack` returns `{applied:[],proposed:[]}` — indistinguishable from an honest "nothing relevant changed". A single quoted argument is immune to word-splitting in both zsh and bash. Verify the count before trusting an empty result: if the landing touched governed-surface files and `applied` is empty, the paths did not arrive.
+   **Pass the paths as one quoted JSON array, never as bare space-separated words.** The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces and matches no anchor. `verifyAndApplyDelta` reports that case as `inputEmpty: true`, distinct from an honest "nothing matched" — but a single quoted argument is immune to word-splitting in both zsh and bash, so pass one and the distinction never has to be read.
 
    Scope the list to the **governed surface** (`memory.architecture_map.governed_surface`) — its roots, its code extensions, minus its excluded segments and trees. Corpus files under `docs/system/` are the model itself, not governed surface, so a relocation of the corpus contributes no touched paths.
 
-   It re-stamps **only** the elements anchored to paths this landing actually touched, and returns everything else as `proposed`. Anything a scanner cannot check — a rationale link, a behavioural diagram, a concept-membership change — is a proposal for a curator, never a write. There is no bulk-refresh path: re-stamping untouched elements would make the model permanently green and launder the drift the digest exists to catch.
+   Read the four arrays before moving on. Each names a different thing the operator owes an answer to:
+
+   | Field | Meaning | What to do |
+   |---|---|---|
+   | `confirmed` / `applied` | the spec declared it and the diff proves it; the anchor, digest and shard landed | nothing — this is the success path |
+   | `drift` | the spec declared it and the diff does **not** confirm it | the row is wrong or the work did not land. Nothing was written for it. Fix the spec or the code |
+   | `unclaimed` | the landing touched a governed path no row claims and no element anchors | a coverage gap. Declare it in a `## System delta` row, or accept it deliberately |
+   | `skippedGlob` | applied, but glob-anchored, so it earned no digest | expected for a family anchor; a *file* anchor here means the element is unwitnessed |
+
+   Only confirmed rows are written. A declared row the diff cannot confirm applies **nothing** — no anchor appended, no shard, no digest — which is what makes this step evidence rather than a re-stamp. There is no bulk-refresh path: re-stamping untouched elements would make the model permanently green and launder the drift the digest exists to catch.
+
+5.5. **Report corpus health, and repair nothing** (same flag gate as Step 5; skip when false):
+
+   ```
+   node -e "import('./.claude/skills/system-reconcile/reconcile-report.mjs').then(m=>console.log(JSON.stringify(m.runReconcile({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+   ```
+
+   This invocation is **report-only**. Surface the seven sections to the user; repair nothing here. `docs/system/` SHALL be byte-identical between Step 5 completing and the workflow ending — Step 5 is the corpus's single writer on the primary tree, and `/system-reconcile` exposes no apply path a workflow phase can reach. A repair the report suggests is a human-confirmed invocation of `/system-reconcile`, never an automatic follow-up to archiving.
 
 6. Append `"archive"` to `workflow.json → completed`.
-7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`."
+7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`." Include any non-empty `drift` or `unclaimed` from Step 5 and the Step 5.5 report — an unread gap report is the same as no gap report.
 
 ## Constraints
 

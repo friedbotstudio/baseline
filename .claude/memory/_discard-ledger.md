@@ -69,3 +69,5 @@
 - discarded :: drift_check is vacuous on every epic-child → landmines.md
 - promoted :: .claude/skills/system-reconcile/reconcile-report.mjs → landmarks.md
 - discarded :: .claude/skills/system-reconcile/SKILL.md → landmarks.md
+- promoted :: backlog → skills-njk-iv-contradicts-claude-md-it-grids-b995
+- discarded :: backlog → spec-not-this-slice-d139

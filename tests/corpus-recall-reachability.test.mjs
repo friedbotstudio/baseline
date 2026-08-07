@@ -178,6 +178,15 @@ function guardOnSpec(root, specPath) {
 
 // ─── Foundation: live-tree probes ───
 
+// The corpus a sandbox is copied from, so any id it returns resolves inside the
+// sandbox too. Read rather than hardcoded: a fixed id would break the day that
+// element is renamed, which is the same brittleness as pointing at a live spec.
+function anyLiveElementId() {
+  const name = readdirSync(join(REPO_ROOT, 'docs/system/elements')).find((n) => n.endsWith('.md'));
+  if (!name) throw new Error('the live corpus carries no elements — the fixture has nothing to reference');
+  return name.replace(/\.md$/, '');
+}
+
 function liveElementAnchors() {
   const dir = join(REPO_ROOT, 'docs/system/elements');
   return readdirSync(dir)
@@ -540,14 +549,23 @@ describe('AC-008 — the write leg is documented governance', () => {
 });
 
 describe('AC-010 — the preflight agrees with the guard', () => {
+  // A sandbox fixture, not the live spec that authored this rule. Pointing at
+  // `docs/specs/<slug>.md` made the test depend on a spec /archive was always going
+  // to move — it did, on 2026-08-06, and the assertion has read ENOENT ever since
+  // while its two siblings (which already sandboxed) kept passing. A test that dies
+  // when its own workflow completes cannot defend the rule it was written for.
   it('test_when_spec_carries_resolvable_ref_then_guard_and_lint_agree', () => {
-    const spec = join(REPO_ROOT, 'docs/specs/corpus-recall-reachability.md');
-    const guard = guardOnSpec(REPO_ROOT, spec);
-    assert.equal(decisionOf(guard), 'allow', 'the guard allows a spec whose @ref resolves');
+    const { root } = sandbox();
+    try {
+      const spec = writeSpecFixture(root, 'resolvable-ref', `@ref element:${anyLiveElementId()}`);
+      assert.equal(decisionOf(guardOnSpec(root, spec)), 'allow', 'the guard allows a spec whose @ref resolves');
 
-    const lint = runLint(REPO_ROOT, 'corpus-recall-reachability');
-    assert.match(presenceRowOf(lint.stdout), /PASS/,
-      'and the preflight reaches the same structural-kind verdict on the same bytes');
+      const lint = runLint(root, 'resolvable-ref');
+      assert.match(presenceRowOf(lint.stdout), /PASS/,
+        'and the preflight reaches the same structural-kind verdict on the same bytes');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('test_when_ref_names_a_missing_element_then_lint_fails_and_guard_blocks', () => {

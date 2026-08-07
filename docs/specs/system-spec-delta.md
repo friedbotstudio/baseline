@@ -520,6 +520,23 @@ Acyclic. `spec-lint → delta.mjs` is a read-only use of `parseDelta`; the lint 
 
 *(none)*
 
+## System delta
+
+Added 2026-08-07, mid-epic. Slice A made this heading a required spec section, and this spec predates
+slice A — so `artifact_template_guard` denied every write to it from the moment slice A landed. The
+epic's own spec became the first artifact its first slice locked out, and slices D–F would each have
+hit the same wall. The section is filled in retroactively with what the epic has actually added to the
+model, which is one element.
+
+| Verb | Element | Anchor | Concept | Kind |
+|---|---|---|---|---|
+| add | system-reconcile-report | .claude/skills/system-reconcile/*.mjs | memory-model | c4_component |
+
+Slices A and C add no row: `workspace/delta.mjs` (A) and `workspace/record-codec.mjs` (C) both fall
+under the `workspace-corpus` element's existing glob anchor, so the model already routes to them and
+coverage stays total. Slice D writes shard annotations, not elements; E touches `research/retrieve.mjs`,
+already anchored; F is governance prose outside the governed surface.
+
 ## Acceptance criteria
 
 | ID | Criterion (given / when / then) | Kind | Upstream AC | Sequence |
@@ -630,9 +647,10 @@ Row shape: `| Verb | Element | Anchor | Concept | Kind |`.
 Step 5 today calls `syncBack`, which re-stamps and nothing else, so a landing that adds a governed file silently opens a coverage gap. Replace it with verify-then-apply through one entry point (D1): parse the delta, confirm each row against the landed diff scoped to the governed surface, apply only confirmed rows, and report drift and unclaimed gaps without writing. Step 5.5 invokes `/system-reconcile` report-only.
 
 - **ACs**: AC-004, AC-005, AC-006, AC-009, AC-014
-- **Write surface**: `.claude/skills/workspace/delta.mjs` (`verifyDelta`, `applyDelta`, `verifyAndApplyDelta`), `.claude/skills/archive/SKILL.md` (Steps 5 and 5.5), `tests/`
+- **Write surface**: `.claude/skills/workspace/delta.mjs` (`verifyDelta`, `applyDelta`, `verifyAndApplyDelta`), `.claude/skills/workspace/record-codec.mjs` (`renderRecord` body framing), `.claude/skills/archive/SKILL.md` (Steps 5 and 5.5), `tests/`
 - **Depends on**: slice A (`parseDelta` and the section it parses), slice B (`writeDiagramShard`)
 - **Notes**: `contribute.syncBack` stays in place for re-stamping; `delta.mjs` owns growth. Pass touched paths as **one quoted JSON array** — zsh does not word-split, and that ambiguity already caused one silent no-op. Every return distinguishes `inputEmpty` from no-match.
+- **Amended 2026-08-07, during implementation.** `record-codec.mjs` joined the write surface. AC-005's idempotence criterion is byte-identity on a re-run, and that could not hold while `renderRecord` re-framed an already-framed body — every `materialize` appended two blank lines to every element it rewrote (landmine `materialize-appends-blank-lines-every-run`, measured at 224 whitespace insertions across 112 untouched files in a single run). The landmine's own recorded fix is the round-trip test this slice wrote, so the two land together. Inside the epic's approved write set (`.claude/skills/**`, §Context), so gate A already covers it; recorded here because the slice's line did not.
 
 ## Slice D
 
