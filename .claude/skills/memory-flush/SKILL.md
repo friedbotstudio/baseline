@@ -98,6 +98,26 @@ You drive this step interactively: prompt the user `Backlog: <key> raised <days>
 
 Report shape: `{"surfaced": N, "kept": N, "dropped": N, "picked_up": N, "deferred": N}`.
 
+### Step 0e — Drifted elements in the central system spec
+
+The corpus at `docs/system/` is a spec artifact, not a memory category — Step 0 never sweeps it. What it shares with memory is decay: an element's `anchor_digest` goes stale the moment the interface at its anchor moves. Detection is mechanical; re-stamping is not.
+
+```
+node -e "import('./.claude/skills/memory-flush/stale-elements.mjs').then(m=>console.log(JSON.stringify(m.listStale({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+```
+
+`listStale` is flag-gated on `memory.architecture_map.enabled` and fail-open — an absent flag or an unreadable corpus yields `[]`, never a throw. Each row is `{id, detail}`, where the detail names what moved.
+
+**List only.** For every element the curator has actually read against the code at its anchor, re-stamp that one:
+
+```
+node -e "import('./.claude/skills/workspace/digest.mjs').then(m=>console.log(JSON.stringify(m.stampElement('docs/system','<element-id>',{rootDir:process.cwd()}))))"
+```
+
+Anything left unreviewed stays stale and surfaces again at the next flush — that is the point. Re-stamping the whole set in one pass would make every element permanently fresh and launder the drift the digest exists to catch, so there is no bulk path and this step never adds one.
+
+This step is sited here rather than at `/scout` deliberately: `spec-entry` is this repository's most-used track and carries `scout` in `exceptions`, so a scout-sited check would rarely fire.
+
 After Step 0 completes, proceed to Step 1.
 
 ## Step 1 — Read everything

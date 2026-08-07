@@ -10,8 +10,7 @@
 // stderr in the tool transcript). Always emits allow — never blocks.
 // Cross-references CLAUDE.md Article IX clauses 6 + 7.
 
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import {
   CLAUDE_DOTDIR,
   readPayload,
@@ -21,7 +20,13 @@ import {
   logLine,
 } from './lib/common.mjs';
 import { surfaceScopedMemory } from './lib/scoped-memory.mjs';
-import { surfaceGovernedMemory, renderGovernedHits } from './lib/governed-memory.mjs';
+import {
+  surfaceGovernedMemory,
+  renderGovernedHits,
+  surfaceCorpusLocation,
+  renderCorpusLocation,
+} from './lib/governed-memory.mjs';
+import { resolveCategory } from '../skills/memory-index/lift-fields.mjs';
 
 // Phase-artifact prefixes → the workflow phase whose scoped memory should surface
 // before the write. This is the decision-point-injection leg (roadmap T4): a Write
@@ -45,32 +50,61 @@ function phaseForPath(filePath) {
   return null;
 }
 
-// The second trigger (epic D3). Terminal: every branch exits via emitAllow, so the
-// write leg never falls past it.
+// Triggers two and three (epic D3; corpus reachability). Terminal: every branch
+// exits via emitAllow, so the write leg never falls past it.
+//
+// BOTH blocks are composed BEFORE any emitAllow, and that ordering is load-bearing:
+// emitAllow EXITS THE PROCESS. The earlier shape returned early when no memory
+// entry governed the path, so a file with a corpus element but no `governs:` entry
+// surfaced nothing at all — the same silence the path-governed trigger was built
+// to end, one layer up.
 function surfaceGovernedMemoryFor(filePath) {
   const rootDir = join(CLAUDE_DOTDIR, '..');
+  const target = repoRelative(filePath, rootDir);
+  const governing = governingMemoryBlock(target, rootDir);
+  const corpus = corpusLocationBlock(target, rootDir);
+  const blocks = [governing, corpus].filter(Boolean);
+
+  if (!blocks.length) emitAllow();
+
+  emitInfo(`process_lifecycle_guard — context surfaced for \`${filePath}\`:
+
+${blocks.join('\n\n')}
+
+CLAUDE.md Article IX clause 7: treat the surfaced entry/entries as binding for this write; prefer verbatim over interpretation when they conflict.`);
+  logLine('process_lifecycle_guard', `surfaced ${blocks.length} block(s) for ${filePath}`);
+  emitAllow();
+}
+
+// The tool payload carries an ABSOLUTE file_path, while both things a path is
+// looked up against — `governs:` globs and corpus anchors — are repo-relative.
+// Measured on this tree: the same file resolves 9 governing entries relative and
+// 0 absolute, so BOTH path-keyed triggers matched nothing on every real write.
+// Normalising once here is what makes either of them fire.
+function repoRelative(filePath, rootDir) {
+  return isAbsolute(filePath) ? relative(rootDir, filePath) : filePath;
+}
+
+function governingMemoryBlock(filePath, rootDir) {
   let hits = [];
   try {
     hits = surfaceGovernedMemory(filePath, { rootDir });
   } catch {
-    emitAllow();
+    return null;
   }
-  if (!hits.length) emitAllow();
+  if (!hits.length) return null;
 
   const rendered = renderGovernedHits(hits);
-  const body = rendered.mode === 'verbatim'
+  return rendered.mode === 'verbatim'
     ? rendered.hits
       .map((h) => `--- ${h.category}/${h.key} ---\n> ${h.verbatim.split('\n').join('\n> ')}\n\n${h.interpretation}`.trimEnd())
       .join('\n\n')
     : `${hits.length} entries govern \`${filePath}\` (walk from \`${rendered.entryPoint}\`):\n${rendered.summary}`;
+}
 
-  emitInfo(`process_lifecycle_guard — governing memory surfaced for \`${filePath}\`:
-
-${body}
-
-CLAUDE.md Article IX clause 7: treat the surfaced entry/entries as binding for this write; prefer verbatim over interpretation when they conflict.`);
-  logLine('process_lifecycle_guard', `surfaced ${hits.length} governing entr${hits.length === 1 ? 'y' : 'ies'} for ${filePath}`);
-  emitAllow();
+function corpusLocationBlock(filePath, rootDir) {
+  const location = surfaceCorpusLocation(filePath, { rootDir, specDir: join(rootDir, 'docs/system') });
+  return location ? renderCorpusLocation(location) : null;
 }
 
 function surfacePhaseScopedMemory(filePath) {
@@ -126,27 +160,35 @@ const TRIGGERS = [
 if (!TRIGGERS.some((re) => re.test(cmd))) emitAllow();
 
 const memDir = join(CLAUDE_DOTDIR, 'memory');
+// Addressed by CATEGORY and KEY, never by filename. The leg used to read
+// `conventions.md` / `landmines.md` directly and `continue` past each missing
+// file, so on a sharded store — this repo's shape since 2026-07-17 — `chunks` was
+// always empty and every match printed the "nothing found" fallback while both
+// entries sat on disk as shards. `resolveCategory` is the shape-agnostic reader
+// every other consumer already routes through, and it is shard-first.
 const TARGETS = [
-  ['conventions.md', 'dev-server-ownership'],
-  ['landmines.md',   'lsof-port-kill-takes-firefox-with-it'],
+  ['conventions', 'dev-server-ownership'],
+  ['landmines',   'lsof-port-kill-takes-firefox-with-it'],
 ];
 
+function entryFor(category, key) {
+  try {
+    return resolveCategory(memDir, category).entries.find((e) => e.key === key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const chunks = [];
-for (const [fname, anchor] of TARGETS) {
-  const p = join(memDir, fname);
-  if (!existsSync(p)) continue;
-  let text;
-  try { text = readFileSync(p, 'utf8'); } catch { continue; }
-  // Capture from "## <anchor>" up to the next "## " (or EOF).
-  const escAnchor = anchor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`^##\\s+${escAnchor}\\b[\\s\\S]*?(?=^##\\s|$(?![\\s\\S]))`, 'm');
-  const m = re.exec(text);
-  if (m) chunks.push(`--- ${fname} ---\n${m[0].trimEnd()}`);
+for (const [category, key] of TARGETS) {
+  const entry = entryFor(category, key);
+  if (entry) chunks.push(`--- ${category}/${key} ---\n${entry.body.trimEnd()}`);
 }
 
 const excerpts = chunks.join('\n\n');
 if (!excerpts) {
-  emitInfo("process_lifecycle_guard: command matched a process-management pattern, but no memory entries (`conventions.md → dev-server-ownership`, `landmines.md → lsof-port-kill-takes-firefox-with-it`) were found. Consider `/memory-flush` or restoring the entries before proceeding.");
+  const named = TARGETS.map(([category, key]) => `\`${category}/${key}\``).join(', ');
+  emitInfo(`process_lifecycle_guard: command matched a process-management pattern, but no memory entries (${named}) were found in either store shape. Consider \`/memory-flush\` or restoring the entries before proceeding.`);
   logLine('process_lifecycle_guard', `fired with empty memory: ${cmd}`);
   emitAllow();
 }

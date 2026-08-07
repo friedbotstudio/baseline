@@ -226,6 +226,10 @@ function suspectDecisions(memDir) {
 // Fail-open and flag-gated: absent flag, absent corpus, or any read error yields ''
 // and the index renders exactly as it does today, so a consumer install that never
 // opted in sees a byte-identical payload.
+// The SessionStart envelope ceiling every appended section is measured against.
+const ENVELOPE_MAX = 9500;
+const SECTION_SEPARATOR = '\n\n---\n\n';
+
 export function renderConceptMap(specDir, { rootDir = process.cwd() } = {}) {
   let concepts = [];
   try {
@@ -429,6 +433,20 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
 
   let out = lines.join('\n');
   if (out.length > 2048) out = out.slice(0, 2000) + '\n…(index truncated)';
+
+  // The architecture map goes in BEFORE the resume snapshot: it is routing
+  // information, and a reader needs to know what the system is made of before
+  // deciding where to look. renderConceptMap is already flag-gated and fail-open
+  // (it returns '' on an absent flag, an absent corpus, or any read error), so no
+  // error handling is added here — the section is simply absent when it is empty.
+  //
+  // Omitted ENTIRELY rather than truncated when it will not fit: half a concept
+  // list routes worse than none, because the missing half reads as "no such
+  // concept" rather than "not shown".
+  const conceptMap = renderConceptMap(join(projectRoot, 'docs/system'), { rootDir: projectRoot });
+  if (conceptMap && out.length + conceptMap.length + SECTION_SEPARATOR.length <= ENVELOPE_MAX) {
+    out += SECTION_SEPARATOR + conceptMap;
+  }
 
   const src = sessionSource || 'startup';
   const framing = FRAMINGS[src] || FRAMINGS.startup;

@@ -79,7 +79,16 @@ function coversEntirely(profile, writeSetPaths) {
 // than one who referenced nothing at all — that would make a typo the cheapest way
 // to thin a spec.
 const REF_TOKEN = /@ref\b[^\n`]*/g;
-const REF_WELL_FORMED = /^@ref\s+element:[a-z0-9][a-z0-9-]*$/;
+// ONE constant, two readers: `hasMalformedReference` tests it, `elementReferences`
+// reads its capture. A second copy of this rule is precisely what let the write
+// guard and /spec-lint disagree about the same bytes — the guard carved the
+// structural kinds out on a resolvable reference and the preflight never did, so
+// every spec-as-diff spec failed its own preflight while passing the boundary.
+const REF_WELL_FORMED = /^@ref\s+element:([a-z0-9][a-z0-9-]*)$/;
+
+// The kinds a corpus element stands in for. Shared for the same reason the regex
+// is: a caller holding its own copy is a caller that can drift.
+export const STRUCTURAL_KINDS = new Set(['c4_context', 'c4_container', 'c4_component']);
 
 export function referenceTokens(content) {
   return String(content).match(REF_TOKEN) ?? [];
@@ -87,6 +96,17 @@ export function referenceTokens(content) {
 
 export function hasMalformedReference(content) {
   return referenceTokens(content).some((token) => !REF_WELL_FORMED.test(token.trim()));
+}
+
+// Well-formed ids only. Resolving them needs the corpus, and this module is
+// deliberately stdlib-only and content-only, so each caller resolves its own —
+// which is also where the two legitimately differ: the guard blocks an
+// unresolvable id, the preflight reports it.
+export function elementReferences(content) {
+  return referenceTokens(content)
+    .map((token) => REF_WELL_FORMED.exec(token.trim()))
+    .filter(Boolean)
+    .map((match) => match[1]);
 }
 
 export function resolveProfile(content, projectGet) {

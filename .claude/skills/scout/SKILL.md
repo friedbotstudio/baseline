@@ -41,10 +41,16 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({specDir:'docs/system', touchedPaths:process.argv.slice(1)}))))" <touched paths>
    ```
 
-   `mode: "reconcile"` → report the returned `delta` (`changed` / `stale` /
+   `mode: "reconcile"` → report the returned `delta` (`changed` /
    `unreferenced`) for the slice being touched and go straight to step 3; the
    corpus already answers "what is this system". `mode: "discovery"` → the corpus
    is absent or empty, so fall through to step 1 and scout normally.
+
+   The delta carries exactly those two keys. `added` and `stale` are deliberately
+   absent from `reconcile.mjs`: `added` would need a prior reconcile snapshot that
+   does not exist, and staleness is decided per element by `classify`, which
+   `/memory-flush` Step 0e surfaces. Reporting a field the helper never returns is
+   how a scout report comes to describe a delta nobody computed.
 
    This step is the whole point of the corpus: without it the modules are an
    orphan nothing calls, and every cycle pays full rediscovery again. A delta that

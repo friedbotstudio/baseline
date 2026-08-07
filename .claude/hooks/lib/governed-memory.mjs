@@ -74,6 +74,45 @@ export function surfaceGovernedMemory(filePath, { rootDir } = {}) {
   return hits;
 }
 
+// The corpus ascent — the THIRD surfacing trigger, beside the phase one and the
+// path-governed one above.
+//
+// `resolveLookup('by_path', …)` answers two different questions under one kind.
+// Without `specDir` it returns an ARRAY of the memory entries whose `governs:`
+// globs match the path; with `specDir` it returns `{elements, concepts}` — the
+// walk UP from a touched path to the concepts that own it. Passing specDir to the
+// call above would swap one answer for the other and break `hydrate`, which
+// iterates the array form. So this is a separate function, and `Array.isArray` is
+// the discriminator.
+//
+// That discriminator also absorbs every negative: an absent `memory.architecture_map`
+// flag and an unreadable corpus both fall back to the array form inside
+// `resolveLookup`, so they need no separate check here.
+//
+// Returns `null` on every negative path rather than an empty shape, so the caller
+// has one falsy check instead of four.
+export function surfaceCorpusLocation(filePath, { rootDir, specDir } = {}) {
+  if (!filePath || !rootDir || !specDir) return null;
+  let hit;
+  try {
+    hit = resolveLookup('by_path', filePath, { rootDir, specDir });
+  } catch {
+    return null;
+  }
+  if (Array.isArray(hit) || !hit?.elements?.length) return null;
+  return { elements: hit.elements, concepts: hit.concepts ?? [] };
+}
+
+export function renderCorpusLocation({ elements, concepts }) {
+  const anchored = elements
+    .map((el) => `- \`${el.id}\` — ${el.title || el.id} (\`${el.anchor}\`)`)
+    .join('\n');
+  const owners = concepts.length
+    ? concepts.map((c) => `\`${c.id}\``).join(', ')
+    : 'none — this element belongs to no concept';
+  return `--- corpus location (docs/system) ---\n${anchored}\nOwning concept(s): ${owners}`;
+}
+
 // Above three hits the bodies stop being readable and start being a wall, so a
 // summary plus a walkable entry point replaces them (AC-007). Same threshold and
 // same reasoning as the phase trigger's existing VERBATIM_LIMIT.

@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
+import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
 import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
@@ -45,7 +45,7 @@ function checkSyntax(blocks, hasPuml) {
   return bad.length === 0 ? ['PASS', 'all blocks parse'] : ['FAIL', bad.join('; ')];
 }
 
-function checkPresence(blocks, pj, spec) {
+function checkPresence(blocks, pj, spec, root) {
   let required;
   try {
     // Honor the write-set-gated diagram profile (same resolver the
@@ -74,9 +74,30 @@ function checkPresence(blocks, pj, spec) {
         } catch { /* ignore bad regex */ }
       }
     }
-    if (found < need) missing.push(`${kind} (need ${need}, found ${found})`);
+    if (found < need) missing.push({ kind, label: `${kind} (need ${need}, found ${found})` });
   }
-  return missing.length === 0 ? ['PASS', 'all kinds present'] : ['FAIL', 'missing: ' + missing.join(', ')];
+
+  // Spec-as-diff, resolved exactly as spec_diagram_presence_guard resolves it. The
+  // shared rule lives in write-set-profile; only the verdict differs — the guard
+  // blocks an unresolvable id at the write boundary, the preflight reports it here.
+  const unresolved = unresolvedReferences(spec, root);
+  if (unresolved.length) {
+    return ['FAIL', 'unresolvable corpus references: ' + unresolved.join(', ')];
+  }
+  if (elementReferences(spec).length) {
+    for (let i = missing.length - 1; i >= 0; i -= 1) {
+      if (STRUCTURAL_KINDS.has(missing[i].kind)) missing.splice(i, 1);
+    }
+  }
+
+  return missing.length === 0
+    ? ['PASS', 'all kinds present']
+    : ['FAIL', 'missing: ' + missing.map((m) => m.label).join(', ')];
+}
+
+function unresolvedReferences(spec, root) {
+  return elementReferences(spec)
+    .filter((id) => !existsSync(join(root, 'docs', 'system', 'elements', `${id}.md`)));
 }
 
 function checkTraceability(spec, blocks) {
@@ -257,7 +278,7 @@ function main(argv) {
 
   const results = [
     ['plantuml_syntax', ...checkSyntax(blocks, hasPuml)],
-    ['diagram_presence', ...checkPresence(blocks, pj, spec)],
+    ['diagram_presence', ...checkPresence(blocks, pj, spec, root)],
     ['ac_traceability', ...checkTraceability(spec, blocks)],
     ['design_calls', ...checkDesignCalls(spec, pj)],
   ];

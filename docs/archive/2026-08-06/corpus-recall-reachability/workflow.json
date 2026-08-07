@@ -1,0 +1,46 @@
+{
+  "request": "Cycle 1 of the central-system-spec reachability plan: make the corpus at docs/system/ actually reachable. (C1-1) Wire renderConceptMap into buildIndex so the concept map reaches session start. (C1-2) Add surfaceCorpusLocation to governed-memory.mjs and emit it from process_lifecycle_guard's write leg so the by_path corpus ascent stops being unreachable. (C1-3) Route process_lifecycle_guard's Bash leg through resolveCategory instead of flat conventions.md/landmines.md. (C1-4) Add memory-flush Step 0e calling stale-elements.mjs listStale. (C1-5) Correct three prose drifts (scout SKILL stale field, spec template Design calls heading, memory README build-index.mjs attribution).",
+  "slug": "corpus-recall-reachability",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved plan file .config/plans/i-guess-earlier-we-synthetic-moth.md, Cycle 1 sections C1-1..C1-5, each naming exact file:line targets. Derived in turn from the landed living-system-model epic (slice C, 'Index and recall layer') whose output these five defects sit on.",
+  "track_reason": "Heavier than tdd-quickfix, which the mechanics alone would justify. C1-2 adds a third surfacing block to process_lifecycle_guard's Write leg, and that leg is undocumented in both seed.md:168 and .claude/CONSTITUTION.md section 2 (which describe only the Bash registration). Modifying the hook enforcement layer (Article VIII) with a governance-doc gap warrants a written contract and gate-A review before code lands.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1786185600,
+  "updated_at": 1786185600,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}

@@ -15,8 +15,9 @@ Each location answers a different question; none overrides another. Naming one
 "the" authority would force the other two to lie.
 
 Guard-enforced invariants:
-  - Required ## headings (artifact_template_guard):
-        Goal, Design, Acceptance criteria, Test plan.
+  - Required ## headings (artifact_template_guard, configured in project.json →
+    artifacts.required_sections.spec — that key is what the guard reads; it wins):
+        Goal, Design, Design calls, Acceptance criteria, Test plan.
   - Required diagram kinds inside ```plantuml``` fences
     (spec_diagram_presence_guard, configured in project.json →
      artifacts.required_diagrams.spec):

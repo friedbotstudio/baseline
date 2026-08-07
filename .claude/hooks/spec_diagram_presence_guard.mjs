@@ -24,7 +24,7 @@ import {
   computeProposedContent,
 } from './lib/common.mjs';
 import { assertSafeSlug } from './lib/slug.mjs';
-import { referenceTokens, resolveProfile } from './lib/write-set-profile.mjs';
+import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from './lib/write-set-profile.mjs';
 
 const payload = await readPayload();
 
@@ -73,11 +73,7 @@ for (const [kind, rule] of Object.entries(required)) {
 // Spec-as-diff: a reference to a corpus element stands in for the STRUCTURAL kinds,
 // which are exactly what the corpus models. Behavioural kinds still have to be drawn
 // — a sequence describes this change, not the system's standing shape.
-const STRUCTURAL_KINDS = new Set(['c4_context', 'c4_container', 'c4_component']);
-const references = referenceTokens(content)
-  .map((token) => /^@ref\s+element:([a-z0-9][a-z0-9-]*)$/.exec(token.trim()))
-  .filter(Boolean)
-  .map((match) => match[1]);
+const references = elementReferences(content);
 
 if (references.length) {
   const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
