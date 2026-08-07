@@ -318,6 +318,6 @@ You SHALL:
 
 ## Appendix — Reference (in the annex)
 
-Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/` + `docs/init/seed.md`) and **Appendix B — Skill index** (all 58 skills by category).
+Two reference tables live in **`.claude/CONSTITUTION.md`** (read on demand): **Appendix A — Where things live** (every `.claude/` path + `src/`) and **Appendix B — Skill index** (all 58 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 58 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 58 skills, `.claude/commands/` (6 commands), 7 memory files, 4 MCP servers, 1 output style, `docs/init/seed.md` (genesis).

@@ -46,7 +46,7 @@ The baseline is that opinion, written down and enforced below the layer Claude c
 
 ## What this is
 
-A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **58 skills**, **1 subagent**, **9 workflow tracks**, and **4 consent gates** you type yourself.
+A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **58 skills**, **1 subagent**, **9 workflow tracks**, **4 consent gates** you type yourself, and **1 output style** that changes how Claude writes back to you.
 
 The hooks run as separate processes, outside Claude's tool boundary, before the tool call resolves. So _"don't push"_, _"don't `--amend`"_, _"don't self-approve specs"_ stop being instructions Claude may follow and become operations it cannot perform. It cannot disable a hook with a flag, cannot write its own consent marker, and cannot reorder a phase without an exception `/triage` records on disk.
 
@@ -104,6 +104,9 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — three workflow-phase gates plus `/grant-push` at runtime. All user-typed, all structurally un-invokable by Claude | 3 + 1 | `consent_gate_grant` UserPromptSubmit hook |
 | **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke), `sprint-channel` (coordination channel) | 4 | `.mcp.json` |
+| **Output style** — `Baseline`, written to ASD-STE100 Simplified Technical English, the controlled language used in aerospace maintenance manuals. Two modes, Engineer and Analyst. It shapes Claude's chat messages only, and stays out of code, skill-owned files, and governance documents. Enabled by default through `outputStyle` in the shipped `.claude/settings.json` | 1 | `.claude/output-styles/` |
+
+This is the only installed component that changes behavior you might not want. Your own `.claude/settings.local.json` overrides it; set `outputStyle` there to any other style. To switch it off for the whole project, delete the single `outputStyle` line from `.claude/settings.json`. If you are upgrading, that file goes through `/upgrade-project` rather than an automatic merge, so a copy you have edited is never silently overwritten.
 
 The roster counts are asserted by `audit-baseline` against `docs/init/seed.md` and the manifest on every build, and drift fails CI. The cross-doc scanner reads prose claims rather than table cells, so this table is maintained by hand against the same source of truth.
 

@@ -73,6 +73,10 @@ const REQUIRED_PATTERNS = [
   { name: 'swarm-worker agent',   match: (p) => p === '.claude/agents/swarm-worker.md' },
   { name: 'plantuml LICENSE',     match: (p) => p === '.claude/bin/LICENSE' },
   { name: 'plantuml NOTICE',      match: (p) => p === '.claude/bin/NOTICE' },
+  // Covers AC-002 of ship-baseline-output-style. The Baseline output style is a
+  // shipped default (seed §4.9); `.claude/settings.json` names it, so the payload
+  // losing the file would leave `outputStyle` dangling.
+  { name: 'Baseline output style', match: (p) => p === '.claude/output-styles/baseline.md' },
   // Counts mirror seed §4 / audit-baseline.
   { name: '23 hooks (.mjs)',      match: (p) => /^\.claude\/hooks\/[^/]+\.mjs$/.test(p), minCount: 23 },
   { name: '4 commands',           match: (p) => /^\.claude\/commands\/[^/]+\.md$/.test(p), minCount: 4 },

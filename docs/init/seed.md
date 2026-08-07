@@ -114,6 +114,7 @@ Applies to every language. Mappings for TSX, Node, Python, Go, Rust ship inside 
 │   ├── agents/                 # 1 subagent: swarm-worker (rendered from src/agents/swarm-worker.template.md)
 │   ├── commands/               # 5 consent/bootstrap gates (user-only — structurally)
 │   ├── skills/                 # 58 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (10) + audit (1) + alt tracks (2) + maintenance (4) + sprint (5) + roadmap (2)
+│   ├── output-styles/          # 1 output style: Baseline (§4.9) — enabled by settings.json → outputStyle
 │   ├── memory/                 # project memory: 7 canonical categories (flat <name>.md OR sharded <category>/<key>.md when memory.sharded_store activated) + _pending.md + _resume.md + _thread.md (all gitignored body) + README.md
 │   └── state/                  # runtime: workflow.json, approvals, swarm plans, verdicts, logs
 ├── src/                        # pristine ship-time templates (overlay source for `npx @friedbotstudio/create-baseline`)
@@ -388,6 +389,18 @@ Records are one file per entity with no on-disk aggregate index — the index is
 **Recall precedes rediscovery.** Two entry points reach the model, and both are live rather than pending: descend by concept, or walk up from a touched path to the element that anchors it. Session start injects the concept map; `process_lifecycle_guard`'s write leg surfaces the corpus location for the path being written. Before scouting or specifying, take one of those two routes before rediscovering the codebase. The map routes; the code witnesses. An unwitnessed shard routes and is never evidence.
 
 A project that is not this one bootstraps its own corpus with `/spec-sync`, which proposes a concept map from a scan and materializes only after a human confirms it.
+
+### §4.9 Output styles (1)
+
+`.claude/output-styles/baseline.md` ships one style, **Baseline**, and `.claude/settings.json → outputStyle` names it, so a fresh install speaks in it without the consumer doing anything. It is the only baseline-owned component that shapes how Claude *talks* rather than what Claude is *allowed to do*.
+
+The style writes to **ASD-STE100 Simplified Technical English** — the controlled-language standard the aerospace industry built so a maintenance instruction cannot be misread. Eleven numbered rules carry it: one instruction per sentence, a 20/25-word ceiling, active voice with a named actor, simple tenses only, one word for one meaning, a three-noun stacking cap, no dropped articles, one topic per paragraph, lists for three or more steps, define-then-reuse for domain terms, and risk-first ordering. Precision outranks brevity: a short sentence that drops a condition is wrong.
+
+Two modes sit on top of that ruleset. **Engineer** is the default and answers solution → why → why-not, dropping the last two parts when the answer is a plain fact. **Analyst** is for requirements gathering: it asks questions rather than correcting the user's framing, writes at a US grade 8 level, and still reports a blocking fact in one plain sentence.
+
+**The scope boundary is load-bearing.** The rules govern Claude's chat messages and nothing else. They explicitly do NOT govern code, comments, commit messages, test names, files a skill owns (`prose`, `humanizer`, `technical-writer`, `documentation`, `copywriting` set that register), governance and specification documents, or direct quotes. Without that boundary the style would fight §10's writing discipline and Article XI.1's deliberate constitutional voice on every write.
+
+**Default-on, with no installer surface.** There is no `--no-output-style` flag: unlike §15.5's CI posture, which writes outside `.claude/` and therefore needs one, this is a single key inside `.claude/` whose opt-out already exists — a consumer's own `settings.local.json` overrides it, or they delete the line. An upgrading consumer who edited `settings.json` is staged for `/upgrade-project` rather than auto-merged, because that file carries all 26 hooks' wiring.
 
 ---
 

@@ -1,0 +1,46 @@
+{
+  "request": "Ship the Baseline output style as an installed default. The ASD-STE100 style file at .claude/output-styles/baseline.md already lands in the tarball via the Stage 1 .claude/ rsync, but nothing sets it as the default for a consumer install. Wire outputStyle into src/settings.template.json and .claude/settings.json (tests/template-drift.test.mjs asserts byte parity), drop the now-redundant .claude/settings.local.json entry, pin the style file with a REQUIRED_PATTERNS row in tests/template-payload.test.mjs so it can never silently stop shipping, and amend docs/init/seed.md (§3 directory tree + a new §4.9 Output styles section) plus the CLAUDE.md quick-orientation counts first, per Article I.4 precedence. Shipped style carries two modes only (Engineer, Analyst) — Quirky Mode is deliberately excluded.",
+  "slug": "ship-baseline-output-style",
+  "track_id": "spec-entry",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "seed.md §15.5 (CI/secrets posture, slice J2) + tests/template-payload.test.mjs:83-87 + scripts/build-template.sh Stage 2.6. Slice J2 shipped a new payload class (.githooks/, scripts/ci/, .github/branch-protection/) default-on with a CLI opt-out, pinned by REQUIRED_PATTERNS rows and declared in its own seed section. This request repeats that exact shape for .claude/output-styles/. Distribution path already verified: build-template.sh Stage 1 rsyncs .claude/ verbatim with no output-styles exclude, and template-payload.test.mjs ALLOWED_PREFIXES carries the '.claude/' prefix.",
+  "track_reason": "Heavier than the leanest safe track (tdd-quickfix). Setting outputStyle on by default changes how the assistant speaks in every consumer install — a consumer-facing product default, not a mechanical parameter. The load-bearing fork (default-on with an opt-out lever, per the J2 precedent, versus opt-in) is a human's-call decision under Article XI.12 and belongs at gate A. spec-entry also retains spec-shippability-review, which tdd-quickfix excepts.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786132539,
+  "updated_at": 1786132539,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}
