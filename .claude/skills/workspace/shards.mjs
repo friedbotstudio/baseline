@@ -34,8 +34,8 @@ export function elementIdFromSection(section) {
   return String(section).replace(/_/g, '-');
 }
 
-// The inverse of elementIdFromSection. All 112 live shards are written this way,
-// and the map stays injective because an id can never contain an underscore.
+// The inverse of elementIdFromSection. Every live shard is written this way, and
+// the map stays injective because an id can never contain an underscore.
 function sectionFromElementId(elementId) {
   return elementId.replace(/-/g, '_');
 }

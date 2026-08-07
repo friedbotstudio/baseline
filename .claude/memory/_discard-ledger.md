@@ -73,3 +73,4 @@
 - discarded :: backlog → spec-not-this-slice-d139
 - discarded :: .claude/skills/tdd/drift_check.mjs → landmarks.md
 - discarded :: .claude/hooks/lib/pinned-spec.mjs → landmarks.md
+- promoted :: backlog → listworkspacefiles-lacks-traversal-guard-3529

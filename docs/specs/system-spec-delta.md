@@ -62,7 +62,7 @@ Container_Boundary(skills, "Claude Code baseline skills") {
   Component(shards,     "workspace/shards.mjs", "node esm",  "read shards; writeDiagramShard is new")
   Component(research,   "research/retrieve.mjs","node esm",  "structural lane plus term overlap")
 }
-ComponentDb(corpus, "docs/system/", "markdown + puml", "15 concepts, 112 elements, 112 shards")
+ComponentDb(corpus, "docs/system/", "markdown + puml", "concepts, elements, one shard per element")
 
 Rel(specskill, delta, "parseDelta for row validation")
 Rel(archive, delta, "verifyAndApplyDelta once per landing")
@@ -134,7 +134,7 @@ ReconcileReport "1" --> "many" Element : reports over
 @enduml
 ```
 
-`Shard.kind` and `Shard.witnessTest` carry no `<<new>>` / `<<changed>>` stereotype on purpose: both fields already exist in the reader (`shards.mjs:19-20`) and their shape does not change. They are `null` for all 112 shards today, and slice D populates the data. **No reader change is required.**
+`Shard.kind` and `Shard.witnessTest` carry no `<<new>>` / `<<changed>>` stereotype on purpose: both fields already exist in the reader (`shards.mjs:19-20`) and their shape does not change. They are `null` for every shard the shard writer did not author, and slice D populates the data. **No reader change is required.**
 
 ### Behavior — sequence per AC
 
@@ -341,13 +341,13 @@ participant "shards.writeDiagramShard" as WS
 participant "witness.bindingFor" as WB
 database "docs/system/diagrams" as D
 
-R -> D : read all 112 shards
-D --> R : 112 with kind null
-loop each shard
+R -> D : read every shard
+D --> R : the unannotated ones, kind null
+loop each unannotated shard
   R -> WS : rewrite with its real kind, annotation inside the startsub block
 end
 R -> D : verify
-D --> R : 112 of 112 carry a kind annotation
+D --> R : every shard carries a kind annotation
 R -> WB : bindingFor(kind) for each element
 WB --> R : anchor-digest or test — never witness none
 @enduml
@@ -550,7 +550,7 @@ already anchored; F is governance prose outside the governed surface.
 | AC-007 | given `writeDiagramShard(specDir, elementId, {kind, witnessTest, label})` called with a valid id, then a `.puml` shard is written whose kind annotation sits inside the `!startsub` block; and given a non-kebab id or one containing `..`, then it throws before constructing a path | behavior | intake AC 7 | §Behavior #7 |
 | AC-008 | given the live corpus, when `/system-reconcile` runs without human confirmation, then `docs/system/` is byte-identical afterwards and the report covers all seven checks (gaps, stale, dangling, duplicate anchors, orphan shards, unillustrated, missing kind annotation) | preflight | intake AC 8 | §Behavior #8 |
 | AC-009 | given `/archive` Step 5.5, when it invokes `/system-reconcile`, then the invocation is report-only and `docs/system/` is unchanged between Step 5 completing and the workflow ending | smoke | intake AC 9 | §Behavior #9 |
-| AC-010 | given the backfill has run, when the shard directory is scanned for the kind annotation, then every one of the 112 shards carries it, and `witness.bindingFor` returns a binding other than `witness: none` for every element | behavior | intake AC 10 | §Behavior #10 |
+| AC-010 | given the backfill has run, when `docs/system/diagrams/` is scanned for the kind annotation, then every shard in it carries one, and `witness.bindingFor` returns a binding other than `witness: none` for every element | behavior | intake AC 10 | §Behavior #10 |
 | AC-011 | given a scout-touched path resolving to an element that carries `source_spec:`, when `/research` Step 0 runs, then the archived spec named by `source_spec:` appears in the hits tagged `via: "source_spec"`, ranked above term-overlap hits, and the term lane still returns its own hits tagged `via: "terms"` | behavior | intake AC 11 | §Behavior #11 |
 | AC-012 | given the amendment, when the tree is inspected, then `seed.md` §4.8/§9/§12 and `CLAUDE.md` Article IX clause 10 carry the recall rule, `src/CLAUDE.template.md` is byte-equal to `CLAUDE.md`, `src/seed.template.md`'s pre-§16 body mirrors `seed.md` with §16 pristine, `audit-baseline` exits 0, and `CLAUDE.md` is at most 38,800 chars and at most 39,000 bytes with no asserted ceiling raised | preflight | intake AC 12 | §Behavior #12 |
 | AC-013 | given `memory.architecture_map.enabled` is false or absent, when any `delta` export, `runReconcile`, or `writeDiagramShard` is invoked, then each returns an empty result without throwing and performs no read or write under `docs/system/` | preflight | intake AC 13 | §Behavior #13 |
@@ -581,7 +581,7 @@ already anchored; F is governance prose outside the governed surface.
 | Regression trap | `stampAll` without an explicit id list | still throws | — |
 | Regression trap | Flag off — snapshot `docs/system/` and every Cycle-2 path's output | byte-identical to the pre-Cycle-2 baseline | AC-013, AC-014 |
 | Regression trap | `CLAUDE.md` size and both mirrors after slice F | within both ceilings, mirrors intact, audit exit 0 | AC-012 |
-| Regression trap | All 112 shards after slice D | every one carries a kind annotation; the `elementIdFromSection` join stays total both ways | AC-010 |
+| Regression trap | Every shard in `docs/system/diagrams/` after slice D | every one carries a kind annotation; the `elementIdFromSection` join stays total both ways | AC-010 |
 
 ## Observability
 
@@ -590,7 +590,7 @@ already anchored; F is governance prose outside the governed surface.
 | Log | archive Step 5 receipt | `{confirmed, drift, unclaimed, applied, shardsWritten, skippedGlob, inputEmpty}` printed to the operator | the receipt an operator reads to decide the fold-back worked; `inputEmpty` makes a zero result falsifiable |
 | Log | `/system-reconcile` report | seven named arrays with counts | corpus health at a glance |
 | Log | `spec-lint` `system_delta` row | PASS/FAIL plus offending row indices | preflight before the guard bites |
-| Metric | count of shards carrying a kind annotation | integer, target 112 | citability of the corpus |
+| Metric | count of shards carrying a kind annotation | integer, target every shard in `docs/system/diagrams/` | citability of the corpus |
 | Alarm | `findGaps(...)` non-empty after a landing | asserted in `workspace-coverage.test.mjs`; a non-empty result fails CI | detects corpus decay within one commit |
 
 ## Rollout
@@ -654,14 +654,15 @@ Step 5 today calls `syncBack`, which re-stamps and nothing else, so a landing th
 
 ## Slice D
 
-**C2-4 — backfill the kind annotation across all 112 shards.**
+**C2-4 — backfill the kind annotation across every shard.**
 
-Zero of 112 shards carry an annotation, so `witness.bindingFor` returns `witness: none` for every element and the 8-kind witnesses block is inert. Run `/system-reconcile`'s missing-kind report, then write each shard's real kind through `writeDiagramShard`. This is a data backfill against an already-correct reader (`shards.mjs:19` is line-anchored and matches PlantUML's verified rule); **no reader change**.
+Every shard the shard writer did not author carries no annotation, so `witness.bindingFor` returns `witness: none` for those elements and the 8-kind witnesses block is effectively inert. Run `/system-reconcile`'s missing-kind report to name the backfill set — the shards `writeDiagramShard` has authored since slice B are annotated at birth and are not in it — then write each named shard's real kind through `writeDiagramShard`. This is a data backfill against an already-correct reader (`shards.mjs:19` is line-anchored and matches PlantUML's verified rule); **no reader change**.
 
 - **ACs**: AC-010
-- **Write surface**: `docs/system/diagrams/**` (112 files), `tests/`
+- **Write surface**: `docs/system/diagrams/**`, `tests/`
 - **Depends on**: slice B (`writeDiagramShard`)
-- **Notes**: each element's kind comes from what its shard already declares structurally (a `Component(...)` line → `c4_component`, and so on). Where a shard's kind is genuinely ambiguous, leave it unannotated and report it rather than guessing — an unwitnessed shard routes and is never evidence, which is a legal state (`unwitnessed-diagrams-are-the-only-noncitable-ones-2026-08-06`). AC-010's target of 112 assumes zero ambiguous shards; if any are found, the slice reports them and the target becomes 112 minus that count, recorded in the slice's commit message.
+- **Amended 2026-08-07, before slice D opened** (workflow `readme-count-gate`, human-approved). Every live shard-count claim in this spec is now a quantifier rather than a number. The spec was written against a 112-shard corpus; slices B and `1db3b6c` each added one, so ten statements — AC-010, the §Test plan regression trap, the C4 `ComponentDb` label, the §Behavior #10 sequence, the observability target, this slice's heading, scope paragraph, write surface and note — had drifted to false. The scoping sentence was the load-bearing one: it read "Zero of 112 shards carry an annotation" against a disk holding 2 of 114, which would have sent the backfill over shards that were already annotated at birth. Counts stated as *measurements* (the `source_spec:` coverage in D5 and §Behavior #11, the whitespace-insertion figure in slice C's amendment) are deliberately untouched — rewriting an observation would falsify it. The gate that makes this class of drift detectable rather than discoverable-by-grep landed in the same workflow: `readme-gate.checkReadmeCounts`.
+- **Notes**: each element's kind comes from what its shard already declares structurally (a `Component(...)` line → `c4_component`, and so on). Where a shard's kind is genuinely ambiguous, leave it unannotated and report it rather than guessing — an unwitnessed shard routes and is never evidence, which is a legal state (`unwitnessed-diagrams-are-the-only-noncitable-ones-2026-08-06`). AC-010 targets every shard rather than a fixed count, so a corpus that grew since this spec was written needs no amendment to stay satisfiable. Ambiguous shards are the one sanctioned shortfall: if any are found, the slice reports them and the unannotated remainder is recorded in the slice's commit message.
 
 ## Slice E
 

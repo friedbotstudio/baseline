@@ -1,0 +1,58 @@
+{
+  "request": "Extend readme-gate.mjs so the corpus counts documented in docs/system/README.md are checked against disk, not just the field names; correct the drifted 112->114 counts in README and shards.mjs; amend AC-010 and the regression trap in docs/specs/system-spec-delta.md to be count-free; land the pending memory curation. Prerequisite fix before epic system-spec-delta slice D.",
+  "slug": "readme-count-gate",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": ".claude/skills/workspace/readme-gate.mjs -> checkReadmeFields is the in-repo precedent: same parse-a-README-claim-and-compare-against-disk shape, same one-directional {ok, overclaimed} return, same header doctrine ('the README cannot outrun disk'). The count check adds a second extractor to that existing gate rather than opening a new surface. Precedent spec: docs/archive/2026-08-06/workspace-corpus-backfill/spec.md.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "cli-copy-review"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "cli-copy-review",
+      "reason": "diff touches no CLI surface (no path under src/cli/ or bin/)",
+      "oracle": "document-phase path survey",
+      "measured": {
+        "cli_paths_touched": 0
+      }
+    }
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786109000,
+  "updated_at": 1786109000,
+  "rightsize_base": [
+    ".claude/memory/landmines/drift-check-does-not-resolve-epic-child-pinned-specs.md",
+    ".claude/memory/landmines/spec-template-backticks-an-anchor-spec-lint-rejects.md",
+    ".claude/memory/backlog/sweep-auto-close-lossy-round-trip-9d41.md",
+    ".claude/memory/landmines/sweep-auto-close-round-trips-entries-and-drops-unknown-fields.md",
+    ".claude/output-styles/"
+  ]
+}

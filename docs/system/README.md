@@ -8,9 +8,11 @@ The layer sits behind `memory.architecture_map.enabled`, which defaults to false
 
 | Directory | Holds | Count |
 |---|---|---|
-| `elements/` | component records, each anchored to a path or a glob | 112 |
+| `elements/` | component records, each anchored to a path or a glob | 114 |
 | `concepts/` | cross-cutting concept nodes, no anchor | 15 |
-| `diagrams/` | one PlantUML shard per element | 112 |
+| `diagrams/` | one PlantUML shard per element | 114 |
+
+`readme-gate.mjs` reads that Count column and fails the suite when a number disagrees with the directory it names. It checks both directions: a count that is too low is as untrue as one that is too high.
 
 ## Authoring
 
@@ -40,7 +42,7 @@ Storing only that one field is a rule rather than an omission. Anything the anch
 
 ## Staleness and witnesses
 
-Every durable diagram declares what would prove it wrong. A shard names its kind in a PlantUML comment (`' @kind c4_component`). `project.json` binds each kind to a witness: a digest comparison, a named test given by `' @witness <path>`, or nothing at all. A diagram with no witness is still permitted, because a project may need to model something no checker can reach. It is marked, though, and can never be cited as evidence.
+Every durable diagram declares what would prove it wrong. A shard names its kind in a PlantUML comment (`' @kind c4_component`). `writeDiagramShard` adds that annotation to every shard it creates. The backfill across the older ones has not run yet, so most elements still resolve to `witness: none`. `project.json` binds each kind to a witness: a digest comparison, a named test given by `' @witness <path>`, or nothing at all. A diagram with no witness is still permitted, because a project may need to model something no checker can reach. It is marked, though, and can never be cited as evidence.
 
 Detection is mechanical and repair is by hand. `/memory-flush` lists the elements that drifted, and a digest is re-stamped only for one whose record and shard a curator actually read. `stampAll` refuses to run without an explicit id list, so no bulk-refresh path exists. A bulk refresh would leave every element permanently fresh and hide the drift the digest was built to catch.
 
