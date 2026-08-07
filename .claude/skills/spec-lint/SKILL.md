@@ -1,7 +1,7 @@
 ---
 name: spec-lint
 owner: baseline
-description: Preflight a spec draft without saving. Runs the same three checks as the write-boundary hooks — PlantUML syntax, required diagram presence, and AC-to-sequence traceability — and prints a compact pass/fail table. Use while iterating so the hooks don't bite on save.
+description: Preflight a spec draft without saving. Runs the same checks as the write-boundary hooks — PlantUML syntax, required diagram presence, AC-to-sequence traceability, Design calls quality floor, and System delta row resolution — and prints a compact pass/fail table. Use while iterating so the hooks don't bite on save.
 ---
 
 > Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('spec')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
@@ -12,13 +12,29 @@ Invocable by both user (`/spec-lint <slug>`) and Claude (when iterating on a spe
 
 ## What it checks
 
-Three checks, same logic as the hooks, but advisory (no writes are blocked):
+Five checks always run, same logic as the hooks, but advisory (no writes are blocked). One more
+appears only when its trigger fires.
 
-| # | Check | Hook it mirrors |
+Checks are identified by **row name**, in the order the report prints them. Ordinals are deliberately
+absent: they have already drifted once — `lint.mjs` labels the codesign check "#4" in its own comment
+while the report prints it last — and a number that means one thing in the source and another in the
+table is worse than no number.
+
+| Check | Row name | Hook it mirrors |
 |---|---|---|
-| 1 | Every ```plantuml``` fence parses under `plantuml -checkonly` | `plantuml_syntax_guard` |
-| 2 | Required diagram kinds present (config: `project.json → artifacts.required_diagrams.spec`) | `spec_diagram_presence_guard` |
-| 3 | Every `AC-NNN` row in the Acceptance criteria table references a `§Behavior #N` section that exists | (no hook — unique to the lint) |
+| Every ```plantuml``` fence parses under `plantuml -checkonly` | `plantuml_syntax` | `plantuml_syntax_guard` |
+| Required diagram kinds present (config: `project.json → artifacts.required_diagrams.spec`) | `diagram_presence` | `spec_diagram_presence_guard` |
+| Every `AC-NNN` row in the Acceptance criteria table references a `§Behavior #N` section that exists | `ac_traceability` | (no hook — unique to the lint) |
+| Each `## Design calls` row carries a populated Reference target and Quality criteria | `design_calls` | `spec_design_calls_guard` |
+| Each `## System delta` row resolves — an `add` anchors inside the governed surface, a `change`/`remove` names an existing element | `system_delta` | (no hook — the guard checks only that the section is present) |
+
+| Conditional check | Row name | Fires when |
+|---|---|---|
+| A `## Decisions` section is present | `codesign_decisions` | `workflow.json → codesign_mode` is `true` |
+
+`system_delta` reports `SKIP` when `project.json → memory.architecture_map.enabled` is not `true`. The
+corpus at `docs/system/` is opt-in, so a project that has not adopted it declares no delta and the
+check has nothing to resolve.
 
 ## Invocation
 
@@ -41,6 +57,8 @@ check                              status
 plantuml_syntax                    PASS
 diagram_presence                   FAIL  (missing: c4_component, dependency_graph)
 ac_traceability                    FAIL  (AC-002 → §Behavior #2 not found)
+design_calls                       PASS
+system_delta                       FAIL  (add row foo-guard: anchor docs/notes/x.md falls outside the governed surface)
 ---------------------------------- ------
 overall                            FAIL
 ```
@@ -49,7 +67,7 @@ Exit 0 on overall PASS, 1 on overall FAIL. Intended for use in CI or a pre-commi
 
 ## Prerequisites
 
-- `plantuml` CLI on PATH for check #1 (if absent, #1 is reported as `SKIP (no plantuml)`; #2 and #3 still run).
+- `plantuml` CLI on PATH for check #1 (if absent, #1 is reported as `SKIP (no plantuml)`; the rest still run).
 
 ## Notes
 

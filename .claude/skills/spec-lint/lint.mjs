@@ -9,6 +9,9 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
 import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.mjs';
+import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
+import { parseDelta } from '../workspace/delta.mjs';
+import { anchorMatches, governedFiles } from '../workspace/coverage.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -211,6 +214,61 @@ function checkDesignCalls(spec, pj) {
   return ['PASS', `${uiHits.length} UI path(s) match design_calls rows`];
 }
 
+// system_delta — every declared delta row must resolve: an `add` anchors inside the
+// governed surface, a `change`/`remove` names an element that exists.
+//
+// Named, not numbered: the ordinals in this file already disagree with the report's
+// print order (checkCodesignDecisions is commented "#4" but prints last), and
+// site-src/pm-mode.njk repeats that "#4" downstream. Adding another number would
+// deepen a drift that a name avoids entirely.
+//
+// The flag is read from the already-parsed project.json rather than through
+// workspace/flags.mjs, which resolves it from disk by rootDir and so cannot answer
+// for the config lint has in hand. SKIP (never FAIL) when it is off: lint.mjs ships,
+// and src/project.template.json omits the block, so a hard failure here would fire
+// on every consumer spec.
+export function checkSystemDelta(spec, pj, root) {
+  if (pj?.memory?.architecture_map?.enabled !== true) {
+    return ['SKIP', 'memory.architecture_map.enabled is not true'];
+  }
+  if (!/^##\s+System\s+delta\s*$/m.test(spec)) {
+    return ['FAIL', "no '## System delta' section"];
+  }
+
+  const { rows, errors, empty } = parseDelta(spec);
+  if (empty) return ['PASS', 'no governed-surface change declared'];
+
+  const defects = [...errors, ...deltaRowDefects(rows, root)];
+  return defects.length === 0
+    ? ['PASS', `${rows.length} delta row(s) resolve`]
+    : ['FAIL', defects.join('; ')];
+}
+
+// governedFiles walks the tree, so it is resolved once per check and only when an
+// `add` row actually needs it.
+function deltaRowDefects(rows, root) {
+  const isAdd = (row) => row.verb.toLowerCase() === 'add';
+  const governed = rows.some(isAdd) ? governedFiles({ rootDir: root }) : [];
+  return rows.flatMap((row) => (isAdd(row)
+    ? anchorDefects(row, governed)
+    : elementDefects(row, root)));
+}
+
+function anchorDefects(row, governed) {
+  if (governed.some((path) => anchorMatches(row.anchor, path))) return [];
+  return [`add row ${row.elementId}: anchor ${row.anchor} falls outside the governed surface`];
+}
+
+function elementDefects(row, root) {
+  try {
+    assertSafeSlug(row.elementId, 'delta element id');
+  } catch (e) {
+    return [`${row.verb} row: ${e.message}`];
+  }
+  if (existsSync(join(root, 'docs', 'system', 'elements', `${row.elementId}.md`))) return [];
+  return [`${row.verb} row: element id ${row.elementId} does not resolve under docs/system/elements/`];
+}
+
 function checkCodesignDecisions(spec, root) {
   // Check #4 — codesign mode requires ## Decisions section presence.
   // Fires only when workflow.json -> codesign_mode is true.
@@ -281,6 +339,7 @@ function main(argv) {
     ['diagram_presence', ...checkPresence(blocks, pj, spec, root)],
     ['ac_traceability', ...checkTraceability(spec, blocks)],
     ['design_calls', ...checkDesignCalls(spec, pj)],
+    ['system_delta', ...checkSystemDelta(spec, pj, root)],
   ];
 
   // Check #4 — codesign_decisions — only included in the report when

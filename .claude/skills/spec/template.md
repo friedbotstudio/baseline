@@ -17,7 +17,7 @@ Each location answers a different question; none overrides another. Naming one
 Guard-enforced invariants:
   - Required ## headings (artifact_template_guard, configured in project.json →
     artifacts.required_sections.spec — that key is what the guard reads; it wins):
-        Goal, Design, Design calls, Acceptance criteria, Test plan.
+        Goal, Design, Design calls, System delta, Acceptance criteria, Test plan.
   - Required diagram kinds inside ```plantuml``` fences
     (spec_diagram_presence_guard, configured in project.json →
      artifacts.required_diagrams.spec):
@@ -254,6 +254,40 @@ If the write_set has no UI files, leave the section body as `*(none)*` — the r
 For specs with no UI surface:
 
 - *(none)*
+
+## System delta
+
+What this spec changes about the standing model at `docs/system/`. The reference affordance
+(`spec/SKILL.md` — citing an element id in place of a structural diagram) says what the model
+*already* holds; this section says what *changes*. The two compose: cite the element, then declare
+the delta against it.
+
+One row per change. The verbs are the corpus's existing op vocabulary — `add`, `change`, `remove`.
+
+- **Verb** — `add` for a governed-surface file the model does not yet anchor; `change` for an
+  element whose shape this spec alters; `remove` for one it retires.
+- **Element** — the element id under `docs/system/elements/`. For `add` it is the id to be created;
+  for `change`/`remove` it must already resolve, or `/spec-lint` fails the row.
+- **Anchor** — the repo-relative path or glob the element governs. For an `add` row this must fall
+  inside `project.json → memory.architecture_map.governed_surface`.
+- **Concept** — the owning concept under `docs/system/concepts/`.
+- **Kind** — the diagram kind this element is witnessed by. There is deliberately no Witness column:
+  the kind is authored, and the witness derives from it via `witness.bindingFor(kind)`. Authoring
+  both would restate `project.json → memory.architecture_map.witnesses` where they agree and create a
+  second source of truth where they do not.
+
+| Verb | Element | Anchor | Concept | Kind |
+|---|---|---|---|---|
+| add | foo-guard | `.claude/hooks/foo_guard.mjs` | guard-substrate | c4_component |
+| change | approval-anchor | `.claude/hooks/lib/approval.mjs` | consent-gates | class |
+
+A spec that changes nothing about the model declares that explicitly:
+
+- *(none)*
+
+`*(none)*` is the only legal empty body — an absent heading is denied by `artifact_template_guard`,
+and an empty table is a FAIL, because "I did not think about it" and "I thought about it and there is
+no change" must not look the same on the page.
 
 ## Acceptance criteria
 

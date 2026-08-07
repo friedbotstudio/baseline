@@ -64,3 +64,6 @@
 - discarded :: backlog → the-fix-is-to-isolate-both-writers-build-cfcc
 - discarded :: .claude/skills/audit-baseline/checks/hook-decision-paths.mjs → landmarks.md
 - promoted :: .claude/skills/spec-lint/lint.mjs → landmarks.md
+- discarded :: .claude/skills/spec-lint/SKILL.md → landmarks.md
+- promoted :: .claude/skills/workspace/delta.mjs → landmarks.md
+- discarded :: drift_check is vacuous on every epic-child → landmines.md

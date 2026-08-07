@@ -1,0 +1,44 @@
+{
+  "request": "Slice A of the system-spec-delta epic (C2-1): make `## System delta` a required spec section, with a spec-lint row validator and parseDelta in workspace/delta.mjs. Row shape `| Verb | Element | Anchor | Concept | Kind |`; `*(none)*` is the sole legal empty body; no Witness column (Kind is authored, witness derived by witness.bindingFor). Also correct spec-lint/SKILL.md's stale \"three checks\" prose.",
+  "slug": "system-spec-delta-slice-a",
+  "track_id": "epic-child",
+  "epic": "system-spec-delta",
+  "slice": "A",
+  "pinned_artifacts": {
+    "scout": "docs/scout/system-spec-delta.md",
+    "research": "docs/research/system-spec-delta.md",
+    "spec": "docs/specs/system-spec-delta.md#slice-A"
+  },
+  "novelty": "spec-derived",
+  "novelty_evidence": "Approved epic slice A in docs/specs/system-spec-delta.md (## Slice A, lines 602-614) and .claude/state/epic/system-spec-delta.json slices[0], carrying ACs AC-001/AC-002/AC-003, an explicit write surface, and 'Depends on: nothing'. The epic's direction approval landed today at .claude/state/spec_approvals/system-spec-delta.approval; the epic discovery bundle committed as 8701ae3.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "approve-direction",
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed_notes": {
+    "simplify": "escalated by slice A risk[] — spans project.json config, two skills, and a shared helper",
+    "document": "escalated by slice A risk[] — changes the spec template and two shipped SKILL.md files",
+    "security": "excepted — slice A risk[] does not escalate security; no auth, IO boundary, or untrusted-input parsing in the write surface",
+    "approve-direction": "inherited from the epic's gate A (spec_approvals/system-spec-delta.approval); §18.9 — one epic approval covers all slices"
+  },
+  "completed": ["tdd", "simplify", "integrate", "document", "archive", "roadmap-sync", "memory-flush"],
+  "tdd_ticks": ["scenario", "implement", "verify", "drift-check", "finalize"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786085514,
+  "updated_at": 1786085514,
+  "rightsize_base": [
+    ".claude/output-styles/"
+  ]
+}

@@ -2,11 +2,17 @@
 key: drift-check-does-not-resolve-epic-child-pinned-specs
 category: landmines
 scope: [scout, spec, tdd, security, integrate]
-verified-at: 922281d
-last-touched: 2026-07-03
+governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/SKILL.md
+load_bearing: true
+verified-at: 8701ae3
+last-touched: 2026-08-07
 ---
 
 - Path: `.claude/skills/tdd/drift_check.mjs` (spec resolution) vs `workflow.json → pinned_artifacts.spec` on `epic-child` tracks.
-- Landmine: `drift_check.mjs --slug <child-slug>` resolves the spec at `docs/specs/<child-slug>.md` only. An `epic-child` workflow has NO spec at its own slug — its contract is the pin `docs/specs/<epic>.md#slice-<id>` — so the checker exits 0 with "no spec; skipped" (the chore-track shape) and NO drift analysis runs against the pinned slice. Mechanically green, semantically unexercised: every epic-child ships without the spec↔impl drift gate the tdd chain assumes.
-- First observed 2026-07-03 (`erp-portables-slice-a`, the first epic-child through the tdd worker chain). Nine more children (B..K) will hit this on the same epic.
-- Mitigation until fixed: on epic-child tracks, treat the drift-check-tick as vacuous and judge the slice ACs against the binding verify/integrate oracles manually in main context. Real fix (small): teach `drift_check.mjs` to read `workflow.json → pinned_artifacts.spec`, strip the `#slice-<id>` fragment, load that file, and scope the AC scan to the named `## Slice <id>` section.
+- Landmine: `drift_check.mjs --slug <child-slug>` resolves the spec at `docs/specs/<child-slug>.md` only (`:64`). An `epic-child` workflow has NO spec at its own slug — its contract is the pin `docs/specs/<epic>.md#slice-<id>` — so the checker exits 0 with "no spec; skipped" (the chore-track shape, `:223`) and NO drift analysis runs against the pinned slice. Mechanically green, semantically unexercised: every epic-child ships without the spec↔impl drift gate the tdd chain assumes.
+- First observed 2026-07-03 (`erp-portables-slice-a`, the first epic-child through the tdd worker chain).
+- **Re-confirmed 2026-08-07 on `system-spec-delta-slice-a`, unchanged.** Still exits 0 with `no spec; skipped`. The 2026-07-03 mitigation was applied and worked: the slice's three ACs were judged by hand in main context against the write surface, and actual drift was zero — so the green was correct **by luck, not by measurement**. That is the whole hazard. A future child with real drift gets the identical green.
+- Note the asymmetry that makes this durable: `track_guard.mjs:57` DOES read `pinned_artifacts` and refuses every write when the pins do not resolve. So the same workflow has one component that understands epic-child pinning and another that does not. Copy the guard's resolution, do not invent a second one.
+- Mitigation until fixed: on epic-child tracks, treat the drift-check-tick as vacuous and judge the slice ACs against the binding verify/integrate oracles manually in main context. Say so in the phase report — a silent vacuous pass reads as a real one.
+- Real fix (small): teach `drift_check.mjs` to read `workflow.json → pinned_artifacts.spec`, strip the `#slice-<id>` fragment, load that file, and scope the AC scan to the named `## Slice <id>` section. Distinguish "no spec anywhere" (chore, genuinely skip) from "spec exists but not at this slug" (epic-child, resolve the pin) — collapsing those two into one branch is what produced the defect.
+- Sibling, different mechanism: [[drift-check-resolves-acs-by-literal-mention-not-implementation]] is a check that runs and mis-scores; this is a check that never runs at all. Same family as [[a-check-that-measured-nothing-reports-success]].
