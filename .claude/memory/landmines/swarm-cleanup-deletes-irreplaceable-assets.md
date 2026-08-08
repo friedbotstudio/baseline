@@ -1,7 +1,7 @@
 ---
 key: swarm-cleanup-deletes-irreplaceable-assets
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd]
 verified-at: 3c74ba8
 last-touched: 2026-06-20
 ---

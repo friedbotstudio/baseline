@@ -1,10 +1,10 @@
 ---
 key: no-jvm-available
 category: constraints
-scope: any
+scope: []
 state: true
 state_verified_at: f7da5a7
-governs: .claude/hooks/plantuml_syntax_guard.mjs,.claude/skills/spec/**,docs/specs/**
+governs: .claude/hooks/plantuml_syntax_guard.mjs, .claude/skills/spec/**, docs/specs/**
 verified-at: f7da5a7
 last-touched: 2026-08-04
 ---

@@ -1,13 +1,14 @@
 ---
 key: swarm-heuristic-counts-zero-components-for-any-ref-spec-4d21
 category: backlog
-scope: any
+scope: []
 status: open
 source: assistant-deferral
 raised-on: 2026-08-06
 raised-in-context: corpus-recall-reachability
 verified-at: d4a1a47
 last-touched: 2026-08-06
+governs: .claude/skills/harness/SKILL.md
 ---
 
 > One finding worth recording for Cycle 2, not acting on now: the swarm-vs-solo heuristic counts `^\s*Component\(` lines in the spec. A spec that satisfies the structural kinds via `@ref` has zero, so **every spec-as-diff spec routes to solo regardless of real component count**. Correct outcome here — this is one coherent change — but it silently disables the swarm path for Cycle 2 onward.

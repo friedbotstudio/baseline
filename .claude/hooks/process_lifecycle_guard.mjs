@@ -128,8 +128,11 @@ function surfacePhaseScopedMemory(filePath) {
       .join('\n\n');
   } else {
     const clip = (s) => (s.length > 90 ? `${s.slice(0, 87)}…` : s);
+    // `surfaceScopedMemory` already ranks load-bearing first; this only MARKS them,
+    // so the reader can see why a row leads instead of trusting the order silently.
+    // Re-sorting here would be a second sort site that could disagree with the first.
     const shown = hits.slice(0, INDEX_CAP)
-      .map((h) => `- ${h.category}/${h.key} — ${clip(h.hook)}`)
+      .map((h) => `- ${h.load_bearing ? '**load-bearing** ' : ''}${h.category}/${h.key} — ${clip(h.hook)}`)
       .join('\n');
     const more = hits.length > INDEX_CAP ? `\n…and ${hits.length - INDEX_CAP} more.` : '';
     body = `${hits.length} facts scoped to \`${phase}\` (read the specific fact file before writing):\n${shown}${more}`;

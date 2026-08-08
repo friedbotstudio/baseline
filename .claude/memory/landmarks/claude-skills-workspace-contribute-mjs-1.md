@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/contribute.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/contribute.mjs,.claude/skills/workspace/conflicts.mjs,.claude/skills/workspace/reconcile.mjs,.claude/skills/workspace/refs.mjs
+scope: []
+governs: .claude/skills/workspace/contribute.mjs, .claude/skills/workspace/conflicts.mjs, .claude/skills/workspace/reconcile.mjs, .claude/skills/workspace/refs.mjs
 load_bearing: true
 verified-at: 7f89385
 last-touched: 2026-08-04

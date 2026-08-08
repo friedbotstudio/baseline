@@ -1,7 +1,7 @@
 ---
 key: blanket-rename-sweep-inverts-eliminated-gate-and-spec-review-timing-semantics
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: c78d3c1
 last-touched: 2026-07-16
 ---

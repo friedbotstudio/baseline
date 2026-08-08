@@ -1,7 +1,7 @@
 ---
 key: render-consume-batch-and-wait-fields-7c31
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-07-19
 raised-in-context: timing-instrument-repair
@@ -9,6 +9,7 @@ source: assistant-deferral
 estimated-effort: small
 verified-at: f36b142
 last-touched: 2026-07-19
+governs: .claude/hooks/lib/timing.mjs
 ---
 
 > verbatim (assistant, 2026-07-19):

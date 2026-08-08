@@ -1,8 +1,8 @@
 ---
 key: frontmatter-values-reach-regex-and-structured-writes-unescaped
 category: landmines
-scope: any
-governs: .claude/skills/memory-index/index-io.mjs,.claude/skills/memory-index/resolve.mjs,.claude/skills/memory-flush/ledger.mjs,.claude/skills/memory-index/constraints.mjs
+scope: []
+governs: .claude/skills/memory-index/index-io.mjs, .claude/skills/memory-index/resolve.mjs, .claude/skills/memory-flush/ledger.mjs, .claude/skills/memory-index/constraints.mjs
 load_bearing: true
 verified-at: f7da5a7
 last-touched: 2026-08-04

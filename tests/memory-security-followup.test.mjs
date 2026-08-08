@@ -10,7 +10,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { rmSync, writeFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { makeProject, writeShard, tryImport } from './helpers/memory-fixtures.mjs';
@@ -101,11 +101,15 @@ describe('security follow-up — F-2: scope probe must be frontmatter-scoped', (
       const mod = await tryImport(RESOLVE);
       assert.ok(mod, `${RESOLVE} must be importable`);
 
-      const report = mod.backfillScopeAny({ rootDir: project.root });
+      // F-2 survives the retirement of backfillScopeAny: the frontmatter/body split
+      // is now enforced by `splitFrontmatter`, which every scope reader and writer
+      // goes through. A body line beginning `scope:` must not read as the field.
+      const split = mod.splitFrontmatter(readFileSync(path, 'utf8'));
+      assert.ok(split, 'the shard has a frontmatter block');
       assert.equal(
-        report.updated,
-        1,
-        'the entry has no frontmatter scope and must be backfilled — a body line beginning "scope:" is prose, and treating it as the field leaves the fact unreachable, the exact condition AC-011 and prerequisite P2 forbid',
+        split.front.some((line) => /^scope:/.test(line)),
+        false,
+        'the body line beginning "scope:" is prose and must never be read as the frontmatter field — treating it as the field is what left the fact unreachable (AC-011, prerequisite P2)',
       );
     } finally {
       rmSync(project.root, { recursive: true, force: true });
@@ -124,16 +128,16 @@ describe('security follow-up — F-2: scope probe must be frontmatter-scoped', (
       ].join('\n');
       writeFileSync(path, `---\nkey: body-intact\ncategory: decisions\n---\n\n${body}`, 'utf8');
 
-      const mod = await tryImport(RESOLVE);
-      assert.ok(mod, `${RESOLVE} must be importable`);
-      mod.backfillScopeAny({ rootDir: project.root });
+      const narrow = await tryImport('.claude/skills/memory-index/scope-narrow.mjs');
+      assert.ok(narrow, 'scope-narrow.mjs must be importable');
+      narrow.applyNarrowing({ path, scope: ['spec'] });
 
       const after = (await import('node:fs')).readFileSync(path, 'utf8');
       assert.ok(
         after.endsWith(body),
-        'the backfill rewrites frontmatter only; body prose mentioning key:/scope: must survive byte-identical',
+        'the scope writer rewrites frontmatter only; body prose mentioning key:/scope: must survive byte-identical',
       );
-      assert.match(after.split('---')[1], /^scope: any$/m, 'scope lands in the frontmatter block');
+      assert.match(after.split('---')[1], /^scope: \[spec\]$/m, 'the narrowed scope lands in the frontmatter block');
     } finally {
       rmSync(project.root, { recursive: true, force: true });
     }

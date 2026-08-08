@@ -9,7 +9,7 @@ import { asArray } from './frontmatter-parser.mjs';
 import { extractVerbatim, extractInterpretation, firstHook } from './entry-body.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
 
-import { CANONICAL as CANONICAL_CATEGORIES } from '../../skills/memory-index/categories.mjs';
+import { CANONICAL as CANONICAL_CATEGORIES, readLoadBearing } from '../../skills/memory-index/categories.mjs';
 
 export { CANONICAL_CATEGORIES };
 
@@ -20,12 +20,25 @@ function scopedFactsIn(entries, category, phase) {
     hits.push({
       key: entry.key,
       category,
+      load_bearing: readLoadBearing(entry.fields),
       verbatim: extractVerbatim(entry.body),
       interpretation: extractInterpretation(entry.body),
       hook: firstHook(entry.body),
     });
   }
   return hits;
+}
+
+// Ranking, not filtering. `process_lifecycle_guard` renders at most INDEX_CAP rows,
+// so on a phase with 107 hits the question is never "how many" but "which 15 get
+// named". Load-bearing entries — the ones a maintainer breaks by accident — lead.
+//
+// Sorting lives HERE and nowhere else. The guard is not the only consumer, and two
+// sort sites would eventually disagree about what leads. Key-ascending is the
+// tiebreak so the order is deterministic rather than filesystem-dependent.
+function byLoadBearingThenKey(a, b) {
+  if (a.load_bearing !== b.load_bearing) return a.load_bearing ? -1 : 1;
+  return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
 }
 
 // Dual-mode: build-template.sh ships consumers a FLAT store, so a shard-only
@@ -41,5 +54,5 @@ export function surfaceScopedMemory(phase, { rootDir } = {}) {
     const { entries } = resolveCategory(memRoot, category);
     hits.push(...scopedFactsIn(entries, category, phase));
   }
-  return hits;
+  return hits.sort(byLoadBearingThenKey);
 }

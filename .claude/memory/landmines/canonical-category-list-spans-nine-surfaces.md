@@ -1,8 +1,8 @@
 ---
 key: canonical-category-list-spans-nine-surfaces
 category: landmines
-scope: any
-governs: .claude/skills/memory-index/**,.claude/hooks/lib/**,.claude/skills/audit-baseline/**,site-src/_data/memorynotes.json,tests/helpers/memory-fixtures.mjs
+scope: []
+governs: .claude/skills/memory-index/**, .claude/hooks/lib/**, .claude/skills/audit-baseline/**, site-src/_data/memorynotes.json, tests/helpers/memory-fixtures.mjs
 rests_on: zero-runtime-dependencies
 load_bearing: true
 verified-at: f7da5a7

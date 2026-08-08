@@ -1,8 +1,8 @@
 ---
 key: plantuml-composition-fails-three-ways-before-it-renders
 category: landmines
-scope: any
-governs: .claude/skills/workspace/render.mjs,.claude/skills/workspace/shards.mjs
+scope: []
+governs: .claude/skills/workspace/render.mjs, .claude/skills/workspace/shards.mjs
 load_bearing: true
 verified-at: 35212e8
 last-touched: 2026-08-05

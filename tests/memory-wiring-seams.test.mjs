@@ -112,7 +112,7 @@ describe('tickets B, C, D — the curation seams are documented in the skill tha
   const seams = [
     ['recordCuration', 'ticket D — a promote/discard decision is written to the ledger'],
     ['writeConstraint', 'ticket B — a promoted constraint goes through the guarded writer'],
-    ['backfillScopeAny', 'ticket C — the scope: any backfill is runnable from the flush'],
+    ['assertWritable', 'roadmap T8 — the flush refuses an entry reachable by neither leg'],
   ];
 
   for (const [symbol, why] of seams) {

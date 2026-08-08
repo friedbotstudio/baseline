@@ -1,8 +1,8 @@
 ---
 key: ledger-row-can-exist-and-still-suppress-nothing
 category: landmines
-scope: any
-governs: .claude/skills/memory-flush/ledger.mjs,.claude/hooks/lib/memory_stop.mjs
+scope: []
+governs: .claude/skills/memory-flush/ledger.mjs, .claude/hooks/lib/memory_stop.mjs
 verified-at: d36d7f0
 last-touched: 2026-08-05
 ---

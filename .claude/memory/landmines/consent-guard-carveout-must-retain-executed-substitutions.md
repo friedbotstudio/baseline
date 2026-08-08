@@ -1,7 +1,7 @@
 ---
 key: consent-guard-carveout-must-retain-executed-substitutions
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: 3c74ba8
 last-touched: 2026-06-20
 ---

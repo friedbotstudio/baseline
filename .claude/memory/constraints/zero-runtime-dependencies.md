@@ -1,10 +1,10 @@
 ---
 key: zero-runtime-dependencies
 category: constraints
-scope: any
+scope: []
 state: true
 state_verified_at: f7da5a7
-governs: .claude/hooks/**,.claude/skills/**,scripts/**
+governs: .claude/hooks/**, .claude/skills/**, scripts/**
 verified-at: f7da5a7
 last-touched: 2026-08-04
 ---

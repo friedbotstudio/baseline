@@ -1,7 +1,7 @@
 ---
 key: governed-round-trips-catch-what-unit-tests-miss
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 file: `.claude/skills/spec-traceability-review/oracle.mjs`, `.claude/skills/harness/graduation-gate.mjs`
 symptom: running the oracle checkers on a REAL spec (the §II.A graduation round-trips) produced 9 false-positive BLOCKER findings on a spec that actually traced all its ACs.
 root-cause: the traceability oracle's `intake AC N` regex matched only the spaced form; real specs write hyphenated `intake AC-1` / zero-padded `intake AC-001`. The unit test used the spaced form, so it was green. The false positives only appeared against the real corpus.

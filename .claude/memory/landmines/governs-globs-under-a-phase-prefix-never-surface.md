@@ -1,8 +1,8 @@
 ---
 key: governs-globs-under-a-phase-prefix-never-surface
 category: landmines
-scope: any
-governs: .claude/hooks/process_lifecycle_guard.mjs,.claude/hooks/lib/governed-memory.mjs,.claude/hooks/lib/scoped-memory.mjs
+scope: []
+governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/hooks/lib/scoped-memory.mjs
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

@@ -1,7 +1,7 @@
 ---
 key: spec-lint-and-guard-section-regexes-are-not-line-anchored
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [spec]
 verified-at: 32b83c2
 last-touched: 2026-07-15
 ---

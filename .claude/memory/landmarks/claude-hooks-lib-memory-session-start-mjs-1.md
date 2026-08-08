@@ -1,8 +1,8 @@
 ---
 key: .claude/hooks/lib/memory_session_start.mjs:1
 category: landmarks
-scope: any
-governs: .claude/hooks/lib/memory_session_start.mjs,.claude/hooks/memory_session_start.mjs,.claude/skills/memory-flush/sweep.mjs
+scope: []
+governs: .claude/hooks/lib/memory_session_start.mjs, .claude/hooks/memory_session_start.mjs, .claude/skills/memory-flush/sweep.mjs
 verified-at: 39464a1
 last-touched: 2026-08-04
 ---

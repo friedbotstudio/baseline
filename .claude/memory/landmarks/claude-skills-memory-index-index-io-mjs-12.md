@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/memory-index/index-io.mjs:12
 category: landmarks
-scope: any
-governs: .claude/skills/memory-index/**,.claude/hooks/lib/governed-memory.mjs
+scope: []
+governs: .claude/skills/memory-index/**, .claude/hooks/lib/governed-memory.mjs
 verified-at: 39464a1
 last-touched: 2026-08-04
 ---

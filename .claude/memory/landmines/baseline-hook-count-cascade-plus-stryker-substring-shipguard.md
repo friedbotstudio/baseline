@@ -1,7 +1,7 @@
 ---
 key: baseline-hook-count-cascade-plus-stryker-substring-shipguard
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 caveat: confirmed live in gitignore-setup (2026-06-15) — the 8 invariant regressions this entry lists were all hit and fixed in one implement pass; serial `--test-concurrency=1` run reached 921/0.
 verified-at: 8e6f904
 last-touched: 2026-06-23

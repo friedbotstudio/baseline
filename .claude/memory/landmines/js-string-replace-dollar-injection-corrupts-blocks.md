@@ -1,7 +1,7 @@
 ---
 key: js-string-replace-dollar-injection-corrupts-blocks
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [implement, tdd]
 caveat: same hazard exists anywhere in the codebase that does `X.replace(<dynamic string>, <content-with-$>)`; this entry documents the sweep.mjs instance but the rule is general to JS.
 verified-at: 8e6f904
 last-touched: 2026-06-23

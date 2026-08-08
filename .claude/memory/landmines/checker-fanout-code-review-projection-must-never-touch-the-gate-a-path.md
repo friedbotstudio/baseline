@@ -1,7 +1,7 @@
 ---
 key: checker-fanout-code-review-projection-must-never-touch-the-gate-A-path
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 32b83c2
 last-touched: 2026-07-15
 ---

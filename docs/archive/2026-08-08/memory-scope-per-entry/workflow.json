@@ -1,0 +1,49 @@
+{
+  "request": "Refine the sharded memory store's phase-scoped surfacing (roadmap Epic 6 T8) from coarse category-level `scope:` backfill to precise per-entry scope tags. 136 of 305 entries carry a migration default from memory-index/migrate.mjs SCOPE_BY_CATEGORY (87 landmarks -> [scout], 49 landmines -> [scout,spec,tdd,security,integrate], 47 -> any), so a docs/scout/** write surfaces 145 facts and a docs/specs/** write surfaces 107, of which process_lifecycle_guard names only 15. Narrow scope per entry and make /memory-flush narrow on re-verify rather than inherit the category default.",
+  "slug": "memory-scope-per-entry",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md:118 (Epic 6 T8, the only open roadmap task) and .claude/memory/backlog/scope-backfill-coarse-refine-per-entry-2902.md. Both name the same defect: memory-index/migrate.mjs SCOPE_BY_CATEGORY tagged whole categories rather than entries. Measured on this tree at HEAD 2bf79ef via surfaceScopedMemory(): scout 145 hits, spec 107, security 62, against a 15-line INDEX_CAP in process_lifecycle_guard.mjs:123.",
+  "track_reason": "Leaner than intake-full because T8 and the backlog entry already state the problem, and this session measured the surface; an intake would restate it. Heavier than tdd-quickfix because the narrowing mechanism is an open design fork (bulk re-curation vs lazy-on-re-verify vs derived from `governs:` globs) that the user deferred to /spec, and tdd-quickfix would commit to one by writing the test first.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "scope-backfill-coarse-refine-per-entry-2902"
+  ],
+  "roadmap_tasks": [
+    "E6-T8"
+  ],
+  "created_at": 1786164685,
+  "updated_at": 1786170172,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

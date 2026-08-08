@@ -1,7 +1,7 @@
 ---
 key: approve-spec-slug-marker-mismatch
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 source: user-instruction (2026-05-11T19:45Z, mid-workflow on slug `design-ui-orchestrator` at Gate A)
 verbatim: > before we move, mark this error in approval flow; we will revisit and fix this later
 verified-at: 3c74ba8

@@ -1,8 +1,8 @@
 ---
 key: load-bearing-marker-requires-engineer-confirmation-2026-08-04
 category: decisions
-scope: any
-governs: .claude/skills/workspace/placement.mjs,.claude/skills/code-structure/SKILL.md,.claude/memory/decisions/**
+scope: []
+governs: .claude/skills/workspace/placement.mjs, .claude/skills/code-structure/SKILL.md, .claude/memory/decisions/**
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

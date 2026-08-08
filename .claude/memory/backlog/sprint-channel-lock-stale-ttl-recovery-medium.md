@@ -1,7 +1,7 @@
 ---
 key: sprint-channel-lock-stale-ttl-recovery-medium
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-06-23
 raised-in-context: sprint-channel-mcp
@@ -11,6 +11,7 @@ parent: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
 verified-at: 80aeeca
 last-touched: 2026-06-23
 caveat: from `docs/archive/2026-06-22/sprint-channel-mcp/security.md` (CWE-667/CWE-400). LOW companions (unbounded mailbox/yields growth; no peer authn — `peer_id` self-asserted) are accepted in the single-machine lead-spawned sandbox trust model; revisit on cross-machine (#28300).
+governs: .claude/mcp/sprint-channel/lib/lock.mjs
 ---
 
 > verbatim (assistant-deferral, slice-B security review, 2026-06-23): "stale lock on holder death (no TTL / recovery) — if the process dies between mkdirSync and the finally rmdirSync, the lock dir persists permanently and that task can never be claimed again."

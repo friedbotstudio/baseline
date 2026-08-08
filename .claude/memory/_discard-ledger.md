@@ -78,3 +78,4 @@
 - promoted :: .claude/skills/research/retrieve.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-one-line-and-you-already-dfaf
 - discarded :: .claude/skills/archive/SKILL.md → landmarks.md
+- promoted :: .claude/skills/memory-index/scope-narrow.mjs → landmarks.md

@@ -1,4 +1,4 @@
 !startsub surfacing_triggers
-' @kind c4_component
-Component(surfacing_triggers, ".claude/hooks/process_lifecycle_guard.mjs", "component", "Memory surfacing triggers — phase-scoped and path-governed")
+' @kind sequence
+Component(surfacing_triggers, "surfacing-triggers", "sequence")
 !endsub

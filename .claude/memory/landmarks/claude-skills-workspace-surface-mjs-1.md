@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/surface.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/surface.mjs,.claude/skills/workspace/coverage.mjs,.claude/skills/workspace/witness.mjs,.claude/project.json
+scope: []
+governs: .claude/skills/workspace/surface.mjs, .claude/skills/workspace/coverage.mjs, .claude/skills/workspace/witness.mjs, .claude/project.json
 rests_on: zero-runtime-dependencies
 verified-at: d4e6216
 last-touched: 2026-08-06

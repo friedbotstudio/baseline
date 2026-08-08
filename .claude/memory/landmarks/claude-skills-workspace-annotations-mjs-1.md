@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/annotations.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/annotations.mjs,.claude/skills/scout/SKILL.md,docs/annotations.md
+scope: []
+governs: .claude/skills/workspace/annotations.mjs, .claude/skills/scout/SKILL.md, docs/annotations.md
 rests_on: zero-runtime-dependencies
 verified-at: 4888484
 last-touched: 2026-08-04

@@ -1,7 +1,7 @@
 ---
 key: claude-code-drops-mcp-channel-notifications-to-session
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd]
 verified-at: ca592c2
 last-touched: 2026-06-23
 ---

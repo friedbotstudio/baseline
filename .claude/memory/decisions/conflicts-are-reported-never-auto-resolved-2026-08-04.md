@@ -1,8 +1,8 @@
 ---
 key: conflicts-are-reported-never-auto-resolved-2026-08-04
 category: decisions
-scope: any
-governs: .claude/skills/workspace/**,.claude/memory/workspace/**
+scope: []
+governs: .claude/skills/workspace/**, .claude/memory/workspace/**
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

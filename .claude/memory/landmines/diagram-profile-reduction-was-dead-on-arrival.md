@@ -1,7 +1,7 @@
 ---
 key: diagram-profile-reduction-was-dead-on-arrival
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [spec]
 file: `.claude/hooks/lib/write-set-profile.mjs`, `.claude/skills/spec-lint/lint.mjs`, `.claude/project.json` (artifacts.diagram_profiles)
 symptom: the write_set-gated diagram-profile reduction (artifact-compression "Lever 4") shipped its config but NEVER fired — every spec still required all 6 C4 diagrams.
 root-cause: `resolveProfile`'s `extractWriteSet` regex required `write_set:` (colon), but real specs declare it in prose — `The write_set is \`...\``. Unit tests used the colon form, so they were green while every production spec fell through fail-open to the full set. Compounded by: the non-arch profile `when[]` omitted `tests/**`/`obj/**`/governance mirrors (real write_sets always touch those → coverage failed); and `spec-lint/lint.mjs` ran its OWN diagram-presence check bypassing `resolveProfile` (so it contradicted the hook).

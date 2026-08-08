@@ -1,7 +1,7 @@
 ---
 key: live-objtemplate-rebuild-races-parallel-test-readers
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: 0299004
 last-touched: 2026-08-06
 ---

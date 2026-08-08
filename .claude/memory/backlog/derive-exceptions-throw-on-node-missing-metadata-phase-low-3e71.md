@@ -1,7 +1,7 @@
 ---
 key: derive-exceptions-throw-on-node-missing-metadata-phase-low-3e71
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (`/security` T2 LOW)
@@ -10,6 +10,7 @@ estimated-effort: tiny
 verified-at: 1414f27
 last-touched: 2026-07-13
 caveat: full analysis in `docs/security/extractor-noise-and-prereq-drift-2026-07-13.md`.
+governs: .claude/skills/triage/derive-exceptions.mjs
 ---
 
 > verbatim (assistant, 2026-07-13, `/security` T2 LOW): "A node missing `metadata.phase` is silently skipped, so its phase is treated as undeclared and therefore unreachable → excepted. Cannot bypass a consent gate (the deny-list still applies), but it can silently skip a non-gate phase."

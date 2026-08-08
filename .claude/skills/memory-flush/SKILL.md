@@ -197,15 +197,29 @@ The ledger lives OUTSIDE Step 5's reset for exactly this reason. Record before y
 node -e "import('./.claude/skills/memory-index/constraints.mjs').then(m=>m.writeConstraint('<memDir>','<key>',{state:true,state_verified_at:'<sha>',governs:'<globs>'}))"
 ```
 
-## Step 4.6 — Backfill unreachable scopes (on demand)
+## Step 4.6 — Refuse an unreachable entry (every promotion and re-verify)
 
-Rollout prerequisite P2. A fact carrying no `scope:`, or `scope: []`, surfaces at no trigger and is unreachable regardless of how good it is. Run when the store has migrated entries predating the field, or after any bulk import:
+Rollout prerequisite P2, rebuilt for roadmap T8. An entry is **reachable** when either leg can surface it:
+
+- the **phase leg** — `scope:` names at least one workflow phase, or
+- the **path leg** — `governs:` names at least one path glob (epic slice C).
+
+An entry satisfying neither surfaces nowhere, however good it is. Call `assertWritable` before writing any promoted or re-verified entry; it throws `UnreachableScopeError` naming the offending key and nothing is written:
 
 ```
-node -e "import('./.claude/skills/memory-index/resolve.mjs').then(m=>console.log(JSON.stringify(m.backfillScopeAny({rootDir:process.cwd()}))))"
+node -e "import('./.claude/skills/memory-index/resolve.mjs').then(m=>m.assertWritable(entry))"
 ```
 
-It stamps `scope: any` on frontmatter only, leaves body prose byte-identical, and reports `{updated:N}`. Idempotent: entries with a real scope are skipped.
+It refuses three things: the retired placeholder value, an entry reachable by neither leg, and a scope silently inherited from `SCOPE_BY_CATEGORY`. **Do not stamp a placeholder to satisfy it.** The retired `backfillScopeAny` set unscoped entries to the literal `any` precisely to make them reachable, and the reader never honoured it — `asArray(scope).includes(phase)` is false for `['any']` — so all 47 stamped entries surfaced at zero phases. Narrow the scope, or give the entry a `governs:` glob.
+
+To audit the whole store, or to see proposals for entries that need narrowing:
+
+```
+node .claude/skills/memory-index/scope-narrow.mjs check    # exit 1 + a named list of offenders
+node .claude/skills/memory-index/scope-narrow.mjs report   # high-confidence governs: proposals
+```
+
+`proposeNarrowing` proposes and decides nothing; you confirm each one (Article II). `applyNarrowing` rewrites frontmatter only and leaves body prose byte-identical.
 
 ## Step 5 — Reset the pending body
 

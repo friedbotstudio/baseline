@@ -1,7 +1,7 @@
 ---
 key: multi-wave-worktree-is-an-agent-tool-constraint
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd]
 significance: shared mode is the working substrate for baseline-on-baseline swarm (worktree is single-wave only); the post-wave audit makes shared mode no longer audit-free. New `.mjs` CLI helpers that ALSO export a pure core guard `main()` behind `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)` so importing the pure function in a test never runs the CLI (the `lint.mjs` `process.exit(2)`-on-import trap).
 verified-at: 04c88f2
 last-touched: 2026-06-22

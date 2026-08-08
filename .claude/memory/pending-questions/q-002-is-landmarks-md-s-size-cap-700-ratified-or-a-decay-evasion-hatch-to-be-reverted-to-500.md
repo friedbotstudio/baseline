@@ -1,8 +1,9 @@
 ---
 key: Q-002 — Is `landmarks.md`'s `size-cap: 700` ratified, or a decay-evasion hatch to be reverted to 500?
 category: pending-questions
-scope: any
+scope: []
 raised-on: 2026-07-10
+governs: .claude/skills/memory-flush/SKILL.md
 ---
 
 - Question: `.claude/memory/landmarks.md` is the only canonical memory file declaring `size-cap: 700`. Every other canonical file — and `src/memory/landmarks.template.md`, its own shipped template — declares `500`. Should the live file be reverted to 500 (forcing a ~40-line prune of the oldest unverified entries), or is 700 a deliberate, ratifiable cap for the landmarks register specifically (in which case the template and `README.md`'s "default 500" line must be updated to match)?

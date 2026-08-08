@@ -1,7 +1,7 @@
 ---
 key: lsof-port-kill-takes-firefox-with-it
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd]
 source: incident
 verified-at: 3c74ba8
 last-touched: 2026-06-20

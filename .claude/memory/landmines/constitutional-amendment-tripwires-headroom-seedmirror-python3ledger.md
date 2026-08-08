@@ -1,7 +1,7 @@
 ---
 key: constitutional-amendment-tripwires-headroom-seedmirror-python3ledger
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: 4cd74e1
 last-touched: 2026-07-11
 ---

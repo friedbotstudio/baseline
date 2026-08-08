@@ -1,7 +1,7 @@
 ---
 key: tdd-order-guard-test-stem-must-match-source-stem
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 3c74ba8
 last-touched: 2026-06-20
 ---

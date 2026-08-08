@@ -1,7 +1,7 @@
 ---
 key: src-cli-canonical-claude-skills-are-vendored-mirrors-clobbered-by-build
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: 6ae2955
 last-touched: 2026-07-09
 ---

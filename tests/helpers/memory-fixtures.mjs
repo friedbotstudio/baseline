@@ -93,14 +93,19 @@ export function copyLiveCorpus(prefix = 'memcorpus-') {
 }
 
 // Build a sharded fact file. `fields` land in frontmatter; `bodyLines` land verbatim.
+// `scope` is hoisted out of `fields` into its canonical slot. Spreading it after a
+// hardcoded `scope: []` emitted TWO scope lines; the parser is last-wins so every
+// assertion still passed, but the fixture on disk was malformed — and a writer that
+// replaced only the first occurrence then left the stale one behind.
 export function writeShard(memDir, category, slug, { key, fields = {}, bodyLines = [] }) {
   const dir = join(memDir, category);
   mkdirSync(dir, { recursive: true });
+  const { scope = '[]', ...rest } = fields;
   const preamble = [
     `key: ${key ?? slug}`,
     `category: ${category}`,
-    'scope: []',
-    ...Object.entries(fields).map(([k, v]) => `${k}: ${v}`),
+    `scope: ${scope}`,
+    ...Object.entries(rest).map(([k, v]) => `${k}: ${v}`),
   ];
   const path = join(dir, `${slug}.md`);
   writeFileSync(path, `---\n${preamble.join('\n')}\n---\n\n${bodyLines.join('\n')}\n`, 'utf8');

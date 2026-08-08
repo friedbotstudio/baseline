@@ -1,7 +1,7 @@
 ---
 key: swarm-refuse-dirty-tree-blocks-mid-workflow
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 86a2bb3
 last-touched: 2026-07-18
 ---

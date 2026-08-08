@@ -1,7 +1,7 @@
 ---
 key: destructive-guard-blocks-benign-bash-containing-consent-redirect-shapes
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: d36d7f0
 last-touched: 2026-08-05
 ---

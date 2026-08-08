@@ -124,16 +124,23 @@ describe('derived index lookups (ticket C)', () => {
       });
 
       const mod = await tryImport(RESOLVE_MODULE);
-      assert.ok(mod, `${RESOLVE_MODULE} must exist and expose the backfill`);
-      assert.equal(typeof mod.backfillScopeAny, 'function', 'the scope: any backfill is part of ticket C');
+      assert.ok(mod, `${RESOLVE_MODULE} must exist and expose the reachability predicate`);
+      assert.equal(typeof mod.isReachable, 'function', 'reachability is a predicate over both legs (roadmap T8)');
 
-      const report = mod.backfillScopeAny({ rootDir: project.root });
-      assert.ok(report.updated >= 1, 'the backfill stamps scope: any on facts carrying no scope (AC-011)');
+      // The invariant this test has always defended is "a migrated fact carrying
+      // governs: but no scope is still reachable". It used to need a backfill to
+      // make that true. It no longer does: `isReachable` spans both legs, so the
+      // fact is reachable as it stands and nothing has to be stamped onto it.
+      assert.equal(
+        mod.isReachable({ key: 'migrated-no-scope', category: 'decisions', fields: { scope: [], governs: ['src/**'] } }),
+        true,
+        'a governs:-only fact is reachable via the path leg without a placeholder',
+      );
 
       const reachable = mod.resolveLookup('by_path', 'src/a.js', { rootDir: project.root });
       assert.ok(
         reachable.some((e) => e.key === 'migrated-no-scope'),
-        'after the backfill no migrated fact is unreachable (AC-011, rollout prerequisite P2)',
+        'and the path leg actually resolves it (AC-011, rollout prerequisite P2)',
       );
       assert.ok(path.endsWith('migrated-no-scope.md'), 'fixture wrote the expected shard path');
     } finally {

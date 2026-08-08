@@ -1,7 +1,7 @@
 ---
 key: split-memory-stop-lib-440-lines-8c3d
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (`/simplify` flagged)
@@ -9,6 +9,7 @@ source: assistant-deferral
 estimated-effort: small
 verified-at: 1414f27
 last-touched: 2026-07-13
+governs: .claude/hooks/lib/memory_stop.mjs
 ---
 
 > verbatim (assistant, 2026-07-13, `/simplify` flagged row): "`.claude/hooks/lib/memory_stop.mjs` is ~440 lines, far past the ~80-line guideline — but it was ALREADY 386 lines before this change; the smell predates the diff."

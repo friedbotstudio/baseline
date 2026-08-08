@@ -1,7 +1,7 @@
 ---
 key: slug-path-guards-must-reject-not-normalize-and-three-regex-traps
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: e51a03d
 last-touched: 2026-07-12
 ---

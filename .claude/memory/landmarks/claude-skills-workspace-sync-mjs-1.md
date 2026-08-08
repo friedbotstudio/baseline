@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/sync.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/sync.mjs,.claude/skills/spec-sync/SKILL.md,docs/system/**
+scope: []
+governs: .claude/skills/workspace/sync.mjs, .claude/skills/spec-sync/SKILL.md, docs/system/**
 rests_on: zero-runtime-dependencies
 verified-at: d4e6216
 last-touched: 2026-08-06

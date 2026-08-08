@@ -1,7 +1,7 @@
 ---
 key: stale-count-is-dominated-by-a-migration-cohort-15a1
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-08-05
 raised-in-context: ledger-key-form (surfaced during an ad-hoc /memory-flush)
@@ -9,6 +9,7 @@ source: assistant-deferral
 estimated-effort: low (one cohort decision, not 115 per-entry prompts)
 verified-at: d36d7f0
 last-touched: 2026-08-05
+governs: .claude/skills/memory-index/migrate.mjs
 ---
 
 > verbatim (assistant, 2026-08-05):

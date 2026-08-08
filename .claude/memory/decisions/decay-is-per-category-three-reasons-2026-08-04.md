@@ -1,8 +1,8 @@
 ---
 key: decay-is-per-category-three-reasons-2026-08-04
 category: decisions
-scope: any
-governs: .claude/skills/memory-index/categories.mjs,.claude/hooks/lib/memory_session_start.mjs
+scope: []
+governs: .claude/skills/memory-index/categories.mjs, .claude/hooks/lib/memory_session_start.mjs
 rests_on: zero-runtime-dependencies
 load_bearing: true
 verified-at: f7da5a7

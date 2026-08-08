@@ -1,7 +1,7 @@
 ---
 key: shipped-skill-must-not-statically-reference-a-dev-only-scripts-module
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: b3f9505
 last-touched: 2026-07-15
 ---

@@ -26,7 +26,10 @@ const OWNERS = {
 // decision-point cases the redesign targets fire: landmines (incl. the -7f3a
 // outcome-AC case) surface at spec/tdd; decisions at spec; the rest at their owner
 // phase. New entries declare scope: explicitly and are not backfilled.
-const SCOPE_BY_CATEGORY = {
+// Exported so `resolve.mjs → assertWritable` can REFUSE an entry that silently
+// inherits this map at promotion. Re-declaring it there would create the second
+// source of truth this module's own header warns about.
+export const SCOPE_BY_CATEGORY = {
   landmarks: ['scout'],
   libraries: ['research'],
   decisions: ['spec'],

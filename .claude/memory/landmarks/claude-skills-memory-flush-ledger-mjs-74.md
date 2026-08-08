@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/memory-flush/ledger.mjs:74
 category: landmarks
-scope: any
-governs: .claude/skills/memory-flush/**,.claude/hooks/lib/memory_stop.mjs
+scope: []
+governs: .claude/skills/memory-flush/**, .claude/hooks/lib/memory_stop.mjs
 load_bearing: true
 verified-at: d36d7f0
 last-touched: 2026-08-05

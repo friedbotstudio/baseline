@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/flags.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/flags.mjs,.claude/skills/scout/SKILL.md,.claude/skills/code-structure/SKILL.md
+scope: []
+governs: .claude/skills/workspace/flags.mjs, .claude/skills/scout/SKILL.md, .claude/skills/code-structure/SKILL.md
 rests_on: zero-runtime-dependencies
 load_bearing: true
 verified-at: 7f89385

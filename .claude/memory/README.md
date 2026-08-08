@@ -109,7 +109,23 @@ Three optional fields on `decisions` entries support it:
 | `rests_on:` | Constraint keys this decision's rationale depends on. |
 | `load_bearing:` | Boolean. Absent reads as `false` (incidental), never undefined. |
 
-`scope: any` is a valid scope value. Migrated facts carrying no scope are backfilled to it, so no fact is unreachable.
+An entry is **reachable** when either leg can surface it.
+
+| Leg | Field | Fires when |
+|---|---|---|
+| Phase | `scope:` names at least one workflow phase | that phase starts |
+| Path | `governs:` names at least one path glob | matching code is edited |
+
+One leg is enough. The entry below has no phase scope and is still fully reachable:
+
+```yaml
+scope: []
+governs: .claude/hooks/**
+```
+
+`assertWritable` refuses to write an entry that neither leg can reach. Two near-misses are refused too: the retired placeholder value, and a scope that still matches the default its category was migrated with, where nobody showed why it should stay that broad.
+
+Know why the placeholder went, or you will reach for it again the first time an entry looks orphaned. A retired backfill stamped unscoped facts with a literal `any`, so that nothing would be unreachable. It did the reverse. The reader checks whether the scope list contains the phase, `any` matches no phase name, and all 47 stamped entries surfaced nowhere.
 
 ## Decay
 

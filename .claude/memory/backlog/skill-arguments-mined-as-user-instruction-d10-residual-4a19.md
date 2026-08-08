@@ -1,7 +1,7 @@
 ---
 key: skill-arguments-mined-as-user-instruction-d10-residual-4a19
 category: backlog
-scope: any
+scope: []
 status: open
 raised-on: 2026-07-13
 raised-in-context: extractor-noise-and-prereq-drift (observed at gate C, post-fix)
@@ -10,6 +10,7 @@ estimated-effort: small-medium (the detection signal is the hard part, not the f
 verified-at: 1414f27
 last-touched: 2026-07-13
 caveat: related [[memory-system-redesign-landmines-captured-but-not-honoured-at-decision-point-7f3a]] — same root system. The `"the fix is"` cue firing on ordinary assistant prose is a SEPARATE, deliberate trade (D1: the cue has real recall; several such candidates ARE genuine decisions). Do not conflate the two.
+governs: .claude/hooks/lib/memory_stop.mjs
 ---
 
 > verbatim (assistant, 2026-07-13, observed live in `_pending.md` immediately after the T1 fix landed): "10 of the 20 pending candidates are tagged `Source: user-instruction`, and they are my own `Skill()` arguments — test fixtures and briefs, quoted into skill args, arriving in the transcript as `role: user`."

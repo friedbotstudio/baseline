@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/identity.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/identity.mjs,.claude/skills/workspace/materialize.mjs,.claude/skills/workspace/store.mjs,docs/system/elements/**
+scope: []
+governs: .claude/skills/workspace/identity.mjs, .claude/skills/workspace/materialize.mjs, .claude/skills/workspace/store.mjs, docs/system/elements/**
 rests_on: zero-runtime-dependencies
 verified-at: d4e6216
 last-touched: 2026-08-06

@@ -1,14 +1,16 @@
 ---
 key: scope-backfill-coarse-refine-per-entry-2902
 category: backlog
-scope: any
-status: open
+scope: []
+status: picked-up
 raised-on: 2026-07-17
 raised-in-context: memory-decision-point-redesign
 source: assistant-deferral
 estimated-effort: medium
 verified-at: e8d1480
 last-touched: 2026-07-17
+governs: .claude/skills/memory-index/migrate.mjs
+superseded-at: 2026-08-08
 ---
 
 > verbatim (assistant, 2026-07-17):

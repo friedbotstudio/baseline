@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/witness.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/witness.mjs,.claude/skills/workspace/reconcile.mjs,.claude/skills/workspace/shards.mjs,.claude/project.json
+scope: []
+governs: .claude/skills/workspace/witness.mjs, .claude/skills/workspace/reconcile.mjs, .claude/skills/workspace/shards.mjs, .claude/project.json
 rests_on: zero-runtime-dependencies
 verified-at: d4e6216
 last-touched: 2026-08-06

@@ -1,7 +1,7 @@
 ---
 key: baseline-skill-count-cascade
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: be0b767
 last-touched: 2026-06-23
 ---

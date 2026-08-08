@@ -1,7 +1,7 @@
 ---
 key: npm-pack-excludes-dotnpmrc
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 source: implementation incident (supply-chain-hardening workflow, 2026-05-13 implement-tick iteration 1)
 verified-at: 3c74ba8
 last-touched: 2026-06-20

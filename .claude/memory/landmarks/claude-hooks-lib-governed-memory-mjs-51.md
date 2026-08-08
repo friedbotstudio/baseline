@@ -1,8 +1,8 @@
 ---
 key: .claude/hooks/lib/governed-memory.mjs:51
 category: landmarks
-scope: any
-governs: .claude/hooks/lib/governed-memory.mjs,.claude/hooks/process_lifecycle_guard.mjs,.claude/hooks/lib/entry-body.mjs
+scope: []
+governs: .claude/hooks/lib/governed-memory.mjs, .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/entry-body.mjs
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

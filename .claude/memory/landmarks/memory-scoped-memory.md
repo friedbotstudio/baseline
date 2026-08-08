@@ -1,7 +1,7 @@
 ---
 key: .claude/hooks/lib/scoped-memory.mjs
 category: landmarks
-scope: any
+scope: []
 governs: .claude/hooks/lib/scoped-memory.mjs
 verified-at: 39464a1
 last-touched: 2026-08-04

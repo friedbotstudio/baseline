@@ -1,13 +1,14 @@
 ---
 key: spec-lint-omits-the-slug-guard-the-diagram-guard-applies-b93f
 category: backlog
-scope: any
+scope: []
 status: open
 source: assistant-deferral
 raised-on: 2026-08-06
 raised-in-context: corpus-recall-reachability
 verified-at: d4a1a47
 last-touched: 2026-08-06
+governs: .claude/skills/spec-lint/lint.mjs
 ---
 
 > **Recommendation**: have `unresolvedReferences` call `assertSafeSlug` in the same `try`/`catch` shape as the guard. AC-010's stated goal is that the two callers cannot disagree; carrying the same validation is the cheap way to keep that true under future edits.

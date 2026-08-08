@@ -1,7 +1,7 @@
 ---
 key: a-green-suite-does-not-prove-a-fix-closed-the-hole-it-opened
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 1414f27
 last-touched: 2026-07-13
 ---

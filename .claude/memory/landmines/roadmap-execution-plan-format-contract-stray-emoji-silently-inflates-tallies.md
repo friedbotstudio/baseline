@@ -1,7 +1,7 @@
 ---
 key: roadmap-execution-plan-format-contract-stray-emoji-silently-inflates-tallies
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [spec]
 verified-at: 3160e0c
 last-touched: 2026-07-12
 ---

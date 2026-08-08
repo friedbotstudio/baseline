@@ -7,7 +7,8 @@ raised-in-context: living-system-model-abcd
 source: assistant-deferral
 verified-at: f7da5a7
 last-touched: 2026-08-04
-scope: any
+scope: []
+governs: .claude/skills/document/document-gate.mjs
 ---
 
 > The gate is page-granular, not change-granular. A one-word fix in a code comment (`install.njk`) drew the same obligation as a full paragraph rewrite. A false obligation is exactly what trains people to override a gate.

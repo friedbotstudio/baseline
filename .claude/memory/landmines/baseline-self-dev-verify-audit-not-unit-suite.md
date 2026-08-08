@@ -1,7 +1,7 @@
 ---
 key: baseline-self-dev-verify-audit-not-unit-suite
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 caveat: confirmed live 2026-06-22 in `simplify-reverify-guard` — verify-tick + integrate stamped via the audit; the new helper's 10 unit tests AND the `tier-dial-coverage` regression risk were caught only by a manual `npm test` in `/integrate` (1057 tests, 1043 pass). The constituent facts existed but scattered across [[baseline-skill-edit-needs-manifest-rebuild]] and [[live-objtemplate-rebuild-races]]; no single entry synthesized the audit-vs-unit-suite split + its integrate implication, so it was re-derived from `project.json`/`package.json` from scratch. This entry is the synthesis. Companion: [[baseline-skill-edit-needs-manifest-rebuild]] (the manifest-rehash half).
 verified-at: 22c986b
 last-touched: 2026-06-22

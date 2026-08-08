@@ -1,7 +1,7 @@
 ---
 key: gate-taxonomy-then-debugging-skill-then-v2-9008
 category: backlog
-scope: any
+scope: []
 source: assistant-deferral
 status: open
 raised-on: 2026-06-05
@@ -12,6 +12,7 @@ slice: C (far out — deliberately coarse)
 verified-at: c9d8f0e
 last-touched: 2026-07-16
 caveat: Deliberately coarse — build the gate taxonomy BEFORE any autonomy (vision doc §2.4); the debugging skill makes the explanation-trace the reviewable object (§2.5); v2 is the signal-driven OS riding on a trusted v1 (§2.6, §1.3). Fragment into separate intakes when v1 is proven. Detail: vision doc Part 5.7 piece 8.
+governs: .claude/hooks/lib/gate-taxonomy.mjs
 ---
 
 > verbatim (assistant, 2026-06-05):

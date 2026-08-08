@@ -1,7 +1,7 @@
 ---
 key: editing-a-stage-0b-mirror-is-silently-reverted-by-npm-run-build
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: 1414f27
 last-touched: 2026-07-13
 ---

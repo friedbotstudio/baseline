@@ -1,7 +1,7 @@
 ---
 key: op-dispatch-plain-object-map-reaches-prototype-members
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: c9d8f0e
 last-touched: 2026-06-23
 ---

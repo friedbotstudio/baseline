@@ -1,7 +1,7 @@
 ---
 key: triage-hand-written-created_at-epoch-corrupts-phase1-timing
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: b6fba83
 last-touched: 2026-07-12
 caveat: the same run reproduced the OTHER known measurement gap — inter-turn/`AskUserQuestion` idle is invisible to the timing model (only consent-gate tokens count as `human-wait`), so wall-clock time the human spent away silently inflates whichever phase is open. Here `document` rendered 3,502,729 ms (58 min) of "model time" that was mostly the user being away. Any phase showing an implausibly large Model(ms) with Human-wait 0 should be treated as unusable, not as a lever target.

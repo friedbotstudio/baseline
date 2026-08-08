@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/workspace/placement.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/workspace/placement.mjs,.claude/skills/code-structure/SKILL.md,docs/annotations.md
+scope: []
+governs: .claude/skills/workspace/placement.mjs, .claude/skills/code-structure/SKILL.md, docs/annotations.md
 rests_on: zero-runtime-dependencies
 load_bearing: true
 verified-at: 39464a1

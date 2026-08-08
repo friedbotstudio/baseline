@@ -1,7 +1,7 @@
 ---
 key: memory-stop-extractor-recursive-noise-loop-on-the-fix-is-prose
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [memory-flush]
 verified-at: 3160e0c
 last-touched: 2026-07-12
 ---

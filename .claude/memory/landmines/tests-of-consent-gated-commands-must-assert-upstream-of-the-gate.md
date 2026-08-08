@@ -1,7 +1,7 @@
 ---
 key: tests-of-consent-gated-commands-must-assert-upstream-of-the-gate
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 97b3e6d
 last-touched: 2026-07-09
 ---

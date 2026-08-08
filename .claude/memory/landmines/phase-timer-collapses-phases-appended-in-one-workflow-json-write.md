@@ -1,7 +1,7 @@
 ---
 key: phase-timer-collapses-phases-appended-in-one-workflow-json-write
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: f36b142
 last-touched: 2026-07-19
 ---

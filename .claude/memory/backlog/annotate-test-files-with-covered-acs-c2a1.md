@@ -1,7 +1,7 @@
 ---
 key: annotate-test-files-with-covered-acs-c2a1
 category: backlog
-scope: any
+scope: [memory-flush]
 status: open
 raised-on: 2026-07-15
 raised-in-context: input-half-governance-class

@@ -1,7 +1,7 @@
 ---
 key: guard-new-lib-dep-breaks-sandbox-copy-tests
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [chore, integrate]
 verified-at: b667aa8
 last-touched: 2026-06-21
 ---

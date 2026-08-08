@@ -10,11 +10,10 @@
 // path / rest on this constraint" and carries NO justification semantics (AC-005) —
 // reasons belong to the surfacing leg, which composes this one.
 
-import { readFileSync, writeFileSync } from 'node:fs';
-
 import { CANONICAL, asList } from './categories.mjs';
 import { resolveCategory } from './lift-fields.mjs';
-import { everyShardPath, matchesGlob } from './index-io.mjs';
+import { matchesGlob } from './index-io.mjs';
+import { SCOPE_BY_CATEGORY } from './migrate.mjs';
 import { architectureMapEnabled } from '../workspace/flags.mjs';
 import { readConcepts } from '../workspace/concepts.mjs';
 import { readAll } from '../workspace/store.mjs';
@@ -126,40 +125,69 @@ function splitFrontmatter(text) {
   return null;
 }
 
-// `scope: []` is as unreachable as an absent `scope:` — both surface nothing at
-// any trigger — so both are backfill targets. Only a scope with real content is
-// left alone.
-function hasReachableScope(front) {
-  for (const line of front) {
-    const match = /^scope:(.*)$/.exec(line);
-    if (!match) continue;
-    const value = match[1].trim();
-    return value !== '' && value !== '[]';
+export { splitFrontmatter };
+
+// The placeholder `scope: any` was written by the retired `backfillScopeAny` to make
+// migrated facts reachable. It never did: `scoped-memory.mjs` matches a phase with
+// `asArray(scope).includes(phase)`, and `['any'].includes('spec')` is false, so all
+// 47 stamped entries surfaced at zero phases. It is not honoured as a wildcard here
+// either — honouring it would take a spec write from 107 hits to 154, and nobody
+// authored those entries meaning "surface everywhere". It is simply not a value.
+export const SCOPE_PLACEHOLDER = 'any';
+
+export class UnreachableScopeError extends Error {
+  constructor(key, reason) {
+    super(`unreachable memory entry ${JSON.stringify(key)}: ${reason}`);
+    this.name = 'UnreachableScopeError';
+    this.key = key;
   }
-  return false;
 }
 
-// Rollout prerequisite P2. Epic decision D7: migrated facts backfill to `scope: any`,
-// NOT to a per-category phase default — the category default is exactly what stamped
-// `scope: [spec]` onto decisions and caused the surfacing defect this batch exists to
-// fix. Repeating it would re-create the bug. Invoked from /memory-flush Step 4.6.
-export function backfillScopeAny({ rootDir } = {}) {
-  if (!rootDir) return { updated: 0 };
-  let updated = 0;
-  for (const path of everyShardPath(`${rootDir}/.claude/memory`)) {
-    const text = readFileSync(path, 'utf8');
-    const split = splitFrontmatter(text);
-    if (!split || hasReachableScope(split.front)) continue;
+function phaseScopeOf(entry) {
+  return asList(entry?.fields?.scope).filter((s) => s !== SCOPE_PLACEHOLDER);
+}
 
-    const front = [...split.front];
-    const scopeIdx = front.findIndex((line) => /^scope:/.test(line));
-    if (scopeIdx >= 0) front[scopeIdx] = 'scope: any';
-    else front.push('scope: any');
+// Reachability spans BOTH legs. The phase leg (`scope:`) fires when a workflow
+// artifact is written; the path leg (`governs:`, from epic slice C) fires when the
+// governed code is edited. An entry needs only one of them. Checking the phase leg
+// alone is what made a perfectly reachable path-governed entry look orphaned and
+// earn a placeholder that orphaned it for real.
+//
+// No phase roster is validated here: the memory layer does not own the workflow's
+// phase list, and importing one would couple the store to `workflows.jsonl`. This
+// predicate answers "can anything reach this entry", not "is this phase spelled
+// correctly" — a misspelt phase is a curation defect the proposal surfaces, not a
+// reachability question.
+export function isReachable(entry) {
+  return phaseScopeOf(entry).length > 0 || asList(entry?.fields?.governs).length > 0;
+}
 
-    const patched = ['---', ...front, ...split.rest].join('\n');
-    if (patched === text) continue;
-    writeFileSync(path, patched, 'utf8');
-    updated++;
+// The category default is refused for the same reason the placeholder is: it is a
+// migration artifact standing in for a judgment nobody made. `SCOPE_BY_CATEGORY`
+// stamped all 87 landmarks and all 49 landmines, which is the entire volume problem.
+// An entry may legitimately END UP at its category default — but only via a proposal
+// carrying evidence, never by inheriting it silently at promotion.
+function inheritsCategoryDefault(entry) {
+  const fallback = SCOPE_BY_CATEGORY[entry?.category];
+  if (!fallback || !fallback.length) return false;
+  const scope = phaseScopeOf(entry);
+  if (scope.length !== fallback.length) return false;
+  return [...scope].sort().join(',') === [...fallback].sort().join(',');
+}
+
+// The write boundary. `/memory-flush` calls this before promoting or re-verifying an
+// entry, so an unreachable fact is refused at the moment it would be written rather
+// than discovered later by a reader that silently returns nothing.
+export function assertWritable(entry) {
+  const key = entry?.key ?? entry?.fields?.key ?? '(unkeyed)';
+  if (asList(entry?.fields?.scope).includes(SCOPE_PLACEHOLDER)) {
+    throw new UnreachableScopeError(key, `\`scope: ${SCOPE_PLACEHOLDER}\` is not a stored value — it matches no phase`);
   }
-  return { updated };
+  if (!isReachable(entry)) {
+    throw new UnreachableScopeError(key, 'reachable by neither leg — give it a phase `scope:` or a `governs:` glob');
+  }
+  if (inheritsCategoryDefault(entry)) {
+    throw new UnreachableScopeError(key, `scope equals the \`${entry.category}\` category default with no narrowing evidence`);
+  }
+  return entry;
 }

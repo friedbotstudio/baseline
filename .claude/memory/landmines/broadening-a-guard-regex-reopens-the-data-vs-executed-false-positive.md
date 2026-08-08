@@ -1,7 +1,7 @@
 ---
 key: broadening-a-guard-regex-reopens-the-data-vs-executed-false-positive
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: 97b3e6d
 last-touched: 2026-07-09
 ---

@@ -1,8 +1,8 @@
 ---
 key: path-keyed-surfacing-needs-a-repo-relative-path-payload-is-absolute
 category: landmines
-scope: any
-governs: .claude/hooks/process_lifecycle_guard.mjs,.claude/hooks/lib/governed-memory.mjs,.claude/skills/memory-index/resolve.mjs
+scope: []
+governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/skills/memory-index/resolve.mjs
 verified-at: d4a1a47
 last-touched: 2026-08-06
 ---

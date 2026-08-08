@@ -1,7 +1,7 @@
 ---
 key: one-rule-two-copies-one-on-a-write-path
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [implement, tdd]
 source: incident
 verified-at: 1a2cce3
 last-touched: 2026-07-20

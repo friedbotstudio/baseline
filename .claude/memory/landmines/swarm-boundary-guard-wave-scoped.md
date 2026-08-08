@@ -1,7 +1,7 @@
 ---
 key: swarm-boundary-guard-wave-scoped
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [security, tdd]
 verified-at: cd062af
 last-touched: 2026-06-21
 ---

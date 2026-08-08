@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/spec-sync/SKILL.md:1
 category: landmarks
-scope: any
-governs: .claude/skills/spec-sync/SKILL.md,.claude/skills/workspace/sync.mjs,docs/system/**
+scope: []
+governs: .claude/skills/spec-sync/SKILL.md, .claude/skills/workspace/sync.mjs, docs/system/**
 verified-at: d4e6216
 last-touched: 2026-08-06
 ---

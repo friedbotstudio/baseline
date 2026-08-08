@@ -1,8 +1,8 @@
 ---
 key: grep-reports-no-match-on-utf8-files-it-calls-binary
 category: landmines
-scope: any
-governs: .claude/**,src/**,tests/**,docs/**
+scope: []
+governs: .claude/**, src/**, tests/**, docs/**
 load_bearing: true
 verified-at: 35212e8
 last-touched: 2026-08-05

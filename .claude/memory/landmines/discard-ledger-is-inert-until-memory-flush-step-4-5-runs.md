@@ -1,8 +1,8 @@
 ---
 key: discard-ledger-is-inert-until-memory-flush-step-4-5-runs
 category: landmines
-scope: any
-governs: .claude/skills/memory-flush/**,.claude/hooks/lib/memory_stop.mjs
+scope: []
+governs: .claude/skills/memory-flush/**, .claude/hooks/lib/memory_stop.mjs
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

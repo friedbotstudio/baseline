@@ -1,7 +1,7 @@
 ---
 key: chore-track-integrate-and-simplify-prereqs-are-structurally-unsatisfiable
 category: landmines
-scope: [scout, spec, tdd, security, integrate]
+scope: [tdd, integrate]
 verified-at: 3160e0c
 last-touched: 2026-07-12
 ---

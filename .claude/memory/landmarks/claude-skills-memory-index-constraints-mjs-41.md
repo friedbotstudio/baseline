@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/memory-index/constraints.mjs:41
 category: landmarks
-scope: any
-governs: .claude/memory/constraints/**,.claude/skills/memory-index/constraints.mjs,.claude/skills/memory-flush/**
+scope: []
+governs: .claude/memory/constraints/**, .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-flush/**
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

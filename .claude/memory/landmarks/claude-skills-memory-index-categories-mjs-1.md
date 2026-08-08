@@ -1,8 +1,8 @@
 ---
 key: .claude/skills/memory-index/categories.mjs:1
 category: landmarks
-scope: any
-governs: .claude/skills/memory-index/**,.claude/hooks/lib/memory_session_start.mjs,.claude/hooks/lib/scoped-memory.mjs,.claude/skills/audit-baseline/**
+scope: []
+governs: .claude/skills/memory-index/**, .claude/hooks/lib/memory_session_start.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/skills/audit-baseline/**
 verified-at: f7da5a7
 last-touched: 2026-08-04
 ---
