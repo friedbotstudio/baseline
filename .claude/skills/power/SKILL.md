@@ -39,10 +39,7 @@ power-specific ordering + closure-last rule. Feed it the dirty tree as `[{path, 
 `groupDirtyTree` consumes — parse it from `git status --porcelain`):
 
 ```bash
-node -e "import('./.claude/skills/power/commit-split.mjs').then(({planCommits})=>{
-  // entries = [{path,status}] parsed from `git status --porcelain`
-  console.log(JSON.stringify(planCommits(entries), null, 2));
-})"
+node .claude/skills/power/commit-split.mjs plan --json   # wraps commit-split.mjs -> planCommits
 ```
 
 `planCommits(entries)` returns an ordered list of commit groups (config/build → implementation → tests →

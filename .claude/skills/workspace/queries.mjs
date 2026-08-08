@@ -11,20 +11,25 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 
-import { NotFoundError, lines } from '../lib/argv.mjs';
+import { NotFoundError, UsageError, lines, requireValue, refuseBulk } from '../lib/argv.mjs';
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { surfaceGovernedMemory } from '../../hooks/lib/governed-memory.mjs';
 import { assertNoTraversal } from './tree.mjs';
 import { readRecords } from './store.mjs';
 import { readConcepts, conceptsFor } from './concepts.mjs';
 import { deriveEdges } from './edges.mjs';
-import { readShard } from './shards.mjs';
+import { readShard, writeDiagramShard } from './shards.mjs';
 import { findGaps } from './coverage.mjs';
 import { composeView, generateView } from './render.mjs';
-import { classify } from './reconcile.mjs';
+import { classify, reconcile as reconcileCorpus } from './reconcile.mjs';
 import { roll } from './roll.mjs';
 import { buildGraphDocument } from './graph.mjs';
 import { workspaceEnabled, annotationsEnabled, architectureMapEnabled } from './flags.mjs';
+import { stampElement } from './digest.mjs';
+import { verifyAndApplyDelta } from './delta.mjs';
+import { proposeMap } from './sync.mjs';
+import { scanAnnotations } from './annotations.mjs';
+import { annotationPlacementAllowed } from './placement.mjs';
 
 const MAX_HOPS = 5;
 
@@ -224,4 +229,134 @@ export function flagStates(ctx) {
     architecture_map: architectureMapEnabled({ rootDir: ctx.root }),
   };
   return { data, text: lines(Object.entries(data).map(([key, value]) => `${key}: ${value}`)) };
+}
+
+// ─── the dispatcher sweep: seven more subcommands ───
+//
+// Three of these WRITE, which is new for this file: the nine above it are all
+// reads. The writer contract (spec dispatcher-sweep, W-1..W-5) is applied here
+// rather than inside each Domain function because two of the three already gate
+// themselves and one does not, and a CLI whose behavior depends on which of those
+// you happened to call is not a contract. Deciding it once at the boundary is what
+// makes `delta`, `digest` and `shards` answer identically.
+
+// W-2. Returned as a RESULT rather than thrown: an un-opted-in project is not an
+// error, it is a project that has not turned the corpus on, and exit 1 there would
+// make every consumer install look broken. It says so in words because a silent
+// exit 0 is indistinguishable from a successful write.
+function writeGate(ctx, command) {
+  if (architectureMapEnabled({ rootDir: ctx.root })) return null;
+  const data = { written: false, reason: 'memory.architecture_map.enabled is not true' };
+  return { data, text: lines([`${command}: written=false — the architecture map is not enabled for this project`]) };
+}
+
+// W-4. `--confirm` is refused rather than ignored. Ignoring it would let a caller
+// believe they had confirmed something; the propose/confirm split exists because
+// the confirming half is a main-context decision (Article II), and a flag is not a
+// human.
+function refuseConfirm(flags, command) {
+  if (flags.confirm !== undefined) {
+    throw new UsageError(`${command} exposes the propose half only — confirmation is a main-context decision, not a flag`);
+  }
+}
+
+function touchedPaths(flags) {
+  const raw = flags.touched;
+  if (raw === undefined || raw === true) return [];
+  return String(raw).split(',').map((p) => p.trim()).filter(Boolean).map((p) => assertNoTraversal(p));
+}
+
+function memoryDir(ctx) {
+  const given = ctx.flags['mem-dir'];
+  if (!given) return join(ctx.root, '.claude/memory');
+  if (isAbsolute(given)) return given;
+  assertNoTraversal(given);
+  return join(ctx.root, given);
+}
+
+export function delta(ctx) {
+  refuseBulk(ctx.flags, ctx.positional, { max: 0 });
+  const slug = requireValue(ctx.flags, 'slug');
+  assertSafeSlug(slug, 'delta workflow slug');
+  const blocked = writeGate(ctx, 'delta');
+  if (blocked) return blocked;
+
+  const result = verifyAndApplyDelta({
+    slug, specDir: corpusDir(ctx), rootDir: ctx.root, touchedPaths: touchedPaths(ctx.flags),
+  });
+  // Reported as three partitions, not one count. applyDelta deliberately separates
+  // them — a glob-anchored element is applied AND skipped for digest, and folding
+  // that into a single number is the overstatement backlog
+  // `syncback-applied-overstates-what-it-stamped-8e21` measured at 2.7x. A front
+  // door that re-collapsed them would reintroduce it at the CLI.
+  const { applied = [], shardsWritten = [], skippedGlob = [] } = result;
+  return {
+    data: { ...result, written: applied.length > 0 },
+    text: lines(applied.length
+      ? [
+        ...applied.map((id) => `applied      ${id}`),
+        ...shardsWritten.map((path) => `shard        ${path}`),
+        ...skippedGlob.map((id) => `no digest    ${id} (glob-anchored)`),
+      ]
+      : ['(no delta row applied)']),
+  };
+}
+
+export function digest(ctx) {
+  refuseBulk(ctx.flags, ctx.positional);
+  const id = elementId(ctx.positional[0]);
+  const blocked = writeGate(ctx, 'digest');
+  if (blocked) return blocked;
+
+  const result = stampElement(corpusDir(ctx), id, { rootDir: ctx.root });
+  if (result.state === 'unknown') throw new NotFoundError(`no element \`${id}\` in the corpus`);
+  return {
+    data: { ...result, written: result.state === 'fresh' },
+    text: lines([`${result.id}: ${result.state}${result.digest ? `  ${result.digest}` : ''}`]),
+  };
+}
+
+export function shards(ctx) {
+  refuseBulk(ctx.flags, ctx.positional);
+  const id = elementId(ctx.positional[0]);
+  const kind = requireValue(ctx.flags, 'kind');
+  const blocked = writeGate(ctx, 'shards');
+  if (blocked) return blocked;
+
+  const label = ctx.flags.label === true ? undefined : ctx.flags.label;
+  const result = writeDiagramShard(corpusDir(ctx), id, { kind, label, rootDir: ctx.root });
+  return { data: result, text: lines([`${result.written ? 'wrote' : 'skipped'} ${result.path ?? id}`]) };
+}
+
+export function placement(ctx) {
+  refuseConfirm(ctx.flags, 'placement');
+  const key = ctx.positional[0];
+  if (!key) throw new UsageError('placement requires a memory entry key');
+  assertSafeSlug(key, 'memory entry key');
+  const allowed = annotationPlacementAllowed(memoryDir(ctx), key);
+  return { data: { key, load_bearing: allowed }, text: lines([`${key}: ${allowed}`]) };
+}
+
+export function reconcile(ctx) {
+  const report = reconcileCorpus({ specDir: corpusDir(ctx), touchedPaths: touchedPaths(ctx.flags) });
+  const counts = Object.entries(report).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.length : value}`);
+  return { data: report, text: lines(counts.length ? counts : ['(nothing to reconcile)']) };
+}
+
+export function annotations(ctx) {
+  const found = scanAnnotations({ rootDir: ctx.root });
+  const rows = Array.isArray(found) ? found : Object.entries(found).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.length : v}`);
+  return {
+    data: found,
+    text: lines(rows.length ? rows.map((r) => (typeof r === 'string' ? r : JSON.stringify(r))) : ['(no annotations)']),
+  };
+}
+
+export function sync(ctx) {
+  refuseConfirm(ctx.flags, 'sync');
+  const proposed = proposeMap({ rootDir: ctx.root });
+  return {
+    data: proposed,
+    text: lines(proposed.concepts.map((c) => `${c.id}  ${c.anchors.length} anchor(s)  ${c.title}`)),
+  };
 }

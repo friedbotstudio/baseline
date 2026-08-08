@@ -40,6 +40,13 @@ export function readRecords(specDir, kind) {
 // RECORDS: an orphan shard is precisely a file with no record behind it, so it can
 // only be found by listing the directory.
 export function listWorkspaceFiles(specDir, kind, ext) {
+  // Guarded at the sink, matching writeWorkspaceFile two functions below. Both
+  // callers used to pass something that could not express traversal — a literal
+  // `'diagrams'`, or a `[a-z0-9_-]+` capture out of the README — so the safety
+  // lived in the caller's regex rather than here. The CLI front door (spec
+  // dispatcher-sweep, W-5) removes that argument: argv is arbitrary. REJECT, never
+  // normalize; repairing the segment would write confidently to the wrong place.
+  assertNoTraversal(kind);
   const dir = join(specDir, kind);
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
   return readdirSync(dir).filter((name) => name.endsWith(ext)).sort();

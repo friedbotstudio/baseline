@@ -13,7 +13,7 @@ It is governed by **Article X — Multi-session coordinated workflows** (a diffe
 ## Gate: opt-in, off by default, git required
 
 ```
-node -e "import('./.claude/skills/org-dispatch/org-mode.mjs').then(async m => { const fs = await import('node:fs'); const cp = await import('node:child_process'); const p = JSON.parse(fs.readFileSync('.claude/project.json','utf8')); let git=true; try { cp.execSync('git rev-parse --is-inside-work-tree', {stdio:'ignore'}); } catch { git=false; } const g = m.orgDispatchGate({ project: p, isGitRepo: git }); if (!g.ok) { console.error('org-dispatch refused: ' + g.reason); process.exit(1); } console.log('org mode ON'); })"
+node .claude/skills/org-dispatch/org-mode.mjs gate   # wraps org-mode.mjs -> orgDispatchGate
 ```
 
 If the gate refuses, **stop** — org mode is the opt-in fence (and worktree isolation requires git).

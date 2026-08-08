@@ -111,7 +111,7 @@ node .claude/skills/memory-flush/cli.mjs stale-elements --json   # wraps stale-e
 **List only.** For every element the curator has actually read against the code at its anchor, re-stamp that one:
 
 ```
-node -e "import('./.claude/skills/workspace/digest.mjs').then(m=>console.log(JSON.stringify(m.stampElement('docs/system','<element-id>',{rootDir:process.cwd()}))))"
+node .claude/skills/workspace/cli.mjs digest <element-id>   # wraps workspace/digest.mjs -> stampElement
 ```
 
 Anything left unreviewed stays stale and surfaces again at the next flush — that is the point. Re-stamping the whole set in one pass would make every element permanently fresh and launder the drift the digest exists to catch, so there is no bulk path and this step never adds one.

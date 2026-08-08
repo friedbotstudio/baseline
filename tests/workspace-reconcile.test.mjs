@@ -68,12 +68,23 @@ describe('E3 — scout reconciliation', () => {
   // phase calls it; that is exactly how document-gate.mjs shipped as an orphan that
   // could only ever BLOCK. A green behavioural test plus an unwired consumer is the
   // documented failure shape, so the invocation itself is asserted here.
+  //
+  // The invocation MOVED at the dispatcher sweep: scout now calls
+  // `workspace/cli.mjs reconcile   # wraps workspace/reconcile.mjs -> reconcile`.
+  // The module path survives in that trailing comment, so the original regex still
+  // matches — but only by way of a comment, which is a thin thread for a wiring
+  // guard to hang on. The oracle accepts either spelling so the next person to
+  // reword that line need not rediscover why this broke. The property is that some
+  // executable step in scout's Method reaches reconcile; the module path was only
+  // ever a proxy for it.
+  const INVOKES_RECONCILE = /workspace\/(reconcile\.mjs|cli\.mjs\s+reconcile)/;
+
   it('test_when_scout_runs_then_it_invokes_reconcile_before_discovering', () => {
     const skill = readFileSync(join(REPO_ROOT, '.claude/skills/scout/SKILL.md'), 'utf8');
     assert.match(
       skill,
-      /workspace\/reconcile\.mjs/,
-      'scout/SKILL.md must invoke reconcile.mjs — an uninvoked module is an orphan, not a feature',
+      INVOKES_RECONCILE,
+      'scout/SKILL.md must invoke reconcile — an uninvoked module is an orphan, not a feature',
     );
     assert.match(
       skill,
@@ -82,7 +93,7 @@ describe('E3 — scout reconciliation', () => {
     );
     const methodStart = skill.indexOf('# Method');
     assert.ok(
-      skill.indexOf('workspace/reconcile.mjs') > methodStart,
+      skill.search(INVOKES_RECONCILE) > methodStart,
       'the reconcile call must live in the Method scout actually follows',
     );
   });

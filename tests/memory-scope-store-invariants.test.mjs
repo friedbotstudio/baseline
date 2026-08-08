@@ -38,9 +38,20 @@ const PHASE_BUDGETS = { spec: 65, security: 30, research: 20 };
 // `backlog/advisory-block-interpolates-an-unsanitised-file-path-8c7e`, a backlog item
 // about that file which previously reached nothing. Verified by enumeration, not
 // assumed. The other three are unchanged and are what pin the leg against real drift.
+// resolve.mjs moved 10 -> 11 at b164ae7 (`feat(memory): scope is per entry, and an
+// unreachable entry is refused`), which added the landmark
+// `landmarks/claude-skills-memory-index-scope-narrow-mjs`. That workflow did not
+// refresh this literal, so the suite has been red on main since. Identified by
+// enumerating all 11 hits and checking each one's add-commit against 2bf79ef —
+// verified, not assumed, same as the 7 -> 8 note above.
+//
+// This is the failure mode backlog `replace-the-corpus-census-literals-with-a-
+// relational-assertion` exists to end: a hand-maintained count drifts the moment
+// any workflow adds a governing entry, and it fails in a workflow that had nothing
+// to do with it. Bumping the literal keeps the trap; the backlog entry is the fix.
 const PATH_LEG_BASELINE = {
   '.claude/hooks/lib/scoped-memory.mjs': 8,
-  '.claude/skills/memory-index/resolve.mjs': 10,
+  '.claude/skills/memory-index/resolve.mjs': 11,
   '.claude/hooks/process_lifecycle_guard.mjs': 8,
   '.claude/skills/harness/checker-fanout.mjs': 5,
 };

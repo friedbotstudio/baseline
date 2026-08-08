@@ -17,8 +17,8 @@
 // stay green forever. Every assertion here opens by proving the file is there.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { REPO_ROOT } from './memory-fixtures.mjs';
 
 export const DISPATCHERS = {
@@ -26,9 +26,42 @@ export const DISPATCHERS = {
   'memory-flush': '.claude/skills/memory-flush/cli.mjs',
   'system-reconcile': '.claude/skills/system-reconcile/cli.mjs',
   'memory-index': '.claude/skills/memory-index/cli.mjs',
+  document: '.claude/skills/document/cli.mjs',
+  commit: '.claude/skills/commit/cli.mjs',
+  harness: '.claude/skills/harness/cli.mjs',
 };
 
+// Pattern B (spec dispatcher-sweep D1): a single-purpose helper carrying its own
+// `process.argv` entry point behind an import.meta.url main-guard, rather than a
+// subcommand on a shared dispatcher.
+//
+// `argless` is the half that keeps the shared loop honest. Three of these six take a
+// required argument — a manifest path, an input document, a file to migrate — so a
+// loop firing the bare subcommand at all six would assert "exit 0" against three
+// commands that SHOULD exit 1 for want of an argument. Those three are exercised by
+// their own targeted tests; the loop covers what is genuinely uniform.
+// workflow-migrator.js is deliberately ABSENT: it is a build mirror of
+// src/cli/workflow-migrator.js, so an entry point inside it is reverted by the next
+// `npm run build`. Its front door is the `harness` Pattern A dispatcher above.
+export const PATTERN_B = {
+  'commit-planner/inventory.mjs': { subcommand: 'group', argless: true },
+  'power/commit-split.mjs': { subcommand: 'plan', argless: true },
+  'org-dispatch/org-mode.mjs': { subcommand: 'gate', argless: true },
+  'sprint-plan/validate-manifest.mjs': { subcommand: 'validate', argless: false },
+  'sprint-planner/planner.mjs': { subcommand: 'select', argless: false },
+};
+
+export function patternBPath(rel) {
+  return join('.claude/skills', rel);
+}
+
 export const ARGV_LIB = '.claude/skills/lib/argv.mjs';
+
+// The presentation half of the shared dispatcher Foundation — usage text and the
+// result writer. Split out of argv.mjs at the code-review file-length finding;
+// named here rather than inlined in the test so the two halves stay addressable
+// as a pair.
+export const OUTPUT_LIB = '.claude/skills/lib/output.mjs';
 
 export function dispatcherPath(name) {
   return join(REPO_ROOT, DISPATCHERS[name] ?? name);
@@ -66,4 +99,67 @@ export function runCliJson(name, args = [], opts = {}) {
 // naming the missing module rather than an opaque stack). Same idea, one layer out.
 export function assertPresent(assert, res) {
   assert.ok(!res.missing, `${res.rel} must exist and be executable — the dispatcher this AC pins`);
+}
+
+// The second vacuity trap, one level in from `missing`.
+//
+// `assertPresent` proves the FILE is there. It cannot prove the SUBCOMMAND is,
+// and an unknown subcommand exits 1 — the same code every rejection test asserts.
+// So `digest --all must exit 1` passes against a dispatcher that has never heard
+// of `digest`, and keeps passing no matter how the real guard is written. Three
+// suites of the writer contract were green that way before this existed.
+//
+// Detected on the stderr banner rather than the exit code, because the exit code
+// is precisely what cannot distinguish the two cases.
+export function subcommandUnknown(res) {
+  return /unknown subcommand/i.test(res.stderr ?? '');
+}
+
+export function assertKnownSubcommand(assert, res, subcommand) {
+  assertPresent(assert, res);
+  assert.ok(
+    !subcommandUnknown(res),
+    `\`${subcommand}\` must be a known subcommand of ${res.rel} before its behavior can be asserted — an unknown subcommand exits 1, which is also what this test expects, so without this check the assertion is vacuous`,
+  );
+}
+
+// ─── write-path fixtures (spec dispatcher-sweep, W-1..W-5) ───
+//
+// The read subcommands in cli-workspace.test.mjs run against the LIVE corpus
+// because reading it mutates nothing. The write subcommands cannot: the rule is
+// "never MUTATE the live corpus", so every writer assertion needs its own root.
+//
+// `enabled` is a parameter rather than always-true because W-2 (a corpus writer
+// no-ops when the map is off) is the one contract that can only be exercised by a
+// project that never opted in.
+export function makeCliProject({ enabled = true, extraConfig = {} } = {}, mkdtemp) {
+  const root = mkdtemp();
+  mkdirSync(join(root, '.claude'), { recursive: true });
+  const config = enabled
+    ? { memory: { architecture_map: { enabled: true, ...extraConfig } } }
+    : { memory: { ...extraConfig } };
+  writeFileSync(join(root, '.claude', 'project.json'), JSON.stringify(config, null, 2) + '\n', 'utf8');
+  return { root, specDir: join(root, 'docs', 'system') };
+}
+
+// A recursive content snapshot keyed by repo-relative path. `snapshotTree` in
+// memory-fixtures walks shard files under a memory dir; this walks an arbitrary
+// subtree, which is what "the tree is byte-identical after a rejected write"
+// needs — a rejected write that creates an empty directory must still fail.
+export function snapshotDir(dir) {
+  const snap = {};
+  if (!existsSync(dir)) return snap;
+  const walk = (current) => {
+    for (const name of readdirSync(current).sort()) {
+      const path = join(current, name);
+      if (statSync(path).isDirectory()) {
+        snap[relative(dir, path) + '/'] = '<dir>';
+        walk(path);
+      } else {
+        snap[relative(dir, path)] = readFileSync(path, 'utf8');
+      }
+    }
+  };
+  walk(dir);
+  return snap;
 }

@@ -38,7 +38,7 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    is a **reconciliation**, not a rediscovery:
 
    ```
-   node -e "import('./.claude/skills/workspace/reconcile.mjs').then(m=>console.log(JSON.stringify(m.reconcile({specDir:'docs/system', touchedPaths:process.argv.slice(1)}))))" <touched paths>
+   node .claude/skills/workspace/cli.mjs reconcile --touched <comma,separated,paths> --json   # wraps workspace/reconcile.mjs -> reconcile
    ```
 
    `mode: "reconcile"` → report the returned `delta` (`changed` /
@@ -68,7 +68,7 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    scan and resolve:
 
    ```
-   node -e "import('./.claude/skills/workspace/annotations.mjs').then(m=>console.log(JSON.stringify(m.scanAnnotations({rootDir:process.cwd(), memDir:'.claude/memory'}),null,1)))"
+   node .claude/skills/workspace/cli.mjs annotations --json   # wraps workspace/annotations.mjs -> scanAnnotations
    ```
 
    Report both halves of the result in the scout report's **Constraints** section:

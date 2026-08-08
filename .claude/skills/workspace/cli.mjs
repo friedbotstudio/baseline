@@ -16,6 +16,13 @@ import {
   view,
   graph,
   flagStates,
+  delta,
+  digest,
+  shards,
+  placement,
+  reconcile,
+  annotations,
+  sync,
 } from './queries.mjs';
 
 dispatch({
@@ -30,5 +37,15 @@ dispatch({
     view: { summary: 'compose a concept view; --render for SVG', run: view },
     graph: { summary: 'nodes, edges, orphans and stale as one document', run: graph },
     flags: { summary: 'the three architecture-map flag states', run: flagStates },
+    // Added by the dispatcher sweep. The three writers sit beside the reads rather
+    // than in a separate dispatcher because they answer about the same corpus; what
+    // separates them is the W-1..W-5 contract they run through, not their address.
+    delta: { summary: 'verify and apply a spec\'s declared System delta (writes)', run: delta },
+    digest: { summary: 're-stamp one element\'s anchor digest (writes)', run: digest },
+    shards: { summary: 'write one element\'s diagram shard; needs --kind (writes)', run: shards },
+    placement: { summary: 'whether a memory entry is annotated load-bearing', run: placement },
+    reconcile: { summary: 'the seven-check corpus drift report', run: reconcile },
+    annotations: { summary: 'scan the governed surface for decision annotations', run: annotations },
+    sync: { summary: 'propose a concept map from the governed surface', run: sync },
   },
 });

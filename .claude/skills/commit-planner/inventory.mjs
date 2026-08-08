@@ -99,3 +99,64 @@ export function groupDirtyTree(entries) {
       || a.paths[0].localeCompare(b.paths[0]),
   );
 }
+
+// ─── entry point (spec dispatcher-sweep, Pattern B) ───
+//
+// The purity claim above is about groupDirtyTree, and it still holds: the export
+// takes entries and touches nothing. What moves here is the GATHERING the SOP used
+// to hand-roll inside a `node -e` block — parsing `git status --porcelain` — which
+// is the part that gets copied wrong.
+//
+// Not sharing power/commit-split.mjs's identical parser: two uses, and hoisting at
+// two is the pre-emptive abstraction VI.4 forbids. The third use hoists it.
+
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+
+const USAGE = `usage: node .claude/skills/commit-planner/inventory.mjs group [--root <dir>]
+
+subcommands:
+  group   partition the dirty tree into single-concern commit groups
+
+flags:
+  --root <dir>  project root (default: cwd)
+  --json        emit machine-readable output
+`;
+
+// `XY <path>`, with a rename rendering as `old -> new`; the new path is the one on
+// disk. Status is kept, unlike harness/rightsize-gate.mjs's parsePorcelain, because
+// groupDirtyTree classifies on it.
+export function dirtyEntries(text) {
+  const entries = [];
+  for (const line of String(text || '').split('\n')) {
+    if (!line.trim()) continue;
+    const status = line.slice(0, 2).trim();
+    let path = line.slice(3).trim();
+    if (path.includes(' -> ')) path = path.split(' -> ').pop().trim();
+    if (path) entries.push({ path, status });
+  }
+  return entries;
+}
+
+function main(argv) {
+  const subcommand = argv[0];
+  if (!subcommand || subcommand === '--help') { process.stdout.write(USAGE); return 0; }
+  if (subcommand !== 'group') { process.stderr.write(`unknown subcommand \`${subcommand}\`\n\n${USAGE}`); return 1; }
+
+  const rootIndex = argv.indexOf('--root');
+  const root = rootIndex >= 0 ? argv[rootIndex + 1] : process.cwd();
+  const status = spawnSync('git', ['-C', root, 'status', '--porcelain'], { encoding: 'utf8' });
+  if (status.status !== 0) { process.stderr.write(`git status failed: ${status.stderr ?? ''}\n`); return 1; }
+
+  const groups = groupDirtyTree(dirtyEntries(status.stdout));
+  if (argv.includes('--json')) { process.stdout.write(JSON.stringify(groups, null, 2) + '\n'); return 0; }
+  process.stdout.write(groups.length
+    ? groups.map((g) => `${g.type}(${g.scope ?? '-'})  ${g.paths.length} path(s)\n${g.paths.map((p) => `    ${p}`).join('\n')}`).join('\n') + '\n'
+    : '(clean tree — nothing to group)\n');
+  return 0;
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exit(main(process.argv.slice(2)));
+}

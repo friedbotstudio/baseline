@@ -1,0 +1,48 @@
+{
+  "request": "Finish the dispatcher sweep — give the remaining 19 inline-import SKILL.md call sites a CLI front door: ~7 more workspace subcommands (delta, placement, digest, reconcile, annotations, sync, shards) plus new dispatchers for power, document, harness, commit-planner, org-dispatch, sprint-plan, sprint-planner and hooks/lib/common. Several targets write (digest.stampElement, shards.writeDiagramShard, sync.proposeMap, delta.verifyAndApplyDelta) and need the guard analysis the read path skipped. Extend COVERED_MODULES in tests/cli-sop-citations.test.mjs to re-arm AC-012.",
+  "slug": "dispatcher-sweep",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog key finish-the-dispatcher-sweep (raised-on 2026-08-08, verified-at b164ae7); the archived spec docs/specs/skill-helper-cli-dispatchers.md records the remaining 19 call sites in its ## Non-goals; precedent commit 4cc46e0 shipped the .claude/skills/lib/argv.mjs dispatcher pattern over 4 skills",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "finish-the-dispatcher-sweep"
+  ],
+  "created_at": 1786187100,
+  "updated_at": 1786189407,
+  "rightsize_base": [
+    ".claude/memory/_discard-ledger.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

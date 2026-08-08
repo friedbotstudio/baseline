@@ -99,3 +99,8 @@
 - promoted :: backlog → drift-check-resolves-an-ac-from-a-range-comment
 - discarded :: backlog → i-have-the-user-s-actual-words-from-e739
 - discarded :: backlog → discarded-8-each-with-a-ledger-row-four-87a3
+- discarded :: backlog → a-backlog-entry-is-here-is-work-with-fcc2
+- promoted :: .claude/skills/lib/output.mjs → landmarks.md
+- promoted :: .claude/skills/harness/cli.mjs → landmarks.md
+- discarded :: .claude/skills/commit/cli.mjs → landmarks.md
+- discarded :: .claude/skills/document/cli.mjs → landmarks.md

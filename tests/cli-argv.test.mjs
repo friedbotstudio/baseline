@@ -17,7 +17,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { tryImport } from './helpers/memory-fixtures.mjs';
-import { runCli, assertPresent, DISPATCHERS, ARGV_LIB } from './helpers/cli-runner.mjs';
+import { runCli, assertPresent, DISPATCHERS, ARGV_LIB, OUTPUT_LIB } from './helpers/cli-runner.mjs';
 
 const DISPATCHER_NAMES = Object.keys(DISPATCHERS);
 
@@ -90,3 +90,125 @@ describe('usage contract across every dispatcher', () => {
 // it compared was declared in the same helper it imported them from, so it
 // asserted that a constant matches a pattern beside it and could not fail on any
 // state of the repository.
+
+// ─── dispatcher sweep: the flag vocabulary (AC-016) ───
+//
+// VALUE_FLAGS is one shared union in a Foundation module, and that is the whole
+// hazard. Under `strict: false` an UNDECLARED `--kind sequence` parses as
+// `kind: true` and leaks `sequence` into positionals — the value is discarded
+// silently and the subcommand sees a positional it never expected. Six flags are
+// added here, so six new ways to fail quietly.
+//
+// Table-driven over the names rather than one test per flag: the claim is that the
+// vocabulary is uniform, and six near-identical tests would state that six times
+// while making it easy to add a seventh flag and no seventh test.
+
+const ADDED_VALUE_FLAGS = ['slug', 'kind', 'mem-dir', 'surface', 'delegate', 'touched'];
+
+describe('added value flags parse their values', () => {
+  // AC-016
+  it('test_when_added_value_flag_passed_with_value_then_value_lands_and_positionals_clean', async () => {
+    const mod = await tryImport(ARGV_LIB);
+    assert.ok(mod && typeof mod.parse === 'function', `${ARGV_LIB} must export parse`);
+
+    const failures = [];
+    for (const name of ADDED_VALUE_FLAGS) {
+      const parsed = mod.parse(['somecmd', `--${name}`, 'thevalue', 'apositional']);
+      if (parsed.flags[name] !== 'thevalue') {
+        failures.push(`--${name}: flags[${name}] === ${JSON.stringify(parsed.flags[name])}, want "thevalue" (undeclared flags parse as true)`);
+      }
+      if (parsed.positional.includes('thevalue')) {
+        failures.push(`--${name}: the value leaked into positionals, which is how the discard goes unnoticed`);
+      }
+      if (!parsed.positional.includes('apositional')) {
+        failures.push(`--${name}: a real positional was swallowed`);
+      }
+    }
+    assert.deepEqual(failures, [], 'every value-taking flag must be declared in VALUE_FLAGS, or its value is silently discarded');
+  });
+
+  // AC-016
+  it('test_when_existing_value_flags_still_parse_then_the_four_shipped_dispatchers_are_unaffected', async () => {
+    const mod = await tryImport(ARGV_LIB);
+    assert.ok(mod && typeof mod.parse === 'function', `${ARGV_LIB} must export parse`);
+
+    const shipped = ['root', 'spec-dir', 'hops', 'jar', 'key', 'disposition', 'state', 'governs'];
+    const broken = shipped.filter((name) => mod.parse(['c', `--${name}`, 'v']).flags[name] !== 'v');
+    assert.deepEqual(broken, [], 'extending the vocabulary must not disturb the eight flags the shipped dispatchers already use');
+  });
+});
+
+// ─── the presentation split (lib/output.mjs) ───
+//
+// argv.mjs held two concerns: parsing argv + owning the exit contract, and
+// rendering what the caller sees. The code-review file-length oracle is what
+// surfaced it, but the split stands on the layer model: `renderUsage` and `emit`
+// consult no argv and decide no exit code — they turn a value into bytes.
+//
+// `renderUsage` stays re-exported from argv.mjs. It shipped as a public export in
+// 4cc46e0, so dropping it would break a consumer that already imports it; the
+// re-export makes the move invisible from outside. `emit` was module-private and
+// becomes public here, because a module that owns writing must expose the write.
+
+describe('dispatcher output module', () => {
+  it('test_when_output_module_imported_then_it_owns_usage_and_emit', async () => {
+    const mod = await tryImport(OUTPUT_LIB);
+    assert.ok(mod, `${OUTPUT_LIB} must exist — argv.mjs delegates its rendering to it`);
+    assert.equal(typeof mod.renderUsage, 'function', 'expected named export `renderUsage`');
+    assert.equal(typeof mod.emit, 'function', 'expected named export `emit`');
+  });
+
+  it('test_when_argv_reexports_render_usage_then_the_shipped_export_is_unbroken', async () => {
+    const argv = await tryImport(ARGV_LIB);
+    const output = await tryImport(OUTPUT_LIB);
+    assert.ok(argv && output, 'both halves must import');
+    assert.equal(typeof argv.renderUsage, 'function', 'argv.mjs must keep exporting renderUsage (shipped in 4cc46e0)');
+    assert.equal(
+      argv.renderUsage,
+      output.renderUsage,
+      're-export must be the SAME function, not a second copy that can drift',
+    );
+  });
+
+  it('test_when_usage_rendered_then_subcommands_and_shared_flags_are_named', async () => {
+    const mod = await tryImport(OUTPUT_LIB);
+    assert.ok(mod, `${OUTPUT_LIB} must exist`);
+
+    const text = mod.renderUsage('workspace', {
+      describe: { summary: 'describe an element' },
+      'blast-radius': { summary: 'what a change touches' },
+    });
+    assert.match(text, /usage: node \.claude\/skills\/workspace\/cli\.mjs <subcommand>/);
+    assert.match(text, /describe\s+describe an element/, 'each subcommand is named with its summary');
+    assert.match(text, /blast-radius\s+what a change touches/);
+    assert.match(text, /--json/, 'the shared flags block must survive the move');
+  });
+
+  it('test_when_emit_given_json_then_data_is_written_and_text_is_ignored', async () => {
+    const mod = await tryImport(OUTPUT_LIB);
+    assert.ok(mod, `${OUTPUT_LIB} must exist`);
+
+    const written = [];
+    const sink = { write: (chunk) => written.push(chunk) };
+
+    mod.emit({ text: 'human form', data: { ok: true } }, true, sink);
+    assert.equal(written.join(''), `${JSON.stringify({ ok: true }, null, 2)}\n`);
+  });
+
+  it('test_when_emit_given_text_then_it_is_written_verbatim_without_a_trailing_newline', async () => {
+    const mod = await tryImport(OUTPUT_LIB);
+    assert.ok(mod, `${OUTPUT_LIB} must exist`);
+
+    const written = [];
+    const sink = { write: (chunk) => written.push(chunk) };
+
+    // A subcommand whose output IS an artifact (a composed PlantUML document)
+    // must stay byte-identical to what the Domain module produced.
+    mod.emit({ text: '@startuml\n@enduml' }, false, sink);
+    assert.equal(written.join(''), '@startuml\n@enduml', 'emit must not append to an artifact payload');
+
+    written.length = 0;
+    mod.emit({}, false, sink);
+    assert.equal(written.join(''), '', 'a result with no text writes nothing');
+  });
+});

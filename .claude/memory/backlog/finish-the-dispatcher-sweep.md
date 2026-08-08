@@ -2,13 +2,14 @@
 key: finish-the-dispatcher-sweep
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-08
 raised-in-context: skill-helper-cli-dispatchers
 verified-at: b164ae7
 last-touched: 2026-08-08
 governs: .claude/skills/*/SKILL.md,.claude/skills/workspace/*.mjs,.claude/skills/power/*.mjs,.claude/skills/document/*.mjs,.claude/skills/commit-planner/*.mjs,.claude/skills/org-dispatch/*.mjs,.claude/skills/sprint-plan/*.mjs,.claude/skills/sprint-planner/*.mjs
+superseded-at: 2026-08-08
 ---
 
 > **The blocker.** AC-012 asserts no shipped `SKILL.md` retains an inline import. I enumerated all of them: **31 call sites**, 14 target skill directories, **12 covered** by the approved 4 dispatchers, **19 not covered**. Closing the gap is roughly triple the approved change.

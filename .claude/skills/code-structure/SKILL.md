@@ -237,7 +237,7 @@ section. `true` → continue to the placement gate below.
 **Placement is then gated on the `load_bearing:` marker, not applied broadly:**
 
 ```
-node -e "import('./.claude/skills/workspace/placement.mjs').then(m=>console.log(m.annotationPlacementAllowed('.claude/memory','<entry-key>')))"
+node .claude/skills/workspace/cli.mjs placement <entry-key>   # wraps workspace/placement.mjs -> annotationPlacementAllowed
 ```
 
 `true` → place the annotation at the governed site. `false` (absent marker or an

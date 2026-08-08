@@ -68,7 +68,7 @@ same rule already governs conflicting contributions.
 For a confirmed `missingKind` or `unillustrated` item:
 
 ```bash
-node -e "import('./.claude/skills/workspace/shards.mjs').then(m=>console.log(m.writeDiagramShard('docs/system','<element-id>',{kind:'<kind>',label:'<label>',rootDir:process.cwd()})))"
+node .claude/skills/workspace/cli.mjs shards <element-id> --kind <kind> --label '<label>'   # wraps workspace/shards.mjs -> writeDiagramShard
 ```
 
 The kind comes from what the shard already declares structurally — a `Component(...)`

@@ -38,7 +38,7 @@ surface is a named error, never a default — a fallback would model the consume
 2. **Propose the map.**
 
    ```
-   node -e "import('./.claude/skills/workspace/sync.mjs').then(m=>console.log(JSON.stringify(m.proposeMap({rootDir:process.cwd()}),null,1)))"
+   node .claude/skills/workspace/cli.mjs sync --json   # wraps workspace/sync.mjs -> proposeMap (propose half only; runSync is not exposed)
    ```
 
    The proposal is a starting point, not an inference to trust. Directory clustering

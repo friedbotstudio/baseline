@@ -28,7 +28,7 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
    **It must run before Step 4, for the same reason Step 2 does.** `archive.sh` moves `docs/specs/<slug>.md` into the bundle; after that `resolveSpecPath` returns `null`, the `## System delta` table is never read, and every array below comes back empty — which is byte-identical to a spec that declared nothing. Verify first, or a real drift archives silently green. The `specMissing` field exists to make that failure loud if the order is ever changed back: when it is `true`, the empty arrays mean *the table was not read*, not *the table was clean*.
 
    ```
-   node -e "import('./.claude/skills/workspace/delta.mjs').then(m=>console.log(JSON.stringify(m.verifyAndApplyDelta({slug:'<slug>', specDir:'docs/system', memDir:'.claude/memory', rootDir:process.cwd(), touchedPaths:JSON.parse(process.argv[1])}),null,1)))" '["<path>","<path>",...]'
+   node .claude/skills/workspace/cli.mjs delta --slug <slug> --touched <comma,separated,paths> --json   # wraps workspace/delta.mjs -> verifyAndApplyDelta
    ```
 
    **Pass the paths as one quoted JSON array, never as bare space-separated words.** The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces and matches no anchor. `verifyAndApplyDelta` reports that case as `inputEmpty: true`, distinct from an honest "nothing matched" — but a single quoted argument is immune to word-splitting in both zsh and bash, so pass one and the distinction never has to be read.

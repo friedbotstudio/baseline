@@ -50,7 +50,7 @@ test('<name>', () => { /* … */ });
 4. Validate the shape before handing it to the oracle:
 
    ```
-   node -e "import('./.claude/skills/sprint-plan/validate-manifest.mjs').then(async m => { const fs = await import('node:fs'); const r = m.validateManifest(JSON.parse(fs.readFileSync(process.argv[1],'utf8'))); if (!r.valid) { console.error(JSON.stringify(r.errors, null, 2)); process.exit(1); } console.log('manifest valid'); })" <manifest-path>
+   node .claude/skills/sprint-plan/validate-manifest.mjs validate <manifest-path>   # wraps validate-manifest.mjs -> validateManifest
    ```
 
    `validateManifest(obj)` returns `{valid, errors:[{feature, field, reason}]}` — it flags missing required fields per feature and duplicate feature ids. It checks **shape**, not completeness; completeness is `sprint-oracle`'s job.

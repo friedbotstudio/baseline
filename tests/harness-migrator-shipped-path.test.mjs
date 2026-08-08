@@ -7,7 +7,17 @@
 // (both the dev-tree copy and the shipped obj/template/ copy) and asserts it
 // resolves inside the shipped tree.
 //
-// Tests are RED until /implement updates SKILL.md.
+// The dispatcher sweep changed HOW the migrator is invoked, not WHETHER this
+// property must hold. Step 3a no longer runs an inline `node -e "import(...)"`; it
+// runs `node .claude/skills/harness/cli.mjs migrate <path>`. The v0.8.1 failure
+// this test exists to prevent is unchanged — a SKILL.md naming a path the consumer
+// never received — so the extractor accepts either form and the assertions below
+// are untouched.
+//
+// Removing the inline import is the STRONGER outcome, and the extractor must not
+// treat it as an absent invocation: throwing "no inline import found" would turn a
+// fix into a failure. What it must still refuse is an invocation naming no path at
+// all, which would mean Step 3a stopped invoking the migrator.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,14 +32,23 @@ const REPO_ROOT = resolve(here, '..');
 const HARNESS_MD_DEV = join(REPO_ROOT, '.claude/skills/harness/SKILL.md');
 const HARNESS_MD_SHIPPED = join(REPO_ROOT, 'obj/template/.claude/skills/harness/SKILL.md');
 
-const MIGRATOR_INVOCATION_RE = /import\(['"`]([^'"`]*workflow-migrator\.js)['"`]\)/;
+// Legacy inline form, then the dispatcher form the sweep introduced. Ordered so the
+// inline form is still caught first if it ever comes back.
+const MIGRATOR_INVOCATION_RES = [
+  /import\(['"`]([^'"`]*workflow-migrator\.js)['"`]\)/,
+  /node\s+(\S*\.claude\/skills\/harness\/cli\.mjs)\s+migrate\b/,
+];
 
 function extractMigratorPath(skillMdText) {
-  const m = skillMdText.match(MIGRATOR_INVOCATION_RE);
-  if (!m) {
-    throw new Error('no inline `import(...workflow-migrator.js...)` found in SKILL.md');
+  for (const re of MIGRATOR_INVOCATION_RES) {
+    const m = skillMdText.match(re);
+    if (m) return m[1];
   }
-  return m[1];
+  throw new Error(
+    'harness/SKILL.md Step 3a names no migrator invocation — neither an inline ' +
+    'import of workflow-migrator.js nor `harness/cli.mjs migrate`. An unreachable ' +
+    'migrator is the orphan this test exists to catch.',
+  );
 }
 
 function isDevTreePath(p) {

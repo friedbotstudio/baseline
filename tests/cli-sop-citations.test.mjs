@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { REPO_ROOT } from './helpers/memory-fixtures.mjs';
-import { DISPATCHERS, ARGV_LIB } from './helpers/cli-runner.mjs';
+import { DISPATCHERS, ARGV_LIB, PATTERN_B, patternBPath } from './helpers/cli-runner.mjs';
 
 const SKILLS_DIR = join(REPO_ROOT, '.claude/skills');
 const INLINE_IMPORT = 'node -e "import(';
@@ -40,15 +40,20 @@ function offendingLines(text, needle) {
 }
 
 describe('SOP citations name a command, not an inline import', () => {
-  // AC-012
+  // AC-012, re-armed by the dispatcher sweep (its AC-017).
   //
-  // Scoped to call sites a dispatcher actually covers. The full sweep is 31 sites
-  // across 14 target skill directories; these four dispatchers reach 12, and the
-  // rest need ~7 more subcommands and ~8 dispatchers that do not exist yet
-  // (backlog `finish-the-dispatcher-sweep`). Asserting the universal form here
-  // would hold this change hostage to roughly triple its approved scope, and
-  // quietly deleting the AC would lose the record that the gap is known.
+  // This list was scoped to 12 of 31 sites because the four dispatchers that
+  // shipped in 4cc46e0 reached only those, and the remainder was recorded as
+  // backlog `finish-the-dispatcher-sweep` rather than silently dropped. The sweep
+  // closed it, so the list is now the full set of covered targets.
+  //
+  // The census was re-measured during that spec and corrected: the raw needle
+  // returns 19 hits across 15 shipped SKILL.md files, but two of them are
+  // spec-shippability-review quoting the pattern IT detects. Those are not call
+  // sites and are asserted to survive below. 17 real sites remain, and every one
+  // of their target modules is named here.
   const COVERED_MODULES = [
+    // covered by the four dispatchers of 4cc46e0
     'workspace/flags.mjs',
     'system-reconcile/reconcile-report.mjs',
     'memory-flush/stale-elements.mjs',
@@ -56,6 +61,25 @@ describe('SOP citations name a command, not an inline import', () => {
     'memory-flush/ledger.mjs',
     'memory-index/constraints.mjs',
     'memory-index/resolve.mjs',
+    // added by the sweep — seven workspace subcommands
+    'workspace/delta.mjs',
+    'workspace/placement.mjs',
+    'workspace/digest.mjs',
+    'workspace/reconcile.mjs',
+    'workspace/annotations.mjs',
+    'workspace/sync.mjs',
+    'workspace/shards.mjs',
+    // added by the sweep — two new Pattern A dispatchers
+    'document/receipts.mjs',
+    'document/public-site-reflect.mjs',
+    'hooks/lib/common.mjs',
+    // added by the sweep — six Pattern B entry points
+    'commit-planner/inventory.mjs',
+    'power/commit-split.mjs',
+    'sprint-plan/validate-manifest.mjs',
+    'sprint-planner/planner.mjs',
+    'org-dispatch/org-mode.mjs',
+    'harness/workflow-migrator.js',
   ];
 
   it('test_when_shipped_skill_md_scanned_then_no_inline_node_e_import_remains', () => {
@@ -107,6 +131,64 @@ describe('SOP citations name a command, not an inline import', () => {
       'the surviving inline example must say why it survives, or it reads as an oversight and gets copied again',
     );
   });
+
+  // AC-019 (dispatcher sweep)
+  //
+  // The second place an inline example must NOT be rewritten, and the one the
+  // AC-013 scan above cannot defend on its own: that scan proves the README stopped
+  // teaching the inline form, and it filters `materialize.mjs` out of its offender
+  // list — but a filter is silent about deletion. A sweep that removed the example
+  // outright would leave AC-013 green and leave the corpus with no documented way
+  // to add an element. The reason clause is load-bearing too: without "it writes",
+  // the survivor reads as an oversight someone tidies away next pass.
+  it('test_when_system_readme_scanned_then_materialize_example_and_its_reason_survive', () => {
+    const path = join(REPO_ROOT, 'docs/system/README.md');
+    assert.ok(existsSync(path), 'docs/system/README.md must exist before its content can be checked');
+    const text = readFileSync(path, 'utf8');
+    assert.ok(text.length > 0, 'README must be non-empty');
+
+    assert.match(
+      text,
+      /workspace\/materialize\.mjs/,
+      'the materialize invocation is the only documented way to add an element; deleting it strands the corpus',
+    );
+    assert.match(
+      text,
+      /`materialize` has no subcommand/,
+      'the survivor must name itself as the exception, or the next sweep reads it as a missed call site',
+    );
+    assert.match(
+      text,
+      /it writes/,
+      'the reason is what scopes the exception — this dispatcher exposes reads, so the write stays inline',
+    );
+  });
+
+  // AC-018 (dispatcher sweep)
+  //
+  // The one place in the repo where an inline import must NOT be rewritten. This
+  // skill's job is to detect the pattern, so its prose quotes the pattern — line
+  // 14 cites the v0.8.1 marker-import bug it was built to catch, and line 60
+  // defines "runtime invocation" by example. A sweep that rewrote them would
+  // delete the detector's description of what it detects, and the AC-012 scan
+  // above cannot tell the difference on its own: it ignores them only because
+  // neither line names a covered module, which is a property of the prose rather
+  // than a decision anyone recorded.
+  it('test_when_detector_skill_scanned_then_its_two_pattern_quotes_survive', () => {
+    const path = join(SKILLS_DIR, 'spec-shippability-review', 'SKILL.md');
+    assert.ok(existsSync(path), 'spec-shippability-review/SKILL.md must exist before its content can be checked');
+    const text = readFileSync(path, 'utf8');
+    assert.ok(text.length > 0, 'the detector SKILL.md must be non-empty');
+
+    const quotes = offendingLines(text, INLINE_IMPORT);
+    assert.equal(
+      quotes.length,
+      2,
+      `the detector must keep exactly the two prose quotes of the pattern it detects; found ${quotes.length} at lines ${quotes.map((q) => q.n).join(', ') || '(none)'}`,
+    );
+    assert.match(text, /marker-import/, 'line 14 cites the v0.8.1 bug by name — that citation is the reason the quote is there');
+    assert.match(text, /Runtime invocation/, 'line 60 defines runtime invocation by example — the example IS the definition');
+  });
 });
 
 describe('code-browser is reachable, not merely present', () => {
@@ -148,7 +230,15 @@ describe('consumer installs receive the dispatchers', () => {
       'manifest.files must be non-empty before membership can be asserted',
     );
 
-    const required = [ARGV_LIB, ...Object.values(DISPATCHERS)];
+    // AC-020 (dispatcher sweep) widens this from "the dispatchers" to "every file
+    // a rewritten SOP now names". A consumer that received the dispatcher but not
+    // the Pattern B module it delegates to is in exactly the state the marker-import
+    // bug produced: a procedure citing a path that is not there.
+    const required = [
+      ARGV_LIB,
+      ...Object.values(DISPATCHERS),
+      ...Object.keys(PATTERN_B).map(patternBPath),
+    ];
     const missing = required.filter((rel) => !manifest.files[rel]);
     assert.deepEqual(
       missing,

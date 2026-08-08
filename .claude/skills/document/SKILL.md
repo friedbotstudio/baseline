@@ -49,7 +49,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
    **After running each delegate, record a receipt** so the gate can verify it:
 
    ```
-   node -e "import('./.claude/skills/document/receipts.mjs').then(m=>m.recordReceipt({slug:'<slug>',surface:'<path>',delegate:'<technical-writer|copywriting|prose|documentation|technical-tutorials>'}))"
+   node .claude/skills/document/cli.mjs receipt --slug <slug> --surface <path> --delegate <technical-writer|copywriting|prose|documentation|technical-tutorials>   # wraps receipts.mjs -> recordReceipt
    ```
 
    Never hand-write a receipt for work that was not done. The receipt asserts the delegate ran; forging one converts the gate into decoration.
@@ -65,7 +65,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
    **2.5 Reflective public-site check (do NOT rely on file-presence alone).** The public site (`site-src/**/*.njk`) *describes* the harness's behavior; a behavior change can require a description update even when **no `site-src/**` file is in the diff**. Anchoring on "no site file changed → no site work" gets the direction backwards (backlog 5e07). So always run the reflective check:
 
    ```
-   node -e "import('./.claude/skills/document/public-site-reflect.mjs').then(m => console.log(JSON.stringify(m.findDescribedSurfaces({changedPaths: <diff paths>}), null, 2)))"
+   node .claude/skills/document/cli.mjs surfaces --touched <comma,separated,diff,paths> --json   # wraps public-site-reflect.mjs -> findDescribedSurfaces
    ```
 
    `findDescribedSurfaces` derives the skill/hook/command tokens the diff touches and returns the public pages that name them. For **each** returned page, route it through TWO registers (per the canonical user feedback, backlog 7b3e — *"on public website we need to describe features not just the behavior"*):

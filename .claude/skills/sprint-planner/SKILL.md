@@ -44,7 +44,7 @@ Readiness is computed **in-planner** from the roadmap's machine-readable status 
 `dep` is `done`), NOT pushed into `graph.mjs`:
 
 ```bash
-node -e "import('./.claude/skills/sprint-planner/planner.mjs').then(({selectSprint})=>{ /* pass {tasks,statusById,capacity} */ })"
+node .claude/skills/sprint-planner/planner.mjs select <input.json> [--capacity N] --json   # wraps planner.mjs -> selectSprint
 ```
 
 `selectSprint({tasks, statusById, capacity})` → `{features, excluded}`:

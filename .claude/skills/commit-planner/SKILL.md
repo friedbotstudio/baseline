@@ -21,7 +21,7 @@ Run `git status --porcelain` and collect `{path, status}` entries (untracked inc
 Feed the entries to the helper:
 
 ```
-node -e "import('./.claude/skills/commit-planner/inventory.mjs').then(m => console.log(JSON.stringify(m.groupDirtyTree(<entries>), null, 2)))"
+node .claude/skills/commit-planner/inventory.mjs group --json   # wraps inventory.mjs -> groupDirtyTree
 ```
 
 `groupDirtyTree(entries)` is **pure and deterministic** — no fs, no git, no clock; the same entries (in any order) produce the same groups. Each group carries:
