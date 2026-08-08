@@ -58,8 +58,8 @@ describe('A2 — the corpus is relocated to docs/system/', () => {
     const diagrams = countIn(join(SPEC_DIR, 'diagrams'), '.puml');
 
     assert.equal(concepts, 15, 'docs/system/concepts must hold every concept');
-    assert.equal(elements, 114, 'docs/system/elements must hold every element record');
-    assert.equal(diagrams, 114, 'docs/system/diagrams must hold one shard per element');
+    assert.equal(elements, 115, 'docs/system/elements must hold every element record');
+    assert.equal(diagrams, 115, 'docs/system/diagrams must hold one shard per element');
     assert.equal(elements, diagrams, 'every element must keep exactly one shard');
 
     assert.ok(!existsSync(OLD_DIR),
@@ -83,7 +83,7 @@ describe('A2 — the corpus is relocated to docs/system/', () => {
     const store = await tryImport('.claude/skills/workspace/store.mjs');
     assert.ok(store, 'store.mjs must be importable');
     const { elements } = store.readAll(SPEC_DIR);
-    assert.equal(elements.length, 114, 'readAll must resolve the corpus at its new root');
+    assert.equal(elements.length, 115, 'readAll must resolve the corpus at its new root');
 
     const holders = [...walkFiles(resolve(REPO_ROOT, '.claude/hooks')),
       ...walkFiles(resolve(REPO_ROOT, '.claude/skills'))]

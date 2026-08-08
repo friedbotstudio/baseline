@@ -27,7 +27,7 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    is gated — check the flag FIRST:
 
    ```
-   node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.workspaceEnabled({rootDir:process.cwd()})))"
+   node .claude/skills/workspace/cli.mjs flags   # gates on memory.workspace.enabled — read the `workspace:` line
    ```
 
    `false` (the default, and the value for any project that has not opted in) → skip
@@ -61,7 +61,7 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    check the flag FIRST:
 
    ```
-   node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.annotationsEnabled({rootDir:process.cwd()})))"
+   node .claude/skills/workspace/cli.mjs flags   # gates on memory.annotations.enabled — read the `annotations:` line
    ```
 
    `false` (the default) → skip the rest of this step and go to step 1. `true` →

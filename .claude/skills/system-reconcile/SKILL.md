@@ -24,7 +24,7 @@ report module.
 ## Step 1 — check the flag
 
 ```bash
-node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.architectureMapEnabled({rootDir:process.cwd()})))"
+node .claude/skills/workspace/cli.mjs flags   # gates on memory.architecture_map.enabled — read the `architecture_map:` line
 ```
 
 `false` → stop and tell the user the corpus is not enabled for this project. Every
@@ -34,7 +34,7 @@ clean corpus rather than an absent one.
 ## Step 2 — run the report
 
 ```bash
-node -e "import('./.claude/skills/system-reconcile/reconcile-report.mjs').then(async m=>console.log(JSON.stringify(m.runReconcile({specDir:'docs/system',rootDir:process.cwd()}),null,2)))"
+node .claude/skills/system-reconcile/cli.mjs report --json
 ```
 
 Nothing is written. `docs/system/` is byte-identical afterwards, which is the

@@ -30,7 +30,7 @@ surface is a named error, never a default — a fallback would model the consume
 1. **Check the flag.**
 
    ```
-   node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.architectureMapEnabled({rootDir:process.cwd()})))"
+   node .claude/skills/workspace/cli.mjs flags   # gates on memory.architecture_map.enabled — read the `architecture_map:` line
    ```
 
    `false` → stop and tell the user to enable it (and declare a governed surface) first.

@@ -228,7 +228,7 @@ dangling. Any unrecognised verb is ignored rather than reported.
 **Annotations are opt-in per project.** Check the feature flag before anything else:
 
 ```
-node -e "import('./.claude/skills/workspace/flags.mjs').then(m=>console.log(m.annotationsEnabled({rootDir:process.cwd()})))"
+node .claude/skills/workspace/cli.mjs flags   # gates on memory.annotations.enabled — read the `annotations:` line
 ```
 
 `false` (the default) → place no annotations at all and skip the rest of this

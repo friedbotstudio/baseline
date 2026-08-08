@@ -103,7 +103,7 @@ Report shape: `{"surfaced": N, "kept": N, "dropped": N, "picked_up": N, "deferre
 The corpus at `docs/system/` is a spec artifact, not a memory category — Step 0 never sweeps it. What it shares with memory is decay: an element's `anchor_digest` goes stale the moment the interface at its anchor moves. Detection is mechanical; re-stamping is not.
 
 ```
-node -e "import('./.claude/skills/memory-flush/stale-elements.mjs').then(m=>console.log(JSON.stringify(m.listStale({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+node .claude/skills/memory-flush/cli.mjs stale-elements --json   # wraps stale-elements.mjs -> listStale
 ```
 
 `listStale` is flag-gated on `memory.architecture_map.enabled` and fail-open — an absent flag or an unreadable corpus yields `[]`, never a throw. Each row is `{id, detail}`, where the detail names what moved.
@@ -126,7 +126,7 @@ Read `_pending.md` in full. Then read the canonical file each candidate targets 
 
 ## Step 2 — Decide per candidate
 
-**Route suggestion (Tier 3, optional aid).** Before deciding, you MAY run `node -e "import('./.claude/skills/memory-flush/route.mjs').then(m=>console.log(JSON.stringify(m.suggestRoutes(<candidates>))))"` (or import `suggestRoutes` directly) to get a deterministic `{suggested_bucket, weight, evidence}` per candidate. The suggestion is an **accept/override default**, not a decision: you remain final, and promotion to canonical stays human-only (Article IX.3). `route.mjs` is pure — it reads/writes nothing. A richer semantic pass (Sonnet-tier over transcript material) is an optional main-context step here, not part of the pure helper. A candidate's `weight`/`route` fields in `_pending` (when present) are the capture-time hints; the suggestion refines them.
+**Route suggestion (Tier 3, optional aid).** Before deciding, you MAY run `node .claude/skills/memory-flush/cli.mjs route '<candidates-json>' --json` (or import `suggestRoutes` directly) to get a deterministic `{suggested_bucket, weight, evidence}` per candidate. The suggestion is an **accept/override default**, not a decision: you remain final, and promotion to canonical stays human-only (Article IX.3). `route.mjs` is pure — it reads/writes nothing. A richer semantic pass (Sonnet-tier over transcript material) is an optional main-context step here, not part of the pure helper. A candidate's `weight`/`route` fields in `_pending` (when present) are the capture-time hints; the suggestion refines them.
 
 For each `## CANDIDATE:` block, decide one of:
 
@@ -172,7 +172,7 @@ Apply the canonical entry shape (from `.claude/memory/README.md`):
 For **each** candidate resolved in Step 2, promoted or discarded alike, record the decision:
 
 ```
-node -e "import('./.claude/skills/memory-flush/ledger.mjs').then(m=>m.recordCuration({key:'<FULL ## CANDIDATE: header text>',disposition:'promoted'|'discarded'},{rootDir:process.cwd()}))"
+node .claude/skills/memory-flush/cli.mjs ledger --key '<FULL ## CANDIDATE: header text>' --disposition promoted|discarded   # wraps ledger.mjs -> recordCuration
 ```
 
 **`key` is the ENTIRE text following `## CANDIDATE: ` in `_pending.md` — copy the header line verbatim, separator and target included.** `memory_stop` matches this set by exact string, so only the header form suppresses anything:
@@ -194,7 +194,7 @@ The ledger lives OUTSIDE Step 5's reset for exactly this reason. Record before y
 **Promoting a constraint** goes through the guarded writer rather than a raw file write, so the category-registration preflight (AC-010) cannot be bypassed:
 
 ```
-node -e "import('./.claude/skills/memory-index/constraints.mjs').then(m=>m.writeConstraint('<memDir>','<key>',{state:true,state_verified_at:'<sha>',governs:'<globs>'}))"
+node .claude/skills/memory-index/cli.mjs constraint --key '<key>' --state true --governs '<globs>' --verified-at '<sha>'   # wraps constraints.mjs -> writeConstraint
 ```
 
 ## Step 4.6 — Refuse an unreachable entry (every promotion and re-verify)
@@ -207,7 +207,7 @@ Rollout prerequisite P2, rebuilt for roadmap T8. An entry is **reachable** when 
 An entry satisfying neither surfaces nowhere, however good it is. Call `assertWritable` before writing any promoted or re-verified entry; it throws `UnreachableScopeError` naming the offending key and nothing is written:
 
 ```
-node -e "import('./.claude/skills/memory-index/resolve.mjs').then(m=>m.assertWritable(entry))"
+node .claude/skills/memory-index/cli.mjs assert-writable '<entry-json>'   # wraps resolve.mjs -> assertWritable
 ```
 
 It refuses three things: the retired placeholder value, an entry reachable by neither leg, and a scope silently inherited from `SCOPE_BY_CATEGORY`. **Do not stamp a placeholder to satisfy it.** The retired `backfillScopeAny` set unscoped entries to the literal `any` precisely to make them reachable, and the reader never honoured it — `asArray(scope).includes(phase)` is false for `['any']` — so all 47 stamped entries surfaced at zero phases. Narrow the scope, or give the entry a `governs:` glob.

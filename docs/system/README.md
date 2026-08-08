@@ -8,9 +8,9 @@ The layer sits behind `memory.architecture_map.enabled`, which defaults to false
 
 | Directory | Holds | Count |
 |---|---|---|
-| `elements/` | component records, each anchored to a path or a glob | 114 |
+| `elements/` | component records, each anchored to a path or a glob | 115 |
 | `concepts/` | cross-cutting concept nodes, no anchor | 15 |
-| `diagrams/` | one PlantUML shard per element | 114 |
+| `diagrams/` | one PlantUML shard per element | 115 |
 
 `readme-gate.mjs` reads that Count column and fails the suite when a number disagrees with the directory it names. It checks both directions: a count that is too low is as untrue as one that is too high.
 
@@ -21,16 +21,34 @@ Concepts are the authored layer. Each concept file carries an `anchors:` list in
 To add an element, add its anchor to the concept that owns it and re-run the materializer. Never write a record by hand:
 
 ```
-node -e "import('./.claude/skills/workspace/materialize.mjs').then(m=>console.log(JSON.stringify(m.materialize({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+node --input-type=module -e "import('./.claude/skills/workspace/materialize.mjs').then(m=>console.log(JSON.stringify(m.materialize({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
 ```
+
+`materialize` has no subcommand: it writes, and this dispatcher exposes reads. Backlog `finish-the-dispatcher-sweep` covers it with the other write paths; until then the inline call above is how it runs.
 
 The materializer refuses before writing anything if an anchor matches no file, so a dangling element never reaches disk.
 
 Coverage is total over the governed surface, and each project declares its own in `project.json` under `memory.architecture_map.governed_surface`. Every code file inside the declared roots has to resolve to at least one element. There is no default: an absent surface is an error, because falling back to some other project's roots would report total coverage over a surface nobody asked about. To see what is uncovered:
 
 ```
-node -e "import('./.claude/skills/workspace/coverage.mjs').then(m=>console.log(JSON.stringify(m.findGaps({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+node .claude/skills/workspace/cli.mjs coverage
 ```
+
+The dispatcher answers nine questions about the corpus:
+
+| Subcommand | Answers |
+|---|---|
+| `describe <element>` | the record, its shard kind, its owning concepts, its digest state |
+| `blast-radius <element>` | what an element depends on, and what depends on it |
+| `concept <id>` | a concept's members, and its internal and crossing edges |
+| `constraints-for <path>` | which constraints govern a file |
+| `coverage` | governed paths no element claims |
+| `stale` | elements whose anchor digest drifted |
+| `view <concept>` | the composed diagram source |
+| `graph [--json]` | every answer above as one document |
+| `flags` | the three architecture-map flag states |
+
+Run it with no subcommand for that list. Read `graph --json` from another program rather than parsing the human output: its shape is pinned at `.claude/schemas/graph-document.v1.json`, and the conformance test drives its assertions from that file, so the two cannot drift.
 
 Granularity comes from the shape of the anchor rather than a stored field. No anchor means a concept, a glob means a subsystem, a file path means a component. That is why a concept never carries an anchor; one that leaked an anchor would read as a component.
 

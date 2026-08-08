@@ -1,0 +1,44 @@
+{
+  "request": "add CLI dispatchers for hand-invoked skill helpers, update SOPs to call them, and fix code-browser routing",
+  "slug": "skill-helper-cli-dispatchers",
+  "track_id": "spec-entry",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "39 of the shipped skill helpers already expose a process.argv CLI (.claude/skills/code-browser/walk.mjs, .claude/skills/triage/seed-tasklist.mjs, .claude/skills/research/retrieve.mjs, .claude/skills/memory-flush/sweep.mjs among them); .claude/skills/workspace/ ships 0 of 23 modules with one. This repeats an established in-repo pattern on the layers that never received it.",
+  "track_reason": "Heavier than tdd-quickfix because the deliverable is a command contract, not just code: the subcommand names and output shapes are cited by 16 shipped SKILL.md files and must be listed in obj/template/.claude/manifest.json for consumer installs. spec-entry pins that contract once at gate A instead of discovering it during implementation and rewriting 16 SOPs afterward. intake/scout/research are excepted because this conversation already produced their evidence.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-flush"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786173386,
+  "updated_at": 1786182172,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

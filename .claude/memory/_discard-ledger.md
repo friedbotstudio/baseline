@@ -79,3 +79,17 @@
 - discarded :: backlog → the-fix-is-one-line-and-you-already-dfaf
 - discarded :: .claude/skills/archive/SKILL.md → landmarks.md
 - promoted :: .claude/skills/memory-index/scope-narrow.mjs → landmarks.md
+- promoted :: backlog → operator-gui-over-the-corpus
+- promoted :: backlog → finish-the-dispatcher-sweep
+- promoted :: landmines → path-leg-baseline-drifted-at-b164ae7
+- promoted :: .claude/skills/lib/argv.mjs → landmarks.md
+- promoted :: .claude/skills/workspace/queries.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/graph.mjs → landmarks.md
+- discarded :: .claude/skills/workspace/cli.mjs → landmarks.md
+- discarded :: .claude/skills/memory-flush/cli.mjs → landmarks.md
+- discarded :: .claude/skills/memory-index/cli.mjs → landmarks.md
+- discarded :: .claude/skills/system-reconcile/cli.mjs → landmarks.md
+- discarded :: backlog → not-reachable-today-the-fix-is-an-explicit-4b02
+- discarded :: backlog → on-code-browser-the-fix-is-routing-not-55a2
+- discarded :: backlog → i-have-not-touched-the-linter-that-is-1202
+- discarded :: backlog → the-better-fix-is-to-keep-those-symbols-2b23

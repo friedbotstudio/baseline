@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./graph-document.v1.json",
+  "title": "Graph Document v1",
+  "description": "The output of `node .claude/skills/workspace/cli.mjs graph --json`. This is the read contract between the corpus at docs/system/ and any consumer that renders or traverses it — the operator GUI, CI, or a terminal query. Schema validation is STRUCTURAL only: it cannot check that an edge's endpoints resolve to nodes, that provenance matches how the edge was actually obtained, or that the corpus is complete. Those are semantic properties owned by .claude/skills/workspace/edges.mjs and coverage.mjs. See docs/specs/skill-helper-cli-dispatchers.md decisions D1 and D3.",
+  "type": "object",
+  "required": ["version", "nodes", "edges", "orphans", "stale"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Bumped only on a breaking shape change. A consumer that reads an unexpected version must refuse rather than guess."
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" },
+      "description": "Elements and concepts together. A consumer distinguishes them by `granularity`, never by array position."
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "orphans": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Shard sections naming no element, as `<file>!<section>`. Reported rather than dropped: a diagram that silently shows an unknown box is worse than one that reports the gap."
+    },
+    "stale": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Element ids whose anchor digest no longer matches the anchored file's structural interface. Glob-anchored elements never appear here — they name a family, so there is no single interface to digest."
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "granularity", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Stable identity. Derived ids are a pure function of the anchor, so two branches deriving the same anchor produce the same id instead of a conflict."
+        },
+        "granularity": {
+          "enum": ["concept", "subsystem", "component"],
+          "description": "Derived from anchor SHAPE, never stored on the record: no anchor is a concept, a glob is a subsystem, a file path is a component. A consumer must not infer this from `kind`."
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "description": "The record's declared kind (e.g. `component`, `concept`). Distinct from the diagram kind on the shard, which is what binds the witness — the two are different axes and conflating them loses data."
+        },
+        "anchor": {
+          "type": "string",
+          "description": "Repo-relative path or glob. Absent on a concept, which is exactly what makes it a concept."
+        },
+        "members": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Concept nodes only: the element ids this concept owns. An element may belong to more than one concept."
+        },
+        "witnessed": {
+          "type": "boolean",
+          "description": "Whether the shard's declared kind binds a witness that can prove the node wrong. An unwitnessed node routes, but may never be cited as evidence."
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "kind", "provenance", "targetKind"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Always a node id."
+        },
+        "to": {
+          "type": "string",
+          "description": "A node id ONLY when targetKind is `element`. For a `config` edge this is a project.json key path, which is deliberately not a node — nothing anchors project.json, and inventing an element for it would put a file in the model no maintainer would ever open."
+        },
+        "targetKind": {
+          "enum": ["element", "config-key"],
+          "description": "The load-bearing discriminator. 46 of 124 live edges target a config key rather than an element; a consumer that assumes every `to` resolves to a node renders that many dangling edges. Filter on this before building an adjacency list."
+        },
+        "kind": {
+          "enum": ["import", "state", "config", "skill"],
+          "description": "How the coupling was observed. `import` is a relative import; `state` is a shared .claude/state path and is SYMMETRIC (the scanner cannot tell writer from reader, so one edge per unordered pair is emitted from the lexically first); `config` is a projectGet key; `skill` is a Skill() call."
+        },
+        "provenance": {
+          "enum": ["derived", "authored"],
+          "description": "`derived` is read out of real source by a scanner and cannot drift from the code. `authored` is a human claim and carries no witness. v1 emits only `derived`; the authored layer ships empty so this contract does not change when it lands (decision D1)."
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Crossing count when the edge is a concept-level roll-up of element-level edges; 1 for a plain element edge."
+        }
+      }
+    }
+  }
+}

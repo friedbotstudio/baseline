@@ -75,7 +75,7 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 5.5. **Report corpus health, and repair nothing** (same flag gate as Step 3; skip when false):
 
    ```
-   node -e "import('./.claude/skills/system-reconcile/reconcile-report.mjs').then(m=>console.log(JSON.stringify(m.runReconcile({specDir:'docs/system', rootDir:process.cwd()}),null,1)))"
+   node .claude/skills/system-reconcile/cli.mjs report --json
    ```
 
    This invocation is **report-only**. Surface the seven sections to the user; repair nothing here. `docs/system/` SHALL be byte-identical between Step 3 completing and the workflow ending — Step 3 is the corpus's single writer on the primary tree, and `/system-reconcile` exposes no apply path a workflow phase can reach. A repair the report suggests is a human-confirmed invocation of `/system-reconcile`, never an automatic follow-up to archiving.
