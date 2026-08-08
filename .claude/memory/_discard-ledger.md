@@ -93,3 +93,9 @@
 - discarded :: backlog → on-code-browser-the-fix-is-routing-not-55a2
 - discarded :: backlog → i-have-not-touched-the-linter-that-is-1202
 - discarded :: backlog → the-better-fix-is-to-keep-those-symbols-2b23
+- promoted :: backlog → delta-fold-should-write-the-readme-count
+- promoted :: backlog → replace-the-corpus-census-literals-with-a-relational-assertion
+- promoted :: backlog → spec-lint-add-row-check-requires-the-file-to-exist
+- promoted :: backlog → drift-check-resolves-an-ac-from-a-range-comment
+- discarded :: backlog → i-have-the-user-s-actual-words-from-e739
+- discarded :: backlog → discarded-8-each-with-a-ledger-row-four-87a3
