@@ -1,7 +1,7 @@
 ---
 layout: docs.njk
 title: "Standup: what shipped and what to pick up · baseline"
-description: "How to use /standup: a read-only recap of the last release, the commits waiting behind it, the backlog and the open questions, plus how to judge whether the pile is ready to cut."
+description: "How to use /standup: a read-only recap of the last release, the commits waiting behind it, the roadmap, the backlog and the open questions, plus how to judge whether the pile is ready to cut."
 heading: "Where the work stands,<br>read off the repo."
 lead: "Two questions come up every time you sit down: what is waiting to ship, and what should you pick up next. /standup answers both from the repo itself. It reads git, the release config and the memory files, reports what it finds, and leaves everything as it was."
 updated: 2026-07-29
@@ -38,13 +38,13 @@ toc:
 
 <p>It runs in two steps. A helper gathers the mechanical facts, then Claude reads them and names the next pickup, with a one-line reason. The helper stops at the facts on purpose. Choosing what to build next is a judgement call, and Article II keeps those in the main session.</p>
 
-<p>You can run the helper on its own from a shell. It prints JSON and takes an optional <code class="tok">--root</code>.</p>
+<p>You can run the recap on its own from a shell. A single call returns all six sections, including the roadmap epics and their per-task tallies, and prints a readable summary by default, so you should not need to re-read the plan or re-run <code class="tok">git log</code> afterwards. Add <code class="tok">--json</code> when you want the raw record, or <code class="tok">--root</code> to point it at a checkout other than the working directory.</p>
 
 <div class="plate">
   <div class="plate-bar">
     <span>shell</span>
   </div>
-  <pre class="plate-body"><span class="t-prompt">$</span> node .claude/skills/standup/gather.mjs --root .</pre>
+  <pre class="plate-body"><span class="t-prompt">$</span> node .claude/skills/standup/cli.mjs recap --json</pre>
 </div>
 
 <p>A shorter version of the same recap greets you at session start, along with a pointer back here. The full read, and the recommendation, wait until you ask.</p>

@@ -43,7 +43,7 @@ toc:
 
 <h2 id="discovery"><span class="sec-mark" aria-hidden="true">§ II</span> Run discovery once</h2>
 
-<p class="sec-lead">The epic track carries nine nodes and stops at the commit: <code class="tok">intake</code>, <code class="tok">scout</code>, <code class="tok">research</code>, <code class="tok">spec</code>, <code class="tok">spec-shippability-review</code>, <code class="tok">approve-direction</code>, <code class="tok">memory-flush</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Code comes later, in the children.</p>
+<p class="sec-lead">The epic track carries nine nodes and stops at the commit: <code class="tok">intake</code>, <code class="tok">scout</code>, <code class="tok">research</code>, <code class="tok">spec</code>, <code class="tok">spec-shippability-review</code>, <code class="tok">approve-direction</code>, <code class="tok">memory-sync</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Code comes later, in the children.</p>
 
 <p>What you get is a sliced spec at <code class="tok">docs/specs/&lt;epic&gt;.md</code>, in which each future child has its own <code class="tok">## Slice &lt;id&gt;</code> section holding that child's acceptance criteria. You approve the whole document once, at gate A.</p>
 
@@ -55,7 +55,7 @@ toc:
 
 <p>Open a session and describe the slice you want to build. If an approved epic is active, triage will match your request to an open slice and pick the <code class="tok">epic-child</code> track for you.</p>
 
-<p>A child skips discovery entirely and pins whatever the epic already produced. Its declared graph is <code class="tok">tdd</code>, <code class="tok">simplify</code>, <code class="tok">security</code>, <code class="tok">integrate</code>, <code class="tok">document</code>, <code class="tok">archive</code>, <code class="tok">roadmap-sync</code>, <code class="tok">memory-flush</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Three of those nodes only run when they are needed.</p>
+<p>A child skips discovery entirely and pins whatever the epic already produced. Its declared graph is <code class="tok">implementation</code>, <code class="tok">simplify</code>, <code class="tok">security</code>, <code class="tok">integrate</code>, <code class="tok">document</code>, <code class="tok">archive</code>, <code class="tok">roadmap-sync</code>, <code class="tok">memory-sync</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. The first node is a selector: a slice with independent components fans out to swarm workers, and a single-component slice runs solo. Three of the later nodes only run when they are needed.</p>
 
 <div class="callout">
   <span class="callout-mark" aria-hidden="true">!</span>

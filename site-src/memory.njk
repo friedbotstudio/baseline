@@ -9,7 +9,7 @@ breadcrumb: ["docs", "concepts", "memory"]
 facts:
   - { label: "canonical files", value: "7" }
   - { label: "inbox", value: "_pending.md" }
-  - { label: "curated by", value: "/memory-flush" }
+  - { label: "curated by", value: "/memory-sync" }
 toc:
   - { id: "files", label: "The eight files" }
   - { id: "inbox", label: "From inbox to canonical" }
@@ -91,7 +91,7 @@ toc:
 
 <p>The quote is the canonical part. The body underneath is Claude's reading of it, and readings drift, so when the two disagree your words win and Claude must raise the conflict with you before acting on its own paraphrase.</p>
 
-<p><code class="tok">/memory-flush</code> enforces this at the boundary. If a candidate claims to come from you and carries no quote, promotion is refused and it stays a candidate.</p>
+<p><code class="tok">/memory-sync</code> enforces this at the boundary. If a candidate claims to come from you and carries no quote, promotion is refused and it stays a candidate.</p>
 
 <p>You can add quotes over time. Clarify an instruction across three turns and the entry keeps all three blocks, oldest first, because how a rule got sharpened is often the thing that explains it.</p>
 
@@ -123,7 +123,7 @@ toc:
 
 <p>The stamp has to land in the same commit as the work, and splitting the two is refused. A backlog entry which closes one commit later will still be open when the branch is cut, and the next person reads it as work nobody started.</p>
 
-<p>There is a second lock. Unless <code class="tok">memory-flush</code> sits in the workflow's completed list or has been explicitly excepted, <code class="tok">/commit</code> refuses to run at all, so whatever the session learned is curated before anything lands.</p>
+<p>There is a second lock. Unless <code class="tok">memory-sync</code> sits in the workflow's completed list or has been explicitly excepted, <code class="tok">/commit</code> refuses to run at all, so whatever the session learned is curated before anything lands.</p>
 
 <p>Wiring memory into the commit path is a deliberate choice, and it has a cost: you cannot land work while the record is behind. That is the point. Memory that nothing depends on rots quietly, and the rot only shows up months later when someone trusts it.</p>
 

@@ -11,7 +11,7 @@ chips:
 facts:
   - { label: "subagent", value: "1" }
   - { label: "pod size", value: "4 by default" }
-  - { label: "worth it at", value: "3+ components" }
+  - { label: "routes to swarm at", value: "1+ components" }
 toc:
   - { id: "principle", label: "One subagent, by design" }
   - { id: "waves", label: "Waves and write sets" }
@@ -67,7 +67,7 @@ toc:
   </div>
 </div>
 
-<p>Worktree mode is the default wherever git is available, and it buys a real second layer: a worker that somehow slips past the boundary guard still has to survive the merge audit before its work can land.</p>
+<p>Shared mode is what ships by default, so swarm runs with the boundary guard as its only barrier unless you change it. Worktree mode is opt-in through <code class="tok">swarm.isolation</code>, and it buys a real second layer: a worker that somehow slips past the boundary guard still has to survive the merge audit before its work can land. Swarm now fires on any spec with an independent component, so that layer is worth turning on before you lean on parallel runs.</p>
 
 <p>If a tree has no git at all, swarm mode is simply unavailable: <code class="tok">/triage</code> strips the swarm phases as it sets up the workflow, and a later request for swarm is refused. Worktrees need git, which is the whole reason swarm mode does. Shared mode stays a choice for git projects that want the speed (it is never a fallback for a tree without git).</p>
 
@@ -83,7 +83,7 @@ toc:
 
 <h2 id="when"><span class="sec-mark" aria-hidden="true">§ V</span> When solo wins</h2>
 
-<p>Parallel work has a floor. Below three independent components the planning, dispatch and merge audit will cost more than they save, so a spec under that line routes to <code class="tok">/tdd</code> solo. The threshold sits in <code class="tok">project.json</code> if your projects typically run differently.</p>
+<p>Swarm is now the default route: any spec with at least one independent component goes through planning, dispatch and the merge audit, and only a spec with no independent component falls back to <code class="tok">/tdd</code> solo. The threshold sits in <code class="tok">project.json</code>, so raise it if your specs are usually small enough that planning costs more than parallelism returns.</p>
 
 <p>Components have to be genuinely independent, and the write sets are what tell you whether they are. Two tasks that keep reaching for the same file are really one task; force them apart and the plan will simply run them in order anyway.</p>
 
