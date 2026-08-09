@@ -191,7 +191,7 @@ for (const [category, key] of TARGETS) {
 const excerpts = chunks.join('\n\n');
 if (!excerpts) {
   const named = TARGETS.map(([category, key]) => `\`${category}/${key}\``).join(', ');
-  emitInfo(`process_lifecycle_guard: command matched a process-management pattern, but no memory entries (${named}) were found in either store shape. Consider \`/memory-flush\` or restoring the entries before proceeding.`);
+  emitInfo(`process_lifecycle_guard: command matched a process-management pattern, but no memory entries (${named}) were found in either store shape. Consider \`/memory-sync\` or restoring the entries before proceeding.`);
   logLine('process_lifecycle_guard', `fired with empty memory: ${cmd}`);
   emitAllow();
 }

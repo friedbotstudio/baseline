@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { NOISE_PREFIXES, SKILL_SOP_MARKER, isBoilerplate } from './common.mjs';
-import { candidateKey, decidedKeys } from '../../skills/memory-flush/ledger.mjs';
+import { candidateKey, decidedKeys } from '../../skills/memory-sync/ledger.mjs';
 
 const SRC_PREFIXES = ['src/', 'lib/', 'app/', 'pkg/', 'internal/', 'cmd/', '.claude/hooks/', '.claude/skills/'];
 const SKIP_PREFIXES = [
@@ -94,7 +94,7 @@ const BACKLOG_MARKER_RE = new RegExp(String.raw`\b(?:${BACKLOG_MARKER_BODY})\b`,
 // phrasings are high-precision ("the cleanest approach is", "decided to") so a
 // mid-sentence occurrence is still real intent, which line-start anchoring drops
 // (the recurring miss in backlog.md). Capture stays cheap + deterministic; the
-// semantic backstop is the model at /memory-flush.
+// semantic backstop is the model at /memory-sync.
 const DECISION_CUE_BODY =
   String.raw`the\s+(?:right|cleanest|cleaner|better|simplest)\s+(?:approach|move|fix|option)\s+is` +
   String.raw`|(?:i'?m|we'?re|i\s+am|we\s+are)\s+going\s+to\b` +
@@ -148,13 +148,13 @@ function filterNoise(text) {
 // --- Capture precision: three predicates that keep the extractor off its own tail.
 //
 // Before these, 16 of 16 candidates at one flush were unpromotable: the extractor
-// was re-ingesting its OWN /memory-flush reports and mining SKILL.md contract prose.
+// was re-ingesting its OWN /memory-sync reports and mining SKILL.md contract prose.
 // All three fail SAFE to "drop" (a missed candidate is cheap — the human re-raises
 // it; a false one taxes every future flush) and none may throw: this runs inside a
 // Stop hook that must never crash a turn.
 
-// A rendered /memory-flush report: its header, or one of its section rows.
-const FLUSH_REPORT_RE = /^(?:memory-flush\s+—\s+\d{4}-\d{2}-\d{2}|(?:Promoted|Discarded|Closed|Deferred)\s+\(\d+)/m;
+// A rendered /memory-sync report: its header, or one of its section rows.
+const FLUSH_REPORT_RE = /^(?:memory-sync\s+—\s+\d{4}-\d{2}-\d{2}|(?:Promoted|Discarded|Closed|Deferred)\s+\(\d+)/m;
 
 // The vocabulary of candidate EXTRACTION — deliberately NOT "memory_stop" or
 // "flush report". Keying on the subsystem's name would suppress the sentence
@@ -275,14 +275,14 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
     while ((m = re.exec(existing)) !== null) existingKeys.add(m[1]);
   }
   // Ticket D EXTENDS the dedup above rather than adding a second one. The body is
-  // reset by /memory-flush, which throws away the curation the human just did along
+  // reset by /memory-sync, which throws away the curation the human just did along
   // with the candidates; the ledger outlives that reset, so a key already promoted
   // or discarded is not re-offered as fresh (AC-006). Absent ledger → empty set →
   // byte-identical behavior to before (AC-012).
   // Matched by exact string against the header-form keys built above, which is why
   // every construction site routes through candidateKey(). A ledger row in any
   // other shape joins this set and matches nothing.
-  // @landmine:discard-ledger-is-inert-until-memory-flush-step-4-5-runs
+  // @landmine:discard-ledger-is-inert-until-memory-sync-step-4-5-runs
   for (const key of decidedKeys({ rootDir: projectRoot })) existingKeys.add(key);
 
   const candidates = []; // [key, category, bodyLines]
@@ -291,7 +291,7 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   // `pathSawWrite.has(fp)` ⇔ at least one Write event landed on `fp` this turn.
   // Landmark candidates emit on (Write seen) OR (touch count >= LANDMARK_EDIT_MIN);
   // a single Edit on a never-Written file is chaff that almost always gets
-  // discarded at /memory-flush time. Raising the bar prunes the noise.
+  // discarded at /memory-sync time. Raising the bar prunes the noise.
   const pathSawWrite = new Set();
   const libQueries = []; // {library, topic}
   const intentCandidates = []; // {key, verbatim, role, source}
@@ -459,6 +459,6 @@ export function runMemoryStop({ transcript, pending, projectRoot }) {
   const total = priorCount + candidates.length;
   process.stderr.write(
     `memory_stop: appended ${candidates.length} candidate(s) to .claude/memory/_pending.md ` +
-    `(total pending: ${total}). Run /memory-flush to review.\n`
+    `(total pending: ${total}). Run /memory-sync to review.\n`
   );
 }

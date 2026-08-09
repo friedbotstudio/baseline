@@ -297,7 +297,7 @@ function lastUserPrompt(transcript) {
 
 // Distill the durable "what/why" into the pinned working-thread entry so it
 // survives /clear (Tier 3). Deterministic + cheap: workflow request, else the
-// last user prompt. The model backstop that enriches this lives at /memory-flush.
+// last user prompt. The model backstop that enriches this lives at /memory-sync.
 function distillWorkingThread({ transcript, projectDir, memDir, trigger }) {
   let slug = '';
   let request = '';

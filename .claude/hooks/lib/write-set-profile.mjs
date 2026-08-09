@@ -48,7 +48,11 @@ function matchesAnyGlob(path, globs) {
   return false;
 }
 
-function extractWriteSet(content) {
+// Exported for the same reason REF_WELL_FORMED is shared: a caller holding its
+// own copy is a caller that can drift. `spec/optimize.mjs` asks the same question
+// this guard asks — which paths does this spec claim to touch — and two parsers
+// answering it differently is how a spec passes one check and fails the other.
+export function extractWriteSet(content) {
   const paths = new Set();
   for (const line of content.split(/\r?\n/)) {
     // Accept the colon form (`write_set: ...`), the markdown-bold heading

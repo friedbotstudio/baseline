@@ -376,25 +376,9 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   const workflowJson = join(projectRoot, '.claude/state/workflow.json');
   const activeWorkflow = existsSync(workflowJson);
 
-  // #9: pending nag fires regardless of active-workflow state. The harness
-  // is harness-local and never blocks the commit path; this is an advisory.
-  // Framing differs per case so the right action is obvious:
-  //   - No workflow: candidates carried over from a prior abandoned workflow.
-  //   - Active workflow: candidates accumulated in the current session.
-  if (pendingCount > 0) {
-    const plural = pendingCount === 1 ? '' : 's';
-    if (activeWorkflow) {
-      lines.push(
-        `**${pendingCount} pending memory candidate${plural} accumulated this session** — ` +
-        'Phase 10.6 (`/memory-flush`) will flush before commit; curate early with `/memory-flush` if you want.'
-      );
-    } else {
-      lines.push(
-        `**${pendingCount} pending memory candidate${plural} carried over from a prior workflow** — ` +
-        'run `/memory-flush` to clear before starting new work.'
-      );
-    }
-  }
+  // The pending count is still reported in the index table above. It no longer
+  // produces a prompt: Phase 10.7 flushes inside every workflow, so a session-start
+  // nag told the reader about work the pipeline already does.
 
   // Pending upgrade stages
   let upgradePending = 0;

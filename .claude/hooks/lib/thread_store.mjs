@@ -5,7 +5,7 @@
 // switch-candidate. Pure filesystem + JSON; no model, no network. Best-effort
 // readers return null on absence/parse failure so callers (hooks) never throw.
 //
-// The trail survives `/memory-flush` by construction: `_thread.md` is NOT a
+// The trail survives `/memory-sync` by construction: `_thread.md` is NOT a
 // member of sweep.mjs CANONICAL_FILES and is not the _pending reset target.
 
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, renameSync } from 'node:fs';
@@ -18,7 +18,7 @@ const CANDIDATE_FILENAME = 'shelve_candidate.json';
 
 const TRAIL_HEADER = '# Conversation thread trail (local, gitignored)\n\n' +
   'Durable per-developer continuity narrative. Mechanically appended at shelve, ' +
-  'transformed at resume. Survives /memory-flush. Never committed.\n';
+  'transformed at resume. Survives /memory-sync. Never committed.\n';
 
 // Each shelved section embeds its entry object as JSON inside an HTML comment
 // so verbatim cues round-trip byte-identical (AC-7), with readable markdown
@@ -110,7 +110,7 @@ function parseSections(text) {
 // ---- trail file ----
 
 // Count cap on the rolling trail. One section is appended per shelve and the
-// trail is OUTSIDE /memory-flush's reset path by design, so without a cap it
+// trail is OUTSIDE /memory-sync's reset path by design, so without a cap it
 // grows unbounded. Only the most-recent section is ever injected at
 // SessionStart, so retaining the newest N bounds disk growth with no loss of
 // live continuity.
