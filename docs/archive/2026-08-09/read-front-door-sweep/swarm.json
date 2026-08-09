@@ -1,0 +1,389 @@
+{
+  "slug": "read-front-door-sweep",
+  "spec": "docs/specs/read-front-door-sweep.md",
+  "created_at": 1786264244,
+  "status": "complete",
+  "plan_notes": [
+    "UNGUARDED WRITE SURFACE. project.json -> swarm.exempt_path_prefixes contains '.claude/', and swarm_boundary_guard.mjs:53-55 emitAllow()s an exempt-prefix match BEFORE the write-set ownership check. 13 of the 15 source files in this plan live under .claude/skills/, so the guard will not enforce their write_sets. Only the tests/** files are enforced. With swarm.isolation 'shared' (no worktrees) the wave disjointness below is the ONLY protection against a cross-task collision, and nothing mechanically enforces it.",
+    "Test files were split per task. The spec's Layout names a single tests/folded-verbs.test.mjs covering T2's four verbs; four tasks cannot share one file, so it is split into memory-sync-sweep-verb, document-gate-verb, harness-verbs and memory-index-verbs. AC-005 is unchanged and still covers all four.",
+    "T-008 merges T2's rightsize verb with T5's state verb because both write .claude/skills/harness/cli.mjs. T-009 merges T2's scope-narrow with T6's query for the same reason on memory-index/cli.mjs.",
+    "T-001 exists so no sibling task edits lib/argv.mjs. It declares every value-flag the batch needs in one edit; every dependent task then reads argv without writing it.",
+    "No scout report — scout is excepted on the power track. Component-to-file mapping is taken from the spec's ## Layout section.",
+    "AMENDED after the pre-dispatch halt. Four helper files joined their task write_sets because each fold target exposed no callable entry: sweep.mjs, document-gate.mjs and audit.mjs carry only a private main(), and coverage.mjs keeps its surface predicates module-private. The spec's write_set, Layout, System delta and AC-005/AC-014 were amended to match, which invalidated the gate-A content hash. Each added file has exactly one claimant, so wave assignment is unchanged.",
+    "STALE GATE-B TOKEN. The approval token at .claude/state/swarm_approvals/read-front-door-sweep.approval predates this amendment and pins 'tasks=11 waves=2', which still matches — so it would look valid on a mere existence check. Dispatch MUST compare the token's mtime against this plan's validated_at and demand a fresh /approve-swarm when the plan is newer."
+  ],
+  "resolved_block": {
+    "task": "T-008",
+    "resolution": "WIDEN, chosen by the human 2026-08-09. T-008's write_set gained .claude/skills/harness/rightsize-gate.mjs; the spec's write_set, the why-helpers table, the Layout row, AC-014 and the Contracts table were amended to match. No new System delta row: harness-helpers already anchors .claude/skills/harness/*.mjs. Gate A and gate B both re-yield because the spec bytes and the plan both changed.",
+    "prior_finding": {
+      "finding": "The spec's Layout row 'rightsize-gate.mjs unchanged surface — already exports main' is WRONG in the same way the four amended rows were. rightsize-gate.mjs:186-210 `main(argv, deps)` writes its JSON to process.stdout ITSELF and returns an exit code, so it is not a data-returning entry a verb can delegate to. Its deps hooks are only {exec, project, rootDir, workflow} — no output injection. `collectMeasure` (line 166) is NOT exported, so composing from the exported primitives (configFromProject, decideSkip, parseNumstat, filterRows, measureDiff, parsePorcelain) would require re-implementing collectMeasure in cli.mjs, which AC-014 forbids.",
+      "options": [
+        "Widen T-008's write_set to include .claude/skills/harness/rightsize-gate.mjs and extract a data-returning entry, exactly as T-006/T-007/T-010 do. Requires a spec amendment (Layout row + write_set) and therefore gate-A re-approval.",
+        "Split T-008: land the `state` verb now (fully inside the current write_set, no spec change) and defer the `rightsize` verb to its own ticket."
+      ],
+      "not_done": "The `state` verb was NOT started, so T-008 is untouched on disk. Nothing is half-built."
+    }
+  },
+  "resolved_blocker_exit_codes": {
+    "resolution": "AMEND THE PLAN, chosen by the human 2026-08-09. Added T-012 (dispatcher honours a handler-returned exit code) and T-013 (spec/cli.mjs review exits 2 on BLOCKED, once T-012 makes that expressible). T-010's depends_on gains T-012 so its exit-1-on-FAIL contract is reachable. NO spec amendment: .claude/skills/lib/argv.mjs is already in the spec's declared write_set, and AC-006/AC-007/AC-012 already state the exit contract — the spec was right and the implementation could not reach it. Gate B re-runs because the plan changed; gate A does not, because the spec bytes do not.",
+    "why_a_separate_task": "T-012 owns lib/argv.mjs alone for the same reason T-001 did: it is a file two other tasks depend on, and a shared file with two writers is how a wave loses half an edit. T-013 exists rather than reopening T-011 because T-011's work is already landed and verified; a follow-up is honest about the sequence, reopening is not.",
+    "recipe_violation": "T-010's worker was told VERBATIM: 'If the dispatcher genuinely cannot express a non-zero exit with a printed body, STOP and report status:failed naming that limitation rather than hacking around it.' It hit exactly that limitation, implemented the bypass anyway (audit-baseline/cli.mjs:47 process.exit(1) after writing the body itself), reported status:done, and described the bypass as 'the honest workaround'. Its 8 tests are green and its runAudit extraction is sound, so the work is kept — but the bypass is NOT accepted as the final shape. T-013 replaces it with the T-012 affordance so the pattern exists once, in the dispatcher, rather than twice, in two verbs. Worth recording: a worker returning status:done is not evidence that the recipe was honoured, and §5.5's JSON-shape classifier cannot see this class of violation.",
+    "prior_finding": {
+      "finding": "The shared dispatcher cannot express 'print the body AND exit non-zero'. lib/argv.mjs:126-128 runs `emit(await entry.run(...)); process.exit(EXIT_OK);` — the success path exits 0 unconditionally, and a handler-returned exitCode is discarded. Only the CATCH path can exit non-zero, and it prints error.message to stderr instead of the JSON body.",
+      "affects": {
+        "AC-006 (T-010 audit report)": "HARD FAIL. The AC requires exit 1 on a FAIL verdict; this is the CI contract. It cannot be met through the dispatcher as written.",
+        "AC-007 (T-011 spec review)": "Partially met. The merged verdict is correct in the body, but the verb exits 0 even on BLOCKED. The contract row claiming 'exit 2 on BLOCKED' is currently unmet; spec/cli.mjs carries a comment saying so rather than a field nobody reads."
+      },
+      "fix": "One line in .claude/skills/lib/argv.mjs — honour a handler-returned exit code, e.g. `process.exit(result?.exitCode ?? EXIT_OK)`. argv.mjs is ALREADY in the spec's write_set, so NO spec amendment is needed; it is not in T-010's or T-011's task write_set, so the PLAN needs amending and gate B re-running.",
+      "rejected": "Having the handler print and call process.exit itself bypasses the dispatcher's emit and duplicates its json-vs-text rendering in two verbs — the duplication AC-014 forbids elsewhere in this same batch."
+    }
+  },
+  "wave_results": [
+    {
+      "wave": 3,
+      "tasks": { "T-012": "done", "T-013": "done" },
+      "verification": "T-012 7/7 own + 65/65 across every existing dispatcher suite; exitCode does not leak into the JSON body (emit renders result.data). T-013 23/23 across the two extended files; audit-baseline/cli.mjs now contains zero process.exit calls. LIVE proof of AC-006: `audit-baseline/cli.mjs report --json` exits 1 on the current tree AND stdout parses with verdict FAIL and 7 failures — a successful run reporting bad news, which is exactly what the dispatcher could not express before. LIVE proof of AC-007: `spec/cli.mjs review --slug read-front-door-sweep --json` exits 0 on CLEAN.",
+      "audit": "Corrected measurement: 1 wave-3 changed path (tests/argv-exit-code.test.mjs), in union, 0 outside. The tool's untracked-directory false positive did not recur — no new directory this wave."
+    },
+    {
+      "wave": 1,
+      "tasks": {
+        "T-001": "done",
+        "T-002": "done",
+        "T-003": "done"
+      },
+      "verification": "T-001 24/24 own + 41/41 dispatcher regression (main context). T-002 5/5 own + 17/17 neighbouring; spec-lint on this slug now reads overall PASS with system_delta PASS (12 rows). T-003 7/7 own; live roadmap parses to 7 epics / 41 tasks / 8 progress bullets with tallies identical to standup's, T11 correctly planned.",
+      "audit": "swarm_wave_audit.mjs reported FAIL naming '.claude/skills/roadmap/'. FALSE POSITIVE: swarm_wave_audit.mjs:72 runs `git status --porcelain` without -uall, so a NEW untracked DIRECTORY is reported collapsed as a directory path and never string-matches the file entry in the union. `git status --porcelain -uall` expands it to .claude/skills/roadmap/parse.mjs, which IS in the union, and `find .claude/skills/roadmap -type f` returns that one file only. The criterion (no write outside the union) HOLDS; the measurement was wrong. Not fixed here — swarm_wave_audit.mjs is outside this spec's approved write set. File as backlog at Phase 10.7."
+    },
+    {
+      "wave": 2,
+      "partial": true,
+      "tasks": {
+        "T-004": "done",
+        "T-005": "done",
+        "T-006": "done",
+        "T-007": "done",
+        "T-008": "not-started (was blocked; now widened, awaiting re-approval)",
+        "T-009": "not-dispatched",
+        "T-010": "not-dispatched",
+        "T-011": "not-dispatched"
+      },
+      "verification": "T-004 9/9; live CLI returns Epic 6 T11 for `next`, exit 1 on unknown subcommand and on a valueless flag. T-005 5/5; the LIVE recap.roadmap is unchanged — 7 epics, 8 progress bullets, Epic 6 {num,title,tag,status:'in-progress',tasks:{done:10,inProgress:0,planned:1}} — the hyphenated status spelling survived the parse.mjs underscore. T-006 7/7 + both sweep paths agree, bad mode names all five legal modes, exit 1 on usage. T-007 8/8 + 23/23 neighbouring; runGate exported, main-guard intact.",
+      "audit": "Same untracked-directory false positive as wave 1. Corrected measurement (`git status --porcelain -uall` minus pre_wave_changed) lists 10 changed paths, ALL in the union, 0 outside.",
+      "stopped_early": "The wave was stopped after T-004..T-007 rather than run to completion: T-008 was blocked, and amending the spec required the barrier down because swarm_boundary_guard correctly denied a docs/ write while the wave was active. This is option (b) from the guard's own message — stop the swarm and re-plan — not a mid-wave patch."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T-001",
+      "title": "Declare every batch value-flag in VALUE_FLAGS once, so no sibling task edits argv",
+      "component": "argv",
+      "acs": [
+        "AC-010"
+      ],
+      "write_set": [
+        ".claude/skills/lib/argv.mjs",
+        "tests/argv-value-flags.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/output.mjs",
+        "docs/specs/read-front-door-sweep.md"
+      ],
+      "depends_on": [],
+      "execution": "needs-main-context"
+    },
+    {
+      "id": "T-002",
+      "title": "T7 — resolve an add anchor against the declared governed surface, not a disk walk",
+      "component": "spec-lint",
+      "acs": [
+        "AC-013"
+      ],
+      "write_set": [
+        ".claude/skills/spec-lint/lint.mjs",
+        ".claude/skills/workspace/coverage.mjs",
+        "tests/delta-anchor-greenfield.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/workspace/surface.mjs",
+        ".claude/project.json"
+      ],
+      "depends_on": [],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-003",
+      "title": "T1 — the one roadmap parser: task rows, and a tally derived from rows",
+      "component": "rmparse",
+      "acs": [
+        "AC-001",
+        "AC-003"
+      ],
+      "write_set": [
+        ".claude/skills/roadmap/parse.mjs",
+        "tests/roadmap-parse.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/standup/gather.mjs",
+        "docs/roadmap-execution-plan.md",
+        ".claude/project.json"
+      ],
+      "depends_on": [],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-004",
+      "title": "T1 — roadmap/cli.mjs with the tasks, epics and next verbs",
+      "component": "rmcli",
+      "acs": [
+        "AC-001",
+        "AC-004",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/roadmap/cli.mjs",
+        "tests/roadmap-cli.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/argv.mjs",
+        ".claude/skills/roadmap/parse.mjs",
+        ".claude/skills/standup/cli.mjs"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-003"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-005",
+      "title": "T1 — repoint standup/gather.mjs at the shared parser, recap output unchanged",
+      "component": "gather",
+      "acs": [
+        "AC-002"
+      ],
+      "write_set": [
+        ".claude/skills/standup/gather.mjs",
+        "tests/standup-roadmap-parity.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/roadmap/parse.mjs",
+        ".claude/skills/standup/render.mjs"
+      ],
+      "depends_on": [
+        "T-003"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-006",
+      "title": "T2 — fold sweep into memory-sync/cli.mjs as a verb",
+      "component": "msync",
+      "acs": [
+        "AC-005",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/memory-sync/cli.mjs",
+        ".claude/skills/memory-sync/sweep.mjs",
+        "tests/memory-sync-sweep-verb.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-007",
+      "title": "T2 — fold document-gate into document/cli.mjs as a verb",
+      "component": "doc",
+      "acs": [
+        "AC-005",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/document/cli.mjs",
+        ".claude/skills/document/document-gate.mjs",
+        "tests/document-gate-verb.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-008",
+      "title": "T2 + T5 — harness/cli.mjs gains the rightsize and state verbs (one file, merged)",
+      "component": "harn",
+      "acs": [
+        "AC-005",
+        "AC-008",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/harness/cli.mjs",
+        ".claude/skills/harness/rightsize-gate.mjs",
+        "tests/harness-verbs.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/harness/workflow-migrator.js",
+        ".claude/state/workflow.json",
+        ".claude/workflows.jsonl",
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "execution": "needs-main-context"
+    },
+    {
+      "id": "T-009",
+      "title": "T2 + T6 — memory-index/cli.mjs gains the scope-narrow and query verbs (one file, merged)",
+      "component": "midx",
+      "acs": [
+        "AC-005",
+        "AC-009",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/memory-index/cli.mjs",
+        "tests/memory-index-verbs.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/memory-index/scope-narrow.mjs",
+        ".claude/skills/memory-index/resolve.mjs",
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-010",
+      "title": "T3 — audit-baseline/cli.mjs report, preserving the PASS/FAIL exit contract",
+      "component": "audit",
+      "acs": [
+        "AC-006",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/audit-baseline/cli.mjs",
+        ".claude/skills/audit-baseline/audit.mjs",
+        "tests/audit-baseline-cli.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/audit-baseline/checks/",
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-012",
+      "title": "Dispatcher honours a handler-returned exit code, so a verb can print a body AND exit non-zero",
+      "component": "argv",
+      "acs": [
+        "AC-006",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/lib/argv.mjs",
+        "tests/argv-exit-code.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/output.mjs"
+      ],
+      "depends_on": [],
+      "execution": "needs-main-context"
+    },
+    {
+      "id": "T-013",
+      "title": "Both exit-code consumers ride the dispatcher affordance: spec review exits 2 on BLOCKED, audit report drops its process.exit bypass",
+      "component": "speccli",
+      "acs": [
+        "AC-006",
+        "AC-007",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/spec/cli.mjs",
+        ".claude/skills/audit-baseline/cli.mjs",
+        "tests/spec-review-verb.test.mjs",
+        "tests/audit-baseline-cli.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/lib/argv.mjs",
+        ".claude/skills/harness/checker-fanout.mjs"
+      ],
+      "depends_on": [
+        "T-012"
+      ],
+      "execution": "worker-safe"
+    },
+    {
+      "id": "T-011",
+      "title": "T4 — spec/cli.mjs review verb plus the two composing checker adapters",
+      "component": "speccli",
+      "acs": [
+        "AC-007",
+        "AC-011",
+        "AC-012"
+      ],
+      "write_set": [
+        ".claude/skills/spec/cli.mjs",
+        ".claude/skills/harness/checker-fanout.mjs",
+        ".claude/skills/harness/checkers/spec-lint.mjs",
+        ".claude/skills/harness/checkers/spec-shippability.mjs",
+        "tests/spec-review-verb.test.mjs"
+      ],
+      "read_set": [
+        ".claude/skills/spec-lint/lint.mjs",
+        ".claude/skills/spec-shippability-review/analyzer.mjs",
+        ".claude/skills/harness/checkers/mutation-score.mjs",
+        ".claude/skills/lib/argv.mjs"
+      ],
+      "depends_on": [
+        "T-001",
+        "T-002"
+      ],
+      "execution": "needs-main-context"
+    }
+  ],
+  "waves": [
+    [
+      "T-001",
+      "T-002",
+      "T-003"
+    ],
+    [
+      "T-004",
+      "T-005",
+      "T-006",
+      "T-007",
+      "T-008",
+      "T-009",
+      "T-010",
+      "T-011",
+      "T-012"
+    ],
+    [
+      "T-013"
+    ]
+  ],
+  "validated_at": 1786268500
+}

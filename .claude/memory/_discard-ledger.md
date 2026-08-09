@@ -111,3 +111,9 @@
 - discarded :: .claude/skills/spec/optimize.mjs → landmarks.md
 - discarded :: .claude/skills/standup/render.mjs → landmarks.md
 - promoted :: .claude/skills/spec/optimize.mjs → landmarks.md
+- discarded :: backlog → the-plan-is-already-post-amendment-and-validated-100b
+- promoted :: backlog → one-non-blocking-observation-roadmaptask-title-and-body-e6ea
+- discarded :: .claude/skills/harness/checkers/spec-lint.mjs → landmarks.md
+- promoted :: .claude/skills/harness/checkers/spec-shippability.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-one-line-have-dispatch-honour-7d29
+- discarded :: backlog → the-fix-is-one-fixture-in-a-file-b200

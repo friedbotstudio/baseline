@@ -1,4 +1,4 @@
 !startsub spec_review_helpers
 ' @kind c4_component
-Component(spec_review_helpers, ".claude/skills/spec-*/*.mjs", "subsystem", "Spec review oracles (lint, diagram, traceability, rollout, shippability, render)")
+Component(spec_review_helpers, "spec-review-helpers", "c4_component")
 !endsub

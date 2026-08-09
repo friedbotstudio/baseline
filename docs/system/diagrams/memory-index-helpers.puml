@@ -1,4 +1,4 @@
 !startsub memory_index_helpers
-' @kind class
-Component(memory_index_helpers, "memory-index-helpers", "class")
+' @kind c4_component
+Component(memory_index_helpers, "memory-index-helpers", "c4_component")
 !endsub

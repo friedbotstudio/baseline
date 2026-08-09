@@ -1,4 +1,4 @@
 !startsub skill_probe_lib
 ' @kind c4_component
-Component(skill_probe_lib, ".claude/skills/lib/*.mjs", "subsystem", "Shared skill probe library")
+Component(skill_probe_lib, "skill-probe-lib", "c4_component")
 !endsub

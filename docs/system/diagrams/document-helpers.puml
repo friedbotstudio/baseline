@@ -1,4 +1,4 @@
 !startsub document_helpers
 ' @kind c4_component
-Component(document_helpers, ".claude/skills/document/*.mjs", "subsystem", "Document phase gate and receipts")
+Component(document_helpers, "document-helpers", "c4_component")
 !endsub
