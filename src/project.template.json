@@ -139,6 +139,7 @@
       "spec": [
         "Goal",
         "Design",
+        "Program design",
         "Design calls",
         "Acceptance criteria",
         "Test plan"
@@ -218,7 +219,7 @@
   "swarm": {
     "max_parallel": 4,
     "granularity": "component",
-    "min_tasks_worth_swarming": 3,
+    "min_tasks_worth_swarming": 1,
     "isolation": "shared",
     "refuse_dirty_tree": false,
     "exempt_path_prefixes": [

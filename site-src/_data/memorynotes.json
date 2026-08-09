@@ -35,7 +35,7 @@
     "key": "Q-NNN"
   },
   "backlog": {
-    "owner": "/memory-flush",
+    "owner": "/memory-sync",
     "holds": "Future work, picked up from what you and Claude said you would come back to.",
     "key": "slug plus a 4-character hash"
   }
