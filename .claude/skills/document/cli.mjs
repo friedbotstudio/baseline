@@ -6,14 +6,16 @@
 // refuses a bulk form, and it reports whether it actually recorded anything rather
 // than exiting 0 either way.
 //
-// `document-gate.mjs` gets no subcommand. It is invoked by the harness, not by a
-// SOP procedure, so it has no inline-import call site to replace — and adding a
-// front door nobody walks through is the scaffold VI.4 forbids.
+// `document-gate.mjs` keeps its own front door too (the harness invokes it
+// directly, not through a SOP procedure) — `gate` below is an added caller, not a
+// moved one, per the read-front-door sweep (§Behavior #5).
 
 import { dispatch, lines, requireValue, refuseBulk, UsageError } from '../lib/argv.mjs';
 import { assertNoTraversal } from '../workspace/tree.mjs';
+import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { recordReceipt, readReceipts } from './receipts.mjs';
 import { findDescribedSurfaces } from './public-site-reflect.mjs';
+import { runGate } from './document-gate.mjs';
 
 function changedPaths(flags) {
   const raw = flags.touched;
@@ -53,6 +55,30 @@ function surfaces({ flags, root }) {
   };
 }
 
+// `--touched` omitted means "derive from git", matching document-gate.mjs's own
+// direct-path default (`--paths` omitted). An explicit but empty `--touched`
+// resolves to an empty array rather than `undefined`, so it means "nothing
+// changed" here — a caller that wants git-derived paths simply omits the flag.
+function gate({ flags, root }) {
+  const slug = requireValue(flags, 'slug');
+  assertSafeSlug(slug, 'document gate');
+  const raw = flags.touched;
+  const paths = raw === undefined || raw === true
+    ? undefined
+    : String(raw).split(',').map((p) => p.trim()).filter(Boolean).map((p) => assertNoTraversal(p));
+
+  const result = runGate({ slug, paths, rootDir: root });
+  return {
+    data: result,
+    text: lines(result.ok
+      ? [`document-gate: ${result.required.length} surface(s) checked — CLEAN`]
+      : [
+        'document-gate: BLOCKED — required delegate(s) left no receipt',
+        ...result.missing.map((gap) => `  ${gap.surface}  ->  missing: ${gap.delegate}`),
+      ]),
+  };
+}
+
 function receipts({ flags, root }) {
   const slug = requireValue(flags, 'slug');
   const state = readReceipts({ slug, rootDir: root });
@@ -70,5 +96,6 @@ dispatch({
     receipt: { summary: 'record a delegate receipt for a documented surface (writes)', run: receipt },
     receipts: { summary: 'the receipts recorded so far for a slug', run: receipts },
     surfaces: { summary: 'described site surfaces reflecting --touched paths', run: surfaces },
+    gate: { summary: 'required and missing delegates for a slug, and whether the gate passes', run: gate },
   },
 });

@@ -42,6 +42,27 @@ export function governedFiles({ rootDir = process.cwd() } = {}) {
   );
 }
 
+// anchorSurfaceVerdict tests an anchor against the DECLARED governed surface —
+// roots / codeExtensions / excludedTrees from project.json — never the filesystem.
+// governedFiles (above) is a disk walk and is right for coverage questions ("what
+// governed code exists"); it is wrong for a delta row that DECLARES a not-yet-built
+// element, where a greenfield directory would match nothing and no new element
+// could ever be declared before its code exists. The three predicates
+// (underGovernedRoot / isCode / isExcluded) stay module-private; this composed
+// verdict is the only exported surface, so a caller cannot drift from their order.
+export function anchorSurfaceVerdict(anchor, { rootDir = process.cwd() } = {}) {
+  const surface = resolveGovernedSurface({ rootDir });
+  const path = String(anchor);
+  if (!underGovernedRoot(path, surface)) return { ok: false, reason: 'outside-root' };
+  if (!isCode(path, surface)) return { ok: false, reason: 'undeclared-extension' };
+  if (isExcluded(path, surface)) return { ok: false, reason: 'excluded' };
+  return { ok: true, reason: null };
+}
+
+export function anchorInGovernedSurface(anchor, { rootDir = process.cwd() } = {}) {
+  return anchorSurfaceVerdict(anchor, { rootDir }).ok;
+}
+
 export function findGaps({ specDir, rootDir = process.cwd() } = {}) {
   const anchors = readAll(specDir).elements.map((element) => element.anchor).filter(Boolean);
   if (!anchors.length) return [];

@@ -10,6 +10,14 @@
 // Reports each check as PASS / FAIL / WARN with a short detail. Exits 0 on a
 // clean audit, 1 if any FAIL. Read-only; safe to run any time, in CI, or as
 // the final step of /init-project.
+//
+// `runAudit({rootDir})` is the programmatic entry point: it runs the same
+// checks and RETURNS `{verdict, checks, failures}` as data rather than
+// printing and exiting. cli.mjs's `report` verb is the only other caller —
+// it renders the same table and owns the CI exit-code contract (§Behavior #6:
+// exit 1 on a FAIL verdict). The IS_MAIN block below is the historical
+// `node audit.mjs` entry point; it now delegates to runAudit too, so there is
+// exactly one place the checks actually run.
 
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -47,50 +55,75 @@ const IS_MAIN = (() => {
   catch { return import.meta.url === pathToFileURL(process.argv[1]).href; }
 })();
 
-const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-
-let SCOPE_FILE = '';
-// --skip-hash-check suppresses ONLY the per-file sha256 re-hash of manifest-listed
-// skill files (build-internal Stage-4 invocation, where the manifest was just
-// stamped from the same source). The standalone verify/integrate audit runs
-// WITHOUT this flag and keeps full hash-drift detection.
-let SKIP_HASH_CHECK = false;
-for (const arg of process.argv.slice(2)) {
-  if (arg.startsWith('--file=')) SCOPE_FILE = arg.slice('--file='.length);
-  else if (arg === '--skip-hash-check') SKIP_HASH_CHECK = true;
-}
-
-if (SCOPE_FILE) {
-  const inScope = (
-    SCOPE_FILE.startsWith('.claude/') ||
-    SCOPE_FILE === 'CLAUDE.md' || SCOPE_FILE === 'README.md' ||
-    SCOPE_FILE === 'docs/init/seed.md' ||
-    SCOPE_FILE === 'src/CLAUDE.template.md' || SCOPE_FILE === 'src/seed.template.md' ||
-    SCOPE_FILE === 'src/settings.template.json' || SCOPE_FILE === 'src/project.template.json' ||
-    SCOPE_FILE.startsWith('src/agents/') || SCOPE_FILE.startsWith('src/memory/') ||
-    SCOPE_FILE === 'src/.mcp.template.json' || SCOPE_FILE.startsWith('obj/template/') ||
-    SCOPE_FILE === 'scripts/build-manifest.mjs' || SCOPE_FILE === 'scripts/build-template.sh'
-  );
-  if (!inScope) {
-    process.stdout.write(`audit-baseline: ${SCOPE_FILE} is out of baseline scope (no checks affected)\n`);
-    process.exit(0);
-  }
-}
-
-const ctx = buildContext({ root: ROOT, skipHashCheck: SKIP_HASH_CHECK });
 const CHECKS = [
   counts, skillOwnership, constitution, memory, srcTemplatesA, srcTemplatesB,
   helperScripts, settingsWiring, projectJson, mcpServers, licenses, designUiSurface,
   crossDocCounts, quickfixInvariants, derivedCountSurfaces, docsiteDrift,
   hookDecisionPaths,
 ];
-const results = [];
-for (const check of CHECKS) results.push(...check(ctx));
+
+// The programmatic entry point. Builds the context, runs every check, and
+// returns data — it never writes to stdout/stderr and never calls
+// process.exit. `rootDir` defaults the same way the script path always has
+// (CLAUDE_PROJECT_DIR, then cwd) so a bare `runAudit()` behaves like `node
+// audit.mjs` did. A context-build or check-module throw is caught and folded
+// into a FAIL verdict rather than propagating — the contract is "never
+// throws" so a caller (the CI dispatcher) can always render a result.
+export function runAudit({ rootDir, skipHashCheck = false } = {}) {
+  const root = rootDir || process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  try {
+    const ctx = buildContext({ root, skipHashCheck });
+    const checks = [];
+    for (const check of CHECKS) checks.push(...check(ctx));
+    const failures = checks.filter(([, status]) => status === 'FAIL');
+    return { verdict: failures.length > 0 ? 'FAIL' : 'PASS', checks, failures };
+  } catch (err) {
+    const detail = err && err.message ? err.message : String(err);
+    return {
+      verdict: 'FAIL',
+      checks: [['audit-error', 'FAIL', detail]],
+      failures: [['audit-error', 'FAIL', detail]],
+    };
+  }
+}
 
 // ---------- output ----------
-// Guarded: only when run as a script. When imported (by a test) the re-exported
-// helpers are available without printing the table or calling process.exit.
+// Guarded: only when run as a script (`node audit.mjs`). When imported (by a
+// test, or by cli.mjs) nothing runs and nothing prints — the caller gets
+// `runAudit` and decides what to do with it.
 if (IS_MAIN) {
+  const ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+
+  let SCOPE_FILE = '';
+  // --skip-hash-check suppresses ONLY the per-file sha256 re-hash of manifest-listed
+  // skill files (build-internal Stage-4 invocation, where the manifest was just
+  // stamped from the same source). The standalone verify/integrate audit runs
+  // WITHOUT this flag and keeps full hash-drift detection.
+  let SKIP_HASH_CHECK = false;
+  for (const arg of process.argv.slice(2)) {
+    if (arg.startsWith('--file=')) SCOPE_FILE = arg.slice('--file='.length);
+    else if (arg === '--skip-hash-check') SKIP_HASH_CHECK = true;
+  }
+
+  if (SCOPE_FILE) {
+    const inScope = (
+      SCOPE_FILE.startsWith('.claude/') ||
+      SCOPE_FILE === 'CLAUDE.md' || SCOPE_FILE === 'README.md' ||
+      SCOPE_FILE === 'docs/init/seed.md' ||
+      SCOPE_FILE === 'src/CLAUDE.template.md' || SCOPE_FILE === 'src/seed.template.md' ||
+      SCOPE_FILE === 'src/settings.template.json' || SCOPE_FILE === 'src/project.template.json' ||
+      SCOPE_FILE.startsWith('src/agents/') || SCOPE_FILE.startsWith('src/memory/') ||
+      SCOPE_FILE === 'src/.mcp.template.json' || SCOPE_FILE.startsWith('obj/template/') ||
+      SCOPE_FILE === 'scripts/build-manifest.mjs' || SCOPE_FILE === 'scripts/build-template.sh'
+    );
+    if (!inScope) {
+      process.stdout.write(`audit-baseline: ${SCOPE_FILE} is out of baseline scope (no checks affected)\n`);
+      process.exit(0);
+    }
+  }
+
+  const { checks: results } = runAudit({ rootDir: ROOT, skipHashCheck: SKIP_HASH_CHECK });
+
   const nameW = Math.max(20, ...results.map(r => r[0].length));
   let failN = 0, warnN = 0;
   for (const [, s] of results) { if (s === 'FAIL') failN++; else if (s === 'WARN') warnN++; }

@@ -11,7 +11,7 @@ import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from '../../hooks
 import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.mjs';
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseDelta } from '../workspace/delta.mjs';
-import { anchorMatches, governedFiles } from '../workspace/coverage.mjs';
+import { anchorSurfaceVerdict } from '../workspace/coverage.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -244,19 +244,28 @@ export function checkSystemDelta(spec, pj, root) {
     : ['FAIL', defects.join('; ')];
 }
 
-// governedFiles walks the tree, so it is resolved once per check and only when an
-// `add` row actually needs it.
+// AC-013: an `add` row declares an element that may not exist on disk yet, so it
+// resolves against the DECLARED governed surface (anchorSurfaceVerdict), never a
+// disk walk — a greenfield directory would otherwise match nothing and no new
+// element could ever be declared before its code exists.
 function deltaRowDefects(rows, root) {
   const isAdd = (row) => row.verb.toLowerCase() === 'add';
-  const governed = rows.some(isAdd) ? governedFiles({ rootDir: root }) : [];
   return rows.flatMap((row) => (isAdd(row)
-    ? anchorDefects(row, governed)
+    ? anchorDefects(row, root)
     : elementDefects(row, root)));
 }
 
-function anchorDefects(row, governed) {
-  if (governed.some((path) => anchorMatches(row.anchor, path))) return [];
-  return [`add row ${row.elementId}: anchor ${row.anchor} falls outside the governed surface`];
+const ANCHOR_FAIL_REASONS = {
+  'outside-root': 'falls outside every declared governed root',
+  'undeclared-extension': 'has an extension that is not a declared code extension',
+  excluded: 'falls under a declared excluded segment or tree',
+};
+
+function anchorDefects(row, root) {
+  const verdict = anchorSurfaceVerdict(row.anchor, { rootDir: root });
+  if (verdict.ok) return [];
+  const detail = ANCHOR_FAIL_REASONS[verdict.reason] || 'does not satisfy the governed-surface declaration';
+  return [`add row ${row.elementId}: anchor ${row.anchor} ${detail}`];
 }
 
 function elementDefects(row, root) {

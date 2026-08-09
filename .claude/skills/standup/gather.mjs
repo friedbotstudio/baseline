@@ -14,6 +14,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { resolveCategory } from '../memory-index/lift-fields.mjs';
+import { parseRoadmap } from '../roadmap/parse.mjs';
 
 // ---- Orchestration -----------------------------------------------------
 
@@ -37,9 +38,10 @@ export async function gather(opts = {}) {
 
 // ---- Domain: release model (policy) ------------------------------------
 // The declared release POLICY (project.json → release), distinct from the release
-// MECHANISM in collectRelease (git tags + .releaserc rules). Lenient read mirroring
-// roadmapPathFor: any absence — no config, no `release` key, malformed json — yields
-// null + a `no-release-model` degraded marker, never a throw. The regime-aware
+// MECHANISM in collectRelease (git tags + .releaserc rules). Lenient read, same
+// discipline as the roadmap plan's path resolution: any absence — no config, no
+// `release` key, malformed json — yields null + a `no-release-model` degraded
+// marker, never a throw. The regime-aware
 // recommendation is reasoned in main context (/standup SKILL, Article II); this only
 // surfaces the config.
 export function collectReleaseModel(rootDir, degraded) {
@@ -170,92 +172,35 @@ function collectPendingQuestions(rootDir, degraded) {
 
 // ---- Domain: roadmap execution plan ------------------------------------
 
-// Reads the project's execution roadmap (project.json → roadmap.path, default
-// docs/roadmap-execution-plan.md) — the epic-by-epic delivery tracker. Returns the
-// epic list (number/title/tag/status + per-task tallies) and the Progress summary
-// bullets. Status is read from the heading emoji legend (✅ done · 🟡 in progress ·
-// ⬜ planned); per-task tallies count the same emojis across the epic's bodies. This
-// is the machine-readable signal sprint-planner reads to compute per-task readiness
-// and roadmap-sync writes back to; fail-soft — a missing plan degrades, never throws.
+// Delegates the actual read + parse to roadmap/parse.mjs (the typed, row-tally
+// front door) and projects its RoadmapPlan into the recap's OWN pre-existing
+// shape: `tasks` here is the {done,inProgress,planned} tally object (parse.mjs
+// calls that `tally` and reserves `tasks` for the parsed row array — the row
+// array never leaves this projection), and epic status keeps the recap's own
+// hyphenated spelling ('in-progress') rather than parse.mjs's Status enum
+// spelling ('in_progress'). Fail-soft — a missing plan degrades, never throws.
 function collectRoadmap(rootDir, degraded) {
-  const raw = readFileSafe(join(rootDir, roadmapPathFor(rootDir)));
-  if (raw === null) {
+  const plan = parseRoadmap(rootDir);
+  if (plan === null) {
     degraded.push('no-roadmap-plan');
     return null;
   }
-  const epics = [];
-  let progress = [];
-  for (const { key, block } of parseEntries(raw)) {
-    const epic = parseEpicHeading(key);
-    if (epic) epics.push({ ...epic, tasks: countTaskStatuses(block) });
-    else if (/^Progress\b/.test(key)) progress = bulletLines(block);
-  }
-  return { epics, progress };
+  const epics = plan.epics.map((epic) => ({
+    num: epic.num,
+    title: epic.title,
+    tag: epic.tag,
+    status: recapStatus(epic.status),
+    tasks: epic.tally,
+  }));
+  return { epics, progress: plan.progress };
 }
 
-// project.json → roadmap.path, resolved leniently; falls back to the baseline default.
-function roadmapPathFor(rootDir) {
-  const raw = readFileSafe(join(rootDir, '.claude/project.json'));
-  if (raw) {
-    try {
-      const cfg = JSON.parse(raw);
-      const p = cfg && cfg.roadmap && cfg.roadmap.path;
-      if (typeof p === 'string' && p.trim()) return p.trim();
-    } catch {
-      /* fall through to default */
-    }
-  }
-  return 'docs/roadmap-execution-plan.md';
-}
-
-// Epic headings: `## Epic N — Title <emoji> (tag)`. The optional parenthetical is
-// captured as `tag` and stripped from the title.
-function parseEpicHeading(heading) {
-  const m = /^Epic\s+(\d+)\s+—\s+(.+)$/.exec(heading);
-  if (!m) return null;
-  const rest = m[2];
-  const tag = field(rest, /\(([^)]*)\)/);
-  const title = rest
-    .replace(/\s*(?:✅|🟡|⬜).*$/u, '')
-    .replace(/\s*\(.*$/, '')
-    .trim();
-  return { num: Number(m[1]), title, tag: tag ? tag.trim() : null, status: statusFromEmoji(rest) };
-}
-
-function countTaskStatuses(block) {
-  const body = block.slice(block.indexOf('\n') + 1); // drop the heading line (its emoji is the epic status)
-  return {
-    done: occurrences(body, '✅'),
-    inProgress: occurrences(body, '🟡'),
-    planned: occurrences(body, '⬜'),
-  };
-}
-
-const STATUS_BY_EMOJI = [
-  ['✅', 'done'],
-  ['🟡', 'in-progress'],
-  ['⬜', 'planned'],
-];
-
-function statusFromEmoji(text) {
-  let best = { status: 'unknown', at: Infinity };
-  for (const [emoji, status] of STATUS_BY_EMOJI) {
-    const at = text.indexOf(emoji);
-    if (at !== -1 && at < best.at) best = { status, at };
-  }
-  return best.status;
-}
-
-function occurrences(text, sub) {
-  return text.split(sub).length - 1;
-}
-
-function bulletLines(block) {
-  return block
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.startsWith('- '))
-    .map((l) => l.slice(2).replace(/\*\*/g, '').trim());
+// parse.mjs's Status enum spells the in-progress state with an underscore
+// ('in_progress'); the recap has always spelled it with a hyphen
+// ('in-progress'). Every other status spelling ('done', 'planned', 'unknown')
+// is shared verbatim between the two, so only that one state needs mapping.
+function recapStatus(status) {
+  return status === 'in_progress' ? 'in-progress' : status;
 }
 
 // ---- Foundation: release rules + commit classification -----------------

@@ -183,31 +183,62 @@ function collectMeasure(rootDir, exec, { testGlobs = [], basePaths = [] } = {}) 
   return measureDiff(rows);
 }
 
-export async function main(argv, deps = {}) {
-  const failOpen = () => {
-    process.stdout.write(JSON.stringify({ skip: [], keep: [...CANDIDATE_PHASES], advisories: [] }) + '\n');
-    return 0;
-  };
+// The fail-open decision, as DATA. Named once because three call sites need the
+// same value and one of them (runRightsize) must not print it.
+function failOpenDecision() {
+  return { skip: [], keep: [...CANDIDATE_PHASES], advisories: [] };
+}
+
+// The data-returning entry a dispatcher verb can delegate to.
+//
+// `main` below already existed and is exported, but it WRITES its JSON to
+// process.stdout and returns an exit code — so a `cli.mjs` verb calling it would
+// put the helper's document and the dispatcher's document on stdout together and
+// break the "--json emits JSON only" contract. Exporting something named `main` is
+// not the same as exposing a callable entry; this is that entry.
+//
+// The fail-open posture is preserved exactly: any throw yields the empty decision
+// rather than propagating, because a gate that errors must never be read as
+// permission to skip a phase.
+export async function runRightsize({ sub, rootDir = process.cwd(), deps = {} } = {}) {
   try {
-    const [sub] = argv;
-    const rootDir = deps.rootDir || process.cwd();
     const exec = deps.exec || ((cmd, args) =>
       execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
 
-    if (sub === 'baseline') return runBaseline(rootDir, exec, deps);
-    if (sub !== 'check') return failOpen();
+    if (sub === 'baseline') {
+      const workflow = readWorkflow(rootDir, deps);
+      const applied = applyBaseline(workflow, captureBaseline({ rootDir, exec }));
+      const changed = applied !== workflow;
+      if (changed && !deps.workflow) {
+        writeFileSync(workflowPath(rootDir), JSON.stringify(applied, null, 2) + '\n');
+      }
+      return { baseline: { applied: changed, paths: applied.rightsize_base ?? [] } };
+    }
+
+    if (sub !== 'check') return failOpenDecision();
 
     const config = configFromProject(deps.project ?? readProject(rootDir));
     const securityRunning = !((deps.workflow?.exceptions) || []).includes('security');
     const basePaths = readWorkflow(rootDir, deps).rightsize_base ?? [];
 
     const measure = collectMeasure(rootDir, exec, { testGlobs: config.test_globs, basePaths });
-    const decision = decideSkip({ measure, config, securityRunning });
-    process.stdout.write(JSON.stringify({ ...decision, measured: measure }) + '\n');
-    return 0;
+    return { ...decideSkip({ measure, config, securityRunning }), measured: measure };
   } catch {
-    return failOpen();
+    return failOpenDecision();
   }
+}
+
+// The CLI entry. Unchanged in behavior: `baseline` prints nothing, `check` prints
+// the decision, anything else prints the fail-open decision, and every path exits
+// 0. It now renders what `runRightsize` computes instead of computing inline.
+export async function main(argv, deps = {}) {
+  const [sub] = argv;
+  const rootDir = deps.rootDir || process.cwd();
+  const result = await runRightsize({ sub, rootDir, deps });
+
+  if (sub === 'baseline') return 0;
+  process.stdout.write(JSON.stringify(result) + '\n');
+  return 0;
 }
 
 function workflowPath(rootDir) {
@@ -232,22 +263,6 @@ function readWorkflow(rootDir, deps) {
     return JSON.parse(readFileSync(workflowPath(rootDir), 'utf8'));
   } catch {
     return {};
-  }
-}
-
-// D2 first-arm capture: record the start-of-workflow dirty/untracked path set
-// into workflow.json → rightsize_base, but only when the field is absent. Any
-// failure is swallowed — the gate stays fail-open.
-function runBaseline(rootDir, exec, deps) {
-  try {
-    const workflow = readWorkflow(rootDir, deps);
-    const applied = applyBaseline(workflow, captureBaseline({ rootDir, exec }));
-    if (applied !== workflow && !deps.workflow) {
-      writeFileSync(workflowPath(rootDir), JSON.stringify(applied, null, 2) + '\n');
-    }
-    return 0;
-  } catch {
-    return 0;
   }
 }
 

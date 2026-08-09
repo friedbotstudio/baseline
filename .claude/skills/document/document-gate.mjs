@@ -140,13 +140,60 @@ function unquoteGitPath(raw) {
 // `-uall` is load-bearing: plain `--porcelain` collapses an untracked directory to a
 // single `?? docs/` entry, so a brand-new documentation directory is invisible to
 // every glob and the gate passes without ever seeing the pages.
-function changedPathsFromGit() {
-  const res = spawnSync('git', ['-C', ROOT, 'status', '--porcelain', '-uall'], { encoding: 'utf8' });
+//
+// `rootDir` is a parameter (not the module-scoped ROOT) so `runGate` behaves the
+// same whether it is invoked by `main()`'s direct path (which pins ROOT from
+// CLAUDE_PROJECT_DIR at import time) or by an in-process caller such as the
+// `document gate` verb, which resolves its root from `--root`/cwd per invocation.
+function changedPathsFromGit(rootDir = ROOT) {
+  const res = spawnSync('git', ['-C', rootDir, 'status', '--porcelain', '-uall'], { encoding: 'utf8' });
   if (res.status !== 0) return [];
   return res.stdout
     .split('\n')
     .filter(Boolean)
     .map((l) => unquoteGitPath(l.slice(3).replace(/^.* -> /, '').trim()));
+}
+
+// The core gate computation, extracted so a caller other than this file's own CLI
+// can ask "what's required, what's missing, is it clean" as DATA rather than by
+// spawning a process and parsing an exit code. Never throws: every failure mode
+// (no surfaces configured, a malformed surface declaration, a malformed receipt
+// file) resolves to a `{required, missing, ok}` shape rather than an exception —
+// slug SAFETY validation stays the caller's job (main() and the `document gate`
+// verb each validate their own `--slug` before it reaches here), because that is
+// argv-shaped, not gate-shaped.
+export function runGate({ slug, paths = null, rootDir = ROOT } = {}) {
+  const surfaces = readJson(join(rootDir, '.claude/project.json'), {})?.document?.surfaces;
+  if (!Array.isArray(surfaces) || surfaces.length === 0) {
+    return { required: [], missing: [], ok: true };
+  }
+
+  const changedPaths = paths ?? changedPathsFromGit(rootDir);
+
+  let required;
+  try {
+    required = requiredDelegates({ changedPaths, surfaces });
+  } catch {
+    // A malformed surface declaration (a `requires`-less row) proves nothing about
+    // receipts either way. runGate's contract is "never throw", so this resolves
+    // to BLOCKED-with-nothing-known rather than propagating the config error.
+    return { required: [], missing: [], ok: false };
+  }
+  if (required.length === 0) {
+    return { required: [], missing: [], ok: true };
+  }
+
+  // A malformed receipt file proves nothing, so it BLOCKS. Previously a non-array
+  // `receipts` threw an uncaught TypeError — fail-closed by accident rather than by
+  // design. Here it resolves to "every required delegate is unproven".
+  const state = readJson(join(rootDir, '.claude/state/document', `${slug}.json`), { receipts: [] });
+  if (state.receipts !== undefined && !Array.isArray(state.receipts)) {
+    const missing = required.flatMap((row) => row.requires.map((delegate) => ({ surface: row.surface, delegate })));
+    return { required, missing, ok: false };
+  }
+
+  const missing = missingReceipts({ required, receipts: state.receipts || [] });
+  return { required, missing, ok: missing.length === 0 };
 }
 
 function main() {
@@ -168,51 +215,29 @@ function main() {
     process.exit(1);
   }
 
-  const surfaces = readJson(join(ROOT, '.claude/project.json'), {})?.document?.surfaces;
-  if (!Array.isArray(surfaces) || surfaces.length === 0) {
-    process.stdout.write('document-gate: no document.surfaces configured — nothing required\n');
-    process.exit(0);
-  }
-
   if (pathsGiven && (!paths || paths.length === 0)) {
     process.stderr.write('document-gate: --paths was given but empty; refusing to treat that as a clean tree\n');
     process.exit(1);
   }
 
-  const changedPaths = paths ?? changedPathsFromGit();
+  const result = runGate({ slug, paths, rootDir: ROOT });
 
-  let required;
-  try {
-    required = requiredDelegates({ changedPaths, surfaces });
-  } catch (err) {
-    process.stderr.write(`${err.message}\n`);
+  if (result.required.length === 0) {
+    if (result.ok) {
+      process.stdout.write('document-gate: no documentation surface in the diff — CLEAN\n');
+      process.exit(0);
+    }
+    process.stderr.write('document-gate: BLOCKED — surface configuration could not be evaluated\n');
     process.exit(1);
   }
-  if (required.length === 0) {
-    process.stdout.write('document-gate: no documentation surface in the diff — CLEAN\n');
-    process.exit(0);
-  }
 
-  // A malformed receipt file proves nothing, so it BLOCKS. Previously a non-array
-  // `receipts` threw an uncaught TypeError — fail-closed by accident rather than by
-  // design, and unreadable to whoever hit it.
-  const state = readJson(join(ROOT, '.claude/state/document', `${slug}.json`), { receipts: [] });
-  if (state.receipts !== undefined && !Array.isArray(state.receipts)) {
-    process.stderr.write(
-      `document-gate: BLOCKED — receipt file for "${slug}" has a malformed \`receipts\` field `
-      + `(expected an array, got ${typeof state.receipts}); nothing is proven\n`,
-    );
-    process.exit(1);
-  }
-  const gaps = missingReceipts({ required, receipts: state.receipts || [] });
-
-  if (gaps.length === 0) {
-    process.stdout.write(`document-gate: ${required.length} surface(s), every required delegate has a receipt — CLEAN\n`);
+  if (result.ok) {
+    process.stdout.write(`document-gate: ${result.required.length} surface(s), every required delegate has a receipt — CLEAN\n`);
     process.exit(0);
   }
 
   process.stderr.write('document-gate: BLOCKED — required delegate(s) left no receipt\n\n');
-  for (const gap of gaps) {
+  for (const gap of result.missing) {
     process.stderr.write(`  ${gap.surface}  ->  missing: ${gap.delegate}\n`);
   }
   process.stderr.write('\nRun the named delegate for each surface, or correct document.surfaces if the obligation is wrong.\n');

@@ -8,11 +8,12 @@
 
 import { isAbsolute, join } from 'node:path';
 
-import { dispatch, lines } from '../lib/argv.mjs';
+import { dispatch, lines, requireValue } from '../lib/argv.mjs';
 import { assertNoTraversal } from '../workspace/tree.mjs';
 import { listStale } from './stale-elements.mjs';
 import { suggestRoutes } from './route.mjs';
 import { isCandidateKey, recordCuration, readLedger, CANDIDATE_SEPARATOR } from './ledger.mjs';
+import { runSweep } from './sweep.mjs';
 
 const DISPOSITIONS = ['promoted', 'discarded'];
 
@@ -70,6 +71,18 @@ function ledgerRows(ctx) {
   return { data: { rows }, text: lines(rows.length ? rows.map((r) => JSON.stringify(r)) : ['(empty ledger)']) };
 }
 
+// The verb rides `runSweep` rather than re-implementing the mode dispatch:
+// `sweep.mjs` owns every mode's semantics and the closure precondition
+// (assertRelifted) — this handler's only job is translating cli.mjs's flag
+// surface into runSweep's call shape and the result into a subcommand result.
+// A bad --mode surfaces via runSweep's own UnknownModeError, naming the legal
+// set; dispatch() maps that (and any other thrown error) to exit 1.
+function sweep(ctx) {
+  const mode = requireValue(ctx.flags, 'mode');
+  const report = runSweep({ mode, rootDir: ctx.root, memoryDir: ctx.flags['mem-dir'] });
+  return { data: report, text: lines([JSON.stringify(report)]) };
+}
+
 dispatch({
   name: 'memory-sync',
   subcommands: {
@@ -77,5 +90,6 @@ dispatch({
     route: { summary: 'deterministic bucket suggestion for candidates (JSON array)', run: route },
     ledger: { summary: 'record a curation decision (--key, --disposition)', run: ledger },
     'ledger-rows': { summary: 'read the discard ledger', run: ledgerRows },
+    sweep: { summary: 'run a memory sweep mode (--mode)', run: sweep },
   },
 });

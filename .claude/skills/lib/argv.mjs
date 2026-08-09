@@ -31,6 +31,12 @@ const VALUE_FLAGS = [
   // subcommand added by that spec; omitting any of them from this union is not a
   // missing feature but a silent data loss, per the `strict: false` note above.
   'slug', 'kind', 'mem-dir', 'surface', 'delegate', 'touched', 'label',
+  // Added by the read-front-door sweep, for the same reason. `epic` and `status`
+  // filter `roadmap tasks`; `needle` is the lookup term for `memory-index query`;
+  // `mode` selects the sweep `memory-sync sweep` runs. Declared here in one edit
+  // rather than by each dispatcher that wants one — a second writer to this array
+  // is how two concurrent tasks each land half the vocabulary.
+  'epic', 'status', 'needle', 'mode',
 ];
 
 // Two error classes rather than an exit-code argument: a handler throws what went
@@ -118,8 +124,18 @@ export async function dispatch({ name, subcommands, argv = process.argv.slice(2)
   }
 
   try {
-    emit(await entry.run({ positional, flags, json, root: flags.root ?? process.cwd() }) ?? {}, json);
-    process.exit(EXIT_OK);
+    // A handler may return `exitCode` when its exit status IS its verdict — the
+    // audit's PASS/FAIL and the spec review's CLEAN/BLOCKED are successful runs
+    // that report bad news, not errors. The body still prints; only the status
+    // differs. Absent (every verb that predates this) keeps exiting 0, and an
+    // explicit 0 is honoured rather than treated as absent, so `?? EXIT_OK` is on
+    // the field and not a truthiness test.
+    //
+    // The alternative was each such verb printing and calling process.exit itself,
+    // which bypasses `emit` and duplicates its json-vs-text rendering per verb.
+    const result = await entry.run({ positional, flags, json, root: flags.root ?? process.cwd() }) ?? {};
+    emit(result, json);
+    process.exit(result.exitCode ?? EXIT_OK);
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
     process.exit(exitCodeFor(error));

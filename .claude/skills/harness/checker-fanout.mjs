@@ -15,6 +15,8 @@ import { runSimplifyOracle } from '../simplify/oracle.mjs';
 import { runCodeStructureOracle } from '../code-structure/oracle.mjs';
 import { mutationScoreAdapter } from './checkers/mutation-score.mjs';
 import { acConformanceAdapter } from './checkers/ac-conformance.mjs';
+import { specLintAdapter } from './checkers/spec-lint.mjs';
+import { specShippabilityAdapter } from './checkers/spec-shippability.mjs';
 import { readPlan, setVerdictArtifact, assertSafeSlug } from './plan-store.mjs';
 
 /** Merge per-checker verdicts into one deterministic, order-independent result. */
@@ -51,6 +53,11 @@ export const DEFAULT_CHECKER_REGISTRY = {
       : runTraceabilityOracle({ spec: ctx.specContent, intake: ctx.intakeContent })),
   },
   'spec-rollout': { phase: 'spec-review', run: (ctx) => runRolloutOracle({ specContent: ctx.specContent }) },
+  // The two adapters backlog `-d186` deferred. They compose rather than wrap,
+  // because neither source skill exports an oracle-shaped entry — see the module
+  // comments in checkers/spec-lint.mjs and checkers/spec-shippability.mjs.
+  'spec-lint': specLintAdapter,
+  'spec-shippability': specShippabilityAdapter,
   security: { phase: 'code-review', run: (ctx) => runSecurityOracle({ securityReport: ctx.securityReport }) },
   simplify: { phase: 'code-review', run: (ctx) => runSimplifyOracle({ simplifyTable: ctx.simplifyTable }) },
   'code-structure': { phase: 'code-review', run: (ctx) => runCodeStructureOracle({ changedFiles: ctx.changedFiles || [] }) },

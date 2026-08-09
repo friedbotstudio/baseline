@@ -479,6 +479,55 @@ const MODE_DISPATCH = {
   'backlog-decay': modeBacklogDecay,
 };
 
+// A mode outside MODE_DISPATCH gets its own named error (rather than a bare
+// Error) so a caller — the `memory-sync sweep` verb included — can tell "you
+// asked for a mode that doesn't exist" apart from any other failure this
+// throws (UnrepairedCorpusError, an fs error). Named the same way
+// UnrepairedCorpusError is: this module's other refusal already sets the
+// convention.
+export class UnknownModeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'UnknownModeError';
+  }
+}
+
+// The front door for BOTH callers: the private `main()` below (the unchanged
+// direct `node sweep.mjs` path) and the `memory-sync sweep` verb on cli.mjs.
+// Returns the report as DATA — never an exit code, never writes stdout/stderr
+// — so a caller decides for itself how to present or exit on the result.
+//
+// `memoryDir`, when given, wins outright: the direct CLI's own `--memory-dir`
+// flag may point anywhere and is validated by `main()` before it ever reaches
+// here. `rootDir` is the fallback the `sweep` verb uses, resolved the same way
+// every other cli.mjs dispatcher resolves its default memory directory
+// (`<root>/.claude/memory`) — see memory-index/cli.mjs's `memDir()`.
+export function runSweep({ mode, rootDir, memoryDir, backlogKeys, thresholdDays } = {}) {
+  // Absent and invalid are different mistakes and get different sentences. The
+  // combined "is required and must be one of" told a caller who HAD passed --mode
+  // that they had omitted it, which sends them looking for the wrong error. The
+  // shape here matches the sibling dispatchers: name the legal set, echo what
+  // arrived. `main()` keeps the "is required" wording because its own argv parse
+  // reaches that branch only when the flag really is missing.
+  const legal = Object.keys(MODE_DISPATCH).join(', ');
+  if (!mode) {
+    throw new UnknownModeError(`sweep: --mode is required; must be one of ${legal}`);
+  }
+  if (!(mode in MODE_DISPATCH)) {
+    throw new UnknownModeError(`sweep: --mode must be one of ${legal}; got ${JSON.stringify(mode)}`);
+  }
+  const dir = resolve(memoryDir || join(rootDir ?? '.', '.claude', 'memory'));
+  assertRelifted(dir);
+  if (mode === 'stamp-closure') {
+    return modeStampClosure(dir, backlogKeys || '');
+  }
+  if (mode === 'backlog-decay') {
+    const n = Number.isFinite(thresholdDays) ? thresholdDays : BACKLOG_DECAY_DAYS_DEFAULT;
+    return modeBacklogDecay(dir, n);
+  }
+  return MODE_DISPATCH[mode](dir);
+}
+
 function main(argv) {
   let values;
   try {
@@ -511,31 +560,35 @@ function main(argv) {
     return 2;
   }
 
-  const memdir = resolve(values['memory-dir']);
-  try {
-    assertRelifted(memdir);
-  } catch (err) {
-    if (!(err instanceof UnrepairedCorpusError)) throw err;
-    process.stderr.write(`${err.message}\n`);
-    return 1;
-  }
-  let report;
-  if (values.mode === 'stamp-closure') {
-    report = modeStampClosure(memdir, values['backlog-keys'] || '');
-  } else if (values.mode === 'backlog-decay') {
+  let thresholdDays;
+  if (values.mode === 'backlog-decay') {
     const raw = values['threshold-days'];
-    let n = BACKLOG_DECAY_DAYS_DEFAULT;
+    thresholdDays = BACKLOG_DECAY_DAYS_DEFAULT;
     if (raw !== undefined) {
       const parsed = parseInt(raw, 10);
       if (!Number.isFinite(parsed) || parsed < 0) {
         process.stderr.write(`sweep: --threshold-days must be a non-negative integer; got "${raw}"\n`);
         return 2;
       }
-      n = parsed;
+      thresholdDays = parsed;
     }
-    report = modeBacklogDecay(memdir, n);
-  } else {
-    report = MODE_DISPATCH[values.mode](memdir);
+  }
+
+  const memdir = resolve(values['memory-dir']);
+  let report;
+  try {
+    report = runSweep({
+      mode: values.mode,
+      memoryDir: memdir,
+      backlogKeys: values['backlog-keys'],
+      thresholdDays,
+    });
+  } catch (err) {
+    if (err instanceof UnrepairedCorpusError) {
+      process.stderr.write(`${err.message}\n`);
+      return 1;
+    }
+    throw err;
   }
   process.stdout.write(pyJson(report) + '\n');
   return 0;
