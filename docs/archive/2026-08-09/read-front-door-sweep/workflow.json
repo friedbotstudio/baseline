@@ -1,0 +1,85 @@
+{
+  "request": "Give the roadmap a CLI --json front door and move the remaining mechanical read helpers onto the shared dispatcher (six tickets).",
+  "slug": "read-front-door-sweep",
+  "track_id": "power",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "Shared dispatcher contract already exists at .claude/skills/lib/argv.mjs + output.mjs; nine skills ride it; commits 4cc46e0 and dd0e5d2 moved 31 call sites onto it. Backlog operator-gui-over-the-corpus (user-raised 2026-08-08) pins the cli.mjs <verb> --json contract and the GUI consumer. Each ticket repeats that pattern on a new skill.",
+  "track_reason": "Heavier than the leanest safe track (spec-entry) by user direction: six related tickets need the per-ticket security pass and the six-way Conventional Commit split that only power provides.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [
+    {
+      "node": "implementation",
+      "sub_track": "tdd-worker-chain",
+      "reason": "swarm alternate preconditions hold: git repo, 12 C4 components >= min_tasks_worth_swarming 1"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "T7",
+      "title": "spec-lint resolves an add anchor against the declared governed surface, not a disk walk; coverage.mjs exports anchorInGovernedSurface"
+    },
+    {
+      "id": "T1",
+      "title": "roadmap/cli.mjs with tasks/epics/next verbs; extract the roadmap parser out of standup/gather.mjs so both readers share one parser"
+    },
+    {
+      "id": "T2",
+      "title": "Fold four orphan helpers into their existing CLIs as verbs: memory-sync/sweep, memory-index/scope-narrow, document/document-gate, harness/rightsize-gate"
+    },
+    {
+      "id": "T3",
+      "title": "audit-baseline/cli.mjs report"
+    },
+    {
+      "id": "T4",
+      "title": "spec/cli.mjs review over checker-fanout, plus the two missing adapters (spec-lint, spec-shippability); the other three are already registered"
+    },
+    {
+      "id": "T5",
+      "title": "harness/cli.mjs state to read workflow.json"
+    },
+    {
+      "id": "T6",
+      "title": "memory-index/cli.mjs query over the sharded store"
+    }
+  ],
+  "notes": [
+    "cli-copy-review is structurally unreachable on the power DAG; user directed it be run manually in main context after memory-sync and before grant-commit.",
+    "2026-08-09 spec amendment: /swarm-dispatch halted pre-barrier because four fold targets exposed no callable entry, so the spec's write_set under-described the change. Spec write_set, Layout, System delta (+workspace-corpus) and AC-005/AC-014 were amended; the swarm plan's T-002/T-006/T-007/T-010 write_sets widened. approve-direction, swarm-plan and approve-swarm were removed from completed because the gate-A content hash no longer matches the approved bytes.",
+    "The gate-B token on disk predates the plan amendment and still reads 'tasks=11 waves=2'. It SHALL NOT be treated as authorization; dispatch compares token mtime against plan validated_at first.",
+    "DOCUMENT PHASE, 2026-08-09: document-gate reported required=[] missing=[] ok=true — correct, the diff touches no surface in project.json -> document.surfaces (site-src/**/*.njk, docs/{runbooks,references}/**, docs/*.md, **/README.md). docs/specs and docs/security are workflow artifacts, excluded by design. The phase was completed on that oracle's verdict rather than overridden. SEPARATE GAP the gate structurally cannot see: seven SKILL.md SOPs now under-describe their own CLI — memory-sync (+sweep), document (+gate), harness (+rightsize,+state), spec (+review), memory-index (+query,+scope-narrow, and it never mentioned cli.mjs at all), audit-baseline (+report, same), standup (should point at the new roadmap/cli.mjs). No SKILL.md is in this spec's approved write_set. File as a follow-up chore at Phase 10.7 — chore is the right track (documentation edits, no failing test to drive), and note SKILL.md files are manifest-hashed so that chore must re-stamp."
+  ],
+  "created_at": 1786263177,
+  "updated_at": 1786264693,
+  "rightsize_base": [],
+  "resolved_alternates": [
+    {
+      "node": "implementation",
+      "sub_track": "swarm-implementation"
+    }
+  ]
+}
