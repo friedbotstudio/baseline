@@ -26,7 +26,7 @@ Local changes:
     to match the current shape: 14 → 17 hooks (the 3 lifecycle hooks
     `memory_session_start`, `memory_stop`, `memory_pre_compact` were
     added between 2026-04-25 and now), 34 → 36 skills (the `chore`
-    alternate track and `memory-flush` memory-curation skill were added).
+    alternate track and `memory-sync` memory-curation skill were added).
     The historical 2026-04-25 entry above is preserved verbatim as a
     record of the snapshot at that date.
   - 2026-04-28 (later): 36 → 37 skills — the user added a vendored

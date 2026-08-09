@@ -19,7 +19,7 @@ export { CANONICAL_CATEGORIES as CANONICAL };
 const OWNERS = {
   landmarks: 'scout', libraries: 'research', decisions: 'spec, rca',
   landmines: 'security, integrate, scout', conventions: 'scenario, implement',
-  'pending-questions': 'any', backlog: 'memory-flush',
+  'pending-questions': 'any', backlog: 'memory-sync',
 };
 
 // Backfill scope for legacy entries that predate the scope: field. Chosen so the

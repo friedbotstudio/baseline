@@ -12,11 +12,38 @@ export const ENTRY_PHASE_TO_TRACK_ID = Object.freeze({
   chore: 'chore',
 });
 
+// Phase-name renames applied to `completed[]` and `exceptions[]` on EVERY
+// migration, both shapes. A workflow already in flight when a phase is renamed
+// carries the old name in its durable state; without this it would look for a
+// phase that no longer exists in workflows.jsonl and stall at that node.
+export const PHASE_RENAMES = Object.freeze({
+  'memory-flush': 'memory-sync',
+});
+
+function renamePhases(data) {
+  let changed = false;
+  const rename = (list) => (Array.isArray(list)
+    ? list.map((phase) => {
+      const to = PHASE_RENAMES[phase];
+      if (!to) return phase;
+      changed = true;
+      return to;
+    })
+    : list);
+  const next = { ...data, completed: rename(data.completed), exceptions: rename(data.exceptions) };
+  return { next, changed };
+}
+
 export async function migrateWorkflowJsonInPlace(filePath) {
   const text = await readFile(filePath, 'utf8');
   const data = JSON.parse(text);
+
   if ('track_id' in data && !('entry_phase' in data)) {
-    return { migrated: false, reason: 'already post-§18' };
+    const { next, changed } = renamePhases(data);
+    if (!changed) return { migrated: false, reason: 'already post-§18' };
+    next.updated_at = Math.floor(Date.now() / 1000);
+    await writeJsonAtomic(filePath, next);
+    return { migrated: true, track_id: next.track_id, renamed_phases: true };
   }
   if (!('entry_phase' in data)) {
     return { migrated: false, reason: 'no entry_phase and no track_id; cannot determine shape' };
@@ -30,24 +57,28 @@ export async function migrateWorkflowJsonInPlace(filePath) {
       `Cannot migrate; run /triage to restart this workflow.`
     );
   }
-  const migrated = { ...data };
+  const migrated = renamePhases(data).next;
   migrated.track_id = trackId;
   migrated.skipped_alternates = Array.isArray(data.skipped_alternates) ? data.skipped_alternates : [];
   migrated.updated_at = Math.floor(Date.now() / 1000);
   delete migrated.entry_phase;
-  // Atomic temp+rename (CWE-362): rename(2) is atomic on POSIX, so a crash
-  // mid-migration can't leave workflow.json half-written and unparseable — the
-  // file the harness reads on the next session is either the old shape or the
-  // fully-migrated one. Inlined (not the hooks-lib writeJsonAtomic) to keep this
-  // src/cli module free of a cross-tree dependency; the build mirrors this file
-  // byte-for-byte to .claude/skills/harness/workflow-migrator.js.
+  await writeJsonAtomic(filePath, migrated);
+  return { migrated: true, track_id: trackId };
+}
+
+// Atomic temp+rename (CWE-362): rename(2) is atomic on POSIX, so a crash
+// mid-migration can't leave workflow.json half-written and unparseable — the file
+// the harness reads on the next session is either the old shape or the fully
+// migrated one. Inlined (not the hooks-lib writeJsonAtomic) to keep this src/cli
+// module free of a cross-tree dependency; the build mirrors this file
+// byte-for-byte to .claude/skills/harness/workflow-migrator.js.
+async function writeJsonAtomic(filePath, value) {
   const tmp = `${filePath}.tmp.${process.pid}`;
   try {
-    await writeFile(tmp, JSON.stringify(migrated, null, 2) + '\n');
+    await writeFile(tmp, JSON.stringify(value, null, 2) + '\n');
     await rename(tmp, filePath);
   } catch (err) {
     try { await unlink(tmp); } catch {}
     throw err;
   }
-  return { migrated: true, track_id: trackId };
 }

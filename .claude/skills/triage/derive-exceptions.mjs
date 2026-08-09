@@ -26,12 +26,38 @@ import { fileURLToPath } from 'node:url';
 // licence to skip the gate.
 export const CONSENT_DENY_LIST = Object.freeze(['approve-direction', 'approve-swarm', 'grant-commit', 'commit']);
 
-export function deriveExceptions(trackNodes, allPhases, internalPhases = [], authored = []) {
+// A selector node carries no `metadata.phase` of its own — its phases live in the
+// sub_tracks its alternates name. Counting only the track's own nodes therefore
+// excepts a phase that IS reachable, which is the same class of defect this module
+// exists to kill, one level down. `tdd` on a selector-bearing track is the concrete
+// case: the phase is reachable through `tdd-worker-chain`, so excepting it would let
+// track_guard block the very implementation write the track exists to perform.
+//
+// One level only, matching I7 — a sub_track is never itself selectable, so its nodes
+// cannot nest another selector.
+function reachablePhases(trackNodes, subTracks) {
+  const phases = new Set();
+  const add = (nodes) => {
+    for (const node of nodes ?? []) {
+      if (node?.metadata?.phase) phases.add(node.metadata.phase);
+    }
+  };
+  add(trackNodes);
+  for (const node of trackNodes ?? []) {
+    for (const alternate of node?.alternates ?? []) {
+      const id = alternate?.sub_track;
+      if (id && subTracks?.get) add(subTracks.get(id)?.nodes);
+    }
+  }
+  return phases;
+}
+
+export function deriveExceptions(trackNodes, allPhases, internalPhases = [], authored = [], { subTracks } = {}) {
   if (!Array.isArray(trackNodes)) {
     throw new TypeError(`deriveExceptions: trackNodes must be an array, received ${typeof trackNodes}`);
   }
 
-  const declared = new Set(trackNodes.map((node) => node?.metadata?.phase).filter(Boolean));
+  const declared = reachablePhases(trackNodes, subTracks);
   const internal = new Set(Array.isArray(internalPhases) ? internalPhases : []);
   const universe = Array.isArray(allPhases) ? allPhases : [];
 
@@ -68,7 +94,8 @@ async function main(trackId) {
     process.stderr.write(`derive-exceptions: unknown track '${trackId}'\n`);
     process.exit(1);
   }
-  const exceptions = deriveExceptions(track.nodes, phaseUniverse(tracks), track.internal_phases ?? [], []);
+  const subTracks = new Map(tracks.map((t) => [t.track_id, t]));
+  const exceptions = deriveExceptions(track.nodes, phaseUniverse(tracks), track.internal_phases ?? [], [], { subTracks });
   process.stdout.write(JSON.stringify(exceptions) + '\n');
 }
 

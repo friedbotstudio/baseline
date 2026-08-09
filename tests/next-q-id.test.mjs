@@ -1,4 +1,4 @@
-// Tests for the Q-ID allocator at .claude/skills/memory-flush/next-q-id.mjs.
+// Tests for the Q-ID allocator at .claude/skills/memory-sync/next-q-id.mjs.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = join(dirname(__filename), '..');
-const HELPER = join(REPO_ROOT, '.claude/skills/memory-flush/next-q-id.mjs');
+const HELPER = join(REPO_ROOT, '.claude/skills/memory-sync/next-q-id.mjs');
 
 function runHelper(memdir) {
   return spawnSync('node', [HELPER, '--memory-dir', memdir], { encoding: 'utf8' });

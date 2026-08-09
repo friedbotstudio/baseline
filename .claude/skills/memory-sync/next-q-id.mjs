@@ -4,8 +4,8 @@
 // Q-NNN (max + 1) to stdout, zero-padded to 3 digits.
 //
 // Usage:
-//   node .claude/skills/memory-flush/next-q-id.mjs
-//   node .claude/skills/memory-flush/next-q-id.mjs --memory-dir .claude/memory
+//   node .claude/skills/memory-sync/next-q-id.mjs
+//   node .claude/skills/memory-sync/next-q-id.mjs --memory-dir .claude/memory
 //
 // Output: a single line `Q-NNN\n`. Exit 0 always (no entries → Q-001).
 // Used by any skill that needs to append a new question — avoids manual
@@ -39,7 +39,7 @@ function formatId(n) {
 }
 
 function defaultMemoryDir() {
-  // The script ships at .claude/skills/memory-flush/next-q-id.mjs; default
+  // The script ships at .claude/skills/memory-sync/next-q-id.mjs; default
   // memory dir is the sibling .claude/memory/. Two levels up from this
   // file's directory is the .claude/ root.
   const here = dirname(fileURLToPath(import.meta.url));

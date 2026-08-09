@@ -1,10 +1,10 @@
-// Foundation — pure deterministic route classifier for /memory-flush (Tier 3).
+// Foundation — pure deterministic route classifier for /memory-sync (Tier 3).
 //
 // suggestRoutes() proposes one canonical bucket + a salience weight per pending
 // candidate. It is PURE: no filesystem, no network, no model call. The semantic
 // backstop (a Sonnet-tier pass over transcript material) is a main-context
-// /memory-flush concern, NOT this module. Per Article IX.3 the output only
-// SUGGESTS — the human accepts/overrides at /memory-flush and promotion to
+// /memory-sync concern, NOT this module. Per Article IX.3 the output only
+// SUGGESTS — the human accepts/overrides at /memory-sync and promotion to
 // canonical stays human-only. The suggested bucket is the accept/override
 // default; this module never writes anything.
 

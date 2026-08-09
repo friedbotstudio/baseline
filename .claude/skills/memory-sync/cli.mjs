@@ -71,7 +71,7 @@ function ledgerRows(ctx) {
 }
 
 dispatch({
-  name: 'memory-flush',
+  name: 'memory-sync',
   subcommands: {
     'stale-elements': { summary: 'corpus elements whose anchor digest drifted', run: staleElements },
     route: { summary: 'deterministic bucket suggestion for candidates (JSON array)', run: route },

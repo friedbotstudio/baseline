@@ -175,7 +175,7 @@ function inheritsCategoryDefault(entry) {
   return [...scope].sort().join(',') === [...fallback].sort().join(',');
 }
 
-// The write boundary. `/memory-flush` calls this before promoting or re-verifying an
+// The write boundary. `/memory-sync` calls this before promoting or re-verifying an
 // entry, so an unreachable fact is refused at the moment it would be written rather
 // than discovered later by a reader that silently returns nothing.
 export function assertWritable(entry) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Covers AC-002, AC-010, AC-011 of remove-python-runtime-dep.
-// Deterministic actuator for /memory-flush Step 0 and for /commit Step 6.
+// Deterministic actuator for /memory-sync Step 0 and for /commit Step 6.
 //
 // Scans canonical memory files for closure fields and prose closure signals,
 // applies the matching action (auto-close / surface-and-confirm / stale-sweep),
@@ -38,7 +38,7 @@ export class UnrepairedCorpusError extends Error {
 // about what is stale (measured 46 vs 156), so curating against the larger set
 // churns entries without fixing the invisibility. Two of the modes fire
 // automatically — stamp-closure from /commit Step 2.7, auto-close from
-// /memory-flush Step 0 — so this cannot live in prose; it has to refuse here.
+// /memory-sync Step 0 — so this cannot live in prose; it has to refuse here.
 export function assertRelifted(memdir) {
   const stranded = strandedFieldBullets(memdir);
   if (!stranded.length) return;

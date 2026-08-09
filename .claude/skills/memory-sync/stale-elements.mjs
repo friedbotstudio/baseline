@@ -7,7 +7,7 @@
 // point. A module that both detected and refreshed would quietly close the loop
 // with no human in it.
 //
-// Sited at /memory-flush rather than /scout (D4): scout is the intuitive home and
+// Sited at /memory-sync rather than /scout (D4): scout is the intuitive home and
 // the wrong one, because `spec-entry` — this repository's most-used track — carries
 // scout in `exceptions`, so a scout-sited check would rarely fire.
 

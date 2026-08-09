@@ -4,7 +4,7 @@
 // dedupes against the wrong LIFETIME. memory_stop.mjs builds `existingKeys` from
 // the CURRENT `_pending.md` body and skips on a hit, and
 // tests/memory-stop-dedup.test.mjs guards exactly that. The re-emission happens
-// because /memory-flush RESETS the body, discarding the dedup state along with the
+// because /memory-sync RESETS the body, discarding the dedup state along with the
 // candidates it curated.
 //
 // So the job here is to persist a curation decision ACROSS that reset — not to add

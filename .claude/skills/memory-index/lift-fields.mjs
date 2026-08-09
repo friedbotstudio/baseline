@@ -26,7 +26,7 @@ export const LIFTABLE_FIELDS = new Set([
   'status',           // closure-check.mjs, sweep.mjs — backlog closure state
   'superseded-at',    // closure-check.mjs, sweep.mjs — closure stamp
   'resolved-at',      // sweep.mjs — closure stamp, pending-questions only
-  'source',           // /memory-flush verbatim gate — Art. IX.6 provenance
+  'source',           // /memory-sync verbatim gate — Art. IX.6 provenance
   'raised-on',        // sweep.mjs modeBacklogDecay
 ]);
 

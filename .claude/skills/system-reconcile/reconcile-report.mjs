@@ -14,7 +14,7 @@
 // construction beats enforcing it by a mode flag someone can pass the wrong way.
 //
 // `listStale` is deliberately absent: Cycle 1 already wired the memory-side
-// staleness sweep at memory-flush/SKILL.md, and duplicating it here would give the
+// staleness sweep at memory-sync/SKILL.md, and duplicating it here would give the
 // operator two stale counts over two different corpora under one name.
 
 import { findGaps } from '../workspace/coverage.mjs';

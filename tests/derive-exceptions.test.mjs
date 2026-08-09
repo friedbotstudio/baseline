@@ -70,14 +70,18 @@ describe('T2 — deriveExceptions', () => {
   it('test_when_phase_absent_from_track_dag_then_derived_as_exception', async () => { // AC-004
     const { deriveExceptions } = await import('../.claude/skills/triage/derive-exceptions.mjs');
     const power = trackById('power');
-    const result = deriveExceptions(power.nodes, allPhasesFromDisk(), power.internal_phases ?? [], []);
+    // subTracks is load-bearing: `tdd` reaches the power DAG through the
+    // `implementation` selector's `tdd-worker-chain` alternate, not through a bare
+    // node. Omitting the map excepts a phase the track can actually run.
+    const subTracks = new Map(readTracks().map((t) => [t.track_id, t]));
+    const result = deriveExceptions(power.nodes, allPhasesFromDisk(), power.internal_phases ?? [], [], { subTracks });
 
     // `research` has no node in the power DAG. Its absence from exceptions is what
     // blocked the spec write in this workflow until it was hand-corrected.
     assert.ok(result.includes('research'), 'power has no research node -> research must be excepted');
     assert.ok(result.includes('intake'), 'power has no intake node -> intake must be excepted');
     assert.ok(!result.includes('spec'), 'power HAS a spec node -> spec must NOT be excepted');
-    assert.ok(!result.includes('tdd'), 'power HAS a tdd node -> tdd must NOT be excepted');
+    assert.ok(!result.includes('tdd'), 'power reaches tdd via the implementation selector -> tdd must NOT be excepted');
   });
 
   it('test_when_track_lacks_approve_spec_node_then_consent_gate_not_excepted', async () => { // AC-008

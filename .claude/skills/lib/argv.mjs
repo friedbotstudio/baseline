@@ -45,7 +45,7 @@ export function parse(argv) {
   return { subcommand, positional: positionals, flags: values, json: values.json === true };
 }
 
-// Hoisted here at the third concrete use (workspace, memory-flush, memory-index).
+// Hoisted here at the third concrete use (workspace, memory-sync, memory-index).
 // Every human-readable subcommand result is a list of lines with one trailing
 // newline; three copies of that was the signal to name it once.
 export function lines(rows) {
