@@ -1,7 +1,7 @@
 ---
 key: baseline-v1-thought-compiler-agent-team-plan-mode-9d4c
 category: backlog
-scope: [memory-flush]
+scope: [memory-sync]
 source: user-instruction
 status: open
 raised-on: 2026-06-01

@@ -1,0 +1,187 @@
+{
+  "request": "Six harness fixes as one power-track batch sprint: standup single-pass recap, no-comment-by-default code policy, session-start nag removal, memory-flush -> memory-sync rename, spec Program Design + optimization pass, and swarm-worker as the default code-generation route across every code-generating track.",
+  "slug": "harness-batch-fixes",
+  "track_id": "power",
+  "novelty": "novel",
+  "novelty_evidence": "Ticket 5 is novel: grep of .claude/skills/spec/template.md and .claude/skills/spec/SKILL.md finds no program-design, data-access, call-stack, layout, or optimization-pass surface — no precedent to copy. Tickets 1/2/3/6 cite exact existing locations (standup/gather.mjs:181 collectRoadmap, code-structure/SKILL.md:49, hooks/lib/memory_session_start.mjs:381, harness/SKILL.md:187, swarm-plan/SKILL.md:9). Ticket 4 is a mechanical rename over 155 measured referencing files.",
+  "track_reason": "Heavier than chore or freeform because ticket 5 adds a new spec surface that needs failing tests, and ticket 6 amends seed.md §18.3 track node shapes. Heavier than spec-entry because the six tickets have disjoint write surfaces and the human asked for per-ticket security review plus a six-way Conventional Commit split under one grant.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-dispatch",
+    "swarm-plan"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "tickets": [
+    {
+      "id": "T1",
+      "title": "standup returns its whole recap in one pass",
+      "intent": "Document all six StandupRecap keys (release, releaseModel, backlog, pendingQuestions, roadmap, degraded) in standup/SKILL.md, which currently names four, and add a rendered summary mode to gather.mjs so one invocation ends the gather.",
+      "write_surface": [
+        ".claude/skills/standup/SKILL.md",
+        ".claude/skills/standup/gather.mjs",
+        "tests/"
+      ],
+      "risk": [
+        "document"
+      ],
+      "acs": []
+    },
+    {
+      "id": "T2",
+      "title": "code-structure defaults to no comment",
+      "intent": "Promote the comment rule from list item 6 of code-structure/SKILL.md:49 to a first-class no-comment-by-default policy: code must read without comments. Why-comments and lazy: markers survive as named exceptions.",
+      "write_surface": [
+        ".claude/skills/code-structure/SKILL.md",
+        ".claude/skills/code-structure/oracle.mjs",
+        "tests/"
+      ],
+      "risk": [
+        "document"
+      ],
+      "acs": []
+    },
+    {
+      "id": "T3",
+      "title": "the session-start pending-memory nag is deleted",
+      "intent": "Delete the pendingCount nag block in hooks/lib/memory_session_start.mjs:381-397 (both branches). Fix the CLAUDE.md Art. III.4 drift, which claims the nag fires only with no active workflow, and the Phase 10.6 vs 10.7 citation drift. Retire tests/memory-session-start-pending-nag.test.mjs.",
+      "write_surface": [
+        ".claude/hooks/lib/memory_session_start.mjs",
+        "CLAUDE.md",
+        "src/CLAUDE.template.md",
+        "tests/memory-session-start-pending-nag.test.mjs"
+      ],
+      "risk": [
+        "document"
+      ],
+      "acs": []
+    },
+    {
+      "id": "T4",
+      "title": "memory-flush becomes memory-sync",
+      "intent": "Rename the skill, command, workflow node, and every reference across all 155 measured files including both src/ templates, the 40 memory entries, and the ~45 tests. archive Step 3 remains the sole docs/system writer — the rename adds no corpus-writing behaviour. audit-baseline must stay green.",
+      "write_surface": [
+        ".claude/skills/memory-flush/",
+        ".claude/commands/",
+        ".claude/workflows.jsonl",
+        "CLAUDE.md",
+        "docs/init/seed.md",
+        "src/CLAUDE.template.md",
+        "src/seed.template.md",
+        ".claude/memory/",
+        "tests/"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "acs": []
+    },
+    {
+      "id": "T5",
+      "title": "spec carries Program Design and an optimization pass",
+      "intent": "Add a Program Design section (data access, call stack where it is load-bearing, layout) to spec/template.md, and add a spec-optimization pass that diffs the drafted spec against docs/system to surface correction and optimization opportunities, then applies the fixes to the spec. Needs failing tests.",
+      "write_surface": [
+        ".claude/skills/spec/",
+        ".claude/skills/spec-lint/",
+        "tests/"
+      ],
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "acs": []
+    },
+    {
+      "id": "T6",
+      "title": "code generation routes through swarm-worker by default",
+      "intent": "Set swarm.min_tasks_worth_swarming to 1, and add the swarm-plan -> approve-swarm -> swarm-dispatch branch to the power, epic-child, and tdd-quickfix tracks in workflows.jsonl. Amend seed.md §18.3 for the new node shapes and §5 for the routing rule. Update harness/SKILL.md:187 and swarm-plan/SKILL.md:9. Re-validate all tracks against invariants I1..I11.",
+      "write_surface": [
+        ".claude/project.json",
+        "src/project.template.json",
+        ".claude/workflows.jsonl",
+        "docs/init/seed.md",
+        "src/seed.template.md",
+        ".claude/skills/harness/SKILL.md",
+        ".claude/skills/swarm-plan/SKILL.md",
+        "tests/"
+      ],
+      "risk": [
+        "security",
+        "document"
+      ],
+      "acs": []
+    }
+  ],
+  "created_at": 1786218868,
+  "updated_at": 1786258260,
+  "rightsize_base": [
+    ".claude/memory/_discard-ledger.md",
+    ".claude/memory/backlog/code-review-fanout-defects-from-dispatcher-sweep-9444.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": [
+    {
+      "ticket": "T1",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "T2",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "T3",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "T4",
+      "verdict": "CLEAN",
+      "findings": 1,
+      "severities": [
+        "LOW"
+      ]
+    },
+    {
+      "ticket": "T5",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "T6",
+      "verdict": "CLEAN",
+      "findings": 1,
+      "severities": [
+        "MEDIUM"
+      ],
+      "note": "accepted at gate A (D-1)"
+    }
+  ]
+}

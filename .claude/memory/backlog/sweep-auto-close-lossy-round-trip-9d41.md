@@ -1,7 +1,7 @@
 ---
 key: sweep-auto-close-lossy-round-trip-9d41
 category: backlog
-scope: [memory-flush]
+scope: [memory-sync]
 status: open
 raised-on: 2026-08-07
 raised-in-context: epic-child-pin-and-delta-backticks (ad-hoc flush after the commit)

@@ -15,7 +15,7 @@ last-touched: 2026-08-06
 
 **The defect.** `contribute.syncBack` pushes an element into `applied[]` whenever `stampElement` returns anything other than `dangling`. Glob-anchored elements are never digested — a glob names a family, so there is no single interface to hash — yet they still come back non-dangling and still get counted.
 
-**Measured on this workflow.** 8 reported applied. Three carry a real digest: `spec-diagram-presence-guard`, `write-set-profile`, `memory-index-resolve`. Five are glob-anchored and carry none: `workspace-corpus`, `audit-baseline-helpers`, `memory-flush-helpers`, `memory-hook-libs`, `memory-index-helpers`.
+**Measured on this workflow.** 8 reported applied. Three carry a real digest: `spec-diagram-presence-guard`, `write-set-profile`, `memory-index-resolve`. Five are glob-anchored and carry none: `workspace-corpus`, `audit-baseline-helpers`, `memory-sync-helpers`, `memory-hook-libs`, `memory-index-helpers`.
 
 **Why it matters.** `applied[]` is the receipt an operator reads to decide whether the fold-back did its job. A count inflated by ~2.7x makes an under-performing sync look complete. It also masks the real question a glob-anchored element raises, which is that nothing witnesses it at all.
 
