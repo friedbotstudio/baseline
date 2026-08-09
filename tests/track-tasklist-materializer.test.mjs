@@ -152,14 +152,14 @@ function trackWithConditionalGrantCommit({ annotate = true } = {}) {
   const allTracks = new Map();
   const gc = {
     id: 'grant-commit', type: 'task', skill: 'grant-commit',
-    depends_on: ['memory-flush'], blocks: ['commit'], can_parallel: false, needs_user: true,
+    depends_on: ['memory-sync'], blocks: ['commit'], can_parallel: false, needs_user: true,
   };
   if (annotate) gc.condition = { name: 'requires_commit_consent' };
   const track = {
     track_id: 'conditional-gate',
     invariants: ['commits'],
     nodes: [
-      { id: 'memory-flush', type: 'task', skill: 'memory-flush', depends_on: [], blocks: ['grant-commit'], can_parallel: false, needs_user: false },
+      { id: 'memory-sync', type: 'task', skill: 'memory-sync', depends_on: [], blocks: ['grant-commit'], can_parallel: false, needs_user: false },
       gc,
       { id: 'commit', type: 'task', skill: 'commit', depends_on: ['grant-commit'], blocks: [], can_parallel: false, needs_user: false },
     ],
@@ -175,7 +175,7 @@ describe('materializeTaskList — requires_commit_consent condition (AC-003)', (
       slug: 'demo', ctx: { commitConsentRequired: false },
     });
     assert.equal(tasks.length, 2, 'grant-commit node omitted under autonomous landing');
-    assert.equal(tasks[0].subject, 'Run /memory-flush for demo');
+    assert.equal(tasks[0].subject, 'Run /memory-sync for demo');
     assert.equal(tasks[1].subject, 'Run /commit for demo');
     assert.deepEqual(tasks[1].blockedBy, [1], "commit rewired to grant-commit's predecessor");
   });
@@ -210,11 +210,11 @@ describe('materializeTaskList — freeform track (live workflows.jsonl)', () => 
     assert.ok(freeform, 'live workflows.jsonl must declare freeform track');
     assert.deepEqual(freeform.invariants, ['commits'], 'freeform invariants must be exactly [commits]');
     const tasks = materializer.materializeTaskList(freeform, { slug: 'sample' });
-    assert.equal(tasks.length, 4, 'freeform DAG: roadmap-sync → memory-flush → grant-commit → commit');
+    assert.equal(tasks.length, 4, 'freeform DAG: roadmap-sync → memory-sync → grant-commit → commit');
     assert.equal(tasks[0].subject, 'Run /roadmap-sync for sample');
     assert.equal(tasks[0].needs_user, false);
     assert.deepEqual(tasks[0].blockedBy, []);
-    assert.equal(tasks[1].subject, 'Run /memory-flush for sample');
+    assert.equal(tasks[1].subject, 'Run /memory-sync for sample');
     assert.equal(tasks[1].needs_user, false);
     assert.deepEqual(tasks[1].blockedBy, [1]);
     assert.equal(tasks[2].subject, 'Wait for /grant-commit');

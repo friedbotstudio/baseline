@@ -22,7 +22,7 @@ export function materializeTaskList(track, { slug, ctx } = {}) {
 
 // Resolve per-node `condition` annotations against ctx BEFORE emission.
 // An omitted node's dependents inherit its depends_on so the chain stays
-// connected (grant-commit omitted → commit depends on memory-flush).
+// connected (grant-commit omitted → commit depends on memory-sync).
 // Fail-safe: a node is only ever omitted on a POSITIVE resolution that its
 // condition excludes it; missing ctx, a non-boolean ctx field, or an unknown
 // predicate all keep the node (I11 rejects unknown names at validate time).
@@ -219,7 +219,7 @@ const ACTIVE_FORM_OVERRIDES = Object.freeze({
   integrate: 'Running integrate',
   document: 'Running document',
   archive: 'Running archive',
-  'memory-flush': 'Running memory-flush',
+  'memory-sync': 'Running memory-sync',
   commit: 'Running commit',
   chore: 'Running chore',
   'swarm-plan': 'Running swarm-plan',

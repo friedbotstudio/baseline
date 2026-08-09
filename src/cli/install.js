@@ -17,7 +17,7 @@ export const NEVER_TOUCH = Object.freeze([
   '.claude/schemas/workflow-track.v1.json',
   // Runtime-state files: bodies are gitignored and overwritten every
   // conversation turn by the memory_stop / memory_pre_compact hooks and the
-  // /memory-flush skill. Their on-disk hash will essentially never match the
+  // /memory-sync skill. Their on-disk hash will essentially never match the
   // shipped template hash, so any merge-time prompt is a structural false
   // positive. Preserve silently. See docs/specs/upgrade-no-replay-prompts.md
   // §Behavior #1.
