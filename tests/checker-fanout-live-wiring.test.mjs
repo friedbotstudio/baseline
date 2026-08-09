@@ -24,10 +24,19 @@ const cyclicSpecTracingAc1 = [
   '| AC | Upstream |', '| AC-001 | intake AC 1 |',
 ].join('\n');
 
+// Carries an explicit empty `## System delta` because this fixture is the one that
+// must come back CLEAN through the DEFAULT registry, and that registry now includes
+// the spec-lint adapter. `checkSystemDelta` treats an ABSENT heading as FAIL — the
+// same judgement `artifact_template_guard` makes at the write boundary, which a
+// synthetic fixture never passes through. `*(none)*` is the template's sanctioned
+// "considered it, nothing changes" body, so this states the fixture's intent rather
+// than exempting it from the check.
 const acyclicSpecTracingBoth = [
   '# Spec', '## Design',
   '```plantuml', '@startuml', "' @kind dependency-graph",
   '[a] --> [b]', '@enduml', '```',
+  '## System delta',
+  '- *(none)*',
   '## Acceptance criteria',
   '| AC | Upstream |', '| AC-001 | intake AC 1 |', '| AC-002 | intake AC 2 |',
 ].join('\n');
