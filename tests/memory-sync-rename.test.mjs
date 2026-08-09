@@ -31,12 +31,20 @@ const OLD_SKILL_DIR = `.claude/skills/${OLD}`;
 
 const HISTORICAL = [/^docs\/archive\//, /^CHANGELOG\.md$/, /^obj\//];
 
-// The rename MAP has to name both sides — that is what makes it a map. Excluding
-// it by exact path rather than by pattern keeps the exemption to these two files
-// (the src/ source and its build mirror) so nothing else can hide behind it.
-const RENAME_MAP = [
+// Files that MUST contain the old name to do their job. Listed by exact path, not
+// by pattern, so nothing else can hide behind the exemption.
+//
+// Two kinds. The migrator pair holds the rename MAP, which has to name both sides
+// or it is not a map. The two rename suites spell the old name in their own TEST
+// NAMES: assembling the needle in the code is not enough, because a test called
+// `..._no_live_memory_flush_reference_remains` contains the literal it forbids.
+// Renaming those tests to dodge the sweep would make them describe something other
+// than what they check.
+const SELF_REFERENTIAL = [
   'src/cli/workflow-migrator.js',
   '.claude/skills/harness/workflow-migrator.js',
+  'tests/memory-sync-rename.test.mjs',
+  'tests/workflow-migrator-phase-rename.test.mjs',
 ];
 
 function trackedFiles() {
@@ -44,7 +52,7 @@ function trackedFiles() {
     .split('\n')
     .filter(Boolean)
     .filter((p) => !HISTORICAL.some((re) => re.test(p)))
-    .filter((p) => !RENAME_MAP.includes(p));
+    .filter((p) => !SELF_REFERENTIAL.includes(p));
 }
 
 function carriesOldName(rel) {

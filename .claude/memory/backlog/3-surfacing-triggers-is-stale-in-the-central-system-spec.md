@@ -13,7 +13,7 @@ governs: .claude/skills/harness/checker-fanout.mjs, .claude/skills/harness/check
 
 - `system-reconcile report` at `dd0e5d2`: *"kind sequence binds a test witness but
   the shard names none."* Untouched by `dispatcher-sweep`, so it was not
-  re-stamped — `/memory-flush` Step 0e re-stamps only elements the curator has
+  re-stamped — `/memory-sync` Step 0e re-stamps only elements the curator has
   actually read against the code at the anchor.
 - It resurfaces at every flush until someone names the witnessing test in the
   shard. That is the designed behavior, not a bug in the sweep.

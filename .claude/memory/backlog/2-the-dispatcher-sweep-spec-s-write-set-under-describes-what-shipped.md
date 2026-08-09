@@ -1,6 +1,14 @@
 ---
 key: 2. The `dispatcher-sweep` spec's write set under-describes what shipped
 category: backlog
+scope: []
+status: open
+source: assistant-deferral
+raised-on: 2026-08-09
+raised-in-context: dispatcher-sweep
+verified-at: dd0e5d2
+last-touched: 2026-08-09
+governs: .claude/skills/spec/SKILL.md, .claude/skills/workspace/delta.mjs
 ---
 
 - `.claude/skills/lib/output.mjs` was created during `integrate` (the fix for the

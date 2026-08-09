@@ -53,13 +53,16 @@ const PATH_LEG_BASELINE = {
   '.claude/hooks/lib/scoped-memory.mjs': 8,
   '.claude/skills/memory-index/resolve.mjs': 11,
   '.claude/hooks/process_lifecycle_guard.mjs': 8,
-  // 5 -> 6: the `code-review-fanout-defects-from-dispatcher-sweep-9444` backlog
-  // entry governs this path. It was filed by the dispatcher-sweep workflow and was
-  // already in the working tree, uncommitted, before harness-batch-fixes began —
-  // this baseline simply had not been re-measured since. A governed-memory count is
-  // a census, not an invariant: it moves whenever an entry's `governs:` legitimately
-  // names a new path.
-  '.claude/skills/harness/checker-fanout.mjs': 6,
+  // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow
+  // filed four backlog entries and left them uncommitted; harness-batch-fixes
+  // committed them. Three of the four carried only `key` and `category`, so they
+  // were unreachable by either leg and `scope-narrow check` failed the moment they
+  // became tracked. Giving them the `governs:` globs their bodies already describe
+  // fixed that and raised this count.
+  //
+  // A governed-memory count is a census, not an invariant: it moves whenever an
+  // entry's `governs:` legitimately names a new path. Re-measure it; do not defend it.
+  '.claude/skills/harness/checker-fanout.mjs': 8,
 };
 
 function liveShards() {
