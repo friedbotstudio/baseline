@@ -14,7 +14,7 @@ reports/
 .stryker-tmp/
 
 # Per-session signal collection. `memory_stop` hook auto-extracts memory
-# candidates here every turn; `/memory-flush` curates keepers into the
+# candidates here every turn; `/memory-sync` curates keepers into the
 # canonical six (landmarks/libraries/decisions/landmines/conventions/
 # pending-questions) and resets the body. The file's only durable shape
 # is in src/memory/_pending.template.md (the pristine ship-time placeholder
@@ -29,7 +29,7 @@ reports/
 
 # Durable local conversation-thread trail (shelve/resume — Article IX). The
 # content is per-developer continuity and is NEVER committed; only the pristine
-# structure in src/memory/_thread.template.md ships. Survives /memory-flush.
+# structure in src/memory/_thread.template.md ships. Survives /memory-sync.
 .claude/memory/_thread.md
 
 # Legacy agent-memory directories (subagents removed in 2026-04-27 refactor;
