@@ -1,7 +1,7 @@
 ---
 key: materialize-appends-blank-lines-every-run
 category: landmines
-scope: [archive, memory-flush, simplify]
+scope: [archive, memory-sync, simplify]
 governs: .claude/skills/workspace/materialize.mjs,.claude/skills/workspace/record-codec.mjs,.claude/skills/workspace/store.mjs
 verified-at: 17f1fa0
 last-touched: 2026-08-07

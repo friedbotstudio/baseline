@@ -2,7 +2,7 @@
 key: security-fixes-are-per-call-site-and-new-modules-inherit-none
 category: landmines
 scope: [security, integrate, tdd]
-governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-flush/**
+governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-sync/**
 load_bearing: true
 verified-at: 39464a1
 last-touched: 2026-08-04

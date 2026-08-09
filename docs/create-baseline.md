@@ -134,7 +134,7 @@ The committed `template/manifest.json` references files that **no longer exist**
 - **Dead subagents** (the baseline now ships only `swarm-worker`):
   `.claude/agents/{code-author,codebase-scout,general-writer,pattern-researcher,scenario-author,security-reviewer,spec-diagram-reviewer,spec-traceability-reviewer,ui-ux-designer,verify-enforcer}.md`
 - **Missing lifecycle hooks**: manifest has 13 hook entries; current baseline has 17 (added `memory_session_start`, `memory_stop`, `memory_pre_compact` plus `swarm_boundary_guard` and `artifact_template_guard`).
-- **Missing skills**: manifest predates the move to skills-only architecture; missing `scenario`, `implement`, `verify`, `prose`, `design-ui`, `memory-flush`, `triage`, `tdd`, `simplify`, `security`, `integrate`, `intake`, `rca`, `spec`, `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review`, `swarm-plan`, `swarm-dispatch`, `scout`, `research`.
+- **Missing skills**: manifest predates the move to skills-only architecture; missing `scenario`, `implement`, `verify`, `prose`, `design-ui`, `memory-sync`, `triage`, `tdd`, `simplify`, `security`, `integrate`, `intake`, `rca`, `spec`, `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review`, `swarm-plan`, `swarm-dispatch`, `scout`, `research`.
 
 The fix is structural: in v0.2, the manifest is regenerated on every build from the actual root files. Stale entries can't survive a `prepack` rebuild.
 

@@ -46,8 +46,33 @@ Not in this table? Map by the same principle: **Orchestration files are the tabl
 3. **Step-over / step-into.** Reading a file should work like a debugger. At the current level, you "step over" each named call (understand what it does from its name). To see how it works, you "step into" its definition. Each step-into reveals exactly one level deeper.
 4. **Compose, don't inline.** Instead of writing code directly, identify patterns first, build them as units, then assemble. For pattern identification, refer to https://refactoring.guru/design-patterns for established solutions. This is composition — not premature abstraction.
 5. **DRY emerges from structure.** Do not force DRY. If you follow the layer model and compose correctly, reuse happens naturally.
-6. **Comments become unnecessary.** If the code needs a comment to explain *what* it does, the abstraction is wrong. Names and composition should convey meaning. Comments for *why* — non-obvious constraints, workarounds, hidden invariants — are still valid. Mark a **deliberate** simplification with a `lazy:` comment so a future reader sees intent, not ignorance: `// lazy: <what + why>`. When the shortcut has a known ceiling, the comment names the ceiling and the upgrade path — `# lazy: global lock; per-account locks if throughput matters`. A `lazy:` marker is a sanctioned *why*-comment documenting a bounded decision; it is **not** a forbidden `TODO` / `FIXME` / `HACK` / `XXX` (CLAUDE.md Art. VI.2), which flag deferred or unfinished work.
+6. **Comments become unnecessary.** See **The comment rule** below — it is a rule in its own right, not a corollary of composition.
 7. **Refactoring is a separate concern.** If a module grows too large or complex, apply design patterns (see https://refactoring.guru/design-patterns) to restructure it during the `/simplify` review stage — not during initial composition.
+
+## The comment rule
+
+**The default is no comment. The code must read without a comment.**
+
+A comment explaining *what* the code does is a bug report against the code. The abstraction is wrong, the name is wrong, or the function is doing two things. Fix that instead of narrating it. Do not add a comment to make unclear code survive review — rename the thing, split the function, or extract the primitive until the line explains itself.
+
+Three exceptions earn their place, and nothing else does:
+
+| Exception | What it carries | Example |
+|---|---|---|
+| **Why-comment** | A non-obvious constraint, a workaround, a hidden invariant, an ordering that looks arbitrary but is load-bearing. The reader cannot recover this from the code because it is not *in* the code. | `// The projection is written FIRST and is canonical; the mirror is best-effort.` |
+| **`lazy:` marker** | A *deliberate* simplification, so a future reader sees intent rather than ignorance. When the shortcut has a known ceiling, name the ceiling and the upgrade path. | `// lazy: global lock; per-account locks if throughput matters` |
+| **Module header** | One block at the top of a file naming the module's role and its layer, where that is not derivable from the path alone. | `// Foundation — argv parsing and the uniform exit contract.` |
+
+Everything else is noise to delete:
+
+- Restating the signature (`// returns the user id`).
+- Section banners (`// ---- helpers ----`) that substitute for splitting the file.
+- Commented-out code. If it is removed, it is deleted (Art. VI.2).
+- A comment that would go stale the moment the line below it changes.
+
+A `lazy:` marker is a sanctioned why-comment documenting a bounded decision. It is **not** a forbidden `TODO` / `FIXME` / `HACK` / `XXX` (CLAUDE.md Art. VI.2), which flag deferred or unfinished work and never belong in source.
+
+The test is mechanical: delete every comment in the file. If a reader can still tell what the code does, the comments were right to go. If they can only tell *why* it does it that way, that comment stays.
 
 ## Before you create: the laziness ladder
 
@@ -263,7 +288,7 @@ either scatters comments or hides the ones that matter.
 
 The marker lands in the entry's own category. Keys shaped like paths (the landmark
 register uses `<path>:<line>`) are rejected by `assertSafeFactKey` before any path
-is built, so those markers are set by `/memory-flush`, not through this call.
+is built, so those markers are set by `/memory-sync`, not through this call.
 
 Never annotate a key that does not resolve: `scout` reports a dangling annotation
 rather than skipping it, so a stale reference is louder than no reference.

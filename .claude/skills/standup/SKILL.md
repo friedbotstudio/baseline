@@ -1,7 +1,7 @@
 ---
 name: standup
 owner: baseline
-description: Read-only release + backlog recap. Reports the last release, commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin state, the backlog bucketed (open/picked-up/dropped with epic parent→child nesting), and condensed open questions — then recommends the next pickup. Invoke any time (on demand) to plan a release or choose the next thing to build; a compact form is also surfaced at session start. Not a workflow phase; never writes CHANGELOG; never starts or commits work.
+description: Read-only release + backlog recap. Reports the last release, commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin state, the backlog bucketed (open/picked-up/dropped with epic parent→child nesting), the roadmap epics with their per-task tallies, and condensed open questions — then recommends the next pickup. One `cli.mjs recap` call returns all six recap keys. Invoke any time (on demand) to plan a release or choose the next thing to build; a compact form is also surfaced at session start. Not a workflow phase; never writes CHANGELOG; never starts or commits work.
 ---
 
 # standup — where are we, what's next
@@ -14,17 +14,33 @@ A read-only recap utility in the family of `audit-baseline` / `rca`: it reads st
 2. **Staged but unreleased** — every commit since the last tag, classified by conventional-commit type, with the aggregate semver bump those commits will trigger (read from `.releaserc.json` at runtime, so it never drifts from the release config) and the pushed-vs-origin state.
 3. **Backlog** — entries bucketed `open` / `picked-up` / `dropped`, with epic children nested under their parent.
 4. **Open questions** — `pending-questions.md` condensed to id + question + blocker.
-5. **Recommended next pickup** — assembled in main context (see Article II below).
+5. **Roadmap** — the execution plan's epics with their status and per-task tallies, plus the Progress bullets, read from `project.json → roadmap.path`.
+6. **Recommended next pickup** — assembled in main context (see Article II below).
 
 ## How to run
 
-The mechanical recap is produced by a deterministic helper:
+One invocation returns the whole recap. Use the CLI front door:
 
 ```
-node .claude/skills/standup/gather.mjs [--root <repo-root>]
+node .claude/skills/standup/cli.mjs recap [--json] [--root <repo-root>]
 ```
 
-It prints a JSON `StandupRecap` (`release`, `backlog`, `pendingQuestions`, `degraded`). It degrades gracefully — on a non-git tree, a repo with no tags, or missing memory files it names the missing precondition in `degraded[]` and never throws.
+Without `--json` it prints the bounded rendering — commits collapsed to counts-by-type plus the aggregate bump, the roadmap epics with their tallies, backlog bucket sizes, and any open questions. With `--json` it prints the raw `StandupRecap`.
+
+**`StandupRecap` carries six keys. All six come back in that one call:**
+
+| Key | What it holds |
+|---|---|
+| `release` | `lastVersion`, `lastTag`, and `commitsSinceTag[]` classified by conventional-commit type with the semver `bump` each triggers |
+| `releaseModel` | the declared release POLICY from `project.json → release` — drives the regime-aware recommendation below |
+| `backlog` | entries bucketed `open` / `picked-up` / `dropped`, epic children nested under their parent |
+| `pendingQuestions` | `pending-questions.md` condensed to id + question + blocker |
+| `roadmap` | the execution plan's `epics[]` (number, title, tag, status, per-task tallies) and its Progress bullets |
+| `degraded` | one marker per source that could not be read — `no-roadmap-plan`, `no-release-model`, and so on |
+
+Do not re-derive any of these by hand afterwards. Re-reading the roadmap file or re-running `git log` after this call is the multi-pass behaviour the CLI replaced; every key above is already in the result.
+
+It degrades gracefully — on a non-git tree, a repo with no tags, or missing memory files it names the missing precondition in `degraded[]`, still exits 0, and never throws. `gather.mjs` remains importable as the collector for in-process callers such as the session-start hook.
 
 ## Article II — where the judgment lives
 

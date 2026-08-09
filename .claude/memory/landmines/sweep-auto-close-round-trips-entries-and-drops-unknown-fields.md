@@ -1,14 +1,14 @@
 ---
 key: sweep-auto-close-round-trips-entries-and-drops-unknown-fields
 category: landmines
-scope: [memory-flush, archive, commit]
-governs: .claude/skills/memory-flush/sweep.mjs
+scope: [memory-sync, archive, commit]
+governs: .claude/skills/memory-sync/sweep.mjs
 load_bearing: true
 verified-at: 1db3b6c
 last-touched: 2026-08-07
 ---
 
-- Path: `.claude/skills/memory-flush/sweep.mjs --mode auto-close`, the Step 0a actuator every `/memory-flush` runs unconditionally.
+- Path: `.claude/skills/memory-sync/sweep.mjs --mode auto-close`, the Step 0a actuator every `/memory-sync` runs unconditionally.
 - Landmine: **auto-close does not only delete closed entries. A run that closes anything also parses and rewrites unrelated entries, and the round-trip is lossy.** Observed 2026-08-07 on a run that reported `{"closed": 2, "malformed": [], "invariant_violation": []}` — an honest-looking receipt for an operation that also modified 13 unrelated files and created 2 spurious shards. The report names only the closures, so the damage is invisible in the output.
 - **Trigger condition, measured 2026-08-07 (workflow `readme-count-gate`) — narrower than first recorded.** The original wording said the rewrite hits "every entry it walks", which reads as *every run is dangerous*. It is not. Re-verified by copying the live store to a scratch dir and running `--mode auto-close` against the copy: `{"closed": 0}`, `diff -rq` against the original **empty**, all 28 `load_bearing:` still in frontmatter, 302 files in and 302 out. With zero entries carrying `superseded-at:` there are no closure candidates, and the lossy path never fires. **The rewrite is coupled to actually closing an entry.** A no-closure run is inert, which is why the two runs disagree and why the first reading overstated the blast radius.
 

@@ -6,7 +6,7 @@ feature (CLAUDE.md Article IX clause 8). Claude Code — never the human — app
 one section per shelve (mechanical, verbatim) and transforms the most-recent
 section into a surfaced summary at resume. This file's CONTENT is gitignored and
 never committed; only this pristine structure ships. It is explicitly excluded
-from the /memory-flush reset path, so a shelved thread survives flushes and
+from the /memory-sync reset path, so a shelved thread survives flushes and
 /clear. Not a skill, not a command — model-internal.
 
 Section format (described in prose so this placeholder is not itself mistaken

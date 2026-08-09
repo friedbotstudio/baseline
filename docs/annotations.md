@@ -94,7 +94,7 @@ Keys must pass `assertSafeFactKey` before any path is constructed. Should a key 
 unsafe fact key/filename slug (REJECT, never normalize): "../escape"
 ```
 
-That guard also rejects the landmark register's path-shaped keys, such as `.claude/skills/workspace/placement.mjs:1`, so `/memory-flush` sets those markers. Reading stays unaffected, because the placement gate builds no path: a landmark marked `load_bearing` still authorises placement, and only the propose-and-confirm write path closes to it. Relaxing the guard to admit those keys would reopen the traversal it was added to close.
+That guard also rejects the landmark register's path-shaped keys, such as `.claude/skills/workspace/placement.mjs:1`, so `/memory-sync` sets those markers. Reading stays unaffected, because the placement gate builds no path: a landmark marked `load_bearing` still authorises placement, and only the propose-and-confirm write path closes to it. Relaxing the guard to admit those keys would reopen the traversal it was added to close.
 
 Where the store is flat, no `<category>/<key>.md` exists to rewrite, so the call reports `{written: false}` with a reason naming the shape.
 

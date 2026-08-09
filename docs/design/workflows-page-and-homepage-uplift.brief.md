@@ -98,7 +98,7 @@ toc:
 **Body**:
 - Sub-h3 "The canonical set" with anchor `#canonical`.
 - Four bullets, one per canonical track:
-  - `intake-full`: 11 nodes; intake → scout → research → spec → /approve-spec → implementation (selector) → simplify → security → integrate → document → archive → memory-flush → /grant-commit → changelog → commit.
+  - `intake-full`: 11 nodes; intake → scout → research → spec → /approve-spec → implementation (selector) → simplify → security → integrate → document → archive → memory-sync → /grant-commit → changelog → commit.
   - `spec-entry`: starts at /spec. Skips intake, scout, research.
   - `tdd-quickfix`: starts at /tdd. Skips spec entirely.
   - `chore`: stripped-down. Skips scenario and implement.

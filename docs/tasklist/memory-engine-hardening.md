@@ -2,7 +2,7 @@
 
 Workflow: `memory-engine-hardening` (freeform track)
 Created: 2026-05-28
-Source: 14 findings from /clear-time review of the memory subsystem (`.claude/memory/`, `memory_*` hooks, `memory-flush` skill).
+Source: 14 findings from /clear-time review of the memory subsystem (`.claude/memory/`, `memory_*` hooks, `memory-sync` skill).
 
 Each item is sized for an independent fix. Pick step-by-step; rerun freeform / chore / tdd as appropriate per item. Strike through completed items and append the landing commit SHA.
 
@@ -12,7 +12,7 @@ Each item is sized for an independent fix. Pick step-by-step; rerun freeform / c
 
 - [x] **#1 — Dedup regex captures wrong key.** ~~`.claude/hooks/lib/memory_stop.mjs:122` regex `^##\s+CANDIDATE:\s*(\S+)` only grabs the path token before ` → target.md`.~~ Fixed by widening to `^##\s+CANDIDATE:\s*(.+?)\s*$`. Regression test at `tests/memory-stop-dedup.test.mjs` covers cross-invocation dedup on both landmark and backlog candidates. `_pending.md` body reset to skeleton.
 
-- [x] **#2 — Closure detection misaligned with how entries are actually closed.** ~~Entries use `## Q-005 — CLOSED 2026-05-16` heading suffix + `- Resolution: ...` body; neither matched.~~ Fixed by (a) extending `sweep.mjs modeAutoClose` to detect `— CLOSED YYYY-MM-DD` (em-dash or ASCII `--`) in the heading as equivalent to the structured field; (b) adding R4 prose pattern `^(\s*-\s*)?\*{0,2}Resolution\s*:` so `- Resolution:` body bullets surface in prose-scan. 5 new tests in `.claude/skills/memory-flush/tests/run.sh`. **Note:** README still documents the structured-field style only — #14 below now narrows to "decide whether to document the heading-suffix style as canonical or normalize entries to the structured form at /memory-flush write time".
+- [x] **#2 — Closure detection misaligned with how entries are actually closed.** ~~Entries use `## Q-005 — CLOSED 2026-05-16` heading suffix + `- Resolution: ...` body; neither matched.~~ Fixed by (a) extending `sweep.mjs modeAutoClose` to detect `— CLOSED YYYY-MM-DD` (em-dash or ASCII `--`) in the heading as equivalent to the structured field; (b) adding R4 prose pattern `^(\s*-\s*)?\*{0,2}Resolution\s*:` so `- Resolution:` body bullets surface in prose-scan. 5 new tests in `.claude/skills/memory-sync/tests/run.sh`. **Note:** README still documents the structured-field style only — #14 below now narrows to "decide whether to document the heading-suffix style as canonical or normalize entries to the structured form at /memory-sync write time".
 
 ## P1 — Decay / discipline holes
 
@@ -20,7 +20,7 @@ Each item is sized for an independent fix. Pick step-by-step; rerun freeform / c
 
 - [x] **#4 — `landmarks.md` exceeds its declared `size-cap: 500`** (currently 513 lines / 66 entries). ~~Pruning is documented but not enforced on write.~~ Fixed by extending `memory_session_start` index to (a) compute line count vs declared cap per file, (b) flip Status column to `over-cap` when exceeded, (c) append a `## Files over size-cap` section listing offenders worst-first with the README guidance line. No new hook (preserves "22 hooks" count) — the surface is the existing session-start index. 4 new node tests cover within-cap silence, over-cap surface, worst-first ordering, and default-cap fallback.
 
-- [x] **#5 — Backlog growth has no enforced pruning policy.** ~~Stale-exempt + `verifies-against: none` + no `status: dropped` sweep.~~ Fixed by adding a `backlog-decay` mode to `sweep.mjs` (Step 0d in the `/memory-flush` SOP). For each open backlog entry whose `raised-on:` is older than `--threshold-days` (default 90), the curator decides `keep / drop / picked-up / skip`. `drop` and `picked-up` stamp `status:` + `superseded-at:` so the next Step 0a auto-close removes them. `--threshold-days` is configurable per invocation. 5 new tests cover threshold, all three replies, and the closed-entry-skip case.
+- [x] **#5 — Backlog growth has no enforced pruning policy.** ~~Stale-exempt + `verifies-against: none` + no `status: dropped` sweep.~~ Fixed by adding a `backlog-decay` mode to `sweep.mjs` (Step 0d in the `/memory-sync` SOP). For each open backlog entry whose `raised-on:` is older than `--threshold-days` (default 90), the curator decides `keep / drop / picked-up / skip`. `drop` and `picked-up` stamp `status:` + `superseded-at:` so the next Step 0a auto-close removes them. `--threshold-days` is configurable per invocation. 5 new tests cover threshold, all three replies, and the closed-entry-skip case.
 
 ## P2 — Signal quality
 
@@ -40,7 +40,7 @@ Each item is sized for an independent fix. Pick step-by-step; rerun freeform / c
 
 ## P4 — Smaller things
 
-- [x] **#12 — `Q-NNN` IDs have no allocator.** Added `.claude/skills/memory-flush/next-q-id.mjs`. Reads `pending-questions.md`, returns max+1 zero-padded. Counts CLOSED entries against the max so a closed Q-007 still increments to Q-008. Memory-flush SOP references the allocator in the defer step.
+- [x] **#12 — `Q-NNN` IDs have no allocator.** Added `.claude/skills/memory-sync/next-q-id.mjs`. Reads `pending-questions.md`, returns max+1 zero-padded. Counts CLOSED entries against the max so a closed Q-007 still increments to Q-008. Memory-flush SOP references the allocator in the defer step.
 
 - [x] **#13 — `stripFrontmatter` brittle to body horizontal rules.** Replaced `indexOf('---')` with line-anchored lookup for both `memory_session_start.mjs → stripFrontmatter` and `sweep.mjs → splitEntries`. A `---` substring in a frontmatter body field no longer truncates content. Tests cover tricky-frontmatter cases and clean-case sanity.
 

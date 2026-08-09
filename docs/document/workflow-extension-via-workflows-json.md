@@ -22,7 +22,7 @@ The diff in this workflow makes one architectural change with cascading doc impa
 - `/harness` becomes a graph executor. It loads the Track, walks the DAG, resolves selector-node alternates by evaluating preconditions in declaration order, expands sub-tracks inline, and dispatches `can_parallel` clusters concurrently.
 - A one-shot migrator rewrites pre-§18 `workflow.json` files (entry_phase + no track_id) into the post-§18 shape at preflight.
 - `/init-project doctor` is a new sub-command that detects baseline drift in `workflows.jsonl`, the schemas directory, and the Article IV mirrors, and offers interactive fixes.
-- The `cli-copy-review` skill ships with this repo's own `workflows.jsonl` as an inline node in `intake-full` and `tdd-quickfix` (between `memory-flush` and `grant-commit`). It travels into end-user installs only when their `workflows.jsonl` references it. Hardcoded conditional references in baseline-owned skills are removed.
+- The `cli-copy-review` skill ships with this repo's own `workflows.jsonl` as an inline node in `intake-full` and `tdd-quickfix` (between `memory-sync` and `grant-commit`). It travels into end-user installs only when their `workflows.jsonl` references it. Hardcoded conditional references in baseline-owned skills are removed.
 - The `.claude/` tooling convention is codified in `seed.md §3`. All user-shipped baseline tooling lives under `.claude/`. The only project-root exceptions are `CLAUDE.md` and `.mcp.json`.
 
 This makes the public-facing claim about "an 11-phase workflow" technically still true (it is the canonical `intake-full` track), but incomplete. Tracks are the new abstraction. Phases are nodes inside a track.
@@ -139,7 +139,7 @@ The intake-full track, eleven nodes from request to commit. The
 composition reads as five zones: a preamble strip (intake, scout,
 research), the plan anchor (spec as the hero cell), the execution arm (tdd
 as a tall right-side cell), a mid strip (simplify, security, integrate,
-document), and the paired endings (archive with memory-flush; changelog
+document), and the paired endings (archive with memory-sync; changelog
 with commit as the ship pair). The two filled accent squares mark
 workflow-phase gates /approve-spec and /grant-commit. The third phase gate,
 /approve-swarm, sits inside the swarm-implementation sub-track of phase 6
@@ -235,7 +235,7 @@ Four selectable tracks ship in the pristine template:
 - intake-full: eleven nodes for a new feature that needs a written spec.
   Intake, scout, research, spec, /approve-spec, implementation (selector:
   swarm or solo TDD), simplify, security, integrate, document, archive,
-  memory-flush, /grant-commit, changelog, commit.
+  memory-sync, /grant-commit, changelog, commit.
 - spec-entry: starts at /spec. For a bugfix where the failing case is
   contract-level. Skips intake, scout, research.
 - tdd-quickfix: starts at /tdd. For a localised bug with a known failing
@@ -337,7 +337,7 @@ Every SVG on the site, classified. Three categories: **REWORK** (the SVG geometr
 | 3 | `site-src/index.njk:183` `arch-bento workflow-diag-title` | The 11-cell bento (intake → ... → commit) with consent-gate squares + runtime gate rule | **REWORK** | This is the main casualty. The SVG geometry literally encodes "11 phases as bento cells." Three SVG-level changes needed: (a) ord `06` label on the tall TDD cell becomes a `selector` annotation since implementation is now a selector node; (b) the `<title>` and `<desc>` (lines 184-185) currently say "eleven-phase workflow" — must become "intake-full track"; (c) the figcaption (line 462) is the Block F copy swap. **Path A (recommended):** keep the bento, change the title/desc/caption to frame it as the intake-full track. **Path B (heavier):** redesign the bento entirely as a track-picker (four cells: intake-full / spec-entry / tdd-quickfix / chore) with the current 11-cell layout as a drill-in. Defer Path B. |
 | 4 | `site-src/index.njk:488, :499` arch-spine arrows | Decorative left/right arrows in the "Architectural principle" section | **NO CHANGE** | Pure ornament. |
 | 5 | `site-src/index.njk:557` `cli-check` | Checkmark glyph in the install copy strip | **NO CHANGE** | Decorative. |
-| 6 | `site-src/memory.njk:68` `memflow-svg` (lifecycle) | memory_stop → _pending → /memory-flush → canonical → cite, with re-verify loops | **NO CHANGE** | Memory lifecycle. Orthogonal to the track abstraction. Step labels remain accurate. |
+| 6 | `site-src/memory.njk:68` `memflow-svg` (lifecycle) | memory_stop → _pending → /memory-sync → canonical → cite, with re-verify loops | **NO CHANGE** | Memory lifecycle. Orthogonal to the track abstraction. Step labels remain accurate. |
 | 7 | `site-src/memory.njk:137` `backlog-states-cap` | Backlog state transitions: open → picked-up / dropped → auto-close | **NO CHANGE** | The figcaption (line 182) references `workflow.json` + `/commit` + `source_backlog_keys`. All three still exist post-§18. The SVG itself encodes state transitions, not workflow phases. Verify the figcaption once more during the design-ui pass, but no edits expected. |
 
 ### 7.2 Hero symbols (per-page hero glyphs)

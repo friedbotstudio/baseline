@@ -1,12 +1,12 @@
 ---
 name: roadmap-sync
 owner: baseline
-description: Phase 10.6 — sync the project's execution roadmap (project.json → roadmap.path, default docs/roadmap-execution-plan.md) to the just-landed work. Flips the tasks named in workflow.json → roadmap_tasks[] from ⬜ to ✅ and promotes their epic headings ⬜→🟡→✅, preserving the standup parser format contract. Fail-open: never throws, no-ops when roadmap.path is unset/absent or no task matches, and never blocks a commit. Runs after /archive and before /memory-flush on every committing track except epic.
+description: Phase 10.6 — sync the project's execution roadmap (project.json → roadmap.path, default docs/roadmap-execution-plan.md) to the just-landed work. Flips the tasks named in workflow.json → roadmap_tasks[] from ⬜ to ✅ and promotes their epic headings ⬜→🟡→✅, preserving the standup parser format contract. Fail-open: never throws, no-ops when roadmap.path is unset/absent or no task matches, and never blocks a commit. Runs after /archive and before /memory-sync on every committing track except epic.
 ---
 
 # roadmap-sync — Phase 10.6
 
-Runs after `/archive` (10.5) and before `/memory-flush` (10.7) on every committing track except `epic`. Keeps the project's execution roadmap (`project.json → roadmap.path`) in sync with landed work, so the roadmap tracker never drifts from what actually shipped. The roadmap is a plan, never a gate.
+Runs after `/archive` (10.5) and before `/memory-sync` (10.7) on every committing track except `epic`. Keeps the project's execution roadmap (`project.json → roadmap.path`) in sync with landed work, so the roadmap tracker never drifts from what actually shipped. The roadmap is a plan, never a gate.
 
 ## Prereq
 

@@ -49,7 +49,7 @@ If no intake exists (ad-hoc invocation), fall back to the parent task descriptio
    The delta carries exactly those two keys. `added` and `stale` are deliberately
    absent from `reconcile.mjs`: `added` would need a prior reconcile snapshot that
    does not exist, and staleness is decided per element by `classify`, which
-   `/memory-flush` Step 0e surfaces. Reporting a field the helper never returns is
+   `/memory-sync` Step 0e surfaces. Reporting a field the helper never returns is
    how a scout report comes to describe a delta nobody computed.
 
    This step is the whole point of the corpus: without it the modules are an

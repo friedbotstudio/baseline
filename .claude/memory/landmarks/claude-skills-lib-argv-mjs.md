@@ -2,9 +2,9 @@
 key: .claude/skills/lib/argv.mjs
 category: landmarks
 scope: []
-governs: .claude/skills/lib/argv.mjs, .claude/skills/lib/output.mjs, .claude/skills/workspace/cli.mjs, .claude/skills/memory-flush/cli.mjs, .claude/skills/system-reconcile/cli.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/commit/cli.mjs, .claude/skills/document/cli.mjs, .claude/skills/harness/cli.mjs
+governs: .claude/skills/lib/argv.mjs, .claude/skills/lib/output.mjs, .claude/skills/workspace/cli.mjs, .claude/skills/memory-sync/cli.mjs, .claude/skills/system-reconcile/cli.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/commit/cli.mjs, .claude/skills/document/cli.mjs, .claude/skills/harness/cli.mjs, .claude/skills/standup/cli.mjs, .claude/skills/spec/cli.mjs
 load_bearing: true
-verified-at: 9179afd
+verified-at: dd0e5d2
 last-touched: 2026-08-09
 ---
 

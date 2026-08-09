@@ -60,7 +60,7 @@ on the fly during ordinary work. A later **workflow node** expands those into a
 well-linked knowledge graph of ADRs and updates the indices. The shape and placement of
 that workflow node is deliberately not specified yet.
 
-Note on existing behavior: `/memory-flush` **segregates** candidates and discards noise —
+Note on existing behavior: `/memory-sync` **segregates** candidates and discards noise —
 it is not a plain reset. The segregation step is the part that matters here.
 
 **Known constraint on the current capture leg** (verified 2026-08-04 during a flush):

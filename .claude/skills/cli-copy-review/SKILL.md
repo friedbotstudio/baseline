@@ -1,6 +1,6 @@
 ---
 name: cli-copy-review
-description: Dev-only review of user-facing CLI interface copy in `src/cli/tui/*.js`, `src/cli/*.js` error paths, and `bin/cli.js` help/usage text. Surfaces three failure modes — copy/behavior mismatch, jargon, missing next-action — as a punch list the maintainer addresses before `/grant-commit`. Read-only; no writes to source. Conditionally seeded by `/triage` between `/memory-flush` and `/grant-commit` when the request will touch CLI surfaces.
+description: Dev-only review of user-facing CLI interface copy in `src/cli/tui/*.js`, `src/cli/*.js` error paths, and `bin/cli.js` help/usage text. Surfaces three failure modes — copy/behavior mismatch, jargon, missing next-action — as a punch list the maintainer addresses before `/grant-commit`. Read-only; no writes to source. Conditionally seeded by `/triage` between `/memory-sync` and `/grant-commit` when the request will touch CLI surfaces.
 ---
 
 <!-- DEV-ONLY SKILL — this file lives in `.claude/skills/cli-copy-review/` of the
@@ -17,7 +17,7 @@ You are reviewing the user-facing text strings in the baseline's CLI for three f
 2. **Jargon** — internal terminology leaking into end-user text.
 3. **Missing next-action** — the string reports a problem or partial result without telling the user how to address it.
 
-This skill is a **quality gate**, not a phase. It sits between `/memory-flush` and `/grant-commit` when the workflow has been seeded with a `Run /cli-copy-review for <slug>` task by `/triage`. It is read-only: it surfaces findings; the maintainer addresses them in subsequent conversation turns and re-runs the skill until clean.
+This skill is a **quality gate**, not a phase. It sits between `/memory-sync` and `/grant-commit` when the workflow has been seeded with a `Run /cli-copy-review for <slug>` task by `/triage`. It is read-only: it surfaces findings; the maintainer addresses them in subsequent conversation turns and re-runs the skill until clean.
 
 ## When to use
 

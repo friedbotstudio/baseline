@@ -1,0 +1,10 @@
+---
+key: .claude/skills/memory-sync/sweep.mjs:1
+category: landmarks
+scope: [scout]
+verified-at: 8e6f904
+last-touched: 2026-06-23
+---
+
+- Role: deterministic actuator for /memory-sync Step 0 AND for /commit Step 6. Four modes via `--mode {auto-close, prose-scan, stale-sweep, stamp-closure}` + `--memory-dir`. auto-close deletes blocks carrying valid `resolved-at:` (pending-questions) or `superseded-at:` (other five canonical files) and flags malformed dates + per-file invariant violations. prose-scan surfaces entries whose body matches R1/R2/R3 (Resolution path/Superseded by/Resolved by, anchored, case-insensitive) and applies stdin replies (y deletes, n keeps, skip defers). stale-sweep re-derives the stale set with the same predicate as `memory_session_start.mjs:1` and applies stdin replies (re-verify / delete / mark-closed / skip). stamp-closure (non-interactive) takes `--backlog-keys <csv>` and writes `status: picked-up` + `superseded-at: <today>` to each named backlog.md entry; invoked by /commit Step 6 when workflow.json → source_backlog_keys is populated; report shape `{stamped, missing, already_closed}`. Emits JSON action report on stdout.
+- Caveat: the stale predicate's non-git threshold (30 days) MUST stay in sync with `memory_session_start.mjs:1`'s `STALE_DAYS` — they re-derive the same set. Spec design diagram says 90 days; the 30-day choice matches the test plan AC-003 row and the index header label `stale (>=30 commits old)`. The helper trusts argv strings reaching `git rev-list` (e.g., the verified-at value as `<stamp>..HEAD`); a malicious memory file could feed a `--exec`-style argv flag — low risk because filesystem write to `.claude/memory/` already implies broader compromise. See `docs/archive/2026-05-13/memory-lifecycle-closure/security.md` LOW finding. stamp-closure has its own LOW finding (CWE-22 path traversal via slug; CWE-78 shell quoting of backlog-keys CSV) — see `docs/archive/2026-05-17/workflow-loop-closing-hygiene/security.md`; mitigations are non-blocking carve-outs for a future hardening workflow.

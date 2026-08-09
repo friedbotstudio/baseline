@@ -2,7 +2,7 @@
 - promoted :: .claude/skills/memory-index/resolve.mjs → landmarks.md
 - promoted :: .claude/hooks/lib/governed-memory.mjs → landmarks.md
 - promoted :: .claude/skills/memory-index/constraints.mjs → landmarks.md
-- promoted :: .claude/skills/memory-flush/ledger.mjs → landmarks.md
+- promoted :: .claude/skills/memory-sync/ledger.mjs → landmarks.md
 - promoted :: .claude/hooks/process_lifecycle_guard.mjs → landmarks.md
 - promoted :: .claude/hooks/lib/memory_session_start.mjs → landmarks.md
 - promoted :: .claude/hooks/lib/scoped-memory.mjs → landmarks.md
@@ -52,7 +52,7 @@
 - discarded :: .claude/skills/workspace/readme-gate.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/record-codec.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/tree.mjs → landmarks.md
-- discarded :: .claude/skills/memory-flush/stale-elements.mjs → landmarks.md
+- discarded :: .claude/skills/memory-sync/stale-elements.mjs → landmarks.md
 - promoted :: backlog → my-recommendation-in-the-plan-is-one-writer-4d39
 - promoted :: .claude/skills/workspace/identity.mjs → landmarks.md
 - promoted :: .claude/skills/workspace/surface.mjs → landmarks.md
@@ -86,7 +86,7 @@
 - promoted :: .claude/skills/workspace/queries.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/graph.mjs → landmarks.md
 - discarded :: .claude/skills/workspace/cli.mjs → landmarks.md
-- discarded :: .claude/skills/memory-flush/cli.mjs → landmarks.md
+- discarded :: .claude/skills/memory-sync/cli.mjs → landmarks.md
 - discarded :: .claude/skills/memory-index/cli.mjs → landmarks.md
 - discarded :: .claude/skills/system-reconcile/cli.mjs → landmarks.md
 - discarded :: backlog → not-reachable-today-the-fix-is-an-explicit-4b02
@@ -104,3 +104,10 @@
 - promoted :: .claude/skills/harness/cli.mjs → landmarks.md
 - discarded :: .claude/skills/commit/cli.mjs → landmarks.md
 - discarded :: .claude/skills/document/cli.mjs → landmarks.md
+- promoted :: backlog → code-review-fanout-defects-from-dispatcher-sweep-9444
+- promoted :: backlog → is-the-one-line-swarm-isolation-flip-not-d3ed
+- promoted :: .claude/skills/standup/cli.mjs → landmarks.md
+- promoted :: .claude/skills/spec/cli.mjs → landmarks.md
+- discarded :: .claude/skills/spec/optimize.mjs → landmarks.md
+- discarded :: .claude/skills/standup/render.mjs → landmarks.md
+- promoted :: .claude/skills/spec/optimize.mjs → landmarks.md

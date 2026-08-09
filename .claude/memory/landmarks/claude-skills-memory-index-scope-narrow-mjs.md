@@ -2,7 +2,7 @@
 key: .claude/skills/memory-index/scope-narrow.mjs
 category: landmarks
 scope: []
-governs: .claude/skills/memory-index/*.mjs, .claude/skills/memory-flush/SKILL.md
+governs: .claude/skills/memory-index/*.mjs, .claude/skills/memory-sync/SKILL.md
 verified-at: 2bf79ef
 last-touched: 2026-08-08
 ---

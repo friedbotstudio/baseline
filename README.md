@@ -87,7 +87,7 @@ Three gates pause the workflow until you type the command yourself:
 | Gate | When | What it authorizes |
 | --- | --- | --- |
 | `/approve-direction <slug>` | after intake | the build direction, before scout/research/spec. The spec is then machine-reviewed, not human-gated |
-| `/approve-swarm <slug>` | after `/swarm-plan` | parallel dispatch into isolated worktrees |
+| `/approve-swarm <slug>` | after `/swarm-plan` | parallel dispatch of the planned waves |
 | `/grant-commit` | before the commit lands | the workflow's commits. Under github-flow, a non-protected feature branch omits this gate: `/commit` pushes and opens a PR, handing back to you if either fails |
 
 A fourth sits outside the pipeline: **`/grant-push`** opens a 5-minute window for `git push` on a protected branch (per `project.json → git.protected_branches`). Pushes on non-protected branches need no consent.
@@ -100,7 +100,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 | --- | ---: | --- |
 | **Hooks** on PreToolUse, PostToolUse, SessionStart, Stop, PreCompact, and UserPromptSubmit | 26 | `.claude/hooks/` |
 | **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 58 | `.claude/skills/` |
-| **Subagent** — `swarm-worker`, executes pre-decided recipes inside isolated git worktrees | 1 | `.claude/agents/` |
+| **Subagent** — `swarm-worker`, executes pre-decided recipes within a declared write set | 1 | `.claude/agents/` |
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — three workflow-phase gates plus `/grant-push` at runtime. All user-typed, all structurally un-invokable by Claude | 3 + 1 | `consent_gate_grant` UserPromptSubmit hook |
 | **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke), `sprint-channel` (coordination channel) | 4 | `.mcp.json` |
@@ -114,9 +114,9 @@ The roster counts are asserted by `audit-baseline` against `docs/init/seed.md` a
 
 The 26 hooks declared in `.claude/settings.json` fire at Claude's tool boundaries: PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. Each is a Node ESM script (`.mjs`) invoked as a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
 
-The architectural rule is short: **decisions live in main context; subagents only execute pre-decided recipes.** The baseline ships exactly one subagent, `swarm-worker`, and its only sanctioned use is parallel dispatch of fully-specified recipes inside isolated git worktrees during `/swarm-dispatch`. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) is a **skill** running in main context with full conversation visibility.
+The architectural rule is short: **decisions live in main context; subagents only execute pre-decided recipes.** The baseline ships exactly one subagent, `swarm-worker`, and its only sanctioned use is parallel dispatch of fully-specified recipes during `/swarm-dispatch`. Workers share your working tree by default; set `swarm.isolation` to give each one its own git worktree. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) is a **skill** running in main context with full conversation visibility.
 
-The full pipeline runs `intake → /approve-direction → scout → research → spec → tdd → simplify → security → integrate → document → archive → roadmap-sync → memory-flush → /grant-commit → commit`. The closing sequence matters: `archive` moves the workflow's artifacts into `docs/archive/<date>/<slug>/`, `roadmap-sync` flips the tasks this work landed, and `memory-flush` curates the session's memory candidates into the canonical files — all before `/grant-commit` opens the consent window and `commit` lands the change. A track may skip phases it declares no node for, but it cannot reorder them.
+The full pipeline runs `intake → /approve-direction → scout → research → spec → tdd → simplify → security → integrate → document → archive → roadmap-sync → memory-sync → /grant-commit → commit`. The closing sequence matters: `archive` moves the workflow's artifacts into `docs/archive/<date>/<slug>/`, `roadmap-sync` flips the tasks this work landed, and `memory-sync` curates the session's memory candidates into the canonical files — all before `/grant-commit` opens the consent window and `commit` lands the change. A track may skip phases it declares no node for, but it cannot reorder them.
 
 Tracks declared in `.claude/workflows.jsonl` are enforced at the write boundary by `track_guard`, and node ordering inside each track is binding. Two mechanisms may bypass a node: the `exceptions` array in `.claude/state/workflow.json`, written by `/triage` at workflow-creation time, and the post-`tdd` **right-size gate**, a mechanical, fail-open, additive-only oracle that may auto-skip a hard subset of `{simplify, document}` on a small diff, recording each skip in `auto_skipped[]`. It never skips `security` and never overrides an existing exception.
 

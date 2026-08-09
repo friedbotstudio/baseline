@@ -139,7 +139,7 @@ The build script `scripts/build-manifest.mjs` reads each SKILL.md's `owner:` val
 
 *Relocated 2026-08-08 (`system-spec-delta` slice F).* Clause 3's binding kernel stays in `CLAUDE.md`; the mechanics live here. Per Art. I.6 the narration moved so the always-loaded file kept room for the clause 10 recall rule without either size ceiling moving.
 
-`_pending.md` is written by the `memory_stop` Stop hook, which appends candidates at every turn-end. It is a passive collector: the hook proposes, `/memory-flush` disposes. Promotion to a canonical file happens only through `/memory-flush`, where a human-curated decision adds the `verified-at:` stamp that makes an entry self-healing.
+`_pending.md` is written by the `memory_stop` Stop hook, which appends candidates at every turn-end. It is a passive collector: the hook proposes, `/memory-sync` disposes. Promotion to a canonical file happens only through `/memory-sync`, where a human-curated decision adds the `verified-at:` stamp that makes an entry self-healing.
 
 The prohibition on writing canonical files directly carries one carve-out: the **natural byproduct of phase skills**. A phase that legitimately learns a fact of its own kind records it as it works — `scout` writes landmarks because it just mapped the code, `research` writes libraries because it just pinned a version. That is the fact landing next to the work that produced it, while the reason for it is still fresh, and it is not the same act as promoting an unverified candidate out of the inbox.
 
@@ -151,11 +151,11 @@ The prohibition on writing canonical files directly carries one carve-out: the *
 
 On overflow in the flat shape, **prune oldest unverified** entries first: an entry that has never been re-verified is the cheapest thing to lose, and pruning by age alone would evict facts that are still true and still cited. The **sharded shape has no per-file cap** — one fact per file means the cap has nothing to bound, and the decay predicate does the work the cap used to do.
 
-Staleness is not deletion. An entry past the threshold is *flagged*, and the next phase that touches it re-verifies or deletes it — self-healing at the point of use rather than by a sweep that no one reads. `/memory-flush` Step 0c surfaces the stale set on demand for the same treatment.
+Staleness is not deletion. An entry past the threshold is *flagged*, and the next phase that touches it re-verifies or deletes it — self-healing at the point of use rather than by a sweep that no one reads. `/memory-sync` Step 0c surfaces the stale set on demand for the same treatment.
 
 ### Durable local thread trail (Article IX clause 8)
 
-`.claude/memory/_thread.md` is a third, **local + durable** memory class for cross-session conversation continuity — distinct from the committed/curated canonical seven and from the overwritten-every-turn `_resume.md`. Its content is gitignored (only `src/memory/_thread.template.md` ships) and it is excluded from `/memory-flush`'s reset path, so a shelved thread survives a flush or `/clear`.
+`.claude/memory/_thread.md` is a third, **local + durable** memory class for cross-session conversation continuity — distinct from the committed/curated canonical seven and from the overwritten-every-turn `_resume.md`. Its content is gitignored (only `src/memory/_thread.template.md` ships) and it is excluded from `/memory-sync`'s reset path, so a shelved thread survives a flush or `/clear`.
 
 It is **model-internal**: Claude Code performs shelve and resume automatically; the human never invokes them, and there is no skill or command surface (so the audited skill/command counts are unchanged). Four `.mjs` Foundation helpers in `.claude/hooks/lib/` back it:
 
@@ -221,7 +221,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 - `harness` (user + model invokable; Stop-hook auto-continued), `swarm-plan`, `swarm-dispatch`
 
 **Memory (1)**:
-- `memory-flush`
+- `memory-sync`
 
 **Phase helpers (1)** — invoked by entry phases as a Step 0.5 / Step 1.5 gate; never on user-direct invocation:
 - `brainstorm` — PM-mode requirement capture via Socratic dialogue. Invoked by `/intake`, `/spec`, `/tdd` at Step 0.5 when `workflow.json → skip_brainstorm: false`. Writes `docs/brief/<slug>.md` with structured fields (actor, trigger, current state, desired state, non-goals, solution-leakage). Stage 2 discipline-assertor structurally forbids solution-shaped tokens in probes. See Article XI.3.
@@ -394,6 +394,6 @@ Relocated from CLAUDE.md Article IV's entry-point list per Art. I.6. The binding
 
 **`chore` — the `verify` skip rule.** `verify` is conditional, and the condition is narrow: it is skipped **only** for a pure-docs/prose diff when `project.json → test.kind` is `behavior`. An absent or invalid `test.kind` resolves to `structural`, which runs verify; any code or config change in the diff runs it regardless of `test.kind`. `verify` / `simplify` / `security` / `integrate` / `document` are the track's `internal_phases[]` — deliberately left OUT of `exceptions` at triage time, because the diff does not exist yet. The chore skill resolves each at runtime into `completed` (its trigger fired) or `exceptions` (it did not), recording an `auto_skipped[]` row. Chore is a stripped-down pipeline, not a bypass: silently skipping a conditional phase whose triggers apply is forbidden.
 
-**`freeform` — the blanket exception list.** Every pre-commit phase is excepted: `intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`. The DAG carries only `roadmap-sync` → `memory-flush` → `/grant-commit` → `/commit`.
+**`freeform` — the blanket exception list.** Every pre-commit phase is excepted: `intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`. The DAG carries only `roadmap-sync` → `memory-sync` → `/grant-commit` → `/commit`.
 
 **`freeform` — what stays live.** All 26 hooks fire normally, including `tdd_order_guard` (still blocks a new source file without a paired test), `git_commit_guard`, `destructive_cmd_guard`, `env_guard`, `verify_pass_guard`, and every consent gate. Use freeform only when the work is genuinely heterogeneous — an optimization sweep across unrelated landmines, exploratory cleanup, drive-by fixes. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.

@@ -1,7 +1,7 @@
 ---
 key: .claude/skills/system-reconcile/reconcile-report.mjs:1
 category: landmarks
-scope: [scout, spec, tdd, archive, memory-flush]
+scope: [scout, spec, tdd, archive, memory-sync]
 governs: .claude/skills/system-reconcile/reconcile-report.mjs,.claude/skills/system-reconcile/SKILL.md
 source: inferred-from-code
 verified-at: 17f1fa0

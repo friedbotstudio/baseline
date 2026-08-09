@@ -62,7 +62,7 @@ Storing only that one field is a rule rather than an omission. Anything the anch
 
 Every durable diagram declares what would prove it wrong. A shard names its kind in a PlantUML comment (`' @kind c4_component`). `writeDiagramShard` adds that annotation to every shard it creates, and a backfill has since annotated the shards that predate it. Every shard in `diagrams/` now carries a kind, so no element in this corpus resolves to `witness: none`. `project.json` binds each kind to a witness: a digest comparison, a named test given by `' @witness <path>`, or nothing at all. A diagram with no witness is still permitted, because a project may need to model something no checker can reach. It is marked, though, and can never be cited as evidence.
 
-Detection is mechanical and repair is by hand. `/memory-flush` lists the elements that drifted, and a digest is re-stamped only for one whose record and shard a curator actually read. `stampAll` refuses to run without an explicit id list, so no bulk-refresh path exists. A bulk refresh would leave every element permanently fresh and hide the drift the digest was built to catch.
+Detection is mechanical and repair is by hand. `/memory-sync` lists the elements that drifted, and a digest is re-stamped only for one whose record and shard a curator actually read. `stampAll` refuses to run without an explicit id list, so no bulk-refresh path exists. A bulk refresh would leave every element permanently fresh and hide the drift the digest was built to catch.
 
 A glob-anchored element is never stale. It names a family rather than a file, so there is no single interface to digest, and reconciliation reports it as moved.
 
