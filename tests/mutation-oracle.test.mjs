@@ -20,14 +20,14 @@ const wrapper = await import('../scripts/mutation-oracle.mjs');
 describe('mutation-oracle — config scoping (AC-003, AC-004)', () => {
   it('test_when_module_arg_then_config_scopes_mutate_and_command', () => {
     const cfg = wrapper.buildConfig(
-      '.claude/skills/memory-flush/route.mjs',
-      'tests/memory-flush-routing.test.mjs',
+      '.claude/skills/memory-sync/route.mjs',
+      'tests/memory-sync-routing.test.mjs',
     );
-    assert.deepEqual(cfg.mutate, ['.claude/skills/memory-flush/route.mjs'], 'mutate scoped to one file');
+    assert.deepEqual(cfg.mutate, ['.claude/skills/memory-sync/route.mjs'], 'mutate scoped to one file');
     assert.equal(cfg.testRunner, 'command', 'uses the command runner (no framework)');
     assert.equal(
       cfg.commandRunner.command,
-      'node --test tests/memory-flush-routing.test.mjs',
+      'node --test tests/memory-sync-routing.test.mjs',
       'command runs ONLY the named test (AC-003), drives node --test (AC-004)',
     );
     assert.equal(cfg.coverageAnalysis, 'off', 'perTest is unsupported by the command runner (context7) → off');
@@ -43,7 +43,7 @@ describe('mutation-oracle — survivor parsing (AC-001)', () => {
     // Only the 'Survived' mutant should surface; Killed/NoCoverage/Timeout excluded.
     assert.equal(survivors.length, 1, 'exactly one survivor');
     assert.deepEqual(survivors[0], {
-      file: '.claude/skills/memory-flush/route.mjs',
+      file: '.claude/skills/memory-sync/route.mjs',
       line: 40,
       mutationKind: 'ConditionalExpression',
     });

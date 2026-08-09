@@ -41,7 +41,7 @@ const CONFIG = {
 };
 
 const CANDIDATES = ['simplify', 'security', 'document'];
-const FORBIDDEN_IN_SKIP = ['security', 'integrate', 'tdd', 'archive', 'memory-flush', 'grant-commit', 'commit'];
+const FORBIDDEN_IN_SKIP = ['security', 'integrate', 'tdd', 'archive', 'memory-sync', 'grant-commit', 'commit'];
 
 describe('rightsize-gate decideSkip — micro skip', () => {
   it('test_when_micro_diff_no_doc_then_skip_simplify_and_document', () => {

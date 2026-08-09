@@ -6,9 +6,9 @@
 // key it is handed, verbatim. So only a key in the header form can ever suppress
 // a candidate; any other string is recorded and inert.
 //
-// /memory-flush Step 4.5 said `key:'<candidate key>'`, a curator read that as the
+// /memory-sync Step 4.5 said `key:'<candidate key>'`, a curator read that as the
 // bare key, and the ledger filled with rows that match nothing. The file exists,
-// so the `discard-ledger-is-inert-until-memory-flush-step-4-5-runs` landmine's
+// so the `discard-ledger-is-inert-until-memory-sync-step-4-5-runs` landmine's
 // `ls _discard-ledger.md` check reports healthy while suppression does nothing.
 //
 // The fix is ONE definition shared by the builder and the validator. These tests
@@ -24,7 +24,7 @@ import { join } from 'node:path';
 
 import { makeProject, readPending, tryImport } from './helpers/memory-fixtures.mjs';
 
-const LEDGER_MODULE = '.claude/skills/memory-flush/ledger.mjs';
+const LEDGER_MODULE = '.claude/skills/memory-sync/ledger.mjs';
 const STOP_MODULE = '.claude/hooks/lib/memory_stop.mjs';
 
 // The module EXISTS; these exports do not until /implement lands. A bare named

@@ -33,7 +33,7 @@ const ARCHIVE_EXEMPT = new Map([
   [
     'freeform',
     'CLAUDE.md Art. IV lists archive among freeform\'s deliberate blanket exceptions; '
-      + 'its DAG carries only roadmap-sync -> memory-flush -> grant-commit -> commit.',
+      + 'its DAG carries only roadmap-sync -> memory-sync -> grant-commit -> commit.',
   ],
   [
     'epic',

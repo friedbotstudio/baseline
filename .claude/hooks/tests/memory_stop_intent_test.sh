@@ -93,7 +93,7 @@ seed_project() {
   ln -s "$REPO_ROOT/.claude/hooks/lib" "$root/.claude/hooks/lib"
   cat > "$root/.claude/memory/_pending.md" <<'EOF'
 ---
-owners: [memory_stop.sh writes; /memory-flush clears]
+owners: [memory_stop.sh writes; /memory-sync clears]
 category: auto-extracted candidates awaiting curation
 verifies-against: none
 ---
@@ -334,7 +334,7 @@ test_when_widened_follow_up_label_then_backlog_candidate_emitted() {
 test_when_widened_future_work_label_then_backlog_candidate_emitted() {
   local root; root="$(seed_project)"; trap "rm -rf $root" RETURN
   local tx="$root/transcript.jsonl"
-  append_text_event "$tx" "assistant" "Future work: add backlog-decay sweep to the memory-flush SOP"
+  append_text_event "$tx" "assistant" "Future work: add backlog-decay sweep to the memory-sync SOP"
   run_hook "$root" "$tx"
   local pf; pf="$(pending_path "$root")"
   assert_grep_count "$pf" '^## CANDIDATE: backlog → ' 1 "#7 'Future work' should emit" || return 1

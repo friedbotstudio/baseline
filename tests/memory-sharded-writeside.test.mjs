@@ -13,7 +13,7 @@ import { spawnSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = join(dirname(__filename), '..');
-const SWEEP = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
+const SWEEP = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
 const CLOSURE = pathToFileURL(join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs')).href;
 
 function seedShardedBacklog(root, key, extraFields = '') {

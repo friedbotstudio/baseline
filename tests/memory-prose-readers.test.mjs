@@ -22,7 +22,7 @@ import { REPO_ROOT, CANONICAL_CATEGORIES } from './helpers/memory-fixtures.mjs';
 const PROSE_SURFACES = [
   '.claude/skills/commit/SKILL.md',
   '.claude/skills/retrospective/SKILL.md',
-  '.claude/skills/memory-flush/SKILL.md',
+  '.claude/skills/memory-sync/SKILL.md',
   '.claude/skills/standup/SKILL.md',
   '.claude/skills/research/SKILL.md',
   '.claude/memory/README.md',

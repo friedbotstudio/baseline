@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { makeProject, writeShard, tryImport } from './helpers/memory-fixtures.mjs';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FLUSH_SKILL = join(REPO_ROOT, '.claude/skills/memory-flush/SKILL.md');
+const FLUSH_SKILL = join(REPO_ROOT, '.claude/skills/memory-sync/SKILL.md');
 
 describe('ticket C — the derived index is actually queried', () => {
   it('test_when_governed_surfacing_runs_then_it_resolves_through_the_index', async () => {
@@ -104,7 +104,7 @@ describe('ticket B — a constraint flip actually surfaces its dependents', () =
 });
 
 describe('tickets B, C, D — the curation seams are documented in the skill that owns them', () => {
-  // These three run inside /memory-flush, which is a prose SOP rather than a code
+  // These three run inside /memory-sync, which is a prose SOP rather than a code
   // path, so the seam is an instruction plus this assertion that the instruction
   // exists. That is weaker than an exit code and is stated as such in the report:
   // a future run can skip a documented step the same way the /document routing rule
@@ -116,7 +116,7 @@ describe('tickets B, C, D — the curation seams are documented in the skill tha
   ];
 
   for (const [symbol, why] of seams) {
-    it(`test_when_memory_flush_skill_is_read_then_it_invokes_${symbol}`, () => {
+    it(`test_when_memory_sync_skill_is_read_then_it_invokes_${symbol}`, () => {
       const text = readFileSync(FLUSH_SKILL, 'utf8');
       assert.match(text, new RegExp(symbol), `${FLUSH_SKILL} must invoke ${symbol} (${why})`);
     });

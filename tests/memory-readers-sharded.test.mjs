@@ -32,7 +32,7 @@ import {
 
 const LIFT_FIELDS_REL = '.claude/skills/memory-index/lift-fields.mjs';
 const GATHER_REL = '.claude/skills/standup/gather.mjs';
-const NEXT_Q_ID_ABS = join(REPO_ROOT, '.claude/skills/memory-flush/next-q-id.mjs');
+const NEXT_Q_ID_ABS = join(REPO_ROOT, '.claude/skills/memory-sync/next-q-id.mjs');
 const RETRIEVE_REL = '.claude/skills/research/retrieve.mjs';
 const COMMIT_SPLIT_REL = '.claude/skills/power/commit-split.mjs';
 const SCOPED_MEMORY_REL = '.claude/hooks/lib/scoped-memory.mjs';

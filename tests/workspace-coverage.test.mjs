@@ -18,7 +18,7 @@ import { makeProject, tryImport, REPO_ROOT } from './helpers/memory-fixtures.mjs
 
 const COVERAGE = '.claude/skills/workspace/coverage.mjs';
 const MATERIALIZE = '.claude/skills/workspace/materialize.mjs';
-const STALE = '.claude/skills/memory-flush/stale-elements.mjs';
+const STALE = '.claude/skills/memory-sync/stale-elements.mjs';
 
 async function materializedCorpus() {
   const materialize = await tryImport(MATERIALIZE);

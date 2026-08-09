@@ -53,7 +53,13 @@ const PATH_LEG_BASELINE = {
   '.claude/hooks/lib/scoped-memory.mjs': 8,
   '.claude/skills/memory-index/resolve.mjs': 11,
   '.claude/hooks/process_lifecycle_guard.mjs': 8,
-  '.claude/skills/harness/checker-fanout.mjs': 5,
+  // 5 -> 6: the `code-review-fanout-defects-from-dispatcher-sweep-9444` backlog
+  // entry governs this path. It was filed by the dispatcher-sweep workflow and was
+  // already in the working tree, uncommitted, before harness-batch-fixes began —
+  // this baseline simply had not been re-measured since. A governed-memory count is
+  // a census, not an invariant: it moves whenever an entry's `governs:` legitimately
+  // names a new path.
+  '.claude/skills/harness/checker-fanout.mjs': 6,
 };
 
 function liveShards() {
@@ -178,7 +184,7 @@ describe('memory scope — the docs stop claiming the placeholder confers reacha
   it('test_when_reachability_docs_read_then_neither_claims_any_confers_reachability', () => {
     const claims = [
       ['.claude/memory/README.md', readFileSync(join(REPO_ROOT, '.claude/memory/README.md'), 'utf8')],
-      ['.claude/skills/memory-flush/SKILL.md', readFileSync(join(REPO_ROOT, '.claude/skills/memory-flush/SKILL.md'), 'utf8')],
+      ['.claude/skills/memory-sync/SKILL.md', readFileSync(join(REPO_ROOT, '.claude/skills/memory-sync/SKILL.md'), 'utf8')],
     ]
       .filter(([, text]) => /scope: any/.test(text))
       .map(([path]) => path);
@@ -186,7 +192,7 @@ describe('memory scope — the docs stop claiming the placeholder confers reacha
     assert.deepEqual(
       claims,
       [],
-      'README.md:112 said "backfilled to it, so no fact is unreachable" and memory-flush/SKILL.md:208 repeated it, while scoped-memory.mjs:19 honoured neither. Both must now describe the two-leg predicate.',
+      'README.md:112 said "backfilled to it, so no fact is unreachable" and memory-sync/SKILL.md:208 repeated it, while scoped-memory.mjs:19 honoured neither. Both must now describe the two-leg predicate.',
     );
   });
 });

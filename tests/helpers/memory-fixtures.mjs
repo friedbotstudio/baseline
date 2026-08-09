@@ -11,7 +11,7 @@ export const REPO_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))
 
 const PENDING_SKELETON = [
   '---',
-  'owners: [memory_stop.mjs writes; /memory-flush clears]',
+  'owners: [memory_stop.mjs writes; /memory-sync clears]',
   'category: auto-extracted candidates awaiting curation',
   'verifies-against: none',
   '---',

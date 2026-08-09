@@ -23,12 +23,14 @@ import { REPO_ROOT } from './memory-fixtures.mjs';
 
 export const DISPATCHERS = {
   workspace: '.claude/skills/workspace/cli.mjs',
-  'memory-flush': '.claude/skills/memory-flush/cli.mjs',
+  'memory-sync': '.claude/skills/memory-sync/cli.mjs',
   'system-reconcile': '.claude/skills/system-reconcile/cli.mjs',
   'memory-index': '.claude/skills/memory-index/cli.mjs',
   document: '.claude/skills/document/cli.mjs',
   commit: '.claude/skills/commit/cli.mjs',
   harness: '.claude/skills/harness/cli.mjs',
+  standup: '.claude/skills/standup/cli.mjs',
+  spec: '.claude/skills/spec/cli.mjs',
 };
 
 // Pattern B (spec dispatcher-sweep D1): a single-purpose helper carrying its own

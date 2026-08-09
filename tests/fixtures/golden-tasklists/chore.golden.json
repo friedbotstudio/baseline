@@ -38,10 +38,10 @@
     },
     {
       "ord": 4,
-      "subject": "Run /memory-flush for <slug>",
-      "activeForm": "Running memory-flush",
+      "subject": "Run /memory-sync for <slug>",
+      "activeForm": "Running memory-sync",
       "metadata": {
-        "phase": "memory-flush"
+        "phase": "memory-sync"
       },
       "needs_user": false,
       "blockedBy": [

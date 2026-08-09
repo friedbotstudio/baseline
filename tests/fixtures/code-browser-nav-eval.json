@@ -10,8 +10,8 @@
     "symbol": "isBoilerplate"
   },
   {
-    "question": "Where is the deterministic route classifier for memory-flush candidates?",
-    "file": ".claude/skills/memory-flush/route.mjs",
+    "question": "Where is the deterministic route classifier for memory-sync candidates?",
+    "file": ".claude/skills/memory-sync/route.mjs",
     "symbol": "suggestRoutes"
   },
   {

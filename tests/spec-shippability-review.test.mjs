@@ -42,8 +42,8 @@ async function setupProject(fixtureName, slug) {
   // For the advisory-mixed fixture: sweep.py must EXIST on disk for the
   // ADVISORY (vs BLOCKER) verdict. Create a stub.
   if (fixtureName === 'advisory-mixed') {
-    await mkdir(join(tmp, '.claude/skills/memory-flush'), { recursive: true });
-    await writeFile(join(tmp, '.claude/skills/memory-flush/sweep.py'), '# stub for test fixture\n');
+    await mkdir(join(tmp, '.claude/skills/memory-sync'), { recursive: true });
+    await writeFile(join(tmp, '.claude/skills/memory-sync/sweep.py'), '# stub for test fixture\n');
   }
 
   return tmp;

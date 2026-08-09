@@ -7,7 +7,7 @@
 //   out-of-scope; an in-scope file runs every check).
 //   skill-ownership.mjs:30-37 re-hashes every manifest-listed file under a
 //   baseline-owned skill dir and FAILs on mismatch.
-// Tickets B and D both edit .claude/skills/memory-flush/. Without an immediate
+// Tickets B and D both edit .claude/skills/memory-sync/. Without an immediate
 // `npm run manifest:refresh`, ticket C and D read a red audit that ticket B caused
 // — the batch loses its test signal exactly where it is most needed.
 //
@@ -24,7 +24,7 @@ import { createHash } from 'node:crypto';
 import { REPO_ROOT } from './helpers/memory-fixtures.mjs';
 
 const CHECK_MODULE = '.claude/skills/audit-baseline/checks/skill-ownership.mjs';
-const SKILL_SLUG = 'memory-flush';
+const SKILL_SLUG = 'memory-sync';
 const TRACKED_FILE = `.claude/skills/${SKILL_SLUG}/route.mjs`;
 
 function sha256(buf) {

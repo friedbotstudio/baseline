@@ -17,7 +17,8 @@ Each location answers a different question; none overrides another. Naming one
 Guard-enforced invariants:
   - Required ## headings (artifact_template_guard, configured in project.json →
     artifacts.required_sections.spec — that key is what the guard reads; it wins):
-        Goal, Design, Design calls, System delta, Acceptance criteria, Test plan.
+        Goal, Design, Program design, Design calls, System delta,
+        Acceptance criteria, Test plan.
   - Required diagram kinds inside ```plantuml``` fences
     (spec_diagram_presence_guard, configured in project.json →
      artifacts.required_diagrams.spec):
@@ -235,6 +236,40 @@ Every entry must be confirmed against current docs — no training-data recall f
 |---|---|---|
 | A | <description> | <reason> |
 | B | <description> | <reason> |
+
+## Program design
+
+How the change is actually built: what reads and writes what, the path a call takes when that path is load-bearing, and the file layout the change produces. The `## Design` section above says what the system becomes; this section says how the code is arranged to get there.
+
+### Data access
+
+One row per reader. Name the source, the access path, and who writes it — a table, not prose. This is where a second writer to a single-writer store becomes visible before it is built.
+
+| Reader | Source | Access path | Written by |
+|---|---|---|---|
+| `<module>` | `<table / file / config key>` | `<query, readFileSync, in-process call>` | `<the one writer, or "nothing — read-only">` |
+
+### Call stack
+
+**Required only when load-bearing** — a chain that crosses a layer boundary, a dispatch whose entry point is not obvious from the file layout, or a hop a maintainer would otherwise have to rediscover. A single-frame edit has no call stack worth drawing; write `*(not load-bearing)*` and move on. Padding this out for a one-file change is ceremony, not design.
+
+```
+<entry point>
+  └─ <next frame>              <module>
+       ├─ <branch>             <module>
+       └─ <leaf / IO boundary> <module>
+```
+
+### Layout
+
+The files this change creates, renames, or alters, annotated with which. A reader should be able to check out the branch and find everything named here.
+
+```
+<dir>/
+  <file>        new       — <one-line role>
+  <file>        changed   — <what moves>
+  <file>        unchanged surface — <why it is listed anyway>
+```
 
 ## Design calls
 

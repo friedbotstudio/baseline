@@ -92,12 +92,12 @@ describe('Tier 1 — boilerplate-free cues + shared noise source', () => {
 // ---------------------------------------------------------------------------
 // extractor-noise-and-prereq-drift — T1 capture-precision fixtures.
 // Spec: docs/specs/extractor-noise-and-prereq-drift.md
-// The extractor was re-ingesting its OWN /memory-flush reports and mining
+// The extractor was re-ingesting its OWN /memory-sync reports and mining
 // SKILL.md contract prose, so 16 of 16 candidates at one flush were unpromotable.
 // ---------------------------------------------------------------------------
 
 const FLUSH_REPORT = [
-  'memory-flush — 2026-07-12',
+  'memory-sync — 2026-07-12',
   '',
   'Closed (1):',
   '- durable-plan-slug-path-traversal-hardening-7c4d → backlog.md (auto-close)',
@@ -106,7 +106,7 @@ const FLUSH_REPORT = [
   '- phase-timer-collapses-phases-appended-in-one-workflow-json-write → landmines.md (new)',
   '',
   'Discarded (16 of 16 pending):',
-  '- 8 candidates — verbatim quotations of PRIOR /memory-flush reports (recursive noise)',
+  '- 8 candidates — verbatim quotations of PRIOR /memory-sync reports (recursive noise)',
 ].join('\n');
 
 // A skill body as it arrives on FIRST invocation: the marker is at the head.
@@ -158,7 +158,7 @@ describe('T1 — capture precision (extractor-noise-and-prereq-drift)', () => {
   it('test_when_assistant_block_is_flush_report_then_zero_candidates', async () => { // AC-001
     const lib = await import('../.claude/hooks/lib/memory_stop.mjs');
     assert.equal(typeof lib.isFlushReport, 'function', 'memory_stop.mjs must export isFlushReport()');
-    assert.equal(lib.isFlushReport(FLUSH_REPORT), true, 'a /memory-flush report block must be suppressed');
+    assert.equal(lib.isFlushReport(FLUSH_REPORT), true, 'a /memory-sync report block must be suppressed');
     assert.equal(lib.isFlushReport(GENUINE_DEFERRAL), false, 'ordinary prose is not a flush report');
   });
 

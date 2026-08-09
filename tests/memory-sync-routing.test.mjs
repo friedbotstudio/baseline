@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { tryImport, loadCorpus } from './helpers/memory-fixtures.mjs';
 
 const BUCKETS = ['landmark', 'decision', 'open-question', 'backlog'];
-const ROUTE = '.claude/skills/memory-flush/route.mjs';
+const ROUTE = '.claude/skills/memory-sync/route.mjs';
 
 async function suggest(candidates) {
   const mod = await tryImport(ROUTE);

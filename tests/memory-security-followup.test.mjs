@@ -18,7 +18,7 @@ import { makeProject, writeShard, tryImport } from './helpers/memory-fixtures.mj
 const INDEX_IO = '.claude/skills/memory-index/index-io.mjs';
 const RESOLVE = '.claude/skills/memory-index/resolve.mjs';
 const GOVERNED = '.claude/hooks/lib/governed-memory.mjs';
-const LEDGER = '.claude/skills/memory-flush/ledger.mjs';
+const LEDGER = '.claude/skills/memory-sync/ledger.mjs';
 
 describe('security follow-up — F-1: malformed governs glob', () => {
   it('test_when_governs_glob_holds_regex_metachar_then_match_returns_false_not_throws', async () => {

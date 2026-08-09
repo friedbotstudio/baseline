@@ -1,7 +1,7 @@
 // Skill-helper CLI dispatchers — the three non-workspace front doors, plus the
 // regression trap that keeps them additive (AC-001, AC-005, regression).
 //
-// memory-flush, system-reconcile and memory-index each own a handful of
+// memory-sync, system-reconcile and memory-index each own a handful of
 // hand-invoked modules. Their dispatchers are thinner than workspace's, so the
 // assertions here concentrate on the two things that can actually go wrong: a
 // write subcommand that accepts a bad value, and a dispatcher that reshapes the
@@ -21,7 +21,7 @@ import { runCli, assertPresent } from './helpers/cli-runner.mjs';
 
 const SPEC_DIR = 'docs/system';
 
-describe('memory-flush dispatcher', () => {
+describe('memory-sync dispatcher', () => {
   // AC-005
   //
   // The key MUST be a well-formed candidate key (isCandidateKey requires the
@@ -29,8 +29,8 @@ describe('memory-flush dispatcher', () => {
   // is ever examined, which would make this test pass for the wrong reason and
   // stay green even if the disposition check were deleted. The invalid
   // disposition has to be the sole distinguishing input.
-  it('test_when_memory_flush_ledger_disposition_invalid_then_rejected_and_ledger_unchanged', async () => {
-    const mod = await tryImport('.claude/skills/memory-flush/ledger.mjs');
+  it('test_when_memory_sync_ledger_disposition_invalid_then_rejected_and_ledger_unchanged', async () => {
+    const mod = await tryImport('.claude/skills/memory-sync/ledger.mjs');
     assert.ok(mod, 'ledger.mjs must be importable to resolve the ledger path');
 
     const { root, memDir } = makeProject();
@@ -42,7 +42,7 @@ describe('memory-flush dispatcher', () => {
     const seeded = '# discard ledger\n\n- existing row\n';
     writeFileSync(ledger, seeded, 'utf8');
 
-    const res = runCli('memory-flush', [
+    const res = runCli('memory-sync', [
       'ledger', '--key', validKey, '--disposition', 'bogus', '--root', root,
     ]);
     assertPresent(assert, res);
@@ -56,8 +56,8 @@ describe('memory-flush dispatcher', () => {
   });
 
   // AC-001
-  it('test_when_memory_flush_stale_elements_runs_then_report_emitted', () => {
-    const res = runCli('memory-flush', ['stale-elements']);
+  it('test_when_memory_sync_stale_elements_runs_then_report_emitted', () => {
+    const res = runCli('memory-sync', ['stale-elements']);
     assertPresent(assert, res);
     assert.equal(res.status, 0, `stale-elements must exit 0; got ${res.status}: ${res.out.slice(0, 300)}`);
   });
@@ -115,8 +115,8 @@ describe('dispatchers stay additive', () => {
       '.claude/skills/workspace/shards.mjs': ['writeDiagramShard', 'readShard'],
       '.claude/skills/workspace/flags.mjs': ['architectureMapEnabled'],
       '.claude/skills/workspace/roll.mjs': ['roll'],
-      '.claude/skills/memory-flush/route.mjs': ['suggestRoutes'],
-      '.claude/skills/memory-flush/ledger.mjs': ['recordCuration'],
+      '.claude/skills/memory-sync/route.mjs': ['suggestRoutes'],
+      '.claude/skills/memory-sync/ledger.mjs': ['recordCuration'],
       '.claude/skills/system-reconcile/reconcile-report.mjs': ['runReconcile'],
       '.claude/skills/memory-index/resolve.mjs': ['assertWritable'],
     };

@@ -38,7 +38,7 @@ const SANDBOXES = [];
 const PROJECT_JSON = {
   configured: true,
   workflow: {
-    phases: ['intake', 'scout', 'research', 'spec', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-flush', 'grant-commit', 'commit'],
+    phases: ['intake', 'scout', 'research', 'spec', 'approve-spec', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'memory-sync', 'grant-commit', 'commit'],
     artifacts: {
       intake: 'docs/intake/*.md',
       scout: 'docs/scout/*.md',

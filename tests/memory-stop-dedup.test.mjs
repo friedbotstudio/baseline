@@ -22,7 +22,7 @@ const REPO_ROOT = join(dirname(__filename), '..');
 const HOOK_PATH = join(REPO_ROOT, '.claude/hooks/memory_stop.mjs');
 
 const PENDING_SKELETON = `---
-owners: [memory_stop.sh writes; /memory-flush clears]
+owners: [memory_stop.sh writes; /memory-sync clears]
 category: auto-extracted candidates awaiting curation
 verifies-against: none
 ---

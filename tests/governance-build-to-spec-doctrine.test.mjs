@@ -44,12 +44,12 @@ function sectionOf(text, heading) {
 // review, cli-copy-review); the pristine template ships without them.
 const PINNED_NODE_IDS = {
   '.claude/workflows.jsonl': {
-    'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'spec-shippability-review', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'cli-copy-review', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'spec-shippability-review', 'approve-direction', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
+    'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'spec-shippability-review', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'cli-copy-review', 'grant-commit', 'commit'],
+    'spec-entry': ['spec', 'spec-shippability-review', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
   },
   'src/.claude/workflows.template.jsonl': {
-    'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'approve-direction', 'tdd', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-flush', 'grant-commit', 'commit'],
+    'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
+    'spec-entry': ['spec', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
   },
 };
 
@@ -131,7 +131,7 @@ describe('workflows.jsonl entry-point rebalance is text-only (AC-004)', () => {
         const track = tracks.find((t) => t.track_id === trackId);
         assert.ok(track, `${rel} declares ${trackId}`);
         assert.deepEqual(track.nodes.map((n) => n.id), pinned,
-          `${trackId} DAG untouched — rebalance is description/selector_hints text only`);
+          `${trackId} DAG drifted. The entry-point rebalance was text-only; the ONLY sanctioned change since is harness-batch-fixes T6, which replaced the bare \`tdd\` node with the \`implementation\` selector so swarm is the default code-generation route. Any other delta is unintended.`);
       }
     });
   }

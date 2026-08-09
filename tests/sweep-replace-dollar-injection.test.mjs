@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SWEEP = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
+const SWEEP = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
 
 const SENTINEL = 'UNIQUESENTINEL_DOLLARBUG';
 // The provocative payload: every String.replace special pattern, on one body line.

@@ -111,7 +111,7 @@ describe('AC-012 via Rollout prerequisite 1 — the budget is paid by relocation
 
     // Clause 3: the inbox MECHANICS move; the binding kernel stays.
     assert.match(article, /_pending\.md/, 'clause 3 keeps its binding kernel naming _pending.md');
-    assert.match(article, /memory-flush/, 'clause 3 keeps the promote-only-via-/memory-flush rule');
+    assert.match(article, /memory-sync/, 'clause 3 keeps the promote-only-via-/memory-sync rule');
     assert.ok(
       !/natural byproduct/i.test(article),
       'the clause 3 natural-byproduct narration must move to the annex'

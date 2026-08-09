@@ -56,9 +56,9 @@ describe('SOP citations name a command, not an inline import', () => {
     // covered by the four dispatchers of 4cc46e0
     'workspace/flags.mjs',
     'system-reconcile/reconcile-report.mjs',
-    'memory-flush/stale-elements.mjs',
-    'memory-flush/route.mjs',
-    'memory-flush/ledger.mjs',
+    'memory-sync/stale-elements.mjs',
+    'memory-sync/route.mjs',
+    'memory-sync/ledger.mjs',
     'memory-index/constraints.mjs',
     'memory-index/resolve.mjs',
     // added by the sweep — seven workspace subcommands

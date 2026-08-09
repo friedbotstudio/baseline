@@ -1,5 +1,5 @@
-// Phase 10.6 (memory-flush) — acceptance criteria fixtures.
-// Spec: docs/specs/memory-flush-phase.md
+// Phase 10.6 (memory-sync) — acceptance criteria fixtures.
+// Spec: docs/specs/memory-sync-phase.md
 //
 // AC-001 / AC-006 / AC-010 / AC-011 are static-analysis tests over markdown SOPs
 // (read files, regex against canonical lines). AC-007/008/009 spawn
@@ -30,14 +30,14 @@ async function readRepoFile(rel) {
 }
 
 const PENDING_HEADER = `---
-owners: [memory_stop.sh writes; /memory-flush clears]
+owners: [memory_stop.sh writes; /memory-sync clears]
 category: auto-extracted candidates awaiting curation
 verifies-against: none
 ---
 
 # Pending memory candidates
 
-Auto-extracted by \`memory_stop.sh\`. Run \`/memory-flush\` to review.
+Auto-extracted by \`memory_stop.sh\`. Run \`/memory-sync\` to review.
 
 **Content of this file is gitignored.**
 
@@ -102,8 +102,8 @@ function additionalContextOf(result) {
 
 // ---------- Domain tests ----------
 
-describe('AC-001 — harness phase ordering includes memory-flush between archive and grant-commit', () => {
-  it('test_when_archive_completes_then_taskList_next_pending_is_memory_flush', async () => {
+describe('AC-001 — harness phase ordering includes memory-sync between archive and grant-commit', () => {
+  it('test_when_archive_completes_then_taskList_next_pending_is_memory_sync', async () => {
     const sop = await readRepoFile('.claude/skills/harness/SKILL.md');
     // Anchor on the fenced arrow-chain block itself (it opens with `intake`), not on the
     // first fence pair that happens to span the words archive..commit. The looser regex
@@ -112,12 +112,12 @@ describe('AC-001 — harness phase ordering includes memory-flush between archiv
     assert.ok(orderingBlock, 'harness/SKILL.md must contain a fenced phase-ordering block starting at intake');
     const chain = orderingBlock[1];
     const archiveIdx = chain.indexOf('archive');
-    const memflushIdx = chain.indexOf('memory-flush');
+    const memflushIdx = chain.indexOf('memory-sync');
     const commitIdx = chain.indexOf('commit');
-    assert.ok(memflushIdx > -1, 'harness/SKILL.md phase-ordering chain must mention memory-flush');
+    assert.ok(memflushIdx > -1, 'harness/SKILL.md phase-ordering chain must mention memory-sync');
     assert.ok(
       archiveIdx > -1 && archiveIdx < memflushIdx && memflushIdx < commitIdx,
-      `archive (idx ${archiveIdx}) → memory-flush (idx ${memflushIdx}) → commit (idx ${commitIdx}) ordering invariant violated`
+      `archive (idx ${archiveIdx}) → memory-sync (idx ${memflushIdx}) → commit (idx ${commitIdx}) ordering invariant violated`
     );
   });
 });
@@ -138,28 +138,28 @@ async function trackNodeOrder(trackId) {
   return (id) => (order.has(id) ? order.get(id) : -1);
 }
 
-describe('AC-006 — canonical tracks (workflows.jsonl) order memory-flush between archive and grant-commit', () => {
-  it('test_when_intake_full_track_then_memory_flush_node_is_between_archive_and_grant_commit', async () => {
+describe('AC-006 — canonical tracks (workflows.jsonl) order memory-sync between archive and grant-commit', () => {
+  it('test_when_intake_full_track_then_memory_sync_node_is_between_archive_and_grant_commit', async () => {
     const idx = await trackNodeOrder('intake-full');
     const archiveIdx = idx('archive');
-    const memflushIdx = idx('memory-flush');
+    const memflushIdx = idx('memory-sync');
     const grantIdx = idx('grant-commit');
-    assert.ok(memflushIdx > -1, 'intake-full must contain a memory-flush node');
+    assert.ok(memflushIdx > -1, 'intake-full must contain a memory-sync node');
     assert.ok(
       archiveIdx > -1 && archiveIdx < memflushIdx && memflushIdx < grantIdx,
-      `intake-full node order: archive (${archiveIdx}) → memory-flush (${memflushIdx}) → grant-commit (${grantIdx}) violated`
+      `intake-full node order: archive (${archiveIdx}) → memory-sync (${memflushIdx}) → grant-commit (${grantIdx}) violated`
     );
   });
 
-  it('test_when_chore_track_then_memory_flush_node_is_between_chore_and_grant_commit', async () => {
+  it('test_when_chore_track_then_memory_sync_node_is_between_chore_and_grant_commit', async () => {
     const idx = await trackNodeOrder('chore');
     const choreIdx = idx('chore');
-    const memflushIdx = idx('memory-flush');
+    const memflushIdx = idx('memory-sync');
     const grantIdx = idx('grant-commit');
-    assert.ok(memflushIdx > -1, 'chore must contain a memory-flush node');
+    assert.ok(memflushIdx > -1, 'chore must contain a memory-sync node');
     assert.ok(
       choreIdx > -1 && choreIdx < memflushIdx && memflushIdx < grantIdx,
-      `chore node order: chore (${choreIdx}) → memory-flush (${memflushIdx}) → grant-commit (${grantIdx}) violated`
+      `chore node order: chore (${choreIdx}) → memory-sync (${memflushIdx}) → grant-commit (${grantIdx}) violated`
     );
   });
 });
@@ -173,19 +173,10 @@ describe('AC-007 / AC-008 / AC-009 — memory_session_start.sh debt-mode nag dec
     await fs.rm(tmp, { recursive: true, force: true });
   });
 
-  it('test_when_session_start_K_gt_0_AND_no_workflow_json_then_debt_mode_nag_fires', async () => {
-    await writePendingMd(tmp, 3);
-    await removeWorkflowJson(tmp);
-    const result = invokeSessionStart(tmp);
-    assert.equal(result.status, 0, `hook exit code; stderr: ${result.stderr}`);
-    const ctx = additionalContextOf(result);
-    assert.match(
-      ctx,
-      /carried over from a prior workflow/i,
-      `K>0 + no workflow.json must emit debt-mode wording. Got:\n${ctx}`
-    );
-    assert.match(ctx, /run\s+`?\/memory-flush`?\s+to\s+clear/i, 'debt-mode wording must instruct running /memory-flush to clear');
-  });
+  // RETIRED by T3 (harness-batch-fixes): the session-start debt-mode nag was
+  // deleted. Phase 10.7 flushes inside every workflow, so the nag announced work
+  // the pipeline already does. tests/memory-session-start-nag-removed.test.mjs
+  // now asserts the opposite — that no prompt is emitted in either branch.
 
   it('test_when_session_start_K_eq_0_then_no_pending_candidates_line', async () => {
     await writePendingMd(tmp, 0);
@@ -225,31 +216,31 @@ describe('AC-007 / AC-008 / AC-009 — memory_session_start.sh debt-mode nag dec
   });
 });
 
-describe('AC-011 — commit skill prereq names memory-flush', () => {
-  it('test_when_commit_skill_md_lists_prereqs_then_memory_flush_is_named', async () => {
+describe('AC-011 — commit skill prereq names memory-sync', () => {
+  it('test_when_commit_skill_md_lists_prereqs_then_memory_sync_is_named', async () => {
     const sop = await readRepoFile('.claude/skills/commit/SKILL.md');
     const prereqSection = sop.split(/##\s+\w/)[0] + sop.match(/Prereq:[\s\S]{0,400}/)[0];
     assert.match(
       prereqSection,
-      /memory-flush/,
-      'commit/SKILL.md prereq must name memory-flush as a required completed phase'
+      /memory-sync/,
+      'commit/SKILL.md prereq must name memory-sync as a required completed phase'
     );
     assert.match(prereqSection, /archive/, 'commit/SKILL.md prereq must still name archive (regression guard)');
   });
 
-  it('test_when_commit_skill_md_describes_step_2_then_memory_flush_is_final_non_commit_entry', async () => {
+  it('test_when_commit_skill_md_describes_step_2_then_memory_sync_is_final_non_commit_entry', async () => {
     const sop = await readRepoFile('.claude/skills/commit/SKILL.md');
     const step2 = sop.match(/Verify\s+workflow\s+prereq[\s\S]{0,300}/i);
     assert.ok(step2, 'commit/SKILL.md must contain a Step 2 verification of workflow prereqs');
     assert.match(
       step2[0],
-      /memory-flush\s+is\s+the\s+final\s+non-commit\s+entry/i,
-      'Step 2 must state memory-flush is the final non-commit entry in completed'
+      /memory-sync\s+is\s+the\s+final\s+non-commit\s+entry/i,
+      'Step 2 must state memory-sync is the final non-commit entry in completed'
     );
   });
 });
 
-describe('AC-010 — phase-ordering enumerations consistently name memory-flush between archive and commit', () => {
+describe('AC-010 — phase-ordering enumerations consistently name memory-sync between archive and commit', () => {
   const ENUMERATING_FILES = [
     'CLAUDE.md',
     'src/CLAUDE.template.md',
@@ -262,18 +253,18 @@ describe('AC-010 — phase-ordering enumerations consistently name memory-flush 
   ];
 
   for (const rel of ENUMERATING_FILES) {
-    it(`test_${rel.replace(/[^\w]/g, '_')}_mentions_memory_flush`, async () => {
+    it(`test_${rel.replace(/[^\w]/g, '_')}_mentions_memory_sync`, async () => {
       const content = await readRepoFile(rel);
-      assert.match(content, /memory-flush/, `${rel} must mention memory-flush after the change lands`);
+      assert.match(content, /memory-sync/, `${rel} must mention memory-sync after the change lands`);
     });
 
-    it(`test_${rel.replace(/[^\w]/g, '_')}_orders_memory_flush_between_archive_and_commit`, async () => {
+    it(`test_${rel.replace(/[^\w]/g, '_')}_orders_memory_sync_between_archive_and_commit`, async () => {
       const content = await readRepoFile(rel);
       const memflushPositions = [];
-      const re = /memory-flush/g;
+      const re = /memory-sync/g;
       let m;
       while ((m = re.exec(content)) !== null) memflushPositions.push(m.index);
-      assert.ok(memflushPositions.length >= 1, `${rel} must reference memory-flush at least once`);
+      assert.ok(memflushPositions.length >= 1, `${rel} must reference memory-sync at least once`);
       // For each occurrence, verify a nearby archive comes BEFORE and a nearby grant-commit/commit comes AFTER.
       // Window: 600 chars on each side.
       const WINDOW = 600;
@@ -284,7 +275,7 @@ describe('AC-010 — phase-ordering enumerations consistently name memory-flush 
       });
       assert.ok(
         orderedNearby,
-        `${rel}: at least one memory-flush occurrence must sit with archive before and commit after within ${WINDOW} chars`
+        `${rel}: at least one memory-sync occurrence must sit with archive before and commit after within ${WINDOW} chars`
       );
     });
   }
@@ -311,32 +302,32 @@ describe('AC-012 — audit-baseline exits 0 (regression guard; must stay green a
   });
 });
 
-describe('AC-002 — memory-flush SOP documents empty-pending fast-path', () => {
-  it('test_when_memory_flush_skill_md_describes_empty_pending_fast_path', async () => {
-    const sop = await readRepoFile('.claude/skills/memory-flush/SKILL.md');
+describe('AC-002 — memory-sync SOP documents empty-pending fast-path', () => {
+  it('test_when_memory_sync_skill_md_describes_empty_pending_fast_path', async () => {
+    const sop = await readRepoFile('.claude/skills/memory-sync/SKILL.md');
     assert.match(
       sop,
       /empty[- ]pending|zero\s+`?##\s+CANDIDATE|no\s+pending\s+candidates/i,
-      'memory-flush SKILL.md must document the empty-pending fast-path (one of: "empty-pending", "zero `## CANDIDATE", "no pending candidates")'
+      'memory-sync SKILL.md must document the empty-pending fast-path (one of: "empty-pending", "zero `## CANDIDATE", "no pending candidates")'
     );
     assert.match(
       sop,
       /(?:skip\s+steps?\s+1\D5|short[- ]circuit|fast[- ]path)/i,
-      'memory-flush SKILL.md must describe the fast-path semantic (skip Steps 1-5 / short-circuit / fast-path)'
+      'memory-sync SKILL.md must describe the fast-path semantic (skip Steps 1-5 / short-circuit / fast-path)'
     );
     assert.match(
       sop,
       /Step\s+0[\s\S]{0,400}(?:still\s+runs?|runs?\s+unconditionally|auto-close|stale[- ]sweep)/i,
-      'memory-flush SKILL.md must clarify Step 0 sweeps still run on the empty-pending fast-path'
+      'memory-sync SKILL.md must clarify Step 0 sweeps still run on the empty-pending fast-path'
     );
   });
 
-  it('test_when_memory_flush_skill_md_describes_workflow_phase_role', async () => {
-    const sop = await readRepoFile('.claude/skills/memory-flush/SKILL.md');
+  it('test_when_memory_sync_skill_md_describes_workflow_phase_role', async () => {
+    const sop = await readRepoFile('.claude/skills/memory-sync/SKILL.md');
     assert.match(
       sop,
       /Phase\s+10\.6|workflow\s+phase|invoked\s+as\s+a\s+phase/i,
-      'memory-flush SKILL.md must document its Phase 10.6 / workflow-phase role'
+      'memory-sync SKILL.md must document its Phase 10.6 / workflow-phase role'
     );
   });
 });

@@ -4,7 +4,7 @@
 // Adversarial review found shape.mjs:40 holding a byte-identical copy of the
 // defective regex, sitting on a WRITE path: sweep.mjs round-trips shards through
 // writeShardedFromFlat on every stamp-closure (fired by /commit) and auto-close
-// (fired by /memory-flush). Fixing migrate.mjs alone would let the very next commit
+// (fired by /memory-sync). Fixing migrate.mjs alone would let the very next commit
 // re-strand what the repair just fixed. Two copies of one rule is what produced
 // this entire workflow, so the invariant is structural: exactly one definition.
 //
@@ -62,7 +62,7 @@ describe('lift-fields — exactly one definition repo-wide (AC-003)', () => {
 
     for (const consumer of [
       '.claude/skills/memory-index/migrate.mjs',
-      '.claude/skills/memory-flush/shape.mjs',
+      '.claude/skills/memory-sync/shape.mjs',
     ]) {
       const text = readFileSync(join(REPO_ROOT, consumer), 'utf8');
       assert.match(text, /from\s+['"].*lift-fields\.mjs['"]/,

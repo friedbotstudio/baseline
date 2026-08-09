@@ -1,6 +1,6 @@
 // Roll-off cap for the durable local conversation trail (`_thread.md`).
 //
-// The trail is appended one section per shelve and is OUTSIDE /memory-flush's
+// The trail is appended one section per shelve and is OUTSIDE /memory-sync's
 // reset path by design, so without a cap it grows unbounded. These tests drive
 // a count-based roll-off (`pruneTrail` + a default cap, applied from inside
 // `appendEntry`) that evicts the oldest sections while keeping the most-recent

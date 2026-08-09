@@ -27,7 +27,7 @@ const SESSION_START = '.claude/hooks/lib/memory_session_start.mjs';
 const GOVERNED_MEMORY = '.claude/hooks/lib/governed-memory.mjs';
 const WRITE_SET_PROFILE = '.claude/hooks/lib/write-set-profile.mjs';
 const RESOLVE = '.claude/skills/memory-index/resolve.mjs';
-const STALE_ELEMENTS = '.claude/skills/memory-flush/stale-elements.mjs';
+const STALE_ELEMENTS = '.claude/skills/memory-sync/stale-elements.mjs';
 const DIGEST = '.claude/skills/workspace/digest.mjs';
 
 const LIFECYCLE_HOOK = join(REPO_ROOT, '.claude/hooks/process_lifecycle_guard.mjs');
@@ -470,9 +470,9 @@ describe('AC-006 — corpus drift surfaces to the curator, and nothing bulk-stam
     }
   });
 
-  it('test_when_memory_flush_sop_read_then_step_0e_invokes_list_stale', () => {
-    const sop = readFileSync(join(REPO_ROOT, '.claude/skills/memory-flush/SKILL.md'), 'utf8');
-    assert.match(sop, /Step 0e/, 'memory-flush gains a Step 0e');
+  it('test_when_memory_sync_sop_read_then_step_0e_invokes_list_stale', () => {
+    const sop = readFileSync(join(REPO_ROOT, '.claude/skills/memory-sync/SKILL.md'), 'utf8');
+    assert.match(sop, /Step 0e/, 'memory-sync gains a Step 0e');
     assert.match(sop, /stale-elements\.mjs/, 'which invokes the previously orphaned helper');
     assert.match(sop, /listStale/, 'by name');
   });
@@ -486,7 +486,7 @@ describe('AC-006 — corpus drift surfaces to the curator, and nothing bulk-stam
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-    const sop = readFileSync(join(REPO_ROOT, '.claude/skills/memory-flush/SKILL.md'), 'utf8');
+    const sop = readFileSync(join(REPO_ROOT, '.claude/skills/memory-sync/SKILL.md'), 'utf8');
     assert.ok(!sop.includes('stampAll'),
       'Step 0e re-stamps per element the curator read; a bulk path would launder the drift');
   });

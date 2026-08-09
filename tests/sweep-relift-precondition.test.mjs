@@ -8,7 +8,7 @@
 // every other surface believes 46 would churn entries without fixing the invisibility.
 //
 // The constraint cannot live in prose: two sweep modes fire AUTOMATICALLY —
-// stamp-closure from /commit Step 2.7, auto-close from /memory-flush Step 0. So the
+// stamp-closure from /commit Step 2.7, auto-close from /memory-sync Step 0. So the
 // guard belongs inside sweep.mjs itself, refusing every mode until the corpus is clean.
 //
 // RED until: sweep.mjs exports assertRelifted and calls it before every mode.
@@ -21,8 +21,8 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { tryImport, writeShard, REPO_ROOT } from './helpers/memory-fixtures.mjs';
 
-const SWEEP_ABS = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
-const SWEEP_REL = '.claude/skills/memory-flush/sweep.mjs';
+const SWEEP_ABS = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
+const SWEEP_REL = '.claude/skills/memory-sync/sweep.mjs';
 const MIGRATE_REL = '.claude/skills/memory-index/migrate.mjs';
 
 const MODES = ['auto-close', 'stale-sweep', 'prose-scan', 'backlog-decay', 'stamp-closure'];
@@ -59,7 +59,7 @@ describe('sweep precondition — refuses an unrepaired corpus (AC-015)', () => {
         if (mode === 'stamp-closure') args.push('--backlog-keys', 'some-open-entry');
         const res = spawnSync('node', args, { encoding: 'utf8' });
         assert.notEqual(res.status, 0,
-          `--mode ${mode} must refuse while the corpus is unrepaired (stamp-closure and auto-close fire automatically from /commit and /memory-flush)`);
+          `--mode ${mode} must refuse while the corpus is unrepaired (stamp-closure and auto-close fire automatically from /commit and /memory-sync)`);
         assert.match(`${res.stderr}${res.stdout}`, /relift|stranded|precondition/i,
           `--mode ${mode} must name the precondition rather than failing opaquely`);
       }

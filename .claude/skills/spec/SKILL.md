@@ -38,6 +38,19 @@ Per `.claude/state/workflow.json`, `research` must be in `completed` OR in `exce
 4. Confirm every third-party API cited (in the Libraries table, Contracts rows, or diagram labels) against current docs — the `context7` MCP is the default source; a library's official docs / `llms.txt` or a pinned local cache also satisfy it (seed.md §2.5). Record the library version. Never recall an API from training data.
 5. Verify each `AC-NNN` row points to a real `§Behavior #N` anchor, and that the corresponding sequence diagram actually defines the promised behaviour.
 6. Run `/spec-lint <slug>` before saving if you want to preview what the guards will report — same checks, not enforced.
+6.5 **Optimization pass.** After the draft is on disk and `/spec-lint` passes, diff it against the standing model:
+
+   ```
+   node .claude/skills/spec/cli.mjs optimize --slug <slug>
+   ```
+
+   It reports three findings and writes nothing (Article II — it gathers, you edit):
+
+   - **`undeclared`** — an element whose anchor the spec's `write_set` touches, with no `## System delta` row naming it. Either add the row or narrow the write_set; a touched element with no declared delta is how the corpus drifts from disk.
+   - **`reuse`** — an element that already models part of the write_set. Extend it rather than building alongside it (`code-structure`'s reuse-before-create, applied to the model instead of the code).
+   - **`corrections`** — a `change`/`remove` row whose element id does not resolve under `docs/system/elements/`. That row will fail `/spec-lint`'s `system_delta` check; fix the id or the verb.
+
+   Apply the fixes to the spec yourself, then re-run `/spec-lint`. A missing corpus exits 1 with a named error — carry on without the pass rather than treating it as a spec defect. The pass is advisory: it never blocks, and it never edits the spec.
 7. Write to `docs/specs/<slug>.md`.
 8. **NEVER write `Status: Approved`, `Approved: true`, or any variation.** The `direction_approval_guard` blocks self-approval. Approval is the token written by `/approve-direction` to `.claude/state/spec_approvals/<slug>.approval`.
 9. Append `"spec"` to `.claude/state/workflow.json` → `completed`.

@@ -13,7 +13,7 @@ import { spawnSync } from 'node:child_process';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LIB = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
-const SWEEP = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
+const SWEEP = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
 const imp = () => import(LIB);
 
 // A backlog entry as it appears in .claude/memory/backlog.md.

@@ -4,7 +4,7 @@
 // SCOUT WARNING encoded as tests: the capture leg is NOT un-deduped. It dedupes
 // against the WRONG LIFETIME. memory_stop.mjs:262-274 builds existingKeys from the
 // CURRENT _pending.md body and :373 skips on a hit — and tests/memory-stop-dedup.
-// test.mjs guards exactly that. The re-emission happens because /memory-flush
+// test.mjs guards exactly that. The re-emission happens because /memory-sync
 // RESETS the body, discarding the dedup state along with the candidates.
 //
 // So ticket D's problem is PERSISTING A CURATION DECISION ACROSS THE RESET, not
@@ -21,12 +21,12 @@ import { join } from 'node:path';
 import { makeProject, writeTranscript, readPending, tryImport } from './helpers/memory-fixtures.mjs';
 import { runTestFile } from './helpers/memory-git-fixtures.mjs';
 
-const LEDGER_MODULE = '.claude/skills/memory-flush/ledger.mjs';
+const LEDGER_MODULE = '.claude/skills/memory-sync/ledger.mjs';
 const STOP_MODULE = '.claude/hooks/lib/memory_stop.mjs';
 
 const PENDING_SKELETON = [
   '---',
-  'owners: [memory_stop.mjs writes; /memory-flush clears]',
+  'owners: [memory_stop.mjs writes; /memory-sync clears]',
   '---',
   '',
   '# Pending memory candidates',
@@ -55,7 +55,7 @@ describe('discard ledger (ticket D)', () => {
 
       const capturedKey = /^##\s+CANDIDATE:\s*(.+?)\s*$/m.exec(firstBody)[1];
 
-      // The human discards it at /memory-flush, then the flush RESETS the body.
+      // The human discards it at /memory-sync, then the flush RESETS the body.
       ledger.recordCuration({ key: capturedKey, disposition: 'discarded' }, { rootDir: project.root });
       writeFileSync(project.pending, PENDING_SKELETON, 'utf8');
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Fixture-based integration tests for the memory-flush Step 0 SOP.
+# Fixture-based integration tests for the memory-sync Step 0 SOP.
 # Covers AC-001, AC-002, AC-004, AC-006 from docs/specs/memory-lifecycle-closure.md
 #
 # The SKILL.md SOP is markdown; the executable contract lives in
-# `.claude/skills/memory-flush/sweep.mjs`, a deterministic helper the SOP
+# `.claude/skills/memory-sync/sweep.mjs`, a deterministic helper the SOP
 # invokes for the sweep-and-classify portion of Step 0. Each test builds a
 # stubbed memory tree, invokes sweep.mjs with a stubbed reply stream, and
 # asserts on the resulting file state + JSON action report.
@@ -15,7 +15,7 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
-SWEEP="$REPO_ROOT/.claude/skills/memory-flush/sweep.mjs"
+SWEEP="$REPO_ROOT/.claude/skills/memory-sync/sweep.mjs"
 
 PASS=0; FAIL=0; FAILED=()
 
@@ -304,19 +304,19 @@ test_when_pre_spec_entry_no_source_no_verbatim_then_grandfathered() {
   assert_file_contains "$mem/conventions.md" "## legacy-entry" "AC-006 grandfathered legacy entry survives" || return 1
 }
 
-# --- Phase 10.6 (memory-flush-phase) regression traps -------------------------
+# --- Phase 10.6 (memory-sync-phase) regression traps -------------------------
 # Confirms sweep.mjs stays scoped to canonical files and does not touch _pending.md
 # regardless of whether _pending.md body is empty (the fast-path case).
 
 PENDING_SKELETON='---
-owners: [memory_stop.sh writes; /memory-flush clears]
+owners: [memory_stop.sh writes; /memory-sync clears]
 category: auto-extracted candidates awaiting curation
 verifies-against: none
 ---
 
 # Pending memory candidates
 
-Auto-extracted by `memory_stop.sh`. Run `/memory-flush` to review.
+Auto-extracted by `memory_stop.sh`. Run `/memory-sync` to review.
 
 **Content of this file is gitignored.**
 
@@ -366,7 +366,7 @@ test_when_pending_empty_AND_q999_has_resolved_at_then_q999_is_swept() {
 test_when_promote_user_candidate_writes_canonical_entry_with_status_open_and_verbatim() {
   local mem; mem="$(mktemp -d)"; trap "rm -rf $mem" RETURN
   seed_skel "$mem"
-  # Curator-style entry: the shape /memory-flush would write on promotion.
+  # Curator-style entry: the shape /memory-sync would write on promotion.
   add "$mem" "backlog" "## add-retry-to-webhook-worker-3f2a
 
 > verbatim (user, $(today)):
@@ -467,7 +467,7 @@ sweep_stamp_closure() {
   node "$SWEEP" --mode stamp-closure --memory-dir "$mem" --backlog-keys "$keys"
 }
 
-# Add a backlog entry shaped like the canonical write from /memory-flush.
+# Add a backlog entry shaped like the canonical write from /memory-sync.
 add_open_backlog_entry() {
   local mem="$1" key="$2"
   add "$mem" "backlog" "## $key

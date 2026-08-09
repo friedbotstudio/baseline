@@ -25,7 +25,7 @@ import { spawnSync } from 'node:child_process';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LIB = join(REPO_ROOT, '.claude/hooks/lib');
-const SWEEP = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
+const SWEEP = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
 
 const imp = (name) => import(join(LIB, `${name}.mjs`));
 
@@ -69,10 +69,10 @@ function sampleEntry(over = {}) {
   };
 }
 
-// ---- AC-1: durability across /memory-flush --------------------------------
+// ---- AC-1: durability across /memory-sync --------------------------------
 
-describe('AC-1 trail survives /memory-flush sweep', () => {
-  it('test_when_memory_flush_runs_then_thread_md_unchanged', () => {
+describe('AC-1 trail survives /memory-sync sweep', () => {
+  it('test_when_memory_sync_runs_then_thread_md_unchanged', () => {
     const root = seedProject();
     try {
       const md = memDir(root);

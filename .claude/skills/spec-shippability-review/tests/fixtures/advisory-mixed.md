@@ -2,11 +2,11 @@
 
 ## Design
 
-Spec proposes a tweak to the existing memory-flush sweep.
+Spec proposes a tweak to the existing memory-sync sweep.
 
 ## Contracts
 
 | Path | Why |
 |---|---|
-| .claude/skills/memory-flush/sweep.py | EXISTS on disk — grandfathered Python helper; ADVISORY only |
-| .claude/skills/memory-flush/SKILL.md | OK |
+| .claude/skills/memory-sync/sweep.py | EXISTS on disk — grandfathered Python helper; ADVISORY only |
+| .claude/skills/memory-sync/SKILL.md | OK |

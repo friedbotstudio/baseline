@@ -1,7 +1,7 @@
 // Workflow-extension-via-workflows-json — cli-copy-review dogfood retrofit
 //
 // SP-009: this repo's .claude/workflows.jsonl declares a cli-copy-review node
-// in the intake-full and tdd-quickfix tracks (between memory-flush and
+// in the intake-full and tdd-quickfix tracks (between memory-sync and
 // grant-commit). The hardcoded conditional in triage SKILL.md is removed in
 // the same commit. Two assertions:
 //   1. grep -rn "cli-copy-review" .claude/skills/*/SKILL.md returns zero
@@ -80,8 +80,8 @@ describe('cli-copy-review retrofit (SP-009 / SP-010)', () => {
       const node = track.nodes.find((n) => n.skill === 'cli-copy-review');
       assert.ok(node, `${expectedTrack}: cli-copy-review node must be declared`);
       assert.ok(
-        Array.isArray(node.depends_on) && node.depends_on.includes('memory-flush'),
-        `${expectedTrack}: cli-copy-review.depends_on must include 'memory-flush'`
+        Array.isArray(node.depends_on) && node.depends_on.includes('memory-sync'),
+        `${expectedTrack}: cli-copy-review.depends_on must include 'memory-sync'`
       );
       const grantCommit = track.nodes.find((n) => n.id === 'grant-commit');
       assert.ok(grantCommit, `${expectedTrack}: grant-commit node must be present`);

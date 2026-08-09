@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const REPO_ROOT = join(dirname(__filename), '..');
 const HOOK_PATH = join(REPO_ROOT, '.claude/hooks/memory_session_start.mjs');
-const SWEEP = join(REPO_ROOT, '.claude/skills/memory-flush/sweep.mjs');
+const SWEEP = join(REPO_ROOT, '.claude/skills/memory-sync/sweep.mjs');
 
 function seedTree() {
   const root = mkdtempSync(join(tmpdir(), 'mem-strip-fm-'));
