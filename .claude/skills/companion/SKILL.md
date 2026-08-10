@@ -2,6 +2,7 @@
 name: companion
 owner: baseline
 description: EXPERIMENTAL. Join or leave an org-team coordination channel as a session peer. `/companion on <channel_id> [peer_id]` registers this Claude Code session as a `pclass:"session"` peer and works the claim → execute → signal loop, escalating un-decidable forks to the lead (never deciding). `/companion off` deregisters. `/companion status` reports the current peer. Part of org mode (Article X), which is opt-in via `velocity.org_mode.enabled` and OFF by default. Use when a human launches a second session to act as a peer alongside a lead.
+disable-model-invocation: true
 ---
 
 # companion — be a session peer on an org-team channel

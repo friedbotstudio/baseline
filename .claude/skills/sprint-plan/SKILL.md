@@ -2,6 +2,7 @@
 name: sprint-plan
 owner: baseline
 description: Decompose an MVP vision into a sprint manifest — a prioritized feature list where every feature carries explicit done-criteria (a done-record reference, named edge tests, and a wiring test). Produces the sprint manifest that `sprint-oracle` checks for completeness. Use when planning a sprint of parallel work (Slice A of the sprint-mode epic). Not a workflow phase; the manifest it writes is the completeness contract a sprint is held to.
+disable-model-invocation: true
 ---
 
 # sprint-plan — author a sprint manifest with per-feature done-criteria

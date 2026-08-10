@@ -2,6 +2,7 @@
 name: sprint-planner
 owner: baseline
 description: Propose the next dependency-ready sprint from the ALREADY-DECOMPOSED roadmap — standup's active sibling. Reads docs/roadmap-execution-plan.md + the memory backlog, computes per-task readiness from the roadmap's machine-readable status, orders with roadmap-planner's graph engine, and emits a proposed task-set (sprint-plan manifest shape) with per-feature done-criteria, excluding unready tasks and naming their unmet prerequisite. PROPOSES ONLY — the human confirms/edits before /triage routes it (typically to the `power` track). Distinct from `sprint-plan`, which decomposes a fresh vision.
+disable-model-invocation: true
 ---
 
 # sprint-planner — select the next ready sprint from the roadmap

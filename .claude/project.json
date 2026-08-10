@@ -283,8 +283,7 @@
         ],
         "excludedTrees": [
           ".claude/skills/impeccable/",
-          ".claude/skills/copywriting/evals/",
-          ".claude/skills/optimize-seo/scripts/"
+          ".claude/skills/copywriting/evals/"
         ]
       },
       "witnesses": {

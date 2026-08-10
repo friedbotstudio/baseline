@@ -18,15 +18,17 @@ import { isAbsolute, join, relative } from 'node:path';
 import { isBoilerplate } from './common.mjs';
 import { appendEntry } from './thread_store.mjs';
 
-// #10: caps doubled from the original (3/12/5/5/400) so dense sessions
-// retain useful context. The composeSnapshot truncator still budget-checks
-// against the SessionStart 10KB envelope at read time, so the upper bound
-// is enforced even if a single session blows past these targets.
-const MAX_USER_PROMPTS = 6;
-const MAX_FILES = 24;
-const MAX_SKILLS = 10;
-const MAX_BASH = 10;
-const USER_PROMPT_CHARS = 800;
+// The snapshot is injected warm at every session start, so each row is charged
+// against the context budget before the user types. These caps were doubled once
+// (from 3/12/5/5/400) on the theory that dense sessions need more retained
+// context; measured against the 4096-char SessionStart budget, the extra rows
+// were the single largest contributor and carried almost no signal — the tail of
+// a 24-file list is noise by the time a session resumes.
+const MAX_USER_PROMPTS = 3;
+const MAX_FILES = 8;
+const MAX_SKILLS = 5;
+const MAX_BASH = 5;
+const USER_PROMPT_CHARS = 300;
 
 function utcNowIso() {
   return new Date().toISOString().replace(/\.\d+Z$/, 'Z');
@@ -146,6 +148,20 @@ function dedupKeepOrder(items) {
   return out;
 }
 
+// A bare `cd` records where the shell went, never what was done there. Sessions
+// that prefix every call with one produced a snapshot whose entire shell section
+// was the same path repeated. A chained `cd x && build` keeps its payload, so
+// only an unchained navigation is dropped.
+function isNavigationOnly(command) {
+  return /^cd\s+\S+$/.test(command.trim());
+}
+
+// Filter and dedupe BEFORE taking the last N: slicing first lets a run of
+// repeated navigations evict the real commands that preceded them.
+function informativeCommands(commands, limit) {
+  return dedupKeepOrder(commands.filter((cmd) => !isNavigationOnly(cmd))).slice(-limit);
+}
+
 const TRACK_ID_TO_ENTRY_PHASE = {
   'intake-full': 'intake',
   'spec-entry': 'spec',
@@ -197,8 +213,8 @@ export function composeSnapshot({ transcript, projectDir, trigger }) {
     .reverse()
     .slice(0, MAX_SKILLS);
 
-  // Bash — last K (chatty, so keep small).
-  const bashRecent = w.bashCmds.slice(-MAX_BASH).reverse();
+  // Bash — last K informative commands (chatty, so keep small).
+  const bashRecent = informativeCommands(w.bashCmds, MAX_BASH).reverse();
 
   const lastLog = slug !== '(none)' ? lastHarnessLogLine(projectDir, slug) : '';
 

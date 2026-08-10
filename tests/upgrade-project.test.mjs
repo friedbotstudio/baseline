@@ -104,6 +104,13 @@ describe('/upgrade-project skill — shape', () => {
       // .config = Claude Code gitignored local state (~200MB on a dev machine);
       // absent in CI/normal checkouts, so a no-op there and a clone speedup here.
       '--exclude=.config',
+      // .claude/state = transient harness runtime. `.harness_active` is created
+      // and deleted at every phase boundary, so a file can vanish between
+      // rsync's enumeration and its open — which fails the copy whenever this
+      // suite runs from inside a live /harness workflow, i.e. at every
+      // /integrate. The manifest is built from the shipped template; runtime
+      // state is never an input.
+      '--exclude=.claude/state',
       '--exclude=docs/archive', '--exclude=.playwright-mcp',
       `${repoRoot}/`,
       tmp,

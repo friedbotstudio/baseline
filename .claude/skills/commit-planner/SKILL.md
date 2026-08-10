@@ -2,6 +2,7 @@
 name: commit-planner
 owner: baseline
 description: Split a dirty working tree into single-concern Conventional Commits. The deterministic inventory.mjs helper groups dirty paths by concern (docs, source + paired test, config, governance); main context refines the grouping and presents a commit plan. Read-only until the user approves the plan — it never stages, never commits, never touches consent paths. Disjoint from the commit skill (Phase 11 executor): the planner proposes a split; the executor lands one consented commit. Use when a working tree has accumulated heterogeneous changes that should not land as one commit.
+disable-model-invocation: true
 ---
 
 # commit-planner — single-concern commit splitting

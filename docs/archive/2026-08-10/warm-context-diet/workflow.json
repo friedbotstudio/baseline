@@ -1,0 +1,63 @@
+{
+  "request": "Cut the warm-baseline token floor from 45.1k to ~36k across four levers: delete four orphaned website skills (google-analytics, optimize-seo, pagespeed-insights, marketing-psychology) plus their .claude/project.json excludedTrees reference; add disable-model-invocation:true to 16 user-only skills; relocate constitution narration from CLAUDE.md to the .claude/CONSTITUTION.md annex (seed.md amendment first, then mirror sync); trim the SessionStart hook injection from 7.6KB to ~4KB. Approved plan at .config/plans/this-is-minimum-token-warm-manatee.md",
+  "slug": "warm-context-diet",
+  "track_id": "spec-entry",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "Every lever repeats an in-repo precedent. Lever 2 copies the disable-model-invocation:true frontmatter flag already carried by .claude/skills/spec-render/SKILL.md:5 and sanctioned by docs/init/seed.md:665. Lever 3 copies the annex relocation recorded in .claude/CONSTITUTION.md:78 -- 'Article X relocation -- annex Section 5 detail tables (2026-06-05, -b4d1)' -- and follows the 26 existing annex pointers in CLAUDE.md. Lever 1 deletes four owner:user skill directories that no manifest entry, Skill() call site, test, or governance doc references. Lever 4 reshapes the payload emitted by .claude/hooks/lib/resume_writer.mjs against the size contract its own header comment already states.",
+  "track_reason": "tdd-quickfix is the leanest track whose guardrails cover Lever 4's failing-test need, but Lever 3 edits the constitution chain (docs/init/seed.md -> CLAUDE.md -> src/CLAUDE.template.md), the highest-blast-radius surface in this repository. The human chose spec-entry to buy a written spec and consent gate A ahead of that edit.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [
+    {
+      "node": "implementation",
+      "alternate": "swarm-implementation",
+      "reason": "components are not independent: the spec dependency graph chains seed.md -> CLAUDE.md -> annex/mirror, and Rollout mandates manifest:refresh last across all levers"
+    }
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1786313997,
+  "updated_at": 1786361351,
+  "rightsize_base": [
+    "docs/audits/swarm-first-production-run-2026-08-09.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "scope_additions": [
+    {
+      "path": "tests/upgrade-project.test.mjs",
+      "reason": "pre-existing rsync race on .claude/state/.harness_active fails integrate nondeterministically in every workflow; outside the approved write_set",
+      "authorized_by": "user at integrate yield 2026-08-10"
+    },
+    {
+      "path": "3 SKILL.md restorations + org-dispatch + guard test",
+      "reason": "/document reflective check found 4 de-indexed skills reachable through the Skill tool (init-project steps 4/5a, verify repeat-FAIL, org track phase 6); AC-003 list corrected 16 -> 12",
+      "authorized_by": "document phase finding, 2026-08-10"
+    }
+  ]
+}

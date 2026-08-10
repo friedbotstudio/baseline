@@ -117,3 +117,6 @@
 - promoted :: .claude/skills/harness/checkers/spec-shippability.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-one-line-have-dispatch-honour-7d29
 - discarded :: backlog → the-fix-is-one-fixture-in-a-file-b200
+- promoted :: backlog → i-left-the-write-set-accurate-and-noted-77be
+- discarded :: .claude/hooks/lib/resume_writer.mjs → landmarks.md
+- promoted :: backlog → the-fix-is-one-line-in-tests-upgrade-8806

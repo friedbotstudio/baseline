@@ -2,6 +2,7 @@
 name: system-reconcile
 owner: baseline
 description: Report the health of the central system spec at `docs/system/` across seven checks — coverage gaps, stale elements, dangling anchors, duplicate anchors, orphan shards, unillustrated elements, and shards missing their kind annotation. Report-first and read-only: it repairs nothing until a human confirms a specific item. Use when the corpus has drifted, after a merge that touched `docs/system/`, or from `/archive` Step 5.5 in report-only mode. Requires `memory.architecture_map.enabled`.
+disable-model-invocation: true
 ---
 
 # system-reconcile — corpus health, reported before anything is repaired

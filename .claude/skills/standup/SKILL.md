@@ -2,6 +2,7 @@
 name: standup
 owner: baseline
 description: Read-only release + backlog recap. Reports the last release, commits-since-tag classified by conventional-commit type with the semver bump they trigger and pushed-vs-origin state, the backlog bucketed (open/picked-up/dropped with epic parent→child nesting), the roadmap epics with their per-task tallies, and condensed open questions — then recommends the next pickup. One `cli.mjs recap` call returns all six recap keys. Invoke any time (on demand) to plan a release or choose the next thing to build; a compact form is also surfaced at session start. Not a workflow phase; never writes CHANGELOG; never starts or commits work.
+disable-model-invocation: true
 ---
 
 # standup — where are we, what's next

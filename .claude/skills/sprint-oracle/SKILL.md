@@ -2,6 +2,7 @@
 name: sprint-oracle
 owner: baseline
 description: The sprint completeness oracle — a mechanical, exit-code-driven check that every feature in a sprint manifest is provably complete across three dimensions (a done-record reference, resolvable edge tests, and a resolvable wiring test). Fails loud with a per-feature gap list naming the missing dimension. Read-only. Use to gate a sprint before it is called done (Slice A of the sprint-mode epic), or any time you want a completeness reading.
+disable-model-invocation: true
 ---
 
 # sprint-oracle — mechanical completeness gate for a sprint

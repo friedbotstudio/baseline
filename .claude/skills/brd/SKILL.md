@@ -2,6 +2,7 @@
 name: brd
 owner: baseline
 description: Draft a Business Requirements Document (BRD) for cross-functional or stakeholder-heavy work that needs more structure than an intake. Use after `/intake` when the request spans multiple systems/teams, carries regulatory weight, or needs formal sign-off. Output lives at `docs/brd/<slug>.md`.
+disable-model-invocation: true
 ---
 
 # BRD — Business Requirements Document

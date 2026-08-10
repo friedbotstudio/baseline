@@ -2,6 +2,7 @@
 name: retrospective
 owner: baseline
 description: Cycle-end retrospective converting recurring judgment failures into durable enforcement. Reviews the cycle's friction — repeated user corrections, guard trips, RCA themes, integrate failures — and turns each recurring one into a landmines.md entry, then proposes graduation candidates up the enforcement funnel (landmine → advisory hook → hard gate). Pairs with standup: standup says what shipped and what's next; retrospective says what kept going wrong and how to stop it structurally. Writes only memory entries and a report — graduation proposals are advisory and require the normal seed.md amendment path to become enforcement. Invoke at the end of a release cycle, an epic, or any stretch of work with repeated friction.
+disable-model-invocation: true
 ---
 
 # retrospective — from recurring friction to structural enforcement

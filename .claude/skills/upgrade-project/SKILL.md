@@ -2,6 +2,7 @@
 name: upgrade-project
 owner: baseline
 description: Reconcile baseline-versioned files that the `create-baseline upgrade` CLI staged for LLM-assisted semantic merge. Use when the CLI prints "Open Claude Code and run /upgrade-project to reconcile". Reads the stage manifest at `.claude/state/upgrade/<ts>/manifest.json`, reasons through each pending file's three-way delta in main context, writes a reconciled LOCAL, then deletes the stage when every file lands. Supports `--dry-run` (preview the reconciled diff without writing) and a structured "needs-user-input" fallback when the conflict cannot be disambiguated automatically.
+disable-model-invocation: true
 ---
 
 # /upgrade-project — semantic-merge reconciliation for baseline files

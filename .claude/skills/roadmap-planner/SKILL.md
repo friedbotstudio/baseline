@@ -16,6 +16,7 @@ description: >
   cross-cutting inherited-default seams, builds a real dependency graph with hard + soft (seam) edges
   (deterministic helper), breaks cycles, topologically orders, compacts, and emits a derived roadmap
   PLUS a delta report against the current one — it never blindly overwrites a hand-crafted roadmap.
+disable-model-invocation: true
 ---
 
 # roadmap-planner

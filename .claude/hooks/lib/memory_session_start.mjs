@@ -29,6 +29,72 @@ const STALE_COMMITS = 30;
 const STALE_DAYS = 30;
 const DEFAULT_SIZE_CAP = 500;
 
+// The injection is loaded warm on every session start, so it is charged against
+// the context budget before the user types. Every optional tail section below
+// checks its remaining room against this.
+const SESSION_START_BUDGET = 4096;
+
+// The index table above already reports the stale COUNT per file, and the index
+// prompts no action on staleness. The named sample is orientation, not a
+// worklist, so three is as useful as five and costs less.
+const STALE_SAMPLE = 3;
+
+// thread_store round-trips its own state through a base64 comment in _thread.md.
+// The model cannot read it, so the injected copy carries the human-readable
+// prose only; the on-disk file keeps the blob.
+const THREAD_DATA_COMMENT = /<!--\s*thread-entry[\s\S]*?-->\s*/g;
+
+function stripThreadDataComment(markdown) {
+  return markdown.replace(THREAD_DATA_COMMENT, '');
+}
+
+const TRUNCATION_NOTICE = '\n\n…(session-start index truncated at the context budget)';
+
+// Room held back from the head sections for the shelved thread, the working
+// thread, and the standup. Those answer "what was I doing / what is next" and
+// are the reason a resumed session reads this at all; the index table and
+// concept map above are orientation. Clamping the composed whole would cut the
+// tail — the wrong end — so the head is clamped against this reserve instead.
+const TAIL_RESERVE = 1100;
+
+// Room the shelved-thread section leaves for the two sections after it, so a
+// long thread cannot consume the working-thread and standup allocations.
+const TRAILING_SECTIONS_RESERVE = 700;
+
+// The per-section checks gate only the optional tail; the index table, stale
+// sample and concept map are composed unconditionally. Without this the budget
+// holds by arithmetic coincidence, and a repository that grows a few more
+// concepts silently reopens the leak. Cutting on a line boundary keeps the
+// result readable as markdown.
+export function clampTo(text, limit) {
+  if (text.length <= limit) return text;
+  // Below the notice's own length there is no room to say "truncated", and the
+  // negative `room` below would slice from the END and return MORE than the
+  // limit. Unreachable while SESSION_START_BUDGET is 4096; a future cut would
+  // reach it.
+  if (limit <= TRUNCATION_NOTICE.length) return limit <= 0 ? '' : text.slice(0, limit);
+  const room = limit - TRUNCATION_NOTICE.length;
+  const cut = text.lastIndexOf('\n', room);
+  return text.slice(0, cut > 0 ? cut : room).replace(/\s+$/, '') + TRUNCATION_NOTICE;
+}
+
+function serialize(text) {
+  return JSON.stringify({
+    hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: text },
+  });
+}
+
+// The budget is a property of what the hook WRITES, not of the text it wraps:
+// the JSON wrapper adds a fixed prefix and escaping expands every newline to two
+// characters. Clamping the inner text to the budget therefore overshoots by a
+// few hundred characters. Re-clamp by the measured overage instead of estimating
+// it — one pass is enough because shrinking the text never grows the envelope.
+function envelopeWithin(text, limit) {
+  const envelope = serialize(text);
+  if (envelope.length <= limit) return envelope;
+  return serialize(clampTo(text, text.length - (envelope.length - limit)));
+}
+
 function readSizeCap(text) {
   if (!text.startsWith('---')) return DEFAULT_SIZE_CAP;
   const end = text.indexOf('---', 3);
@@ -347,8 +413,8 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       const right = (b[2] || '') + `${b[0]}:${b[1]}`;
       return left < right ? -1 : left > right ? 1 : 0;
     });
-    const top = staleRecords.slice(0, 5);
-    const overflow = staleRecords.length - 5;
+    const top = staleRecords.slice(0, STALE_SAMPLE);
+    const overflow = staleRecords.length - STALE_SAMPLE;
     lines.push('');
     lines.push('## Stale entries');
     lines.push('');
@@ -494,9 +560,10 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   // older sections stay on disk; the read is bounded so the SessionStart
   // envelope holds. Best-effort — absence/parse failure injects nothing.
   try {
-    const threadMd = readMostRecentMarkdown({ memDir });
+    out = clampTo(out, SESSION_START_BUDGET - TAIL_RESERVE);
+    const threadMd = stripThreadDataComment(readMostRecentMarkdown({ memDir }));
     if (threadMd) {
-      const budget = 9000 - out.length - 80;
+      const budget = SESSION_START_BUDGET - out.length - 80 - TRAILING_SECTIONS_RESERVE;
       if (budget > 300) {
         const block = threadMd.length > budget
           ? threadMd.slice(0, budget).replace(/\s+$/, '') + '\n\n…(thread section truncated)'
@@ -511,7 +578,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   try {
     const wt = readWorkingThread({ memDir });
     const whatWhy = wt && Array.isArray(wt.verbatim_cues) ? wt.verbatim_cues.join(' ') : '';
-    if (whatWhy && (9000 - out.length) > 200) {
+    if (whatWhy && (SESSION_START_BUDGET - out.length) > 200) {
       out = out + '\n\n---\n\n## Working thread (durable what/why)\n\n'
         + `> ${whatWhy.slice(0, 400)}\n\nNext: ${wt.next_step || '(continue)'}`;
     }
@@ -521,15 +588,10 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   // snapshot above. Best-effort: a gather failure omits the section rather
   // than breaking session start.
   try {
-    if ((9000 - out.length) > 250) {
+    if ((SESSION_START_BUDGET - out.length) > 250) {
       out = out + '\n\n---\n\n' + renderStandupSection(projectRoot);
     }
   } catch {}
 
-  return JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'SessionStart',
-      additionalContext: out,
-    },
-  });
+  return envelopeWithin(out, SESSION_START_BUDGET);
 }

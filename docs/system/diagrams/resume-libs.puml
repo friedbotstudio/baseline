@@ -1,4 +1,4 @@
 !startsub resume_libs
 ' @kind c4_component
-Component(resume_libs, ".claude/hooks/lib/resume_*.mjs", "subsystem", "Resume snapshot transform and writer")
+Component(resume_libs, "resume-libs", "c4_component")
 !endsub
