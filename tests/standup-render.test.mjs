@@ -62,14 +62,19 @@ describe('standup rendered recap', () => {
     assert.match(text, /\bminor\b/, 'the aggregate bump the 49 commits trigger must be stated');
   });
 
-  // AC-003
+  // AC-003. Fixtures carry the shape gather.mjs's collectRoadmap actually emits:
+  // key `num` (not `number`) and word statuses (not emoji). The previous literals
+  // used `number` + emoji, which no producer in this repo ever yields — that is
+  // what let the "Epic undefined" seam defect pass a green suite (consumer-
+  // install-defects D3). Cross-seam coverage lives in
+  // standup-gather-render-contract.test.mjs; this test stays a renderer unit test.
   it('test_when_roadmap_has_three_epics_then_each_appears_with_status_and_tallies', async () => {
     const renderRecap = await loadRenderer(assert);
     const roadmap = {
       epics: [
-        { number: 1, title: 'First epic', tag: 'a', status: '✅', tasks: { done: 4, wip: 0, planned: 0 } },
-        { number: 2, title: 'Second epic', tag: 'b', status: '🟡', tasks: { done: 2, wip: 1, planned: 3 } },
-        { number: 3, title: 'Third epic', tag: 'c', status: '⬜', tasks: { done: 0, wip: 0, planned: 5 } },
+        { num: 1, title: 'First epic', tag: 'a', status: 'done', tasks: { done: 4, inProgress: 0, planned: 0 } },
+        { num: 2, title: 'Second epic', tag: 'b', status: 'in-progress', tasks: { done: 2, inProgress: 1, planned: 3 } },
+        { num: 3, title: 'Third epic', tag: 'c', status: 'planned', tasks: { done: 0, inProgress: 0, planned: 5 } },
       ],
       progress: ['3 epics tracked'],
     };
@@ -78,6 +83,7 @@ describe('standup rendered recap', () => {
     for (const epic of roadmap.epics) {
       assert.ok(text.includes(epic.title), `epic "${epic.title}" must be listed — T1 surfaces the roadmap, it does not merely collect it`);
       assert.ok(text.includes(epic.status), `epic "${epic.title}" must carry its status marker`);
+      assert.match(text, new RegExp(`Epic ${epic.num}\\b`), `epic "${epic.title}" must carry its number`);
     }
     assert.match(text, /\b5\b/, 'per-task tallies must be rendered, not just epic titles');
   });

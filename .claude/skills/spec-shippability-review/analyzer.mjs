@@ -25,6 +25,18 @@ const RUNTIME_INVOCATION_PATTERNS = [
   { re: /(?<![\w/])(\.\/(?:src|tests|scripts|obj|docs)\/[\w./-]+)(?:\s|$)/g, group: 1 },
 ];
 
+// Opt-in, per surface. The four patterns above are syntax-gated: each needs an
+// import/require, a node|bash|sh prefix, or a leading `./`. A shipped COMMAND is
+// a recipe Claude executes, so "Read the template at `src/agents/x.md`" is a
+// runtime read even though it carries none of those markers — that exact line
+// shipped past this gate. Applying the form tree-wide was measured at 74 hits in
+// 22 files, nearly all descriptive prose (28 in CONSTITUTION.md alone), so only
+// the commands descriptor opts in.
+const STRICT_DEV_PATH_PATTERN = {
+  re: /(?<![\w/.])((?:src|tests|scripts|obj)\/[\w./-]+\.\w+)/g,
+  group: 1,
+};
+
 export function isDevOnlyPath(path) {
   const normalized = path.replace(/^(?:\.\.\/)+/, '');
   if (DEV_ONLY_PREFIXES.some((p) => normalized.startsWith(p))) return true;
@@ -135,13 +147,16 @@ export function collectMarkdownCode(text) {
   return [...collectShellFences(text), ...collectInlineBackticks(text)];
 }
 
-export function runDevTreeAndUnshippedChecks(fences, manifest, sourcePath) {
+export function runDevTreeAndUnshippedChecks(fences, manifest, sourcePath, { strictDevPaths = false } = {}) {
   const shippedFiles = new Set(Object.keys(manifest?.files ?? {}));
   const findings = [];
   const seenC1 = new Set();
   const seenC3 = new Set();
+  const patterns = strictDevPaths
+    ? [...RUNTIME_INVOCATION_PATTERNS, STRICT_DEV_PATH_PATTERN]
+    : RUNTIME_INVOCATION_PATTERNS;
   for (const fence of fences) {
-    for (const { re, group } of RUNTIME_INVOCATION_PATTERNS) {
+    for (const { re, group } of patterns) {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(fence.body)) !== null) {

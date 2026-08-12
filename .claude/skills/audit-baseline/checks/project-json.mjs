@@ -50,6 +50,18 @@ export function run(ctx) {
     }
     add(`project.json: ${label}`, ok ? 'PASS' : 'FAIL', ok ? '' : 'missing key');
   }
+  // Gated the same way checks/src-templates-a.mjs gates its own src/ reads: a
+  // consumer install ships no src/, so there is no template to compare against
+  // and an ungated read failed config parity on every fresh install. The gate is
+  // on TREE SHAPE, never on the file being absent — src/ present with the
+  // template missing stays a FAIL, or a real dev-tree defect would read as PASS.
+  if (ctx.skipSrc) {
+    const detail = ctx.consumerManifest
+      ? 'consumer install (manifest present, src/ absent) — src/ parity check skipped'
+      : 'src/ absent — parity check skipped';
+    add('project.json <-> template: config parity', 'PASS', detail);
+    return rows;
+  }
   const template = ctx.readJson('src/project.template.json');
   if (template === null) {
     add('project.json <-> template: config parity', 'FAIL', 'src/project.template.json missing or invalid JSON');

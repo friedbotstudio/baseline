@@ -66,11 +66,15 @@ function roadmapLines(roadmap) {
   return [...lines, ''];
 }
 
+// `num`, not `number` — gather.mjs's collectRoadmap projects parse.mjs's epic
+// number under that key, and reading the wrong one printed "Epic undefined" for
+// every row while both sides' unit tests stayed green. `??` rather than `||`
+// because epic 0 is a real epic number.
 function epicLine(epic) {
   const tallies = Object.entries(epic.tasks ?? {})
     .map(([state, n]) => `${state} ${n}`)
     .join(', ');
-  return `  ${epic.status ?? '?'} Epic ${epic.number}: ${epic.title}${tallies ? ` — ${tallies}` : ''}`;
+  return `  ${epic.status ?? '?'} Epic ${epic.num ?? '?'}: ${epic.title}${tallies ? ` — ${tallies}` : ''}`;
 }
 
 function backlogLines(backlog) {

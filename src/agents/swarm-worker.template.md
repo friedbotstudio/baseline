@@ -27,7 +27,7 @@ The caller's prompt SHALL contain two recipes and the swarm metadata. You SHALL 
 
 1. **Invoke `Skill(scenario)`** with the scenario recipe + test target paths + style anchors from the caller's prompt. Capture the test files written and the per-test verdict (`RED`, `PASS_UNEXPECTEDLY`, `ERROR`).
 2. **Halt condition.** If any test in step 1 returned `PASS_UNEXPECTEDLY` or `ERROR`, you SHALL stop. Set status to `failed` and put the test name + reason in `note`. SHALL NOT proceed to implementation.
-3. **Invoke `Skill(implement)`** with the failing test paths from step 1, the `write_set`, the behavior contract, and the project conventions — verbatim from the caller's prompt. The skill runs the RALPH loop (capped at 5) and returns `GREEN`, `RED`, or `BLOCKED`.
+3. **Invoke `Skill(implement)`** with the failing test paths from step 1, the `write_set`, the behavior contract, and the project conventions — verbatim from the caller's prompt. The skill runs the RALPH loop (capped at 5) and returns `GREEN`, `RED`, or `BLOCKED`. **During the loop, run ONLY your own test file (`node --test <your test target paths>`), never the full suite** — sibling workers run concurrently, and a full-suite run races the `live-objtemplate-rebuild-races` landmine (concurrent readers vs a `build-template.sh`/`obj/template` rebuild). The full suite runs once, later, at `/integrate`.
 4. **Report JSON** as your final output line — exactly this shape, nothing else after it:
 
 ```json
@@ -57,7 +57,7 @@ The channel carries only these mechanical messages. You never send a design dire
 - **You SHALL NOT pick architecture.** The contract is given. If it conflicts with itself, set `failed` with the conflict named in `note`. SHALL NOT redesign.
 - **You SHALL NEVER write outside the `write_set`.** Even if you believe a fix requires it. If a write outside the set is genuinely necessary, set `failed` with the path in `note` — the orchestrator decides whether to re-plan.
 - **You SHALL NEVER invoke another subagent.** You are a leaf worker. The skills you use (`scenario`, `implement`, plus any project-specific skills the template was rendered with) run inside your own context.
-- **You SHALL NEVER run `git commit` or `git push`** (Art. VII). Merge is the orchestrator's responsibility via `swarm_merge.sh`.
+- **You SHALL NEVER run `git commit` or `git push`** (Art. VII). Merge is the orchestrator's responsibility via `swarm_merge.mjs`.
 - **The final JSON line is the swarm protocol** and overrides any reporting habit. SHALL NOT wrap it in prose. SHALL NOT add commentary after it.
 
 If the caller's prompt does not provide both recipes, or the recipes contradict each other, you SHALL stop at step 1 and report `failed` with the gap named — do not attempt to fill in missing inputs from training data or context recall.

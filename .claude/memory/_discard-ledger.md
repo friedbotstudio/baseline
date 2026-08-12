@@ -120,3 +120,12 @@
 - promoted :: backlog → i-left-the-write-set-accurate-and-noted-77be
 - discarded :: .claude/hooks/lib/resume_writer.mjs → landmarks.md
 - promoted :: backlog → the-fix-is-one-line-in-tests-upgrade-8806
+- promoted :: .claude/skills/spec-shippability-review/scan-shipped-skills.mjs → landmarks.md
+- promoted :: src/memory/constraints.template.md → landmarks.md
+- discarded :: src/seed.template.md → landmarks.md
+- discarded :: backlog → i-m-going-to-run-the-build-and-d96a
+- discarded :: backlog → ac-009-has-an-established-convention-in-this-4b01
+- discarded :: backlog → the-fix-is-one-line-pass-the-path-ec9d
+- discarded :: backlog → accept-and-track-proceed-to-integrate-4eab
+- discarded :: backlog → the-fix-is-one-line-but-the-tests-ca25
+- discarded :: backlog → that-is-the-seventh-instance-of-this-batch-8c0a

@@ -139,6 +139,36 @@ fi  # end skip-when-manifest-only (Stages 0a/0b)
 #                             .gitignore); defensive exclude in case stragglers
 #                             from pre-2026-04-27 refactor reappear
 #   .DS_Store               — macOS Finder metadata; defensive exclude
+# The per-category shard excludes are DERIVED from the canonical category list,
+# never restated here. Seven were hardcoded while CANONICAL held eight, so the
+# dev repo's `constraints/` shard dir shipped beside seven flat stubs: the shipped
+# store read as sharded-but-incomplete and failed eight audit rows on every fresh
+# install, carrying two dev-repo facts with it. audit-baseline/memory-shape.mjs
+# imports the same list for the same reason. Bash cannot import an ESM module, so
+# the list comes through `node -e`; a non-zero exit here aborts the build rather
+# than shipping a partial exclude set.
+#
+# The JS program stays SINGLE-quoted and the module path is passed as an argument.
+# Interpolating the path into a double-quoted program let a single quote in the
+# checkout directory close the `import('...')` literal and append arbitrary JS —
+# at the step that stamps the shipped manifest, where the quiet abuse is not code
+# execution but a wrong category list that ships dev-repo memory. Never move the
+# path back inside the program.
+# `|| [ -n "$category" ]` is load-bearing: `read` returns non-zero on a final line
+# with no trailing newline, so the loop body would skip the LAST category. That
+# silently dropped `constraints` — the eighth and last id — and rebuilt the exact
+# off-by-one this derivation exists to remove. The node side emits the trailing
+# newline too; either alone fixes it, and both together survive an edit to one.
+MEMORY_SHARD_EXCLUDES=()
+while IFS= read -r category || [ -n "$category" ]; do
+  [ -n "$category" ] && MEMORY_SHARD_EXCLUDES+=("--exclude=memory/${category}/")
+done < <(node -e 'import(process.argv[1]).then(m => process.stdout.write(m.CANONICAL.join("\n") + "\n"))' "$SCRIPT_DIR/../.claude/skills/memory-index/categories.mjs")
+if [ ${#MEMORY_SHARD_EXCLUDES[@]} -eq 0 ]; then
+  echo "build-template: could not derive memory shard excludes from memory-index/categories.mjs" >&2
+  exit 1
+fi
+echo "build-template: excluding ${#MEMORY_SHARD_EXCLUDES[@]} canonical memory shard dirs"
+
 rsync -a \
   --exclude='state/' \
   --exclude='.baseline-manifest.json' \
@@ -147,13 +177,8 @@ rsync -a \
   --exclude='memory/_pending.md' \
   --exclude='memory/_resume.md' \
   --exclude='memory/_thread.md' \
-  --exclude='memory/landmarks/' \
-  --exclude='memory/libraries/' \
-  --exclude='memory/decisions/' \
-  --exclude='memory/landmines/' \
-  --exclude='memory/conventions/' \
-  --exclude='memory/pending-questions/' \
-  --exclude='memory/backlog/' \
+  --exclude='memory/_discard-ledger.md' \
+  "${MEMORY_SHARD_EXCLUDES[@]}" \
   --exclude='skill-memory/' \
   --exclude='agent-memory/' \
   --exclude='workflows.jsonl' \

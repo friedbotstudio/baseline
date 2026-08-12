@@ -1,7 +1,9 @@
-// Foundation — recognize the sharded memory shape (seven category directories +
-// three continuity trails) so audit-baseline can validate a migrated store
-// (AC-006). Reads only inside the given memory root — never the Claude Code
-// session-level MEMORY.md store outside .claude/memory (intake non-goal).
+// Foundation — recognize the sharded memory shape (every CANONICAL category
+// directory + three continuity trails) so audit-baseline can validate a migrated
+// store (AC-006). The count is deliberately not written out here: it was "seven"
+// while CANONICAL held eight, which is the same stale-local-copy drift the import
+// below exists to prevent. Reads only inside the given memory root — never the
+// Claude Code session-level MEMORY.md store outside .claude/memory (intake non-goal).
 
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';

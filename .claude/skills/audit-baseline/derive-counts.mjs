@@ -9,10 +9,12 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CANONICAL_MEMORY = [
-  'landmarks', 'libraries', 'decisions', 'landmines',
-  'conventions', 'pending-questions', 'backlog',
-];
+// Imported, not re-listed. This was the third independent copy of the category
+// list — it sat at seven while CANONICAL held eight, so `memoryFiles` counted 7
+// against a roster of 8 and the disk-vs-roster assertion failed even though every
+// category was present. memory-shape.mjs and expected-baseline.mjs read the same
+// oracle for the same reason.
+import { CANONICAL as CANONICAL_MEMORY } from '../memory-index/categories.mjs';
 
 const SPELLED = {
   1: 'one', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 10: 'ten',

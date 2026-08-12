@@ -115,24 +115,18 @@ Do each sub-step in order; if any fails, stop and surface the error before conti
    ```
 2. **Add new MCP servers** (if any) → merge into `.mcp.json → mcpServers`.
 3. **Add new skills** (if any) → write `.claude/skills/<name>/SKILL.md`. Skills are landed *before* the swarm-worker re-render so any skill referenced by `additions.swarm_worker_skills` exists on disk when the worker file is written.
-4. **Re-render `swarm-worker`** with stack-specific skills:
-   - Read the template at `src/agents/swarm-worker.template.md`.
-   - Build the `SKILLS` value as a YAML list block. Always include `  - scenario` and `  - implement` (the worker's two mandatory skills). Append each skill in `additions.swarm_worker_skills` in dependency order (framework first, then testing/linting, then cross-cutting). Two-space indent, one skill per line.
-   - Substitute the four tokens — `{{NAME}}` → `swarm-worker`, `{{DESCRIPTION}}` → the canonical description (verbatim string below), `{{SKILLS}}` → the YAML list block, `{{ROLE_LINE}}` → the canonical first-paragraph role line. Substitution is literal string replacement.
-
-   **Canonical description (use verbatim for `{{DESCRIPTION}}`):**
-
-   > Execute a single swarm task in an isolated git worktree. Receive a fully-specified recipe from the main context — a scenario recipe plus an implementation contract — then run \`Skill(scenario)\` followed by \`Skill(implement)\` and report JSON status. Make no design decisions and do not expand scope. Invoked exclusively by \`/swarm-dispatch\`; never elsewhere.
-
-   **Canonical role line (use verbatim for `{{ROLE_LINE}}`):**
-
-   > You are a swarm worker. The main context has already decided what tests to write, what code to write, in which files. Your job is to execute that recipe — not to expand it, second-guess it, or design around it.
-   - Validate every skill named in `SKILLS` exists at `.claude/skills/<skill>/SKILL.md`. If any is missing, refuse the render and surface the gap.
-   - Write the rendered output to `.claude/agents/swarm-worker.md` (overwriting the baseline version with the stack-augmented one).
+4. **Re-render `swarm-worker`** with stack-specific skills, by rewriting its `skills:` block in place:
+   - Read the installed worker at `.claude/agents/swarm-worker.md`. This file is already the fully-substituted body, so rewriting one frontmatter block is byte-identical to re-substituting the template — and unlike the template, it exists in every install. (The token template is a baseline **development** artifact; a consumer install has no `src/`, so a step that reads it there can never run.)
+   - Locate the frontmatter `skills:` key and the YAML list block directly beneath it — the consecutive `  - <skill>` lines up to the next key or the closing `---`.
+   - Build the replacement list. Always include `  - scenario` and `  - implement` (the worker's two mandatory skills). Append each skill in `additions.swarm_worker_skills` in dependency order (framework first, then testing/linting, then cross-cutting). Two-space indent, one skill per line.
+   - Replace **only** that block. Every other byte — description, tools, model, role line, body — stays exactly as it is. Do not reflow or re-wrap surrounding text.
+   - If the frontmatter carries no `skills:` block, refuse the rewrite and surface the gap rather than appending a block or writing a partial file.
+   - Validate every skill named in the new list exists at `.claude/skills/<skill>/SKILL.md`. If any is missing, refuse the rewrite and surface the gap.
+   - Write the result back to `.claude/agents/swarm-worker.md`.
 
    Recommender output **must not** propose new subagent types — only stack-skill additions for the existing `swarm-worker`. If you see a `subagents` field in the recommender JSON, ignore it and surface a warning that the schema is stale.
 5. **Add new hooks** (if any) → write `.claude/hooks/<name>.mjs`, `chmod +x`, wire into `.claude/settings.json`. Use Node ESM with `import` from `lib/common.mjs`, no jq, follow §4.1 conventions.
-5a. **Ensure `.gitignore`** → run the baseline `.gitignore` materialization (the same add-only merge `src/cli/install.js → materializeGitignore` performs): create the target `.gitignore` from `.claude/skills/gitignore/baseline-ignores.json` if absent, or append only the baseline must-ignore lines it lacks (never overwrite or reorder existing entries). Offline; for stack-tailored enrichment, invoke the `gitignore` skill. This guarantees the `gitignore_leak_guard` hook's must-ignore set is actually ignored before the first commit.
+5a. **Ensure `.gitignore`** → run the baseline `.gitignore` materialization, the same add-only merge the installer performs: create the target `.gitignore` from `.claude/skills/gitignore/baseline-ignores.json` if absent, or append only the baseline must-ignore lines it lacks (never overwrite or reorder existing entries). Offline; for stack-tailored enrichment, invoke the `gitignore` skill. This guarantees the `gitignore_leak_guard` hook's must-ignore set is actually ignored before the first commit.
 6. **Write `project.json`** with the agreed values, `configured: true`, **and a populated `additions` block**:
    ```jsonc
    "additions": {

@@ -19,6 +19,7 @@
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, extname, join, resolve, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   collectMarkdownCode,
   collectHelperFileContent,
@@ -28,25 +29,64 @@ import {
 const DEFAULT_ROOT_REL = 'obj/template/.claude/skills';
 const DEFAULT_MANIFEST_REL = 'obj/template/.claude/manifest.json';
 const REPORT_REL = '.claude/state/spec-shippability/shipped-skills.json';
+const SHIPPED_CLAUDE_REL = 'obj/template/.claude';
 
 const USAGE = `usage: node scan-shipped-skills.mjs [--root <skills-dir>] [--report-root <project-root>] [--manifest <path> | --shipped-tree <dir>]`;
 
 async function main(argv) {
   const args = parseArgs(argv);
-  const root = resolve(args.root ?? DEFAULT_ROOT_REL);
+  const skillsRoot = resolve(args.root ?? DEFAULT_ROOT_REL);
   const reportRoot = resolve(args.reportRoot ?? '.');
 
-  if (!existsSync(root)) {
-    process.stderr.write(`scan-shipped-skills: missing root ${root} (ENOENT)\n${USAGE}\n`);
+  // An EXPLICIT --root that does not exist stays a hard 3: the caller named a
+  // path and was wrong. A descriptor root that is merely absent records a skip,
+  // because a consumer tree legitimately lacks some shipped directories.
+  if (args.root && !existsSync(skillsRoot)) {
+    process.stderr.write(`scan-shipped-skills: missing root ${skillsRoot} (ENOENT)\n${USAGE}\n`);
     return 3;
   }
 
   const manifest = await resolveManifest(args, reportRoot);
-  const findings = await scanRoot(root, manifest, reportRoot);
-  const report = buildReport(root, findings);
+  const { findings, scanned, skipped } = await scanRoots(resolveDescriptors(skillsRoot), manifest, reportRoot);
+  const report = buildReport(skillsRoot, findings);
   await writeReport(reportRoot, report);
+  printCoverage(scanned, skipped);
   printSummary(report);
   return verdictToExitCode(report.verdict);
+}
+
+// --root overrides ONLY the skills descriptor. Every other descriptor keeps
+// resolving under the shipped tree, so the build gate and the per-slug adapter
+// (which both pass --root) still get commands coverage.
+function resolveDescriptors(skillsRoot) {
+  return SCAN_ROOTS.map((descriptor) => ({
+    ...descriptor,
+    root: descriptor.id === 'skills' ? skillsRoot : resolve(join(SHIPPED_CLAUDE_REL, descriptor.dir)),
+  }));
+}
+
+async function scanRoots(descriptors, manifest, reportRoot) {
+  const findings = [];
+  const scanned = [];
+  const skipped = [];
+  for (const descriptor of descriptors) {
+    if (!existsSync(descriptor.root)) {
+      skipped.push(descriptor);
+      process.stdout.write(`scan-shipped-skills: skipped ${descriptor.id} (missing ${descriptor.root})\n`);
+      continue;
+    }
+    scanned.push(descriptor);
+    findings.push(...(await scanDescriptor(descriptor, manifest, reportRoot)));
+  }
+  return { findings, scanned, skipped };
+}
+
+function printCoverage(scanned, skipped) {
+  const ids = scanned.map((d) => d.id).join(', ');
+  process.stdout.write(
+    `scan-shipped-skills: ${scanned.length} descriptor(s) scanned [${ids}], ` +
+      `${skipped.length} skipped, ${Object.keys(SCAN_EXEMPTIONS).length} exempt\n`,
+  );
 }
 
 function parseArgs(argv) {
@@ -109,14 +149,15 @@ async function* walkFiles(absRoot, relPrefix) {
 
 const HELPER_FILE_EXTS = new Set(['.mjs', '.js', '.sh', '.py']);
 
-async function scanRoot(root, manifest, reportRoot) {
-  const scannableFiles = await findScannableFiles(root);
+async function scanDescriptor(descriptor, manifest, reportRoot) {
   const findings = [];
-  for (const absPath of scannableFiles) {
+  for (const absPath of await descriptor.finder(descriptor.root)) {
     const sourcePath = relative(reportRoot, absPath) || absPath;
     const text = await readFile(absPath, 'utf8');
     const chunks = collectChunksForFile(absPath, text);
-    findings.push(...runDevTreeAndUnshippedChecks(chunks, manifest, sourcePath));
+    findings.push(
+      ...runDevTreeAndUnshippedChecks(chunks, manifest, sourcePath, { strictDevPaths: descriptor.strictDevPaths }),
+    );
   }
   return findings;
 }
@@ -128,7 +169,32 @@ function collectChunksForFile(absPath, text) {
   return [];
 }
 
-async function findScannableFiles(root) {
+// One descriptor per shipped surface that can carry a runtime path. This list
+// replaced a single hardcoded skills root: `.claude/commands/` shipped unscanned,
+// which is how an /init-project step telling a consumer install to read
+// `src/agents/swarm-worker.template.md` reached users. `dir` is the shipped
+// directory name so no-descriptor coverage can be asserted against the built
+// tree; `strictDevPaths` opts a surface into the unprefixed dev-path form, and
+// only recipe surfaces (commands) take it.
+export const SCAN_ROOTS = Object.freeze([
+  Object.freeze({ id: 'skills', dir: 'skills', finder: findScannableSkillFiles, strictDevPaths: false }),
+  Object.freeze({ id: 'commands', dir: 'commands', finder: topLevelScannableFiles, strictDevPaths: true }),
+  Object.freeze({ id: 'agents', dir: 'agents', finder: topLevelScannableFiles, strictDevPaths: false }),
+  Object.freeze({ id: 'hooks', dir: 'hooks', finder: findNestedScannableFiles, strictDevPaths: false }),
+  Object.freeze({ id: 'mcp', dir: 'mcp', finder: findNestedScannableFiles, strictDevPaths: false }),
+  Object.freeze({ id: 'output-styles', dir: 'output-styles', finder: topLevelScannableFiles, strictDevPaths: false }),
+]);
+
+// A shipped directory is exempt only when it cannot carry a runtime path at all.
+// Every entry states why, because a bare exemption is the silent gap with extra
+// steps — the coverage test rejects an empty reason.
+export const SCAN_EXEMPTIONS = Object.freeze({
+  bin: 'vendored binaries and their licence files — no source text to scan',
+  schemas: 'JSON Schema documents — data contracts, never invoked',
+  memory: 'seeded memory stubs — project facts, not runtime instructions',
+});
+
+async function findScannableSkillFiles(root) {
   const entries = await readdir(root, { withFileTypes: true });
   const out = [];
   for (const entry of entries) {
@@ -156,6 +222,22 @@ async function isBaselineOwnedSkill(skillDir) {
   return /^owner:\s+baseline\s*$/m.test(fmMatch[1]);
 }
 
+async function findNestedScannableFiles(root) {
+  const out = [];
+  let entries;
+  try {
+    entries = await readdir(root, { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const entry of entries) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) out.push(...(await findNestedScannableFiles(path)));
+    else if (entry.isFile() && isScannableFile(entry.name)) out.push(path);
+  }
+  return out.sort();
+}
+
 async function topLevelScannableFiles(dir) {
   let entries;
   try {
@@ -169,7 +251,7 @@ async function topLevelScannableFiles(dir) {
     if (!isScannableFile(entry.name)) continue;
     out.push(join(dir, entry.name));
   }
-  return out;
+  return out.sort();
 }
 
 function isScannableFile(name) {
@@ -220,5 +302,12 @@ function verdictToExitCode(verdict) {
   return verdict === 'BLOCKED' ? 2 : verdict === 'NEEDS_REVIEW' ? 1 : 0;
 }
 
-const code = await main(process.argv.slice(2));
-process.exit(code);
+// Guarded so a test (or any caller) can import SCAN_ROOTS / SCAN_EXEMPTIONS
+// without running a scan and exiting the host process. Same shape as
+// audit-baseline/audit.mjs.
+const IS_MAIN = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (IS_MAIN) {
+  const code = await main(process.argv.slice(2));
+  process.exit(code);
+}

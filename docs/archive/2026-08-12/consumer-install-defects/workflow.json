@@ -1,0 +1,48 @@
+{
+  "request": "Fix five confirmed consumer-install defects reported by a downstream baseline user. D1: .claude/commands/init-project.md:119 and docs/init/seed.md:191,:661 (§13 Step 6.4) instruct a consumer install to read src/agents/swarm-worker.template.md, which ships only in the dev repo; amend seed.md and the shipped command so the consumer re-render rewrites the skills: block in .claude/agents/swarm-worker.md in place (byte-identical to token substitution). D2: .claude/skills/audit-baseline/checks/project-json.mjs:53 calls ctx.readJson('src/project.template.json') unconditionally, so audit-baseline exits 1 on every consumer install; mirror the ctx.skipSrc gate from checks/src-templates-a.mjs:11. D3: .claude/skills/standup/render.mjs:73 reads epic.number but gather.mjs:189 emits num, so /standup prints 'Epic undefined' for every row; add a gather-to-render contract test because both existing unit tests use divergent hand-built fixtures and neither crosses the seam. D4: spec-shippability-review/scan-shipped-skills.mjs:28 walks obj/template/.claude/skills only, so .claude/commands/ is never scanned for src/ runtime references; this coverage gap is the root cause of D1. D5: scripts/build-template.sh:150-156 excludes seven memory shard directories by name and omits memory/constraints/, so the shipped template carries constraints/ as a shard dir beside seven flat stubs. checkMemoryShape returns categories:1, which sends checks/memory.mjs:23 down the sharded branch and fails 8 checks on every fresh install; the shipped constraints/ also leaks two dev-repo facts (no-jvm-available.md, zero-runtime-dependencies.md) into every consumer install. Derive the exclude list from memory-index/categories.mjs CANONICAL instead of hardcoding it. Note the stale comment at audit-baseline/memory-shape.mjs:1 says 'seven category directories' where CANONICAL now holds eight.",
+  "slug": "consumer-install-defects",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "D2's fix is a direct copy of the ctx.skipSrc gate at .claude/skills/audit-baseline/checks/src-templates-a.mjs:11. D4 extends the DEFAULT_ROOT_REL root list at .claude/skills/spec-shippability-review/scan-shipped-skills.mjs:28. D1 cites .claude/commands/init-project.md:119 plus docs/init/seed.md:191 and :661, all reproduced in-repo. D3 was reproduced by running .claude/skills/standup/cli.mjs recap, which printed 'Epic undefined' for all seven roadmap epics. D5 was reproduced by calling checkMemoryShape on obj/template/.claude/memory, which returned categories:1 with the seven flat categories reported missing. Downstream install recorded D1 as seed §16 deviation 1 and D2 as §16 open follow-up 8; D5 is that session's Failure A (8 checks).",
+  "track_reason": "The leanest safe track is tdd-quickfix, but two facts make it unsafe here. First, D1 amends docs/init/seed.md, the governing specification under CLAUDE.md Article I.1; spec-entry routes the amendment wording through gate A (/approve-direction) before it lands, and tdd-quickfix has no gate A. Second, tdd-quickfix auto-excepts spec-shippability-review, which is the exact checker whose coverage gap is D4; spec-entry keeps it reachable in the checker fan-out. User confirmed spec-entry via AskUserQuestion. Scope note: D2 does NOT require a seed amendment. CLAUDE.md Article VIII binds the 26 files under .claude/hooks/; checks/project-json.mjs is an audit-baseline skill file and is not a hook. seed.md:832 already establishes the audit's consumer-install awareness (the manifest read falls back dev-repo to consumer), so the ctx.skipSrc gate corrects the implementation to match seed under Article I.4. The downstream session attributed the amendment to D2 on Article VIII grounds; that attribution is wrong. Manifest hash drift is not a blocker in this repo because the template build regenerates obj/template/.claude/manifest.json.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "scenario-correction",
+    "verify",
+    "drift-check",
+    "scenario-d9-coverage",
+    "reverify",
+    "finalize"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1786545924,
+  "updated_at": 1786545924,
+  "rightsize_base": [
+    "docs/audits/swarm-first-production-run-2026-08-09.md"
+  ]
+}

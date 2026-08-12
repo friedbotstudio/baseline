@@ -1,3 +1,5 @@
+import { CANONICAL as CANONICAL_MEMORY_CATEGORIES } from '../memory-index/categories.mjs';
+
 // Single source of truth for the baseline's declared rosters.
 //
 // These Sets are the *declaration* of what the baseline ships; `deriveCounts()`
@@ -31,10 +33,15 @@ export const EXPECTED_COMMANDS = new Set([
   'init-project', 'init-project-doctor',
 ]);
 
-export const EXPECTED_MEMORY_FILES = new Set([
-  'landmarks', 'libraries', 'decisions', 'landmines', 'conventions',
-  'pending-questions', 'backlog', '_pending', '_resume', '_thread',
-]);
+// Derived from CANONICAL, not restated. A local copy of the category list sat at
+// seven while CANONICAL held eight, so the two oracles disagreed about what a
+// complete store is: `constraints` was a real category the audit never expected
+// and no stub ever shipped. memory-shape.mjs imports the same list for the same
+// reason. Only the three underscore-prefixed continuity trails are declared here
+// — they are session files, not categories, and CANONICAL does not carry them.
+const CONTINUITY_TRAILS = ['_pending', '_resume', '_thread'];
+
+export const EXPECTED_MEMORY_FILES = new Set([...CANONICAL_MEMORY_CATEGORIES, ...CONTINUITY_TRAILS]);
 
 // Canonical memory files = the roster minus the underscore-prefixed session files
 // (_pending / _resume / _thread). deriveCounts().memoryFiles counts these.
