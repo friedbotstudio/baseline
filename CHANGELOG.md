@@ -1,3 +1,47 @@
+# [0.22.0](https://github.com/friedbotstudio/baseline/compare/v0.21.0...v0.22.0) (2026-08-12)
+
+
+### Bug Fixes
+
+* **archive:** the delta is verified before the move, and an unread spec says so ([3cc84ac](https://github.com/friedbotstudio/baseline/commit/3cc84acc264405899e4e4f2462f6ee3ad4409c85))
+* **governance:** document harness_continuation's second path and check for the class ([2a3479c](https://github.com/friedbotstudio/baseline/commit/2a3479c62efa2cb9c6dc40d3c43200c50e3d496b))
+* **harness:** an epic-child's checks read the spec its pin names ([f97d3b7](https://github.com/friedbotstudio/baseline/commit/f97d3b737278b7c9d59424edacc38c62ef031102))
+* **memory:** close frontmatter injection, path traversal and ReDoS ([2ff98d3](https://github.com/friedbotstudio/baseline/commit/2ff98d3da4abb109bad1da495cf520c5bd778f2e))
+* **memory:** make four backlog entries reachable and stop the sweep flagging itself ([117bd8b](https://github.com/friedbotstudio/baseline/commit/117bd8bc2a57ca320d3e174dfb2e8a7b51034225))
+* **memory:** make the discard ledger's key form one shared definition ([484e6f6](https://github.com/friedbotstudio/baseline/commit/484e6f6806739d07c6a2a395158b3a0a9a879544))
+* **recall:** wire the central system spec into the session and the write boundary ([fed7f2e](https://github.com/friedbotstudio/baseline/commit/fed7f2e25245ff52b7eb9ef1f0fa8462df840a0e))
+* **tests:** stop the default tier rewriting the trees the audit reads ([8362df2](https://github.com/friedbotstudio/baseline/commit/8362df2c61a17a129383379fa38c0b62243af0bb))
+* **tooling:** expand AC spans, stop self-certification, remove NUL sentinels ([c81e30c](https://github.com/friedbotstudio/baseline/commit/c81e30c2d08e79e9f79299732bc43d62d4d38341))
+
+
+### Features
+
+* **annotations:** wire the scanner into scout and widen the load_bearing gate ([85a89ec](https://github.com/friedbotstudio/baseline/commit/85a89ec87934ccaa47822636dda93d6a9b7cad4c))
+* **cli:** the migrator remaps a renamed phase for an in-flight workflow ([041fbdb](https://github.com/friedbotstudio/baseline/commit/041fbdbdff42a0db2592372912e7d531fb6ce2ba))
+* **document:** gate Phase 10 routing on delegate receipts ([95b5767](https://github.com/friedbotstudio/baseline/commit/95b57675c813f0a3898f0fca24626cfc24030720))
+* **hooks:** let a spec satisfy a diagram kind by referencing an element ([00a3bfa](https://github.com/friedbotstudio/baseline/commit/00a3bfa54cb6da3d8d066a30f33ced1c81cd0241))
+* **hooks:** the session-start index reports pending candidates without prompting ([2d5c90d](https://github.com/friedbotstudio/baseline/commit/2d5c90d3e8deda3df20cd7e7c76005f518f5a726))
+* **memory:** add constraints as the eighth canonical category ([5230016](https://github.com/friedbotstudio/baseline/commit/523001657bbf072182bbf68b04b3e372df1f0430))
+* **memory:** populate the architecture map and make its staleness reachable ([7ec3cfe](https://github.com/friedbotstudio/baseline/commit/7ec3cfed010bfbfd289c1b74f29b9b72d40f3698))
+* **memory:** scope is per entry, and an unreachable entry is refused ([4c657e2](https://github.com/friedbotstudio/baseline/commit/4c657e291686ffe6670295813e1629351131761d))
+* **memory:** seed the concept layer and one shard per element ([b6fd456](https://github.com/friedbotstudio/baseline/commit/b6fd45638f91c4cad2afcb1bbe406dbb7cdb3445))
+* **output-style:** a fresh install speaks in the Baseline STE register ([fea8531](https://github.com/friedbotstudio/baseline/commit/fea85311f1af170fd8bcfcfe4732b8d679d2e948))
+* **research:** the spec that authored a touched path outranks word overlap ([957d4f6](https://github.com/friedbotstudio/baseline/commit/957d4f68c997c8bb505b99fc05ae8ba2fce290a0))
+* **skills:** every mechanical read gets a cli.mjs --json front door ([1833e9f](https://github.com/friedbotstudio/baseline/commit/1833e9f20707275242043c3639bb184b59ffd852))
+* **skills:** give skill helpers a CLI front door and move 12 SOP call sites onto it ([af3c2c2](https://github.com/friedbotstudio/baseline/commit/af3c2c2ebeeb740243081ca6ad664a4ba5a1bd9b))
+* **skills:** give the remaining 19 helper call sites a CLI front door ([b4ad0aa](https://github.com/friedbotstudio/baseline/commit/b4ad0aae94f4da1ba695ff870c421964d5fa2e52))
+* **skills:** the flush skill becomes memory-sync, and standup answers in one call ([d958f91](https://github.com/friedbotstudio/baseline/commit/d958f9138ddc940ab14cd9cfec5e67f64d25f9c8))
+* **spec:** a spec declares its delta against docs/system/ ([e28cc0f](https://github.com/friedbotstudio/baseline/commit/e28cc0fa0a66fbdc613181202bf099d82aa2681a))
+* **system:** a shard writer, and a corpus health report that writes nothing ([3eb77ff](https://github.com/friedbotstudio/baseline/commit/3eb77ffd9b7ef7eb770cfcaf6aab86ba74d34003))
+* **system:** archive proves the declared delta before it writes anything ([becb6e6](https://github.com/friedbotstudio/baseline/commit/becb6e6a0df7c437c0ed30e2f8f801272b955b0e))
+* **system:** every shard declares its kind, so the witness registry is live ([276306f](https://github.com/friedbotstudio/baseline/commit/276306fcd6d148f2b606f00213b86bc80b792244))
+* **system:** the README's corpus counts are checked against disk ([408c1b2](https://github.com/friedbotstudio/baseline/commit/408c1b2bb17b79114c2ac0df0a4d06eba022ef1f)), closes [#10](https://github.com/friedbotstudio/baseline/issues/10)
+* **workflows:** four more tracks resolve implementation through a selector ([2b2fac8](https://github.com/friedbotstudio/baseline/commit/2b2fac8238f77b1153c46042107aa1c370342121))
+* **workspace:** add the concept layer, derived edges, shards and staleness ([2e71a46](https://github.com/friedbotstudio/baseline/commit/2e71a463bc8c1edd5e5f04617aa08f41844b222f))
+* **workspace:** add the durable structural corpus ([e731b51](https://github.com/friedbotstudio/baseline/commit/e731b51c9ccf7845cde6b2706c9d94545d505a47))
+* **workspace:** make the corpus consumer-general and give diagrams a witness ([232310b](https://github.com/friedbotstudio/baseline/commit/232310b8f509eb95e80cb8c9e8de71e3f24cb1ea))
+* **workspace:** seed the structural corpus and make slice E deliver ([4daf610](https://github.com/friedbotstudio/baseline/commit/4daf610230889574befaa7a73b41564cff125ab5))
+
 # [0.21.0](https://github.com/friedbotstudio/baseline/compare/v0.20.0...v0.21.0) (2026-07-30)
 
 
