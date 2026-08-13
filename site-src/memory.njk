@@ -95,6 +95,14 @@ toc:
 
 <p>You can add quotes over time. Clarify an instruction across three turns and the entry keeps all three blocks, oldest first, because how a rule got sharpened is often the thing that explains it.</p>
 
+<h3>Every deferral names what stopped it</h3>
+
+<p>Where the rule above governs what you said, this one governs what Claude said about its own unfinished work. An entry carrying <code class="tok">source: assistant-deferral</code> must also carry <code class="tok">deferred:</code>, and the value must be one of four: <code class="tok">dependency</code>, <code class="tok">risk</code>, <code class="tok">cost</code>, or <code class="tok">human-directed</code>. Anything else will fail the review, as will an entry that omits the field entirely.</p>
+
+<p>Because the checker reads only the files a change actually touches, the requirement applies on touch rather than retroactively. An entry that Claude writes or reopens must carry its reason before the change can land; the entries already sitting in your backlog from before the rule existed stay exactly as they are until somebody picks one up.</p>
+
+<p>Claude can still defer work, and for a genuine dependency or a cost you have not agreed to spend, it should. What it can no longer do is defer silently. Read the backlog six weeks later and each open item tells you which of the four reasons applies, which is the difference between a list of work nobody did and a record of decisions somebody made.</p>
+
 <h2 id="closing"><span class="sec-mark" aria-hidden="true">§ IV</span> Verification, closure and decay</h2>
 
 <p class="sec-lead">An entry leaves the store three ways. Only one of them is time passing, and it no longer touches the reasoning you most want to keep.</p>

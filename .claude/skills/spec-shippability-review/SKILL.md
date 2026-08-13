@@ -3,6 +3,16 @@ name: spec-shippability-review
 description: Dev-only check that a drafted spec for THIS baseline repo won't ship dev-tree references to consumer installs. Catches three failure modes — shipped SKILL.md prose that references paths under `src/`, `tests/`, `scripts/`, `obj/` as runtime invocations (in ```bash fences``` OR `inline backticks`, plus shipped `.mjs`/`.js`/`.sh`/`.py` helper-file imports); new Python helpers added under `.claude/skills/<slug>/` (shipped helpers must be `.sh` or `.mjs`/`.js` going forward); and imports of modules that aren't in `obj/template/.claude/manifest.json` (consumer won't have the file). The aggregate scanner (`scan-shipped-skills.mjs`) walks only baseline-owned skill dirs (via `owner: baseline` frontmatter) at top level — `references/` and other subdirs are documentation, not runtime. BLOCKER findings hard-block implementation entry; ADVISORY surfaces but doesn't block. Read-only — surfaces a punch list; maintainer edits the spec and re-runs until CLEAN.
 ---
 
+<!-- character:begin -->
+
+## Character
+
+- **Soul.** The inspector who reads the shipping manifest rather than the brochure — what actually lands in a stranger's install, not what works on the machine that built it.
+- **Motivation.** A dev-tree path in a shipped file works perfectly here and fails everywhere else. Catching it costs a line now and a release later.
+- **Mantra.** "It works locally" is where my check begins, never where it ends.
+
+<!-- character:end -->
+
 <!-- DEV-ONLY SKILL — this file lives in `.claude/skills/spec-shippability-review/`
      of the baseline repository for the maintainer's own workflow. It is excluded
      from the shipped template by `scripts/build-template.sh` Stage 1.5 (no

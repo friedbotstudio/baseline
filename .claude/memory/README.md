@@ -68,6 +68,9 @@ When a flat entry is sharded, exactly seven body bullets move into the fact file
 | `resolved-at` | `sweep.mjs` | closure stamp (`pending-questions` only) |
 | `source` | `/memory-sync` verbatim gate | provenance (Art. IX.6) |
 | `raised-on` | `sweep.mjs → modeBacklogDecay` | backlog decay |
+| `deferred` | `harness/checkers/backlog-deferral.mjs` | reason an `assistant-deferral` was left; one of `dependency` / `risk` / `cost` / `human-directed` |
+
+**`source: assistant-deferral` requires `deferred:`.** An entry Claude wrote to defer its own follow-up has to say why it was left, using one of the four reasons above. `harness/checkers/backlog-deferral.mjs` runs at the code-review phase and reads `changedFiles`, which is what makes the rule enforce on touch: an entry the diff writes or reopens must carry the tag, and an entry the diff never touches is never read. Entries that predate the rule stay as they are until someone picks one up. An untagged entry, or a value outside the list, is a BLOCKER. `spec-traceability-review` already applies the same four reasons to a spec AC row that defers committed scope (CLAUDE.md VI.4); this puts the rule where deferrals actually collect.
 
 `key`, `category`, and `scope` are **structural** — the emitted preamble owns them, so a body bullet of those names is dropped rather than lifted.
 

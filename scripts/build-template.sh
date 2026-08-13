@@ -116,6 +116,16 @@ if [ -f "$PKG_ROOT/scripts/sync-constitution-mirror.mjs" ]; then
     && echo "build: reconciled constitution mirror" >&2
 fi
 
+# Stage 0c — stamp each skill's character block into the DEV tree.
+#
+# Ordering is load-bearing: build-manifest.mjs (Stage 3) hashes $TEMPLATE_DIR, while
+# audit-baseline re-hashes the same relative paths under $PKG_ROOT. Stamping after
+# Stage 1's rsync would leave the dev tree unstamped and every shipped target failing
+# `hash mismatch`. Idempotent, so a build on a current tree produces no diff.
+if [ -f "$PKG_ROOT/scripts/stamp-character.mjs" ]; then
+  node "$PKG_ROOT/scripts/stamp-character.mjs" "$PKG_ROOT" >&2
+fi
+
 rm -rf "$TEMPLATE_DIR"
 mkdir -p "$TEMPLATE_DIR/.claude" "$TEMPLATE_DIR/docs/init"
 

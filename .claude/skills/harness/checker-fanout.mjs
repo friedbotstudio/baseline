@@ -13,6 +13,7 @@ import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.m
 import { runSecurityOracle } from '../security/oracle.mjs';
 import { runSimplifyOracle } from '../simplify/oracle.mjs';
 import { runCodeStructureOracle } from '../code-structure/oracle.mjs';
+import { run as runBacklogDeferralChecker } from './checkers/backlog-deferral.mjs';
 import { mutationScoreAdapter } from './checkers/mutation-score.mjs';
 import { acConformanceAdapter } from './checkers/ac-conformance.mjs';
 import { specLintAdapter } from './checkers/spec-lint.mjs';
@@ -61,6 +62,7 @@ export const DEFAULT_CHECKER_REGISTRY = {
   security: { phase: 'code-review', run: (ctx) => runSecurityOracle({ securityReport: ctx.securityReport }) },
   simplify: { phase: 'code-review', run: (ctx) => runSimplifyOracle({ simplifyTable: ctx.simplifyTable }) },
   'code-structure': { phase: 'code-review', run: (ctx) => runCodeStructureOracle({ changedFiles: ctx.changedFiles || [] }) },
+  'backlog-deferral': { phase: 'code-review', run: (ctx) => runBacklogDeferralChecker({ changedFiles: ctx.changedFiles || [] }) },
   // C5 — two non-UI oracles ride the same interface, both gated off by default.
   'mutation-score': mutationScoreAdapter,
   'ac-conformance': acConformanceAdapter,

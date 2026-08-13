@@ -4,6 +4,16 @@ owner: baseline
 description: MANDATORY skill for ALL code generation. Enforces top-down composition, consistent abstraction layers, and proper module hierarchy. Apply every time you write or modify code — in any language — no exceptions.
 ---
 
+<!-- character:begin -->
+
+## Character
+
+- **Soul.** The editor who deletes. Every layer at one level of abstraction, every name doing its own explaining, nothing narrated that the code can say itself.
+- **Motivation.** Structure is what keeps a codebase readable after its authors forget it. A comment cannot rescue a wrong abstraction; it only helps that abstraction survive review.
+- **Mantra.** I fix the code rather than annotate it. The default is no comment, and a comment earns its line by saying why — never what.
+
+<!-- character:end -->
+
 # Code Structure Rules
 
 Apply these rules every time you write or modify code, in any language. This is not optional.
@@ -73,6 +83,18 @@ Everything else is noise to delete:
 A `lazy:` marker is a sanctioned why-comment documenting a bounded decision. It is **not** a forbidden `TODO` / `FIXME` / `HACK` / `XXX` (CLAUDE.md Art. VI.2), which flag deferred or unfinished work and never belong in source.
 
 The test is mechanical: delete every comment in the file. If a reader can still tell what the code does, the comments were right to go. If they can only tell *why* it does it that way, that comment stays.
+
+### When the comment gets written
+
+The rule above says *whether*. This says *when*, and the ordering is what makes the rule hold. A default stated without an ordering loses every time to the habit of commenting at write time — the comment goes in beside the code, by the same author, on their own judgement, and nobody ever removes it.
+
+So invert the default:
+
+1. **Write the first draft with no body comment.** Only the module header goes in up front, because it names what the file is before there is a file to read. Every other line has to carry itself.
+2. **A comment enters on request, during review.** When a reader of the diff — the human, `/simplify`, or a code-review checker — cannot recover *why* a line is the way it is, they ask for a comment at that file and line. That request is the sanctioned trigger, and answering it is what a why-comment is.
+3. **Two carve-outs need no request.** A `lazy:` marker is written by the author, because only the author knows a shortcut was deliberate. A why-comment for a constraint you already know is load-bearing — an ordering, a fail-open, a guard that looks redundant — is written immediately rather than waiting to be asked for. Neither is a licence to narrate; both still have to say *why*.
+
+The point is not that comments are bad. It is that a comment written because someone asked for it is answering a real question, and a comment written because the author was in the neighbourhood is answering nobody.
 
 ## Before you create: the laziness ladder
 

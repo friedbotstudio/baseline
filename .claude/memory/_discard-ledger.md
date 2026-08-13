@@ -143,3 +143,17 @@
 - discarded :: .claude/skills/standup/SKILL.md → landmarks.md
 - discarded :: backlog → defects-3-and-5-hit-render-mjs-s-dc20
 - discarded :: backlog → the-fix-is-one-line-s-s-which-fa40
+- discarded :: backlog → it-is-a-workaround-not-a-fix-the-dc95
+- discarded :: .claude/skills/code-structure/oracle.mjs → landmarks.md
+- discarded :: .claude/skills/audit-baseline/character.json → landmarks.md
+- discarded :: .claude/skills/audit-baseline/checks/skill-character.mjs → landmarks.md
+- promoted :: .claude/skills/audit-baseline/character.mjs → landmarks.md
+- promoted :: .claude/skills/harness/checkers/backlog-deferral.mjs → landmarks.md
+- promoted :: comment-corpus exceeds the new ratio bar → backlog.md
+- promoted :: terminal-sanitizer rule now has two copies → backlog.md
+- promoted :: code-review fan-out has never scored a real diff → backlog.md
+- promoted :: binding test.cmd does not run the node suite → backlog.md
+- promoted :: census literals drift on every wide-governs memory flush → backlog.md
+- promoted :: three files exceed the code-structure line budget → backlog.md
+- promoted :: document.surfaces `**/README.md` obliges prose on files prose must refuse → backlog.md
+- promoted :: archive SOP's --touched guidance contradicts the CLI it documents → backlog.md

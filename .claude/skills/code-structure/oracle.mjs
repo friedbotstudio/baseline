@@ -12,8 +12,16 @@ import { resolveCheckerThreshold } from '../../hooks/lib/tier-dial.mjs';
 const CHECKER = 'code-structure';
 export const phase = 'code-review';
 const LINE_BUDGET = 80;
+// Derived, not chosen: 370 files measured at p95 0.452 and p99 0.784 with the module
+// header excluded (docs/research/skill-character-doctrine.md). 0.50 flags 11 of them.
+const COMMENT_RATIO_MAX = 0.5;
 
-function substantiveLineCount(content) {
+function isCommentLine(raw) {
+  const t = raw.trim();
+  return t.startsWith('//') || t.startsWith('#') || t.startsWith('*') || t.startsWith('/*');
+}
+
+export function substantiveLineCount(content) {
   return String(content == null ? '' : content)
     .split(/\r?\n/)
     .filter((raw) => {
@@ -21,6 +29,25 @@ function substantiveLineCount(content) {
       return t && !t.startsWith('//') && !t.startsWith('#') && !t.startsWith('*') && !t.startsWith('/*');
     })
     .length;
+}
+
+// Counts comment lines AFTER the leading header block. The module header is a
+// sanctioned carve-out, so counting it would fire hardest on the smallest, most
+// disciplined files — the median file measures 0.244 with it and 0.098 without.
+export function bodyCommentCount(content) {
+  let count = 0;
+  let inHeader = true;
+  for (const raw of String(content == null ? '' : content).split(/\r?\n/)) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (t.startsWith('#!')) continue;
+    if (isCommentLine(raw)) {
+      if (!inHeader) count += 1;
+      continue;
+    }
+    inHeader = false;
+  }
+  return count;
 }
 
 export function runCodeStructureOracle({ changedFiles } = {}, deps = {}) {
@@ -40,6 +67,26 @@ export function runCodeStructureOracle({ changedFiles } = {}, deps = {}) {
         artifact: { kind: 'file-length', file: file.path, lines },
       }, { mandatory }));
     }
+    const ratioFinding = commentRatioFinding(file, lines);
+    if (ratioFinding) findings.push(ratioFinding);
   }
   return { findings };
+}
+
+// mandatory is FORCED false, not read from the dial: D-2 lands this advisory for one
+// release so the first real measurement is free. A dial change must not promote it.
+function commentRatioFinding(file, substantive) {
+  if (substantive === 0) return null;
+  const comments = bodyCommentCount(file && file.content);
+  const ratio = comments / substantive;
+  if (ratio <= COMMENT_RATIO_MAX) return null;
+  return normalizeFinding({
+    check: 'comment_ratio',
+    file: file.path,
+    line: null,
+    evidence: `${comments} body comment lines / ${substantive} substantive = ${ratio.toFixed(2)} (> ${COMMENT_RATIO_MAX.toFixed(2)})`,
+    message: `${file.path} carries ${ratio.toFixed(2)} body comments per substantive line; the bar is ${COMMENT_RATIO_MAX.toFixed(2)}.`,
+    suggested_fix: 'Delete what the code already says. A comment earns its line by saying why, never what.',
+    artifact: { kind: 'comment-ratio', file: file.path, ratio },
+  }, { mandatory: false });
 }

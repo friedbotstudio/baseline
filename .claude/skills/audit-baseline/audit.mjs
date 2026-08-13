@@ -24,6 +24,7 @@ import { pathToFileURL } from 'node:url';
 import { buildContext } from './checks/context.mjs';
 import { run as counts } from './checks/counts.mjs';
 import { run as skillOwnership } from './checks/skill-ownership.mjs';
+import { run as skillCharacter } from './checks/skill-character.mjs';
 import { run as constitution } from './checks/constitution.mjs';
 import { run as memory } from './checks/memory.mjs';
 import { run as srcTemplatesA } from './checks/src-templates-a.mjs';
@@ -56,7 +57,7 @@ const IS_MAIN = (() => {
 })();
 
 const CHECKS = [
-  counts, skillOwnership, constitution, memory, srcTemplatesA, srcTemplatesB,
+  counts, skillOwnership, skillCharacter, constitution, memory, srcTemplatesA, srcTemplatesB,
   helperScripts, settingsWiring, projectJson, mcpServers, licenses, designUiSurface,
   crossDocCounts, quickfixInvariants, derivedCountSurfaces, docsiteDrift,
   hookDecisionPaths,

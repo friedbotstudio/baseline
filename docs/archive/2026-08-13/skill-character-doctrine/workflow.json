@@ -1,0 +1,73 @@
+{
+  "request": "Give 14 heavy-lifting baseline skills a written character — soul, motivation, mantra. A shared doctrine file is the source of truth; a build step stamps the block into each SKILL.md; audit-baseline fails on a missing or incomplete block. Anti-slack rule: a backlog entry with source: assistant-deferral must carry a deferred: dependency|risk|cost|human-directed tag, and an untagged entry is a checker BLOCKER, enforced on touch. Claude drafts the words; the human approves them at gate A. Additionally, make code-structure's existing comment rule binding via its oracle, so comments appear only where a why-comment is warranted.",
+  "slug": "skill-character-doctrine",
+  "track_id": "intake-full",
+  "novelty": "novel",
+  "novelty_evidence": "grep for mantra / character blocks across .claude/skills, docs/init and src returns zero hits, and no stage of scripts/build-template.sh writes a block into SKILL.md — the doctrine surface has no precedent. The deferred: dependency|risk|cost|human-directed tag is precedented at .claude/skills/spec-traceability-review/oracle.mjs and CLAUDE.md VI.4 for spec AC rows, but no oracle applies it to backlog entries.",
+  "track_reason": "intake-full over the leaner spec-entry because the change edits audit-baseline, which project.json → test.cmd names as the binding verdict command, and rewrites 12 baseline-owned SKILL.md files whose manifest hashes the audit reconciles. Chosen over epic because project.json → release.completeness_gate.half_wired_blocks_release is true and consumer_upgrade_cadence is rare: epic children commit separately, so every intermediate landing would ship doctrine text without its audit, or an audit without its oracle.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "org-dispatch"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "decisions": {
+    "location": "shared doctrine file is the source of truth; a build step writes the block into each SKILL.md",
+    "force": "binding — audit-baseline fails on a missing or incomplete block",
+    "scope": "fourteen SKILL.md files: brainstorm, intake, spec, spec-shippability-review, spec-traceability-review, spec-diagram-review, spec-rollout-enforceability-review, scenario, implement, code-structure, tdd, simplify, integrate, security",
+    "anti_slack": "a backlog entry with source: assistant-deferral must carry deferred: dependency|risk|cost|human-directed; untagged is a checker BLOCKER",
+    "backfill": "enforce on touch — the oracle applies to any entry a workflow writes or reopens; untouched entries stay untagged",
+    "authorship": "Claude drafts all 12 character sets; the human approves or edits them at gate A",
+    "scope_corrections": "Scout 2026-08-14 found two approved ACs unbuildable. D-4: audit derives its target set from the doctrine file, not owner: — spec-shippability-review is dev-only by design and annotating it would ship it plus force a 56->62 count cascade needing a seed.md amendment first. D-5: the 2026-08-09 D-6 rejection of a what-comment detector is upheld; only an aggregate ratio lands, advisory. D-6: code-structure SOP inverts the default — comment-free first draft, review-phase request as the sanctioned trigger.",
+    "comment_rule": "Fourth deliverable added: code-structure SOP directs a comment-free first draft; a comment enters via a review-phase request. Enforcement by ordering, not by oracle — which is why it succeeds where the 2026-08-09 D-6 correctly judged an oracle would fail."
+  },
+  "created_at": 1786654363,
+  "updated_at": 1786662025,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "overrides": [
+    {
+      "at": "drift-check-tick",
+      "decision": "accept 1 unresolved (AC-022)",
+      "by": "human",
+      "reason": "AC-022 artifact is the backlog entry due at /memory-sync (phase 10.7); Article IX.3 routes it through the gitignored _pending.md, which drift diff-scan cannot see. Not an implementation gap."
+    },
+    {
+      "at": "integrate",
+      "decision": "accept code-review BLOCKED (3 file_length, all pre-existing)",
+      "by": "human",
+      "reason": "audit.mjs 90->91, checker-fanout.mjs 136->138, build-template.sh 142->145 — all over the 80-line budget before this diff, which adds 6 lines total. Recorded as RCA AI-06 and backlog three-files-over-the-eighty-line-budget-audit-fanout-buildtemplate (deferred: dependency). Not verifiable as fixed until the fan-out stops running blind (RC-1)."
+    },
+    {
+      "at": "commit",
+      "decision": "clear source_backlog_keys before the closure stamp",
+      "by": "claude",
+      "reason": "Set at triage when the plan was to annotate spec-shippability-review owner: baseline. Intake D-4 reversed that on scout evidence: the skill is dev-only by design and annotating it would ship a maintainer tool plus force a 56->62 count cascade. The entry is still open and spec-shippability-review still carries no owner: line, so /commit Step 6 would have stamped picked-up on work this workflow deliberately did not do."
+    }
+  ]
+}

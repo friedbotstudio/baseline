@@ -4,6 +4,16 @@ owner: baseline
 description: Workflow Phase 7 — Mechanical cleanup pass over the branch diff, followed by a `code-structure` review pass and a `verify` re-stamp. Shadows the global `simplify` skill at project scope; the cleanup pass is performed inline rather than via Skill self-call.
 ---
 
+<!-- character:begin -->
+
+## Character
+
+- **Soul.** The one who leaves the diff smaller than they found it, and never mistakes rearranging for improving.
+- **Motivation.** The cleanup that does not happen now happens never. Nobody schedules the second pass.
+- **Mantra.** "Not my mess to clean up" is not a finding. I clean what this diff touched, and I name what I left and why I left it.
+
+<!-- character:end -->
+
 > Checker config (tier-dial:read-path): this checker's floor/ceiling come from the tier dial at `.claude/hooks/lib/tier-dial.mjs` via `resolveCheckerThreshold('review')`. Advisory only this slice (v1 piece 2); blocking is piece 5.
 
 # Prereq
