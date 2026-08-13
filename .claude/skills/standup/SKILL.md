@@ -15,7 +15,7 @@ A read-only recap utility in the family of `audit-baseline` / `rca`: it reads st
 2. **Staged but unreleased** — every commit since the last tag, classified by conventional-commit type, with the aggregate semver bump those commits will trigger (read from `.releaserc.json` at runtime, so it never drifts from the release config) and the pushed-vs-origin state.
 3. **Backlog** — entries bucketed `open` / `picked-up` / `dropped`, with epic children nested under their parent.
 4. **Open questions** — `pending-questions.md` condensed to id + question + blocker.
-5. **Roadmap** — the execution plan's epics with their status and per-task tallies, plus the Progress bullets, read from `project.json → roadmap.path`.
+5. **Roadmap** — the execution plan's epics with their status and per-task tallies, the rows still open under each, plus the Progress bullets, read from `project.json → roadmap.path`.
 6. **Recommended next pickup** — assembled in main context (see Article II below).
 
 ## How to run
@@ -26,7 +26,20 @@ One invocation returns the whole recap. Use the CLI front door:
 node .claude/skills/standup/cli.mjs recap [--json] [--root <repo-root>] [--remote]
 ```
 
-Without `--json` it prints the bounded rendering — commits collapsed to counts-by-type plus the aggregate bump, the roadmap epics with their tallies, backlog bucket sizes, and any open questions. With `--json` it prints the raw `StandupRecap`.
+Without `--json` it prints the bounded rendering; with `--json` it prints the raw `StandupRecap`.
+
+The bound is a **threshold, not a blanket collapse**. Detail renders while the pile is small and degrades to counts once printing it back would reproduce the cost the CLI exists to remove:
+
+| Section | At or below the bound | Above it |
+|---|---|---|
+| Unreleased commits | one line per commit: type, bump, subject | counts-by-type plus the aggregate bump (`COMMIT_DETAIL_MAX` = 20) |
+| Roadmap epics | each epic's OPEN rows listed beneath it — planned and in-progress, never done | per-task tallies only (`OPEN_TASK_DETAIL_MAX` = 20, measured across the whole plan) |
+
+Collapsing at every size was the older behaviour, and it cost a second `--json` pass to answer "what is actually in this pile?" for a four-commit pile. Done rows are never listed at either size: they are the bulk of a finished epic and carry no pickup signal.
+
+Alongside those, the pushed-vs-origin state and the declared completeness gate each render as their own line, so the two questions that decide whether to cut — *is this even pushed?* and *may a half-wired feature ship?* — are answered without opening git or `project.json`.
+
+Every rendered detail line is whitespace-collapsed, clipped to 96 characters, and stripped of C0/C1 control characters. Roadmap titles, commit subjects and question bodies are all repository-controlled content on its way to a terminal, and a row title in this repo already runs past 1000 characters.
 
 ### `--remote` — prove the release picture against the remote
 
@@ -46,14 +59,16 @@ The default run therefore states its own limitation in the Release block (`Figur
 
 | Key | What it holds |
 |---|---|
-| `release` | `lastVersion`, `lastTag`, and `commitsSinceTag[]` classified by conventional-commit type with the semver `bump` each triggers |
+| `release` | `lastVersion`, `lastTag`, `commitsSinceTag[]` classified by conventional-commit type with the semver `bump` each triggers, and `upstream` — `{state, ahead, behind}`, where `state` is `ahead` / `behind` / `up-to-date` / `no-upstream` |
 | `releaseModel` | the declared release POLICY from `project.json → release` — drives the regime-aware recommendation below |
 | `backlog` | entries bucketed `open` / `picked-up` / `dropped`, epic children nested under their parent |
 | `pendingQuestions` | `pending-questions.md` condensed to id + question + blocker |
-| `roadmap` | the execution plan's `epics[]` (number, title, tag, status, per-task tallies) and its Progress bullets |
+| `roadmap` | the execution plan's `epics[]` (number, title, tag, status, per-task tallies, plus `openTasks[]` of `{id, status, title}` for the rows still open) and its Progress bullets |
 | `degraded` | one marker per source that could not be read — `no-roadmap-plan`, `no-release-model`, and so on |
 
 Do not re-derive any of these by hand afterwards. Re-reading the roadmap file or re-running `git log` after this call is the multi-pass behaviour the CLI replaced; every key above is already in the result.
+
+Six is the whole list, and it stays six. New data nests inside an existing key rather than becoming a seventh — `openTasks` sits on the roadmap epic, `upstream` and `remote` sit on `release`. `tests/standup-cli-recap.test.mjs:71` asserts the count, so widening the top level breaks a contract other readers depend on.
 
 It degrades gracefully — on a non-git tree, a repo with no tags, or missing memory files it names the missing precondition in `degraded[]`, still exits 0, and never throws. `gather.mjs` remains importable as the collector for in-process callers such as the session-start hook.
 

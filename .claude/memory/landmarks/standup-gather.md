@@ -4,7 +4,7 @@ category: landmarks
 scope: [scout]
 governs: .claude/skills/standup/**
 source: inferred-from-code
-verified-at: c53a121
+verified-at: 87d3573
 last-touched: 2026-08-13
 ---
 
@@ -14,4 +14,6 @@ last-touched: 2026-08-13
 - `compareHead` (`:157`) returns `{state, sha}` with FOUR states — `diverged | matched | unreachable | not-comparable` — surfaced as `release.remote.headState`. Collapsing any two is the defect the four-state split exists to prevent; see [[a-verdict-must-distinguish-checked-from-nothing-to-compare]].
 - Backlog and questions route through `resolveCategory` from [[.claude/skills/memory-index/lift-fields.mjs]], so both store shapes read identically.
 - Caveat: `degraded[]` markers mean *the store is absent*, not *the store is empty*. `no-backlog` fired for weeks while 16 shards existed, because the collector read flat `backlog.md` after the T4 migration had sharded it. Keep the marker's meaning honest; a reader that cannot find its data must say so rather than returning a confident zero.
-- Caveat: the file is ~460 lines, past the layer-split guideline. Tracked as [[standup-gather-mjs-past-the-layer-split-guideline]].
+- `collectRoadmap` (`:266`) projects parse.mjs's plan into TWO sibling keys per epic, and they must not be conflated: `tasks` is the `{done,inProgress,planned}` **tally object**, `openTasks` is the **row array** (`{id, status, title}`) for planned and in-progress rows only. `tests/standup-roadmap-parity.test.mjs:57` asserts `!Array.isArray(epic.tasks)` specifically to keep rows off the tally key. Done rows are dropped in `openRowsOf` (`:297`) rather than at render time, so nothing downstream can print them by accident.
+- `collectPendingQuestions` (`:240`) strips markdown emphasis BEFORE matching its label, so one pattern serves `- **Question.** x`, `- **Question:** x` and `- Question: x`. The matcher shape is load-bearing for a second reason — see [[adjacent-unbounded-quantifiers-are-quadratic-even-when-anchored]].
+- Caveat: the file is 509 lines, past the layer-split guideline. Tracked as [[standup-gather-mjs-past-the-layer-split-guideline]]; `render.mjs` has since crossed it too and is not yet tracked separately.

@@ -21,7 +21,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { resolveCategory } from '../memory-index/lift-fields.mjs';
-import { parseRoadmap } from '../roadmap/parse.mjs';
+import { parseRoadmap, Status } from '../roadmap/parse.mjs';
 
 // ---- Orchestration -----------------------------------------------------
 
@@ -247,21 +247,29 @@ function collectPendingQuestions(rootDir, degraded) {
   degraded.push(...shapeDegraded);
   return entries
     .filter((entry) => /Q-\d+/.test(entry.key))
-    .map((entry) => ({
-      id: entry.key,
-      question: (field(entry.body, /^-?\s*Question:\s*(.+)$/m) || '').trim(),
-      blocker: (field(entry.body, /^-?\s*Blocker(?: for)?:\s*(.+)$/m) || '').trim(),
-    }));
+    .map(describeQuestion);
+}
+
+const QUESTION_LABEL = 'Question';
+const BLOCKER_LABEL = 'Blocker(?:\\s+for)?';
+
+function describeQuestion(entry) {
+  const body = withoutEmphasis(entry.body);
+  return {
+    id: entry.key,
+    question: labelledField(body, QUESTION_LABEL),
+    blocker: labelledField(body, BLOCKER_LABEL),
+  };
 }
 
 // ---- Domain: roadmap execution plan ------------------------------------
 
 // Delegates the actual read + parse to roadmap/parse.mjs (the typed, row-tally
-// front door) and projects its RoadmapPlan into the recap's OWN pre-existing
-// shape: `tasks` here is the {done,inProgress,planned} tally object (parse.mjs
-// calls that `tally` and reserves `tasks` for the parsed row array — the row
-// array never leaves this projection), and epic status keeps the recap's own
-// hyphenated spelling ('in-progress') rather than parse.mjs's Status enum
+// front door) and projects its RoadmapPlan into the recap's OWN shape: `tasks`
+// here is the {done,inProgress,planned} tally object, where parse.mjs calls that
+// `tally` and uses `tasks` for the row array. The two must not be conflated —
+// rows reach the recap under `openTasks` instead. Epic status keeps the recap's
+// own hyphenated spelling ('in-progress') rather than parse.mjs's Status enum
 // spelling ('in_progress'). Fail-soft — a missing plan degrades, never throws.
 function collectRoadmap(rootDir, degraded) {
   const plan = parseRoadmap(rootDir);
@@ -275,8 +283,21 @@ function collectRoadmap(rootDir, degraded) {
     tag: epic.tag,
     status: recapStatus(epic.status),
     tasks: epic.tally,
+    openTasks: openRowsOf(epic),
   }));
   return { epics, progress: plan.progress };
+}
+
+// The rows land on their OWN key: `tasks` is the tally object, and
+// standup-roadmap-parity.test.mjs:57 exists to keep the row array out of it.
+// Done rows are dropped here rather than at render time — they are the bulk of a
+// finished epic and carry no pickup signal, so nothing downstream wants them.
+const OPEN_STATUSES = new Set([Status.PLANNED, Status.IN_PROGRESS]);
+
+function openRowsOf(epic) {
+  return epic.tasks
+    .filter((row) => OPEN_STATUSES.has(row.status))
+    .map((row) => ({ id: row.id, status: recapStatus(row.status), title: row.title }));
 }
 
 // parse.mjs's Status enum spells the in-progress state with an underscore
@@ -457,9 +478,25 @@ function splitOnTab(line) {
   return i === -1 ? [line, ''] : [line.slice(0, i), line.slice(i + 1)];
 }
 
-function field(text, re) {
-  const m = re.exec(text);
-  return m ? m[1] : null;
+// Emphasis is stripped BEFORE matching rather than spelled into the pattern.
+// Shards write `- **Question.**` with the period inside the bold, and the
+// original pattern demanded a bare `Question:` — so every shipped entry parsed
+// to an empty string while the regex itself looked correct. Enumerating the bold
+// variants inline would leave the same trap for the next spelling; removing the
+// markers first means one pattern covers all of them.
+function withoutEmphasis(text) {
+  return String(text ?? '').replace(/\*\*|__/g, '');
+}
+
+// The bullet and its trailing space are ONE optional unit, which is what keeps
+// this linear. Spelling it `\s*[-*]?\s*` puts two unbounded whitespace runs next
+// to each other separated by an optional token: on a line of leading whitespace
+// that never reaches the label, every split the first run picks makes the second
+// run retry every remaining length. That measured 2563ms at 32k spaces against
+// 0.3ms here, and gatherSync runs on every session start.
+function labelledField(body, labelPattern) {
+  const m = new RegExp(`^\\s*(?:[-*]\\s*)?${labelPattern}\\s*[.:]\\s*(.+)$`, 'm').exec(body);
+  return m ? m[1].trim() : '';
 }
 
 // ---- CLI wrapper -------------------------------------------------------

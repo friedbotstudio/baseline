@@ -71,9 +71,13 @@ toc:
 
 <p>Every commit since the tag is sorted by its conventional-commit type, and each one carries the version bump it would cause. <code class="tok">aggregateBump</code> is the largest of them, which is the bump the whole pile triggers.</p>
 
+<p>A four-commit pile can be judged on sight. Up to twenty commits, each one prints on its own line as type, bump and subject, and past twenty the list collapses to counts by type. The bound is set there because a seventy-commit dump would recreate the wall of text the recap exists to replace.</p>
+
 <p>Those bump rules come from <code class="tok">.releaserc.json</code>, read fresh on every run. Change your release config and the recap follows it the same day.</p>
 
 <p><code class="tok">upstream</code> compares your branch against the copy of origin your last fetch left behind. Origin may have moved since. An <code class="tok">ahead</code> count above zero is work that exists on your machine alone. A <code class="tok">behind</code> count of zero only means nothing had arrived by the time you last fetched.</p>
+
+<p>That state also prints as a line of its own. Four unpushed commits render as <code class="tok">Unpushed: 4 commit(s) not on origin</code>, and a branch with no remote behind it says so in full rather than reporting a match that never ran. On a project that releases on push, the line separates a finished release from a finished branch.</p>
 
 <p><code class="tok">remote</code> is <code class="tok">null</code> until you pass <code class="tok">--remote</code>. That null is load bearing. It is how you tell a recap that was never checked against origin from one that was checked and found current.</p>
 
@@ -97,7 +101,11 @@ toc:
 
 <p>Open questions come from <code class="tok">pending-questions.md</code>, boiled down to an id, a question, and what it blocks. Only entries keyed <code class="tok">Q-1</code>, <code class="tok">Q-2</code> and so on are picked up.</p>
 
-<p>If your project keeps a roadmap, the recap reads that too. It looks at <code class="tok">project.json → roadmap.path</code>, falling back to <code class="tok">docs/roadmap-execution-plan.md</code>. Each epic reports its number, title, tag and status, plus a count of its tasks by state.</p>
+<p>If your project keeps a roadmap, the recap reads that too. It looks at <code class="tok">project.json → roadmap.path</code>, falling back to <code class="tok">docs/roadmap-execution-plan.md</code>. Each epic reports its number, title, tag and status, a count of its tasks by state, and the rows still open beneath it.</p>
+
+<p>A tally reading <code class="tok">planned 1</code> reports that an epic has one task left and stops there. Locating that task meant opening the roadmap file. The rows themselves now print beneath their epic with id and title, and a planned row and a started row will both count as open. Finished rows are dropped in the gatherer, since they make up most of a completed epic and say nothing about what can be picked up next.</p>
+
+<p>Twenty open rows across the whole plan is the limit; past it the roadmap falls back to tallies. The count spans every epic rather than each one alone, because eight epics carrying four open rows fill a screen as fast as one epic carrying thirty-two.</p>
 
 <div class="grid-rule grid-3 lane-grid">
   <div class="cell">
@@ -134,6 +142,8 @@ toc:
 </div>
 
 <p>One rule bites in the second case. Set <code class="tok">release.completeness_gate.half_wired_blocks_release</code> to <code class="tok">true</code> and a half-wired feature holds the cut. A feature is half wired when it shipped dark and its opt-in path is still broken. Consumers who upgrade rarely would sit with that for months.</p>
+
+<p>The rule that decides the cut ends up on screen beside the commits it governs. Either setting prints back under the release block, so the policy and the pile are read in one pass.</p>
 
 <p>Say nothing about your release policy and you get the plain answer: here is the semver bump your commits imply, and the call is yours.</p>
 

@@ -141,3 +141,5 @@
 - promoted :: .claude/skills/standup/gather.mjs → landmarks.md
 - promoted :: backlog → i-recommend-a-taken-as-a-separate-chore-f849
 - discarded :: .claude/skills/standup/SKILL.md → landmarks.md
+- discarded :: backlog → defects-3-and-5-hit-render-mjs-s-dc20
+- discarded :: backlog → the-fix-is-one-line-s-s-which-fa40

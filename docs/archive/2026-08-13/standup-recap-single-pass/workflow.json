@@ -1,0 +1,45 @@
+{
+  "request": "Fix /standup's render path so one invocation answers the recap without hand re-derivation. Five defects: (1) release.upstream is gathered but never rendered; (2) collectPendingQuestions matches /^-?\\s*Question:\\s*/ but shards write '- **Question.**', so every question renders empty; (3) roadmapLines drops planned/in-progress task titles; (4) release.completeness_gate is dropped by modelLine; (5) commit subjects collapse to counts-by-type only. Defects 3 and 5 expand what renders, bounded by a threshold that degrades to today's counts above it, preserving render.mjs's stated reduction principle.",
+  "slug": "standup-recap-single-pass",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "render.mjs:97-100 (epicLine reads gather's `num`, not `number`) and render.mjs:108-117 (BACKLOG_BUCKETS maps `pickedUp`, not `picked-up`) are two already-fixed instances of the same gather-to-render field-drop class, each carrying a comment explaining that both sides' unit tests stayed green through it. `.claude/memory/conventions/anti-drift-tests-compare-against-the-live-oracle-b4d2.md` prescribes the test shape for this class: build the fixture by calling the real producer rather than hand-writing its shape. Defects 1, 2 and 4 are literal repeats of that pattern; 3 and 5 are a bounded print expansion decided at triage.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": ["tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-sync", "cli-copy-review", "grant-commit"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "decisions": [
+    {
+      "id": "D1",
+      "owner": "user",
+      "point": "Track selection for a five-defect render-path fix.",
+      "chosen": "tdd-quickfix",
+      "rationale": "Leanest track whose guardrails cover the risk. Every defect has a known failing case demonstrable today, the diff is two files, and the fix and test patterns are both already established in-repo. Uniquely among the candidates its DAG carries cli-copy-review, which is the correct guardrail for a change to user-facing CLI output copy; spec-entry excepts that node."
+    },
+    {
+      "id": "D2",
+      "owner": "user",
+      "point": "Defects 3 and 5 expand what render.mjs prints, against its header comment that 'the reduction is the point'.",
+      "chosen": "Threshold, degrading to today's counts-by-type above it.",
+      "rationale": "Preserves the stated principle literally rather than by exception: detail prints while the pile is small, and the renderer falls back to counts exactly when printing every row back would reproduce the cost the CLI exists to remove. The motivating real case was a 70-commit pile. Rejected 'always print, truncate each line' because it prints 70 lines in that case; rejected 'open items only' because it closes defect 5 as won't-fix and leaves --json as the only route to commit subjects."
+    }
+  ],
+  "notes": [
+    "Manifest hash drift: .claude/skills/standup/gather.mjs and render.mjs carry sha256 entries in obj/template/.claude/manifest.json. Editing them drifts the manifest and audit-baseline hard-FAILs on hash drift (Article XII.3). Regenerate the template before /integrate.",
+    "gather.mjs is also imported by .claude/hooks/lib/memory_session_start.mjs:15 and .claude/skills/roadmap-sync/tests/sync.test.mjs:13. Defect 2 changes collectPendingQuestions output values, not the recap shape.",
+    "The six-key gatherSync contract is asserted at tests/standup-cli-recap.test.mjs:71 and tests/standup-remote-freshness.test.mjs:404. Defects 1 and 4 render fields that already exist (release.upstream, releaseModel.completeness_gate); no top-level key is added."
+  ],
+  "created_at": 1786924800,
+  "updated_at": 1786924800,
+  "rightsize_base": [],
+  "tdd_ticks": ["scenario", "implement", "verify", "finalize"]
+}

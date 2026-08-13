@@ -4,8 +4,8 @@ category: landmines
 scope: []
 governs: .claude/**, src/**, tests/**, docs/**
 load_bearing: true
-verified-at: 35212e8
-last-touched: 2026-08-05
+verified-at: 87d3573
+last-touched: 2026-08-13
 ---
 
 - On macOS/BSD, `file` classifies a perfectly valid UTF-8 source containing an em dash as `binary data`, and plain `grep` then reports **no match** and exits 1 rather than warning. There is no error, no "Binary file matches" line, nothing. It looks exactly like a clean result.
@@ -21,3 +21,19 @@ last-touched: 2026-08-05
 - Node parses a NUL inside a template literal without complaint, and the byte renders as nothing in an editor and in the Read tool. Tests pass. The audit passes. Nothing surfaces it.
 - Now gated: `tests/control-bytes.test.mjs` scans every tracked text file for C0 controls other than tab/LF/CR, using an allowlist of text extensions (a blocklist fails open on the next vendored binary type) and excluding `docs/archive/**` because archived bundles are immutable.
 - **This entry existed, was `load_bearing: true`, and governed `.claude/**` when the trap recurred.** The dead-code scan that missed `roll.mjs` on 2026-08-05 is precisely the scenario the bullet above warns about. Knowing the rule is not the same as applying it under momentum; the mechanical gate is what actually closes it.
+
+## 2026-08-13 — third recurrence, and a cause the NUL-sentinel framing hides
+
+- Recurred in `standup-recap-single-pass`, in `.claude/skills/standup/render.mjs` and `tests/standup-recap-single-pass.test.mjs`. `git diff --numstat` printed `-\t-\t.claude/skills/standup/render.mjs`, and `grep -n` on the two files returned nothing at all while the lines plainly existed.
+- **The cause was not a sentinel.** Both prior cases used a NUL deliberately, as a glob-expansion marker. This one was a regex character class written with LITERAL control bytes — an editor-invisible class holding the raw bytes, where the printable six-character escape text (backslash-u-0-0-0-0 and its siblings) was intended. Three raw bytes at offsets 1596-1599. The regex was semantically CORRECT and every test passed; only the byte encoding was wrong. Framing this entry solely around "a NUL used as a sentinel" is what let the class of defect through a second time.
+- **Write control characters as escape TEXT, never as the bytes themselves.** `\u0000` as six printable characters is what keeps the file diffable. This applies to regex classes, string constants and test fixtures alike.
+- Confirms the closing claim above rather than weakening it: `tests/control-bytes.test.mjs` caught it within one suite run, named the file and the byte offset, and the whole thing cost minutes. The mechanical gate is still the thing that closes this, and it has now paid for itself twice.
+- Related: a Bash tool call carrying literal control characters is refused before it runs, so an inline `node -e` probe cannot even be used to investigate. Write the probe to a file with `\u` escapes instead.
+
+## 2026-08-13 — fourth recurrence: inside this entry, while documenting it
+
+- Writing the section above put a **literal NUL into this file**, at byte 3738, in the very bullet that says to use escape text. `tests/control-bytes.test.mjs` failed on `.claude/memory/landmines/grep-reports-no-match-on-utf8-files-it-calls-binary.md` one command after it had passed on the source files.
+- Then the repair attempt failed the same way twice more: a `node -e` fixer and an `Edit` call were both authored with the raw bytes typed into the character class. The Bash tool refused the first outright (`command contains control characters`), and the Edit simply did not match.
+- **Memory files are covered by this trap too.** The scan is not limited to source; any tracked text file goes binary the same way, and a landmine that cannot be grepped is a landmine that will not be found by the next person looking for it.
+- The reliable move, having now failed the direct one four times: never type the byte. Write the fix to a scratchpad `.mjs` file where the class is spelled with `\u` escapes, run that, and let the guard confirm. Typing the character into a tool call is the step that keeps failing, not the understanding.
+- Frequency note for whoever reads this next: four occurrences across three sessions, every one of them caught by the mechanical gate and none by review. Weight the gate accordingly.

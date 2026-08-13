@@ -1,13 +1,39 @@
 // Foundation — StandupRecap to display lines.
 //
-// The reduction is the point. gatherSync returns every commit since the last tag
-// as a full object; a renderer that prints them back reproduces the cost the CLI
-// exists to remove, so commits collapse to counts-by-type and the aggregate bump.
+// The reduction is the point, and a threshold is how it survives contact with a
+// reader. gatherSync returns every commit since the last tag as a full object; a
+// renderer that prints them all back reproduces the cost the CLI exists to
+// remove. But collapsing at EVERY size cost the reader a second `--json` pass to
+// answer "what is actually in this pile?" for a four-commit pile. So detail
+// renders below the bound and degrades to counts above it: the 70-commit case
+// that motivated the reduction still collapses, and the everyday case answers
+// itself.
+//
 // Nothing here reads the filesystem, git, or the clock — the same recap always
 // renders the same lines.
 
 const BUMP_RANK = { none: 0, patch: 1, minor: 2, major: 3 };
 const RANK_BUMP = ['none', 'patch', 'minor', 'major'];
+
+const COMMIT_DETAIL_MAX = 20;
+const OPEN_TASK_DETAIL_MAX = 20;
+const DETAIL_WIDTH = 96;
+
+// parse.mjs sets a task row's title to the full row text, and the live roadmap
+// carries rows past 1000 characters. Collapsing whitespace is what guarantees
+// "one row, one line" — a clipped-but-multiline title still breaks the block.
+//
+// Controls are neutralised BEFORE the collapse, and the order is load-bearing:
+// ESC and BEL are not whitespace, so `\s+` alone left them intact and every
+// commit subject, roadmap title and question body — all repository-controlled
+// content — reached the operator's terminal verbatim. Replacing them with a
+// space first means the collapse then absorbs the gap they leave behind.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/gu;
+
+function clip(text) {
+  const flat = String(text ?? '').replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim();
+  return flat.length <= DETAIL_WIDTH ? flat : `${flat.slice(0, DETAIL_WIDTH - 1)}…`;
+}
 
 export function renderRecap(recap) {
   if (recap === null || typeof recap !== 'object' || Array.isArray(recap)) {
@@ -23,19 +49,61 @@ export function renderRecap(recap) {
 }
 
 function releaseLines(release, releaseModel) {
-  const shipped = release?.lastVersion ?? '(never released)';
-  const commits = release?.commitsSinceTag ?? [];
-  const lines = ['## Release', '', `Shipped: ${shipped}`];
+  return [
+    '## Release',
+    '',
+    `Shipped: ${release?.lastVersion ?? '(never released)'}`,
+    ...unreleasedLines(release?.commitsSinceTag ?? []),
+    ...upstreamLine(release?.upstream),
+    ...freshnessLine(release),
+    ...modelLine(releaseModel),
+    ...gateLine(releaseModel?.completeness_gate),
+    '',
+  ];
+}
 
-  if (commits.length === 0) {
-    lines.push('No unreleased commits.');
-    return [...lines, ...freshnessLine(release), ...modelLine(releaseModel), ''];
+function unreleasedLines(commits) {
+  if (commits.length === 0) return ['No unreleased commits.'];
+  return [
+    `Unreleased: ${commits.length} commit(s)`,
+    ...commitLines(commits),
+    `Next bump: ${aggregateBump(commits)}`,
+  ];
+}
+
+function commitLines(commits) {
+  if (commits.length > COMMIT_DETAIL_MAX) {
+    return countByType(commits).map(([type, count]) => `  ${type}: ${count}`);
   }
+  // The type column is deliberately absent: a conventional-commit subject opens
+  // with its own type, so printing it again rendered `feat  minor  feat(...)`.
+  // The bump is what the subject does NOT already carry.
+  return commits.map((commit) => `  ${commit.bump}  ${clip(commit.subject)}`);
+}
 
-  lines.push(`Unreleased: ${commits.length} commit(s)`);
-  for (const [type, count] of countByType(commits)) lines.push(`  ${type}: ${count}`);
-  lines.push(`Next bump: ${aggregateBump(commits)}`);
-  return [...lines, ...freshnessLine(release), ...modelLine(releaseModel), ''];
+// `no-upstream` and `up-to-date` are answers to different questions and must
+// never share wording: one means nothing was compared, the other means the
+// comparison ran and matched. collectRemoteFreshness draws the same line between
+// `not-comparable` and `matched`, and collapsing it is what let an unpushed
+// branch read as current.
+function upstreamLine(upstream) {
+  if (!upstream) return [];
+  if (upstream.state === 'no-upstream') {
+    return ['Upstream: none. This branch tracks no remote, so there is nothing to compare.'];
+  }
+  if (upstream.state === 'ahead') return [`Unpushed: ${upstream.ahead} commit(s) not on origin.`];
+  if (upstream.state === 'behind') return [`Behind origin by ${upstream.behind} commit(s).`];
+  return ['Upstream: level with the last fetched origin.'];
+}
+
+// The gate decides whether an unreleased pile may be cut at all, so it belongs
+// beside the policy it qualifies rather than in the config a reader has to open.
+function gateLine(gate) {
+  if (!gate) return [];
+  const consequence = gate.half_wired_blocks_release
+    ? 'a half-wired feature blocks the release'
+    : 'half-wired features do not block the release';
+  return [`Completeness gate: ${gate.enabled ? 'enabled' : 'disabled'} — ${consequence}.`];
 }
 
 // Every figure above this line comes from local refs. Un-probed, that is exactly
@@ -88,10 +156,30 @@ function aggregateBump(commits) {
 function roadmapLines(roadmap) {
   if (!roadmap) return ['## Roadmap', '', 'Roadmap: not configured.', ''];
 
-  const lines = ['## Roadmap', ''];
-  for (const epic of roadmap.epics ?? []) lines.push(epicLine(epic));
-  for (const bullet of roadmap.progress ?? []) lines.push(`  ${bullet}`);
-  return [...lines, ''];
+  const epics = roadmap.epics ?? [];
+  const withRows = totalOpenRows(epics) <= OPEN_TASK_DETAIL_MAX;
+  return [
+    '## Roadmap',
+    '',
+    ...epics.flatMap((epic) => epicBlock(epic, withRows)),
+    ...(roadmap.progress ?? []).map((bullet) => `  ${bullet}`),
+    '',
+  ];
+}
+
+// The budget is measured across the whole plan, not per epic: eight epics with
+// four open rows each is the same wall of text as one epic with thirty-two.
+function totalOpenRows(epics) {
+  return epics.reduce((count, epic) => count + (epic.openTasks?.length ?? 0), 0);
+}
+
+function epicBlock(epic, withRows) {
+  if (!withRows) return [epicLine(epic)];
+  return [epicLine(epic), ...(epic.openTasks ?? []).map(openTaskLine)];
+}
+
+function openTaskLine(row) {
+  return `    ${row.status} ${row.id}. ${clip(row.title)}`;
 }
 
 // `num`, not `number` — gather.mjs's collectRoadmap projects parse.mjs's epic
@@ -128,7 +216,12 @@ function backlogLines(backlog) {
 function questionLines(pendingQuestions) {
   const questions = pendingQuestions ?? [];
   if (questions.length === 0) return [];
-  return ['## Open questions', '', ...questions.map((q) => `  ${q.id ?? '?'}: ${q.question ?? q.title ?? ''}`), ''];
+  return ['## Open questions', '', ...questions.map(questionLine), ''];
+}
+
+function questionLine(question) {
+  const blocks = question.blocker ? ` (blocks: ${clip(question.blocker)})` : '';
+  return `  ${question.id ?? '?'}: ${clip(question.question)}${blocks}`;
 }
 
 function degradedLines(degraded) {
