@@ -1,0 +1,49 @@
+{
+  "request": "Make a spec's `## Contracts` rows resolve against the landed diff at drift-check time, exactly as AC ids already do, so a spec cannot promise a function or a CLI that never ships. Resolution keys off the Name cell and never reads the Kind column, which is free text with ~150 distinct values across 636 rows and therefore has no schema to switch on. Evidence of the gap: the spec landed as be0a351 pinned `node .claude/skills/workspace/restore-degraded-shards.mjs [--dry-run]` in its Contracts table; that CLI did not exist and its address contradicted the house `workspace/cli.mjs` front-door convention, yet spec-lint returned PASS on all five checks across three separate approvals, and drift_check could not see it because no AC named the CLI. Only /integrate caught it, by hand, at the last phase before commit. Article VI.4's two-sided rule says YAGNI never authorizes deferring spec-committed scope and no AC row carried a `deferred:` tag, so the spec committed to a capability, the workflow did not build it, and every machine gate stayed green. Weight the design toward under-reporting rather than over-reporting: drift_check gates every spec-track TDD phase, and a false positive yields a workflow that has done nothing wrong.",
+  "slug": "contracts-rows-resolve-at-drift-check",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Searched docs/archive/**/spec.md and docs/specs/*.md — 102 of 104 specs carry a Contracts section, 636 rows total. No precedent exists for resolving a Contracts row mechanically: no skill reads the table, and spec-lint's five checks (plantuml_syntax, diagram_presence, ac_traceability, design_calls, system_delta) do not touch it. The obvious precedent, drift_check's AC resolution, does NOT transfer: `AC-\\d+` is a pinned token format that spec-lint's ac_traceability already enforces, whereas a Contracts row's Name and Kind cells are prose. The Kind column was measured and is free text — ~150 distinct values, with Function/Fn/fn/fn (export)/Hook fn/Helper all naming one concept — so there is no enum to key a resolver off. The resolvable token has to be invented, which is design work rather than parameterisation of an existing pattern.",
+  "track_reason": "The leanest safe track is tdd-quickfix — one failing case is known (the be0a351 CLI row) and the change is localized to drift_check.mjs. It is insufficient for two reasons. First, the resolution semantics are undefined anywhere on disk: what token a Contracts row resolves against, how a Function row's signature and a CLI row's invocation each reduce to one, and what a legitimately-unresolvable row looks like are all open, and leaving them only in code repeats the failure this ticket exists to fix. Second, drift_check is the oracle gating every spec-track workflow's TDD phase, so a false positive stops work that is correct; a corpus-wide blast radius over 636 existing rows wants a written contract and gate A. User confirmed spec-entry via AskUserQuestion.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "spec-contracts-rows-are-never-checked-against-reality"
+  ],
+  "created_at": 1786609251,
+  "updated_at": 1786616425,
+  "rightsize_base": [
+    ".claude/memory/backlog/spec-contracts-rows-are-never-checked-against-reality.md",
+    ".claude/memory/landmines/a-checker-aimed-one-axis-off-passes-loudly.md",
+    "docs/audits/swarm-first-production-run-2026-08-09.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "scenario",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

@@ -33,8 +33,8 @@
 // once also swallowed every epic-child, whose spec exists but not at its slug, and
 // three consecutive children shipped on that vacuous green.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, realpathSync } from 'node:fs';
-import { resolve, dirname, join } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, realpathSync } from 'node:fs';
+import { resolve, dirname, join, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
@@ -200,6 +200,178 @@ function lineReferences(line, itemId) {
   return asAc ? spanCovers(line, Number(asAc[1])) : false;
 }
 
+// The Contracts table is h3 under `## Program design` in the template, but some
+// specs promote it to h2. Both are accepted; the section ends at the next heading
+// of either depth.
+const CONTRACTS_SECTION_RE = /^#{2,3}\s+Contracts\s*\n([\s\S]*?)(?=^#{2,3}\s|$(?![\s\S]))/m;
+const TABLE_ROW_RE = /^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+const BACKTICK_SPAN = /`([^`]+)`/g;
+
+// `<slug>`, `[--strict]`, `{rootDir}` and a call's argument list are never in a
+// diff, and an argument list is not part of a name. Stripping them before
+// tokenizing is what keeps `restoreDegradedShards({rootDir})` from yielding
+// `rootDir` as a token of its own.
+const PLACEHOLDER_RE = /<[^>]*>|\[[^\]]*\]|\{[^}]*\}|\([^)]*\)/g;
+const RUNNER_WORDS = new Set(['node', 'npx', 'bash', 'sh']);
+
+// The Kind column is deliberately never read: ~150 free-text values across the
+// live corpus, with one concept spelled six ways. There is no enum to key on.
+export function contractTokens(nameCell) {
+  const out = new Set();
+  for (const span of String(nameCell).matchAll(BACKTICK_SPAN)) {
+    for (const raw of span[1].replace(PLACEHOLDER_RE, ' ').split(/[\s,]+/)) {
+      const word = raw.replace(/^[^A-Za-z0-9_.\-/]+|[^A-Za-z0-9_\-/]+$/g, '');
+      if (!word || word.startsWith('--') || RUNNER_WORDS.has(word)) continue;
+      if (word.length < 3 || !/[A-Za-z]/.test(word)) continue;
+      out.add(word);
+    }
+  }
+  return [...out];
+}
+
+// An invocation promises something RUNNABLE, which a token match cannot express:
+// the module path of a library appears in the diff exactly as the path of a CLI
+// does. `path` stays null for a bare bin name, which resolves through
+// `package.json → bin` rather than a repo path and is therefore not probeable.
+const INVOCATION_RE = /^(?:node|npx|bash|sh)\s+(\S+)|^(\S+\.(?:mjs|js|sh))\s+\S/;
+
+function invocationOf(nameCell) {
+  const first = String(nameCell).match(BACKTICK_SPAN)?.[0]?.slice(1, -1);
+  if (!first) return null;
+  const m = INVOCATION_RE.exec(first.trim());
+  if (!m) return null;
+  const target = m[1] ?? m[2];
+  return { raw: first, path: /[/\\.]/.test(target) ? target : null };
+}
+
+export function extractContractRows(specText) {
+  const section = CONTRACTS_SECTION_RE.exec(String(specText));
+  if (!section) return [];
+  const rows = [];
+  for (const m of section[1].matchAll(TABLE_ROW_RE)) {
+    const [, kind, name] = m;
+    if (/^[\s:|\-]+$/.test(kind) || kind.toLowerCase() === 'kind') continue;
+    rows.push({ name, tokens: contractTokens(name), invocation: invocationOf(name) });
+  }
+  return rows;
+}
+
+// A Contracts row is authored content, so its path is attacker-influenceable by
+// whoever writes the spec. REJECT, never normalize: resolving a `../../..` would
+// open a file outside the repo and report one bit about its contents.
+// `resolve` is LEXICAL and does not follow links, so a lexical check alone passes
+// a symlink whose PATH is inside the root while its target is not — CWE-59, the
+// same defect and posture as `restore-degraded-shards.mjs → classifyEntry`.
+// `realpathSync` resolves the whole chain, including a symlinked PARENT directory
+// that a per-entry `lstat` would miss.
+//
+// Both sides are realpathed, matching `isRunAsScript` below: on macOS `/tmp` is
+// itself a symlink to `/private/tmp`, so realpathing only the target makes every
+// temp-dir root read as an escape.
+function containedReal(root, target) {
+  const real = realpathSync(target);
+  return real === root || real.startsWith(root + sep);
+}
+
+export function probeRunnable(rootDir, relPath) {
+  const root = realpathSync(resolve(rootDir));
+  const target = resolve(root, relPath);
+  if (target !== root && !target.startsWith(root + sep)) return 'refused';
+  let contained;
+  try {
+    contained = containedReal(root, target);
+  } catch {
+    return 'absent';
+  }
+  if (!contained) return 'refused';
+  let text;
+  try {
+    text = readFileSync(target, 'utf8');
+  } catch {
+    return existsSync(target) ? 'not-runnable' : 'absent';
+  }
+  const guarded = /import\.meta\.url\s*===|process\.argv\[1\]|require\.main\s*===\s*module/.test(text);
+  const topLevel = /^(?:dispatch|main|run)\s*\(/m.test(text);
+  return guarded || topLevel ? 'runnable' : 'not-runnable';
+}
+
+// Every ambiguity resolves toward silence. drift_check gates every spec-track
+// TDD phase, so a missed promise costs one review cycle while a false positive
+// halts a workflow that did nothing wrong. `skipped` never reaches the exit code.
+function scoreInvocation({ path }, rootDir) {
+  if (path === null) return ['skipped', 'a bare bin name resolves outside the repo'];
+  const state = probeRunnable(rootDir, path);
+  if (state === 'refused') return ['skipped', `refused: ${path} escapes the project root`];
+  if (state === 'absent') return ['unresolved', `promised entry point is missing: ${path}`];
+  if (state === 'not-runnable') return ['unresolved', `${path} is present but not runnable as named`];
+  return ['resolved', `${path} is runnable as named`];
+}
+
+function scoreTokens({ tokens }, diffAdded) {
+  if (tokens.length === 0) return ['skipped', 'no machine-readable identifier in the Name cell'];
+  for (const ln of diffAdded) {
+    if (tokens.some((t) => ln.includes(t))) {
+      const snippet = ln.trim();
+      return ['resolved', `found in diff: ${snippet.length > 120 ? snippet.slice(0, 117) + '...' : snippet}`];
+    }
+  }
+  return ['unresolved', 'no diff added-line references this contract'];
+}
+
+export function scoreContractRow(row, diffAdded, rootDir) {
+  return row.invocation ? scoreInvocation(row.invocation, rootDir) : scoreTokens(row, diffAdded);
+}
+
+// The sweep scores the DIFF half only. The disk probe reads the tree as it is
+// NOW, while an archived spec describes the tree as it was at its landing, so
+// probing here would report a moved entry point as a broken promise. The probe's
+// correctness is pinned by its own controls instead.
+//
+// An EPIC spec is excluded, and the count is returned rather than dropped
+// silently. The `epic` track has no implementation phases: its commit carries the
+// sliced spec and nothing else, and each slice's promises land later in its own
+// `epic-child` commit. Scoring an epic against its own landing commit therefore
+// measures the track's shape, not the resolver — it produced all 8 apparent
+// offenders in the first live run, every one from `system-spec-delta`.
+const SLICE_HEADING_RE = /^##\s+Slice\s+\S/m;
+
+export function sweepArchivedSpecs(rootDir) {
+  const archive = join(rootDir, 'docs', 'archive');
+  if (!existsSync(archive)) return { skipped: 'no archive', rows: 0, unresolved: [] };
+  const specs = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name === 'spec.md') specs.push(path);
+    }
+  };
+  walk(archive);
+
+  let rows = 0;
+  let epicsSkipped = 0;
+  const unresolved = [];
+  for (const specPath of specs) {
+    const rel = specPath.slice(rootDir.length + 1);
+    const specText = readFileSync(specPath, 'utf8');
+    if (SLICE_HEADING_RE.test(specText)) {
+      epicsSkipped += 1;
+      continue;
+    }
+    const log = spawnSync('git', ['-C', rootDir, 'log', '--diff-filter=A', '--format=%H', '--', rel], { encoding: 'utf8' });
+    const sha = (log.stdout ?? '').split('\n').filter(Boolean)[0];
+    if (!sha) continue;
+    const show = spawnSync('git', ['-C', rootDir, 'show', sha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    const added = addedLines(show.stdout ?? '');
+    for (const row of extractContractRows(specText)) {
+      if (row.invocation) continue;
+      rows += 1;
+      if (scoreContractRow(row, added, rootDir)[0] === 'unresolved') unresolved.push(`${rel} :: ${row.name}`);
+    }
+  }
+  return { rows, epicsSkipped, unresolved };
+}
+
 function scoreAgainstDiff(itemId, diffAdded) {
   for (const ln of diffAdded) {
     if (lineReferences(ln, itemId)) {
@@ -211,7 +383,7 @@ function scoreAgainstDiff(itemId, diffAdded) {
   return ['unresolved', 'no diff added-line references this item'];
 }
 
-function renderReport(slug, acs, designRows) {
+function renderReport(slug, acs, designRows, contractRows) {
   const lines = [
     `# Drift report — ${slug}`,
     '',
@@ -235,6 +407,18 @@ function renderReport(slug, acs, designRows) {
     lines.push('|---|---|---|---|');
     for (const [rowSlug, verdict, evidence] of designRows) {
       lines.push(`| design-call | ${rowSlug} | ${verdict} | ${evidence} |`);
+    }
+  }
+  lines.push('');
+  lines.push('## Contracts');
+  lines.push('');
+  if (contractRows.length === 0) {
+    lines.push('no contracts table — skipped');
+  } else {
+    lines.push('| kind | name | verdict | evidence |');
+    lines.push('|---|---|---|---|');
+    for (const [name, verdict, evidence] of contractRows) {
+      lines.push(`| contract | ${name} | ${verdict} | ${evidence} |`);
     }
   }
   lines.push('');
@@ -276,10 +460,12 @@ function main(argv) {
   const acResults = parseAcs(specText, sliceId).map(acId => [acId, ...scoreAgainstDiff(acId, diffAdded)]);
   const designResults = parseDesignCalls(specText).map(s => [s, ...scoreAgainstDiff(s, diffAdded)]);
 
-  const report = renderReport(values.slug, acResults, designResults);
+  const contractResults = extractContractRows(specText).map((row) => [row.name, ...scoreContractRow(row, diffAdded, projectRoot)]);
+
+  const report = renderReport(values.slug, acResults, designResults, contractResults);
   writeReport(projectRoot, values.slug, report);
 
-  const unresolved = [...acResults, ...designResults].filter(([, v]) => v === 'unresolved').length;
+  const unresolved = [...acResults, ...designResults, ...contractResults].filter(([, v]) => v === 'unresolved').length;
   return unresolved === 0 ? 0 : 1;
 }
 

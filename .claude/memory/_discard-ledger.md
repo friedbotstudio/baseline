@@ -135,3 +135,4 @@
 - discarded :: backlog → implement-may-not-edit-tests-so-this-needs-4e24
 - discarded :: backlog → when-archive-applies-this-spec-s-system-delta-736e
 - discarded :: backlog → two-of-my-test-files-tripped-this-via-31c8
+- discarded :: backlog → the-fix-is-two-lines-lstatsync-and-refuse-1508

@@ -49,7 +49,19 @@ const LANDMINE_CATEGORY_DEFAULT = '[scout, spec, tdd, security, integrate]';
 // prediction's own cycle. The number is left at the measured value rather than
 // padded, because inventing headroom is a policy change and this is a test file.
 // Deciding what this cap should actually measure is the open question.
-const PHASE_BUDGETS = { spec: 68, security: 30, research: 20 };
+// 68 -> 69 when /retrospective filed `a-checker-aimed-one-axis-off-passes-loudly`
+// at `scope: [spec, scenario, implement, simplify, integrate]`. Third bump of this
+// literal in one session. See the note on PATH_LEG_BASELINE below: the same single
+// entry moved two path-leg counts as well, which is what a broad `governs:` glob
+// does to every census that intersects it.
+// 69 -> 71 at the `contracts-rows-resolve-at-drift-check` flush, which filed one
+// decision and one landmine at `scope: [spec, implement, integrate]`. Fifth bump of
+// this literal in one session, and the fifth is the useful one: the PATH-leg
+// literals below did NOT move this time, because those entries were given narrow
+// `governs:` (named modules) rather than a `.claude/skills/**` glob. The blast
+// radius of a memory write is a choice — see the landmine
+// `a-wide-governs-glob-ripples-into-unrelated-literals`.
+const PHASE_BUDGETS = { spec: 71, security: 30, research: 20 };
 
 // Captured at HEAD 2bf79ef. The phase leg is what this spec rewrites; the path leg
 // must not drift except where the curation deliberately ADDS a `governs:` to an
@@ -70,9 +82,15 @@ const PHASE_BUDGETS = { spec: 68, security: 30, research: 20 };
 // relational-assertion` exists to end: a hand-maintained count drifts the moment
 // any workflow adds a governing entry, and it fails in a workflow that had nothing
 // to do with it. Bumping the literal keeps the trap; the backlog entry is the fix.
+// ONE entry moved two of these four at once. `a-checker-aimed-one-axis-off-passes-
+// loudly` declares `governs: tests/**, .claude/skills/**`, and that second glob
+// covers `resolve.mjs` (11 -> 12) and `checker-fanout.mjs` (8 -> 9) alike. A broad
+// `governs:` ripples into every census it intersects, which is worth knowing before
+// writing one: the cost of a wide glob is paid in literals somebody re-measures
+// later, not at the moment it is authored.
 const PATH_LEG_BASELINE = {
   '.claude/hooks/lib/scoped-memory.mjs': 8,
-  '.claude/skills/memory-index/resolve.mjs': 11,
+  '.claude/skills/memory-index/resolve.mjs': 12,
   '.claude/hooks/process_lifecycle_guard.mjs': 8,
   // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow
   // filed four backlog entries and left them uncommitted; harness-batch-fixes
@@ -83,7 +101,7 @@ const PATH_LEG_BASELINE = {
   //
   // A governed-memory count is a census, not an invariant: it moves whenever an
   // entry's `governs:` legitimately names a new path. Re-measure it; do not defend it.
-  '.claude/skills/harness/checker-fanout.mjs': 8,
+  '.claude/skills/harness/checker-fanout.mjs': 9,
 };
 
 function liveShards() {
