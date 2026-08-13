@@ -1,0 +1,97 @@
+{
+  "request": "Add an opt-in --remote freshness probe to /standup so an unfetched clone cannot report a stale release picture as authoritative; close pending question Q-002 as moot at Phase 10.7.",
+  "slug": "standup-remote-freshness",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Searched 53 open backlog entries and docs/roadmap-execution-plan.md: no entry names standup remote-freshness or ref staleness. Epic 6 T5 added collectReleaseModel but never touched ref freshness. The --remote probe amends the SKILL.md deterministic-core constraint (no clock, no network), which has no precedent in this repo.",
+  "track_reason": "Amends the published determinism contract of a baseline-owned skill (.claude/skills/standup/SKILL.md, Constraints: deterministic core, no clock read, read-only). A contract amendment needs a written design record and gate A; tdd-quickfix would except /spec and land it unrecorded.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [
+    {
+      "node": "implementation",
+      "alternate": "swarm-implementation",
+      "chose": "solo-tdd",
+      "reason": "4 C4 Components clears min_tasks_worth_swarming=1, but they are not independent: every component carries a cross-edge and collectRemoteFreshness is a function inside gather.mjs, so two tasks would share one write target. Wave scheduling requires pairwise-disjoint write_sets."
+    }
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1786621157,
+  "updated_at": 1786639664,
+  "rightsize_base": [
+    ".claude/memory/conventions/anti-drift-tests-compare-against-the-live-oracle-b4d2.md",
+    ".claude/memory/backlog/derive-the-memory-census-literals-or-gate-them-at-write-time.md",
+    "docs/audits/swarm-first-production-run-2026-08-09.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "accepted_findings": [
+    {
+      "gate": "drift-check",
+      "verdict": "1 unresolved",
+      "row": "node .claude/skills/standup/cli.mjs recap [--remote]",
+      "disposition": "accepted-false-positive",
+      "decided_by": "human",
+      "decided_on": "2026-08-13",
+      "evidence": "probeRunnable (.claude/skills/tdd/drift_check.mjs:294) anchors /^(?:dispatch|main|run)\\s*\\(/m at line start, so `await dispatch({...})` reads as not-runnable. Measured live: 2 of 11 shipped .claude/skills/*/cli.mjs fail the current regex (standup, spec); 0 of 11 fail with (?:await\\s+)? added. Both CLIs verified runnable: `recap --remote` and `--help` exit 0.",
+      "follow_up": "tdd-quickfix slug drift-check-await-entry-point — one regex plus a live-oracle test over every .claude/skills/*/cli.mjs. Sequenced after this workflow lands because /triage overwrites workflow.json."
+    },
+    {
+      "gate": "drift-check",
+      "pass": 2,
+      "verdict": "1 unresolved",
+      "row": "node .claude/skills/standup/cli.mjs recap [--remote]",
+      "disposition": "carried-forward",
+      "decided_by": "human (2026-08-13, pass 1)",
+      "decided_on": "2026-08-13",
+      "evidence": "Identical to the pass-1 finding: probeRunnable anchors /^(?:dispatch|main|run)\\s*\\(/m so `await dispatch({...})` reads as not-runnable. Verified programmatically that this is the ONLY unresolved row and that it matches the accepted_findings entry exactly. All 11 ACs including the new AC-010 and AC-011 resolved.",
+      "follow_up": "unchanged — tdd-quickfix slug drift-check-await-entry-point"
+    }
+  ],
+  "spec_amendments": [
+    {
+      "on": "2026-08-13",
+      "added": [
+        "AC-010",
+        "AC-011",
+        "D11",
+        "D12"
+      ],
+      "reason": "A branch with no upstream rendered `Remote check: local refs match origin.` — a verification claim for a comparison that never ran. compareHead folded not-comparable into matched. Measured on a tagless trunk-based fixture.",
+      "rewound_phases": [
+        "spec-shippability-review",
+        "approve-direction",
+        "tdd",
+        "simplify",
+        "security",
+        "integrate"
+      ],
+      "decided_by": "human"
+    }
+  ]
+}

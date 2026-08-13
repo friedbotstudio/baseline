@@ -1,13 +1,20 @@
 // standup/gather.mjs — deterministic, read-only recap collector.
 //
 // Pure core: given a repo root, returns a structured StandupRecap built from
-// git state, .releaserc.json release rules, and the memory files. No clock is
-// read in the core (the `now` parameter is accepted but never consulted), so
-// identical inputs always produce identical output.
+// LOCAL git state, .releaserc.json release rules, and the memory files. No clock
+// is read in the core (the `now` parameter is accepted but never consulted) and
+// no network call is made, so identical inputs always produce identical output.
 //
-// Layering: gather() (orchestration) composes the three Domain collectors,
-// which compose Foundation primitives (git exec, file read, commit classifier,
-// bump lattice). git is invoked for real; failures degrade rather than throw.
+// `remote: true` opts into collectRemoteFreshness, the one path that leaves the
+// machine. It sits deliberately OUTSIDE the determinism guarantee — its answer
+// depends on a remote that can move between two otherwise identical runs — which
+// is why it is opt-in rather than default: memory_session_start calls gatherSync
+// on every session start and must not pay a round-trip.
+//
+// Layering: gather() (orchestration) composes the Domain collectors, which
+// compose Foundation primitives (git exec, file read, commit classifier, bump
+// lattice, semver compare). git is invoked for real; failures degrade rather
+// than throw.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -18,10 +25,10 @@ import { parseRoadmap } from '../roadmap/parse.mjs';
 
 // ---- Orchestration -----------------------------------------------------
 
-export function gatherSync({ rootDir, now } = {}) {
+export function gatherSync({ rootDir, now, remote = false } = {}) {
   void now; // accepted for caller symmetry; never read — keeps the core clock-free.
   const degraded = [];
-  const release = collectRelease(rootDir, degraded);
+  const release = collectRelease(rootDir, degraded, remote === true);
   const releaseModel = collectReleaseModel(rootDir, degraded);
   const backlog = collectBacklog(rootDir, degraded);
   const pendingQuestions = collectPendingQuestions(rootDir, degraded);
@@ -60,7 +67,7 @@ export function collectReleaseModel(rootDir, degraded) {
 
 // ---- Domain: release ---------------------------------------------------
 
-function collectRelease(rootDir, degraded) {
+function collectRelease(rootDir, degraded, probeRemote) {
   if (!isGitRepo(rootDir)) {
     degraded.push('no-git');
     return emptyRelease();
@@ -81,6 +88,7 @@ function collectRelease(rootDir, degraded) {
     commitsSinceTag,
     aggregateBump: aggregateBump(commitsSinceTag.map((c) => c.bump)),
     upstream: collectUpstream(rootDir),
+    remote: probeRemote ? collectRemoteFreshness(rootDir, degraded, lastTag) : null,
   };
 }
 
@@ -104,6 +112,81 @@ function noUpstream() {
   return { state: 'no-upstream', ahead: 0, behind: 0 };
 }
 
+// ---- Domain: remote freshness (opt-in) ---------------------------------
+// The only path in this module that touches the network, and it runs solely when
+// the caller passes `remote: true`. Everything else answers from local refs,
+// which is what lets the session-start hook call gatherSync without paying a
+// round-trip. A probe that cannot run reports `remote-probe-failed` and leaves
+// the local answer intact: "I could not check" must never render as "you are
+// current", and it must never render as "you are stale" either.
+export function collectRemoteFreshness(rootDir, degraded, localTag) {
+  const advertisedTags = probeGit(rootDir, ['ls-remote', '--tags', DEFAULT_REMOTE]);
+  if (advertisedTags === null) return probeFailed(degraded, 'remote-unreachable');
+
+  const newestTag = newestSemverTag(advertisedTags);
+  const head = compareHead(rootDir);
+  const stale = isTagStale(localTag, newestTag) || head.state === 'diverged';
+
+  if (stale) degraded.push('stale-remote-refs');
+  if (head.state === 'unreachable') degraded.push('remote-probe-failed');
+
+  return {
+    probed: true,
+    stale,
+    remoteTag: newestTag ? newestTag.name : null,
+    remoteHead: head.sha,
+    headState: head.state,
+    reason: head.state === 'unreachable' ? 'head-unreachable' : null,
+  };
+}
+
+function probeFailed(degraded, reason) {
+  degraded.push('remote-probe-failed');
+  return { probed: true, stale: false, remoteTag: null, remoteHead: null, headState: 'unreachable', reason };
+}
+
+// Four outcomes, and collapsing any two of them is the bug this whole spec
+// exists to fix. An earlier draft returned `{sha, unreachable}`, where `sha:
+// null` meant BOTH "compared and equal" and "there was nothing to compare" —
+// so a branch that had never been pushed rendered as `local refs match origin`,
+// a verification claim for a comparison that never ran.
+//
+// `not-comparable` is deliberately neither stale nor a probe failure: nothing
+// broke and nothing was found, there is simply no remote-tracking branch on the
+// other side. `unreachable` is the opposite claim — the branch IS comparable and
+// the probe itself failed — so the two must never share a value.
+function compareHead(rootDir) {
+  const branch = currentBranch(rootDir);
+  if (branch === null) return notComparable();
+
+  const advertised = probeGit(rootDir, ['ls-remote', '--heads', DEFAULT_REMOTE, branch]);
+  if (advertised === null) return { state: 'unreachable', sha: null };
+
+  // An empty advertisement is a successful probe of a branch the remote does not
+  // carry, which is nothing to compare rather than a failure to reach.
+  const remoteSha = firstSha(advertised);
+  const trackedSha = gitOut(rootDir, ['rev-parse', '@{upstream}']);
+  if (remoteSha === null || trackedSha === null) return notComparable();
+
+  if (remoteSha === trackedSha) return { state: 'matched', sha: null };
+  return { state: 'diverged', sha: remoteSha };
+}
+
+function notComparable() {
+  return { state: 'not-comparable', sha: null };
+}
+
+// An unparseable local tag is deliberately NOT stale: the comparison cannot be
+// made, and guessing would report a project with a non-semver tagging scheme as
+// permanently behind. A local tree with no tags at all is a different case — a
+// remote release exists that this clone has never seen, which is provable.
+function isTagStale(localTag, newestTag) {
+  if (!newestTag) return false;
+  if (localTag === null) return true;
+  const local = parseSemverTag(localTag);
+  return local === null ? false : compareVersions(newestTag.version, local) > 0;
+}
+
 function emptyRelease() {
   return {
     lastVersion: null,
@@ -111,6 +194,7 @@ function emptyRelease() {
     commitsSinceTag: [],
     aggregateBump: 'none',
     upstream: noUpstream(),
+    remote: null,
   };
 }
 
@@ -279,6 +363,87 @@ function gitOut(rootDir, args) {
   }
 }
 
+const DEFAULT_REMOTE = 'origin';
+
+// Measured, not guessed: five `git ls-remote --tags origin` runs against this
+// repo's GitHub remote took 3.5s / 7.0s / 6.8s / 12.3s / 12.9s — TLS and auth
+// setup dominate and a cold connection routinely passes ten seconds. A 10s bound
+// reported `remote-probe-failed` for a perfectly healthy remote on roughly half
+// the runs, which is worse than not probing: a false "could not check" trains the
+// reader to ignore the marker. 30s keeps the hang bounded with real headroom.
+const PROBE_TIMEOUT_MS = 30_000;
+
+// Separate from gitOut because a network call needs a bound and a local ref read
+// does not. killSignal is SIGKILL rather than the SIGTERM default: Node's docs
+// state execFileSync waits for the child even after the timeout fires, so a git
+// blocked on a TCP connect that ignores SIGTERM would hang the recap forever —
+// which is exactly the fail-open promise this probe makes. SIGKILL is not
+// catchable, so the timeout is a real bound.
+//
+// `shell` is left at its default false and args are passed as an array. That is
+// what keeps remote-controlled ref names out of a command line: a hostile remote
+// advertising `refs/tags/v0.0.9;>/tmp/x` hands us a string to parse, never argv.
+function probeGit(rootDir, args) {
+  try {
+    return execFileSync('git', args, {
+      cwd: rootDir,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: PROBE_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function currentBranch(rootDir) {
+  const branch = gitOut(rootDir, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  return branch === null || branch === 'HEAD' ? null : branch;
+}
+
+function firstSha(lsRemoteOut) {
+  const [sha] = splitOnTab(lsRemoteOut.split('\n')[0] ?? '');
+  return sha || null;
+}
+
+const TAG_REF_PREFIX = 'refs/tags/';
+const SEMVER_TAG = /^v?(\d+)\.(\d+)\.(\d+)$/;
+
+// `^{}` marks the peeled commit an annotated tag points at, so ls-remote
+// advertises every annotated tag twice. Stripping the suffix collapses the pair
+// onto one name rather than letting `v2.0.0^{}` through as a separate ref.
+function tagNameFrom(line) {
+  const marker = line.indexOf(TAG_REF_PREFIX);
+  if (marker === -1) return null;
+  return line.slice(marker + TAG_REF_PREFIX.length).replace(/\^\{\}$/, '');
+}
+
+function parseSemverTag(name) {
+  const m = SEMVER_TAG.exec(name);
+  return m ? { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) } : null;
+}
+
+function compareVersions(a, b) {
+  return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
+}
+
+// The remote decides what its refs are named, so anything that does not parse as
+// strict semver is discarded BEFORE it can influence the comparison. Trusting
+// ls-remote's own ordering, or comparing the strings, would let a remote with a
+// `refs/tags/zzz` nominate our newest release — and would rank v9.0.0 above
+// v10.0.0 into the bargain.
+function newestSemverTag(lsRemoteOut) {
+  let newest = null;
+  for (const line of lsRemoteOut.split('\n')) {
+    const name = tagNameFrom(line);
+    const version = name === null ? null : parseSemverTag(name);
+    if (version === null) continue;
+    if (newest === null || compareVersions(version, newest.version) > 0) newest = { name, version };
+  }
+  return newest;
+}
+
 function readFileSafe(path) {
   try {
     return existsSync(path) ? readFileSync(path, 'utf8') : null;
@@ -290,13 +455,6 @@ function readFileSafe(path) {
 function splitOnTab(line) {
   const i = line.indexOf('\t');
   return i === -1 ? [line, ''] : [line.slice(0, i), line.slice(i + 1)];
-}
-
-function parseEntries(raw) {
-  return raw
-    .split(/^##\s+/m)
-    .slice(1)
-    .map((block) => ({ key: block.split('\n', 1)[0].trim(), block }));
 }
 
 function field(text, re) {

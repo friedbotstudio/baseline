@@ -23,10 +23,24 @@ A read-only recap utility in the family of `audit-baseline` / `rca`: it reads st
 One invocation returns the whole recap. Use the CLI front door:
 
 ```
-node .claude/skills/standup/cli.mjs recap [--json] [--root <repo-root>]
+node .claude/skills/standup/cli.mjs recap [--json] [--root <repo-root>] [--remote]
 ```
 
 Without `--json` it prints the bounded rendering — commits collapsed to counts-by-type plus the aggregate bump, the roadmap epics with their tallies, backlog bucket sizes, and any open questions. With `--json` it prints the raw `StandupRecap`.
+
+### `--remote` — prove the release picture against the remote
+
+Every release figure in the recap is read from **local** refs: `git describe --tags` for the last tag, `rev-list @{upstream}...HEAD` for the pushed-vs-origin state. On a clone that has not fetched, both answer from a stale view. On 2026-08-13 that reported `v0.21.0` with 70 unreleased commits while `v0.22.0` was already tagged, published to npm, and released — the operator read a shipped release as an unshipped pile.
+
+The default run therefore states its own limitation in the Release block (`Figures read local refs, not fetched`) and names the remedy. Pass `--remote` to check instead of caveat:
+
+- `git ls-remote --tags origin` and `--heads origin <branch>` are read-only; nothing is fetched and no ref is mutated.
+- A newer remote tag or a diverged branch head adds **`stale-remote-refs`** to `degraded[]` and fills `release.remote` with `{probed, stale, remoteTag, remoteHead, reason}`.
+- A probe that cannot run — offline, no remote, auth, timeout — adds **`remote-probe-failed`** instead, keeps the local figures untouched, and still exits 0. "I could not check" never renders as "you are current", and never as "you are stale" either.
+- `release.remote.headState` reports the branch-head comparison as one of `diverged` / `matched` / `unreachable` / `not-comparable`. The last two are distinct on purpose: `unreachable` means the branch tracks a remote and the probe failed, while `not-comparable` means there was no upstream to compare against (a detached HEAD, a branch never pushed, or a branch the remote does not carry). A checkout with nothing to compare is never reported as one whose refs match.
+- Tag comparison is numeric on strict semver, so `v10.0.0` beats `v9.0.0`; any ref the remote advertises that does not parse is discarded before it can influence the answer.
+
+`release.remote` is `null` on the default path, which is how a reader tells *not checked* from *checked and current*.
 
 **`StandupRecap` carries six keys. All six come back in that one call:**
 
@@ -61,4 +75,5 @@ A `no-release-model` marker in `degraded` means no policy is declared — fall b
 - **Read-only.** Reads git, `.releaserc.json`, `CHANGELOG.md`, and the memory files. Writes nothing.
 - **Never writes `CHANGELOG.md`** — semantic-release owns it in CI.
 - **Never starts, stages, or commits work** — it recommends; you act.
-- **Deterministic core** — identical repo + memory state yields identical helper output (no clock read in the core path).
+- **Deterministic, offline core** — identical repo + memory state yields identical helper output (no clock read, and no network call, in the core path). `--remote` is an explicitly non-deterministic opt-in that sits **outside** this guarantee: its result depends on a remote that can change between two otherwise identical runs. The guarantee is narrowed in scope, not weakened — every caller that does not pass `--remote`, which is every in-process caller on disk including the `memory_session_start` hook, keeps exactly the property it had before.
+- **Read-only over the network too** — the probe runs `git ls-remote` only. It never fetches, never writes a ref, and never changes what a later `git status` or `/commit` sees.

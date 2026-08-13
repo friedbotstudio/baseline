@@ -4,7 +4,7 @@ title: "Standup: what shipped and what to pick up · baseline"
 description: "How to use /standup: a read-only recap of the last release, the commits waiting behind it, the roadmap, the backlog and the open questions, plus how to judge whether the pile is ready to cut."
 heading: "Where the work stands,<br>read off the repo."
 lead: "Two questions come up every time you sit down: what is waiting to ship, and what should you pick up next. /standup answers both from the repo itself. It reads git, the release config and the memory files, reports what it finds, and leaves everything as it was."
-updated: 2026-07-29
+updated: 2026-08-13
 breadcrumb: ["docs", "how-to", "standup"]
 chips:
   - { label: "read-only" }
@@ -38,7 +38,9 @@ toc:
 
 <p>It runs in two steps. A helper gathers the mechanical facts, then Claude reads them and names the next pickup, with a one-line reason. The helper stops at the facts on purpose. Choosing what to build next is a judgement call, and Article II keeps those in the main session.</p>
 
-<p>You can run the recap on its own from a shell. A single call returns all six sections, including the roadmap epics and their per-task tallies, and prints a readable summary by default, so you should not need to re-read the plan or re-run <code class="tok">git log</code> afterwards. Add <code class="tok">--json</code> when you want the raw record, or <code class="tok">--root</code> to point it at a checkout other than the working directory.</p>
+<p>You can run the recap on its own from a shell. A single call returns all six sections, including the roadmap epics and their per-task tallies, and prints a readable summary by default, so you should not need to re-read the plan or re-run <code class="tok">git log</code> afterwards. Add <code class="tok">--json</code> when you want the raw record, <code class="tok">--root</code> to point it at a checkout other than the working directory, or <code class="tok">--remote</code> to check the release figures against origin before you trust them.</p>
+
+<p>Everything in the release section is read from your local refs. On a checkout that has not fetched recently they are exactly as old as your last fetch, so the default run says so in its output and names <code class="tok">git fetch --tags</code> as the fix. <code class="tok">--remote</code> answers the question for you. It runs <code class="tok">git ls-remote</code>, fetches nothing, and changes no ref.</p>
 
 <div class="plate">
   <div class="plate-bar">
@@ -53,6 +55,8 @@ toc:
 
 <p class="sec-lead">This is the pile that has built up behind your last tag.</p>
 
+<p>You can tell which of these numbers to trust. The recap marks which figures it checked against origin and which came from a checkout that may not have fetched. Without that mark, a pile of 70 commits reads the same whether it is waiting to ship or shipped two weeks ago.</p>
+
 <div class="plate">
   <div class="plate-bar">
     <span>release</span>
@@ -61,14 +65,31 @@ toc:
 <span class="t-ok">lastTag</span>          <span class="t-val">"v0.20.0"</span>
 <span class="t-ok">commitsSinceTag</span>  <span class="t-dim">[ { sha, type, scope, subject, bump } ]</span>
 <span class="t-ok">aggregateBump</span>    <span class="t-val">"none"</span> <span class="t-dim">| "patch" | "minor" | "major"</span>
-<span class="t-ok">upstream</span>         <span class="t-dim">{ state, ahead, behind }</span></pre>
+<span class="t-ok">upstream</span>         <span class="t-dim">{ state, ahead, behind }</span>
+<span class="t-ok">remote</span>           <span class="t-dim">{ probed, stale, remoteTag, remoteHead, headState, reason } | null</span></pre>
 </div>
 
 <p>Every commit since the tag is sorted by its conventional-commit type, and each one carries the version bump it would cause. <code class="tok">aggregateBump</code> is the largest of them, which is the bump the whole pile triggers.</p>
 
 <p>Those bump rules come from <code class="tok">.releaserc.json</code>, read fresh on every run. Change your release config and the recap follows it the same day.</p>
 
-<p><code class="tok">upstream</code> tells you where your local branch sits against origin. An <code class="tok">ahead</code> count above zero is work that exists on your machine alone.</p>
+<p><code class="tok">upstream</code> compares your branch against the copy of origin your last fetch left behind. Origin may have moved since. An <code class="tok">ahead</code> count above zero is work that exists on your machine alone. A <code class="tok">behind</code> count of zero only means nothing had arrived by the time you last fetched.</p>
+
+<p><code class="tok">remote</code> is <code class="tok">null</code> until you pass <code class="tok">--remote</code>. That null is load bearing. It is how you tell a recap that was never checked against origin from one that was checked and found current.</p>
+
+<p>When the check does run, <code class="tok">headState</code> reports what happened to your branch head.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>headState</span>
+  </div>
+  <pre class="plate-body"><span class="t-ok">diverged</span>          <span class="t-dim">origin carries a commit you do not have</span>
+<span class="t-ok">matched</span>           <span class="t-dim">compared against origin, and equal</span>
+<span class="t-ok">unreachable</span>       <span class="t-dim">your branch tracks a remote, the check failed</span>
+<span class="t-ok">not-comparable</span>    <span class="t-dim">there was no remote branch to compare</span></pre>
+</div>
+
+<p>The last two look similar and mean opposite things. <code class="tok">unreachable</code> says the comparison was possible and did not happen, so the answer is unknown. <code class="tok">not-comparable</code> says there was nothing to compare in the first place, which happens on a detached head, on a branch you have never pushed, and on a branch origin does not carry. Neither one is reported as a match.</p>
 
 <h2 id="backlog"><span class="sec-mark" aria-hidden="true">§ III</span> Read the backlog</h2>
 
@@ -126,13 +147,18 @@ toc:
   </div>
   <pre class="plate-body"><span class="t-ok">no-git</span>                 <span class="t-dim">the tree is not a git repository</span>
 <span class="t-ok">no-tags</span>                <span class="t-dim">git repo, no release tagged yet</span>
-<span class="t-ok">no-upstream</span>            <span class="t-dim">the branch tracks no remote</span>
 <span class="t-ok">no-backlog</span>             <span class="t-dim">backlog.md absent</span>
 <span class="t-ok">no-pending-questions</span>   <span class="t-dim">pending-questions.md absent</span>
 <span class="t-ok">no-roadmap-plan</span>        <span class="t-dim">no roadmap at the configured path</span>
-<span class="t-ok">no-release-model</span>       <span class="t-dim">project.json declares no release policy</span></pre>
+<span class="t-ok">no-release-model</span>       <span class="t-dim">project.json declares no release policy</span>
+<span class="t-ok">stale-remote-refs</span>      <span class="t-dim">origin is ahead of your local refs</span>
+<span class="t-ok">remote-probe-failed</span>    <span class="t-dim">the check could not run, figures unverified</span></pre>
 </div>
+
+<p>The last two appear only under <code class="tok">--remote</code>, and never together for the same branch. <code class="tok">stale-remote-refs</code> is a finding: origin has something you do not. <code class="tok">remote-probe-failed</code> is the absence of one, and it leaves your local figures exactly as they were. An offline run says so and leaves the verdict open.</p>
+
+<p>A branch that tracks no remote surfaces as <code class="tok">upstream.state</code>. The recap describes that case in full, so it reads as an ordinary result.</p>
 
 <p>A fresh clone on a brand-new project can trip most of these at once and still get a useful answer. The helper reports what it has and names the rest.</p>
 
-<p>The core is deterministic. Identical repo and memory state give identical helper output, because nothing on that path reads the clock. Two people running the recap an hour apart compare the same numbers.</p>
+<p>The default path is deterministic and offline. Identical repo and memory state give identical helper output, because nothing on that path reads the clock or opens a socket. Two people running the recap an hour apart compare the same numbers. <code class="tok">--remote</code> sits outside that guarantee by design, since its answer depends on a remote that can move between two otherwise identical runs. The guarantee got narrower, not weaker. Every run that does not pass the flag keeps the property it always had, including the shorter recap at session start.</p>

@@ -2,12 +2,16 @@
 key: .claude/skills/standup/gather.mjs
 category: landmarks
 scope: [scout]
+governs: .claude/skills/standup/**
 source: inferred-from-code
-verified-at: 1a2cce3
-last-touched: 2026-07-20
+verified-at: c53a121
+last-touched: 2026-08-13
 ---
 
-- Role: Domain — the deterministic recap `/standup` reads. Gathers release state (last tag, commits-since classified by conventional-commit type, aggregate semver bump from `.releaserc.json`, pushed-vs-origin), the backlog bucketed open/picked-up/dropped with epic children nested under `parent`, condensed pending questions, and the roadmap epic rollup. Per Article II it gathers only — the "what to pick up next" judgment is main-context's.
-- Entry point: `gatherSync({ rootDir, now })` at `:20`. Note the parameter is `rootDir`, not `root`.
-- Backlog and questions route through `resolveCategory` from [[.claude/skills/memory-index/lift-fields.mjs]] (`:117`, `:155`), so both store shapes read identically.
-- Caveat: `degraded[]` markers mean *the store is absent*, not *the store is empty*. `no-backlog` fired for weeks while 16 shards existed, because the collector read flat `backlog.md` after the T4 migration had sharded it — `/standup` reported an empty backlog to every reader, which reads as "nothing to do". Keep the marker's meaning honest; a reader that cannot find its data must say so rather than returning a confident zero.
+- Role: Domain — the recap `/standup` reads. Gathers release state (last tag, commits-since classified by conventional-commit type, aggregate semver bump from `.releaserc.json`, pushed-vs-origin), the backlog bucketed open/picked-up/dropped with epic children nested under `parent`, condensed pending questions, and the roadmap epic rollup. Per Article II it gathers only — the "what to pick up next" judgment is main-context's.
+- Entry point: `gatherSync({ rootDir, now, remote = false })` at `:28`. The parameter is `rootDir`, not `root`. Returns EXACTLY six top-level keys; `tests/standup-cli-recap.test.mjs:71` asserts it, so new data nests rather than adding a key.
+- `remote: true` is the ONLY path that leaves the machine (`collectRemoteFreshness`, `:122`). It runs `git ls-remote` through `probeGit` (`:378`), which is separate from `gitOut` because a network call needs a bound: `timeout: PROBE_TIMEOUT_MS` (30s, measured — see [[network-git-timeouts-must-be-measured-not-guessed]]) plus `killSignal: 'SIGKILL'`, and `shell` left at its default false so remote-controlled ref names never reach argv.
+- `compareHead` (`:157`) returns `{state, sha}` with FOUR states — `diverged | matched | unreachable | not-comparable` — surfaced as `release.remote.headState`. Collapsing any two is the defect the four-state split exists to prevent; see [[a-verdict-must-distinguish-checked-from-nothing-to-compare]].
+- Backlog and questions route through `resolveCategory` from [[.claude/skills/memory-index/lift-fields.mjs]], so both store shapes read identically.
+- Caveat: `degraded[]` markers mean *the store is absent*, not *the store is empty*. `no-backlog` fired for weeks while 16 shards existed, because the collector read flat `backlog.md` after the T4 migration had sharded it. Keep the marker's meaning honest; a reader that cannot find its data must say so rather than returning a confident zero.
+- Caveat: the file is ~460 lines, past the layer-split guideline. Tracked as [[standup-gather-mjs-past-the-layer-split-guideline]].

@@ -136,3 +136,8 @@
 - discarded :: backlog → when-archive-applies-this-spec-s-system-delta-736e
 - discarded :: backlog → two-of-my-test-files-tripped-this-via-31c8
 - discarded :: backlog → the-fix-is-two-lines-lstatsync-and-refuse-1508
+- discarded :: backlog → the-fix-is-realpathsync-not-lstatsync-an-lstat-44ad
+- discarded :: backlog → confirmed-and-the-fix-is-bigger-than-one-5378
+- promoted :: .claude/skills/standup/gather.mjs → landmarks.md
+- promoted :: backlog → i-recommend-a-taken-as-a-separate-chore-f849
+- discarded :: .claude/skills/standup/SKILL.md → landmarks.md

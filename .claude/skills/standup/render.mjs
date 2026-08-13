@@ -29,13 +29,41 @@ function releaseLines(release, releaseModel) {
 
   if (commits.length === 0) {
     lines.push('No unreleased commits.');
-    return [...lines, ...modelLine(releaseModel), ''];
+    return [...lines, ...freshnessLine(release), ...modelLine(releaseModel), ''];
   }
 
   lines.push(`Unreleased: ${commits.length} commit(s)`);
   for (const [type, count] of countByType(commits)) lines.push(`  ${type}: ${count}`);
   lines.push(`Next bump: ${aggregateBump(commits)}`);
-  return [...lines, ...modelLine(releaseModel), ''];
+  return [...lines, ...freshnessLine(release), ...modelLine(releaseModel), ''];
+}
+
+// Every figure above this line comes from local refs. Un-probed, that is exactly
+// as stale as the last fetch, and saying nothing is what let a shipped v0.22.0
+// read as a 70-commit unreleased pile. The caveat is not decoration: it is the
+// half of the fix that serves a reader who does not know `--remote` exists.
+function freshnessLine(release) {
+  const remote = release?.remote ?? null;
+  if (remote === null) {
+    return ['Figures read local refs, not fetched. Run `git fetch --tags` to confirm.'];
+  }
+  if (remote.stale) {
+    return [`Remote check: origin is AHEAD${remote.remoteTag ? ` at ${remote.remoteTag}` : ''}. Run \`${fetchRemedy(remote)}\`.`];
+  }
+  if (remote.reason) {
+    return [`Remote check failed (${remote.reason}). Figures read local refs, not fetched.`];
+  }
+  if (remote.headState === 'not-comparable') {
+    return ['Remote check: tags only. This checkout has no upstream branch, so its head was not compared.'];
+  }
+  return ['Remote check: local refs match origin.'];
+}
+
+// Naming `--tags` when no tag drove the finding points the reader at an object
+// their repository does not have. A head-only staleness on a tagless repo is
+// fixed by a plain fetch.
+function fetchRemedy(remote) {
+  return remote.remoteTag ? 'git fetch --tags' : 'git fetch';
 }
 
 function modelLine(releaseModel) {
@@ -77,11 +105,22 @@ function epicLine(epic) {
   return `  ${epic.status ?? '?'} Epic ${epic.num ?? '?'}: ${epic.title}${tallies ? ` — ${tallies}` : ''}`;
 }
 
+// The label and the data key differ for exactly one bucket, and both spellings
+// are load-bearing: gather.mjs emits `pickedUp`, while SKILL.md documents
+// `picked-up` as the user-visible bucket name. Iterating the labels alone read
+// `backlog['picked-up']` — a key the gatherer never emits — so that count
+// rendered 0 unconditionally. Map the pair; rename neither side.
+const BACKLOG_BUCKETS = [
+  ['open', 'open'],
+  ['picked-up', 'pickedUp'],
+  ['dropped', 'dropped'],
+];
+
 function backlogLines(backlog) {
   if (!backlog) return [];
   const lines = ['## Backlog', ''];
-  for (const bucket of ['open', 'picked-up', 'dropped']) {
-    lines.push(`  ${bucket}: ${(backlog[bucket] ?? []).length}`);
+  for (const [label, key] of BACKLOG_BUCKETS) {
+    lines.push(`  ${label}: ${(backlog[key] ?? []).length}`);
   }
   return [...lines, ''];
 }

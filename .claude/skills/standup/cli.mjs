@@ -9,8 +9,12 @@ import { dispatch, lines } from '../lib/argv.mjs';
 import { gatherSync } from './gather.mjs';
 import { renderRecap } from './render.mjs';
 
+// `--remote` takes no value, so it needs no entry in argv.mjs VALUE_FLAGS: under
+// `strict: false` a valueless flag parses as boolean true. The `=== true` test is
+// what keeps a stray `--remote foo` (which parses as the string "foo") from
+// silently enabling a network probe the operator did not ask for.
 function recap({ flags, root }) {
-  const collected = gatherSync({ rootDir: flags.root ?? root });
+  const collected = gatherSync({ rootDir: flags.root ?? root, remote: flags.remote === true });
   return { data: collected, text: lines(renderRecap(collected)) };
 }
 
