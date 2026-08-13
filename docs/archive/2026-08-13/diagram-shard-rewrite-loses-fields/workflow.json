@@ -1,0 +1,48 @@
+{
+  "request": "Fix the corpus delta-apply path, which silently degrades PlantUML diagram shards. When /archive applies a confirmed System delta row for an element that already has a shard, the caller of writeDiagramShard passes the element id as `label`, lets `technology` default to the kind, and passes `description: null` — so the rewritten shard loses the element's anchor path, its C4 techn value and its human title. Reproduced live during workflow consumer-install-defects (commit 79e41cb): docs/system/diagrams/audit-baseline-checks.puml went from `Component(audit_baseline_checks, \".claude/skills/audit-baseline/checks/*.mjs\", \"subsystem\", \"Per-surface baseline audit checks\")` to `Component(audit_baseline_checks, \"audit-baseline-checks\", \"c4_component\")`, and consent-commands.puml the same way; both were held out of that commit and remain dirty in the working tree as the reproduction. Not a schema migration: 85 of 116 diagrams still carry the rich 4-argument form and 19 carry the degraded 3-argument form. Recurring, not a one-off: commit 0d8e776 (2026-08-09) degraded audit-baseline-helpers.puml and document-helpers.puml by the same path, so the damage accumulates one workflow at a time. Mechanism is at .claude/skills/workspace/shards.mjs:76 componentLine({label, technology, description}), which renders faithfully — the loss is entirely in its caller. Two deliverables: (1) the forward fix, so a rewrite preserves anchor, techn and description (or leaves an already-correct shard alone); (2) a decision on repairing the 19 already-degraded diagrams, including whether the restore is derivable from the element records under docs/system/elements/, which still hold anchor and title.",
+  "slug": "diagram-shard-rewrite-loses-fields",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Searched docs/specs/, docs/archive/**/spec.md and .claude/memory/backlog/ for the shard field contract. The 2026-08-07 system-spec-delta-slice-b spec names writeDiagramShard but specifies none of technology/descr/subsystem, and no backlog entry or roadmap item covers it — the roadmap has one open task (T11, landmark scope re-homing), unrelated. The correct rewrite semantics are undefined anywhere on disk, which is why the defect could accumulate silently across at least two workflows.",
+  "track_reason": "The leanest safe track is tdd-quickfix, and two facts make it insufficient. First, the correct field semantics are unspecified anywhere on disk, so the fix needs a written contract rather than only a passing test — the next caller of writeDiagramShard would otherwise face the same undefined behaviour. Second, repairing the 19 already-degraded diagrams is a data decision with corpus-wide blast radius: the comment at shards.mjs:68-74 records that 51 shards declare `subsystem` in the techn slot while their element record reads `kind: component`, and that this distinction exists nowhere else on disk, so a wrong repair destroys it permanently. Both want gate A. User confirmed spec-entry via AskUserQuestion.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "scenario",
+    "implement",
+    "finalize"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1786558424,
+  "updated_at": 1786558424,
+  "rightsize_base": [
+    "docs/system/diagrams/audit-baseline-checks.puml",
+    "docs/system/diagrams/consent-commands.puml",
+    "docs/audits/swarm-first-production-run-2026-08-09.md"
+  ]
+}

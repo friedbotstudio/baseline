@@ -1,4 +1,4 @@
 !startsub audit_baseline_helpers
 ' @kind c4_component
-Component(audit_baseline_helpers, "audit-baseline-helpers", "c4_component")
+Component(audit_baseline_helpers, ".claude/skills/audit-baseline/*.mjs", "subsystem", "Baseline drift audit")
 !endsub

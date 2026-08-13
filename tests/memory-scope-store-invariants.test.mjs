@@ -26,9 +26,30 @@ const NARROW_CLI = '.claude/skills/memory-index/scope-narrow.mjs';
 const LANDMINE_CATEGORY_DEFAULT = '[scout, spec, tdd, security, integrate]';
 
 // The budgets AC-007 commits to. `scout` is deliberately absent: AC-009 defers the
-// 87 landmarks that make up most of its 145 hits, so a scout budget would either
-// force that deferred re-homing or record a number this cycle does not move.
-const PHASE_BUDGETS = { spec: 65, security: 30, research: 20 };
+// landmarks that make up most of its hits, so a scout budget would either force
+// that deferred re-homing or record a number this cycle does not move.
+//
+// spec moved 65 -> 67 at 79e41cb, which added three correctly-scoped entries:
+// `backlog/memory-index-ships-unhashed-while-being-a-shared-oracle-d5b6` and
+// `backlog/shipped-subdirs-under-flat-scan-descriptors-go-unscanned-a3f8` (both
+// `scope: [spec]`), and `decisions/strict-dev-path-scan-is-scoped-to-shipped-
+// commands-5e19` (`scope: [spec, implement]`). Legitimate growth, not mis-scoping —
+// so the cap moves rather than the entries.
+//
+// Expect this to recur on a schedule. Backlog entries default to `[spec]` and a
+// workflow files backlog entries routinely, so the spec cap drifts every few
+// landings. A cap re-measured to the exact current value also has zero headroom,
+// which makes it behave as a tripwire rather than a budget. The real fix is to
+// measure surfaced VOLUME rather than entry count — an entry count says nothing
+// about the context cost the budget exists to bound.
+//
+// 67 -> 68 in the SAME workflow, at its /memory-sync flush, when a decision entry
+// landed with `scope: [spec, implement, simplify]`. Two bumps in one workflow is
+// the tripwire behaviour predicted three paragraphs up, demonstrated inside the
+// prediction's own cycle. The number is left at the measured value rather than
+// padded, because inventing headroom is a policy change and this is a test file.
+// Deciding what this cap should actually measure is the open question.
+const PHASE_BUDGETS = { spec: 68, security: 30, research: 20 };
 
 // Captured at HEAD 2bf79ef. The phase leg is what this spec rewrites; the path leg
 // must not drift except where the curation deliberately ADDS a `governs:` to an
@@ -131,14 +152,34 @@ describe('memory scope — measured phase budgets (AC-007)', () => {
 });
 
 describe('memory scope — the landmark deferral is enforced, not assumed (AC-009)', () => {
-  it('test_when_landmark_scope_counted_then_eighty_seven_remain_at_scout', () => {
+  // 87 -> 88 at 79e41cb, which added
+  // `landmarks/src-memory-constraints-template-md-1.md` carrying `scope: [scout]`.
+  // Verified by enumeration, not assumed: `git log -1 --` on that file returns
+  // 79e41cb, and `git grep -l "^scope: \[scout\]" HEAD -- .claude/memory/landmarks/`
+  // returns 88 at HEAD. Same shape as the PATH_LEG_BASELINE bumps above.
+  //
+  // A relational assertion CANNOT replace this literal — checked, so nobody
+  // re-opens it. The 120 landmark shards carry seven distinct scope values: 88
+  // `[scout]`, 25 `[]`, and 7 others, of which `[document]`, `[spec, tdd, archive]`
+  // and `[spec, tdd]` omit scout entirely. So neither "every landmark is [scout]"
+  // nor "every scoped landmark includes scout" holds; the deferral this test
+  // defends has already been partially and legitimately overtaken, and the count
+  // is the only oracle left.
+  //
+  // The number is out of the test NAME for that reason: it forced a rename on this
+  // bump and would force another on the next.
+  //
+  // 88 -> 89 later the same day, at this workflow's /memory-sync flush, when the
+  // landmark for `restore-degraded-shards.mjs` landed at `scope: [scout]`. The
+  // rename paid for itself within one workflow.
+  it('test_when_landmark_scope_counted_then_the_deferred_set_is_unchanged', () => {
     const atScout = liveShards()
       .filter((f) => f.includes(`${'landmarks'}/`))
       .filter((f) => scopeLineOf(f) === '[scout]');
 
     assert.equal(
       atScout.length,
-      87,
+      89,
       'D4 defers re-homing landmarks to the path leg (deferred: risk) — scout writes docs/scout/<slug>.md, which no landmark governs, so re-homing would remove landmark surfacing from scout entirely. This asserts the deferral so a later cycle cannot silently re-home them.',
     );
   });

@@ -230,7 +230,13 @@ describe('AC-007 — writeDiagramShard writes an annotated shard', () => {
     const secondBytes = readFileSync(join(specDir, second.path), 'utf8');
 
     assert.equal(secondBytes, firstBytes, 'same input must rewrite identical bytes — slice D re-runs this 112 times');
-    assert.deepEqual(second, first);
+    // This used to be `deepEqual(second, first)`, which pinned `written: true` on
+    // the re-run. AC-003 of diagram-shard-rewrite-loses-fields supersedes it: a
+    // rewrite whose merged bytes equal what is already on disk writes NOTHING and
+    // reports `written: false`. That is a stronger guarantee than rewriting
+    // identical bytes, and the "112 times" above is exactly the case it optimizes.
+    assert.equal(second.path, first.path, 'the same element still resolves to the same shard path');
+    assert.equal(second.written, false, 'the second call must be a no-op, not an identical rewrite');
   });
 
   it('test_when_write_diagram_shard_label_or_witness_carries_newline_then_rejected', async () => {

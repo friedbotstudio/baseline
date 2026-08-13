@@ -19,6 +19,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -34,6 +35,10 @@ const WRITE_PATHS = [
   { name: 'digest', argv: ['digest', 'alpha'], idAt: 1 },
   { name: 'shards', argv: ['shards', 'alpha', '--kind', 'sequence'], idAt: 1 },
   { name: 'delta', argv: ['delta', '--slug', 'demo'], idAt: 2 },
+  // `restore-shards` sweeps the whole diagrams directory, so it takes no id and
+  // `idAt: null` opts it out of the traversal table below rather than out of the
+  // contract — W-2 and W-3 still bind it, which is the point of the shared table.
+  { name: 'restore-shards', argv: ['restore-shards'], idAt: null },
 ];
 
 const TRAVERSALS = ['../../etc/passwd', 'a/../../b', '/etc/passwd'];
@@ -49,6 +54,7 @@ describe('W-1 — validate at the boundary, REJECT never normalize', () => {
   it('test_when_write_subcommand_given_traversal_id_then_rejected_before_path_construction', () => {
     const failures = [];
     for (const { name, argv, idAt } of WRITE_PATHS) {
+      if (idAt === null) continue;
       for (const attack of TRAVERSALS) {
         const { root, specDir } = seeded();
         const before = snapshotDir(specDir);
@@ -192,5 +198,75 @@ describe('W-5 — the sink guards, not the caller', () => {
       ['a.puml'],
       'the guard must not change behavior for a legitimate literal kind',
     );
+  });
+});
+
+// The `restore-shards` front door. The repair shipped as a module-only export and
+// the spec's Contracts table pinned a CLI that did not exist — caught at /integrate.
+// It lands here rather than as a standalone `node restore-shards.mjs` because
+// cli.mjs already states the rule: the writers "sit beside the reads because they
+// answer about the same corpus". A repair answers about the same corpus.
+//
+// Fixtures are real temp git repos. The repair walks history, so a corpus without
+// one exercises only the record-fallback half.
+describe('restore-shards — the repair has a front door', () => {
+  function git(cwd, ...args) {
+    return execFileSync('git', args, { cwd, encoding: 'utf8' });
+  }
+
+  function shard(section, args) {
+    return ['!startsub ' + section, "' @kind c4_component", `Component(${section}, ${args})`, '!endsub', ''].join('\n');
+  }
+
+  // One commit holding a degraded shard, so history offers nothing rich and the
+  // record path decides the outcome — which is what lets a single fixture cover
+  // both the repaired case and the unrestorable one by adding or omitting a record.
+  function damagedRepo({ withRecord }) {
+    const { root, specDir } = makeCliProject({}, mkdtemp);
+    mkdirSync(join(specDir, 'diagrams'), { recursive: true });
+    writeFileSync(join(specDir, 'diagrams', 'alpha.puml'), shard('alpha', '"alpha", "c4_component"'), 'utf8');
+    if (withRecord) writeWorkspaceElement(specDir, 'alpha', { anchor: 'src/alpha/*.mjs', title: 'Alpha subsystem' });
+    git(root, 'init', '-q');
+    git(root, 'add', 'docs');
+    git(root, '-c', 'user.email=f@example.invalid', '-c', 'user.name=f', 'commit', '-q', '-m', 'seed');
+    return { root, specDir };
+  }
+
+  it('test_when_restore_shards_runs_then_it_repairs_and_names_every_file_it_touched', () => {
+    const { root, specDir } = damagedRepo({ withRecord: true });
+
+    const res = runCli('workspace', ['restore-shards', '--root', root, '--spec-dir', specDir], { cwd: root });
+    assertKnownSubcommand(assert, res, 'restore-shards');
+
+    assert.equal(res.status, 0, `a corpus with nothing unrestorable exits 0; got ${res.status}\n${res.out}`);
+    assert.match(res.out, /alpha/, 'the report names each file — a bare count cannot be audited against history');
+    assert.match(
+      readFileSync(join(specDir, 'diagrams', 'alpha.puml'), 'utf8'),
+      /"src\/alpha\/\*\.mjs".*"Alpha subsystem"/,
+      'the shard is rebuilt from its element record when history holds no rich blob',
+    );
+  });
+
+  it('test_when_a_shard_is_unrestorable_then_the_exit_status_is_non_zero', () => {
+    const { root, specDir } = damagedRepo({ withRecord: false });
+    const before = readFileSync(join(specDir, 'diagrams', 'alpha.puml'), 'utf8');
+
+    const res = runCli('workspace', ['restore-shards', '--root', root, '--spec-dir', specDir], { cwd: root });
+    assertKnownSubcommand(assert, res, 'restore-shards');
+
+    assert.notEqual(res.status, 0, 'the exit status IS the verdict here — damage nobody can repair must not read as success');
+    assert.equal(readFileSync(join(specDir, 'diagrams', 'alpha.puml'), 'utf8'), before, 'an unrestorable shard is reported, never guessed at');
+  });
+
+  it('test_when_dry_run_is_passed_then_the_plan_is_printed_and_nothing_is_written', () => {
+    const { root, specDir } = damagedRepo({ withRecord: true });
+    const before = snapshotDir(specDir);
+
+    const res = runCli('workspace', ['restore-shards', '--dry-run', '--root', root, '--spec-dir', specDir], { cwd: root });
+    assertKnownSubcommand(assert, res, 'restore-shards');
+
+    assert.equal(res.status, 0, `a dry run of a repairable corpus exits 0; got ${res.status}\n${res.out}`);
+    assert.match(res.out, /alpha/, 'a dry run still names what it would touch, or it is not a plan');
+    assert.deepEqual(snapshotDir(specDir), before, 'a dry run writes nothing — that is the whole contract');
   });
 });

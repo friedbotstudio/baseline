@@ -1,4 +1,4 @@
 !startsub roadmap_cli
 ' @kind c4_component
-Component(roadmap_cli, "roadmap-cli", "c4_component")
+Component(roadmap_cli, ".claude/skills/roadmap/*.mjs", "c4_component", "Planning release")
 !endsub

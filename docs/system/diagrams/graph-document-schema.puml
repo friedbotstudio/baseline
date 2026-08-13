@@ -1,4 +1,4 @@
 !startsub graph_document_schema
 ' @kind c4_component
-Component(graph_document_schema, "graph-document-schema", "c4_component")
+Component(graph_document_schema, ".claude/schemas/graph-document.v1.json", "c4_component", "Project config")
 !endsub

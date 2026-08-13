@@ -1,4 +1,4 @@
 !startsub harness_checkers
 ' @kind c4_component
-Component(harness_checkers, "harness-checkers", "c4_component")
+Component(harness_checkers, ".claude/skills/harness/checkers/*.mjs", "subsystem", "Harness oracle checkers")
 !endsub

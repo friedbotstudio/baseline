@@ -36,8 +36,24 @@ export function elementIdFromSection(section) {
 
 // The inverse of elementIdFromSection. Every live shard is written this way, and
 // the map stays injective because an id can never contain an underscore.
-function sectionFromElementId(elementId) {
+export function sectionFromElementId(elementId) {
   return elementId.replace(/-/g, '_');
+}
+
+// The section is the one Component argument interpolated raw — C4 takes it as a
+// bare alias, not a quoted string, so quotedArgument cannot bound it. A caller that
+// reads a section back out of an existing shard gets `[^,]+`, which admits quotes
+// and parens and escapes the macro exactly as a quoted argument would (security
+// review 2026-08-12). Guarded here rather than at each call site because the export
+// is public: `sectionFromElementId` output always passes, and anything else is a
+// caller that should have derived it from the element id.
+const BARE_SECTION = /^[A-Za-z0-9_]+$/;
+
+function assertSection(section) {
+  if (!BARE_SECTION.test(String(section))) {
+    throw new Error(`unsafe field section (REJECT, never normalize): a section must be a bare identifier, got ${JSON.stringify(String(section))}`);
+  }
+  return section;
 }
 
 function shardRel(elementId) {
@@ -72,10 +88,43 @@ function requireKind(kind) {
 // on disk. `technology` therefore defaults to the kind — which keeps every shard
 // written before the backfill byte-identical — and `descr` is emitted only when the
 // caller has one, so the three- and four-argument forms stay distinguishable.
-function componentLine(section, { label, technology, description }) {
-  const args = [section, `"${label}"`, `"${technology}"`];
-  if (description !== null) args.push(`"${description}"`);
+export function renderComponentLine(section, { label, technology, description }) {
+  const args = [assertSection(section), `"${quotedArgument('label', label)}"`, `"${quotedArgument('technology', technology)}"`];
+  if (description !== null) args.push(`"${quotedArgument('description', description)}"`);
   return `Component(${args.join(', ')})`;
+}
+
+// componentLine's inverse, and it lives here so the pair cannot drift apart. The
+// description group is greedy to the final `")` rather than `[^"]*` on purpose: a
+// description carrying a stray quote must come back INTACT so quotedArgument can
+// reject it. A non-greedy read would truncate at the stray quote and hand a
+// silently-shortened string to the writer.
+const COMPONENT_ARGS = /^Component\([^,]+,\s*"([^"]*)",\s*"([^"]*)"(?:,\s*"(.*)")?\)\s*$/m;
+
+function parseComponentArgs(text) {
+  const m = COMPONENT_ARGS.exec(text);
+  if (!m) return null;
+  return { label: m[1], technology: m[2], description: m[3] ?? null };
+}
+
+// Preservation is best-effort: an absent or unparseable shard yields null and the
+// caller falls back to its defaults. A shard nobody can parse must not wedge a
+// legitimate write.
+function readExistingFields(specDir, elementId) {
+  const shard = readShard(specDir, elementId);
+  return shard === null ? null : parseComponentArgs(shard.body);
+}
+
+// Caller wins, then whatever the shard already carried, then the historical
+// defaults. Those defaults used to be the FIRST choice, which is how a rewrite
+// supplying only `kind` destroyed the anchor, the techn and the title of every
+// element it touched.
+function mergedFields({ elementId, kind, existing, label, technology, description }) {
+  return {
+    label: label ?? existing?.label ?? elementId,
+    technology: technology ?? existing?.technology ?? kind,
+    description: description ?? existing?.description ?? null,
+  };
 }
 
 // D3 — the annotations sit INSIDE the block. `!includesub file.puml!NAME` pulls in
@@ -84,7 +133,7 @@ function componentLine(section, { label, technology, description }) {
 function shardText(section, { kind, witnessTest, ...component }) {
   const lines = [`!startsub ${section}`, `' @kind ${kind}`];
   if (witnessTest !== null) lines.push(`' @witness ${witnessTest}`);
-  lines.push(componentLine(section, component), '!endsub');
+  lines.push(renderComponentLine(section, component), '!endsub');
   return lines.join('\n') + '\n';
 }
 
@@ -105,13 +154,22 @@ export function writeDiagramShard(specDir, elementId, {
   assertSafeSlug(elementId, 'element id');
   const section = sectionFromElementId(elementId);
   const safeKind = requireKind(kind);
+  const merged = mergedFields({
+    elementId,
+    kind: safeKind,
+    existing: readExistingFields(specDir, elementId),
+    label,
+    technology,
+    description,
+  });
   const text = shardText(section, {
     kind: safeKind,
     witnessTest: witnessTest === null ? null : assertSafeFieldValue('witnessTest', witnessTest),
-    label: quotedArgument('label', label ?? elementId),
-    technology: technology === null ? safeKind : quotedArgument('technology', technology),
-    description: description === null ? null : quotedArgument('description', description),
+    label: quotedArgument('label', merged.label),
+    technology: quotedArgument('technology', merged.technology),
+    description: merged.description === null ? null : quotedArgument('description', merged.description),
   });
+  if (readSourceText(specDir, shardRel(elementId)) === text) return { path: shardRel(elementId), written: false };
   writeWorkspaceFile(specDir, SHARD_DIR, `${elementId}.puml`, text);
   return { path: shardRel(elementId), written: true };
 }

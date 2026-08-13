@@ -1,4 +1,4 @@
 !startsub memory_index_helpers
 ' @kind c4_component
-Component(memory_index_helpers, "memory-index-helpers", "c4_component")
+Component(memory_index_helpers, ".claude/skills/memory-index/*.mjs", "subsystem", "Memory index build, migrate, constraints")
 !endsub

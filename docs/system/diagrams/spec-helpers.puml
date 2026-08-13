@@ -1,4 +1,4 @@
 !startsub spec_helpers
 ' @kind c4_component
-Component(spec_helpers, "spec-helpers", "c4_component")
+Component(spec_helpers, ".claude/skills/spec/*.mjs", "subsystem", "Spec evidence ladder and decision capture")
 !endsub

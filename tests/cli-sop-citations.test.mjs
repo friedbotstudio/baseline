@@ -141,6 +141,13 @@ describe('SOP citations name a command, not an inline import', () => {
   // outright would leave AC-013 green and leave the corpus with no documented way
   // to add an element. The reason clause is load-bearing too: without "it writes",
   // the survivor reads as an oversight someone tidies away next pass.
+  //
+  // The reason itself changed. When this was written the dispatcher exposed reads
+  // only, so "it writes" fully explained the exception. It now exposes eight
+  // writers, and what keeps materialize inline is that the dispatcher sweep has not
+  // reached it. The assertions below are unchanged — the survivor must still name
+  // itself and still say that it writes — but do not read them as evidence that
+  // this dispatcher refuses writes.
   it('test_when_system_readme_scanned_then_materialize_example_and_its_reason_survive', () => {
     const path = join(REPO_ROOT, 'docs/system/README.md');
     assert.ok(existsSync(path), 'docs/system/README.md must exist before its content can be checked');
@@ -160,7 +167,7 @@ describe('SOP citations name a command, not an inline import', () => {
     assert.match(
       text,
       /it writes/,
-      'the reason is what scopes the exception — this dispatcher exposes reads, so the write stays inline',
+      'the reason is what scopes the exception — materialize writes, and the dispatcher sweep has not reached it, so the write stays inline',
     );
   });
 

@@ -1,4 +1,4 @@
 !startsub scoped_memory
-' @kind class
-Component(scoped_memory, "scoped-memory", "class")
+' @kind c4_component
+Component(scoped_memory, ".claude/hooks/lib/scoped-memory.mjs", "component", "Phase-scoped fact surfacing")
 !endsub

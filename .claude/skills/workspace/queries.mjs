@@ -11,7 +11,7 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 
-import { NotFoundError, UsageError, lines, requireValue, refuseBulk } from '../lib/argv.mjs';
+import { EXIT_NOT_FOUND, EXIT_OK, NotFoundError, UsageError, lines, requireValue, refuseBulk } from '../lib/argv.mjs';
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { surfaceGovernedMemory } from '../../hooks/lib/governed-memory.mjs';
 import { assertNoTraversal } from './tree.mjs';
@@ -27,6 +27,7 @@ import { buildGraphDocument } from './graph.mjs';
 import { workspaceEnabled, annotationsEnabled, architectureMapEnabled } from './flags.mjs';
 import { stampElement } from './digest.mjs';
 import { verifyAndApplyDelta } from './delta.mjs';
+import { restoreDegradedShards } from './restore-degraded-shards.mjs';
 import { proposeMap } from './sync.mjs';
 import { scanAnnotations } from './annotations.mjs';
 import { annotationPlacementAllowed } from './placement.mjs';
@@ -326,6 +327,36 @@ export function shards(ctx) {
   const label = ctx.flags.label === true ? undefined : ctx.flags.label;
   const result = writeDiagramShard(corpusDir(ctx), id, { kind, label, rootDir: ctx.root });
   return { data: result, text: lines([`${result.written ? 'wrote' : 'skipped'} ${result.path ?? id}`]) };
+}
+
+// The exit status IS the verdict, which is why this returns `exitCode` rather than
+// throwing: a corpus carrying damage nobody can repair is a successful run
+// reporting bad news, not an error. `dispatch` honours the field and still prints
+// the body, so the operator gets the file list either way.
+//
+// Reported as three partitions for the same reason `delta` is: git-restored is
+// lossless, record-restored recovers a label and a title but leaves `techn` at the
+// kind, and unrestorable changed nothing. Collapsing them into one count would
+// claim a fidelity two thirds of the rows do not have.
+export function restoreShards(ctx) {
+  refuseBulk(ctx.flags, ctx.positional, { max: 0 });
+  const blocked = writeGate(ctx, 'restore-shards');
+  if (blocked) return blocked;
+
+  const dryRun = ctx.flags['dry-run'] !== undefined;
+  const report = restoreDegradedShards({ rootDir: ctx.root, specDir: corpusDir(ctx), dryRun });
+  const { restored, recordRestored, unrestorable } = report;
+  const verb = dryRun ? 'would restore' : 'restored';
+  const rows = [
+    ...restored.map((r) => `${verb}    ${r.path}  (git ${r.sha.slice(0, 8)})`),
+    ...recordRestored.map((r) => `${verb}    ${r.path}  (element record)`),
+    ...unrestorable.map((path) => `unrestorable ${path}`),
+  ];
+  return {
+    data: { ...report, dryRun, written: !dryRun && restored.length + recordRestored.length > 0 },
+    text: lines(rows.length ? rows : ['no degraded shards']),
+    exitCode: unrestorable.length > 0 ? EXIT_NOT_FOUND : EXIT_OK,
+  };
 }
 
 export function placement(ctx) {

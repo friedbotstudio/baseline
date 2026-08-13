@@ -53,7 +53,29 @@ import { resolveSpecPath, sliceAcIds, sliceSection } from '../../hooks/lib/pinne
 // run's output and the gate silently turns green — a checker that certifies itself.
 // It never bit this repo only because `.claude/state/` is gitignored here; a
 // consumer project without that ignore would see every AC resolve on re-run.
-const EXCLUDED_DIFF_PREFIXES = ['docs/specs/', 'docs/archive/', '.claude/state/'];
+//
+// The remaining seven are the same defect, generalized rather than patched a
+// fourth time: every directory here holds per-workflow REPORTS, and a report about
+// a workflow is never the implementation of one. Live case — this ticket's drift
+// tick resolved two ACs against `docs/audits/<a prior session's report>.md`, which
+// only discussed the ids. Both had real coverage elsewhere, so the verdicts were
+// right by accident; an AC with none would have passed identically.
+//
+// `docs/system/`, `docs/references/` and `docs/runbooks/` are deliberately NOT
+// here. Those can be a docs ticket's actual deliverable, and excluding them would
+// make such a ticket's ACs permanently unresolvable.
+const EXCLUDED_DIFF_PREFIXES = [
+  'docs/specs/',
+  'docs/archive/',
+  'docs/audits/',
+  'docs/rca/',
+  'docs/security/',
+  'docs/intake/',
+  'docs/scout/',
+  'docs/research/',
+  'docs/brief/',
+  '.claude/state/',
+];
 
 function isExcludedDiffPath(relPath) {
   return EXCLUDED_DIFF_PREFIXES.some(prefix => relPath.startsWith(prefix));

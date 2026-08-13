@@ -129,3 +129,9 @@
 - discarded :: backlog → accept-and-track-proceed-to-integrate-4eab
 - discarded :: backlog → the-fix-is-one-line-but-the-tests-ca25
 - discarded :: backlog → that-is-the-seventh-instance-of-this-batch-8c0a
+- promoted :: backlog → two-of-my-test-files-tripped-this-via-31c8
+- promoted :: .claude/skills/workspace/restore-degraded-shards.mjs → landmarks.md
+- discarded :: backlog → repair-after-the-fix-is-built-so-the-6c86
+- discarded :: backlog → implement-may-not-edit-tests-so-this-needs-4e24
+- discarded :: backlog → when-archive-applies-this-spec-s-system-delta-736e
+- discarded :: backlog → two-of-my-test-files-tripped-this-via-31c8

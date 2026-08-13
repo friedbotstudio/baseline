@@ -1,4 +1,4 @@
 !startsub memory_index_resolve
-' @kind class
-Component(memory_index_resolve, "memory-index-resolve", "class")
+' @kind c4_component
+Component(memory_index_resolve, ".claude/skills/memory-index/resolve.mjs", "component", "Derived reverse index, rebuilt on read")
 !endsub

@@ -79,6 +79,14 @@ function verdictOf(report, acId) {
   return m ? m[1] : null;
 }
 
+// The verdict alone cannot tell a resolution earned by real coverage from one
+// earned by prose that merely discusses the id. AC-011 exists because both read
+// `resolved`, so the citation is the only thing that separates them.
+function evidenceOf(report, acId) {
+  const m = report.match(new RegExp(`\\|\\s*ac\\s*\\|\\s*${acId}\\s*\\|\\s*\\w+\\s*\\|([^|]*)\\|`));
+  return m ? m[1].trim() : null;
+}
+
 describe('drift_check working-tree diff sourcing', () => {
   it('test_when_uncommitted_change_references_ac_then_resolved', () => {
     const root = initRepo();
@@ -170,5 +178,62 @@ describe('drift_check working-tree diff sourcing', () => {
     const res = runDrift(root, ['--diff', diffPath]);
     assert.equal(res.status, 0, `expected exit 0, got ${res.status}\n${res.stderr}`);
     assert.equal(verdictOf(readReport(root), 'AC-001'), 'resolved');
+  });
+});
+
+// AC-011 — an AC resolves against implementation and test, never workflow prose.
+//
+// Found live: this ticket's own drift tick reported two of its criteria `resolved`,
+// citing added lines in `docs/audits/swarm-first-production-run-2026-08-09.md`, an
+// untracked report from an earlier session that merely discusses those ids. Both
+// did have real coverage, so the verdicts were right by accident — a criterion with
+// no coverage at all would have passed identically.
+//
+// Their ids are deliberately not spelled here. A file that names a criterion it
+// does not cover becomes the next false witness, since the exclusion is path-based
+// and this file is legitimately scored.
+//
+// `docs/specs/` and `docs/archive/` were already excluded for exactly this reason;
+// the remaining per-workflow report directories were not. Each one gets a case so
+// the exclusion cannot be narrowed back to a single directory unnoticed.
+const REPORT_DIRS = ['docs/audits', 'docs/rca', 'docs/security', 'docs/intake', 'docs/scout', 'docs/research', 'docs/brief'];
+
+describe('drift_check — workflow prose is not evidence (AC-011)', () => {
+  for (const dir of REPORT_DIRS) {
+    it(`test_when_ac_only_in_${dir.replace(/[^\w]/g, '_')}_prose_then_unresolved`, () => {
+      const root = initRepo();
+      writeSpec(root, ['AC-011']);
+      writeFile(root, `${dir}/prior-workflow.md`, 'A report discussing AC-011 at length.\n');
+
+      const res = runDrift(root);
+
+      assert.equal(res.status, 1, `expected exit 1, got ${res.status}\n${res.stderr}`);
+      assert.equal(
+        verdictOf(readReport(root), 'AC-011'),
+        'unresolved',
+        `a report under ${dir}/ describes work; it never implements it, so it must not satisfy an AC`,
+      );
+    });
+  }
+
+  it('test_when_ac_is_in_impl_and_also_in_report_prose_then_evidence_cites_the_impl', () => {
+    const root = initRepo();
+    writeSpec(root, ['AC-011']);
+    // The prose sorts BEFORE the implementation in the untracked walk, so it is
+    // scored first and wins the citation unless it is excluded outright. That
+    // ordering is what made the live report cite an unrelated audit document.
+    writeFile(root, 'docs/audits/prior-workflow.md', 'A report discussing AC-011 at length.\n');
+    writeFile(root, 'src/impl.mjs', '// AC-011 — the real implementation.\nexport const done = true;\n');
+
+    const res = runDrift(root);
+    const report = readReport(root);
+
+    assert.equal(res.status, 0, `expected exit 0, got ${res.status}\n${res.stderr}`);
+    assert.equal(verdictOf(report, 'AC-011'), 'resolved', 'genuine coverage must still resolve — the exclusion must not over-filter');
+    assert.match(
+      evidenceOf(report, 'AC-011'),
+      /the real implementation/,
+      'the cited line must be the implementation, not the report prose — a resolution nobody can trace is not proof',
+    );
   });
 });

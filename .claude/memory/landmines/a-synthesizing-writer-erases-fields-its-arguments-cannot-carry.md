@@ -4,8 +4,8 @@ category: landmines
 scope: [implement, simplify, security]
 governs: .claude/skills/workspace/shards.mjs
 load_bearing: true
-verified-at: 9235a23
-last-touched: 2026-08-07
+verified-at: 79e41cb
+last-touched: 2026-08-13
 ---
 
 - Path: `.claude/skills/workspace/shards.mjs → writeDiagramShard`, and any writer whose output is "a pure function of the arguments".
@@ -27,4 +27,12 @@ So two of three were derivable and one was not. The `subsystem` distinction in t
 
 - **The check that catches it, and it is cheap.** Before routing existing files through a writer, diff one file's parsed arguments against what the writer would emit for it. If any field has no parameter to land in, the writer is lossy for that population — extend the writer or do not use it. The fix here was two optional fields (`technology` defaulting to `kind`, `description` omitted when absent), which kept the writer's prior output byte-identical and made the legacy form round-trip.
 - **The test that proves it stayed fixed.** `tests/system-spec-delta-kind-backfill.test.mjs → test_when_backfilled_shard_is_rewritten_from_its_own_arguments_then_bytes_identical` reads every live shard's arguments back out, re-writes them into a throwaway corpus, and asserts byte-equality. A corpus-wide idempotence assertion is the only one that distinguishes a backfill that CONVERGED on the writer from one that was hand-approximated — the latter passes every state assertion and then gets silently rewritten by the next real write.
-- Sibling: [[materialize-appends-blank-lines-every-run]] and [[sweep-auto-close-round-trips-entries-and-drops-unknown-fields]] are the same defect class — a round-trip that does not preserve its input. Those two were caught after they shipped; this one was caught before, by measuring the arguments instead of trusting the instruction.
+- Sibling: [[materialize-appends-blank-lines-every-run]] and [[sweep-auto-close-round-trips-entries-and-drops-unknown-fields]] are the same defect class — a round-trip that does not preserve its input.
+
+**The 2026-08-07 fix was half a fix, and the other half cost 19 shards.** This entry used to close by saying the defect was caught before it shipped. It was not. Making the writer *able* to carry `technology` and `description` left every CALLER free to omit them, and `delta.mjs`'s `/archive` path passed only `{kind, rootDir}`. Each archive run therefore rewrote its touched shard into the exact three-argument form measured above, one workflow at a time, until 19 of 116 carried the damage. `0d8e776` degraded two; the run that produced this correction found two more already dirty in the tree. Nothing failed, because a writer that renders faithfully from what it was given is not wrong at the sink.
+
+**What the second half had to be.** Capability in the writer is not preservation; preservation has to be the DEFAULT. `writeDiagramShard` now reads the shard on disk and fills any field the caller omitted, so precedence runs caller, then existing, then the historical default — and a caller can only ever ADD information. The defaults that used to be the first choice are now the last. Ship that shape with the capability, or the capability is a parameter nobody passes.
+
+- **Generalise it:** when you widen a lossy writer, ask what happens if the next caller omits the new parameter. If the answer is "the old data loss", you have moved the bug rather than fixed it.
+- Repair path, for when this has already happened: git history is the only lossless source for a field that exists nowhere else on disk. `workspace restore-shards` walks it. The element record is a fallback for a shard that was never rich, never a primary — records carry no `techn`, so a record-first repair finishes what the defect started.
+- Standing guard: `tests/corpus-shard-preservation.test.mjs` scans every live shard and fails on the three-argument form, so the class cannot recur silently a third time.
