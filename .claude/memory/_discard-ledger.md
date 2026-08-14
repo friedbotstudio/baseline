@@ -162,3 +162,5 @@
 - promoted :: .claude/skills/memory-sync/census-measures.mjs → landmarks.md
 - discarded :: backlog → and-the-open-backlog-entry-roadmap-t11-quotes-0f09
 - discarded :: backlog → no-approved-ac-covers-it-and-the-sibling-b2ed
+- discarded :: backlog → task-23-6ecc
+- discarded :: backlog → it-s-the-sweep-predicate-follow-up-you-eee9

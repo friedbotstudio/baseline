@@ -1,0 +1,58 @@
+{
+  "request": "Make memory-sync/sweep.mjs derive its staleness rule from memory-index/categories.mjs instead of hardcoding a second copy. sweep.mjs:52 hardcodes CANONICAL_FILES (omitting `constraints`), :58 hardcodes STALE_EXEMPT_FILES, and :249 omits the SUPERSESSION_DRIVEN guard that hooks/lib/memory_session_start.mjs:192 applies. Measured at 1b2b0c7: sweep reports 287 stale vs the hook's 248, surfacing 40 `decisions` entries that @decision:decay-is-per-category-three-reasons-2026-08-04 says are never age-stale. Add a test pinning the two isStale predicates equal over the live store, and correct memory-sync/SKILL.md Step 0c, which claims the helper already uses the hook's predicate.",
+  "slug": "sweep-staleness-parity",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "The fix repeats a pattern already shipped twice in this repo. (1) hooks/lib/memory_session_start.mjs:18-24 imports CANONICAL, STALE_EXEMPT, SUPERSESSION_DRIVEN and closureFieldFor from .claude/skills/memory-index/categories.mjs — the registry sweep.mjs should read and does not. (2) Commit 12effd8 (2026-08-14) applied the same single-rule-one-home shape to the character doctrine: checks/skill-character.mjs stopped declaring its own PARTS and imported it from character.mjs, pinned by tests/character-doctrine-render.test.mjs test_when_check_source_read_then_parts_is_imported_not_redeclared. This workflow copies that shape, including the anti-redeclaration test.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "simplify",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "completed_notes": {
+    "origin": "Found during the character-guard-and-triage workflow while attempting the /memory-sync Step 0c stale sweep. The sweep was halted before mutating anything; no memory entry was touched.",
+    "measurement": "At 1b2b0c7 sweep.mjs isStale yields 287 stale entries (landmarks 117, libraries 14, decisions 40, landmines 94, conventions 21, pending-questions 1); the session-start hook yields 248. The 40 decisions are exempt under SUPERSESSION_DRIVEN; constraints is absent from sweep's CANONICAL_FILES entirely, so sweep can never see it.",
+    "blocked-work": "The 247-entry stale sweep the user requested stays unrun until this lands.",
+    "document-kept-against-gate": "rightsize-gate voted to skip document (no doc path in the diff). Overridden in main context: the request commits to correcting memory-sync/SKILL.md Step 0c, and that edit cannot appear in a pre-document diff, so the gate would always vote skip. Honouring it would drop committed scope.",
+    "document-scope-widened": "The reflective check surfaced site-src/memory.njk, which claimed 'Three categories sit outside that rule' and then described one of the three (constraints) as ageing. categories.mjs decision B3 puts constraints in neither exempt set, so two are exempt. Corrected, plus an adjacent stale count in the same section ('the other six files' -> seven; eight categories, one of which uses resolved-at). Both predate constraints becoming the eighth category. Not in the original request; fixed because they are verified-false public claims about the exact rule this workflow repaired. Every other count on the page audits clean. Delegates: technical-writer (measure 2.08/4.5 PASS, reader-level 7.6/11 PASS), copywriting (clean, no edit)."
+  },
+  "created_at": 1786707730,
+  "updated_at": 1786710079,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "oracle": "rightsize-gate",
+      "reason": "2 files / 34 lines, net deletion of duplicated constants; nothing to clean",
+      "measured": {
+        "files": 2,
+        "lines": 34
+      }
+    }
+  ]
+}

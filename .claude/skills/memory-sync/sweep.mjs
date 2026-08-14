@@ -25,6 +25,13 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './shape.mjs';
 import { strandedFieldBullets } from '../memory-index/lift-fields.mjs';
+import {
+  CANONICAL,
+  PENDING_FILE,
+  STALE_EXEMPT,
+  SUPERSESSION_DRIVEN,
+  closureFieldFor,
+} from '../memory-index/categories.mjs';
 
 export class UnrepairedCorpusError extends Error {
   constructor(message) {
@@ -49,13 +56,6 @@ export function assertRelifted(memdir) {
     + `Sweeping now would curate against a stale-set the other readers cannot see. Sample: ${sample}`);
 }
 
-const CANONICAL_FILES = [
-  'landmarks', 'libraries', 'decisions',
-  'landmines', 'conventions', 'pending-questions',
-  'backlog',
-];
-const PENDING_FILE = 'pending-questions';
-const STALE_EXEMPT_FILES = new Set(['backlog']);
 const STALE_COMMITS = 30;
 const STALE_DAYS = 30;
 const BACKLOG_DECAY_DAYS_DEFAULT = 90;
@@ -229,10 +229,6 @@ function todayIso() {
 
 // --- Domain: closure semantics ----------------------------------------------
 
-function closureFieldFor(name) {
-  return name === PENDING_FILE ? 'resolved-at' : 'superseded-at';
-}
-
 function invariantFieldFor(name) {
   return name === PENDING_FILE ? 'superseded-at' : 'resolved-at';
 }
@@ -245,9 +241,13 @@ function proseMatches(block) {
   return PROSE_PATTERNS.some(p => p.test(block));
 }
 
-function isStale(block, name, head, root) {
-  if (STALE_EXEMPT_FILES.has(name)) return false;
+export function isStale(block, name, head, root) {
+  if (STALE_EXEMPT.has(name)) return false;
   if (isClosed(block, name)) return false;
+  // A supersession-driven category expires by being superseded, never by elapsed
+  // time. Omitting this guard is what made the sweep surface 40 open decisions
+  // the session-start hook never considered stale.
+  if (SUPERSESSION_DRIVEN.has(name)) return false;
   const stamp = readFieldValue(block, 'verified-at');
   if (head && stamp && stamp !== 'HEAD') {
     const dist = commitDistance(root, stamp);
@@ -266,7 +266,7 @@ function isStale(block, name, head, root) {
 
 function modeAutoClose(memdir) {
   const report = { closed: 0, malformed: [], invariant_violation: [] };
-  for (const name of CANONICAL_FILES) {
+  for (const name of CANONICAL) {
     const text = readFile(memdir, name);
     if (!text) continue;
     const valid = closureFieldFor(name);
@@ -315,7 +315,7 @@ const stdinReplies = (() => {
 
 function modeProseScan(memdir) {
   const report = { surfaced: 0, closed_by_confirm: 0, kept: 0, deferred: 0 };
-  for (const name of CANONICAL_FILES) {
+  for (const name of CANONICAL) {
     const text = readFile(memdir, name);
     if (!text) continue;
     let newText = text;
@@ -439,7 +439,7 @@ function modeStaleSweep(memdir) {
   const root = dirname(dirname(memdir));
   const head = headSha(root);
   const today = todayIso();
-  for (const name of CANONICAL_FILES) {
+  for (const name of CANONICAL) {
     const text = readFile(memdir, name);
     if (!text) continue;
     let newText = text;

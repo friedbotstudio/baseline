@@ -182,7 +182,7 @@ function splitBlocks(body) {
 }
 
 // @decision:decay-is-per-category-three-reasons-2026-08-04
-function isStale(block, name, head, root) {
+export function isStale(block, name, head, root) {
   if (STALE_EXEMPT.has(name)) return false;
   if (getField(block, closureFieldFor(name))) return false;
   // A supersession-driven category expires by being superseded, never by elapsed
