@@ -28,10 +28,12 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
    **It must run before Step 4, for the same reason Step 2 does.** `archive.sh` moves `docs/specs/<slug>.md` into the bundle; after that `resolveSpecPath` returns `null`, the `## System delta` table is never read, and every array below comes back empty — which is byte-identical to a spec that declared nothing. Verify first, or a real drift archives silently green. The `specMissing` field exists to make that failure loud if the order is ever changed back: when it is `true`, the empty arrays mean *the table was not read*, not *the table was clean*.
 
    ```
-   node .claude/skills/workspace/cli.mjs delta --slug <slug> --touched <comma,separated,paths> --json   # wraps workspace/delta.mjs -> verifyAndApplyDelta
+   node .claude/skills/workspace/cli.mjs delta --slug <slug> --touched '["path/one.mjs","path/two.mjs"]' --json   # wraps workspace/delta.mjs -> verifyAndApplyDelta
    ```
 
-   **Pass the paths as one quoted JSON array, never as bare space-separated words.** The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces and matches no anchor. `verifyAndApplyDelta` reports that case as `inputEmpty: true`, distinct from an honest "nothing matched" — but a single quoted argument is immune to word-splitting in both zsh and bash, so pass one and the distinction never has to be read.
+   **Pass the paths as one quoted argument, never as bare space-separated words.** Both a quoted JSON array (above) and a quoted comma-separated list (`--touched 'a.mjs,b.mjs'`) parse. The repo's default shell is zsh, which does not word-split an unquoted `$VAR`, so a variable holding N paths arrives as a *single* argument containing spaces and matches no anchor. `verifyAndApplyDelta` reports that case as `inputEmpty: true`, distinct from an honest "nothing matched" — but a single quoted argument is immune to word-splitting in both zsh and bash, so pass one and the distinction never has to be read.
+
+   The signature previously named the comma form while this paragraph instructed the array form in bold, and only the comma form parsed. Measured 2026-08-13 on one spec and tree: the array gave confirmed 0 / drift 6, the comma list gave confirmed 6 / drift 0, and `inputEmpty` was `false` both times — so the field that separates malformed input from an honest no-match was defeated by following the instruction. Accepting both forms is what closed it.
 
    Scope the list to the **governed surface** (`memory.architecture_map.governed_surface`) — its roots, its code extensions, minus its excluded segments and trees. Corpus files under `docs/system/` are the model itself, not governed surface, so a relocation of the corpus contributes no touched paths.
 

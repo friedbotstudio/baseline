@@ -221,6 +221,28 @@ node .claude/skills/memory-index/scope-narrow.mjs report   # high-confidence gov
 
 `proposeNarrowing` proposes and decides nothing; you confirm each one (Article II). `applyNarrowing` rewrites frontmatter only and leaves body prose byte-identical.
 
+## Step 4.7 — Re-measure the census literals this flush moves, or refuse
+
+A count derived from the store is a **census**, not an invariant: it moves whenever an entry legitimately changes what the store holds. Assertions elsewhere in the repo pin several of those counts, and the flush that moves one is the only call that knows it moved. Leaving it stale pushes the cost onto whoever next runs the suite, in a workflow that had nothing to do with the write — eight such corrections landed in one two-commit session, and two of the eight were caused by writing the very entries that described the pattern.
+
+Before writing canonical entries, call the gate with the sites this project declares:
+
+```
+node -e "import('./.claude/skills/memory-sync/census-gate.mjs').then(m => console.log(JSON.stringify(m.measureCensusMovement({rootDir: process.cwd(), sites, pendingEntries}))))"
+```
+
+It returns `{moved, remeasured, refused}` and has exactly three outcomes:
+
+| Outcome | Meaning | What you do |
+|---|---|---|
+| `moved: []` | this flush moves no pinned count | proceed to Step 5 |
+| `remeasured: true` | every moved literal was rewritten in this same commit | proceed, and name the moved sites in the commit body |
+| `refused: true` | a site is missing, unreadable, or its symbol did not resolve | **stop.** Do not write canonical entries. Surface the named sites so the curator settles them first |
+
+**Refusing is the correct outcome, not a failure.** Writing the store while leaving an assertion that describes it stale is the one result this gate exists to prevent. A `refused` verdict names every offending site, so the fix is a decision the curator makes rather than a search they run.
+
+A **budget** is not a census and must never be routed through this gate. Re-measuring a policy cap to its exact current value silently converts it into a zero-headroom tripwire that the next flush trips; that has happened five times to `PHASE_BUDGETS.spec` alone. A census is re-measured; a budget is raised deliberately, with stated headroom, by a human.
+
 ## Step 5 — Reset the pending body
 
 After all promotion/discard/defer decisions are written, **rewrite `_pending.md`** to the empty skeleton:

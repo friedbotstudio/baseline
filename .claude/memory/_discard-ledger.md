@@ -157,3 +157,7 @@
 - promoted :: three files exceed the code-structure line budget → backlog.md
 - promoted :: document.surfaces `**/README.md` obliges prose on files prose must refuse → backlog.md
 - promoted :: archive SOP's --touched guidance contradicts the CLI it documents → backlog.md
+- promoted :: .claude/skills/harness/assemble-context.mjs → landmarks.md
+- promoted :: .claude/skills/memory-sync/census-gate.mjs → landmarks.md
+- promoted :: .claude/skills/memory-sync/census-measures.mjs → landmarks.md
+- discarded :: backlog → and-the-open-backlog-entry-roadmap-t11-quotes-0f09
