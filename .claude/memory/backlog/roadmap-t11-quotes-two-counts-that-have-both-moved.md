@@ -2,12 +2,13 @@
 key: roadmap-t11-quotes-two-counts-that-have-both-moved
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-13
 verified-at: be0a351
 last-touched: 2026-08-13
 governs: docs/roadmap-execution-plan.md
+superseded-at: 2026-08-14
 ---
 
 > `docs/roadmap-execution-plan.md` Epic 6 T11 quotes two counts in its prose: the number of landmarks a test locks at `scope: [scout]`, and the number of facts scout surfaces. Both are copies of live state and both are wrong.

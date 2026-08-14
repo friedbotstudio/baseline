@@ -1,6 +1,7 @@
 ---
 key: frontmatter-values-reach-regex-and-structured-writes-unescaped
 category: landmines
+load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/index-io.mjs, .claude/skills/memory-index/resolve.mjs, .claude/skills/memory-sync/ledger.mjs, .claude/skills/memory-index/constraints.mjs
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - **Unanchored `/m` over a whole file** — `backfillScopeAny()` probed `^scope:` with `/m` across the entire shard, matching a BODY line that began `scope:` and skipping the entry. Entries in this corpus routinely quote frontmatter keys while documenting the schema, so this collision is ordinary. Split the frontmatter block first; the store already owns a parser.
 - **Unvalidated key into a line-delimited file** — `ledger.mjs → recordCuration()` interpolated `key` into `- <disposition> :: <key>\n`. A newline wrote a second, forged row, and because `decidedKeys()` feeds `memory_stop`'s suppression set, a forged key **permanently silences an unrelated future candidate**. `disposition` was bounded by a closed set; `key` was not. Same class in `constraints.mjs → renderConstraint()`, now using `assertSafeFactKey`.
 - Reusable validator: `assertSafeFactKey` in `.claude/skills/memory-index/migrate.mjs` (`/^[a-z0-9][a-z0-9-]*$/`). Reuse it rather than writing a second one.
-
-- load_bearing: true

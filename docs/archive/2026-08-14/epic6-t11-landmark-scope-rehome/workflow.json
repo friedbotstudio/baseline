@@ -1,0 +1,61 @@
+{
+  "request": "Epic 6 T11: re-home default-scope landmarks and strip the quoted counts",
+  "slug": "epic6-t11-landmark-scope-rehome",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md:121 (Epic 6 T11); spec AC-009 tagged the deferral deferred: risk with a test locking the count at 87; backlog roadmap-t11-quotes-two-counts-that-have-both-moved",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [
+    {
+      "phase": "implementation",
+      "alternate": "swarm",
+      "reason": "12 components share write-set-profile.mjs as a write target; no conflict-free wave partition exists"
+    }
+  ],
+  "source_backlog_keys": [
+    "roadmap-t11-quotes-two-counts-that-have-both-moved"
+  ],
+  "roadmap_tasks": [
+    "E6-T11"
+  ],
+  "created_at": 1786721595,
+  "updated_at": 1786726960,
+  "rightsize_base": [],
+  "write_surface": [
+    ".claude/hooks/lib/**",
+    ".claude/hooks/process_lifecycle_guard.mjs",
+    ".claude/skills/spec/optimize.mjs",
+    ".claude/skills/triage/SKILL.md",
+    "docs/roadmap-execution-plan.md",
+    "tests/**"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

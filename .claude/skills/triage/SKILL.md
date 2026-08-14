@@ -57,6 +57,7 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
      "novelty_evidence": "<the cited evidence from Step 0>",
      "track_reason": "<required only when the pick is heavier than the leanest safe track>",
      "skip_brainstorm": <boolean — written explicitly on EVERY workflow per Step 0>,
+     "write_surface": ["<repo-relative glob>", ...],
      "exceptions": ["<phase>", ...],
      "completed": [],
      "skipped_alternates": [],
@@ -83,6 +84,8 @@ Triage the user's request and set up `.claude/state/workflow.json` so downstream
    - **A track's `internal_phases[]`** — conditionals the track's own skill resolves at runtime into `completed` (it ran) or `exceptions` (its trigger did not fire). At triage time the diff does not exist yet, so derivation cannot pre-judge them.
 
    The `track_id` value is the `track_id` field of the Track you picked in step 5c above (one of `intake-full`, `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, OR a project-declared selectable Track from `.claude/workflows.jsonl`). The legacy pre-§18 field `entry_phase` is NOT written — downstream skills (intake / tdd / chore / harness) read `track_id` directly. Pre-§18 workflow.json files (those that still carry `entry_phase`) are auto-migrated by harness preflight Step 3a via the shipped `.claude/skills/harness/workflow-migrator.js` mirror (synced from `src/cli/workflow-migrator.js` at build time by `scripts/build-template.sh` Stage 0b).
+
+   The `write_surface` field declares the repo-relative globs this workflow expects to touch. It is the oracle the phase-scoped memory filter narrows against (`hooks/lib/write-surface.mjs`): a scout write surfaces the landmarks governing those paths rather than every entry carrying the category-default `scope: [scout]`. Populate it from the paths the request NAMES — never infer paths from prose, because a confidently wrong surface hides facts silently, which is strictly worse than surfacing all of them. **Omit the field when the request names no paths.** Omission is the fail-open default: an absent, empty, or malformed `write_surface` narrows nothing and every scoped entry surfaces exactly as it does today. Absolute paths and `..` segments are dropped before any match, so a surface can never reach outside the repository.
 
    The `source_backlog_keys` field is optional. When the user's request explicitly names one or more backlog entries this workflow picks up (the common framing is a `Source:` line listing backlog keys), populate the array with those keys. `/commit` (Phase 11) reads this field and invokes `sweep.mjs --mode stamp-closure` after the commit lands, stamping each named entry with `status: picked-up` + `superseded-at: <today>` so the next `/memory-sync` Step 0a auto-closes them. Absent / empty array → `/commit` skips the stamp step entirely (backward-compatible for any workflow that pre-dates the field). `/triage` does NOT auto-detect backlog keys from free-form prose — the user populates the field (or names them in the triage prompt and you populate it during step 4).
 5. **Seed the workflow tasklist** — workflows.jsonl-driven (post-§18; per CLAUDE.md Article IV amendment + seed.md §18).

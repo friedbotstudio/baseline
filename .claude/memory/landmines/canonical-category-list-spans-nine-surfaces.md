@@ -1,6 +1,8 @@
 ---
 key: canonical-category-list-spans-nine-surfaces
 category: landmines
+rests_on: zero-runtime-dependencies
+load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/**, .claude/skills/audit-baseline/**, site-src/_data/memorynotes.json, tests/helpers/memory-fixtures.mjs
 verified-at: 8201af6
@@ -13,6 +15,3 @@ last-touched: 2026-08-14
 - Hard two: `skills/audit-baseline/memory-shape.mjs` gates on `categories === CANONICAL.length`, so a correctly-registered store reads as an audit FAIL. `site-src/_data/memorynotes.json` is checked by `site-src/_data/roster.cjs`, which throws `memorynotes.json out of sync with the audit's CANONICAL list` and renders zero pages — this takes the whole docs-site test suite down with it.
 - A 10th surface is a TEST, not a reader: `tests/memory-shard-audit.test.mjs` seeds a full store and asserts the count. It now derives both from `CANONICAL`; if you see it hardcode a number again, that is the regression.
 - Trap within the trap: editing anything under `.claude/skills/memory-sync/` or `.claude/skills/audit-baseline/` invalidates the manifest hash, and `test.cmd` runs the FULL audit on every `.claude/**` write. Run `npm run manifest:refresh` immediately, not at the end, or every later edit reads a `hash mismatch` caused by the earlier one.
-
-- rests_on: zero-runtime-dependencies
-- load_bearing: true

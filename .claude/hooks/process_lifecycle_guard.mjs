@@ -20,6 +20,7 @@ import {
   logLine,
 } from './lib/common.mjs';
 import { surfaceScopedMemory } from './lib/scoped-memory.mjs';
+import { readWriteSurface } from './lib/write-surface.mjs';
 import {
   surfaceGovernedMemory,
   renderGovernedHits,
@@ -114,7 +115,8 @@ function surfacePhaseScopedMemory(filePath) {
   // it — the whole point of ticket C, and done without a 27th hook.
   if (!phase) surfaceGovernedMemoryFor(filePath);
   const rootDir = join(CLAUDE_DOTDIR, '..');
-  const hits = surfaceScopedMemory(phase, { rootDir });
+  const writeSurface = readWriteSurface({ rootDir });
+  const hits = surfaceScopedMemory(phase, { rootDir, writeSurface });
   if (!hits.length) emitAllow();
   // Small result sets show full verbatim (targeted surfacing); larger sets show a
   // bounded index of `category/key — hook` so a spec write is not buried under

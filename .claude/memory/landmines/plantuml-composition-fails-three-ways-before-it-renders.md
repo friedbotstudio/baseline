@@ -1,6 +1,7 @@
 ---
 key: plantuml-composition-fails-three-ways-before-it-renders
 category: landmines
+load_bearing: true
 scope: []
 governs: .claude/skills/workspace/render.mjs, .claude/skills/workspace/shards.mjs
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - **3. `Unable to access jarfile` — the cwd fix broke the jar path.** Running from `memDir` also re-resolves a *relative* `jarPath` against `memDir`, so a caller passing the repo-relative `.claude/bin/plantuml.jar` gets a jar error instead of a render. `resolve(jarPath)` BEFORE the spawn. The render test only passed because it happened to use an absolute path.
 - The pattern across all three: each fix moved the failure one layer down, and the layer below was only reachable by actually running the JVM. **Run the opt-in test after touching this path** (`PLANTUML_TESTS=1 node --test tests/workspace-shards.test.mjs`) — a green default suite says nothing about rendering.
 - `%loadfile` does not exist on `plantuml@1.2026.2` (rejected as an unknown built-in), which is what kept a `title`-injection finding at MEDIUM rather than confirmed file disclosure. That is a property of this jar version, not a guarantee — re-test if the jar is upgraded.
-
-- load_bearing: true

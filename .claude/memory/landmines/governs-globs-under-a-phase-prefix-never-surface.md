@@ -1,6 +1,7 @@
 ---
 key: governs-globs-under-a-phase-prefix-never-surface
 category: landmines
+load_bearing: true
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/hooks/lib/scoped-memory.mjs
 verified-at: 8201af6
@@ -12,5 +13,3 @@ last-touched: 2026-08-14
 - **How to avoid it.** Write `governs:` globs against **source** paths. To surface an entry when a workflow artifact is authored, use `scope: <phase>` — that is the vocabulary the phase trigger reads. `scope:` means workflow phases; `governs:` means path globs; one field never covers the other's job (epic decision D3).
 - **Consequence if ignored.** The failure is silent in the worst direction: no error, no empty-result warning, just an entry that never reaches the person editing the file it governs — the exact defect ticket C existed to close, re-created one prefix over.
 - Companion: `.claude/hooks/process_lifecycle_guard.mjs:50`, `.claude/hooks/lib/governed-memory.mjs:51`.
-
-- load_bearing: true

@@ -1,6 +1,7 @@
 ---
 key: security-fixes-are-per-call-site-and-new-modules-inherit-none
 category: landmines
+load_bearing: true
 scope: [security, integrate, tdd]
 governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-sync/**
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - **Practical rule.** When you add ANY module that writes a fact file, shard, or frontmatter, grep for `assertSafeFactKey` and `assertSafeFieldValue` and apply both before you write the first line — key before path construction, values and field NAMES before rendering. Do not assume the helper you are copying from is already hardened; `writeConstraint` was the hardened one and was still holed.
 - **Do not "fix" this by normalizing.** `canonicalSlug` in `common.mjs` is a NORMALIZER, not a validator; using it here MASKS a traversal by silently writing to a different path. REJECT, never repair.
 - The shared writer that would end this class is real but non-trivial: the seven writers span three different operations (render new shard / patch existing frontmatter / write flat canonical file), so one API either grows modes or covers a subset and creates false confidence. It needs its own spec. Backlog.
-
-- load_bearing: true

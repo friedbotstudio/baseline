@@ -1,6 +1,7 @@
 ---
 key: a-cycle-that-adds-a-gate-must-assert-the-consumer-calls-it
 category: landmines
+load_bearing: true
 scope: [tdd, integrate, document]
 governs: .claude/skills/**,tests/**
 verified-at: 8201af6
@@ -18,5 +19,3 @@ last-touched: 2026-08-14
 - **Practical rule.** When a cycle adds a gate, a flag, or a store, write a test that asserts the CONSUMER reaches for it — grep the consumer for the call, and assert ordering when order matters (the flag check must precede the call it gates). Then prove the test has teeth by mutating the producer and confirming it goes red. A test that only proves the gate computes the right answer proves nothing about whether the gate runs.
 - **For a rollout step, assert the end state on the live tree, not in a temp dir.** `applyContribution` against `mkdtemp` proves the function works; it says nothing about whether the repository was actually seeded. The check is `readAll('.claude/memory').elements.length > 0`, run against the real store.
 - Companion oracles that will NOT catch this: [[drift-check-resolves-acs-by-literal-mention-not-implementation]], [[reader-level-grades-rendered-html-so-markdown-passes-vacuously]], and `document-gate`'s git-diff derivation (blind to untracked files, and page-granular so a behaviour change with no page change reads CLEAN).
-
-- load_bearing: true

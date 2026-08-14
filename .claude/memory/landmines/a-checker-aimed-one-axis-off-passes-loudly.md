@@ -1,6 +1,7 @@
 ---
 key: a-checker-aimed-one-axis-off-passes-loudly
 category: landmines
+load_bearing: true
 scope: [spec, scenario, implement, simplify, integrate]
 governs: tests/**, .claude/skills/**
 verified-at: be0a351
@@ -29,5 +30,3 @@ last-touched: 2026-08-13
 - Related: [[anti-drift-tests-compare-against-the-live-oracle-b4d2]] is the sub-case where the two things are a literal and a live count. This entry is the general form.
 - **Not** the same as [[a-wide-governs-glob-ripples-into-unrelated-literals]], though this entry's own `governs:` glob produced that one. There, every checker is aimed correctly and reports honestly; what surprises is the blast radius of a declaration. Aim the checker for this entry; narrow the glob for that one.
 - Related: [[a-synthesizing-writer-erases-fields-its-arguments-cannot-carry]] is the instance that cost the most (19 shards).
-
-- load_bearing: true

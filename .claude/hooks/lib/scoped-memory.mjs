@@ -7,6 +7,7 @@
 import { join } from 'node:path';
 import { asArray } from './frontmatter-parser.mjs';
 import { extractVerbatim, extractInterpretation, firstHook } from './entry-body.mjs';
+import { pathOverlapsWriteSet } from './write-set-profile.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
 
 import { CANONICAL as CANONICAL_CATEGORIES, readLoadBearing } from '../../skills/memory-index/categories.mjs';
@@ -21,12 +22,37 @@ function scopedFactsIn(entries, category, phase) {
       key: entry.key,
       category,
       load_bearing: readLoadBearing(entry.fields),
+      paths: entryPaths(entry),
       verbatim: extractVerbatim(entry.body),
       interpretation: extractInterpretation(entry.body),
       hook: firstHook(entry.body),
     });
   }
   return hits;
+}
+
+// The path signal a hit can be narrowed by. `governs:` is the declared answer;
+// a landmark's `key:` is a repo path by convention (`<path>:<line>`), which is
+// what makes the 92 category-default landmarks filterable at all — only 8 of
+// them declare `governs:`.
+//
+// An entry with neither returns [], and narrowToWriteSurface keeps it. A missing
+// signal is not evidence of irrelevance, and hiding a fact for lack of metadata
+// is the one failure this filter must never produce.
+export function entryPaths(entry) {
+  const governs = asArray(entry?.fields?.governs);
+  if (governs.length) return governs;
+  const key = entry?.key;
+  if (typeof key !== 'string' || !key.includes('/')) return [];
+  return [key.replace(/:\d+$/, '')];
+}
+
+function narrowToWriteSurface(hits, writeSurface) {
+  if (!Array.isArray(writeSurface) || !writeSurface.length) return hits;
+  return hits.filter((hit) => {
+    if (!hit.paths.length) return true;
+    return hit.paths.some((path) => pathOverlapsWriteSet(path, writeSurface));
+  });
 }
 
 // Ranking, not filtering. `process_lifecycle_guard` renders at most INDEX_CAP rows,
@@ -46,7 +72,10 @@ function byLoadBearingThenKey(a, b) {
 // surfacing feature would appear to work while never firing. resolveCategory
 // normalizes both shapes; the hit shape (verbatim + interpretation + hook) is
 // unchanged, because Art. IX.7 requires the VERBATIM be surfaced, not a summary.
-export function surfaceScopedMemory(phase, { rootDir } = {}) {
+// `writeSurface` is optional and its absence is the fail-open path, so every
+// existing two-argument call site keeps working unchanged. Narrowing runs
+// between collection and ranking: it drops hits, and never reorders survivors.
+export function surfaceScopedMemory(phase, { rootDir, writeSurface } = {}) {
   if (!phase || !rootDir) return [];
   const memRoot = join(rootDir, '.claude/memory');
   const hits = [];
@@ -54,5 +83,5 @@ export function surfaceScopedMemory(phase, { rootDir } = {}) {
     const { entries } = resolveCategory(memRoot, category);
     hits.push(...scopedFactsIn(entries, category, phase));
   }
-  return hits.sort(byLoadBearingThenKey);
+  return narrowToWriteSurface(hits, writeSurface).sort(byLoadBearingThenKey);
 }

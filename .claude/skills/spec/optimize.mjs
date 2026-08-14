@@ -14,7 +14,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { extractWriteSet } from '../../hooks/lib/write-set-profile.mjs';
+import { extractWriteSet, patternsOverlap } from '../../hooks/lib/write-set-profile.mjs';
 import { parseDelta } from '../workspace/delta.mjs';
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
@@ -69,16 +69,20 @@ function elementFrom(path) {
   return meta.id ? { elementId: meta.id, anchor: meta.anchor ?? '', kind: meta.kind ?? '' } : null;
 }
 
+// Anchor and write_set are both glob-ish path patterns, so both call sites below
+// ask the pattern-against-pattern question. `patternsOverlap` is the
+// bidirectional predicate; `pathOverlapsWriteSet` beside it in the same module is
+// the one-directional one, and they are not interchangeable here.
 function undeclaredElements(elements, writeSet, declared) {
   const named = new Set(declared.map((row) => row.elementId));
   return elements
-    .filter((el) => !named.has(el.elementId) && overlapsWriteSet(el.anchor, writeSet))
+    .filter((el) => !named.has(el.elementId) && writeSet.some((p) => patternsOverlap(el.anchor, p)))
     .map((el) => ({ elementId: el.elementId, anchor: el.anchor, reason: 'write_set touches this element but no System delta row names it' }));
 }
 
 function reuseCandidates(elements, writeSet) {
   return elements
-    .filter((el) => overlapsWriteSet(el.anchor, writeSet))
+    .filter((el) => writeSet.some((p) => patternsOverlap(el.anchor, p)))
     .map((el) => ({ elementId: el.elementId, anchor: el.anchor, reason: 'an element already models this anchor — extend it rather than building alongside it' }));
 }
 
@@ -89,22 +93,3 @@ function danglingRows(declared, elements) {
     .map((row) => ({ elementId: row.elementId, anchor: row.anchor, reason: `delta row \`${row.verb}\` names an element id that does not resolve under docs/system/elements/` }));
 }
 
-// Anchor and write_set are both glob-ish path patterns. Two patterns overlap when
-// their non-wildcard directory prefixes are a prefix of one another — comparing
-// the literal strings would miss `.claude/skills/alpha/*.mjs` against
-// `.claude/skills/alpha/**`, which name the same surface.
-function overlapsWriteSet(anchor, writeSet) {
-  const base = directoryPrefix(anchor);
-  if (!base) return false;
-  return writeSet.some((pattern) => {
-    const other = directoryPrefix(pattern);
-    return Boolean(other) && (base.startsWith(other) || other.startsWith(base));
-  });
-}
-
-function directoryPrefix(pattern) {
-  const cut = pattern.search(/[*?[]/);
-  const head = cut === -1 ? pattern : pattern.slice(0, cut);
-  const trimmed = head.replace(/[^/]*$/, '');
-  return trimmed.replace(/^\.\//, '');
-}

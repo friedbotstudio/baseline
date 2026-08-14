@@ -27,13 +27,20 @@ function expandBraces(globs) {
   return out;
 }
 
-function globToRegex(g) {
+// A run of N stars is `**` in every glob dialect, so the whole run is consumed
+// and emitted once. Emitting per-star produced adjacent unbounded groups
+// (`.*[^/]*.*…`), and a 60-star pattern then backtracked for 133,913 ms against
+// a 400-character path (CWE-1333, security review 2026-08-14). Collapsing is
+// normalisation of an equivalent form — it resolves to the same surface — which
+// is why it is safe here where repairing a traversal would not be.
+export function globToRegex(g) {
   let out = '';
   for (let i = 0; i < g.length; i++) {
     const c = g[i];
     if (c === '*') {
-      if (g[i + 1] === '*') { out += '.*'; i++; }
-      else out += '[^/]*';
+      const start = i;
+      while (g[i + 1] === '*') i++;
+      out += i > start ? '.*' : '[^/]*';
     } else if (c === '?') out += '[^/]';
     else if ('.+()|^$\\[]{}'.includes(c)) out += '\\' + c;
     else out += c;
@@ -46,6 +53,46 @@ function matchesAnyGlob(path, globs) {
     if (globToRegex(g).test(path)) return true;
   }
   return false;
+}
+
+// The shared primitive under both overlap predicates below: a pattern's
+// non-wildcard directory head. Hoisted out of spec/optimize.mjs so the two
+// callers rest on one implementation rather than two that can drift.
+export function directoryPrefix(pattern) {
+  if (typeof pattern !== 'string') return '';
+  const cut = pattern.search(/[*?[]/);
+  const head = cut === -1 ? pattern : pattern.slice(0, cut);
+  const trimmed = head.replace(/[^/]*$/, '');
+  return trimmed.replace(/^\.\//, '');
+}
+
+// Glob against glob: do two patterns name overlapping surfaces? Bidirectional,
+// because neither side is more specific than the other — this is what
+// spec/optimize.mjs asks of an element anchor against a spec write_set.
+export function patternsOverlap(a, b) {
+  const left = directoryPrefix(a);
+  const right = directoryPrefix(b);
+  if (!left || !right) return false;
+  return left.startsWith(right) || right.startsWith(left);
+}
+
+// Concrete path against a declared surface: is this file inside it? ONE-directional
+// on purpose. Under the bidirectional rule a surface naming the single file
+// `.claude/hooks/lib/scoped-memory.mjs` would match every sibling in that
+// directory, and the relevance filter would narrow nothing.
+export function pathOverlapsWriteSet(path, patterns) {
+  if (typeof path !== 'string' || !path || !Array.isArray(patterns) || !patterns.length) return false;
+  const strings = patterns.filter((p) => typeof p === 'string' && p);
+  if (matchesAnyGlob(path, strings)) return true;
+  return strings.some((pattern) => denotesDirectory(pattern) && path.startsWith(directoryPrefix(pattern)));
+}
+
+// The prefix fallback exists so a surface can name a bare directory
+// (`.claude/hooks/`) without a glob. It must NOT fire for a surface member that
+// names one file: `directoryPrefix` would widen that file to its whole
+// directory, and every sibling would read as inside the surface.
+function denotesDirectory(pattern) {
+  return pattern.endsWith('/') || /[*?[]/.test(pattern);
 }
 
 // Exported for the same reason REF_WELL_FORMED is shared: a caller holding its

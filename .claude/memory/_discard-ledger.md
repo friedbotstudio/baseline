@@ -164,3 +164,5 @@
 - discarded :: backlog → no-approved-ac-covers-it-and-the-sibling-b2ed
 - discarded :: backlog → task-23-6ecc
 - discarded :: backlog → it-s-the-sweep-predicate-follow-up-you-eee9
+- promoted :: .claude/hooks/lib/write-surface.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-small-and-well-bounded-reject-524d

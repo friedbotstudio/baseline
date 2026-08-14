@@ -1,6 +1,7 @@
 ---
 key: writeconstraint-blind-overwrites-the-entry-it-updates
 category: landmines
+load_bearing: true
 scope: [memory-sync]
 governs: .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/lib/argv.mjs
 verified-at: 79e41cb
@@ -24,5 +25,3 @@ key / category / state / state_verified_at / governs
 - **How to survive it today:** read the entry first, keep its bytes, and after calling the writer restore `scope:`, `verified-at:`, `last-touched:` and the body by hand. `/memory-sync` is the sanctioned curator, so writing the file directly from that phase is legitimate; do not reach for the CLI expecting an update.
 - **The real fix, when someone takes it:** make `writeConstraint` read the existing entry and merge, preserving unknown frontmatter and the body unless a caller explicitly replaces them; and add `verified-at` to `VALUE_FLAGS`. Both are small. Neither has a test today, which is why a data-destroying writer reads as working.
 - **Why it went unnoticed:** the writer's job is registration-gated (`UnregisteredCategoryError`, AC-010), and the guard it carries is about the CATEGORY, not the CONTENT. A loud guard on one axis reads as care on every axis.
-
-- load_bearing: true
