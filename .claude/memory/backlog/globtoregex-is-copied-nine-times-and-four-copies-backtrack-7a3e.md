@@ -2,12 +2,13 @@
 key: globtoregex-is-copied-nine-times-and-four-copies-backtrack-7a3e
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-14
 verified-at: 33953da
 last-touched: 2026-08-14
 governs: .claude/hooks/spec_design_calls_guard.mjs, .claude/hooks/lib/common.mjs, .claude/skills/triage/governance-class.mjs, .claude/skills/harness/rightsize-gate.mjs, .claude/skills/spec-lint/lint.mjs
+superseded-at: 2026-08-14
 ---
 
 > The same catastrophic backtracking is reachable today through at least four more live copies of `globToRegex`. Not introduced by that workflow and not fixed by it; fixing four modules across three subsystems inside a cleanup pass is the scope expansion the `/simplify` guardrail refuses.

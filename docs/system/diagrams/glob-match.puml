@@ -1,0 +1,4 @@
+!startsub glob_match
+' @kind c4_component
+Component(glob_match, ".claude/hooks/lib/glob-match.mjs", "c4_component", "Shared glob-to-RegExp compiler")
+!endsub

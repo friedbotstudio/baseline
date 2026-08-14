@@ -14,8 +14,9 @@ import { join } from 'node:path';
 // No legitimate glob needs more than `**`, so a longer run is a pattern nobody
 // wrote by hand. Refused rather than collapsed: the matcher collapses runs as an
 // equivalence, but a member this shape signals a malformed or hostile surface and
-// the boundary should say so (CWE-1333, second layer).
-const MAX_STAR_RUN = 3;
+// the boundary should say so (CWE-1333, second layer). The bound now has one
+// definition, shared with the compiler that does the collapsing.
+import { MAX_STAR_RUN } from './glob-match.mjs';
 
 // Rejected outright rather than repaired. A surface member is compared against
 // repo-relative entry paths, so an absolute path or a `..` segment cannot match

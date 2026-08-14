@@ -12,6 +12,7 @@ import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.m
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseDelta } from '../workspace/delta.mjs';
 import { anchorSurfaceVerdict } from '../workspace/coverage.mjs';
+import { matchesAnyGlob } from '../../hooks/lib/glob-match.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -136,46 +137,6 @@ function checkTraceability(spec, blocks) {
   return problems.length === 0
     ? ['PASS', `${rows.length} AC rows all traced`]
     : ['FAIL', problems.join('; ')];
-}
-
-function expandBraceGlobs(globs) {
-  const out = [];
-  for (const g of globs) {
-    if (!g.includes('{')) { out.push(g); continue; }
-    const i = g.indexOf('{');
-    const j = g.indexOf('}', i);
-    const prefix = g.slice(0, i);
-    const suffix = g.slice(j + 1);
-    const alts = g.slice(i + 1, j).split(',');
-    for (const a of alts) out.push(prefix + a.trim() + suffix);
-  }
-  return out;
-}
-
-function globToRegex(g) {
-  let i = 0;
-  const out = [];
-  while (i < g.length) {
-    const c = g[i];
-    if (c === '*') {
-      if (g[i + 1] === '*') { out.push('.*'); i += 2; }
-      else { out.push('[^/]*'); i += 1; }
-    } else if (c === '?') {
-      out.push('[^/]'); i += 1;
-    } else if ('.+()|^$\\[]{}'.includes(c)) {
-      out.push('\\' + c); i += 1;
-    } else {
-      out.push(c); i += 1;
-    }
-  }
-  return new RegExp('^' + out.join('') + '$');
-}
-
-function matchesAnyGlob(path, globs) {
-  for (const g of expandBraceGlobs(globs)) {
-    if (globToRegex(g).test(path)) return true;
-  }
-  return false;
 }
 
 function checkDesignCalls(spec, pj) {

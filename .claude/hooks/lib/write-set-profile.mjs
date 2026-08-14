@@ -9,51 +9,15 @@
 //     covered by that profile's `when` globs (a single uncovered path — e.g. a
 //     src/** file — forces the full set, so architecture always wins).
 //
-// Self-contained (stdlib-only): the brace/glob and write_set-extraction helpers
-// mirror spec_design_calls_guard.mjs but are copied here so a hook lib never
-// imports another hook.
+// The glob compiler lives in glob-match.mjs. It was copied here on the premise
+// that a hook lib never imports another hook lib — a rule the tree does not
+// actually hold (19 such imports predate this file), and the copy is what let
+// four of six copies keep the backtracking bug after one was fixed.
+//
+// globToRegex is re-exported because in-repo callers already import it here.
+import { globToRegex, matchesAnyGlob } from './glob-match.mjs';
 
-function expandBraces(globs) {
-  const out = [];
-  for (const g of globs) {
-    if (!g.includes('{')) { out.push(g); continue; }
-    const i = g.indexOf('{'), j = g.indexOf('}', i);
-    if (j < 0) { out.push(g); continue; }
-    const prefix = g.slice(0, i);
-    const alts = g.slice(i + 1, j).split(',');
-    const suffix = g.slice(j + 1);
-    for (const a of alts) out.push(prefix + a.trim() + suffix);
-  }
-  return out;
-}
-
-// A run of N stars is `**` in every glob dialect, so the whole run is consumed
-// and emitted once. Emitting per-star produced adjacent unbounded groups
-// (`.*[^/]*.*…`), and a 60-star pattern then backtracked for 133,913 ms against
-// a 400-character path (CWE-1333, security review 2026-08-14). Collapsing is
-// normalisation of an equivalent form — it resolves to the same surface — which
-// is why it is safe here where repairing a traversal would not be.
-export function globToRegex(g) {
-  let out = '';
-  for (let i = 0; i < g.length; i++) {
-    const c = g[i];
-    if (c === '*') {
-      const start = i;
-      while (g[i + 1] === '*') i++;
-      out += i > start ? '.*' : '[^/]*';
-    } else if (c === '?') out += '[^/]';
-    else if ('.+()|^$\\[]{}'.includes(c)) out += '\\' + c;
-    else out += c;
-  }
-  return new RegExp('^' + out + '$');
-}
-
-function matchesAnyGlob(path, globs) {
-  for (const g of expandBraces(globs)) {
-    if (globToRegex(g).test(path)) return true;
-  }
-  return false;
-}
+export { globToRegex };
 
 // The shared primitive under both overlap predicates below: a pattern's
 // non-wildcard directory head. Hoisted out of spec/optimize.mjs so the two
@@ -123,7 +87,7 @@ function coversEntirely(profile, writeSetPaths) {
 
 // A spec may satisfy the structural diagram kinds by REFERENCING a corpus element
 // instead of redrawing it. Only the SYNTAX is judged here: resolving the id needs
-// the corpus, and this module is deliberately stdlib-only.
+// the corpus on disk, and this module deliberately reads no files.
 //
 // A malformed reference forces the full set rather than throwing. An author who
 // meant to reference something and mistyped it must not get a QUIETER requirement
@@ -149,8 +113,8 @@ export function hasMalformedReference(content) {
   return referenceTokens(content).some((token) => !REF_WELL_FORMED.test(token.trim()));
 }
 
-// Well-formed ids only. Resolving them needs the corpus, and this module is
-// deliberately stdlib-only and content-only, so each caller resolves its own —
+// Well-formed ids only. Resolving them needs the corpus on disk, and this module
+// is deliberately content-only and reads no files, so each caller resolves its own —
 // which is also where the two legitimately differ: the guard blocks an
 // unresolvable id, the preflight reports it.
 export function elementReferences(content) {

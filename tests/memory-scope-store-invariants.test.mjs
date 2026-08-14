@@ -116,7 +116,13 @@ const PHASE_BUDGETS = { spec: 88, security: 30, research: 20 };
 // each discovered by a later workflow that had nothing to do with it — is the
 // cost that gate removes.
 const PATH_LEG_BASELINE = {
-  '.claude/hooks/lib/scoped-memory.mjs': 9,
+  // 9 -> 10 at c92f82a, the Epic 6 T11 landing. That workflow filed the landmark
+  // `.claude/hooks/lib/write-surface.mjs`, whose `governs:` names this module
+  // directly — the new relevance filter reads the surface here, so someone editing
+  // this file should see the landmark for the module it consults. A census moving
+  // because a genuinely related fact was filed is the mechanism working; the number
+  // is re-measured, never defended.
+  '.claude/hooks/lib/scoped-memory.mjs': 10,
   '.claude/skills/memory-index/resolve.mjs': 16,
   '.claude/hooks/process_lifecycle_guard.mjs': 9,
   // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow

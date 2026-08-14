@@ -13,6 +13,7 @@
 import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { globToRegex } from './glob-match.mjs';
 
 export const CLAUDE_PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 export const CLAUDE_DOTDIR = join(CLAUDE_PROJECT_ROOT, '.claude');
@@ -466,49 +467,20 @@ export function gitSubcommandInvoked(cmd, sub) {
   return executedFragments(cmd).some((f) => tokensAreGitSub(commandTokens(f), sub));
 }
 
-// Hand-rolled shell-glob → RegExp matcher. Used for git.protected_branches.
-// `*` matches anything except `/`; `**` matches anything including `/`;
-// `?` matches a single non-`/` char; `[...]` is a character class.
+// Shell-glob → RegExp matcher. Used for git.protected_branches, so widening what
+// it matches changes which branches demand a commit grant. Two things are load-
+// bearing: `charClass`, which keeps `[...]` a character class rather than an
+// escaped literal; and the absence of brace expansion — the shared
+// `matchesAnyGlob` expands `{a,b}`, which this dialect has always left as a
+// literal, so the members are iterated here instead.
 // Returns false if globs is null/undefined/empty.
 export function matchAnyGlob(name, globs) {
   if (!Array.isArray(globs) || globs.length === 0) return false;
   for (const glob of globs) {
     if (typeof glob !== 'string' || glob === '') continue;
-    if (globToRegex(glob).test(name)) return true;
+    if (globToRegex(glob, { charClass: true }).test(name)) return true;
   }
   return false;
-}
-
-function globToRegex(glob) {
-  let pattern = '^';
-  for (let i = 0; i < glob.length; i++) {
-    const c = glob[i];
-    if (c === '*') {
-      if (glob[i + 1] === '*') {
-        pattern += '.*';
-        i += 1;
-      } else {
-        pattern += '[^/]*';
-      }
-    } else if (c === '?') {
-      pattern += '[^/]';
-    } else if (c === '[') {
-      let j = i + 1;
-      while (j < glob.length && glob[j] !== ']') j++;
-      if (j >= glob.length) {
-        pattern += '\\[';
-      } else {
-        pattern += glob.slice(i, j + 1);
-        i = j;
-      }
-    } else if ('.+()^$|\\{}'.includes(c)) {
-      pattern += '\\' + c;
-    } else {
-      pattern += c;
-    }
-  }
-  pattern += '$';
-  return new RegExp(pattern);
 }
 
 // --- Consent-path Bash-write detection (consumed by destructive_cmd_guard) ---

@@ -1,4 +1,4 @@
 !startsub write_surface
 ' @kind c4_component
-Component(write_surface, "write-surface", "c4_component")
+Component(write_surface, ".claude/hooks/lib/write-surface.mjs", "c4_component", "Declared write-surface reader")
 !endsub

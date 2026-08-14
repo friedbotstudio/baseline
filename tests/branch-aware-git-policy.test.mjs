@@ -19,6 +19,7 @@ const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const GUARD = join(REPO_ROOT, '.claude/hooks/git_commit_guard.mjs');
 const GRANT = join(REPO_ROOT, '.claude/hooks/consent_gate_grant.mjs');
 const LIB   = join(REPO_ROOT, '.claude/hooks/lib/common.mjs');
+const GLOBMATCH = join(REPO_ROOT, '.claude/hooks/lib/glob-match.mjs');
 const CLOSURE = join(REPO_ROOT, '.claude/hooks/lib/closure-check.mjs');
 const DECISION = join(REPO_ROOT, '.claude/hooks/lib/consent-decision.mjs');
 // consent-decision.mjs imports ./slug.mjs; without it the spawned guard dies with
@@ -33,6 +34,7 @@ function buildSandbox(projectJson) {
   mkdirSync(join(root, '.claude/hooks/lib'), { recursive: true });
   mkdirSync(join(root, '.claude/state/logs'), { recursive: true });
   cpSync(LIB, join(root, '.claude/hooks/lib/common.mjs'));
+  cpSync(GLOBMATCH, join(root, '.claude/hooks/lib/glob-match.mjs'));
   cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(DECISION, join(root, '.claude/hooks/lib/consent-decision.mjs'));
   cpSync(SLUG, join(root, '.claude/hooks/lib/slug.mjs'));

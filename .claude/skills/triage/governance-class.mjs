@@ -5,8 +5,10 @@
 // result to tier-dial.classFloor. Kept next to the tier dial's read path
 // (tier-dial:read-path) so there is one threat/value classification surface.
 //
-// The glob helpers mirror hooks/lib/write-set-profile.mjs but are copied here so
-// a skill helper never imports a hook.
+// The glob matcher is the shared one. It was copied here on the premise that a
+// skill helper never imports a hook lib; the tree does not hold that rule, and
+// the copy is how a fixed backtracking bug stayed unfixed in its siblings.
+import { matchesAnyGlob } from '../../hooks/lib/glob-match.mjs';
 
 // Consent-adjacent path markers → force a Class-A floor. These name the consent
 // artifacts + guards; touching any of them is the highest blast radius.
@@ -41,37 +43,6 @@ const LAYERS = [
   { name: 'source', re: /^(src|bin|scripts)\// },
 ];
 
-function expandBraces(globs) {
-  const out = [];
-  for (const g of globs) {
-    if (!g.includes('{')) { out.push(g); continue; }
-    const i = g.indexOf('{'); const j = g.indexOf('}', i);
-    if (j < 0) { out.push(g); continue; }
-    const prefix = g.slice(0, i); const alts = g.slice(i + 1, j).split(','); const suffix = g.slice(j + 1);
-    for (const a of alts) out.push(prefix + a.trim() + suffix);
-  }
-  return out;
-}
-
-function globToRegex(g) {
-  let out = '';
-  for (let i = 0; i < g.length; i++) {
-    const c = g[i];
-    if (c === '*') { if (g[i + 1] === '*') { out += '.*'; i++; } else out += '[^/]*'; }
-    else if (c === '?') out += '[^/]';
-    else if ('.+()|^$\\[]{}'.includes(c)) out += '\\' + c;
-    else out += c;
-  }
-  return new RegExp('^' + out + '$');
-}
-
-function matchesAny(path, globs) {
-  for (const g of expandBraces(globs)) {
-    if (globToRegex(g).test(path)) return true;
-  }
-  return false;
-}
-
 // extractSignals({ writeSet, diffPaths, project }) → the Signals object the tier
 // dial's classFloor consumes. Empty input → every signal false / zero.
 export function extractSignals({ writeSet = [], diffPaths = [], project = {} } = {}) {
@@ -83,7 +54,7 @@ export function extractSignals({ writeSet = [], diffPaths = [], project = {} } =
     : [];
 
   const consentAdjacent = paths.some((p) => CONSENT_PATTERNS.some((re) => re.test(p)));
-  const sensitiveSurface = sensitiveGlobs.length > 0 && paths.some((p) => matchesAny(p, sensitiveGlobs));
+  const sensitiveSurface = sensitiveGlobs.length > 0 && paths.some((p) => matchesAnyGlob(p, sensitiveGlobs));
   const hookOrGovernance = paths.some(isHookOrGovernance);
 
   const layers = new Set();

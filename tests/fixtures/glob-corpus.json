@@ -1,0 +1,862 @@
+{
+  "d1-shared": {
+    "source_module": ".claude/hooks/lib/write-set-profile.mjs",
+    "options": {},
+    "entries": [
+      {
+        "glob": "src/**",
+        "expected_source": "^src\\/.*$"
+      },
+      {
+        "glob": "bin/**",
+        "expected_source": "^bin\\/.*$"
+      },
+      {
+        "glob": "scripts/**",
+        "expected_source": "^scripts\\/.*$"
+      },
+      {
+        "glob": "site/assets/src/**",
+        "expected_source": "^site\\/assets\\/src\\/.*$"
+      },
+      {
+        "glob": "site-src/_filters/**",
+        "expected_source": "^site-src\\/_filters\\/.*$"
+      },
+      {
+        "glob": ".claude/skills/**",
+        "expected_source": "^\\.claude\\/skills\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/**",
+        "expected_source": "^\\.claude\\/hooks\\/.*$"
+      },
+      {
+        "glob": "tests/**",
+        "expected_source": "^tests\\/.*$"
+      },
+      {
+        "glob": "test/**",
+        "expected_source": "^test\\/.*$"
+      },
+      {
+        "glob": "spec/**",
+        "expected_source": "^spec\\/.*$"
+      },
+      {
+        "glob": "__tests__/**",
+        "expected_source": "^__tests__\\/.*$"
+      },
+      {
+        "glob": "**/*_test.*",
+        "expected_source": "^.*\\/[^/]*_test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.test.*",
+        "expected_source": "^.*\\/[^/]*\\.test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.spec.*",
+        "expected_source": "^.*\\/[^/]*\\.spec\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.md",
+        "expected_source": "^.*\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "**/*.json",
+        "expected_source": "^.*\\/[^/]*\\.json$"
+      },
+      {
+        "glob": "scripts/ci/*.sh",
+        "expected_source": "^scripts\\/ci\\/[^/]*\\.sh$"
+      },
+      {
+        "glob": "**/*.yaml",
+        "expected_source": "^.*\\/[^/]*\\.yaml$"
+      },
+      {
+        "glob": "**/*.yml",
+        "expected_source": "^.*\\/[^/]*\\.yml$"
+      },
+      {
+        "glob": "**/*.toml",
+        "expected_source": "^.*\\/[^/]*\\.toml$"
+      },
+      {
+        "glob": "docs/**",
+        "expected_source": "^docs\\/.*$"
+      },
+      {
+        "glob": ".claude/**",
+        "expected_source": "^\\.claude\\/.*$"
+      },
+      {
+        "glob": ".config/**",
+        "expected_source": "^\\.config\\/.*$"
+      },
+      {
+        "glob": "src/**.template.*",
+        "expected_source": "^src\\/.*\\.template\\.[^/]*$"
+      },
+      {
+        "glob": "site/assets/brandmark*",
+        "expected_source": "^site\\/assets\\/brandmark[^/]*$"
+      },
+      {
+        "glob": "site/assets/favicon/**",
+        "expected_source": "^site\\/assets\\/favicon\\/.*$"
+      },
+      {
+        "glob": "site-src/**",
+        "expected_source": "^site-src\\/.*$"
+      },
+      {
+        "glob": "app/**/*.{tsx,jsx}",
+        "expected_source": "^app\\/.*\\/[^/]*\\.\\{tsx,jsx\\}$"
+      },
+      {
+        "glob": "components/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^components\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "pages/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^pages\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "src/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^src\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "**/*.html",
+        "expected_source": "^.*\\/[^/]*\\.html$"
+      },
+      {
+        "glob": "**/*.css",
+        "expected_source": "^.*\\/[^/]*\\.css$"
+      },
+      {
+        "glob": "**/*.scss",
+        "expected_source": "^.*\\/[^/]*\\.scss$"
+      },
+      {
+        "glob": "**/*.njk",
+        "expected_source": "^.*\\/[^/]*\\.njk$"
+      },
+      {
+        "glob": "*.md",
+        "expected_source": "^[^/]*\\.md$"
+      },
+      {
+        "glob": ".claude/*.json",
+        "expected_source": "^\\.claude\\/[^/]*\\.json$"
+      },
+      {
+        "glob": ".claude/*.md",
+        "expected_source": "^\\.claude\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "src/*.template.md",
+        "expected_source": "^src\\/[^/]*\\.template\\.md$"
+      },
+      {
+        "glob": "obj/**",
+        "expected_source": "^obj\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/lib/**",
+        "expected_source": "^\\.claude\\/hooks\\/lib\\/.*$"
+      },
+      {
+        "glob": "docs/specs/**",
+        "expected_source": "^docs\\/specs\\/.*$"
+      },
+      {
+        "glob": "a*b",
+        "expected_source": "^a[^/]*b$"
+      },
+      {
+        "glob": "**",
+        "expected_source": "^.*$"
+      },
+      {
+        "glob": "*",
+        "expected_source": "^[^/]*$"
+      },
+      {
+        "glob": "",
+        "expected_source": "^$"
+      },
+      {
+        "glob": "x?y",
+        "expected_source": "^x[^/]y$"
+      },
+      {
+        "glob": "a.b+c",
+        "expected_source": "^a\\.b\\+c$"
+      },
+      {
+        "glob": "release-[0-9]",
+        "expected_source": "^release-\\[0-9\\]$"
+      },
+      {
+        "glob": "release-[0-9",
+        "expected_source": "^release-\\[0-9$"
+      },
+      {
+        "glob": "a{b,c}d",
+        "expected_source": "^a\\{b,c\\}d$"
+      },
+      {
+        "glob": "a**b",
+        "expected_source": "^a.*b$"
+      }
+    ]
+  },
+  "spec-lint": {
+    "source_module": ".claude/skills/spec-lint/lint.mjs",
+    "options": {},
+    "entries": [
+      {
+        "glob": "src/**",
+        "expected_source": "^src\\/.*$"
+      },
+      {
+        "glob": "bin/**",
+        "expected_source": "^bin\\/.*$"
+      },
+      {
+        "glob": "scripts/**",
+        "expected_source": "^scripts\\/.*$"
+      },
+      {
+        "glob": "site/assets/src/**",
+        "expected_source": "^site\\/assets\\/src\\/.*$"
+      },
+      {
+        "glob": "site-src/_filters/**",
+        "expected_source": "^site-src\\/_filters\\/.*$"
+      },
+      {
+        "glob": ".claude/skills/**",
+        "expected_source": "^\\.claude\\/skills\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/**",
+        "expected_source": "^\\.claude\\/hooks\\/.*$"
+      },
+      {
+        "glob": "tests/**",
+        "expected_source": "^tests\\/.*$"
+      },
+      {
+        "glob": "test/**",
+        "expected_source": "^test\\/.*$"
+      },
+      {
+        "glob": "spec/**",
+        "expected_source": "^spec\\/.*$"
+      },
+      {
+        "glob": "__tests__/**",
+        "expected_source": "^__tests__\\/.*$"
+      },
+      {
+        "glob": "**/*_test.*",
+        "expected_source": "^.*\\/[^/]*_test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.test.*",
+        "expected_source": "^.*\\/[^/]*\\.test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.spec.*",
+        "expected_source": "^.*\\/[^/]*\\.spec\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.md",
+        "expected_source": "^.*\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "**/*.json",
+        "expected_source": "^.*\\/[^/]*\\.json$"
+      },
+      {
+        "glob": "scripts/ci/*.sh",
+        "expected_source": "^scripts\\/ci\\/[^/]*\\.sh$"
+      },
+      {
+        "glob": "**/*.yaml",
+        "expected_source": "^.*\\/[^/]*\\.yaml$"
+      },
+      {
+        "glob": "**/*.yml",
+        "expected_source": "^.*\\/[^/]*\\.yml$"
+      },
+      {
+        "glob": "**/*.toml",
+        "expected_source": "^.*\\/[^/]*\\.toml$"
+      },
+      {
+        "glob": "docs/**",
+        "expected_source": "^docs\\/.*$"
+      },
+      {
+        "glob": ".claude/**",
+        "expected_source": "^\\.claude\\/.*$"
+      },
+      {
+        "glob": ".config/**",
+        "expected_source": "^\\.config\\/.*$"
+      },
+      {
+        "glob": "src/**.template.*",
+        "expected_source": "^src\\/.*\\.template\\.[^/]*$"
+      },
+      {
+        "glob": "site/assets/brandmark*",
+        "expected_source": "^site\\/assets\\/brandmark[^/]*$"
+      },
+      {
+        "glob": "site/assets/favicon/**",
+        "expected_source": "^site\\/assets\\/favicon\\/.*$"
+      },
+      {
+        "glob": "site-src/**",
+        "expected_source": "^site-src\\/.*$"
+      },
+      {
+        "glob": "app/**/*.{tsx,jsx}",
+        "expected_source": "^app\\/.*\\/[^/]*\\.\\{tsx,jsx\\}$"
+      },
+      {
+        "glob": "components/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^components\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "pages/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^pages\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "src/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^src\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "**/*.html",
+        "expected_source": "^.*\\/[^/]*\\.html$"
+      },
+      {
+        "glob": "**/*.css",
+        "expected_source": "^.*\\/[^/]*\\.css$"
+      },
+      {
+        "glob": "**/*.scss",
+        "expected_source": "^.*\\/[^/]*\\.scss$"
+      },
+      {
+        "glob": "**/*.njk",
+        "expected_source": "^.*\\/[^/]*\\.njk$"
+      },
+      {
+        "glob": "*.md",
+        "expected_source": "^[^/]*\\.md$"
+      },
+      {
+        "glob": ".claude/*.json",
+        "expected_source": "^\\.claude\\/[^/]*\\.json$"
+      },
+      {
+        "glob": ".claude/*.md",
+        "expected_source": "^\\.claude\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "src/*.template.md",
+        "expected_source": "^src\\/[^/]*\\.template\\.md$"
+      },
+      {
+        "glob": "obj/**",
+        "expected_source": "^obj\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/lib/**",
+        "expected_source": "^\\.claude\\/hooks\\/lib\\/.*$"
+      },
+      {
+        "glob": "docs/specs/**",
+        "expected_source": "^docs\\/specs\\/.*$"
+      },
+      {
+        "glob": "a*b",
+        "expected_source": "^a[^/]*b$"
+      },
+      {
+        "glob": "**",
+        "expected_source": "^.*$"
+      },
+      {
+        "glob": "*",
+        "expected_source": "^[^/]*$"
+      },
+      {
+        "glob": "",
+        "expected_source": "^$"
+      },
+      {
+        "glob": "x?y",
+        "expected_source": "^x[^/]y$"
+      },
+      {
+        "glob": "a.b+c",
+        "expected_source": "^a\\.b\\+c$"
+      },
+      {
+        "glob": "release-[0-9]",
+        "expected_source": "^release-\\[0-9\\]$"
+      },
+      {
+        "glob": "release-[0-9",
+        "expected_source": "^release-\\[0-9$"
+      },
+      {
+        "glob": "a{b,c}d",
+        "expected_source": "^a\\{b,c\\}d$"
+      },
+      {
+        "glob": "a**b",
+        "expected_source": "^a.*b$"
+      }
+    ]
+  },
+  "rightsize-gate": {
+    "source_module": ".claude/skills/harness/rightsize-gate.mjs",
+    "options": {
+      "segmentGlobstar": true
+    },
+    "entries": [
+      {
+        "glob": "src/**",
+        "expected_source": "^src\\/.*$"
+      },
+      {
+        "glob": "bin/**",
+        "expected_source": "^bin\\/.*$"
+      },
+      {
+        "glob": "scripts/**",
+        "expected_source": "^scripts\\/.*$"
+      },
+      {
+        "glob": "site/assets/src/**",
+        "expected_source": "^site\\/assets\\/src\\/.*$"
+      },
+      {
+        "glob": "site-src/_filters/**",
+        "expected_source": "^site-src\\/_filters\\/.*$"
+      },
+      {
+        "glob": ".claude/skills/**",
+        "expected_source": "^\\.claude\\/skills\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/**",
+        "expected_source": "^\\.claude\\/hooks\\/.*$"
+      },
+      {
+        "glob": "tests/**",
+        "expected_source": "^tests\\/.*$"
+      },
+      {
+        "glob": "test/**",
+        "expected_source": "^test\\/.*$"
+      },
+      {
+        "glob": "spec/**",
+        "expected_source": "^spec\\/.*$"
+      },
+      {
+        "glob": "__tests__/**",
+        "expected_source": "^__tests__\\/.*$"
+      },
+      {
+        "glob": "**/*_test.*",
+        "expected_source": "^(?:.*\\/)?[^/]*_test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.test.*",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.spec.*",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.spec\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.md",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.md$"
+      },
+      {
+        "glob": "**/*.json",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.json$"
+      },
+      {
+        "glob": "scripts/ci/*.sh",
+        "expected_source": "^scripts\\/ci\\/[^/]*\\.sh$"
+      },
+      {
+        "glob": "**/*.yaml",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.yaml$"
+      },
+      {
+        "glob": "**/*.yml",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.yml$"
+      },
+      {
+        "glob": "**/*.toml",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.toml$"
+      },
+      {
+        "glob": "docs/**",
+        "expected_source": "^docs\\/.*$"
+      },
+      {
+        "glob": ".claude/**",
+        "expected_source": "^\\.claude\\/.*$"
+      },
+      {
+        "glob": ".config/**",
+        "expected_source": "^\\.config\\/.*$"
+      },
+      {
+        "glob": "src/**.template.*",
+        "expected_source": "^src\\/.*\\.template\\.[^/]*$"
+      },
+      {
+        "glob": "site/assets/brandmark*",
+        "expected_source": "^site\\/assets\\/brandmark[^/]*$"
+      },
+      {
+        "glob": "site/assets/favicon/**",
+        "expected_source": "^site\\/assets\\/favicon\\/.*$"
+      },
+      {
+        "glob": "site-src/**",
+        "expected_source": "^site-src\\/.*$"
+      },
+      {
+        "glob": "app/**/*.{tsx,jsx}",
+        "expected_source": "^app\\/(?:.*\\/)?[^/]*\\.\\{tsx,jsx\\}$"
+      },
+      {
+        "glob": "components/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^components\\/(?:.*\\/)?[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "pages/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^pages\\/(?:.*\\/)?[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "src/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^src\\/(?:.*\\/)?[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "**/*.html",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.html$"
+      },
+      {
+        "glob": "**/*.css",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.css$"
+      },
+      {
+        "glob": "**/*.scss",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.scss$"
+      },
+      {
+        "glob": "**/*.njk",
+        "expected_source": "^(?:.*\\/)?[^/]*\\.njk$"
+      },
+      {
+        "glob": "*.md",
+        "expected_source": "^[^/]*\\.md$"
+      },
+      {
+        "glob": ".claude/*.json",
+        "expected_source": "^\\.claude\\/[^/]*\\.json$"
+      },
+      {
+        "glob": ".claude/*.md",
+        "expected_source": "^\\.claude\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "src/*.template.md",
+        "expected_source": "^src\\/[^/]*\\.template\\.md$"
+      },
+      {
+        "glob": "obj/**",
+        "expected_source": "^obj\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/lib/**",
+        "expected_source": "^\\.claude\\/hooks\\/lib\\/.*$"
+      },
+      {
+        "glob": "docs/specs/**",
+        "expected_source": "^docs\\/specs\\/.*$"
+      },
+      {
+        "glob": "a*b",
+        "expected_source": "^a[^/]*b$"
+      },
+      {
+        "glob": "**",
+        "expected_source": "^.*$"
+      },
+      {
+        "glob": "*",
+        "expected_source": "^[^/]*$"
+      },
+      {
+        "glob": "",
+        "expected_source": "^$"
+      },
+      {
+        "glob": "x?y",
+        "expected_source": "^x[^/]y$"
+      },
+      {
+        "glob": "a.b+c",
+        "expected_source": "^a\\.b\\+c$"
+      },
+      {
+        "glob": "release-[0-9]",
+        "expected_source": "^release-\\[0-9\\]$"
+      },
+      {
+        "glob": "release-[0-9",
+        "expected_source": "^release-\\[0-9$"
+      },
+      {
+        "glob": "a{b,c}d",
+        "expected_source": "^a\\{b,c\\}d$"
+      },
+      {
+        "glob": "a**b",
+        "expected_source": "^a.*b$"
+      }
+    ]
+  },
+  "common": {
+    "source_module": ".claude/hooks/lib/common.mjs",
+    "options": {
+      "charClass": true
+    },
+    "entries": [
+      {
+        "glob": "src/**",
+        "expected_source": "^src\\/.*$"
+      },
+      {
+        "glob": "bin/**",
+        "expected_source": "^bin\\/.*$"
+      },
+      {
+        "glob": "scripts/**",
+        "expected_source": "^scripts\\/.*$"
+      },
+      {
+        "glob": "site/assets/src/**",
+        "expected_source": "^site\\/assets\\/src\\/.*$"
+      },
+      {
+        "glob": "site-src/_filters/**",
+        "expected_source": "^site-src\\/_filters\\/.*$"
+      },
+      {
+        "glob": ".claude/skills/**",
+        "expected_source": "^\\.claude\\/skills\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/**",
+        "expected_source": "^\\.claude\\/hooks\\/.*$"
+      },
+      {
+        "glob": "tests/**",
+        "expected_source": "^tests\\/.*$"
+      },
+      {
+        "glob": "test/**",
+        "expected_source": "^test\\/.*$"
+      },
+      {
+        "glob": "spec/**",
+        "expected_source": "^spec\\/.*$"
+      },
+      {
+        "glob": "__tests__/**",
+        "expected_source": "^__tests__\\/.*$"
+      },
+      {
+        "glob": "**/*_test.*",
+        "expected_source": "^.*\\/[^/]*_test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.test.*",
+        "expected_source": "^.*\\/[^/]*\\.test\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.spec.*",
+        "expected_source": "^.*\\/[^/]*\\.spec\\.[^/]*$"
+      },
+      {
+        "glob": "**/*.md",
+        "expected_source": "^.*\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "**/*.json",
+        "expected_source": "^.*\\/[^/]*\\.json$"
+      },
+      {
+        "glob": "scripts/ci/*.sh",
+        "expected_source": "^scripts\\/ci\\/[^/]*\\.sh$"
+      },
+      {
+        "glob": "**/*.yaml",
+        "expected_source": "^.*\\/[^/]*\\.yaml$"
+      },
+      {
+        "glob": "**/*.yml",
+        "expected_source": "^.*\\/[^/]*\\.yml$"
+      },
+      {
+        "glob": "**/*.toml",
+        "expected_source": "^.*\\/[^/]*\\.toml$"
+      },
+      {
+        "glob": "docs/**",
+        "expected_source": "^docs\\/.*$"
+      },
+      {
+        "glob": ".claude/**",
+        "expected_source": "^\\.claude\\/.*$"
+      },
+      {
+        "glob": ".config/**",
+        "expected_source": "^\\.config\\/.*$"
+      },
+      {
+        "glob": "src/**.template.*",
+        "expected_source": "^src\\/.*\\.template\\.[^/]*$"
+      },
+      {
+        "glob": "site/assets/brandmark*",
+        "expected_source": "^site\\/assets\\/brandmark[^/]*$"
+      },
+      {
+        "glob": "site/assets/favicon/**",
+        "expected_source": "^site\\/assets\\/favicon\\/.*$"
+      },
+      {
+        "glob": "site-src/**",
+        "expected_source": "^site-src\\/.*$"
+      },
+      {
+        "glob": "app/**/*.{tsx,jsx}",
+        "expected_source": "^app\\/.*\\/[^/]*\\.\\{tsx,jsx\\}$"
+      },
+      {
+        "glob": "components/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^components\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "pages/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^pages\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "src/**/*.{tsx,jsx,vue,svelte}",
+        "expected_source": "^src\\/.*\\/[^/]*\\.\\{tsx,jsx,vue,svelte\\}$"
+      },
+      {
+        "glob": "**/*.html",
+        "expected_source": "^.*\\/[^/]*\\.html$"
+      },
+      {
+        "glob": "**/*.css",
+        "expected_source": "^.*\\/[^/]*\\.css$"
+      },
+      {
+        "glob": "**/*.scss",
+        "expected_source": "^.*\\/[^/]*\\.scss$"
+      },
+      {
+        "glob": "**/*.njk",
+        "expected_source": "^.*\\/[^/]*\\.njk$"
+      },
+      {
+        "glob": "*.md",
+        "expected_source": "^[^/]*\\.md$"
+      },
+      {
+        "glob": ".claude/*.json",
+        "expected_source": "^\\.claude\\/[^/]*\\.json$"
+      },
+      {
+        "glob": ".claude/*.md",
+        "expected_source": "^\\.claude\\/[^/]*\\.md$"
+      },
+      {
+        "glob": "src/*.template.md",
+        "expected_source": "^src\\/[^/]*\\.template\\.md$"
+      },
+      {
+        "glob": "obj/**",
+        "expected_source": "^obj\\/.*$"
+      },
+      {
+        "glob": ".claude/hooks/lib/**",
+        "expected_source": "^\\.claude\\/hooks\\/lib\\/.*$"
+      },
+      {
+        "glob": "docs/specs/**",
+        "expected_source": "^docs\\/specs\\/.*$"
+      },
+      {
+        "glob": "a*b",
+        "expected_source": "^a[^/]*b$"
+      },
+      {
+        "glob": "**",
+        "expected_source": "^.*$"
+      },
+      {
+        "glob": "*",
+        "expected_source": "^[^/]*$"
+      },
+      {
+        "glob": "",
+        "expected_source": "^$"
+      },
+      {
+        "glob": "x?y",
+        "expected_source": "^x[^/]y$"
+      },
+      {
+        "glob": "a.b+c",
+        "expected_source": "^a\\.b\\+c$"
+      },
+      {
+        "glob": "release-[0-9]",
+        "expected_source": "^release-[0-9]$"
+      },
+      {
+        "glob": "release-[0-9",
+        "expected_source": "^release-\\[0-9$"
+      },
+      {
+        "glob": "a{b,c}d",
+        "expected_source": "^a\\{b,c\\}d$"
+      },
+      {
+        "glob": "a**b",
+        "expected_source": "^a.*b$"
+      }
+    ]
+  }
+}

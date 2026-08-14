@@ -166,3 +166,8 @@
 - discarded :: backlog → it-s-the-sweep-predicate-follow-up-you-eee9
 - promoted :: .claude/hooks/lib/write-surface.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-small-and-well-bounded-reject-524d
+- discarded :: .claude/hooks/lib/write-set-profile.mjs → landmarks.md
+- promoted :: .claude/hooks/lib/glob-match.mjs → landmarks.md
+- discarded :: .claude/hooks/lib/common.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-one-cpsync-line-per-file-7353
+- discarded :: .claude/skills/triage/governance-class.mjs → landmarks.md

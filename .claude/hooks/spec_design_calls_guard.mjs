@@ -24,6 +24,7 @@ import {
   computeProposedContent,
 } from './lib/common.mjs';
 import { parseDesignCalls, findRowDefects } from './lib/design-calls.mjs';
+import { matchesAnyGlob } from './lib/glob-match.mjs';
 
 const payload = await readPayload();
 
@@ -44,40 +45,6 @@ if (!Array.isArray(uiGlobs) || uiGlobs.length === 0) emitAllow();
 
 const content = computeProposedContent(tool, payload, file);
 if (!content.trim()) emitAllow();
-
-// Brace expansion + glob → regex (local because matchAnyGlob doesn't expand {a,b,c}).
-function expandBraces(globs) {
-  const out = [];
-  for (const g of globs) {
-    if (!g.includes('{')) { out.push(g); continue; }
-    const i = g.indexOf('{'), j = g.indexOf('}', i);
-    if (j < 0) { out.push(g); continue; }
-    const prefix = g.slice(0, i);
-    const alts = g.slice(i + 1, j).split(',');
-    const suffix = g.slice(j + 1);
-    for (const a of alts) out.push(prefix + a.trim() + suffix);
-  }
-  return out;
-}
-function globToRegex(g) {
-  let out = '';
-  for (let i = 0; i < g.length; i++) {
-    const c = g[i];
-    if (c === '*') {
-      if (g[i + 1] === '*') { out += '.*'; i++; }
-      else out += '[^/]*';
-    } else if (c === '?') out += '[^/]';
-    else if ('.+()|^$\\[]{}'.includes(c)) out += '\\' + c;
-    else out += c;
-  }
-  return new RegExp('^' + out + '$');
-}
-function matchesAnyGlob(path, globs) {
-  for (const g of expandBraces(globs)) {
-    if (globToRegex(g).test(path)) return true;
-  }
-  return false;
-}
 
 // Extract write_set paths from the spec body. The spec template mandates the
 // BOLDED form (`**Write set**: ...`), so the pattern must tolerate the `**`

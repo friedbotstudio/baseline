@@ -1,0 +1,67 @@
+{
+  "request": "Hoist globToRegex into one shared module and delete the duplicate copies (four unfixed baseline copies; assess spec-lint/lint.mjs)",
+  "slug": "globtoregex-shared-module-hoist",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog key globtoregex-is-copied-nine-times-and-four-copies-backtrack-7a3e, landed in c92f82a; 10 live definitions counted by grep, 6 baseline-owned and 4 vendored under .claude/skills/impeccable/scripts/",
+  "track_reason": "Heavier than tdd-quickfix because the hoist has an unresolved design constraint the backlog entry names: hook libs must stay self-contained, so a hook lib SHALL NOT import another hook lib. That decision needs writing down and reviewing at gate A before any code moves.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/**",
+    ".claude/hooks/spec_design_calls_guard.mjs",
+    ".claude/skills/harness/rightsize-gate.mjs",
+    ".claude/skills/triage/governance-class.mjs",
+    ".claude/skills/spec-lint/lint.mjs",
+    "docs/specs/**",
+    "docs/system/elements/write-surface.md",
+    "docs/system/diagrams/write-surface.puml",
+    "tests/**"
+  ],
+  "in_cycle_fixes": [
+    {
+      "reason": "main was red from c92f82a; the user directed fixing it in this cycle rather than a separate workflow",
+      "paths": [
+        "docs/system/elements/write-surface.md",
+        "docs/system/diagrams/write-surface.puml",
+        "tests/memory-scope-store-invariants.test.mjs",
+        "tests/standup-roadmap-parity.test.mjs"
+      ]
+    }
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "globtoregex-is-copied-nine-times-and-four-copies-backtrack-7a3e"
+  ],
+  "created_at": 1786727761,
+  "updated_at": 1786741686,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

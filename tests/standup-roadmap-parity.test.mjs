@@ -67,8 +67,12 @@ describe('T-005 — collectRoadmap delegates to parse.mjs, recap keeps its own s
     assert.equal(recap.roadmap.epics.length, 7, 'live repo must still yield 7 epics');
     const epic6 = recap.roadmap.epics.find((e) => e.num === 6);
     assert.ok(epic6, 'expected Epic 6');
-    assert.equal(epic6.status, 'in-progress');
-    assert.deepEqual(epic6.tasks, { done: 10, inProgress: 0, planned: 1 });
+    // Epic 6 closed at c92f82a, the T11 landing: /roadmap-sync flipped the last
+    // planned row (T11) to done, which promoted the epic heading 🟡 -> ✅. These
+    // are live-repo values by design, so they move when the roadmap moves —
+    // re-measure against `roadmap/cli.mjs epics`, do not defend the old numbers.
+    assert.equal(epic6.status, 'done');
+    assert.deepEqual(epic6.tasks, { done: 11, inProgress: 0, planned: 0 });
     assert.equal(recap.roadmap.progress.length, 8, 'live repo must still yield 8 progress bullets');
   });
 
