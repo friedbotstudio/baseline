@@ -3,8 +3,8 @@ key: lsof-port-kill-takes-firefox-with-it
 category: landmines
 scope: [tdd]
 source: incident
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: any cleanup pattern of the form `lsof -ti:<PORT> | xargs kill`

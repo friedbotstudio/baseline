@@ -3,8 +3,8 @@ key: two-manifests-shipped-roster-v3-vs-post-install-drift-record-v2
 category: landmines
 scope: [scout, spec, document, integrate]
 source: inferred-from-code
-verified-at: e98b712
-last-touched: 2026-07-26
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **Two different manifests exist and conflating them produces a wrong "fix".** `obj/template/.claude/manifest.json` is the **shipped roster**: `manifest_version: 3`, ~406 file entries with per-file sha256, plus `owners.skills`. `<target>/.claude/.baseline-manifest.json` is the **post-install drift record**, written by the CLI at `src/cli/manifest.js:5` (`MANIFEST_VERSION = 2`), hash-only, consumed by `doctor` and `upgrade`.

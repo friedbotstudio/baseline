@@ -3,8 +3,8 @@ key: a repair pass that reads its own output perpetuates the corruption
 category: landmines
 scope: [implement, chore]
 source: incident
-verified-at: 2bf79ef
-last-touched: 2026-08-08
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 > verbatim (incident, 2026-08-08):

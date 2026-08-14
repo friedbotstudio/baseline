@@ -2,8 +2,8 @@
 key: @modelcontextprotocol/sdk@1.29.0
 category: libraries
 scope: [research]
-verified-at: 1790513
-last-touched: 2026-07-27
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: RESOLVED 2026-07-25/27 — the earlier "consumer delivery is deferred; registering `server.mjs` in `.mcp.json` would ship a consumer-broken server" caveat is OBSOLETE and was wrong to keep citing. `scripts/bundle-mcp-servers.mjs` (build Stage 1.7) inlines the SDK and `zod` with esbuild, so the SHIPPED `server.mjs` is self-contained and the baseline stays zero-runtime-dep; `sprint-channel` IS registered in `.mcp.json` + `src/.mcp.template.json`. The SDK therefore stays a **devDependency** on purpose — it is a build-time substrate, not a consumer dependency. Pin exact `1.29.0` per maintainer instruction (Q5, "pin it hard") + `check-files-diff DEVDEP_RANGE_FORBIDDEN`; the v2 line publishes as `@modelcontextprotocol/server` (alpha) and is NOT adopted. See [[sprint-channel-mcp-registration-2026-07-25]].
 ---
 

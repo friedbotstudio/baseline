@@ -2,8 +2,8 @@
 key: @stryker-mutator/core@9.6.1
 category: libraries
 scope: [research]
-verified-at: b667aa8
-last-touched: 2026-06-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Library: Stryker mutation-testing engine (`@stryker-mutator/core`), exact-pinned devDependency. The mutation-oracle (`-f029`) uses it.

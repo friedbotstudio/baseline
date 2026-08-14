@@ -2,8 +2,8 @@
 key: governance-class-input-half-A1-A5
 category: landmarks
 scope: [scout]
-verified-at: 9542a7f
-last-touched: 2026-07-15
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/tier-dial.mjs` (`GOVERNANCE_CLASSES`/`classFloor`/`raiseClass`) + `.claude/skills/triage/governance-class.mjs` (`extractSignals`)

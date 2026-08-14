@@ -3,9 +3,8 @@ key: a-required-section-locks-out-every-spec-that-predates-it
 category: landmines
 scope: [spec, tdd, archive]
 governs: .claude/hooks/artifact_template_guard.mjs,.claude/project.json
-load_bearing: true
-verified-at: db121a1
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `artifact_template_guard.mjs:44` reads `project.json → artifacts.required_sections.spec` and denies any write to a spec missing one of them. It checks the file being written, not the file's age.
@@ -14,3 +13,5 @@ last-touched: 2026-08-07
 - Why it hides: the guard fires on WRITE, not on read or on the config change. A required-section addition looks costless at the moment it lands (`/spec-lint` passes on every spec you are actively writing, because you are writing them to the new template), and the cost is paid later by whoever first needs to touch an older artifact.
 - Mitigation when you add a required section: grep `docs/specs/*.md` for the new heading in the SAME change and backfill every spec that lacks it. A live spec is not just history — an epic spec is the standing contract for every slice still unbuilt.
 - Sibling: [[drift-check-does-not-resolve-epic-child-pinned-specs]] — both are cases where a guard or checker resolves an artifact by a rule that was true when it was written and quietly stopped being true.
+
+- load_bearing: true

@@ -3,8 +3,8 @@ key: .claude/hooks/lib/slug.mjs
 category: landmarks
 scope: [scout, spec, tdd, security]
 caveat: REJECT, never normalize. `canonicalSlug` in `common.mjs` is a NORMALIZER for display/marker derivation and must never be used as the validator — routing a path guard through it masks a traversal by silently redirecting the write. `tests/slug-guard-hoist.test.mjs` enforces the separation with a source scan that greps the literal symbol name, so the seven scanned modules cannot even name it in a comment.
-verified-at: ea618e9
-last-touched: 2026-07-25
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/slug.mjs`

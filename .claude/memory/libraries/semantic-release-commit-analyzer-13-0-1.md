@@ -2,8 +2,8 @@
 key: @semantic-release/commit-analyzer@13.0.1
 category: libraries
 scope: [research]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: the first plugin in the semantic-release chain. Parses commits since the last release and decides (a) whether to release at all and (b) the bump type (major / minor / patch) using `releaseRules`. Configured under `plugins[]` in `.releaserc.json` with optional `preset` + `releaseRules` array.

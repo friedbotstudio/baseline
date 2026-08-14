@@ -3,7 +3,6 @@ key: a-synthesizing-writer-erases-fields-its-arguments-cannot-carry
 category: landmines
 scope: [implement, simplify, security]
 governs: .claude/skills/workspace/shards.mjs
-load_bearing: true
 verified-at: 79e41cb
 last-touched: 2026-08-13
 ---
@@ -36,3 +35,5 @@ So two of three were derivable and one was not. The `subsystem` distinction in t
 - **Generalise it:** when you widen a lossy writer, ask what happens if the next caller omits the new parameter. If the answer is "the old data loss", you have moved the bug rather than fixed it.
 - Repair path, for when this has already happened: git history is the only lossless source for a field that exists nowhere else on disk. `workspace restore-shards` walks it. The element record is a fallback for a shard that was never rich, never a primary — records carry no `techn`, so a record-first repair finishes what the defect started.
 - Standing guard: `tests/corpus-shard-preservation.test.mjs` scans every live shard and fails on the three-argument form, so the class cannot recur silently a third time.
+
+- load_bearing: true

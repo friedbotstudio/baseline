@@ -2,8 +2,8 @@
 key: src/seed.template.md:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: pristine ship-time template for the project's genesis prompt (`docs/init/seed.md`). `npx @friedbotstudio/create-baseline` overlays this onto a fresh target tree; `scripts/build-template.sh` regenerates `obj/template/` from it. Per Article I.4 precedence, this template is the source of truth for the baseline's shape — any drift between `docs/init/seed.md` and this file means the genesis is out of step with what ships.

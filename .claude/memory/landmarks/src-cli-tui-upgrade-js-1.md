@@ -2,8 +2,8 @@
 key: src/cli/tui/upgrade.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — interactive upgrade flow that replaces the retired `--merge`. Plan/apply split: (1) dry-run `threeWayMerge` to enumerate `SKIP_CUSTOMIZED` conflicts (including tier-2/3 customized files when `canRecoverBase` reports BASE unrecoverable — see [[src/cli/merge.js:1]]), (2) `prompts.select` per conflict with `CHOICE_OPTIONS` = four entries `keep-mine / take-theirs / merge / abort` (post tier1-merge-option workflow 2026-05-22; `show-diff` and the cap-at-2 loop are removed), (3) on cancel/abort bail before any write, (4) real `threeWayMerge` with `onSkipCustomized` callback backed by the user's choices Map. The `merge` pick routes through `src/cli/merge.js → fallbackToBinaryPrompt`'s new branch and calls `writeStageBaseless` to stage incoming bytes under `.claude/state/upgrade/<ts>/`. Per-file action lines render `ACTION_LABELS[action.kind]` padded to `ACTION_LABEL_WIDTH` (single source of truth from `src/cli/merge.js`). Pending-stage timestamp is rendered via `formatStageTimestamp` (from `src/cli/upgrade-tiers.js:59`) so users see `2026-05-21 11:45 UTC` instead of the raw `2026-05-21T11-45-00-000Z`. Writes `renderHeader({version, subtitle: 'upgrade'})` from `src/cli/tui/splash.js:1` above the clack intro (changed from `renderBrandStrip` on 2026-05-23 per cli-wordmark-on-all-commands; narrow terminals fall back to the slim strip automatically). The legacy-manifest warning also revised that day to name `/upgrade-project` + the marker's silent-skip behavior. `listShippedFiles` filters `COPY_EXCLUDE` (imported from `src/cli/install.js`) so `manifest.json` is never sent into `threeWayMerge` as an ADD candidate. Cancel sentinel: `Symbol.for('clack:cancel')`.

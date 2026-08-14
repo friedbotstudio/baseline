@@ -3,8 +3,8 @@ key: js-string-replace-dollar-injection-corrupts-blocks
 category: landmines
 scope: [implement, tdd]
 caveat: same hazard exists anywhere in the codebase that does `X.replace(<dynamic string>, <content-with-$>)`; this entry documents the sweep.mjs instance but the rule is general to JS.
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-sync/sweep.mjs` — `replaceBlock(text, block, updated)` (the $-safe splice, line 140) vs the `deleteBlock` sibling (line 125); the six block-mutating call sites in `modeStampClosure`, `applyStaleAction` (re-verify + mark-closed), and `modeBacklogDecay` (keep/drop/picked-up).

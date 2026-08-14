@@ -2,8 +2,8 @@
 key: spec-lint-and-guard-section-regexes-are-not-line-anchored
 category: landmines
 scope: [spec]
-verified-at: 32b83c2
-last-touched: 2026-07-15
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/spec-lint/lint.mjs` (`checkTraceability` → `acSectionRe = /##\s+Acceptance criteria([\s\S]*?)(?=^##\s|...)/m`) and every `/^##\s+<Section>/im` section extractor in `.claude/hooks/lib/design-calls.mjs` + the spec-review checkers.

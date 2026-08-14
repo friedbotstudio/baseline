@@ -2,8 +2,8 @@
 key: .claude/skills/whatsnew/SKILL.md:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: On-demand "what's new" generator (NOT a workflow phase; replaced the former Phase 11.5 `changelog` skill). Main context writes keepachangelog-style entries; the generator emits a structured fragment to `.claude/state/whatsnew/<slug>.json` (gitignored, transient). Optional `project.json -> whatsnew.route_workflow` names a per-project routing workflow that consumes the fragment. Never writes `CHANGELOG.md` (owned solely by `@semantic-release/changelog` at release time).

@@ -2,8 +2,8 @@
 key: .claude/skills/commit/SKILL.md:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Phase 11 workflow skill. Stages the diff and runs `git commit` with the message via HEREDOC; the `git_commit_guard` Bash-time hook enforces consent independently. Prereq line 8: BOTH `archive` AND `memory-sync` in `workflow.json → completed` (or in `exceptions`). Step 1 archives `workflow.json` into the slug bundle as the first move; Step 2 verifies memory-sync is the final non-commit entry; Steps 3–7 stage named paths, draft message (humanizer pass on the body), and commit. Non-git projects auto-except this skill at triage time.

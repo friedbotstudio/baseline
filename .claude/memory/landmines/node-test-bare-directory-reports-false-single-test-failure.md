@@ -2,8 +2,8 @@
 key: node-test-bare-directory-reports-false-single-test-failure
 category: landmines
 scope: [integrate, tdd, chore]
-verified-at: f36b142
-last-touched: 2026-07-19
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: the test invocation itself — `package.json → scripts.test` is `node --test --test-reporter=spec tests/*.test.mjs`.

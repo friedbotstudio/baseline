@@ -2,8 +2,8 @@
 key: src/cli/install.js:79
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: `freshInstall(templateDir, target)` — bulk `cp -r templateDir target` with a filter that skips `SPECIAL_MERGE` paths (`.mcp.json` → deep-merge) and `COPY_EXCLUDE` paths; then applies `NEVER_TOUCH` (preserve user's `.claude/project.json` if present) and `SPECIAL_MERGE`; then `materializeNpmrc(target)` writes `<target>/.npmrc` from `src/.npmrc.template`; finally writes `<target>/.claude/.baseline-manifest.json` as the runtime hash table. `forceInstall` parallels the shape but with `force: true` and `skipNeverTouch: true`. The shipped sha256 manifest at `obj/template/.claude/manifest.json` (with `owners.skills`) is delivered to `<target>/.claude/manifest.json` by the recursive cp itself — no special-case step — because it lives inside the `.claude/` subtree of the template; `COPY_EXCLUDE` is empty since path-level exclusion is no longer needed.

@@ -2,8 +2,8 @@
 key: .claude/skills/spec-shippability-review/analyzer.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — shared shippability checks for C1 (`DEV_TREE_RUNTIME_REF`) + C3 (`UNSHIPPED_MODULE_IMPORT`). Pure functions, no I/O. Exports: `collectShellFences(text)` → `[{startLine, body}]` (handles BOTH column-0 tagged fences AND indented bash/sh/shell fences — the latter is the typical SKILL.md numbered-list shape that the original column-0-only regex missed), `runDevTreeAndUnshippedChecks(fences, manifest, sourcePath)` → `findings[]` (combined C1+C3 walk; dedupes per `line:refPath`). Static patterns `RUNTIME_INVOCATION_PATTERNS` (import/require, node/python/bash invocation, bare `./dev-prefix/` reference).

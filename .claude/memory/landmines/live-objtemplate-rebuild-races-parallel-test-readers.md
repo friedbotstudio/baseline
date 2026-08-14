@@ -2,8 +2,8 @@
 key: live-objtemplate-rebuild-races-parallel-test-readers
 category: landmines
 scope: [chore, integrate]
-verified-at: 0299004
-last-touched: 2026-08-06
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `tests/build-template.test.mjs` (and other build-exercisers) vs any test that reads `obj/template/**`; helper `tests/helpers/clone-and-build.mjs`.

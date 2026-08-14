@@ -2,8 +2,8 @@
 key: .claude/skills/audit-baseline/audit.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: drift-check between this repo's implementation and the constitution + seed.md. Verifies hook/agent/skill/command names + counts, settings.json wiring, project.json key presence, .mcp.json servers, vendored license files, helper script presence, and per-file memory-shape canonical preamble via the `isValidPreamble(text)` helper (strict opener `^# `, full preamble must include a closing `---` separator; `_pending` and `_resume` get the same shape check). Skill-ownership drift uses `loadManifest()` which tries `<root>/.claude/manifest.json` first (consumer projects) and falls back to `<root>/obj/template/.claude/manifest.json` (dev repo) — keep both paths in mind when reasoning about why the audit found or didn't find the manifest. **Consumer-mode fork (audit.mjs:415, audit.mjs:704):** when `<root>/.claude/manifest.json` is present AND `<root>/src/` is absent, the audit sets `SKIP_SRC = true`, marks `src templates: directory` PASS with reason "consumer install ... — src/ checks skipped", and bypasses every per-template assertion plus the `src/CLAUDE.template.md` Article X.2 mirror check. The §4.3 skills names check passes an empty set as `additions` (NOT `add_skills`) because the disk set is `disk_baseline_skills` (filtered to `owner: baseline`); project additions are out-of-scope per CLAUDE.md Article XI #5. Hooks/agents/commands DO accept additions there because their disk sets are unfiltered. Exit 0 PASS / 1 FAIL. Wired as the binding `project.json → test.cmd` for this project, so every `verify` stamp at `.claude/state/last_test_result` is grounded in this script's verdict.

@@ -3,8 +3,8 @@ key: vendored-skill-upgrade-silently-drops-owner-baseline-and-untracks-reference
 category: landmines
 scope: [scout, spec, tdd, integrate, security]
 source: inferred-from-code
-verified-at: c869526
-last-touched: 2026-07-26
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: check this on EVERY vendored-skill version bump, not just when you intend to change the roster; the whole point is that nobody intended a roster change.
 ---
 

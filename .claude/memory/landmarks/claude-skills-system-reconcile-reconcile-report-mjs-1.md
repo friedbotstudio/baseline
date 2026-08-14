@@ -4,8 +4,8 @@ category: landmarks
 scope: [scout, spec, tdd, archive, memory-sync]
 governs: .claude/skills/system-reconcile/reconcile-report.mjs,.claude/skills/system-reconcile/SKILL.md
 source: inferred-from-code
-verified-at: 17f1fa0
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: the corpus health report behind `/system-reconcile`. Composes seven checks over `docs/system/` into one result — `gaps`, `stale`, `dangling`, `duplicateAnchors`, `orphanShards`, `unillustrated`, `missingKind`. Landed by `system-spec-delta-slice-b` (epic `system-spec-delta`, slice B).

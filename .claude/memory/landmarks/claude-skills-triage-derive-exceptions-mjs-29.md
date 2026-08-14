@@ -2,8 +2,8 @@
 key: .claude/skills/triage/derive-exceptions.mjs:29
 category: landmarks
 scope: [scout]
-verified-at: 0aa70cf
-last-touched: 2026-07-13
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — derives a workflow's `exceptions[]` from the chosen track's DAG instead of hand-authoring them. `deriveExceptions(trackNodes, allPhases, internalPhases, authored)` treats a phase with no node in the track as structurally unreachable, therefore excepted; unions that with any authored exceptions, then subtracts the consent gates. Cures the drift class where a phase skill declares a prereq its own track can never satisfy (`integrate` wanting `security` on the chore DAG; `/spec` wanting `research` on the power DAG, which blocked a real spec write).

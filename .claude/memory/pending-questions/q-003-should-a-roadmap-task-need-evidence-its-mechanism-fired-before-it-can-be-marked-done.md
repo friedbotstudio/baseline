@@ -3,8 +3,8 @@ key: Q-003
 category: pending-questions
 scope: [intake, spec, integrate]
 source: assistant-deferral
-verified-at: d4a1a47
-last-touched: 2026-08-06
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 > Worth flagging, though: roadmap item C was marked ✅ for delivering a path-keyed surfacing trigger that **never fired** — the absolute-vs-relative mismatch meant it matched nothing on any real write until this cycle. A green roadmap line describing an inert mechanism is exactly the drift class this cycle exists to remove.

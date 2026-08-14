@@ -2,8 +2,8 @@
 key: plantuml@1.2026.2
 category: libraries
 scope: [spec, research]
-verified-at: 35212e8
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: NOT an npm dep — a vendored jar at `.claude/bin/plantuml.jar` (19 MB) plus a system JVM; no lockfile pin possible. Re-verify the jar version with `java -jar .claude/bin/plantuml.jar -version` before relying on preprocessor behaviour.
 ---
 

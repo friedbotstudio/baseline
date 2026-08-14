@@ -2,8 +2,8 @@
 key: bsdtar-vs-gnutar-default-extraction
 category: landmines
 scope: [chore, integrate]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - The macOS default `tar` is `bsdtar` (libarchive); Linux/CI default is GNU `tar`. Both DEFAULT-reject absolute paths and `..` path components when extracting (bsdtar: "files containing components that resolve outside of the destination directory" are refused; GNU tar: strips leading `/` and warns). So a malicious tarball cannot write outside `-C tmp` on either platform with default flags.

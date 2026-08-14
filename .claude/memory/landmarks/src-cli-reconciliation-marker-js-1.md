@@ -2,8 +2,8 @@
 key: src/cli/reconciliation-marker.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — per-target reconciliation marker. Writes `<target>/.claude/.baseline-reconciliations.json` (schema_version: 1, body shape `{reconciliations: {rel: {baseline_version, reconciled_against_template_sha, reconciled_at}}}`) recording which template hash each customized file was reconciled against by `/upgrade-project`. Exports: `readMarker(target)` → `ReconciliationsFile | null` (ENOENT → null silently; malformed JSON / future schema_version → null with stderr warning), `recordReconciliation(target, rel, baseline_version, template_sha)` → `void` (atomic write-then-rename via `randomUUID` tmpfile; throws typed `MarkerWriteError` on filesystem failure), `matchesReconciledHash(marker, rel, template_sha)` → `boolean` (pure string equality; null marker → false), `MARKER_PATH_REL` constant, `MarkerWriteError` class. Consumed by `src/cli/merge.js → threeWayMerge` (marker-consult branch between unchanged-since-install and dispatchCustomized: matched newHash → MARKER_MATCHED NOOP) and by `src/cli/doctor.js` (MARKER_PATH_REL exclusion in the `added` scan parallel to MANIFEST_REL).

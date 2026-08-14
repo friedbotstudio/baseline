@@ -3,8 +3,8 @@ key: one-rule-two-copies-one-on-a-write-path
 category: landmines
 scope: [implement, tdd]
 source: incident
-verified-at: 1a2cce3
-last-touched: 2026-07-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-index/lift-fields.mjs` (now the ONLY definition) ← formerly duplicated at `.claude/skills/memory-index/migrate.mjs:81` and `.claude/skills/memory-sync/shape.mjs:40`.

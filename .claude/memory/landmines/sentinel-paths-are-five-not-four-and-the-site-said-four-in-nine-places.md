@@ -3,8 +3,8 @@ key: sentinel-paths-are-five-not-four-and-the-site-said-four-in-nine-places
 category: landmines
 scope: [document, integrate]
 source: inferred-from-code
-verified-at: e98b712
-last-touched: 2026-07-26
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **`SENTINEL_PATHS` at `src/cli/conflict.js:12` holds FIVE entries**, not four: `.claude`, `.claude/.baseline-manifest.json`, `CLAUDE.md`, `.mcp.json`, `docs/init/seed.md`. A fresh install refuses with exit 1 if any of them is already present.

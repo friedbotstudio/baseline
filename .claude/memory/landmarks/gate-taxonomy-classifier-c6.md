@@ -2,8 +2,8 @@
 key: gate-taxonomy-classifier-c6
 category: landmarks
 scope: [scout]
-verified-at: c9d8f0e
-last-touched: 2026-07-16
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/gate-taxonomy.mjs` (`classifyOperation` + `CATEGORIES` + `CONSENT_POINT_MAP`)

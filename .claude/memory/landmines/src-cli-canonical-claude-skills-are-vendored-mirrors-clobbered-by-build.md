@@ -2,8 +2,8 @@
 key: src-cli-canonical-claude-skills-are-vendored-mirrors-clobbered-by-build
 category: landmines
 scope: [chore, integrate]
-verified-at: 6ae2955
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `src/cli/{workflows-validator,workflows-validator-invariants,workflows-validator-predicates,track-tasklist-materializer,workflow-migrator}.js` (CANONICAL) vs `.claude/skills/{triage,harness}/*.js` (MIRRORS). Sync: `scripts/build-template.sh` Stage 0b `sync_vendored_mirror()` runs a plain `cp "$src" "$dst"`. Guard: `tests/vendored-mirror-bytes.test.mjs` asserts byte-equality per pair. Tests import from `src/cli/` (see `tests/byte-equivalent-migration.test.mjs`).

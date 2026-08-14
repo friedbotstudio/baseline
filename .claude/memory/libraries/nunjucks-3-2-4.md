@@ -2,8 +2,8 @@
 key: nunjucks@3.2.4
 category: libraries
 scope: [research]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: template engine for every `.njk` file in `site-src/`. Drives layouts, includes, frontmatter variable substitution.

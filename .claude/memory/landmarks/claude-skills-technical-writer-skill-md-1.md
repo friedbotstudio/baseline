@@ -3,8 +3,8 @@ key: .claude/skills/technical-writer/SKILL.md:1
 category: landmarks
 scope: [scout]
 caveat: TRAP — the pass ORDER is load-bearing, not stylistic. Simplifying (`reader-level`) after de-slopping (`humanizer`) reintroduces phrasing the de-slop pass already cleaned, so `humanizer` has to run twice and the second run flattens the prose. The fixed order is draft against the measured corpus profile -> `reader-level` -> `humanizer`. The other failure mode this SOP exists to prevent is writing before knowing — a page drafted from the model's impression of a system is fluent and unfalsifiable, which is exactly what reads as generated. Step 1 (claim -> source path:line -> verified date) is NOT optional, and an unverifiable claim is cut or written as an explicit open question, never softened into a vague sentence.
-verified-at: c4999eb
-last-touched: 2026-07-31
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/technical-writer/SKILL.md`

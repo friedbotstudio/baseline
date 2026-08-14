@@ -2,8 +2,8 @@
 key: src/cli/tui/meta.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — branded renderers for the meta commands (`--help`, `--version`) AND for usage-class errors. Three exports: `renderHelp(helpText, _version)`, `renderVersion(version)`, `renderUsageError(msg, helpText, version)`. `renderHelp` in TTY prepends the full splash marquee from `src/cli/tui/splash.js:1` (wordmark + tagline + commands + try line + discover URL) before the canonical HELP_TEXT body; non-TTY emits HELP_TEXT byte-clean. `renderVersion` in TTY prints the wordmark + version marquee; non-TTY emits the bare version string. `renderUsageError` writes to stderr (banner + `Error: <msg>` + HELP_TEXT) so every parseArgs/usage-class exit ships brand-framed guidance.

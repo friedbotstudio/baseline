@@ -3,8 +3,8 @@ key: drift_check-diffs-committed-HEAD-empty-for-in-flight-workflow
 category: landmines
 scope: [tdd, integrate]
 caveat: **PREVENTION rule (confirmed 2026-07-09, `power-track-completion`).** The literal-id-substring matcher means a spec AC with NO code and NO test — a pure process/sequencing invariant (e.g. "the commit series proves seed.md lands before CLAUDE.md before impl") — can NEVER be resolved by any working-tree diff and wedges the drift-check tick into a permanent exit-1 YIELD. Do not put such an AC in the `## Acceptance criteria` table; state it in `## Rollout` as an invariant instead (audited in `git log` / enforced by the `commit` phase). This workflow's AC-007 hit exactly this and had to be moved to Rollout (spec decision D11) for the drift gate to pass; renumbering the remaining ACs was explicitly avoided because tests already cite the ids. CONFIRMED AGAIN 2026-07-10 (`harden-power-track-debt`): AC-011 (`audit exits 0`) and AC-012 (`full suite green`) both wedged the drift tick — AC-011 was made resolvable by adding a real audit-spawning test annotated `// AC-011`, and AC-012 was removed from the table entirely (it is a universal `integrate` invariant, not an AC of the change) and moved to the Rollback signal. The tell is a `smoke`/`preflight` AC that describes a whole-suite/whole-repo outcome: it can be enforcement-kind (satisfying spec-rollout-enforceability) yet un-diff-referenceable (wedging drift) — resolve by either binding it to a REAL spawn-and-assert test (audit-exit-0) or moving it out of the table. Corollary for the mitigation above: the fix is to make coverage LEGIBLE — annotate each `it(...)` with `// AC-NNN` (a sanctioned why-comment, code-structure principle 6) so the id appears in an added line — but a genuinely code-less AC cannot be annotated and must leave the table.
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/tdd/drift_check.mjs` → `loadDiff()` (`git merge-base HEAD main` then `git diff <merge-base>..HEAD`); inlined by the harness as the `drift-check-tick` between the last design-ui/verify tick and `tdd-finalize`.

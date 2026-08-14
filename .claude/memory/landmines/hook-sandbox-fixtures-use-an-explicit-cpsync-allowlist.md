@@ -2,8 +2,8 @@
 key: hook-sandbox-fixtures-use-an-explicit-cpsync-allowlist
 category: landmines
 scope: [tdd, security, integrate]
-verified-at: ea618e9
-last-touched: 2026-07-25
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `tests/branch-aware-git-policy.test.mjs:23`, `tests/git-topology-guard.test.mjs:32`

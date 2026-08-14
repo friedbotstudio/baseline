@@ -3,8 +3,8 @@ key: .claude/skills/faithful-capture/SKILL.md:1
 category: landmarks
 scope: [scout]
 caveat: TRAP 1 — R7 ("propose anyway") is load-bearing, not a softener. Strip it and the skill collapses into `brainstorm`'s "SHALL NOT propose solutions", which this thread established is SLOWER than anchor-and-correct whenever the speaker has taste and correction is cheap. Its detection tell is deliberately crude (three consecutive turns with no substantive contribution) because a subtle tell will not fire. TRAP 2 — this skill is deliberately user-owned (NO `owner:` key in its frontmatter). Adding `owner: baseline` without also bumping the skill count in CLAUDE.md + `.claude/CONSTITUTION.md` Appendix B + the Article III session-start greeting, and regenerating `manifest.files` sha256, is a hard `audit-baseline` FAIL per Article XII.3.
-verified-at: c4999eb
-last-touched: 2026-08-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/faithful-capture/SKILL.md` (9,714 bytes, added 2026-07-31, untracked at time of writing)

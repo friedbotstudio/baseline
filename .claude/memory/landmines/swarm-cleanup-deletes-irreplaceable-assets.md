@@ -2,8 +2,8 @@
 key: swarm-cleanup-deletes-irreplaceable-assets
 category: landmines
 scope: [tdd]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: any swarm task that deletes files without preserving a copy first

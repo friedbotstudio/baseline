@@ -2,8 +2,8 @@
 key: cli-mjs-invoked-bare-uses-config-defaults-unless-it-reads-project-json
 category: landmines
 scope: [harness, tdd, integrate]
-verified-at: faa3ca9
-last-touched: 2026-07-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **Trap.** A `.mjs` helper whose config arrives via an injected dep (the test-only path) will silently fall back to **hardcoded defaults** when run as a bare CLI, because the CLI entrypoint passes no deps. Any behavior that depends on `project.json` values is then **inert in production** while every unit test passes — the tests inject the config the CLI never loads.

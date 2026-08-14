@@ -5,8 +5,8 @@ scope: [integrate, tdd]
 source: assistant-deferral
 raised-on: 2026-08-10
 raised-in-context: warm-context-diet
-verified-at: 60c5aeb
-last-touched: 2026-08-10
+verified-at: 8201af6
+last-touched: 2026-08-14
 governs: tests/upgrade-project.test.mjs, .claude/state/.harness_active
 ---
 

@@ -2,8 +2,8 @@
 key: claude-code-drops-mcp-channel-notifications-to-session
 category: landmines
 scope: [tdd]
-verified-at: ca592c2
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Landmine: an MCP server's `server.notification({ method: 'notifications/claude/channel', ... })` push into a Claude Code session is LOSSY — notifications arriving while the session is mid-turn or idle are silently dropped/coalesced (Claude Code issues #38736 "only first channel notification per session delivered", #61797 "MCP notifications dropped to idle session"). Headless `-p` sessions never autonomously take a turn on an event; there is no "wake on notification." So a push-into-session coordination model CANNOT be relied on for correctness.

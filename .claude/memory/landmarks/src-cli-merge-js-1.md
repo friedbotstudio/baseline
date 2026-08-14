@@ -2,8 +2,8 @@
 key: src/cli/merge.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — three-way merge engine used by the `upgrade` subcommand. Exports `threeWayMerge(templateDir, target, oldManifest, newManifest, opts)`, the `ACTION_KINDS` enum (ADD / OVERWRITE / NOOP / **MARKER_MATCHED** / SKIP_CUSTOMIZED / PRUNE / PRUNE_SKIPPED_CUSTOMIZED / NEVER_TOUCH_PRESERVE / NEVER_TOUCH_ADD / SPECIAL_MERGE / MECHANICAL_MERGE_CLEAN / MECHANICAL_MERGE_CONFLICTED / SEMANTIC_MERGE_STAGED), and the `ACTION_LABELS` + `ACTION_LABEL_WIDTH` user-facing render map consumed by both CLI paths. Per-file branch order in the loop: NEVER_TOUCH → SPECIAL_MERGE → tgtHash===newHash NOOP → tgtHash===oldHash OVERWRITE → **marker-consult `matchesReconciledHash(marker, rel, newHash)` MARKER_MATCHED** → dispatchCustomized → upstream-removed prune. Marker is loaded once via `await readMarker(target)` at the top of threeWayMerge. Supports `{dryRun, onSkipCustomized, pack}` opts: dry-run returns planned actions without writing; `onSkipCustomized` is the per-conflict callback (keep-mine / take-theirs / merge / abort). `dispatchCustomized` dry-run branch calls `canRecoverBase` and downgrades tier MECHANICAL/SEMANTIC to SKIP_CUSTOMIZED when BASE is unrecoverable. `fallbackToBinaryPrompt`'s `'merge'` branch calls `writeStageBaseless` for exit-code-5 routing.

@@ -3,8 +3,8 @@ key: .claude/skills/spec/optimize.mjs
 category: landmarks
 scope: []
 governs: .claude/skills/spec/optimize.mjs, .claude/skills/spec/cli.mjs
-verified-at: dd0e5d2
-last-touched: 2026-08-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/spec/optimize.mjs`. Domain — diffs a drafted spec against the standing model at `docs/system/`. Reached from `/spec` Step 6.5 via `node .claude/skills/spec/cli.mjs optimize --slug <slug>`.

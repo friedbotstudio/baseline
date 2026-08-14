@@ -3,8 +3,8 @@ key: count-invariants-cannot-see-field-placement
 category: landmines
 scope: [spec, tdd, integrate]
 source: incident
-verified-at: 1a2cce3
-last-touched: 2026-07-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-index/migrate.mjs → verifyMigrationFidelity` (now three-sided).

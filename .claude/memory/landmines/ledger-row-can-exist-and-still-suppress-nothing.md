@@ -3,8 +3,8 @@ key: ledger-row-can-exist-and-still-suppress-nothing
 category: landmines
 scope: []
 governs: .claude/skills/memory-sync/ledger.mjs, .claude/hooks/lib/memory_stop.mjs
-verified-at: d36d7f0
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **The trap.** `/memory-sync` Step 4.5 can run, write rows, and still suppress nothing. `memory_stop` builds its dedup set from the FULL `## CANDIDATE:` header text (`memory_stop.mjs:275`) and folds `decidedKeys()` into that same set by exact string; `recordCuration` stores whatever key it is handed, verbatim. Record a bare key (`annotations.mjs` instead of `annotations.mjs → landmarks.md`) and the row lands, matches nothing, and every candidate you just curated comes back next turn.

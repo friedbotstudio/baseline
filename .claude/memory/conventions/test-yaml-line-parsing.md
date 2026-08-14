@@ -8,8 +8,8 @@ why: the project's tarball-shape contract (`check-files-diff.mjs → DEVDEP_RANG
 placement: helpers live ~10 lines each inside the test file that needs them. Do not extract a shared YAML utility module just for one or two test suites; DRY emerges from structure, not from premature extraction.
 reference: `tests/release-workflow.test.mjs:30–87` (the 6 helpers).
 applies-to: any test asserting on `.github/workflows/*.yml` shape or other project-controlled YAML.
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 

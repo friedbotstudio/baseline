@@ -2,8 +2,8 @@
 key: verification-harness-misreports-more-often-than-the-subject-fails
 category: landmines
 scope: [tdd, integrate]
-verified-at: 6ae2955
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: any Bash-driven check in a workflow phase that parses tool output, exit codes, or file contents (verify-tick, integrate, ad-hoc `grep`/`node --test` verification).

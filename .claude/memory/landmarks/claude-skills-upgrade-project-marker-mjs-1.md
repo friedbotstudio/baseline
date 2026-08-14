@@ -2,8 +2,8 @@
 key: .claude/skills/upgrade-project/marker.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — **shipped** CLI helper for `/upgrade-project`'s marker write. Subcommand `record <target> <rel> <baseline_version> <template_sha>` writes `<target>/.claude/.baseline-reconciliations.json` atomically (write-then-rename via `randomUUID` tmpfile). Stdlib only (`node:fs/promises`, `node:path`, `node:crypto`). Exit codes: 0 success, 1 on filesystem error (stderr names `cannot write .claude/.baseline-reconciliations.json: <reason>`), 2 on bad args (stderr names `usage:` line + first missing field or unknown subcommand).

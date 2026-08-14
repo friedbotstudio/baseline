@@ -2,8 +2,8 @@
 key: editing-a-stage-0b-mirror-is-silently-reverted-by-npm-run-build
 category: landmines
 scope: [chore, integrate]
-verified-at: 1414f27
-last-touched: 2026-07-13
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `scripts/build-template.sh` Stage 0b (lines ~66-90, `sync_vendored_mirror`) → the generated mirrors under `.claude/skills/triage/` (`workflows-validator.js`, `workflows-validator-invariants.js`, `workflows-validator-predicates.js`, `track-tasklist-materializer.js`, `workflow-migrator.js`). The SOURCES live in `src/cli/`.

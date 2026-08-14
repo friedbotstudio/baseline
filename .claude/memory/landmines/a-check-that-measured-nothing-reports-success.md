@@ -3,9 +3,8 @@ key: a-check-that-measured-nothing-reports-success
 category: landmines
 scope: [tdd, integrate, document, security]
 governs: tests/**,.claude/skills/scenario/SKILL.md,.claude/skills/implement/SKILL.md
-load_bearing: true
-verified-at: 17f1fa0
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **The trap.** A verification step that measured nothing looks exactly like one that measured everything and passed. Silence and green are the same pixel. This is the operator-side twin of the false-clean *oracle* family ([[reader-level-grades-rendered-html-so-markdown-passes-vacuously]], [[drift-check-resolves-acs-by-literal-mention-not-implementation]], [[security-oracle-reads-any-high-heading-as-an-open-finding]]) — there a shipped tool misreads its input; here the check never ran at all.
@@ -15,3 +14,5 @@ last-touched: 2026-08-07
 - **Instance 4, a test that witnessed the BUG rather than the behaviour (2026-08-07, epic-child-pin-and-delta-backticks).** `tests/system-spec-sync-back.test.mjs:74` asserted `notEqual(readElement(after), before)` — "the touched element must actually change". It passed for four months because `renderRecord` re-framed an already-framed body and appended two blank lines on *every* write, so the file differed whether or not the digest moved. Fixing that writer (landmine `materialize-appends-blank-lines-every-run`) turned a correct no-op — re-stamping an already-current digest — into a test failure, which is how the vacuity surfaced. The witness was a side effect of a defect, so removing the defect removed the evidence. Fix: stale the digest in the fixture first, then assert the stale value is *gone*. **When a test's witness is "the bytes changed", ask what makes them change** — if the answer is anything other than the behaviour under test, the test is measuring that instead.
 - **Practical rule.** Before believing a check, prove it can fail. For a filter, confirm it matches on the known-good input first. For a test, confirm it is RED before the change for the reason you intend, not merely RED. "No output" is never evidence.
 - Related, different actor: [[a-cycle-that-adds-a-gate-must-assert-the-consumer-calls-it]] is about a gate nothing calls; this is about a check that ran but measured nothing.
+
+- load_bearing: true

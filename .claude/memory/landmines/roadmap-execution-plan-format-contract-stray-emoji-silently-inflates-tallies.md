@@ -2,8 +2,8 @@
 key: roadmap-execution-plan-format-contract-stray-emoji-silently-inflates-tallies
 category: landmines
 scope: [spec]
-verified-at: 3160e0c
-last-touched: 2026-07-12
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `docs/roadmap-execution-plan.md` (the artifact) ← parsed by `.claude/skills/standup/gather.mjs` (`parseEpicHeading`, `countTaskStatuses`) and `.claude/skills/roadmap-sync/sync.mjs` (`EPIC_HEADING`, `TASK_LINE`, `auditRoadmap`); path declared at `project.json → roadmap.path`.

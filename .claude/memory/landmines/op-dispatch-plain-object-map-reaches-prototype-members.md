@@ -2,8 +2,8 @@
 key: op-dispatch-plain-object-map-reaches-prototype-members
 category: landmines
 scope: [security, tdd]
-verified-at: c9d8f0e
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Landmine: dispatching on a plain-object lookup map keyed by UNTRUSTED input — `const handler = OPS[frame.op]` — reaches INHERITED `Object.prototype` members. `OPS['__proto__']` returns `Object.prototype` (truthy but NOT callable → `TypeError` crash when called); `OPS['constructor']` / `OPS['toString']` return callable inherited members invoked as unintended handlers. On a socket/IPC/HTTP boundary, one crafted frame `{op:"__proto__"}` crashes the process (DoS).

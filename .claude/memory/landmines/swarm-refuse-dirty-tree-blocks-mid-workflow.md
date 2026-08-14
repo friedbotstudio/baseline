@@ -2,8 +2,8 @@
 key: swarm-refuse-dirty-tree-blocks-mid-workflow
 category: landmines
 scope: [tdd, integrate]
-verified-at: 86a2bb3
-last-touched: 2026-07-18
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/project.json → swarm.refuse_dirty_tree` (read by `swarm-dispatch` preflight)

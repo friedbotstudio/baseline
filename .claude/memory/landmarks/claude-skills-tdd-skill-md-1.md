@@ -2,8 +2,8 @@
 key: .claude/skills/tdd/SKILL.md:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Phase 6 TDD coordinator. Thin orchestrator — decides scenario recipe + implementation contract in main context, writes state at `.claude/state/tdd/<slug>.json`, seeds per-worker tasks (scenario, implement, verify-tick, design-ui-tick, drift-check-tick, tdd-finalize) into the TaskList, yields with `harness_state.continue` so the harness invokes each worker as its own tick. No subagent delegation; no nested Skill calls. The harness inlines verify-tick mechanically rather than invoking the (contract-only) verify skill.

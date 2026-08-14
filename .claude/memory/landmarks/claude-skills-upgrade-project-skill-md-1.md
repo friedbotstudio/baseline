@@ -2,8 +2,8 @@
 key: .claude/skills/upgrade-project/SKILL.md:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Maintenance skill (NOT a workflow phase) — invoked reactively when `create-baseline upgrade` exits 5 with a "Pending semantic-merge stage" pointer OR when the SessionStart hook surfaces a pending-stage nag. Reads `.claude/state/upgrade/<ts>/manifest.json` (shape: `stage_version: 1`, `slug`, `created_at`, `baseline_version_from`, `baseline_version_to`, `files[]` with per-entry `{rel, base_sha256: <64-hex>|null, incoming_sha256, local_sha256, status}`). Procedure: step 2 classification preamble branches on `base_sha256`; step 3 three-way reconciliation (zero-drift renumbering rule); step 4 two-way reconciliation (renumbering rule disclaimed); **step 5 record reconciliation marker** (rewritten 2026-05-27 per marker-helper-shipped-instead-of-dev-import spec): invokes `node .claude/skills/upgrade-project/marker.mjs record <target> <rel> <baseline_version_to> <incoming_sha256>` for every per-file RECONCILED transition (NOT NEEDS_USER_INPUT, NOT dry-run); step 6 shared finalize (delete stage dir when all-RECONCILED). Supports `args=dry-run` (emits unified diff, no writes, no stage delete, **no marker write** — would lie to next upgrade). Fallback: NEEDS_USER_INPUT preserves stage. The SHALL NOT constraint at the constraints section narrowly permits writes to `.claude/.baseline-reconciliations.json` via the shipped helper (atomic write-then-rename); `.baseline-prior/` and `.baseline-manifest.json` remain forbidden.

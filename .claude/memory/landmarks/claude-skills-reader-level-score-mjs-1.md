@@ -3,8 +3,8 @@ key: .claude/skills/reader-level/score.mjs:1
 category: landmarks
 scope: [scout]
 caveat: Default target is grade 9 (`DEFAULT_TARGET`), the LOW end of the 9-11 professional band, chosen because baseline prose already spends its readability budget on unavoidable identifiers. Scoring scope is narrowed on purpose — code spans, headings and quoted excerpts are stripped, and HTML input is scoped to `<article class="docs-main">` via `scopeToArticle()`. A path like `.claude/state/spec_approvals/<epic>.approval` is not prose and would wreck a syllable count; a description quoted from a SKILL.md belongs to its source. Widening the scope to "all text on the page" makes the score unactionable, since the author cannot fix what they did not write.
-verified-at: c4999eb
-last-touched: 2026-07-31
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/reader-level/score.mjs`

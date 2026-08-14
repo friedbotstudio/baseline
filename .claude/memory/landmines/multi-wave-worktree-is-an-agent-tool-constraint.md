@@ -3,8 +3,8 @@ key: multi-wave-worktree-is-an-agent-tool-constraint
 category: landmines
 scope: [tdd]
 significance: shared mode is the working substrate for baseline-on-baseline swarm (worktree is single-wave only); the post-wave audit makes shared mode no longer audit-free. New `.mjs` CLI helpers that ALSO export a pure core guard `main()` behind `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)` so importing the pure function in a test never runs the CLI (the `lint.mjs` `process.exit(2)`-on-import trap).
-verified-at: 04c88f2
-last-touched: 2026-06-22
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/swarm-dispatch/worktree-safety.mjs` (`assertWorktreeWaveSafety`) + `swarm_wave_audit.mjs` (`auditWave`) + `parse_worker_result.mjs` (`parseWorkerResult`); `.claude/skills/swarm-plan/validate.mjs` (`execution` field); `.claude/skills/spec-lint/lint.mjs` (`checkApiSurfacePinned`).

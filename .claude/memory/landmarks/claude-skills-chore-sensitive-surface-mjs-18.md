@@ -2,8 +2,8 @@
 key: .claude/skills/chore/sensitive-surface.mjs:18
 category: landmarks
 scope: [scout]
-verified-at: 0aa70cf
-last-touched: 2026-07-13
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — the predicate answering "does this chore's diff touch a security-sensitive surface?", so a chore touching `.claude/hooks/**` can no longer ship with no security review. `touchesSensitiveSurface(changedPaths, sensitiveGlobs)` glob-matches the diff against `project.json → security.sensitive_globs`; `changedPathsFromGit()` collects them. The `rightsize-gate` was built to NEVER skip security, but the chore track had no security node and no trigger, so it violated that principle BY CONSTRUCTION — this closes the gap.

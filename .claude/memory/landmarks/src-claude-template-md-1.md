@@ -2,8 +2,8 @@
 key: src/CLAUDE.template.md:1
 category: landmarks
 scope: [scout]
-verified-at: b6fba83
-last-touched: 2026-07-12
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: pristine ship-time template for the in-session constitution (`CLAUDE.md`). Per Article XI, this file SHALL remain byte-equal to `CLAUDE.md` for the Article XI block; `audit-baseline` enforces `CLAUDE.md missing Article XI citation` on drift. Article XI carries the manifest-path contract: shipped manifest at `obj/template/.claude/manifest.json`, consumer install at `<target>/.claude/manifest.json`, runtime hash table separately at `<target>/.claude/.baseline-manifest.json`.

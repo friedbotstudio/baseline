@@ -3,8 +3,8 @@ key: .claude/hooks/lib/timing.mjs
 category: landmarks
 scope: [scout]
 caveat: human-wait derives from consent-token mtimes, so it resolves only once the token exists; a hook shipped mid-run backfills pre-existing `completed[]` phases at one timestamp (no retroactive per-phase split). The `/archive` render must run BEFORE `archive.sh` or the moved `spec_approvals/<slug>.approval` makes approve-spec read `n/a`. Token deltas only fire when phase-state writes go through tracked tools (Write/Edit) OR Bash (via phase_timer's Bash leg) — a pure-fs write that bypasses both captures no timing.
-verified-at: f36b142
-last-touched: 2026-07-19
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/timing.mjs`

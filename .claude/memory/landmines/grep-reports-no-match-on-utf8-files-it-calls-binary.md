@@ -4,8 +4,8 @@ category: landmines
 scope: []
 governs: .claude/**, src/**, tests/**, docs/**
 load_bearing: true
-verified-at: 87d3573
-last-touched: 2026-08-13
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - On macOS/BSD, `file` classifies a perfectly valid UTF-8 source containing an em dash as `binary data`, and plain `grep` then reports **no match** and exits 1 rather than warning. There is no error, no "Binary file matches" line, nothing. It looks exactly like a clean result.

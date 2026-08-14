@@ -4,8 +4,8 @@ category: landmarks
 scope: [spec, tdd, archive]
 governs: .claude/skills/workspace/delta.mjs,.claude/skills/spec-lint/lint.mjs
 source: inferred-from-code
-verified-at: 8701ae3
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: parses a spec's `## System delta` table — what the spec DECLARES it changes about the standing model at `docs/system/`. Landed by `system-spec-delta-slice-a` (epic `system-spec-delta`, slice A).

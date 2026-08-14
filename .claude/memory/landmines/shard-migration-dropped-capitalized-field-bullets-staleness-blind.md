@@ -2,8 +2,8 @@
 key: shard-migration-dropped-capitalized-field-bullets-staleness-blind
 category: landmines
 scope: [chore, tdd]
-verified-at: f36b142
-last-touched: 2026-07-18
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-index/migrate.mjs:81` (field-lifting regex) → `.claude/hooks/lib/memory_session_start.mjs:128` (`readShardedCategory`, frontmatter-only reader).

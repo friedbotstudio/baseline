@@ -3,8 +3,8 @@ key: .claude/skills/harness/pre-implementation-gate.mjs:23
 category: landmarks
 scope: [scout]
 source: inferred-from-code
-verified-at: 45b2620
-last-touched: 2026-07-17
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/pre-implementation-gate.mjs` (`checkImplementationReady({slug, rootDir})`)

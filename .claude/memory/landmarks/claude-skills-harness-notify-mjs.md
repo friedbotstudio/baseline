@@ -2,8 +2,8 @@
 key: .claude/skills/harness/notify.mjs
 category: landmarks
 scope: [scout]
-verified-at: 7dba960
-last-touched: 2026-07-10
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — the CO-D yield notifier. Pings the human when the harness needs attention. Pure decision core (`shouldNotify(state, config)`, `composeNotification`, `chooseDispatch`, `bundleIdFor`) separated from the `deliver`/`probeAvail` edge. Delivery is OS-agnostic and degrades through a probed chain: macOS `terminal-notifier` (clickable — `-activate <bundle-id>` resolved from `$TERM_PROGRAM`) → the platform native notifier (`osascript` / `notify-send` / PowerShell balloon) → a universal terminal fallback (BEL + one-line stderr banner). Stdlib only (U6); never throws, always exits 0, so it can never stall the harness loop.

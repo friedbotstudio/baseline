@@ -2,8 +2,8 @@
 key: gitleaks@8.x-binary
 category: libraries
 scope: [research]
-verified-at: 70d9047
-last-touched: 2026-07-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: version floats with the operator's install; the invocation form is the stable fact — re-verify via context7 if the scan flags change.
 ---
 

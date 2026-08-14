@@ -2,8 +2,8 @@
 key: .claude/hooks/lib/consent-decision.mjs
 category: landmarks
 scope: [scout]
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — the commit-consent decision, split out of the hooks so it is import-safe (no `main()`) and unit-testable. Four exports: `parseCommitConsentToken(text)` (accepts both on-disk token shapes — slug-mode `line1=slug, line2=epoch`, and epoch-only `line1=epoch` for ad-hoc/legacy tokens), `decideCommitConsent({token, workflow, now, ttl})`, `buildGrantCommitMarkerLines(slug, now, note)`, `resolveWorkflow(rootDir)`. Resolves three workflow states: **absent** (no `.claude/state/workflow.json`) → classic 900s time-window fallback; **present+slug** → slug-scoped match, so ONE `/grant-commit` authorizes every commit in that workflow's landing and only that workflow; **present+broken** (unreadable / unparseable / no slug) → fail closed.

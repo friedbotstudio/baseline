@@ -3,9 +3,8 @@ key: epic-child-reverifies-the-epics-whole-system-delta-section
 category: landmines
 scope: [archive, spec, triage]
 governs: .claude/skills/workspace/delta.mjs
-load_bearing: true
-verified-at: 9235a23
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `/archive` Step 5 → `delta.verifyAndApplyDelta`, on any `epic-child` track.
@@ -22,3 +21,5 @@ last-touched: 2026-08-07
 - Mitigation: read `drift` on an epic-child as advisory and confirm each row against `git log` before acting. Do not "fix" the spec by deleting a row a sibling legitimately landed — the row is the epic's record of what the epic added, and the next child needs it as much as this one did.
 - Real fix: scope delta verification per child the way `1db3b6c` scoped the AC scan — either move the delta rows into their owning `## Slice <id>` sections, or have the resolver filter rows to those whose anchor intersects the child's touched paths. Either makes `drift` mean the same thing on a child that it means on a solo track.
 - Sibling: [[drift-check-does-not-resolve-epic-child-pinned-specs]] is the same seam one layer over — a check that reads an epic-child's contract from the wrong scope. That one failed open (vacuous green); this one fails loud (spurious drift), which is the better failure but still costs a read.
+
+- load_bearing: true

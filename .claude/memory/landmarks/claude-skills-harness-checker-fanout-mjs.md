@@ -3,8 +3,8 @@ key: .claude/skills/harness/checker-fanout.mjs
 category: landmarks
 scope: [scout]
 caveat: `graduation-gate` fails CLOSED (opposite of `rightsize-gate`'s fail-OPEN) — a malformed/missing ledger yields `pass:false` so the Article II amendment can never ride on bad evidence. The clause-6 → clause-7 lift was granted for the oracle-bound READ-ONLY checker class ONLY (backlog `-9360`); multi-maker / judgment-checker fan-out each needs its own per-class graduation.
-verified-at: 9542a7f
-last-touched: 2026-07-15
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/checker-fanout.mjs`

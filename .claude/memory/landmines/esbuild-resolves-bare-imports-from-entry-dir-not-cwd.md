@@ -2,8 +2,8 @@
 key: esbuild-resolves-bare-imports-from-entry-dir-not-cwd
 category: landmines
 scope: [implement, tdd]
-verified-at: 6ddda04
-last-touched: 2026-07-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `scripts/bundle-mcp-servers.mjs:56-68` (the `build({...})` call).

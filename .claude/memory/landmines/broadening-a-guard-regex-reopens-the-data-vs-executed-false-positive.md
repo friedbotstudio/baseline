@@ -2,8 +2,8 @@
 key: broadening-a-guard-regex-reopens-the-data-vs-executed-false-positive
 category: landmines
 scope: [security, tdd]
-verified-at: 97b3e6d
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/git_commit_guard.mjs` → `FORBIDDEN_RE` + the `gitSegments(sanitizeGitCommitForScan(stripQuotedHeredocBodies(cmd)))` call in `handleBash`; helpers in `.claude/hooks/lib/common.mjs` → `stripQuotedHeredocBodies` / `sanitizeGitCommitForScan` / `collectExecutedSubstitutions`.

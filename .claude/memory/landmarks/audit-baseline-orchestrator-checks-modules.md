@@ -2,8 +2,8 @@
 key: .claude/skills/audit-baseline/audit.mjs
 category: landmarks
 scope: [scout, chore, tdd]
-verified-at: 86a2bb3
-last-touched: 2026-07-18
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: `audit-baseline` entrypoint, now a **thin orchestrator** (~74 lines). Parses args (`--file=`, `--skip-hash-check`), builds the shared audit context in `checks/context.mjs`, runs one check module per concern from `checks/*.mjs`, and prints the PASS/FAIL/WARN table (guarded by `IS_MAIN` so a test import runs the checks read-only without printing/exiting).

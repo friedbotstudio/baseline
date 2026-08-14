@@ -3,9 +3,8 @@ key: .claude/skills/harness/cli.mjs
 category: landmarks
 scope: []
 governs: .claude/skills/harness/cli.mjs, .claude/skills/harness/workflow-migrator.js, .claude/skills/lib/argv.mjs
-load_bearing: true
-verified-at: 9179afd
-last-touched: 2026-08-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/cli.mjs`. Orchestration — a Pattern A dispatcher over `lib/argv.mjs` with exactly one subcommand, `migrate`, wrapping `workflow-migrator.js → migrateWorkflowJsonInPlace`. Cited by `harness/SKILL.md` preflight Step 3a.
@@ -14,3 +13,5 @@ last-touched: 2026-08-09
 - Only one subcommand by design: the other seventeen modules in this directory (`rightsize-gate`, `checker-fanout`, `notify`, `consolidate-open-questions`, …) already self-dispatch on `process.argv` and are cited that way. Adding second front doors beside working ones is scaffold, not reuse.
 - Error mapping is deliberate: a missing file raises `NotFoundError` (exit 2), an unmapped `entry_phase` stays a validation error (exit 1). Collapsing them would tell a caller to fix their config when the real problem is a typo in the path.
 - Related: [[claude-skills-lib-argv-mjs]] owns the dispatch contract this wires into.
+
+- load_bearing: true

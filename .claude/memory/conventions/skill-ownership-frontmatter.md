@@ -2,8 +2,8 @@
 key: skill-ownership-frontmatter
 category: conventions
 scope: [scenario, implement, tdd]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Convention: a `.claude/skills/<slug>/SKILL.md` is baseline-owned iff its YAML frontmatter declares `owner: baseline` on the line directly after `name:`. Every other on-disk skill — those without an `owner:` field, or those declaring `owner: user` — is user/third-party and out-of-scope of baseline audit checks. Absence-of-`owner` is the deliberate default so a project that already has its own skills can install the baseline without annotating any of those files. The build script `scripts/build-manifest.mjs` reads each `owner:` and emits `obj/template/manifest.json → owners.skills` as the canonical baseline-skill enumeration; `audit-baseline` consumes that map and verifies per-file sha256 drift for every baseline-owned skill.

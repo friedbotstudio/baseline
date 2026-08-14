@@ -3,8 +3,8 @@ key: durable-plan-state-subsystem-424f
 category: landmarks
 scope: [scout]
 caveat: Built via a 7-task SHARED-mode swarm — worktree mode was tried first and abandoned: Agent worktrees fork from the stale 0.19.0 release commit (17 behind HEAD) and `swarm_merge` applies to the working tree, so cross-wave dependency propagation breaks (everything imports `plan-store`). The two consumer migrations (T-005/T-006) + harness wiring (T-007) were done in main context, not boundary-only workers, because the plan↔consumer seam is a design decision (Article II). Wiring is additive Tier-2 (Decision D1: no Article II/IV amendment). Next consumer: `-4c43` layers the decide-when-to-replan RALPH loop on `applyReplan`. Goes live the first workflow after commit (introduction pattern).
-verified-at: 765d100
-last-touched: 2026-06-22
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/plan-store.mjs` (+ `plan-frame.mjs`, `plan-diff.mjs`, `replan.mjs`, `plan-wiring.mjs`)

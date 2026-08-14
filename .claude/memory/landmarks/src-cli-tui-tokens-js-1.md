@@ -2,8 +2,8 @@
 key: src/cli/tui/tokens.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — ANSI brand-color helpers translating Friedbot Studio's oklch tokens (from `site-src/assets/site.css :root`) to 24-bit truecolor escape sequences. Exports named helpers (`accentShadow`, `accent`, `accentLight`, `muted`, `success`, `warn`, `error`, `rule`), plus the raw `paintRGB(rgb, text)` function and a frozen `PALETTE` map used by `src/cli/tui/splash.js:1` to paint the wordmark row-by-row (bevel banding: shadow / mid / highlight / mid / shadow). Respects `NO_COLOR` env var and `process.stdout.isTTY`; falls back to plain when either disables color.

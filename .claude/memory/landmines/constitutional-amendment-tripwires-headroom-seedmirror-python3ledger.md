@@ -2,8 +2,8 @@
 key: constitutional-amendment-tripwires-headroom-seedmirror-python3ledger
 category: landmines
 scope: [chore, integrate]
-verified-at: 4cd74e1
-last-touched: 2026-07-11
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `CLAUDE.md` + `src/CLAUDE.template.md`; `docs/init/seed.md` + `src/seed.template.md`; tests `tests/code-browser-primary-navigation.test.mjs`, `tests/seed-template-parity.test.mjs`, `tests/governance-no-python3-runtime.test.mjs`.

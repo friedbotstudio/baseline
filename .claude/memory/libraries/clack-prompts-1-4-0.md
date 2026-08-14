@@ -2,8 +2,8 @@
 key: @clack/prompts@1.4.0
 category: libraries
 scope: [research]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: terminal prompt primitives behind the branded TUI in `src/cli/tui/*`. The first and only runtime dependency declared in `package.json`. Imported via dynamic `await import('@clack/prompts')` from `bin/cli.js` so it loads only on the `process.stdout.isTTY === true` branch; non-TTY invocations never execute clack code.

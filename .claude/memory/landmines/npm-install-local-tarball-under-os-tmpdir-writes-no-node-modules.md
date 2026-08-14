@@ -2,8 +2,8 @@
 key: npm-install-local-tarball-under-os-tmpdir-writes-no-node-modules
 category: landmines
 scope: [chore, integrate]
-verified-at: d36d7f0
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `tests/publish-check.test.mjs` (the `smokeInstallWorks()` probe + the 4 env-gated smoke/orchestrator tests) and `scripts/smoke-tarball.mjs` (phase=install).

@@ -3,8 +3,8 @@ key: user-shipped-tooling-lives-in-claude-directory
 category: conventions
 scope: [scenario, implement, tdd]
 source: user-instruction
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 > verbatim (user, 2026-05-21):

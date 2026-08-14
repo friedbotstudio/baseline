@@ -2,8 +2,8 @@
 key: .claude/skills/power/commit-split.mjs
 category: landmarks
 scope: [scout]
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — plans an ordered series of Conventional Commits from a dirty working tree for the power track's amortized commit phase. Single export `planCommits(entries)` over the dirty-tree array `[{path, status}]`. Composes `.claude/skills/commit-planner/inventory.mjs → groupDirtyTree` for single-concern grouping (**reuse, not reimplement**) and adds only the power-specific concern: ordering. `TYPE_MAP` ranks groupDirtyTree's `{chore, src, test, docs}` types as build/config(0) → implementation(1) → tests(2) → docs(3), mapping `src` to a mechanical `feat` placeholder that main context refines to feat/fix at commit time.

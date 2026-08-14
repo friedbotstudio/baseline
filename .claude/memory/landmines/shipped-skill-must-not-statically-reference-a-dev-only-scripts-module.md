@@ -2,8 +2,8 @@
 key: shipped-skill-must-not-statically-reference-a-dev-only-scripts-module
 category: landmines
 scope: [chore, integrate]
-verified-at: b3f9505
-last-touched: 2026-07-15
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/checkers/mutation-score.mjs`; guards at `tests/mutation-oracle.test.mjs` (`test_when_shipped_harness_skill_walked_then_zero_runtime_dev_tree_refs`, `test_when_files_whitelist_and_buildout_then_no_stryker_or_wrapper_shipped`).

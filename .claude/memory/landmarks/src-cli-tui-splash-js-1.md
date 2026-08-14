@@ -2,8 +2,8 @@
 key: src/cli/tui/splash.js:1
 category: landmarks
 scope: [scout]
-verified-at: 01ce882
-last-touched: 2026-06-22
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — branded splash surfaces. Holds the BASELINE wordmark (ANSI-Shadow style, 5 letter rows + 1 outline trace row in `▔`) and exports five renderers: `renderWordmark()` (paints each row with `SHADES[i]` from `PALETTE` in bevel order shadow/mid/highlight/mid/shadow + outline in accentShadow), `renderSplash({tagline, tryLine, discoverUrl})` (full marquee for `--help` and no-arg TTY landing — intentionally version-LESS so the docs-site PNG doesn't go stale every release), **`renderHeader({subtitle, version, columns})`** (wordmark + tagline header used by install/upgrade/doctor command intros, added 2026-05-23 per cli-wordmark-on-all-commands; falls back to `renderBrandStrip` when `wordmarkFits(columns)` is false), `renderBrandStrip({version, subtitle})` (slim two-row strip used by `--version`, the usage-error renderer in meta.js, and as `renderHeader`'s narrow-terminal fallback), and `renderVersionMarquee(version)` (wordmark + version line for `--version`). Also exports `wordmarkFits(columns)` which treats falsy columns (0 under `script(1)` pty) as wide-enough so the marquee still renders.

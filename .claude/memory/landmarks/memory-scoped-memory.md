@@ -3,8 +3,8 @@ key: .claude/hooks/lib/scoped-memory.mjs
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/scoped-memory.mjs
-verified-at: 39464a1
-last-touched: 2026-08-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — surfaces the fact files scoped to a given phase, verbatim-first. The generalization of `process_lifecycle_guard`'s trigger→key→surface pattern: a phase (or trigger) resolves to the relevant fact keys, which are surfaced before the matched action so a captured lesson becomes an active constraint at the decision point (T4's core goal).

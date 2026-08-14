@@ -3,8 +3,8 @@ key: .claude/skills/memory-index/migrate.mjs
 category: landmarks
 scope: [scout]
 source: inferred-from-code
-verified-at: 1a2cce3
-last-touched: 2026-07-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — migrates the seven flat canonical memory files to per-fact category directories and back, and repairs an already-migrated store in place. The actuator behind the flat→sharded move (T4) and its repair.

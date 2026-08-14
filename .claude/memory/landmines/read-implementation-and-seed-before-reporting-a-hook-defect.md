@@ -2,8 +2,8 @@
 key: read-implementation-and-seed-before-reporting-a-hook-defect
 category: landmines
 scope: [scout, spec, tdd, security, integrate, rca]
-verified-at: e2b7150
-last-touched: 2026-08-06
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: this is about DIAGNOSIS order, not authority order. Article I.4's precedence (seed.md > CLAUDE.md > implementation) is unchanged and still governs which document WINS. The trap is using the middle layer as the first thing you READ.
 ---
 

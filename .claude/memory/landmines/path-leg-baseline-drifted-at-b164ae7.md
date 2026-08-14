@@ -3,8 +3,8 @@ key: path-leg-baseline-drifted-at-b164ae7
 category: landmines
 scope: [tdd, integrate]
 governs: tests/memory-scope-store-invariants.test.mjs,.claude/hooks/lib/governed-memory.mjs
-verified-at: b164ae7
-last-touched: 2026-08-08
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **The trap.** `tests/memory-scope-store-invariants.test.mjs → test_when_path_leg_measured_then_governs_hit_counts_unchanged` FAILS on a clean tree at HEAD `b164ae7`. `PATH_LEG_BASELINE` expects 10 governed hits for `.claude/skills/memory-index/resolve.mjs`; the live store returns 11. The extra hit is `constraints/zero-runtime-dependencies`.

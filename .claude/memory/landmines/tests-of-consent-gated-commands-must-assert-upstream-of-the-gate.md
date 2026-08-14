@@ -2,8 +2,8 @@
 key: tests-of-consent-gated-commands-must-assert-upstream-of-the-gate
 category: landmines
 scope: [tdd, integrate]
-verified-at: 97b3e6d
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `tests/forbidden-git-ops-spellings.test.mjs` (the `guardReason` / `blockedAsForbiddenOp` helpers) against `.claude/hooks/git_commit_guard.mjs → handleBash`, where the `FORBIDDEN_RE` hard-block (line ~274) runs BEFORE the subcommand classification and consent check (line ~279).

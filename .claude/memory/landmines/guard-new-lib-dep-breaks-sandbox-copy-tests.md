@@ -2,8 +2,8 @@
 key: guard-new-lib-dep-breaks-sandbox-copy-tests
 category: landmines
 scope: [chore, integrate]
-verified-at: b667aa8
-last-touched: 2026-06-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/git_commit_guard.mjs` (any hook that gains a new `./lib/<x>.mjs` import); fixtures `tests/branch-aware-git-policy.test.mjs` + `tests/git-topology-guard.test.mjs` (the `buildSandbox`/`addWorktree` `cpSync` helpers).

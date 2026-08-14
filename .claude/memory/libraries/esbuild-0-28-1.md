@@ -2,8 +2,8 @@
 key: esbuild@0.28.1
 category: libraries
 scope: [research, implement]
-verified-at: 6ddda04
-last-touched: 2026-07-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Library: `esbuild` — build-time JS bundler, exact-pinned devDependency. Used by `scripts/bundle-mcp-servers.mjs` (build-template.sh Stage 1.7) to inline the first-party MCP servers into self-contained single-file artifacts. See [[bundle-mcp-servers-stage-1-7]].

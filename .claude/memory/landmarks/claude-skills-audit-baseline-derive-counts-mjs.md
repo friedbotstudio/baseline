@@ -3,8 +3,8 @@ key: .claude/skills/audit-baseline/derive-counts.mjs
 category: landmarks
 scope: [scout]
 caveat: TRAP — a "ships in the pristine template" claim derived from the LIVE tree is silently wrong whenever the dev repo carries something the template does not. That is exactly how the site came to assert 9 selectable tracks while `obj/template/.claude/workflows.jsonl` shipped 8 (`org` existed only here). `countTracks(root)` now defaults to `source: 'template'` and falls back to `live` only when the template file is absent; the returned `source` names which tree was read. `deriveCounts()` STRIPS `source` before returning, because its shape is a long-standing contract asserted by strict `deepEqual` — add a field there and the governance tests fail.
-verified-at: 1790513
-last-touched: 2026-07-27
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/audit-baseline/derive-counts.mjs`

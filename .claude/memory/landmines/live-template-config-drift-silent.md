@@ -2,8 +2,8 @@
 key: live-template-config-drift-silent
 category: landmines
 scope: [chore, tdd, spec]
-verified-at: 86a2bb3
-last-touched: 2026-07-18
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/project.json` (live, dogfood) vs `src/project.template.json` (shipped to consumers, copied verbatim to `obj/template/.claude/project.json` by `scripts/build-template.sh`).

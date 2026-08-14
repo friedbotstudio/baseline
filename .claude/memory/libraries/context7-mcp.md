@@ -2,8 +2,8 @@
 key: context7@mcp
 category: libraries
 scope: [research]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: live library documentation MCP server. Used by `research`, `implement`, `security`, `spec` for any third-party API lookup.

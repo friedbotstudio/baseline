@@ -3,9 +3,8 @@ key: .claude/skills/workspace/identity.mjs:1
 category: landmarks
 scope: []
 governs: .claude/skills/workspace/identity.mjs, .claude/skills/workspace/materialize.mjs, .claude/skills/workspace/store.mjs, docs/system/elements/**
-rests_on: zero-runtime-dependencies
-verified-at: d4e6216
-last-touched: 2026-08-06
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/workspace/identity.mjs`. Foundation — derives a deterministic element id from an anchor. Added by ticket B of `central-system-spec` (2026-08-06).
@@ -15,3 +14,5 @@ last-touched: 2026-08-06
 - **Authored ids were kept for the existing corpus.** Re-deriving all 112 would have renamed every file and thrown away semantic names like `slug-safety`. Derivation applies to new bare anchors, not retroactively.
 - Defence in depth: `store.writeRecord` and `removeElement` call `assertSafeSlug` independently, so a hostile id cannot reach a path build even if derivation were wrong (`docs/archive/2026-08-06/central-system-spec/security.md`).
 - Companions: `.claude/skills/workspace/materialize.mjs` (the caller), `.claude/skills/workspace/concepts.mjs` (where anchors are authored), `.claude/hooks/lib/slug.mjs` (`assertSafeSlug`).
+
+- rests_on: zero-runtime-dependencies

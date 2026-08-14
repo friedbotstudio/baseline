@@ -2,8 +2,8 @@
 key: destructive-guard-blocks-benign-bash-containing-consent-redirect-shapes
 category: landmines
 scope: [security, tdd]
-verified-at: d36d7f0
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/destructive_cmd_guard.mjs` (Bash matcher) → `.claude/hooks/lib/common.mjs` → `writesConsentPath`.

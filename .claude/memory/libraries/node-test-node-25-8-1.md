@@ -2,8 +2,8 @@
 key: node:test@node-25.8.1
 category: libraries
 scope: [research]
-verified-at: 8d11fb0
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Library: Node.js built-in test runner (`node --test`), runtime `node@25.8.1` (engines `>=18.17.0`).

@@ -2,8 +2,8 @@
 key: src/cli/upgrade-tiers.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Domain — three-tier upgrade dispatch + BASE-content recovery + semantic-merge staging (three-way + two-way). Exports `dispatchByTier(rel, tier, ctx)` (routes BINARY_PROMPT → SKIP_CUSTOMIZED for caller to prompt, MECHANICAL → `git merge-file --diff3` via spawnSync, SEMANTIC → stage BASE+INCOMING+manifest under `.claude/state/upgrade/<ts>/`), `resolveBase(rel, baseline_version, target, {oldManifest, pack})` (hybrid resolver: cache-first read from `.claude/.baseline-prior/<rel>` → sha256-verify against oldManifest → fall back to npm `libnpmpack.pack('@friedbotstudio/create-baseline@<v>')` → sha256-verify → write-through cache), `writeStage(ctx, rel, baseBuf, incomingBuf, localBuf)` (three-way; per-run shared `ctx.stageRunTs` initialized lazily; appends entries to stage manifest with status PENDING + `base_sha256` as 64-hex), `writeStageBaseless(ctx, rel, incomingBuf, localBuf)` (two-way, added in tier1-merge-option 2026-05-22; same stage dir layout but no `<rel>.baseline-base` artifact, manifest entry carries `base_sha256: null` — the discriminator `/upgrade-project` reads to route to two-way reconciliation), `findPendingStage(target)` (idempotency precondition — returns first stage_ts with PENDING entries OR null when all RECONCILED). `NoBaseError extends Error` with `kind` enum (`cache_sha_mismatch` / `legacy_manifest` / `npm_fetch_failed` / `npm_sha_mismatch` / `npm_missing_file` / `tarball_path_traversal`). Shared `ensureStageDir(ctx)` helper extracted as a private foundation for both writers.

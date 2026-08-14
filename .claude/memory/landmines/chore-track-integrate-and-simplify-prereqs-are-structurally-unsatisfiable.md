@@ -2,8 +2,8 @@
 key: chore-track-integrate-and-simplify-prereqs-are-structurally-unsatisfiable
 category: landmines
 scope: [tdd, integrate]
-verified-at: 3160e0c
-last-touched: 2026-07-12
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/integrate/SKILL.md` (Prereq) + `.claude/skills/simplify/SKILL.md` (Prereq) + `.claude/skills/chore/SKILL.md` (Phase shape → conditional phases) + `.claude/workflows.jsonl` (the `chore` track DAG) + `.claude/skills/triage/SKILL.md` (the chore decision rule).

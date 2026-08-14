@@ -3,9 +3,8 @@ key: governs-globs-under-a-phase-prefix-never-surface
 category: landmines
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/hooks/lib/scoped-memory.mjs
-load_bearing: true
-verified-at: 39464a1
-last-touched: 2026-08-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **The trap.** `process_lifecycle_guard`'s two write-leg surfacing triggers are **mutually exclusive**, not additive. A `governs:` glob that matches a path under `docs/specs/`, `docs/intake/`, `docs/scout/`, `docs/research/` or `docs/security/` surfaces **nothing** — the entry looks correctly tagged and is silently unreachable at that path.
@@ -13,3 +12,5 @@ last-touched: 2026-08-04
 - **How to avoid it.** Write `governs:` globs against **source** paths. To surface an entry when a workflow artifact is authored, use `scope: <phase>` — that is the vocabulary the phase trigger reads. `scope:` means workflow phases; `governs:` means path globs; one field never covers the other's job (epic decision D3).
 - **Consequence if ignored.** The failure is silent in the worst direction: no error, no empty-result warning, just an entry that never reaches the person editing the file it governs — the exact defect ticket C existed to close, re-created one prefix over.
 - Companion: `.claude/hooks/process_lifecycle_guard.mjs:50`, `.claude/hooks/lib/governed-memory.mjs:51`.
+
+- load_bearing: true

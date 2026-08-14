@@ -2,8 +2,8 @@
 key: slug-path-guards-must-reject-not-normalize-and-three-regex-traps
 category: landmines
 scope: [security, tdd]
-verified-at: e51a03d
-last-touched: 2026-07-12
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/harness/plan-store.mjs:20-31` (`SLUG_RE` + `assertSafeSlug`, called inside `planPath`), vs `.claude/hooks/lib/common.mjs:149` (`canonicalSlug`).

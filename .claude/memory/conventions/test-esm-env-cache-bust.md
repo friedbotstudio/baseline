@@ -7,8 +7,8 @@ convention: ESM tests that dynamically import a target module under multiple env
 why: eleventy global data files at `site-src/_data/*.js` read `process.env.GITHUB_RUN_ID` at import time. The same module needs to return `'gha-…'` in one test and `'dev'` in the next; without cache-busting, the second test sees the first test's frozen value.
 reference: `tests/site-build-id.test.mjs:39–58` (`importBuildData` helper).
 applies-to: any eleventy-data-file test or env-driven ESM module test where the import surface depends on `process.env`.
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 

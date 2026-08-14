@@ -3,8 +3,8 @@ key: src/cli/surface.js:1
 category: landmarks
 scope: [scout]
 caveat: TRAP — this module is deliberately NOT imported by `bin/cli.js`. It is a parallel declaration of the CLI surface, not the runtime authority. `OPTIONS` in `bin/cli.js` stays the single parser truth (six test files sit on it); importing this module there would make a documentation copy edit ship as an npm release and let a bad description string break argv parsing. The two copies are kept honest by set-equality assertions in `tests/surface.test.mjs`, not by a shared import — so editing one without the other fails that test rather than silently drifting.
-verified-at: c4999eb
-last-touched: 2026-07-31
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `src/cli/surface.js`

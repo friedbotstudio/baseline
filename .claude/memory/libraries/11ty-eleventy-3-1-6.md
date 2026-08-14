@@ -2,8 +2,8 @@
 key: @11ty/eleventy@3.1.6
 category: libraries
 scope: [research]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: static site generator for the marketing site. Reads `site-src/`, writes `site/`.

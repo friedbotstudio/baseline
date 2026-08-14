@@ -2,8 +2,8 @@
 key: build-template-tests-need-workflows-template-fixture
 category: landmines
 scope: [chore, integrate]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Any test that calls `runBuild(fixtureRoot)` (a `bash scripts/build-template.sh` shellout against a synthetic `PKG_ROOT`) MUST seed `src/.claude/workflows.template.jsonl` in the fixture. `scripts/build-template.sh:127` runs `cp "$PKG_ROOT/src/.claude/workflows.template.jsonl" "$TEMPLATE_DIR/.claude/workflows.jsonl"` unconditionally as part of Stage 2; absence fails with a cryptic `cp: <path>: No such file or directory` rather than a structured assertion.

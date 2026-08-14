@@ -8,8 +8,8 @@ why: the third category is easy to misclassify as PASS_UNEXPECTEDLY, which promp
 example: `tests/build-template-build-id.test.mjs` has two tests — one for `GITHUB_RUN_ID` set (RED pre-implement; goes green after stamping logic lands) and one for unset (REGRESSION_TRAP_PRE_PASSING — must continue to pass after implement adds the conditional stamp; ensures the dev manifest stays byte-identical when env is unset).
 reference: `.claude/skill-memory/scenario/MEMORY.md` (the originating note, now scratch-only after promotion).
 applies-to: `/scenario` per-test report; any TDD pass where an AC is "X is absent" or "X is unchanged".
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 

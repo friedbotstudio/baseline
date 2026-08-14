@@ -2,8 +2,8 @@
 key: a-green-suite-does-not-prove-a-fix-closed-the-hole-it-opened
 category: landmines
 scope: [tdd, integrate]
-verified-at: 1414f27
-last-touched: 2026-07-13
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/security/SKILL.md` (read-only by contract; fixes route through `/tdd`) + the phase ordering in `.claude/workflows.jsonl`.

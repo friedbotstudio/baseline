@@ -4,8 +4,8 @@ category: landmines
 scope: [tdd, implement, simplify]
 governs: .claude/skills/lib/output.mjs, .claude/skills/lib/argv.mjs, .claude/skills/standup/cli.mjs, .claude/skills/spec/cli.mjs
 source: incident
-verified-at: dd0e5d2
-last-touched: 2026-08-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: any new skill dispatcher subcommand handler, wired through `dispatch()` in `.claude/skills/lib/argv.mjs`.

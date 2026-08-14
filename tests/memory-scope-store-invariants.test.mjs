@@ -245,9 +245,16 @@ describe('memory scope — the landmark deferral is enforced, not assumed (AC-00
     // not: its literalPattern matches only `SYMBOL = <digits>`, and this site is an
     // assert.equal argument. It refused rather than re-measured — safe, but blind.
     // Backlog `census-gate-literal-pattern-matches-no-real-site` carries the repair.
+    //
+    // 94 -> 92 at the 248-entry stale sweep (2026-08-14). Two `scope: [scout]`
+    // landmarks were DELETED because their subjects are gone, not re-homed:
+    // `.claude/memory/backlog.md:1` (the store sharded, so that path is now a
+    // directory) and `site-src/_includes/install-pill.njk:1` (deleted in d2761fb).
+    // The deferral this asserts is untouched — the population shrank, the policy
+    // did not. Re-measured by hand again, for the reason the paragraph above gives.
     assert.equal(
       atScout.length,
-      94,
+      92,
       'D4 defers re-homing landmarks to the path leg (deferred: risk) — scout writes docs/scout/<slug>.md, which no landmark governs, so re-homing would remove landmark surfacing from scout entirely. This asserts the deferral so a later cycle cannot silently re-home them.',
     );
   });

@@ -2,8 +2,8 @@
 key: .claude/hooks/lib/spec-content-hash.mjs
 category: landmarks
 scope: [scout]
-verified-at: 212dbd0
-last-touched: 2026-07-10
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — content-addressed identity for an approved spec, so gate A detects a post-approval amendment even for an untracked (first-time) spec whose git SHA is `N/A`. Single concern: `computeSpecContentHash(bytes)` → sha256 hex over a string or Buffer, throwing on any other type so a caller never silently hashes a coerced value. Pure and stdlib-only (`node:crypto`), so it runs identically in the `/approve-spec` command SOP and in the harness resume path.

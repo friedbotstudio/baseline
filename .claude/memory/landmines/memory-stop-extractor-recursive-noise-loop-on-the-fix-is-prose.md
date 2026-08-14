@@ -2,8 +2,8 @@
 key: memory-stop-extractor-recursive-noise-loop-on-the-fix-is-prose
 category: landmines
 scope: [memory-sync]
-verified-at: 3160e0c
-last-touched: 2026-07-12
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/memory_stop.mjs` (the auto-extractor) → `.claude/memory/_pending.md` → `/memory-sync` Step 2.

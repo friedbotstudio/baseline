@@ -2,8 +2,8 @@
 key: scripts/build-lock-dir.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation helper that derives the build-mutex lock dir for `scripts/build-template.sh`. Takes `argv[2]` = build target dir, prints `${TMPDIR:-/tmp}/create-baseline-build.<sha256(target)[:16]>.lock.d`. Keying the mkdir-mutex on the TARGET (instead of the prior single global `create-baseline-build.lock.d`) lets isolated tmpdir builds (`tests/helpers/clone-and-build.mjs`) run concurrently while same-target builds (npm pack prepack + a live-tree build) still serialize, so the original `obj/template` rebuild race stays fixed. Measured: 3 concurrent isolated builds ~2s per-target vs ~8s global.

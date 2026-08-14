@@ -3,8 +3,8 @@ key: .claude/skills/audit-baseline/expected-baseline.mjs
 category: landmarks
 scope: [scout]
 caveat: the roster is the *declaration*; `deriveCounts()` reads disk. Tests assert disk === roster (a real drift tripwire, not tautological). Prose count literals (CLAUDE.md/seed/README/CONSTITUTION) stay hand-maintained but are audit-checked against disk, so they track the roster transitively.
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/audit-baseline/expected-baseline.mjs`

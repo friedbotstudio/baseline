@@ -3,8 +3,8 @@ key: github-pages-has-no-redirects-so-a-moved-url-is-a-permanent-404
 category: landmines
 scope: [scout, spec, document]
 source: inferred-from-code
-verified-at: e98b712
-last-touched: 2026-07-26
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: this constrains any future site IA change; check it BEFORE promising a restructure, not after.
 ---
 

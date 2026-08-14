@@ -2,8 +2,8 @@
 key: shell-command-guards-must-classify-wrapper-and-quote-aware
 category: landmines
 scope: [security, tdd]
-verified-at: d36d7f0
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/common.mjs` → `executedFragments` / `gitSubcommandInvoked` / `gitSegments` / `extractSubstitutions` / `shellTokens`; consumed by `.claude/hooks/git_commit_guard.mjs` (handleBash) and `.claude/hooks/destructive_cmd_guard.mjs`.

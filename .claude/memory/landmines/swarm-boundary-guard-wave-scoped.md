@@ -2,8 +2,8 @@
 key: swarm-boundary-guard-wave-scoped
 category: landmines
 scope: [security, tdd]
-verified-at: cd062af
-last-touched: 2026-06-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/swarm_boundary_guard.mjs` — the `if (!existsSync(activePath)) emitAllow()` short-circuit (activePath = `.claude/state/swarm/active_wave.json`).

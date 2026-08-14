@@ -2,8 +2,8 @@
 key: bin/cli.js:1
 category: landmarks
 scope: [scout]
-verified-at: 8e6f904
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: `create-baseline` CLI entrypoint — argv routing, mode dispatch (fresh / `--force` / `upgrade` subcommand / `doctor` subcommand / `--dry-run`), exit codes 0/1/2/3/4.

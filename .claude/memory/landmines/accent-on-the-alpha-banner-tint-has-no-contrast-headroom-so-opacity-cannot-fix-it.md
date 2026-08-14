@@ -3,8 +3,8 @@ key: accent-on-the-alpha-banner-tint-has-no-contrast-headroom-so-opacity-cannot-
 category: landmines
 scope: [design-ui, document]
 source: inferred-from-code
-verified-at: c869526
-last-touched: 2026-07-26
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: measure the blended surface, not the token pair; --accent-soft is an alpha fill, so its effective background is not any token in DESIGN.md.
 ---
 

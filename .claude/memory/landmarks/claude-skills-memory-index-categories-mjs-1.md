@@ -3,8 +3,8 @@ key: .claude/skills/memory-index/categories.mjs:1
 category: landmarks
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/memory_session_start.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/skills/audit-baseline/**
-verified-at: f7da5a7
-last-touched: 2026-08-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-index/categories.mjs`. The single source of the canonical memory categories and the decay classes that apply to them.

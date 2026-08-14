@@ -3,8 +3,8 @@ key: .claude/hooks/lib/memory_session_start.mjs:1
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/memory_session_start.mjs, .claude/hooks/memory_session_start.mjs, .claude/skills/memory-sync/sweep.mjs
-verified-at: 39464a1
-last-touched: 2026-08-04
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: SessionStart memory-index builder — invoked by `.claude/hooks/memory_session_start.mjs` (the hook). Exports `buildIndex({ memDir, projectRoot, sessionSource })` and re-exports `CANONICAL`. Reads the **eight** canonical categories (flat or sharded), counts entries + stale entries, counts pending candidates in `_pending.md`, scans `.claude/state/upgrade/*/manifest.json` for `status: PENDING`, and composes the additionalContext envelope: index table, top-5 stale block, pending-flush nag (debt-mode only when no active workflow), pending-stage nag, and resume-snapshot injection from `_resume.md` when fresh.

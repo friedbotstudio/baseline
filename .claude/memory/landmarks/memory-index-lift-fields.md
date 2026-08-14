@@ -3,8 +3,8 @@ key: .claude/skills/memory-index/lift-fields.mjs
 category: landmarks
 scope: [scout]
 source: inferred-from-code
-verified-at: 1a2cce3
-last-touched: 2026-07-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation. The single field-lifting rule for the memory store, plus the frontmatter serializer and the shape-agnostic category resolver every reader routes through.

@@ -6,8 +6,8 @@ source: user-instruction
 detection: before any spawn, run `lsof -ti:<PORT> -sTCP:LISTEN`. If something is listening, the user owns it: connect Playwright to the existing server, never kill the listener. If nothing is listening, Claude may spawn (capture PID at spawn) and owns the lifecycle until session-end.
 applies-to: every skill or session needing a live preview — `impeccable live`, `verify` smoke, `integrate` browser tests, ad-hoc visual review during `/design-ui` or `/polish`, multi-pass `/impeccable` runs. Cross-reference with `landmines.md → lsof-port-kill-takes-firefox-with-it`.
 surfaced-by: `process_lifecycle_guard` PreToolUse hook on Bash matching `kill|pkill|lsof|fuser|npm run.*serve|npm run.*dev|eleventy --serve|vite|next dev|astro dev|http.server`.
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 > verbatim (user, 2026-04-29, recorded in `_resume.md` snapshot):

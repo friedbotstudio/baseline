@@ -3,8 +3,8 @@ key: .claude/skills/research/retrieve.mjs:243
 category: landmarks
 scope: [scout]
 source: inferred-from-code
-verified-at: f0ecb03
-last-touched: 2026-08-08
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Foundation — deterministic, stdlib-only prior-art retriever backing `/research` Step 0 (retrieve-before-derive). `retrieve({root, slug, terms, touchedPaths, specDir})` runs **two lanes** and returns one ordered `hits` array, each hit tagged `via`.

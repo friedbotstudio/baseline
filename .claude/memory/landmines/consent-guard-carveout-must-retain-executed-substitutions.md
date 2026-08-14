@@ -2,8 +2,8 @@
 key: consent-guard-carveout-must-retain-executed-substitutions
 category: landmines
 scope: [security, tdd]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/common.mjs` → `writesConsentPath` / `sanitizeGitCommitForScan` / `collectExecutedSubstitutions`.

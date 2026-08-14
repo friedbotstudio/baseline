@@ -3,7 +3,6 @@ key: a-lexical-containment-check-is-defeated-by-a-symlink
 category: landmines
 scope: [implement, security, simplify]
 governs: .claude/skills/tdd/drift_check.mjs, .claude/skills/workspace/restore-degraded-shards.mjs, .claude/skills/workspace/tree.mjs
-load_bearing: true
 verified-at: be0a351
 last-touched: 2026-08-13
 ---
@@ -27,3 +26,5 @@ last-touched: 2026-08-13
 - **The trap was already documented twelve lines away and I still hit it.** `drift_check.mjs → isRunAsScript` carries the comment "realpath both sides so a symlinked invocation path (macOS /tmp -> /private/tmp) still matches." Proximity is not protection: a comment on a neighbouring function is read when you are debugging that function, not when you are writing a new one. If a module has a path-realpathing convention, state it at the module header where a new function author will meet it.
 - **Cheap detector.** A containment test whose out-of-bounds target is missing or unreadable proves nothing — `refused` and `absent` become indistinguishable. Put a real, readable file outside the root and assert the refusal.
 - Related: [[a-synthesizing-writer-erases-fields-its-arguments-cannot-carry]] is the other "the sibling was fixed, this one was not" pair in the same corpus.
+
+- load_bearing: true

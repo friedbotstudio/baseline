@@ -4,6 +4,7 @@ category: landmines
 scope: [tdd, integrate]
 verified-at: 3c74ba8
 last-touched: 2026-06-20
+superseded-at: 2026-08-14
 ---
 
 - Path: `.claude/hooks/track_guard.sh` (literal-match logic)

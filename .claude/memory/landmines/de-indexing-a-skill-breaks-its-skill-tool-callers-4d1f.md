@@ -5,8 +5,8 @@ scope: [chore, tdd, document, simplify]
 source: assistant-deferral
 raised-on: 2026-08-10
 raised-in-context: warm-context-diet
-verified-at: 60c5aeb
-last-touched: 2026-08-10
+verified-at: 8201af6
+last-touched: 2026-08-14
 governs: .claude/skills/*/SKILL.md, .claude/workflows.jsonl, .claude/commands/init-project.md
 ---
 

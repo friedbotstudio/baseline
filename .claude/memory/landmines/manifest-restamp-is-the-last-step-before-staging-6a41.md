@@ -5,8 +5,8 @@ scope: [simplify, integrate, commit]
 source: assistant-deferral
 raised-on: 2026-08-09
 raised-in-context: read-front-door-sweep
-verified-at: 7f7b582
-last-touched: 2026-08-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 governs: scripts/build-template.sh, .claude/skills/audit-baseline/audit.mjs, obj/template/.claude/manifest.json
 ---
 

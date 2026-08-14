@@ -3,8 +3,8 @@ key: .claude/hooks/lib/closure-check.mjs
 category: landmarks
 scope: [scout]
 caveat: MUST stay shipped in `obj/template/.claude/manifest.json` — if dropped, `git_commit_guard`'s import crashes and the guard fails OPEN (consent bypass). Defended by `audit-baseline` + `tests/closure-amendment-governance.test.mjs`. See landmine `guard-new-lib-dep-breaks-sandbox-copy-tests`. Behavior documented in seed.md §4.1 + CLAUDE.md Art VIII + annex; RCA `docs/rca/2026-06-06-backlog-closure-stamp-stranded-post-commit.md`.
-verified-at: 0e5cc8f
-last-touched: 2026-07-09
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/hooks/lib/closure-check.mjs`

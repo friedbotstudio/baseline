@@ -2,8 +2,8 @@
 key: scout-coverage-on-governance-and-hook-changes
 category: conventions
 scope: [scenario, implement, tdd]
-verified-at: 3c74ba8
-last-touched: 2026-06-20
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Convention: when a workflow's write_set will touch `CLAUDE.md`, `docs/init/seed.md`, any hook implementation, or the consent-gate / commands surface, the `scout` phase SHALL enumerate `site-src/**` and `README.md` as touchpoints in addition to the obvious code paths. Also: every bash hook has a multi-paragraph header comment in its `.sh` body; when porting a hook to `.mjs` or renaming a peer hook's filename, the OTHER bash hooks' header comments need updates too (they reference the file by path).

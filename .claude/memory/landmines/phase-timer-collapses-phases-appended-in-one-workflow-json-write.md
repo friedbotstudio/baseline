@@ -2,8 +2,8 @@
 key: phase-timer-collapses-phases-appended-in-one-workflow-json-write
 category: landmines
 scope: [tdd, integrate]
-verified-at: f36b142
-last-touched: 2026-07-19
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - **Status 2026-07-19 (PARTIALLY RESOLVED, `timing-instrument-repair`)**: the DATA is now honest, the RENDER is not. `stampFromWorkflow` stamps every row emitted by one call with a shared `batch_id` and `batch_size`, so a batched row is distinguishable from a phase that genuinely cost nothing. But `renderTable` does **not** read those fields yet, so `timing.md` still prints `0 / 0` for collapsed rows — observed live in `docs/archive/2026-07-19/timing-instrument-repair/timing.md` (`tdd:verify` and `tdd:finalize`, both members of a `batch_size: 3` group). Until the renderer consumes them ([[render-consume-batch-and-wait-fields-7c31]]), read the JSONL directly rather than trusting the rendered table. The mitigation below (one phase per write) still applies and is still the cleanest fix at the source.

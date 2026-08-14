@@ -2,8 +2,8 @@
 key: mcp-server-file-shebang-trips-check-files-diff
 category: landmines
 scope: [chore, integrate]
-verified-at: 3d3cda7
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 caveat: Companion to [[baseline-skill-count-cascade]] (both bite at integrate, not audit — never trust an audit-clean tree as ship-ready when a new `.claude/mcp/` server or a new skill category was added).
 ---
 

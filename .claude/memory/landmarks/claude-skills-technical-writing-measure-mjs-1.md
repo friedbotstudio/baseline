@@ -3,8 +3,8 @@ key: .claude/skills/technical-writing/measure.mjs:1
 category: landmarks
 scope: [scout]
 caveat: The bands are EMPIRICAL, not invented — `corpus-bands.json` was derived from 113,887 words across 28 documentation pages published before 2022 (SQLite, PostgreSQL 12, Python 3.8, Django 3.2, the Rust book, Effective Go, Pro Git, nginx, Backbone, 12factor, Redis), pre-2022 specifically so the corpus predates LLM-written docs. Do not hand-tune a band to make a failing draft pass; that silently redefines the target. Re-derive from the corpus instead and record it in `references/corpus-profile.md`. `--type` is mandatory and must be one of `TYPES` (reference / explanation / tutorial / howto) — each Diatáxis type has its own band set, so measuring a tutorial against reference bands reports nonsense.
-verified-at: c4999eb
-last-touched: 2026-07-31
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/technical-writing/measure.mjs`

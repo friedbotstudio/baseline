@@ -2,8 +2,8 @@
 key: build-helpers-must-degrade-without-node-modules
 category: landmines
 scope: [implement, tdd, integrate]
-verified-at: 6ddda04
-last-touched: 2026-07-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `tests/helpers/clone-and-build.mjs` (rsync `--exclude=node_modules`) vs any `scripts/*.mjs` invoked by `build-template.sh` that imports a third-party dep.

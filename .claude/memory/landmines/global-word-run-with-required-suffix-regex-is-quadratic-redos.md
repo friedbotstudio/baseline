@@ -2,8 +2,8 @@
 key: global-word-run-with-required-suffix-regex-is-quadratic-redos
 category: landmines
 scope: [implement, tdd]
-verified-at: 32b83c2
-last-touched: 2026-07-15
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: spec/diff oracle regexes over author-controlled content, e.g. `.claude/skills/spec-diagram-review/oracle.mjs` (`checkClassDDL`) and any `content.matchAll(/…(\w+)\s*:…/g)` scanning a whole document.

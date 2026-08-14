@@ -3,8 +3,8 @@ key: archive-step-5-reads-the-spec-after-step-3-has-moved-it
 category: landmines
 scope: [archive, spec, integrate]
 source: inferred-from-code
-verified-at: 6fdd6ee
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 > **STATUS: FIXED 2026-08-07.** The bullets below describe the defect as it stood; the fix and the surviving lesson are at the bottom. Kept rather than deleted so the next reader does not rediscover and re-fix it.

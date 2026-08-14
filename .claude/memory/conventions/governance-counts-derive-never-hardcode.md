@@ -6,8 +6,8 @@ source: user-feedback
 convention: Governance counts (hooks / commands / agents / mcp-servers / memory-files / tracks / skills) SHALL NOT be hardcoded as literals in tests. Derive them from the single source: `.claude/skills/audit-baseline/expected-baseline.mjs` rosters (`EXPECTED_HOOKS.size`, `EXPECTED_COMMANDS.size`, `EXPECTED_AGENTS.size`, `EXPECTED_MCP_SERVERS.size`, `CANONICAL_MEMORY_FILES.size`, `EXPECTED_TRACKS`) — and skills from `derive-counts.mjs → SKILL_CATEGORIES` sum. A test asserts `deriveCounts(disk).<x> === <declared roster>` so the assertion is a real drift tripwire, never a tautology, and adding an artifact is a one-line roster edit that re-aligns every test.
 why: the 25th-hook addition (`phase-timing-instrumentation`) had to touch `24`-literals in five separate test files — exactly the photocopy-the-volatile-fact smell the user flagged. Centralizing collapsed it to one roster declaration.
 applies-to: `tests/derive-counts.test.mjs`, `tests/epic-close-governance.test.mjs`, `tests/epic-approval-guard.test.mjs`, `tests/git-topology-guard.test.mjs`, `tests/gitignore-governance-cascade.test.mjs`, `tests/whatsnew-counts.test.mjs`; `.claude/skills/audit-baseline/expected-baseline.mjs`.
-verified-at: 64d8a55
-last-touched: 2026-06-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - verbatim (user, 2026-06-21):

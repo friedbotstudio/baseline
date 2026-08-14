@@ -2,8 +2,8 @@
 key: bundle-mcp-servers-stage-1-7
 category: landmarks
 scope: [scout, implement]
-verified-at: 6ddda04
-last-touched: 2026-07-21
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `scripts/bundle-mcp-servers.mjs` (Foundation helper) + `scripts/build-template.sh` **Stage 1.7** (between prune Stage 1.5 and manifest Stage 3, runs UNCONDITIONALLY so `--manifest-only` still hashes a fresh bundle).

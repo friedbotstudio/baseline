@@ -3,9 +3,8 @@ key: sweep-auto-close-round-trips-entries-and-drops-unknown-fields
 category: landmines
 scope: [memory-sync, archive, commit]
 governs: .claude/skills/memory-sync/sweep.mjs
-load_bearing: true
-verified-at: 1db3b6c
-last-touched: 2026-08-07
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/memory-sync/sweep.mjs --mode auto-close`, the Step 0a actuator every `/memory-sync` runs unconditionally.
@@ -25,3 +24,5 @@ last-touched: 2026-08-07
 - Mitigation until fixed, in order of cost. **Cheapest first: check whether the run can fire at all** — `grep -rl '^superseded-at:' .claude/memory/ | wc -l`, plus `resolved-at:` on `pending-questions`. Zero closure candidates means auto-close is inert and needs no further guarding. **When there ARE candidates**, copy the store to a scratch dir, run `--mode auto-close --memory-dir <copy>` against the copy, and `diff -rq` it before letting the real run proceed. **After any real run**, `git status --porcelain .claude/memory/` and confirm the changed set is exactly the entries you expected to close. A modification where you expected a deletion is this bug.
 - Real fix: make the codec preserve unknown frontmatter fields verbatim on round-trip, and stop treating a body `## ` heading as an entry boundary in the sharded shape — a shard is one entry by construction, so the split has no legitimate case there.
 - Sibling: [[materialize-appends-blank-lines-every-run]] is the same defect class in the corpus writer — a round-trip that does not preserve its input. That one only added whitespace; this one drops load-bearing fields.
+
+- load_bearing: true

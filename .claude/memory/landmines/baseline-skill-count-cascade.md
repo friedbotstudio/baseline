@@ -2,8 +2,8 @@
 key: baseline-skill-count-cascade
 category: landmines
 scope: [chore, integrate]
-verified-at: be0b767
-last-touched: 2026-06-23
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Path: `.claude/skills/audit-baseline/derive-counts.mjs` (`SKILL_CATEGORIES` map + `SPELLED`/`NUM_WORDS`) + `.claude/skills/audit-baseline/audit.mjs` (word→num map ~line 139, skills-count regex ~227, `NUM_GROUP` ~722) + `CLAUDE.md` + byte-equal mirror `src/CLAUDE.template.md` + `docs/init/seed.md` + mirror `src/seed.template.md` + `README.md` + `.claude/CONSTITUTION.md` (Appendix A count line + Appendix B skill index) + governance-count test literals (`tests/derive-counts.test.mjs`, `tests/whatsnew-counts.test.mjs`).

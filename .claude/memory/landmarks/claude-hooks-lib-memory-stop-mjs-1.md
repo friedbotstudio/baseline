@@ -2,8 +2,8 @@
 key: .claude/hooks/lib/memory_stop.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: d36d7f0
-last-touched: 2026-08-05
+verified-at: 8201af6
+last-touched: 2026-08-14
 ---
 
 - Role: Stop-event transcript walker — invoked by `.claude/hooks/memory_stop.mjs` (the hook). Walks the per-turn JSONL transcript, extracts three candidate kinds (Edit/Write/MultiEdit → `landmark` candidates with path-touch + suggested-role bullet; `context7` MCP queries → `library` candidates; user/assistant text-block intent phrasings → `backlog` candidates with role-tagged provenance + verbatim + slug+4char-sha256 stable key + active-workflow context), and appends `## CANDIDATE:` blocks to `.claude/memory/_pending.md`. Exports `runMemoryStop({ transcript, pending, projectRoot })`. Pure passive collector — never writes to canonical memory files.
