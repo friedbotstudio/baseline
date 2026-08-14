@@ -16,7 +16,7 @@ import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseEntry, renderRecord } from './record-codec.mjs';
 import { assertNoTraversal } from './tree.mjs';
 
-export { assertNoTraversal, readSourceText, walkFiles } from './tree.mjs';
+export { assertNoTraversal, readSourceText, walkFiles, writeSourceText } from './tree.mjs';
 export { splitFrontmatter } from './record-codec.mjs';
 
 // The corpus root IS specDir. There is no intermediate segment to join now that

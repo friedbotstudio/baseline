@@ -24,8 +24,9 @@ import { anchorMatches, governedFiles } from './coverage.mjs';
 import { stampElement } from './digest.mjs';
 import { architectureMapEnabled } from './flags.mjs';
 import { materialize } from './materialize.mjs';
+import { COUNT_ROW as README_COUNT_ROW, checkReadmeCounts } from './readme-gate.mjs';
 import { writeDiagramShard } from './shards.mjs';
-import { assertNoTraversal, readAll, readSourceText } from './store.mjs';
+import { assertNoTraversal, readAll, readSourceText, writeSourceText } from './store.mjs';
 
 const SECTION_RE = /^##\s+System\s+delta\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/im;
 const NONE_RE = /^\*?\(?\s*none\s*\)?\*?$/i;
@@ -304,5 +305,41 @@ export function verifyAndApplyDelta({ slug, specDir, rootDir = process.cwd(), to
   const { specText, specMissing } = readSpecText({ rootDir, slug });
   const { rows } = parseDelta(specText);
   const verdict = verifyDelta({ rows, touchedPaths, specDir, rootDir });
-  return { ...verdict, ...applyDelta({ confirmed: verdict.confirmed, specDir, rootDir }), specMissing };
+  const applied = applyDelta({ confirmed: verdict.confirmed, specDir, rootDir });
+  // Same call, same directory read: the write that moves the census corrects the
+  // README that claims it.
+  const readme = applyReadmeCount({ specDir });
+  return { ...verdict, ...applied, readmeUpdated: readme.updated.length > 0, specMissing };
+}
+
+// The fold that writes an element and its shard also owes the README's Count
+// column, because `readme-gate` enforces that column and the fold is what moves
+// the number. Leaving it made every /archive with a confirmed `add` row falsify
+// its own README, and the failure surfaced two workflows later in a suite that
+// had nothing to do with it. Relaxing the gate instead was rejected: the gate is
+// what makes the census a fact rather than a claim.
+//
+// The count is re-derived from the directory rather than incremented, so a fold
+// applying several rows lands on the right number in one pass.
+export function applyReadmeCount({ specDir } = {}) {
+  const { mismatched } = checkReadmeCounts({ specDir });
+  if (mismatched.length === 0) return { updated: [] };
+
+  const text = readSourceText(specDir, 'README.md');
+  if (text === null) return { updated: [] };
+
+  const corrected = new Map(mismatched.map((row) => [row.directory, row.actual]));
+  const rewritten = text
+    .split('\n')
+    .map((line) => rewriteCountRow(line, corrected))
+    .join('\n');
+
+  writeSourceText(specDir, 'README.md', rewritten);
+  return { updated: mismatched.map(({ directory, actual }) => ({ directory, count: actual })) };
+}
+
+function rewriteCountRow(line, corrected) {
+  const row = README_COUNT_ROW.exec(line);
+  if (!row || !corrected.has(row[1])) return line;
+  return line.replace(/(\|\s*)\d+(\s*\|\s*)$/, `$1${corrected.get(row[1])}$2`);
 }

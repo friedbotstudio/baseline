@@ -5,7 +5,7 @@
 // They differ in who writes them — the corpus is ours, the tree is the subject —
 // so a change to one should not be able to break the other.
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // An anchor that escapes the tree the corpus is contracted to describe. REJECT,
@@ -37,6 +37,17 @@ export function readSourceText(rootDir, rel) {
   } catch {
     return null;
   }
+}
+
+// The symmetric write. `writeWorkspaceFile` covers a corpus SUBDIRECTORY and takes
+// a kind; a root-level file such as README.md has no kind, and passing an empty
+// one would be a hack at every call site. Siting the pair together is what keeps
+// the Domain modules free of node:fs.
+export function writeSourceText(rootDir, rel, text) {
+  assertNoTraversal(rel);
+  const path = join(rootDir, rel);
+  writeFileSync(path, text, 'utf8');
+  return path;
 }
 
 const UNWALKED = new Set(['.git', 'node_modules']);

@@ -54,7 +54,9 @@ export function checkReadmeFields({ specDir } = {}) {
 // and its last is an integer — `| \`elements/\` | ... | 114 |`. Any other line is
 // prose and claims nothing. The character class is also what makes a directory
 // name safe to join: it admits no `/` and no `.`, so no row can escape specDir.
-const COUNT_ROW = /^\|\s*`([a-z0-9_-]+)\/`\s*\|[^|]*\|\s*(\d+)\s*\|\s*$/;
+// Exported so the delta fold rewrites the same row shape this gate reads. Two
+// regexes for one table is how the writer and the enforcer drift apart.
+export const COUNT_ROW = /^\|\s*`([a-z0-9_-]+)\/`\s*\|[^|]*\|\s*(\d+)\s*\|\s*$/;
 
 // The corpus stores exactly two formats: records are `.md`, shards are `.puml`.
 // Reading the count through listWorkspaceFiles is what keeps this module free of

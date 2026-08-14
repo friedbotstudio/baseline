@@ -90,8 +90,20 @@ function pathsMatching(touched, globs) {
 // workflow began (pre-existing cruft the workflow did not produce). Empty
 // testGlobs AND empty basePaths => identity, preserving the whole-tree measure.
 export function filterRows(rows, { testGlobs = [], basePaths = [] } = {}) {
-  const excluded = new Set(basePaths);
-  return rows.filter((r) => !excluded.has(r.path) && !matchesAnyGlob(r.path, testGlobs));
+  const excluded = new Set(basePaths.map(normaliseDiffPath));
+  return rows.filter((r) => {
+    const path = normaliseDiffPath(r.path);
+    return !excluded.has(path) && !matchesAnyGlob(path, testGlobs);
+  });
+}
+
+// The base snapshot stores plain repo-relative paths; the diff renders an
+// untracked add as `/dev/null => <path>` and a rename as `<old> => <new>`. Both
+// sides go through here so the comparison is one vocabulary rather than two —
+// comparing them raw excluded every tracked base path and no untracked one.
+export function normaliseDiffPath(path) {
+  const arrow = String(path).lastIndexOf(' => ');
+  return arrow === -1 ? String(path) : String(path).slice(arrow + 4);
 }
 
 // D2: the workflow's own diff is separated from pre-existing dirt by a start-of-

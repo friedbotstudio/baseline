@@ -291,7 +291,11 @@ export function probeRunnable(rootDir, relPath) {
     return existsSync(target) ? 'not-runnable' : 'absent';
   }
   const guarded = /import\.meta\.url\s*===|process\.argv\[1\]|require\.main\s*===\s*module/.test(text);
-  const topLevel = /^(?:dispatch|main|run)\s*\(/m.test(text);
+  // The `await` prefix is the one broadening with evidence behind it: 2 of 11
+  // shipped skill CLIs open with `await dispatch({...})` and were scored
+  // not-runnable while executing fine. The line anchor stays — it is what stops an
+  // incidental `run(` deep in a file from reading as an entry point.
+  const topLevel = /^(?:await\s+)?(?:dispatch|main|run)\s*\(/m.test(text);
   return guarded || topLevel ? 'runnable' : 'not-runnable';
 }
 

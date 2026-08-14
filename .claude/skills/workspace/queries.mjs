@@ -261,10 +261,34 @@ function refuseConfirm(flags, command) {
   }
 }
 
+// Both forms parse because the SOP and the signature each teach one of them.
+// archive/SKILL.md Step 3 gave the comma signature and then instructed a quoted
+// JSON array in bold; the array split on its own inner commas and yielded quoted
+// garbage paths, which scored confirmed 0 / drift 6 while `inputEmpty` stayed
+// false. Accepting both is cheaper than making a reader pick the right one, and
+// the bold line's zsh word-splitting hazard is real.
+export function parseTouchedPaths(raw) {
+  if (raw === undefined || raw === true || raw === null) return [];
+  const text = String(raw).trim();
+  if (!text) return [];
+  return (jsonArrayOrNull(text) ?? text.split(','))
+    .map((p) => String(p).trim())
+    .filter(Boolean)
+    .map((p) => assertNoTraversal(p));
+}
+
+function jsonArrayOrNull(text) {
+  if (!text.startsWith('[')) return null;
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 function touchedPaths(flags) {
-  const raw = flags.touched;
-  if (raw === undefined || raw === true) return [];
-  return String(raw).split(',').map((p) => p.trim()).filter(Boolean).map((p) => assertNoTraversal(p));
+  return parseTouchedPaths(flags.touched);
 }
 
 function memoryDir(ctx) {

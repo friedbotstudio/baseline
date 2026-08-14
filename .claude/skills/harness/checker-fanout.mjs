@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assembleContext, describeInputState } from './assemble-context.mjs';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
 import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
@@ -144,18 +145,30 @@ export async function runCheckerFanout({ slug, rootDir, enabled, phase, ctx: ext
   // Spec-review needs the spec (gate-A oracles read it); code-review scores the diff, so a
   // missing spec is not an error there.
   const specContent = effectivePhase === 'code-review' ? readOptional(reader, specPath) : reader(specPath);
+  // The code-review checkers score a diff, so their input is assembled here rather
+  // than left to the caller's prose. A caller that supplies changedFiles keeps
+  // supplying them; one that does not now gets a real list instead of [].
+  const assembled = effectivePhase === 'code-review' && !extraCtx?.changedFiles
+    ? assembleContext({ rootDir })
+    : null;
   const ctx = {
     slug,
     rootDir,
     specContent,
     intakeContent: readOptional(reader, join(rootDir, `docs/intake/${slug}.md`)),
+    ...(assembled ? { changedFiles: assembled.changedFiles } : {}),
     ...(extraCtx || {}),
   };
   const names = checkers && checkers.length
     ? checkers
     : Object.keys(reg).filter((n) => entryPhase(reg[n]) === effectivePhase);
   const verdicts = await Promise.all(names.map((name) => runOne(reg, name, ctx)));
-  const merged = mergeVerdicts(verdicts);
+  const merged = {
+    ...mergeVerdicts(verdicts),
+    ...(effectivePhase === 'code-review'
+      ? { inputState: describeInputState(ctx.changedFiles || [], { probeFailed: false }) }
+      : {}),
+  };
   persistVerdict(rootDir, slug, merged, effectivePhase);
   return merged;
 }
