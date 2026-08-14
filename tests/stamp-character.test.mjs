@@ -48,12 +48,22 @@ const silent = { log: () => {} };
 
 describe('stamp-character', () => {
   it('test_when_tree_unstamped_then_every_present_target_is_written', () => {
-    // Covers AC-005.
+    // Covers AC-005, AC-008. A truthy extractBlock only proves the sentinels landed;
+    // the bullet count is what proves the six-field render reached all fourteen.
     withRoot({}, (root) => {
       const changed = stamper.stampAll(root, silent);
       assert.equal(changed.length, 14);
       for (const rel of changed) {
-        assert.ok(render.extractBlock(readFileSync(join(root, rel), 'utf8')));
+        const text = readFileSync(join(root, rel), 'utf8');
+        assert.ok(render.extractBlock(text), `${rel} must carry a block`);
+        assert.equal(
+          (text.match(/<!-- character:begin -->/g) || []).length, 1,
+          `${rel} must carry exactly one block — a second means the stamper appended instead of replacing`,
+        );
+        assert.equal(
+          (text.match(/^- \*\*\w+\.\*\*/gm) || []).length, render.PARTS.length,
+          `${rel} must carry one bullet per PARTS entry`,
+        );
       }
     });
   });

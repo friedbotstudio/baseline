@@ -35,7 +35,8 @@ describe('character doctrine — build integration', () => {
   });
 
   it('test_when_build_completes_then_dev_and_template_bytes_agree', async () => {
-    // Covers AC-005.
+    // Covers AC-005, AC-012 — dev bytes equal to the manifest sha256 IS the
+    // "no hash mismatch" half of the audit verdict, measured per stamped target.
     const render = await tryImport('.claude/skills/audit-baseline/character.mjs');
     assert.ok(render, 'character.mjs must exist');
     const manifest = JSON.parse(read(MANIFEST));

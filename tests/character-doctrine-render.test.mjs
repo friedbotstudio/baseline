@@ -5,20 +5,33 @@
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { REPO_ROOT, tryImport } from './helpers/memory-fixtures.mjs';
 
 const MODULE = '.claude/skills/audit-baseline/character.mjs';
+const CHECK_REL = '.claude/skills/audit-baseline/checks/skill-character.mjs';
 const TARGETS = [
   'brainstorm', 'intake', 'spec', 'spec-shippability-review', 'spec-traceability-review',
   'spec-diagram-review', 'spec-rollout-enforceability-review', 'scenario', 'implement',
   'code-structure', 'tdd', 'simplify', 'integrate', 'security',
 ];
 
-const ENTRY = { soul: 'The witness.', motivation: 'Four phases read this.', mantra: 'I name the non-goal now.' };
+// Order is the render contract, not a formatting preference: the audit compares bytes,
+// so a reordered PARTS would report every one of the fourteen as drifted.
+const PART_LABELS = ['Soul', 'Motivation', 'Mantra', 'Temperament', 'Voice', 'Resolve'];
+const PART_KEYS = ['soul', 'motivation', 'mantra', 'temperament', 'voice', 'resolve'];
+
+const ENTRY = {
+  soul: 'The witness.',
+  motivation: 'Four phases read this.',
+  mantra: 'I name the non-goal now.',
+  temperament: 'Literal-minded on purpose, and unhurried about it.',
+  voice: 'Quotes first, comments second.',
+  resolve: 'If I do not write it down, it did not happen.',
+};
 const FRONTMATTER = ['---', 'name: demo', 'owner: baseline', '---', '', '# Demo', '', 'Body line.'].join('\n');
 
 let mod;
@@ -63,28 +76,87 @@ describe('character doctrine — load', () => {
 });
 
 describe('character doctrine — render', () => {
-  it('test_when_entry_complete_then_render_emits_heading_and_three_bullets', () => {
-    // Covers AC-005.
+  it('test_when_entry_complete_then_render_emits_heading_and_six_bullets', () => {
+    // Covers AC-001.
     const block = mod.renderBlock(ENTRY);
     assert.match(block, /^<!-- character:begin -->/);
     assert.match(block, /<!-- character:end -->\n$/);
     assert.match(block, /^## Character$/m);
-    for (const part of ['Soul', 'Motivation', 'Mantra']) {
+    for (const part of PART_LABELS) {
       assert.equal((block.match(new RegExp(`^- \\*\\*${part}\\.\\*\\*`, 'gm')) || []).length, 1);
     }
+    assert.equal(
+      (block.match(/^- \*\*\w+\.\*\*/gm) || []).length, PART_LABELS.length,
+      'six bullets and no seventh — an extra bullet means PARTS and the doctrine disagree',
+    );
+  });
+
+  it('test_when_entry_rendered_then_bullet_order_is_canonical', () => {
+    // Covers AC-001.
+    const block = mod.renderBlock(ENTRY);
+    const positions = PART_LABELS.map((label) => block.indexOf(`- **${label}.**`));
+    assert.ok(positions.every((at) => at !== -1), 'every label must be present before order can be judged');
+    assert.deepEqual(
+      [...positions].sort((a, b) => a - b), positions,
+      'the audit compares rendered bytes, so reordering PARTS would report all fourteen skills as drifted',
+    );
   });
 
   it('test_when_entry_part_blank_then_render_throws_naming_the_part', () => {
-    // Covers AC-003.
-    for (const part of ['soul', 'motivation', 'mantra']) {
+    // Covers AC-002.
+    for (const part of PART_KEYS) {
       for (const bad of ['', '   ', undefined]) {
         assert.throws(
           () => mod.renderBlock({ ...ENTRY, [part]: bad }),
           new RegExp(part, 'i'),
-          `renderBlock must name "${part}" when it is ${JSON.stringify(bad)} — AC-003 requires the audit to report which part is missing`,
+          `renderBlock must name "${part}" when it is ${JSON.stringify(bad)} — the audit reports which part is missing, and it can only do that if the throw carries the key`,
         );
       }
     }
+  });
+
+  it('test_when_entry_carries_unknown_key_then_render_ignores_it', () => {
+    // Covers AC-001 (boundary).
+    const block = mod.renderBlock({ ...ENTRY, vice: 'Obsessive about margins.' });
+    assert.equal(block, mod.renderBlock(ENTRY), 'PARTS decides what is emitted, never the entry');
+    assert.ok(!block.includes('Obsessive about margins.'));
+  });
+
+  it('test_when_six_field_block_rendered_then_first_three_bullets_match_legacy_bytes', () => {
+    // Covers AC-001 (regression). The three new fields append; they never reshape what
+    // was already stamped, so the first three lines of all fourteen blocks are untouched.
+    const lines = mod.renderBlock(ENTRY).split('\n');
+    const bullets = lines.filter((line) => line.startsWith('- **'));
+    assert.deepEqual(bullets.slice(0, 3), [
+      `- **Soul.** ${ENTRY.soul}`,
+      `- **Motivation.** ${ENTRY.motivation}`,
+      `- **Mantra.** ${ENTRY.mantra}`,
+    ]);
+  });
+});
+
+describe('character doctrine — the render rule has one home', () => {
+  it('test_when_parts_exported_then_it_carries_six_ordered_pairs', () => {
+    // Covers AC-006.
+    assert.ok(Array.isArray(mod.PARTS), 'PARTS must be exported so its one consumer can import it');
+    assert.deepEqual(mod.PARTS.map(([key]) => key), PART_KEYS);
+    assert.deepEqual(mod.PARTS.map(([, label]) => label), PART_LABELS);
+  });
+
+  it('test_when_check_source_read_then_parts_is_imported_not_redeclared', () => {
+    // Covers AC-006.
+    //
+    // character.mjs's own header states the rule: a second copy of it drifts, and the
+    // drift check then compares two wrongs. The audit check WAS that second copy.
+    const source = readFileSync(join(REPO_ROOT, CHECK_REL), 'utf8');
+    assert.doesNotMatch(
+      source, /^\s*const PARTS\s*=/m,
+      'checks/skill-character.mjs must not declare its own PARTS — expanding one copy and not the other is exactly the drift the header warns about',
+    );
+    assert.match(
+      source, /import\s*\{[^}]*\bPARTS\b[^}]*\}\s*from\s*'\.\.\/character\.mjs'/,
+      'it must import PARTS from the module that owns the render rule',
+    );
   });
 });
 
@@ -128,7 +200,7 @@ describe('character doctrine — extract and stamp', () => {
   });
 
   it('test_when_stamped_twice_then_bytes_unchanged', () => {
-    // Covers AC-025.
+    // Covers AC-025, AC-007 — idempotency is what lets Stage 0c run on every build.
     const block = mod.renderBlock(ENTRY);
     const once = mod.stampSkill(FRONTMATTER, block);
     assert.equal(mod.stampSkill(once, block), once);

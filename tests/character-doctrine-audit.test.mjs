@@ -86,6 +86,33 @@ describe('skill-character audit check', () => {
     });
   });
 
+  it('test_when_temperament_bullet_removed_then_check_fails_naming_temperament', () => {
+    // Covers AC-004. The missing-part scan reads the imported PARTS, so a field added
+    // to the doctrine is enforced here the moment it is added there — no second list.
+    const drop = (slug, base, entry) => (slug !== 'tdd'
+      ? stamped(base, entry)
+      : stamped(base, entry).split('\n').filter((line) => !line.startsWith('- **Temperament.**')).join('\n'));
+    withTree({ mutate: drop }, (root) => {
+      const rows = fails(check.run(ctxFor(root)));
+      assert.equal(rows.length, 1);
+      assert.match(rows[0].join(' '), /tdd/);
+      assert.match(rows[0].join(' '), /temperament/i);
+    });
+  });
+
+  it('test_when_voice_text_hand_edited_then_check_fails_naming_drift', () => {
+    // Covers AC-005. A hand-edited new field drifts exactly like a hand-edited old one.
+    const edit = (slug, base, entry) => (slug !== 'scenario'
+      ? stamped(base, entry)
+      : stamped(base, { ...entry, voice: 'A sentence a human typed over the doctrine.' }));
+    withTree({ mutate: edit }, (root) => {
+      const rows = fails(check.run(ctxFor(root)));
+      assert.equal(rows.length, 1);
+      assert.match(rows[0].join(' '), /scenario/);
+      assert.match(rows[0].join(' '), /drift/i);
+    });
+  });
+
   it('test_when_block_drifted_then_check_fails_naming_drift', () => {
     // Covers AC-004.
     const edit = (slug, base, entry) => (slug !== 'spec'

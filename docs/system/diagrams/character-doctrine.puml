@@ -1,4 +1,4 @@
 !startsub character_doctrine
-' @kind class
+' @kind c4_component
 Component(character_doctrine, "character-doctrine", "class")
 !endsub

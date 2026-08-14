@@ -1060,3 +1060,42 @@ The same escalation latitude applies to `tdd-quickfix`: `/triage` MAY except `si
 **Wall-clock effect.** A decomposed feature pays discovery **once** (the `epic` track) instead of per child, and each child runs ~4–6 phases (most review phases excepted) instead of ~16. The dominant cost the pair removes is serial latency: the feature's end-to-end time approaches *one* discovery cycle plus the sum of thin child implementations, rather than N full pipelines.
 
 **New cross-references:** `.claude/state/epic/<slug>.json` (epic state), `track_guard` (inherited-satisfaction check), `project.json → epic.min_slices` / `simplify.min_files` / `security.sensitive_globs` (escalation knobs).
+
+---
+
+## §19 — Skill character doctrine
+
+A **character block** gives a skill a recognizable person to be while it executes its SOP. Fourteen skills carry one: `brainstorm`, `intake`, `spec`, the four `spec-*-review` checkers, `scenario`, `implement`, `code-structure`, `tdd`, `simplify`, `integrate`, `security`. Membership is decided by the doctrine's key set, never by `owner:` frontmatter — one target is dev-only by design, and annotating it would ship a maintainer tool and force a derived-count cascade.
+
+### 19.1 Where it lives
+
+| Artifact | Role |
+|---|---|
+| `.claude/skills/audit-baseline/character.json` | The doctrine. One entry per slug; the only place a character is authored. |
+| `.claude/skills/audit-baseline/character.mjs` | The one render rule — `PARTS`, `renderBlock`, `extractBlock`, `stampSkill`. `PARTS` is exported; a second copy in any caller is drift, and the drift check would then compare two wrongs. |
+| `.claude/skills/audit-baseline/checks/skill-character.mjs` | The audit check. Imports `PARTS`, re-renders each entry, and compares bytes against disk. |
+| `scripts/stamp-character.mjs` | The sole writer of every stamped block, invoked at `build-template.sh` Stage 0c — before Stage 1's rsync, so the dev tree and the hashed template agree. |
+| `.claude/skills/<slug>/SKILL.md` | The rendered block, between `<!-- character:begin -->` and `<!-- character:end -->`, immediately after the frontmatter fence. Never hand-edited. |
+
+### 19.2 The six fields
+
+Rendered in this order. `renderBlock` throws naming the field when any is absent or blank, so a partially-authored entry fails the whole audit rather than shipping a half character.
+
+| Field | What it answers | Writer contract |
+|---|---|---|
+| `soul` | Who is this person? | An evocative archetype with a point of view, not a job title. Describes no procedure. |
+| `motivation` | Why does this person care? | What it protects, prevents, or preserves beneath the mechanics. Restates neither the SOP nor its output. |
+| `mantra` | What does this person believe? | A conviction it would repeat under pressure. It may imply judgment; it prescribes nothing. |
+| `temperament` | How does this person feel to work with? | Disposition while working — patient or impatient, skeptical or trusting, severe or playful. Never a behavioral rule. |
+| `voice` | How does this person sound? | Conversational texture — blunt or diplomatic, clinical or warm, terse or expansive. Describes how it sounds, never what it must say. |
+| `resolve` | Why does this person keep going? | A private first-person sentence for when the work turns tedious, uncertain, or futile. A quote, not an explanation, and never generic encouragement. |
+
+### 19.3 The meta-rule (binding on the author)
+
+**Personality describes character, not procedure. It SHALL NOT introduce, remove, reorder, or override an SOP requirement.**
+
+The SOP determines what the skill does. The character determines who does it. When a proposed field would change a step, drop a check, or reorder a phase, the field is wrong — not the SOP. Two skills with identical SOPs may read as recognizably different people; neither may execute a different procedure because of it.
+
+**Distinctiveness test.** Remove the slug and the six fields must not read as interchangeable with another skill's. Two checkers that share a job take different professions rather than the same adjectives.
+
+This rule binds the human or model authoring a `character.json` entry. It is not mechanically checkable — no oracle can decide whether a temperament sentence prescribes a step — so §19.3 binds the author and the audit binds the bytes. `CLAUDE.md` carries no character clause; the doctrine is authorial guidance, not in-session behavior.

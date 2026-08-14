@@ -1,0 +1,52 @@
+{
+  "request": "Expand the skill character block from three fields (soul, motivation, mantra) to six (adding temperament, voice, resolve) across the doctrine, the renderer, the audit check, the render test, and the 14 stamped SKILL.md files; and close the seed.md governance gap by adding a section that records the character doctrine and states the meta-rule that personality never overrides an SOP.",
+  "slug": "character-block-six-fields",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Mechanism is a pattern-copy of the character doctrine landed 2026-08-13 (docs/archive/2026-08-13/skill-character-doctrine/spec.md): PARTS at .claude/skills/audit-baseline/character.mjs:15, doctrine at .claude/skills/audit-baseline/character.json (14 skills, keys soul/motivation/mantra), renderBlock/extractBlock/stampSkill, and tests/character-doctrine-render.test.mjs. No precedent found for the three new fields or for a seed.md section on the doctrine: grep of docs/init/seed.md for character|soul|mantra|doctrine returns no character-doctrine entry.",
+  "track_reason": "Heavier than tdd-quickfix by one gate. Gate A is required because 42 newly authored character values across 14 baseline-owned skills and a new governance section in seed.md are human-judgment content, and tdd-quickfix carries no approve-direction node. Lighter than intake-full: the write surface is already mapped, so scout and research are excepted.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "completed_notes": {
+    "triage-decision-governance": "Confirmed by user at triage: the change adds a seed.md section recording the character doctrine AND stating the meta-rule (personality never introduces, removes, reorders, or overrides an SOP requirement). CLAUDE.md is NOT amended; no warm-context cost, no src/CLAUDE.template.md mirror edit.",
+    "triage-decision-authoring": "Confirmed by user at triage: derive temperament/voice/resolve for all 14 skills from each approved soul plus its SOP, flag the entries where the existing soul does not constrain the new field enough to be distinctive, and interview the user on only those. Resolve is written by Claude in the character voice, never asked of the user as a quote.",
+    "gate-a-reyield": "Spec amended after approval: the Contracts row for the audit check named the bare path checks/skill-character.mjs, which drift_check resolves from the repo root and could not find. Corrected to .claude/skills/audit-baseline/checks/skill-character.mjs. One table cell; no AC, decision, write_set, or scope changed. Re-approval required because the content hash changed.",
+    "security-medium-open": "MEDIUM (CWE-74) left unfixed on purpose: renderBlock does not reject a field value containing the block terminator. Reproduced live — early block termination, unreviewed prose in a shipped SKILL.md, and stamp idempotency broken. Not fixed here because no approved AC covers it; fixing it mid-workflow would expand scope past gate A. Report: docs/security/character-block-six-fields-2026-08-14.md. Candidate follow-up.",
+    "document-deliverable": "seed.md §19 IS the documentation deliverable — it is the only shipped surface that describes the character doctrine, and the doctrine landed 2026-08-13 with none. Routing gate required zero delegates: seed.md is a governance document that prose/technical-writer are forbidden to touch (seed.md §10). No count claim moved; README stays 58 skills / 26 hooks and audit count checks PASS. site-src was not touched — it is outside the approved write_set.",
+    "archive-corpus-report": "System delta: 3/3 rows confirmed, drift 0, unclaimed 0, inputEmpty false. character-doctrine got its digest + shard; the two audit-baseline family anchors are glob-anchored so they earn none. Corpus report clean except 3 pre-existing stale elements (release-workflow, workflow-migrator, write-set-profile) that this change never touched — reported, not repaired, per the report-only rule.",
+    "roadmap-sync-noop": "No-op, fail-open. roadmap.path resolves to docs/roadmap-execution-plan.md but workflow.json.roadmap_tasks[] is empty and the plan names no task for this work — nothing to flip from ⬜ to ✅.",
+    "memory-sync-report": "Empty-pending fast-path: 0 CANDIDATE blocks, Steps 1-5 skipped. Step 0a auto-close removed 12 entries already carrying structured closure fields. Step 0e listed 3 drifted corpus elements (release-workflow, workflow-migrator, write-set-profile); none re-stamped because none was read against its anchor this session — re-stamping unreviewed elements is the drift-laundering the digest exists to catch. Step 0c interactive stale sweep NOT run: session start reported 248 stale entries, which is a per-entry human decision session, not a workflow phase."
+  },
+  "created_at": 1786700226,
+  "updated_at": 1786704212,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

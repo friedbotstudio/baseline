@@ -7,9 +7,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 
-import { loadDoctrine, renderBlock, extractBlock, skillPathFor } from '../character.mjs';
-
-const PARTS = [['soul', 'Soul'], ['motivation', 'Motivation'], ['mantra', 'Mantra']];
+import { loadDoctrine, renderBlock, extractBlock, skillPathFor, PARTS } from '../character.mjs';
 
 export function run(ctx) {
   const rows = [];

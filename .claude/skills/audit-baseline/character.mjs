@@ -12,7 +12,17 @@ import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 const DOCTRINE_REL = '.claude/skills/audit-baseline/character.json';
 const BEGIN = '<!-- character:begin -->';
 const END = '<!-- character:end -->';
-const PARTS = [['soul', 'Soul'], ['motivation', 'Motivation'], ['mantra', 'Mantra']];
+// Exported because the audit check needs the same ordered pairs to report which part
+// is missing. It imports this one; declaring a second copy there is the drift the
+// header above describes.
+export const PARTS = [
+  ['soul', 'Soul'],
+  ['motivation', 'Motivation'],
+  ['mantra', 'Mantra'],
+  ['temperament', 'Temperament'],
+  ['voice', 'Voice'],
+  ['resolve', 'Resolve'],
+];
 
 export function loadDoctrine(rootDir) {
   const path = join(rootDir, DOCTRINE_REL);
