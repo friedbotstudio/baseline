@@ -5,13 +5,13 @@
     "extra_must_ignore": []
   },
   "test": {
-    "cmd": "node .claude/skills/audit-baseline/audit.mjs --file={file}",
+    "cmd": "node .claude/skills/audit-baseline/audit.mjs --file={file} && node --test tests/*.test.mjs",
     "kind": "structural",
     "affected_resolver": null,
     "file_globs": [
       "**/*"
     ],
-    "timeout_seconds": 120
+    "timeout_seconds": 600
   },
   "lint": {
     "cmd": null,
@@ -495,7 +495,8 @@
         ],
         "exclude": [
           "docs/archive/**",
-          "node_modules/**"
+          "node_modules/**",
+          ".claude/**"
         ],
         "kind": "reference-section",
         "requires": [
