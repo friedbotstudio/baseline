@@ -1,3 +1,24 @@
+# [0.23.0](https://github.com/friedbotstudio/baseline/compare/v0.22.0...v0.23.0) (2026-08-14)
+
+
+### Bug Fixes
+
+* **character:** the render sink rejects delimiters, and triage becomes the fifteenth member ([12effd8](https://github.com/friedbotstudio/baseline/commit/12effd8a56727ab52b95b1f64ef005804590b64d))
+* **consumer-install:** derive nine drifted lists from their oracles ([c6f1068](https://github.com/friedbotstudio/baseline/commit/c6f1068c2bbe3d69b7794f43c90bd88d8a9035ce))
+* **corpus:** a shard rewrite preserves what the caller does not supply ([91fed96](https://github.com/friedbotstudio/baseline/commit/91fed96c7d4dc660489148f7d8265b764b51debf))
+* **memory-sync:** a body heading stops being a record boundary ([a578543](https://github.com/friedbotstudio/baseline/commit/a578543eec598cc0da63876c3151a0d133da4a2c))
+* **memory:** the sweep and the session-start hook agree on what is stale ([8201af6](https://github.com/friedbotstudio/baseline/commit/8201af6f604a287ecce7cccd021c38bad9ebca05))
+* **standup:** one recap invocation answers without follow-up commands ([e36bcb9](https://github.com/friedbotstudio/baseline/commit/e36bcb9c530c7f786ed3a3904d406e1cbd72a1b2))
+
+
+### Features
+
+* **character:** fourteen skills carry a written character, two clauses enforce it ([66fcb29](https://github.com/friedbotstudio/baseline/commit/66fcb294bc99f35a192206a3453322d7febbcc58))
+* **drift-check:** a spec's Contracts rows must resolve against the diff ([d119256](https://github.com/friedbotstudio/baseline/commit/d11925693ce59e0f24195ed8e4bb7fcaeb3903d4))
+* **gates:** four blind gates start measuring what they claim to measure ([4d91ce9](https://github.com/friedbotstudio/baseline/commit/4d91ce91cf6753c3f7e74ed7dae45ee6056b6734))
+* **skills:** character block carries six fields, and seed.md records the doctrine ([1b2b0c7](https://github.com/friedbotstudio/baseline/commit/1b2b0c78c49d22a4f1f0203afe3015a676393547))
+* **standup:** check the release picture against the remote, opt-in ([87d3573](https://github.com/friedbotstudio/baseline/commit/87d3573eab44753056767b2395b29e60916c8aa6))
+
 # [0.22.0](https://github.com/friedbotstudio/baseline/compare/v0.21.0...v0.22.0) (2026-08-12)
 
 
