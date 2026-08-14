@@ -204,3 +204,70 @@ describe('README count claims match disk', () => {
       `the shipped README miscounts: ${JSON.stringify(result.mismatched)}`);
   });
 });
+
+// AC-004 — the delta fold writes the README count.
+//
+// `verifyAndApplyDelta` writes the element record and its shard for a confirmed
+// `add` row and leaves the README Count column untouched, so the fold makes its
+// own README false in the same call. `checkReadmeCounts` then enforces that
+// column, which is why three tests went red on a tree where nothing was wrong
+// except a number nobody wrote.
+//
+// This fires on EVERY workflow whose spec declares a confirmed `add` row, at
+// /archive, after the suite was already green — which is why it kept being
+// discovered by whoever ran next rather than by whoever caused it. The count is
+// derivable from the same directory read the fold already performs; writing it
+// is the same write. Do NOT relax the gate instead: the gate is what makes the
+// census a fact rather than a claim.
+describe('delta fold — the README count rides the same call (AC-004)', () => {
+  const DELTA = '.claude/skills/workspace/delta.mjs';
+
+  it('test_when_delta_fold_applies_add_row_then_readme_count_is_written', async () => {
+    const delta = await tryImport(DELTA);
+    const gate = await tryImport(README_GATE);
+    assert.ok(delta?.applyReadmeCount, `${DELTA} must export applyReadmeCount`);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'alpha', { anchor: 'lib/a.mjs' });
+    writeWorkspaceElement(specDir, 'beta', { anchor: 'lib/b.mjs' });
+    writeCountReadme(specDir, [['elements', 1]]);
+
+    delta.applyReadmeCount({ specDir });
+
+    assert.equal(gate.checkReadmeCounts({ specDir }).ok, true,
+      'after the fold writes the count, the gate it owes must be satisfied immediately — ' +
+      'not on the next workflow, and not by hand');
+  });
+
+  it('test_when_two_add_rows_applied_then_readme_count_reflects_both', async () => {
+    const delta = await tryImport(DELTA);
+    assert.ok(delta?.applyReadmeCount, `${DELTA} must export applyReadmeCount`);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    for (const name of ['alpha', 'beta', 'gamma']) {
+      writeWorkspaceElement(specDir, name, { anchor: `lib/${name}.mjs` });
+    }
+    writeCountReadme(specDir, [['elements', 1]]);
+
+    delta.applyReadmeCount({ specDir });
+
+    assert.match(readFileSync(join(specDir, 'README.md'), 'utf8'), /\|\s*3\s*\|/,
+      'the count must be re-derived from the directory, not incremented once per row — ' +
+      'an increment silently under-counts a two-row fold');
+  });
+
+  it('test_when_readme_absent_then_check_returns_ok', async () => {
+    const delta = await tryImport(DELTA);
+    const gate = await tryImport(README_GATE);
+    assert.ok(delta?.applyReadmeCount, `${DELTA} must export applyReadmeCount`);
+    const { specDir } = makeProject();
+    makeWorkspace(specDir);
+    writeWorkspaceElement(specDir, 'alpha', { anchor: 'lib/a.mjs' });
+
+    delta.applyReadmeCount({ specDir });
+
+    assert.equal(gate.checkReadmeCounts({ specDir }).ok, true,
+      'no README means no claim to contradict; the fold must not invent one where the ' +
+      'project never made a claim');
+  });
+});

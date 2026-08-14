@@ -61,7 +61,23 @@ const LANDMINE_CATEGORY_DEFAULT = '[scout, spec, tdd, security, integrate]';
 // `governs:` (named modules) rather than a `.claude/skills/**` glob. The blast
 // radius of a memory write is a choice — see the landmine
 // `a-wide-governs-glob-ripples-into-unrelated-literals`.
-const PHASE_BUDGETS = { spec: 71, security: 30, research: 20 };
+//
+// AC-002 (release-readiness) — budget leg, raised with stated headroom.
+// 71 -> 88, and this bump breaks the pattern above deliberately. Measured 73 at
+// HEAD 66fcb29 by the `release-readiness` batch. Every prior bump set the cap to
+// the measured value on the stated ground that inventing headroom is a policy
+// change — and each one produced a zero-headroom tripwire that the next flush
+// tripped, five times in one session. Re-measuring to 73 would have been the
+// sixth.
+//
+// 88 is 73 plus roughly 20% room, which is a policy call and named as one here
+// rather than smuggled in as a measurement. It buys about fifteen entries before
+// anyone has to look at this line again. What the cap SHOULD measure is still
+// open — surfaced volume rather than entry count, since a count says nothing
+// about the context cost the budget exists to bound — and that decision is its
+// own ticket, recorded in the spec's Open questions. This is the repair, not the
+// answer.
+const PHASE_BUDGETS = { spec: 88, security: 30, research: 20 };
 
 // Captured at HEAD 2bf79ef. The phase leg is what this spec rewrites; the path leg
 // must not drift except where the curation deliberately ADDS a `governs:` to an
@@ -88,10 +104,21 @@ const PHASE_BUDGETS = { spec: 71, security: 30, research: 20 };
 // `governs:` ripples into every census it intersects, which is worth knowing before
 // writing one: the cost of a wide glob is paid in literals somebody re-measures
 // later, not at the moment it is authored.
+// AC-002 (release-readiness) — census leg, re-measured.
+// Re-measured 2026-08-14 at HEAD 66fcb29 by the `release-readiness` batch, which
+// found all four drifted and the suite red on main. Re-measuring is the whole of
+// the repair here — this is a CENSUS, and the comment above says so: it moves
+// whenever an entry's `governs:` legitimately names a new path.
+//
+// What changed with this batch is who pays. `/memory-sync` now runs the census
+// gate before it writes, so the flush that moves one of these values re-measures
+// it in the same commit or refuses. The bump history above — five in one session,
+// each discovered by a later workflow that had nothing to do with it — is the
+// cost that gate removes.
 const PATH_LEG_BASELINE = {
-  '.claude/hooks/lib/scoped-memory.mjs': 8,
-  '.claude/skills/memory-index/resolve.mjs': 12,
-  '.claude/hooks/process_lifecycle_guard.mjs': 8,
+  '.claude/hooks/lib/scoped-memory.mjs': 9,
+  '.claude/skills/memory-index/resolve.mjs': 16,
+  '.claude/hooks/process_lifecycle_guard.mjs': 9,
   // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow
   // filed four backlog entries and left them uncommitted; harness-batch-fixes
   // committed them. Three of the four carried only `key` and `category`, so they
@@ -101,7 +128,7 @@ const PATH_LEG_BASELINE = {
   //
   // A governed-memory count is a census, not an invariant: it moves whenever an
   // entry's `governs:` legitimately names a new path. Re-measure it; do not defend it.
-  '.claude/skills/harness/checker-fanout.mjs': 9,
+  '.claude/skills/harness/checker-fanout.mjs': 15,
 };
 
 function liveShards() {
@@ -195,9 +222,21 @@ describe('memory scope — the landmark deferral is enforced, not assumed (AC-00
       .filter((f) => f.includes(`${'landmarks'}/`))
       .filter((f) => scopeLineOf(f) === '[scout]');
 
+    // AC-002 (release-readiness) — census leg, roadmap-committed count re-measured.
+    // 89 -> 91 at HEAD 66fcb29, then 91 -> 94 at this workflow's own /memory-sync,
+    // which filed three landmarks for the modules it added. A census, so it moves
+    // whenever a workflow files a landmark — and it is also a roadmap commitment:
+    // Epic 6 T11 owns re-homing this set, and the assertion is what stops the
+    // deferral drifting closed unnoticed.
+    //
+    // The 91 -> 94 bump was made BY HAND, and that is the finding. The census gate
+    // this same batch shipped is supposed to remove exactly this edit, and it could
+    // not: its literalPattern matches only `SYMBOL = <digits>`, and this site is an
+    // assert.equal argument. It refused rather than re-measured — safe, but blind.
+    // Backlog `census-gate-literal-pattern-matches-no-real-site` carries the repair.
     assert.equal(
       atScout.length,
-      89,
+      94,
       'D4 defers re-homing landmarks to the path leg (deferred: risk) — scout writes docs/scout/<slug>.md, which no landmark governs, so re-homing would remove landmark surfacing from scout entirely. This asserts the deferral so a later cycle cannot silently re-home them.',
     );
   });

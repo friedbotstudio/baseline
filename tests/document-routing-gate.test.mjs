@@ -150,8 +150,22 @@ describe('document routing gate (ticket E)', () => {
     );
 
     // ...while the genuine surfaces still are.
-    const real = mod.requiredDelegates({ changedPaths: ['site-src/memory.njk', '.claude/memory/README.md'], surfaces });
-    assert.equal(real.length, 2, 'real prose surfaces still carry obligations');
+    //
+    // This line bundled two contracts and asserted `length === 2`. AC-011 of
+    // `release-readiness` supersedes only the second: `.claude/memory/README.md`
+    // is matched by the `**/README.md` glob but its primary reader is Claude, and
+    // `prose/SKILL.md` refuses any such file — so the gate demanded a register the
+    // delegate is forbidden to supply. Split rather than deleted, because the
+    // site-src clause is the invariant that mattered and this spec does not touch it.
+    const real = mod.requiredDelegates({ changedPaths: ['site-src/memory.njk'], surfaces });
+    assert.equal(real.length, 1, 'a rendered public page still carries its prose obligation');
+
+    assert.deepEqual(
+      mod.requiredDelegates({ changedPaths: ['.claude/memory/README.md'], surfaces }),
+      [],
+      'superseded by AC-011: a Claude-facing instructional file owes no human register, ' +
+      'and demanding one creates an obligation prose/SKILL.md must refuse',
+    );
   });
 
   it('test_when_paths_flag_omitted_then_gate_derives_them_from_git_without_crashing', () => {
@@ -343,5 +357,42 @@ describe('document routing gate (ticket E)', () => {
       conditional < readerLevel && readerLevel < humanizer,
       'order must be conditional -> reader-level -> humanizer; reader-level after humanizer flattens the prose',
     );
+  });
+});
+
+// AC-011 — the README glob stops obliging prose on Claude-facing files.
+//
+// `document.surfaces` globs `**/README.md` and requires `prose`, which catches
+// `.claude/memory/README.md` — the entry schema CLAUDE.md Art. IX.1 cites, whose
+// primary reader is Claude. `prose/SKILL.md` refuses any file whose primary
+// reader is Claude rather than a human, so the gate creates an obligation the
+// delegate is forbidden to satisfy. It was resolved once by prose's mixed-file
+// clause, which relies on the operator noticing.
+describe('document surfaces — no obligation the delegate cannot satisfy (AC-011)', () => {
+  const REPO = dirname(dirname(fileURLToPath(import.meta.url)));
+
+  function referenceSectionRule() {
+    const project = JSON.parse(readFileSync(join(REPO, '.claude/project.json'), 'utf8'));
+    return (project.document?.surfaces ?? []).find((s) => s.kind === 'reference-section');
+  }
+
+  it('test_when_claude_readme_classified_then_no_prose_obligation_is_raised', () => {
+    const rule = referenceSectionRule();
+    assert.ok(rule, 'the reference-section surface rule must still exist');
+
+    const excludes = rule.exclude ?? [];
+    assert.ok(excludes.some((g) => g.startsWith('.claude/')),
+      'the reference-section rule must exclude .claude/** — otherwise it globs ' +
+      '.claude/memory/README.md and demands prose that prose/SKILL.md is required to ' +
+      `refuse. Current excludes: ${JSON.stringify(excludes)}`);
+  });
+
+  it('test_when_root_readme_classified_then_prose_is_still_required', () => {
+    const rule = referenceSectionRule();
+    const excludes = rule.exclude ?? [];
+
+    assert.ok(!excludes.includes('**/README.md') && !excludes.includes('README.md'),
+      'narrowing must not exempt the root README — that one has a human reader and ' +
+      'genuinely owes prose');
   });
 });

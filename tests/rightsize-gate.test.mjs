@@ -350,3 +350,49 @@ describe('rightsize-gate-fix — check loads project.json from disk (end-to-end 
     }
   });
 });
+
+// AC-009 — rightsize_base excludes an untracked path.
+//
+// The baseline snapshot stores plain repo-relative paths; an untracked file
+// arrives from the diff as `/dev/null => <path>`, so the bare string compare in
+// filterRows never matches and every pre-existing UNTRACKED path is measured
+// anyway. Tracked paths exclude correctly — only the untracked half is broken.
+//
+// Blast radius is one-directional: the gate is fail-open and additive-only, so
+// the failure inflates the measure and makes it MORE likely to KEEP simplify and
+// document. It cannot cause a wrongful skip. That is why this is a precision fix
+// and not a safety one — and why the regression row below matters as much as the
+// new one.
+describe('rightsize-gate — the base list and the diff share a vocabulary (AC-009)', () => {
+  const UNTRACKED_ROW = { path: '/dev/null => docs/audits/note.md', added: 40, removed: 0 };
+
+  it('test_when_untracked_path_in_rightsize_base_then_row_is_excluded', () => {
+    const kept = gate.filterRows([UNTRACKED_ROW], {
+      testGlobs: [],
+      basePaths: ['docs/audits/note.md'],
+    });
+
+    assert.deepEqual(kept, [],
+      'a pre-existing untracked path sits in rightsize_base precisely so it is excluded; ' +
+      'the diff renders it as `/dev/null => <path>` and the comparison must normalise ' +
+      'both sides through one helper rather than comparing two vocabularies');
+  });
+
+  it('test_when_tracked_path_in_rightsize_base_then_row_is_still_excluded', () => {
+    const kept = gate.filterRows([{ path: 'docs/audits/tracked.md', added: 5, removed: 1 }], {
+      testGlobs: [],
+      basePaths: ['docs/audits/tracked.md'],
+    });
+
+    assert.deepEqual(kept, [],
+      'the tracked half already worked; normalising must not break it');
+  });
+
+  it('test_when_untracked_path_absent_from_base_then_row_survives', () => {
+    const kept = gate.filterRows([UNTRACKED_ROW], { testGlobs: [], basePaths: [] });
+
+    assert.equal(kept.length, 1,
+      'normalisation must not turn into a blanket exclusion of untracked adds — a file ' +
+      'this workflow actually created is real change and must still be measured');
+  });
+});

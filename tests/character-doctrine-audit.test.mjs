@@ -6,7 +6,7 @@
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -154,13 +154,28 @@ describe('skill-character audit check', () => {
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
 
-  it('test_when_doctrine_keys_compared_to_spec_write_set_then_both_name_fourteen_slugs', () => {
-    // Covers AC-001.
-    const spec = readFileSync(join(REPO_ROOT, 'docs/specs/skill-character-doctrine.md'), 'utf8');
-    const writeSetLine = spec.split('\n').find((line) => line.startsWith('**Write set**:'));
-    const inSpec = new Set([...writeSetLine.matchAll(/\.claude\/skills\/([a-z0-9-]+)\/SKILL\.md/g)].map((m) => m[1]));
+  it('test_when_spec_is_archived_then_doctrine_audit_still_passes', () => {
+    // Covers AC-001, repointed for AC-010.
+    //
+    // This read `docs/specs/skill-character-doctrine.md`, which `/archive` moves to
+    // `docs/archive/<date>/<slug>/` by design — so the test failed with ENOENT after
+    // every workflow that archived its own spec, including the one that introduced
+    // it. A workflow artifact is not an oracle; it is scheduled to disappear.
+    //
+    // The doctrine and the skills it names are both live, both shipped, and both
+    // survive archival. Comparing them asserts the same invariant against state
+    // that is still there tomorrow.
     const inDoctrine = new Set(Object.keys(render.loadDoctrine(REPO_ROOT).skills));
-    assert.deepEqual([...inSpec].sort(), [...inDoctrine].sort());
-    assert.equal(inDoctrine.size, 14);
+    const onDisk = new Set(
+      readdirSync(join(REPO_ROOT, '.claude/skills'))
+        .filter((slug) => {
+          const skillMd = join(REPO_ROOT, '.claude/skills', slug, 'SKILL.md');
+          return existsSync(skillMd) && readFileSync(skillMd, 'utf8').includes('character:begin');
+        }),
+    );
+
+    assert.deepEqual([...inDoctrine].sort(), [...onDisk].sort(),
+      'every skill the doctrine names must carry a character block, and no skill may ' +
+      'carry one the doctrine does not name — drift either way is the defect');
   });
 });

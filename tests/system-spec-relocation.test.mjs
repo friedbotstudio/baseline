@@ -57,13 +57,17 @@ describe('A2 — the corpus is relocated to docs/system/', () => {
     const elements = countIn(join(SPEC_DIR, 'elements'), '.md');
     const diagrams = countIn(join(SPEC_DIR, 'diagrams'), '.puml');
 
-    assert.equal(concepts, 15, 'docs/system/concepts must hold every concept');
-    // 115 -> 116 when read-front-door-sweep's approved `add roadmap-cli` delta row
-    // was applied by /archive. Backlog `replace-the-corpus-census-literals-with-a-
-    // relational-assertion` covers retiring these literals; until then every element
-    // a spec legitimately adds costs an edit here.
-    assert.equal(elements, 116, 'docs/system/elements must hold every element record');
-    assert.equal(diagrams, 116, 'docs/system/diagrams must hold one shard per element');
+    // AC-003 (release-readiness) — the three absolute counts are deleted here.
+    // A deletion leaves no added line for drift_check to score, so the annotation
+    // is what makes the removal traceable rather than invisible.
+    // This suite's invariant is that the corpus lives at the new root and every
+    // element keeps exactly one shard. An absolute count tests nothing relocation
+    // cares about, and `readme-gate` already owns the census WITH a mechanism to
+    // keep it true. Three literals here were a second copy with no mechanism, so
+    // every element a spec legitimately added cost a hand edit — and they were
+    // 116 against a live 117 by the time anyone looked.
+    assert.ok(concepts > 0, 'docs/system/concepts must hold the concept layer');
+    assert.ok(elements > 0, 'docs/system/elements must hold the element records');
     assert.equal(elements, diagrams, 'every element must keep exactly one shard');
 
     assert.ok(!existsSync(OLD_DIR),
@@ -87,7 +91,10 @@ describe('A2 — the corpus is relocated to docs/system/', () => {
     const store = await tryImport('.claude/skills/workspace/store.mjs');
     assert.ok(store, 'store.mjs must be importable');
     const { elements } = store.readAll(SPEC_DIR);
-    assert.equal(elements.length, 116, 'readAll must resolve the corpus at its new root');
+    // AC-003 (release-readiness) — the third absolute count is deleted here.
+    assert.equal(elements.length, countIn(join(SPEC_DIR, 'elements'), '.md'),
+      'readAll must resolve the corpus at its new root — measured against the directory ' +
+      'it reads, not against a number that goes stale the next time the corpus grows');
 
     const holders = [...walkFiles(resolve(REPO_ROOT, '.claude/hooks')),
       ...walkFiles(resolve(REPO_ROOT, '.claude/skills'))]

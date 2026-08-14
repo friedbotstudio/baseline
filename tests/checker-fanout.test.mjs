@@ -138,3 +138,70 @@ describe('checker-fanout — slug guard + durable-plan mirror isolation', () => 
     }
   });
 });
+
+// AC-007 — the fan-out receives real input, and says which zero it means.
+//
+// `checker-fanout.mjs:64-65` reads `ctx.changedFiles || []`, and no helper
+// anywhere builds `changedFiles` — `integrate/SKILL.md` step 3.5 delegates ctx
+// assembly to main context prose. Every archived
+// `.claude/state/checker-fanout-code/*.json` reads
+// `{"findings": [], "verdict": "CLEAN"}`: measured, not assumed. The
+// code-structure and backlog-deferral checkers have never run against real
+// input, and the verdict they produced was indistinguishable from one that had.
+//
+// A quality gate whose input is assembled by prose instructions will eventually
+// run with no input. Inputs that decide a verdict belong in a helper.
+describe('checker-fanout — real input, and an honest zero (AC-007)', () => {
+  const ASSEMBLER = path.join(ROOT, '.claude/skills/harness/assemble-context.mjs');
+
+  async function loadAssembler() {
+    const mod = await import(`${ASSEMBLER}?t=${Date.now()}-${Math.random()}`);
+    if (typeof mod.assembleChangedFiles !== 'function') {
+      throw new Error('assemble-context.mjs must export assembleChangedFiles');
+    }
+    return mod;
+  }
+
+  it('test_when_changed_files_assembled_then_fanout_receives_real_paths', async () => {
+    const { assembleChangedFiles } = await loadAssembler();
+
+    const files = assembleChangedFiles({
+      rootDir: ROOT,
+      exec: () => 'a.mjs\nb.mjs\n',
+    });
+
+    assert.deepEqual(files, ['a.mjs', 'b.mjs'],
+      'the assembler must turn the working tree into the list the checkers read; ' +
+      'today no producer exists at all and every checker sees []');
+  });
+
+  it('test_when_git_fails_then_assembler_returns_empty_and_marks_no_input', async () => {
+    const { assembleChangedFiles, describeInputState } = await loadAssembler();
+
+    const files = assembleChangedFiles({
+      rootDir: ROOT,
+      exec: () => { throw new Error('git exploded'); },
+    });
+
+    assert.deepEqual(files, [], 'a failed probe yields no paths');
+    assert.equal(describeInputState(files, { probeFailed: true }), 'no-input',
+      'a probe that could not run must never render as a clean review');
+  });
+
+  it('test_when_input_is_empty_then_verdict_carries_no_input_state', async () => {
+    const { describeInputState } = await loadAssembler();
+
+    assert.equal(describeInputState([], { probeFailed: false }), 'no-input',
+      'zero files in means the checkers examined nothing — that is not a finding of ' +
+      'zero problems, and the verdict must not spell them the same way');
+  });
+
+  it('test_when_files_changed_and_no_findings_then_verdict_says_measured', async () => {
+    const { describeInputState } = await loadAssembler();
+
+    assert.equal(describeInputState(['a.mjs'], { probeFailed: false }), 'measured',
+      'a real run over real files that finds nothing is a genuine clean result; without ' +
+      'this row, no-input and measured-zero could share a spelling and the suite would ' +
+      'still pass');
+  });
+});

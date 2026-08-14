@@ -316,3 +316,46 @@ describe('the epic exclusion is counted, not silent (AC-010)', () => {
     );
   });
 });
+
+// AC-006 — probeRunnable accepts an awaited dispatch entry point.
+//
+// The line anchor `/^(?:dispatch|main|run)\s*\(/m` reads `await dispatch({...})`
+// as not-runnable, so a working CLI front door scored `unresolved` against a
+// spec's Contracts row. Measured 2026-08-13: 2 of 11 shipped cli.mjs files failed
+// (standup, spec), both confirmed runnable by execution. The suite stayed green
+// because the fixture at line 117 writes `dispatch({...})` WITHOUT the await —
+// a fixture that avoids the one shape the field uses.
+describe('probeRunnable — awaited entry points (AC-006)', () => {
+  it('test_when_shipped_cli_probed_then_every_front_door_is_runnable', () => {
+    const skillsDir = join(REPO_ROOT, '.claude/skills');
+    const clis = readdirSync(skillsDir)
+      .map((slug) => join('.claude/skills', slug, 'cli.mjs'))
+      .filter((rel) => existsSync(join(REPO_ROOT, rel)));
+
+    assert.ok(clis.length > 0, 'the repo must ship at least one skill CLI for this to measure');
+
+    const notRunnable = clis.filter((rel) => mod.probeRunnable(REPO_ROOT, rel) !== 'runnable');
+
+    assert.deepEqual(notRunnable, [],
+      'every shipped skill CLI is a real front door and must probe runnable. A live ' +
+      'oracle over the real directory, not a fixture — a fixture-only test leaves the ' +
+      'same hole one entry-point shape over, which is exactly how this shipped.');
+  });
+
+  it('test_when_entry_point_is_awaited_dispatch_then_probe_reports_runnable', () => {
+    const root = mkroot();
+    writeFileSync(join(root, 'front-door.mjs'), 'import { dispatch } from "./x.mjs";\nawait dispatch({\n  commands: {},\n});\n');
+
+    assert.equal(mod.probeRunnable(root, 'front-door.mjs'), 'runnable',
+      'this is the exact shape standup/cli.mjs:21 and spec/cli.mjs:84 use');
+  });
+
+  it('test_when_entry_point_is_indented_run_then_probe_reports_not_runnable', () => {
+    const root = mkroot();
+    writeFileSync(join(root, 'library.mjs'), 'export function f() {\n  run(x);\n}\n');
+
+    assert.equal(mod.probeRunnable(root, 'library.mjs'), 'not-runnable',
+      'the line anchor is deliberate — it stops an incidental run( deep in a file ' +
+      'reading as an entry point, and the await broadening must not cost that');
+  });
+});

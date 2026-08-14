@@ -124,7 +124,13 @@ describe('standup gather — sharded backlog and questions (AC-008, AC-009)', ()
       const recap = gather.gatherSync({ rootDir: root });
       const expected = readdirSync(join(memDir, 'pending-questions')).filter((f) => f.endsWith('.md')).length;
       assert.equal(recap.pendingQuestions.length, expected, `all ${expected} real pending-questions shard(s) returned`);
-      assert.match(recap.pendingQuestions[0].id ?? recap.pendingQuestions[0].key ?? '', /Q-002/);
+      // AC-002 (release-readiness) — anchored-to-live-state leg, repointed at the id shape.
+      // Asserts the id SHAPE, not a specific question. This line read /Q-002/ and
+      // went red when Q-002 was legitimately resolved and removed — the reader was
+      // working correctly and the test was anchored to live repo state, which is
+      // the trap the scenario skill-memory already names. What gather owes is a
+      // well-formed id for whatever question is on disk.
+      assert.match(recap.pendingQuestions[0].id ?? recap.pendingQuestions[0].key ?? '', /^Q-\d{3}$/);
       assert.ok(!recap.degraded.includes('no-pending-questions'));
     } finally {
       rmSync(root, { recursive: true, force: true });
