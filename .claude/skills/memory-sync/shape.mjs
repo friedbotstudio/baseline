@@ -72,10 +72,41 @@ export function readShardedAsFlat(memdir, name) {
   return { text: blocks.length ? `${blocks.join('\n\n')}\n` : '', keyToFile };
 }
 
+// `## ` opens a RECORD only when it names a key the reader found on disk. An entry
+// body may legitimately carry its own `## ` sub-heading — two live landmines do —
+// and a naive split treats that as a new record: the sub-section is minted as its
+// own shard and the parent silently loses every field and every line below it.
+// Measured 2026-08-14 on the live store: 4 spurious shards, 2 parents stripped of
+// scope/governs/load_bearing/verified-at/last-touched, one of them not even stale.
+//
+// keyToFile is the authority because it comes from `readShardedAsFlat`, which built
+// this very text one file at a time. Callers that pass no map (or an empty one) get
+// the old positional split, so a flat store with no prior read is unaffected — and
+// a caller ADDING an entry must include its key in the map, which is the same thing
+// as knowing the entry exists.
+function splitFlatIntoRecords(newText, keyToFile) {
+  const known = new Set(Object.keys(keyToFile ?? {}));
+  if (known.size === 0) {
+    return newText.split(/^## /m).slice(1).map((b) => `## ${b.trimEnd()}`).filter((b) => b.trim() !== '##');
+  }
+  const blocks = [];
+  let current = null;
+  for (const line of newText.split('\n')) {
+    if (line.startsWith('## ') && known.has(line.slice(3).trim())) {
+      if (current !== null) blocks.push(current.join('\n').trimEnd());
+      current = [line];
+    } else if (current !== null) {
+      current.push(line);
+    }
+  }
+  if (current !== null) blocks.push(current.join('\n').trimEnd());
+  return blocks.filter((b) => b.trim() !== '##');
+}
+
 export function writeShardedFromFlat(memdir, name, newText, keyToFile) {
   const dir = join(memdir, name);
   const present = new Set();
-  const blocks = newText.split(/^## /m).slice(1).map((b) => `## ${b.trimEnd()}`).filter((b) => b.trim() !== '##');
+  const blocks = splitFlatIntoRecords(newText, keyToFile);
   for (const block of blocks) {
     const { key, content } = blockToFact(block, name);
     if (!key) continue;

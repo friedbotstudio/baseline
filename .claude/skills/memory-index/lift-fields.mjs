@@ -18,7 +18,18 @@ import { parseFrontmatter } from '../../hooks/lib/frontmatter-parser.mjs';
 
 // `- name: value` — the one definition in the repo. Case-insensitive by class,
 // bounded by LIFTABLE_FIELDS below rather than by the character class.
-const FIELD_BULLET = /^-\s+([A-Za-z][A-Za-z-]*):\s+(.+)$/;
+//
+// `_` belongs in the class because two reader-backed frontmatter fields carry one:
+// `load_bearing` (categories.mjs readLoadBearing, the annotation-placement gate) and
+// `rests_on` (constraints.mjs decisionsRestingOn, constraint-flip surfacing). Without
+// it `shape.mjs → factToBlock` emits `- load_bearing: true` and its own blockToFact
+// cannot read it back, so a sweep round-trip DEMOTES the field into body prose and
+// the gate that reads it goes quiet. That breaks the invariant shape.mjs states in
+// its own policy note: every bullet factToBlock emits must return to frontmatter.
+// Measured 2026-08-14: 7 live load_bearing entries and 1 rests_on were exposed.
+// Widening the class does not widen lift-fields itself — LIFTABLE_FIELDS still
+// bounds what migrate/relift will lift, and neither name is in it.
+const FIELD_BULLET = /^-\s+([A-Za-z][A-Za-z_-]*):\s+(.+)$/;
 
 export const LIFTABLE_FIELDS = new Set([
   'verified-at',      // memory_session_start isStale(), sweep.mjs — Art. IX.5 decay

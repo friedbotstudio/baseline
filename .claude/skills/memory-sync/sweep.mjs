@@ -10,13 +10,19 @@
 // source_backlog_keys.
 //
 // CLI:
-//   --mode {auto-close, prose-scan, stale-sweep, stamp-closure}
+//   --mode {auto-close, prose-scan, stale-sweep, stamp-closure, backlog-decay}
 //   --memory-dir <path>
-//   --backlog-keys <csv>   (required iff --mode stamp-closure)
+//   --backlog-keys <csv>       (required iff --mode stamp-closure)
+//   --threshold-days <int>     (backlog-decay only; default 90)
 //
-// For interactive modes (prose-scan, stale-sweep), one reply per surfaced
-// entry is read from stdin. Empty stdin / EOF defaults to "keep". stamp-closure
-// is non-interactive; --backlog-keys is the input channel.
+// This list must equal MODE_DISPATCH's keys. It listed four while the table
+// dispatched five — `backlog-decay` shipped and the usage line never followed —
+// and the landmark describing this file inherited the same wrong count.
+// tests/sweep-mode-list-parity.test.mjs pins the two together.
+//
+// For interactive modes (prose-scan, stale-sweep, backlog-decay), one reply per
+// surfaced entry is read from stdin. Empty stdin / EOF defaults to "keep".
+// stamp-closure is non-interactive; --backlog-keys is the input channel.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
