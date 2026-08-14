@@ -171,3 +171,4 @@
 - discarded :: .claude/hooks/lib/common.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-one-cpsync-line-per-file-7353
 - discarded :: .claude/skills/triage/governance-class.mjs → landmarks.md
+- promoted :: mcp-debugger → libraries.md

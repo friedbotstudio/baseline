@@ -1,0 +1,63 @@
+{
+  "request": "AI-native debugging skill: a /codebugger conversational debugging session that writes an explanation trace to docs/debug/<slug>.md, anchored on runtime observations read via a new mcp-debugger MCP server, plus a new `debug` workflow track. Implements docs/vision/baseline-v1-thought-compiler.md §1.4 + §2.5, backlog -9008. Governance amendment first (seed.md §2.7 runtime-witness rule + §4.1 hook table edits + CLAUDE.md Article VI.8).",
+  "slug": "codebugger-explanation-trace",
+  "track_id": "epic",
+  "novelty": "novel",
+  "novelty_evidence": "New surface with no in-repo precedent. Searched: .claude/skills/ (64 dirs, no debugging skill); the string `codebugger` across the whole tree and git history (zero matches); .mcp.json (4 servers, none a debugger); .claude/workflows.jsonl (11 tracks, none debug). docs/vision/baseline-v1-thought-compiler.md §1.4 + §2.5 and backlog key gate-taxonomy-then-debugging-skill-then-v2-9008 establish intent only — the backlog entry is explicitly 'deliberately coarse; fragment when closer' and no spec exists. The work requires a new constitutional Article (VI.8), so no pattern covers it.",
+  "track_reason": "Decomposes into 3 separately-committable slices (>= epic.min_slices 3): governance+MCP amendment, the skill, the track+artifact registration. Epic amortizes intake/scout/research/spec/gate-A across all three rather than repeating discovery per slice. Vision doc Part 3 also directs that each v1 piece gets its own intake -> spec -> approve cycle.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "CLAUDE.md",
+    "src/CLAUDE.template.md",
+    ".claude/CONSTITUTION.md",
+    ".mcp.json",
+    "src/.mcp.template.json",
+    ".claude/skills/codebugger/**",
+    ".claude/skills/audit-baseline/**",
+    ".claude/skills/triage/**",
+    ".claude/skills/archive/**",
+    ".claude/skills/tdd/drift_check.mjs",
+    ".claude/hooks/lib/memory_stop.mjs",
+    ".claude/hooks/process_lifecycle_guard.mjs",
+    ".claude/workflows.jsonl",
+    "src/.claude/workflows.template.jsonl",
+    ".claude/project.json",
+    "src/project.template.json",
+    "site-src/**",
+    "README.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "integrate",
+    "org-dispatch",
+    "roadmap-sync",
+    "security",
+    "simplify",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "gate-taxonomy-then-debugging-skill-then-v2-9008"
+  ],
+  "created_at": 1786743326,
+  "updated_at": 1786745113,
+  "rightsize_base": []
+}
