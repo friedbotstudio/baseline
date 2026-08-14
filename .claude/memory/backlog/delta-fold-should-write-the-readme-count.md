@@ -2,13 +2,14 @@
 key: delta-fold-should-write-the-readme-count
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-08
 raised-in-context: skill-helper-cli-dispatchers
 verified-at: 4cc46e0
 last-touched: 2026-08-08
 governs: .claude/skills/workspace/delta.mjs,.claude/skills/workspace/readme-gate.mjs,docs/system/README.md
+superseded-at: 2026-08-14
 ---
 
 > Have `verifyAndApplyDelta` update the Count column in `docs/system/README.md` as part of applying a confirmed `add` row, so the corpus census and the README cannot diverge.

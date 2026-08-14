@@ -2,13 +2,14 @@
 key: replace-the-corpus-census-literals-with-a-relational-assertion
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-08
 raised-in-context: skill-helper-cli-dispatchers
 verified-at: 4cc46e0
 last-touched: 2026-08-08
 governs: tests/system-spec-relocation.test.mjs,.claude/skills/workspace/readme-gate.mjs
+superseded-at: 2026-08-14
 ---
 
 > `tests/system-spec-relocation.test.mjs` hardcodes the corpus census in three places. That duplicates `readme-gate`'s job without its sync mechanism, so it must be hand-bumped on every legitimate corpus growth.

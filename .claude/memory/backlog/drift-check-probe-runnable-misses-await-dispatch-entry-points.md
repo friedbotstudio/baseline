@@ -3,12 +3,13 @@ key: drift-check-probe-runnable-misses-await-dispatch-entry-points
 category: backlog
 scope: [tdd]
 governs: .claude/skills/tdd/drift_check.mjs
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-13
 raised-in-context: standup-remote-freshness
 verified-at: c53a121
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > I recommend **A**, taken as a separate chore after this workflow lands — the fix is one regex, but folding it in now expands a write set you approved and puts an unrelated change in this diff.

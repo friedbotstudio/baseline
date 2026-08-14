@@ -1,0 +1,176 @@
+{
+  "request": "Make the 6-commit unreleased pile release-ready in one cycle: repair every red node assertion, make the binding test command cover the node suite, and close the half-wired defects shipped in that pile.",
+  "slug": "release-readiness",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Six of seven tickets cite a backlog shard under .claude/memory/backlog/ (binding-test-cmd-is-the-audit-not-the-node-suite, derive-the-memory-census-literals-or-gate-them-at-write-time, drift-check-probe-runnable-misses-await-dispatch-entry-points, code-review-fanout-runs-with-empty-changedfiles-and-reports-clean, archive-sop-touched-json-array-guidance-contradicts-cli-parser, rightsize-base-never-matches-an-untracked-path + rightsize-base-exclusion-misses-untracked-adds). Four trace to docs/rca/2026-08-13-blind-code-review-fanout-and-census-literals.md action items AI-01, AI-03, AI-04, AI-05. T7 has no backlog entry; it was measured on 2026-08-14 from `node --test tests/*.test.mjs`, where tests/character-doctrine-audit.test.mjs:159 reads docs/specs/skill-character-doctrine.md, a path /archive relocates by design.",
+  "track_reason": "Heavier than tdd-quickfix because T1, T2 and T4 change what the binding verify verdict measures, which is a contract change requiring a written spec and gate A. Heavier than spec-entry because the batch is seven separable tickets and security must run once per ticket, which is the power track's defining behaviour.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "swarm-plan",
+    "approve-swarm",
+    "swarm-dispatch"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [
+    {
+      "node": "implementation",
+      "alternate": "swarm-implementation",
+      "reason": "AC-002 and AC-012 are whole-tree suite properties with no oracle inside an isolated worktree; write_sets collide across tickets; Rollout pins a sequential migration order"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "T1",
+      "title": "The binding test command covers the node suite, and every red assertion is repaired",
+      "backlog_keys": [
+        "binding-test-cmd-is-the-audit-not-the-node-suite",
+        "three-suite-assertions-anchored-to-live-state-that-moved",
+        "wide-governs-globs-move-census-literals-in-unrelated-tests"
+      ],
+      "notes": "project.json test.cmd is the governance audit, so /integrate stamps PASS while the node suite is red. Measured 2026-08-14: 8 failing assertions, not the 3 the backlog records. Repair by kind: census (re-measure and name the commit), budget (decide what the cap measures; do not re-measure PHASE_BUDGETS to today's value). Three of the 8 read 117 vs 116 on the workspace corpus; /spec determines whether the shipped README undercounts or the literal is stale before committing a repair."
+    },
+    {
+      "id": "T2",
+      "title": "Gate census literals at write time in /memory-sync",
+      "backlog_keys": [
+        "derive-the-memory-census-literals-or-gate-them-at-write-time"
+      ],
+      "notes": "Human chose the write-time gate over deriving the path-leg census. /memory-sync computes which census literals its write will move and either re-measures them in the same commit or refuses until the curator does. Without T2 the assertions T1 repairs go red again on the next flush."
+    },
+    {
+      "id": "T3",
+      "title": "probeRunnable accepts an awaited dispatch entry point",
+      "backlog_keys": [
+        "drift-check-probe-runnable-misses-await-dispatch-entry-points"
+      ],
+      "notes": "feat(drift-check) shipped opt-in-broken: 2 of 11 shipped .claude/skills/*/cli.mjs score unresolved against a spec Contracts row. One regex at .claude/skills/tdd/drift_check.mjs, plus a live-oracle test asserting every shipped cli.mjs probes runnable. The existing fixture writes dispatch({...}) without await, which is why the suite is green against a broken probe. Do not broaden to leading whitespace, void or return."
+    },
+    {
+      "id": "T4",
+      "title": "The code-review fan-out receives real changed files, and a measured-zero verdict is distinguishable from a measured-nothing verdict",
+      "backlog_keys": [
+        "code-review-fanout-runs-with-empty-changedfiles-and-reports-clean"
+      ],
+      "notes": "checker-fanout.mjs reads ctx.changedFiles || []; integrate/SKILL.md step 3.5 delegates ctx assembly to main context; no helper builds changedFiles. Every archived checker-fanout-code result is {\"findings\": [], \"verdict\": \"CLEAN\"}. Ship the assembler as a helper. RCA AI-03."
+    },
+    {
+      "id": "T5",
+      "title": "The archive SOP and the workspace CLI agree on how --touched paths are passed",
+      "backlog_keys": [
+        "archive-sop-touched-json-array-guidance-contradicts-cli-parser"
+      ],
+      "notes": "archive/SKILL.md Step 3 gives the signature --touched <comma,separated,paths> then instructs the opposite in bold. Measured 2026-08-13: JSON-array form gave confirmed 0 / drift 6; comma-separated gave confirmed 6 / drift 0, and inputEmpty was false both times. Teach cli.mjs to accept a JSON array as well; the zsh word-splitting hazard the bold line prevents is real."
+    },
+    {
+      "id": "T6",
+      "title": "rightsize_base excludes an untracked path",
+      "backlog_keys": [
+        "rightsize-base-never-matches-an-untracked-path",
+        "rightsize-base-exclusion-misses-untracked-adds"
+      ],
+      "notes": "Two backlog entries, one defect. An untracked file arrives from the diff as `/dev/null => <path>`, so a plain string comparison against rightsize_base never matches. Normalise both sides through one helper. Fail-open and additive-only, so it cannot cause a wrongful skip. A test seeding one untracked file into rightsize_base is the guard."
+    },
+    {
+      "id": "T7",
+      "title": "The character-doctrine test stops reading a path /archive relocates",
+      "backlog_keys": [],
+      "notes": "tests/character-doctrine-audit.test.mjs:159 reads docs/specs/skill-character-doctrine.md via readFileSync. /archive moves that spec to docs/archive/<date>/<slug>/ by design, so the test fails after every workflow that archives its own spec. Not a census: a test pointed at a path the pipeline is guaranteed to empty. Retarget it at the archived location or at a shipped oracle. No backlog entry; found by running the suite on 2026-08-14."
+    }
+  ],
+  "hitchhikers": [
+    {
+      "title": "Narrow the document.surfaces README glob",
+      "backlog_keys": [
+        "readme-glob-obliges-prose-on-claude-instructional-files"
+      ],
+      "notes": "project.json document.surfaces globs **/README.md and requires prose, which catches .claude/memory/README.md, whose primary reader is Claude. prose/SKILL.md refuses such a file, so the gate creates an obligation the delegate is forbidden to satisfy. Add an exclude for .claude/**. This cycle's /document phase hits the contradiction otherwise."
+    }
+  ],
+  "source_backlog_keys": [
+    "binding-test-cmd-is-the-audit-not-the-node-suite",
+    "three-suite-assertions-anchored-to-live-state-that-moved",
+    "wide-governs-globs-move-census-literals-in-unrelated-tests",
+    "derive-the-memory-census-literals-or-gate-them-at-write-time",
+    "drift-check-probe-runnable-misses-await-dispatch-entry-points",
+    "code-review-fanout-runs-with-empty-changedfiles-and-reports-clean",
+    "archive-sop-touched-json-array-guidance-contradicts-cli-parser",
+    "rightsize-base-never-matches-an-untracked-path",
+    "rightsize-base-exclusion-misses-untracked-adds",
+    "readme-glob-obliges-prose-on-claude-instructional-files",
+    "replace-the-corpus-census-literals-with-a-relational-assertion",
+    "delta-fold-should-write-the-readme-count"
+  ],
+  "created_at": 1786665001,
+  "updated_at": 1786698828,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": [
+    {
+      "ticket": "T1",
+      "verdict": "MEDIUM",
+      "note": "pre-existing shell interpolation of {file} into bash -lc; this diff edits test.cmd itself"
+    },
+    {
+      "ticket": "T2",
+      "verdict": "LOW",
+      "note": "first-occurrence-only rewrite; unknown measure throws past the verdict"
+    },
+    {
+      "ticket": "T3",
+      "verdict": "clean"
+    },
+    {
+      "ticket": "T4",
+      "verdict": "clean"
+    },
+    {
+      "ticket": "T5",
+      "verdict": "clean"
+    },
+    {
+      "ticket": "T6",
+      "verdict": "clean"
+    },
+    {
+      "ticket": "T7",
+      "verdict": "clean"
+    }
+  ],
+  "deferrals": [
+    {
+      "key": "site-src-memory-njk-census-refusal-paragraph",
+      "reason": "human-directed",
+      "note": "The reflective public-site check surfaced site-src/memory.njk as a page describing memory-sync, and the census gate is a genuine new user-visible refusal worth naming there. Reverted rather than landed: site-src/** is NOT in the approved write_set, and that surface owes technical-writer + copywriting per document.surfaces, which is a two-delegate page pass rather than a paragraph insert."
+    },
+    {
+      "key": "binding-test-cmd-makes-every-source-edit-cost-a-full-suite-run",
+      "reason": "cost",
+      "note": "PostToolUse test_runner runs project.json test.cmd on every Write/Edit outside the md/json/docs/.claude skip list. With AC-001 chaining the node suite into test.cmd, each such edit now costs ~135s instead of ~1s. Observed live on a site-src/memory.njk edit during /document."
+    }
+  ]
+}

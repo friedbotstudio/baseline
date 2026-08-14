@@ -3,13 +3,14 @@ key: binding-test-cmd-is-the-audit-not-the-node-suite
 category: backlog
 scope: [integrate]
 governs: .claude/project.json
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: skill-character-doctrine
 source: assistant-deferral
 deferred: dependency
 verified-at: e36bcb9
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > The binding test command and the test suite the repository actually maintains should be the same thing, or the divergence should be surfaced at every verify rather than known only to whoever reads project.json.

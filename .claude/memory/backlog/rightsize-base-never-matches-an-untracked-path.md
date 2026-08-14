@@ -2,13 +2,14 @@
 key: rightsize-base-never-matches-an-untracked-path
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-13
 raised-in-context: diagram-shard-rewrite-loses-fields
 verified-at: 79e41cb
 last-touched: 2026-08-13
 governs: .claude/skills/harness/rightsize-gate.mjs
+superseded-at: 2026-08-14
 ---
 
 > `rightsize-gate` measured `docs/audits/swarm-first-production-run-2026-08-09.md` as touched even though that path sits in `workflow.json → rightsize_base[]` precisely so it would be excluded.

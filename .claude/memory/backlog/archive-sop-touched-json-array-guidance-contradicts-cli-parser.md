@@ -3,13 +3,14 @@ key: archive-sop-touched-json-array-guidance-contradicts-cli-parser
 category: backlog
 scope: [archive]
 governs: .claude/skills/archive/SKILL.md
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: skill-character-doctrine
 source: assistant-deferral
 deferred: cost
 verified-at: e36bcb9
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > Pass the paths as one quoted JSON array, never as bare space-separated words.

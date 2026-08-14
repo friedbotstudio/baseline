@@ -3,12 +3,13 @@ key: three-suite-assertions-anchored-to-live-state-that-moved
 category: backlog
 scope: [tdd, integrate]
 governs: tests/**
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: standup-recap-single-pass
 source: assistant-deferral
 verified-at: 87d3573
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > Three suite failures were confirmed pre-existing by restoring the unmodified source and re-running: they reproduce against untouched code, so they are not regressions from this workflow.

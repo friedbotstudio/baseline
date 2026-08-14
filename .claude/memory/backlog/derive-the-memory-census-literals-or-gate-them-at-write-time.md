@@ -2,13 +2,14 @@
 key: derive-the-memory-census-literals-or-gate-them-at-write-time
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-13
 raised-in-context: contracts-rows-resolve-at-drift-check
 verified-at: c53a121
 last-touched: 2026-08-13
 governs: tests/memory-scope-store-invariants.test.mjs, .claude/skills/memory-sync/SKILL.md
+superseded-at: 2026-08-14
 ---
 
 > Eight census-literal corrections in one two-commit session, in four sittings, while three memory entries describing the pattern were live and being authored. Two of the eight were caused by writing those entries.

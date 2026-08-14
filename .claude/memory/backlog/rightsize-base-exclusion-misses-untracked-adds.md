@@ -3,12 +3,13 @@ key: rightsize-base-exclusion-misses-untracked-adds
 category: backlog
 scope: [tdd]
 governs: .claude/skills/harness/rightsize-gate.mjs
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-13
 raised-in-context: standup-remote-freshness
 verified-at: c53a121
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > `rightsize_base` excluded three pre-existing paths, but two still appear in `measured.touched` under their `/dev/null => path` rename form, so the base exclusion does not match untracked adds.

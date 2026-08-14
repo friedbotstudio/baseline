@@ -3,13 +3,14 @@ key: wide-governs-globs-move-census-literals-in-unrelated-tests
 category: backlog
 scope: [memory-sync, tdd]
 governs: .claude/memory/**
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: skill-character-doctrine
 source: assistant-deferral
 deferred: cost
 verified-at: e36bcb9
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > Assertions pin exact counts derived from the live memory store, while 45 memory entries carry a ** glob in governs:, so any flush that adds one broadly-scoped entry moves counts in files it has nothing to do with.

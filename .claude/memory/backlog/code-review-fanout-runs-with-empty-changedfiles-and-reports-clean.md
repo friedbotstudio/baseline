@@ -3,13 +3,14 @@ key: code-review-fanout-runs-with-empty-changedfiles-and-reports-clean
 category: backlog
 scope: [integrate]
 governs: .claude/skills/harness/checker-fanout.mjs
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: skill-character-doctrine
 source: assistant-deferral
 deferred: risk
 verified-at: e36bcb9
 last-touched: 2026-08-13
+superseded-at: 2026-08-14
 ---
 
 > A quality gate whose input is assembled by prose instructions will eventually be run with no input. Inputs that decide a verdict belong in a helper, not in a SOP paragraph.
