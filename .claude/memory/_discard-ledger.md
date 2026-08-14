@@ -161,3 +161,4 @@
 - promoted :: .claude/skills/memory-sync/census-gate.mjs → landmarks.md
 - promoted :: .claude/skills/memory-sync/census-measures.mjs → landmarks.md
 - discarded :: backlog → and-the-open-backlog-entry-roadmap-t11-quotes-0f09
+- discarded :: backlog → no-approved-ac-covers-it-and-the-sibling-b2ed

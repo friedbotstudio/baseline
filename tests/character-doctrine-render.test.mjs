@@ -14,13 +14,13 @@ import { REPO_ROOT, tryImport } from './helpers/memory-fixtures.mjs';
 const MODULE = '.claude/skills/audit-baseline/character.mjs';
 const CHECK_REL = '.claude/skills/audit-baseline/checks/skill-character.mjs';
 const TARGETS = [
-  'brainstorm', 'intake', 'spec', 'spec-shippability-review', 'spec-traceability-review',
+  'triage', 'brainstorm', 'intake', 'spec', 'spec-shippability-review', 'spec-traceability-review',
   'spec-diagram-review', 'spec-rollout-enforceability-review', 'scenario', 'implement',
   'code-structure', 'tdd', 'simplify', 'integrate', 'security',
 ];
 
 // Order is the render contract, not a formatting preference: the audit compares bytes,
-// so a reordered PARTS would report every one of the fourteen as drifted.
+// so a reordered PARTS would report every one of the members as drifted.
 const PART_LABELS = ['Soul', 'Motivation', 'Mantra', 'Temperament', 'Voice', 'Resolve'];
 const PART_KEYS = ['soul', 'motivation', 'mantra', 'temperament', 'voice', 'resolve'];
 
@@ -51,7 +51,7 @@ function writeDoctrine(root, body) {
 }
 
 describe('character doctrine — load', () => {
-  it('test_when_doctrine_valid_then_load_returns_fourteen_entries', () => {
+  it('test_when_doctrine_valid_then_load_returns_every_member', () => {
     // Covers AC-001.
     const doctrine = mod.loadDoctrine(REPO_ROOT);
     assert.deepEqual(Object.keys(doctrine.skills).sort(), [...TARGETS].sort());
@@ -98,7 +98,7 @@ describe('character doctrine — render', () => {
     assert.ok(positions.every((at) => at !== -1), 'every label must be present before order can be judged');
     assert.deepEqual(
       [...positions].sort((a, b) => a - b), positions,
-      'the audit compares rendered bytes, so reordering PARTS would report all fourteen skills as drifted',
+      'the audit compares rendered bytes, so reordering PARTS would report every member as drifted',
     );
   });
 
@@ -115,6 +115,45 @@ describe('character doctrine — render', () => {
     }
   });
 
+  it('test_when_field_value_carries_a_block_delimiter_then_render_throws_naming_the_key', () => {
+    // A value carrying the end sentinel terminates the block early: extractBlock then
+    // spans less than renderBlock produced, so the audit reports generic drift while the
+    // text after the sentinel sits in the SKILL.md as body prose nobody reviewed — and
+    // stampSkill stops round-tripping, so Stage 0c rewrites the file on every build.
+    // REJECT, never strip: silently removing the delimiter would write bytes that no
+    // longer match the authored doctrine, which is the drift the audit exists to catch.
+    for (const part of PART_KEYS) {
+      for (const bad of [
+        'text\n<!-- character:end -->\n\n## Injected',
+        'text <!-- character:begin --> more',
+        'first line\nsecond line',
+        'carriage\rreturn',
+      ]) {
+        assert.throws(
+          () => mod.renderBlock({ ...ENTRY, [part]: bad }),
+          new RegExp(part, 'i'),
+          `renderBlock must name "${part}" when its value carries a delimiter or newline`,
+        );
+      }
+    }
+  });
+
+  it('test_when_delimiter_rejected_then_the_message_says_which_rule_tripped', () => {
+    // The missing-field throw and the delimiter throw both name the key, so the key
+    // alone cannot tell a maintainer which one fired.
+    assert.throws(
+      () => mod.renderBlock({ ...ENTRY, voice: 'a\nb' }),
+      /delimiter|newline/i,
+      'the throw must distinguish a malformed value from an absent one',
+    );
+  });
+
+  it('test_when_value_carries_inner_whitespace_only_then_render_still_accepts_it', () => {
+    // Guard the guard: rejecting newlines must not reject ordinary prose punctuation.
+    const wordy = 'Asks; never suggests. One question at a time — short, plain, answerable.';
+    assert.ok(mod.renderBlock({ ...ENTRY, voice: wordy }).includes(wordy));
+  });
+
   it('test_when_entry_carries_unknown_key_then_render_ignores_it', () => {
     // Covers AC-001 (boundary).
     const block = mod.renderBlock({ ...ENTRY, vice: 'Obsessive about margins.' });
@@ -124,7 +163,7 @@ describe('character doctrine — render', () => {
 
   it('test_when_six_field_block_rendered_then_first_three_bullets_match_legacy_bytes', () => {
     // Covers AC-001 (regression). The three new fields append; they never reshape what
-    // was already stamped, so the first three lines of all fourteen blocks are untouched.
+    // was already stamped, so the first three lines of every existing block are untouched.
     const lines = mod.renderBlock(ENTRY).split('\n');
     const bullets = lines.filter((line) => line.startsWith('- **'));
     assert.deepEqual(bullets.slice(0, 3), [
@@ -182,7 +221,7 @@ describe('character doctrine — extract and stamp', () => {
     const closingFence = lines.indexOf('---', 1);
     assert.equal(
       lines[closingFence + 1], '',
-      'S-2 puts the block immediately after the frontmatter fence — the only anchor all fourteen targets share',
+      'S-2 puts the block immediately after the frontmatter fence — the only anchor every target shares',
     );
     assert.equal(lines[closingFence + 2], '<!-- character:begin -->');
     assert.ok(stamped.includes('# Demo'), 'the original body must survive stamping');

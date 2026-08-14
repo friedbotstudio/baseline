@@ -1065,7 +1065,7 @@ The same escalation latitude applies to `tdd-quickfix`: `/triage` MAY except `si
 
 ## §19 — Skill character doctrine
 
-A **character block** gives a skill a recognizable person to be while it executes its SOP. Fourteen skills carry one: `brainstorm`, `intake`, `spec`, the four `spec-*-review` checkers, `scenario`, `implement`, `code-structure`, `tdd`, `simplify`, `integrate`, `security`. Membership is decided by the doctrine's key set, never by `owner:` frontmatter — one target is dev-only by design, and annotating it would ship a maintainer tool and force a derived-count cascade.
+A **character block** gives a skill a recognizable person to be while it executes its SOP. Fifteen skills carry one: `triage`, `brainstorm`, `intake`, `spec`, the four `spec-*-review` checkers, `scenario`, `implement`, `code-structure`, `tdd`, `simplify`, `integrate`, `security`. Membership is decided by the doctrine's key set, never by `owner:` frontmatter — one target is dev-only by design, and annotating it would ship a maintainer tool and force a derived-count cascade.
 
 ### 19.1 Where it lives
 

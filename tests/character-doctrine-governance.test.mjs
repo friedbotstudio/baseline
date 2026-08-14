@@ -88,7 +88,7 @@ describe('character doctrine — the shipped doctrine is complete', () => {
     const mod = await tryImport('.claude/skills/audit-baseline/character.mjs');
     assert.ok(mod, 'character.mjs must import cleanly');
     const entries = Object.entries(mod.loadDoctrine(REPO_ROOT).skills);
-    assert.equal(entries.length, 14, 'the doctrine covers fourteen skills');
+    assert.equal(entries.length, 15, 'the doctrine covers fifteen skills');
     for (const [slug, entry] of entries) {
       for (const field of FIELDS) {
         assert.equal(typeof entry[field], 'string', `${slug}.${field} must be a string`);

@@ -55,7 +55,16 @@ export function renderBlock(entry) {
     if (typeof value !== 'string' || value.trim() === '') {
       throw new Error(`character entry is missing ${key}`);
     }
-    lines.push(`- **${label}.** ${value.trim()}`);
+    const trimmed = value.trim();
+    // REJECT at the sink, never strip. A value carrying END terminates the block early:
+    // extractBlock then spans less than this produced, the rest lands in the SKILL.md as
+    // unreviewed body prose, and stampSkill stops round-tripping so Stage 0c rewrites the
+    // file on every build. Silently removing the delimiter would write bytes that no
+    // longer match the authored doctrine — the drift the audit exists to catch.
+    if (/[\r\n]/.test(trimmed) || trimmed.includes(BEGIN) || trimmed.includes(END)) {
+      throw new Error(`character entry ${key} contains a block delimiter or newline`);
+    }
+    lines.push(`- **${label}.** ${trimmed}`);
   }
   lines.push('', END, '');
   return lines.join('\n');

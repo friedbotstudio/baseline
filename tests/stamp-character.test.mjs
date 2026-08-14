@@ -49,10 +49,10 @@ const silent = { log: () => {} };
 describe('stamp-character', () => {
   it('test_when_tree_unstamped_then_every_present_target_is_written', () => {
     // Covers AC-005, AC-008. A truthy extractBlock only proves the sentinels landed;
-    // the bullet count is what proves the six-field render reached all fourteen.
+    // the bullet count is what proves the six-field render reached every member.
     withRoot({}, (root) => {
       const changed = stamper.stampAll(root, silent);
-      assert.equal(changed.length, 14);
+      assert.equal(changed.length, 15);
       for (const rel of changed) {
         const text = readFileSync(join(root, rel), 'utf8');
         assert.ok(render.extractBlock(text), `${rel} must carry a block`);
@@ -72,7 +72,7 @@ describe('stamp-character', () => {
     // Covers AC-007.
     withRoot({ omit: ['security', 'tdd'] }, (root) => {
       const changed = stamper.stampAll(root, silent);
-      assert.equal(changed.length, 12);
+      assert.equal(changed.length, 13);
       assert.ok(!changed.some((rel) => rel.includes('/security/') || rel.includes('/tdd/')));
     });
   });
@@ -130,7 +130,7 @@ describe('stamp-character', () => {
     withRoot({}, (root) => {
       const lines = [];
       stamper.stampAll(root, { log: (line) => lines.push(line) });
-      assert.equal(lines.length, 14);
+      assert.equal(lines.length, 15);
       assert.ok(lines.every((line) => /^stamp-character: \.claude\/skills\/.+ updated$/.test(line)));
     });
   });

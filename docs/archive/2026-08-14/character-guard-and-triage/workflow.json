@@ -1,0 +1,39 @@
+{
+  "request": "Freeform batch: (1) fix the MEDIUM security finding — renderBlock must reject a field value containing a newline or either block sentinel; (2) add a character block for the triage skill, growing the doctrine from 14 to 15 members and moving every census literal pinned to 14.",
+  "slug": "character-guard-and-triage",
+  "track_id": "freeform",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "(1) copies the reject-at-the-sink convention already shipped by the corpus writers — tests/workspace-security.test.mjs test_when_element_field_value_carries_a_newline_then_write_is_rejected and tests/workspace-slice-d1.test.mjs test_when_technology_or_description_carries_a_quote_or_newline_then_rejected. (2) copies the doctrine-entry shape from the 14 entries in .claude/skills/audit-baseline/character.json and the writer contract in docs/init/seed.md §19.",
+  "track_reason": "User directed freeform. The batch is two distinct concerns — a sink-validation guard and a doctrine membership addition — that share no acceptance criterion, which is the heterogeneous shape freeform exists for. tdd_order_guard stays armed, so both still land test-first.",
+  "skip_brainstorm": true,
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "intake",
+    "integrate",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "memory-sync",
+    "roadmap-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "completed_notes": {
+    "origin": "MEDIUM finding raised by /security during character-block-six-fields and left unfixed there because no approved AC covered it. Report: docs/archive/2026-08-14/character-block-six-fields/security.md.",
+    "intake-already-has-one": "User asked for character on intake and triage. intake is already doctrine member #2 and has carried a block since 2026-08-13; only triage is missing. Scope corrected to triage alone."
+  },
+  "created_at": 1786704799,
+  "updated_at": 1786704799
+}

@@ -128,7 +128,18 @@ const PATH_LEG_BASELINE = {
   //
   // A governed-memory count is a census, not an invariant: it moves whenever an
   // entry's `governs:` legitimately names a new path. Re-measure it; do not defend it.
-  '.claude/skills/harness/checker-fanout.mjs': 15,
+  //
+  // 15 -> 14 at 1b2b0c7, where /memory-sync auto-closed twelve backlog entries that
+  // already carried a superseded-at stamp. One of them —
+  // `code-review-fanout-runs-with-empty-changedfiles-and-reports-clean` — governed
+  // this module, so its closure removed a hit. A closure moves a census downward the
+  // same way a filing moves it up; both are re-measured, neither is defended.
+  //
+  // The re-measure was made BY HAND again, for the reason the landmark-scope comment
+  // below already records: the census gate's literalPattern matches `SYMBOL = <digits>`
+  // and this site is an object property. Backlog
+  // `census-gate-literal-pattern-matches-no-real-site` carries that repair.
+  '.claude/skills/harness/checker-fanout.mjs': 14,
 };
 
 function liveShards() {
