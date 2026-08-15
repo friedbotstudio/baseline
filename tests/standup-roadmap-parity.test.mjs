@@ -64,9 +64,13 @@ describe('T-005 — collectRoadmap delegates to parse.mjs, recap keeps its own s
     const recap = gatherSync({ rootDir: REPO_ROOT });
 
     assert.ok(recap.roadmap, 'the live repo has a roadmap plan');
-    assert.equal(recap.roadmap.epics.length, 7, 'live repo must still yield 7 epics');
+    assert.equal(recap.roadmap.epics.length, 12, 'live repo must still yield 12 epics');
     const epic6 = recap.roadmap.epics.find((e) => e.num === 6);
     assert.ok(epic6, 'expected Epic 6');
+    // Epics 8-12 arrived at 1aed0ae via the first real run of
+    // `roadmap-sync/cli.mjs backfill`, which put the five epics already on disk
+    // onto the plan. The append is additive-only, so Epic 6 below is unmoved.
+    //
     // Epic 6 closed at c92f82a, the T11 landing: /roadmap-sync flipped the last
     // planned row (T11) to done, which promoted the epic heading 🟡 -> ✅. These
     // are live-repo values by design, so they move when the roadmap moves —

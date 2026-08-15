@@ -1,10 +1,10 @@
 ---
 key: census-and-budget-are-different-numbers
 category: conventions
-scope: [scenario, implement, simplify]
+scope: [scenario, implement, simplify, integrate]
 governs: tests/**
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 1aed0ae
+last-touched: 2026-08-15
 ---
 
 - Convention: **when a numeric literal in a test goes red, first decide whether it is a CENSUS or a BUDGET.** They look identical and are repaired oppositely.
@@ -15,6 +15,8 @@ A **budget** caps something (how much memory surfaces at a phase, how large a go
 
 **Measured 2026-08-13.** Both fired in one run. The landmark census moved 87 → 88 because a commit added a `[scout]`-scoped landmark; re-measured. The spec phase budget was exceeded at 67 against a cap of 65 because three correctly-scoped entries landed; the cap moved, with a comment recording that backlog entries default to `scope: [spec]` and workflows file backlog entries routinely, so this one drifts on a schedule.
 
+- **The cheapest version of this convention is a comment in the test, and it works.** Measured 2026-08-15: the first real `roadmap-sync backfill` run appended five epics and turned `standup-roadmap-parity`'s `epics.length` red at 7 against a live 12. The assertion above it already read *"these are live-repo values by design, so they move when the roadmap moves — re-measure against `roadmap/cli.mjs epics`, do not defend the old numbers"*, naming the oracle command. Classification took no investigation, which is the whole return on writing that sentence. **When you pin a live-repo count, write the re-measure command beside it.**
+- **A census that moves alone is evidence.** In the same run `progress.length` (8) and every Epic 6 value held while `epics.length` moved, which independently confirmed the append was additive-only. Had the writer renumbered or rewritten anything, those literals would have moved too — so check WHICH literals moved before assuming the whole set is stale.
 - **Before replacing a literal with a relational assertion, check the relation actually holds.** It often does not. The 120 landmark shards carry seven distinct `scope:` values — 88 `[scout]`, 25 `[]`, and seven others of which three omit scout entirely — so neither "all are `[scout]`" nor "all scoped ones include scout" is true. A wrong relation is worse than an honest literal.
 - **When the literal has to stay, keep the number out of the test NAME.** `..._then_the_deferred_set_is_unchanged` survives a bump; `..._then_eighty_seven_remain` forces a rename every time, which is how a rename gets skipped and the name starts lying.
 - **A budget re-measured with no headroom deserves a note saying so**, plus the structural driver if there is one. Otherwise the next reader reads a cap and sees a tripwire.

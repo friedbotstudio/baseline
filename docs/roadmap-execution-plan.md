@@ -139,3 +139,45 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ D. Capture leg. A discard ledger persisting a curation decision across the `/memory-sync` reset, so a candidate promoted or discarded once is not re-offered as fresh. Extends the existing dedup lifetime in `memory_stop` rather than adding a second dedup.
 - ✅ E. Workspace structural corpus. A durable C4 and module-level diagram set that each cycle contributes to rather than re-deriving, so `scout` reconciles instead of rediscovering. Flagged OVERSIZED at epic triage and still carries the epic's open questions on workspace merge semantics and diagram authority; the third, index rebuild cost, was answered by C. Split before approval.
 - ✅ F. Tracking comments. Code annotations naming a decision, constraint or research doc, resolvable by `scout`. Placement is gated on A's `load_bearing:` marker so annotations land where a maintainer would otherwise confidently break something, rather than broadly. Buildable now that A has landed.
+## Epic 8 — Codebugger explanation trace  ⬜  (codebugger-explanation-trace)
+
+- ⬜ A. Runtime-witness rule and the mcp-debugger declaration
+- ⬜ B. The /codebugger session and the explanation trace
+- ⬜ C. The debug track and the docs/debug artifact registration
+## Epic 9 — Erp portables  🟡  (erp-portables)
+
+- ✅ A. Article II §4.2-A — read-only advisory subagents (binding-judgment scoping; scout/research gathering delegation)
+- ✅ B. branch_guard hook (25→26) — block workflow.json creation on a release branch under github-flow
+- ✅ C. Branch-aware gate C — autonomous commit→push→PR on non-protected feature branches; requires_commit_consent conditional node
+- ✅ DEF. Build-to-spec doctrine — leanest-safe-track triage + novelty, opt-in derivation-first brainstorm (no read-time default flip), XI.12 decision economy
+- ✅ G. Two-sided faithful scope + VI.4 YAGNI floor/ceiling — traceability-review Critical BLOCKER on untagged/YAGNI deferral
+- ✅ H. lint_runner/test_runner honor file_globs
+- ✅ I. commit-planner + retrospective skills (owner: baseline, generalized; counts 46→48)
+- ✅ J1. CI/secrets posture working in this repo — gitleaks pre-commit hard-fail, branch-protection config-as-code (live: repo is public), low-risk auto-merge classifier with NEVER-list
+- ✅ J2. Ship CI posture to consumers behind an opt-out — obj/template artifacts + project.json knob; init-project/upgrade-project tailor per install
+- ⬜ K. Read-before-write state discipline — harness preflight reads state files once; state-write discipline text mandates Read before Write/Edit on existing files
+- ⬜ L1. sprint-planner skill + generic graph engine — source-adaptive sprint selection (tasks file / epic slices with optional deps[] / backlog), graph.mjs port with buckets-from-input, graceful status-only degradation, proposal-only output
+- ⬜ L2. power batch-sprint track + skill — amortized mechanical phases over tickets[], per-ticket security iteration, commit split via commit-split.mjs with closure last, velocity.power_mode.enabled opt-in (depends on L1)
+## Epic 10 — Living system model  ✅  (living-system-model)
+
+- ✅ A. Decision node model
+- ✅ B. Constraint model
+- ✅ C. Index and recall layer
+- ✅ D. Capture leg
+- ✅ E. Structural corpus
+- ✅ F. Tracking comments
+## Epic 11 — Mvp sprint parallel cycles  🟡  (mvp-sprint-parallel-cycles)
+
+- ✅ A. Sprint completeness oracle
+- ✅ B. Baseline-owned MCP coordination channel server
+- ✅ C. Sandboxed sprint mode: lead-spawned bounded workers on the channel + RALPH yield
+- 🟡 D. Merge + integrate + single gate-C on the sprint result
+- 🟡 E. Bounded charter (§II.B) sanctioning the sprint sandbox — NOT a §4.2 rewrite
+## Epic 12 — System spec delta  ✅  (system-spec-delta)
+
+- ✅ A. C2-1 — `## System delta` becomes a required spec section, with a spec-lint row validator
+- ✅ B. C2-3 — diagram shard writer (writeDiagramShard) plus the /system-reconcile report-first skill
+- ✅ C. C2-2 — archive verifies the declared delta against the landed diff before applying anything (depends on A and B)
+- ✅ D. C2-4 — backfill the @kind witness annotation across every shard in docs/system/diagrams/ (depends on B)
+- ✅ E. C2-5 — research retrieves structurally over the corpus via source_spec, ranked beside term overlap
+- ✅ F. C2-6 — constitutional amendment: seed.md §4.8/§9/§12, CLAUDE.md Article IX clause 10, byte-equal mirrors, under the 38,800-char budget
