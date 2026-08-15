@@ -172,3 +172,8 @@
 - discarded :: backlog → the-fix-is-one-cpsync-line-per-file-7353
 - discarded :: .claude/skills/triage/governance-class.mjs → landmarks.md
 - promoted :: mcp-debugger → libraries.md
+- discarded :: .claude/skills/roadmap-sync/cli.mjs → landmarks.md
+- discarded :: .claude/skills/roadmap-sync/append.mjs → landmarks.md
+- discarded :: .claude/skills/roadmap-sync/backfill.mjs → landmarks.md
+- discarded :: .claude/skills/triage/retriage.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-to-name-the-module-in-8abe

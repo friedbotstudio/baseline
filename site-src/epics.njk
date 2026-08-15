@@ -43,7 +43,9 @@ toc:
 
 <h2 id="discovery"><span class="sec-mark" aria-hidden="true">§ II</span> Run discovery once</h2>
 
-<p class="sec-lead">The epic track carries nine nodes and stops at the commit: <code class="tok">intake</code>, <code class="tok">scout</code>, <code class="tok">research</code>, <code class="tok">spec</code>, <code class="tok">spec-shippability-review</code>, <code class="tok">approve-direction</code>, <code class="tok">memory-sync</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Code comes later, in the children.</p>
+<p class="sec-lead">The epic track carries ten nodes and stops at the commit: <code class="tok">intake</code>, <code class="tok">scout</code>, <code class="tok">research</code>, <code class="tok">spec</code>, <code class="tok">spec-shippability-review</code>, <code class="tok">approve-direction</code>, <code class="tok">roadmap-sync</code>, <code class="tok">memory-sync</code>, <code class="tok">grant-commit</code>, <code class="tok">commit</code>. Code comes later, in the children.</p>
+
+<p>Your roadmap tracks a multi-slice feature on its own. The epic adds itself when its discovery commits, and each child turns its own row green as it lands, so nobody keeps the plan current by hand. Epics that predate this go on with <code class="tok">node .claude/skills/roadmap-sync/cli.mjs backfill</code>. Add <code class="tok">--dry-run</code> to read the report first.</p>
 
 <p>What you get is a sliced spec at <code class="tok">docs/specs/&lt;epic&gt;.md</code>, in which each future child has its own <code class="tok">## Slice &lt;id&gt;</code> section holding that child's acceptance criteria. You approve the whole document once, at gate A.</p>
 

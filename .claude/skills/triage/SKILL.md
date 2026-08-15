@@ -136,8 +136,23 @@ Only selectable when an `.claude/state/epic/*.json` is active and its `.claude/s
 1. Write `workflow.json` (track_id `epic-child`) with `epic: "<epic-slug>"`, `slice: "<id>"`, and `pinned_artifacts: {scout, research, spec}` — the spec pin carries the `#slice-<id>` fragment (e.g. `docs/specs/<epic>.md#slice-A`).
 2. Set `exceptions` to the inherited discovery phases (`intake`, `scout`, `research`, `spec`, `approve-direction`) **plus** `simplify` / `security` / `document` **unless** the slice's `risk[]` escalates one — an escalated phase is left OUT of `exceptions` (so it runs) and the reason is recorded in `completed_notes`. `track_guard` will refuse every write until the named epic's direction-approval token exists and the pins resolve, so a child can never skip discovery without a real approved epic behind it. It reads the token, not the epic state's `approved` boolean — a forged flag is inert at the read boundary.
 3. Append `{slice, slug, status: "open"}` to the epic state's `children[]`.
+4. **Seed the child's roadmap row.** When the epic state carries `roadmap_epic` (stamped by the epic's own Phase 10.6 when it appended the epic to the execution roadmap), write `workflow.json → roadmap_tasks: ["E<roadmap_epic>-<slice>"]`. That token is what the child's Phase 10.6 flips ⬜→✅. Absent `roadmap_epic` — an epic that predates the roadmap append, or a project with no roadmap — leave `roadmap_tasks` empty; Phase 10.6 is fail-open and no-ops. Never invent a number: run the ad-hoc `node .claude/skills/roadmap-sync/cli.mjs backfill` to put the epic on the roadmap first, which stamps `roadmap_epic` as a side effect.
 
 `/tdd`, on an `epic-child` track, reads the pinned spec's `## Slice <id>` section as its behavior contract — it does **not** re-run any discovery phase.
+
+# Backlog retriage — grouping open entries into an epic
+
+Invoked as `/triage retriage` when the operator wants to turn accumulated backlog debt into a planned epic rather than triage one incoming request. It is the same decision this skill always makes — how much process the work earns — applied to the backlog instead of a prompt.
+
+The grouping is **binding judgment and stays in main context** (Article II). The helper gathers and writes; it never picks the groupings.
+
+1. **Gather.** `collectOpenBacklog({memoryDir})` from `.claude/skills/triage/retriage.mjs` returns every `status: open` entry with its key, `governs:` paths, raised-in context, and one-line summary. It writes nothing.
+2. **Propose.** In main context, group the entries into candidate epics. Cluster on what the entries share — a governed path, a component, a single root cause — not on how many make a tidy number. Present each candidate via `AskUserQuestion` with its slices and the entries each slice absorbs, and say plainly why those entries belong together.
+3. **Confirm.** The human picks. A rejected proposal writes nothing: the backlog is left byte-identical and no workflow or epic state is created.
+4. **Materialize.** `materializeRetriagedEpic({rootDir, proposal})` writes `workflow.json` (`track_id: "epic"`, `source_backlog_keys` = the deduped union of every slice's absorbed keys) and `.claude/state/epic/<slug>.json` (`approved: false`). It rejects an unsafe slug before constructing any path, refuses to overwrite a live `workflow.json`, and refuses a proposal with no slices.
+5. **Run the epic.** From here it is an ordinary `epic` track — `intake → scout → research → sliced spec → one approval`. Nothing about the entries' origin shortens discovery.
+
+**Closure happens at the epic's commit, never at the proposal.** The absorbed entries stay untouched in `.claude/memory/backlog/` until `/commit` reads `source_backlog_keys` and runs `sweep.mjs --mode stamp-closure`; the next `/memory-sync` then auto-closes them. That ordering is deliberate: an epic that fails approval must lose nothing.
 
 # Constraints
 

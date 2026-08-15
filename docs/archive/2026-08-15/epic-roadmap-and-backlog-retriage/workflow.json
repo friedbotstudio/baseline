@@ -1,0 +1,51 @@
+{
+  "request": "Three linked capabilities. (1) The epic track gains a roadmap-sync step: at the epic commit it writes an epic heading to project.json -> roadmap.path plus one task row per slice from the sliced spec, in the format the standup parser already reads; each epic-child then flips its own row via existing Phase 10.6. (2) A backlog-retriage capability: Claude reads the open backlog entries, proposes candidate epic groupings with rationale, the human confirms, and the confirmed grouping feeds /triage to start a normal epic run. Absorbed backlog entries are closed and removed at the epic commit, never at proposal time. (3) An ad-hoc roadmap resync step that backfills every epic already on disk (.claude/state/epic/*.json) onto the roadmap, so the five existing epics that predate capability (1) get their heading and slice rows. Ad-hoc, not a workflow phase: idempotent, never duplicates an epic already present, and never blocks a commit.",
+  "slug": "epic-roadmap-and-backlog-retriage",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Searched .claude/skills/roadmap-sync/sync.mjs: flipTask, flipTaskInEpic, promoteEpicHeading and auditRoadmap all mutate an existing row; no append/create-epic transform exists. Searched the 55 open backlog keys: none names roadmap-epic creation or backlog retriage. Nearest precedents, both adjacent and neither sufficient: .claude/skills/sprint-planner (propose a batch, human confirms, writes workflow.json tickets[]) and .claude/skills/memory-sync/sweep.mjs --mode stamp-closure (backlog closure driven by source_backlog_keys). No spec chapter commits to either capability.",
+  "track_reason": "Heavier than tdd-quickfix because the change amends docs/init/seed.md section 18.9 and CLAUDE.md Article IV (which today excludes the epic track from roadmap sync), so it needs a written spec and gate A. Lighter than intake-full because the scout and research evidence is already cited in novelty_evidence.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "docs/init/seed.md",
+    "CLAUDE.md",
+    "src/CLAUDE.template.md",
+    ".claude/workflows.jsonl",
+    ".claude/skills/roadmap-sync/**",
+    "docs/roadmap-execution-plan.md",
+    ".claude/state/epic/*.json"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "created_at": 1786780921,
+  "updated_at": 1786792849,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

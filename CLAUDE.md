@@ -70,7 +70,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 | 9 | Integrate | `/integrate` | binding verify verdict |
 | 10 | Document | `/document` | docs |
 | 10.5 | Archive | `/archive` | `docs/archive/<date>/<slug>/` |
-| 10.6 | Roadmap sync | `/roadmap-sync` (committing tracks **except `epic`**) | roadmap synced (fail-open) |
+| 10.6 | Roadmap sync | `/roadmap-sync` (every committing track) | roadmap synced (fail-open) |
 | 10.7 | Memory flush | `/memory-sync` | curated memory + reset `_pending.md` |
 | 11 | **Grant commit** (gate C) + commit | user runs **`/grant-commit`**, then `/commit` | commit |
 

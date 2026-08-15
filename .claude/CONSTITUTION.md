@@ -301,7 +301,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 
 **Roadmap (2)** — derive and maintain the execution plan:
 - `roadmap-planner` — re-derive an execution roadmap from the vision/spec corpus by first principles, then diff that derivation against the existing roadmap to prove task ORDER is correct (producer-after-consumer and seam-after-consumer errors, cycles, over-fragmentation). Never blindly overwrites a hand-crafted roadmap.
-- `roadmap-sync` — Phase 10.6. Flips the tasks named in `workflow.json → roadmap_tasks[]` from ⬜ to ✅ and promotes their epic headings, preserving the standup parser format contract. Fail-open; runs on every committing track **except `epic`**.
+- `roadmap-sync` — Phase 10.6. Flips the tasks named in `workflow.json → roadmap_tasks[]` from ⬜ to ✅ and promotes their epic headings, preserving the standup parser format contract. Fail-open; runs on every committing track. On the `epic` track it appends the epic's own heading plus one row per slice, and stamps `roadmap_epic` into the epic state so each child can name its row.
 
 **Sprint (4)** — the sprint-mode skills (`mvp-sprint-parallel-cycles` epic); not workflow phases:
 - `sprint-plan` — decompose an MVP vision into a sprint manifest where every feature carries explicit done-criteria (`done_record` + `edge_tests[]` + `wiring_test`). Authors + shape-validates the manifest (`validate-manifest.mjs`).
