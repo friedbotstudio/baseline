@@ -171,7 +171,7 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ A. Sprint completeness oracle
 - ✅ B. Baseline-owned MCP coordination channel server
 - ✅ C. Sandboxed sprint mode: lead-spawned bounded workers on the channel + RALPH yield
-- 🟡 D. Merge + integrate + single gate-C on the sprint result
+- ⬜ D. Merge + integrate + single gate-C on the sprint result
 - ✅ E. Bounded charter for the sprint sandbox — SUPERSEDED, not built: Article X absorbed this slot per seed.md §4.2
 ## Epic 12 — System spec delta  ✅  (system-spec-delta)
 

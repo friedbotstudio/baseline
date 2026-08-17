@@ -1,0 +1,53 @@
+{
+  "request": "fix Epic 11 row D in docs/roadmap-execution-plan.md from 🟡 to ⬜",
+  "slug": "roadmap-epic11-row-d",
+  "track_id": "chore",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "Precedent: workflow `epic11-slice-e-superseded`, landed 6b225b2 — the same act on the same file (one status-emoji correction on one Epic 11 slice row), chore track, verify + archive + memory-sync run, the four other internal phases auto-skipped. Warrant for the value: .claude/state/epic/mvp-sprint-parallel-cycles.json children[] slice D is {slice:D, slug:null, status:open} — slug null means no child workflow ever started, so ⬜ (registered, unstarted) is true and 🟡 (in flight) is not.",
+  "skip_brainstorm": true,
+  "write_surface": ["docs/roadmap-execution-plan.md"],
+  "roadmap_tasks": [],
+  "exceptions": [
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "Diff is 1 file / 1 line / 1 changed character (a status emoji). No refactor move, no relocation, no duplication introduced, nothing to consolidate. Every simplify trigger is false.",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "security",
+      "reason": "node .claude/skills/chore/sensitive-surface.mjs returned {\"sensitive\":false,\"matched\":[]}. docs/** is not in project.json -> security.sensitive_globs. Decided mechanically, not by eye.",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "integrate",
+      "reason": "The diff touches no test surface (no test.cmd, no fixture, no hook script, no settings.json wiring, no project.json test/lint key), no MCP declaration, and no runtime config. A roadmap status emoji cannot break a downstream phase — roadmap-sync is fail-open by contract and never gates a commit. The verify PASS stamp is sufficient.",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "docs/roadmap-execution-plan.md is an internal planning artifact, not user-facing prose. No count or inventory changes, no new convention or helper, no seed.md §16 follow-up, no src/ template touched.",
+      "oracle": "chore-conditional"
+    }
+  ],
+  "completed": ["chore", "verify", "archive", "roadmap-sync", "memory-sync"],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786967550,
+  "updated_at": 1786967762
+}
