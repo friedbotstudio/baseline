@@ -3,9 +3,12 @@ key: baseline-self-dev-verify-audit-not-unit-suite
 category: landmines
 scope: [tdd, integrate]
 caveat: confirmed live 2026-06-22 in `simplify-reverify-guard` — verify-tick + integrate stamped via the audit; the new helper's 10 unit tests AND the `tier-dial-coverage` regression risk were caught only by a manual `npm test` in `/integrate` (1057 tests, 1043 pass). The constituent facts existed but scattered across [[baseline-skill-edit-needs-manifest-rebuild]] and [[live-objtemplate-rebuild-races]]; no single entry synthesized the audit-vs-unit-suite split + its integrate implication, so it was re-derived from `project.json`/`package.json` from scratch. This entry is the synthesis. Companion: [[baseline-skill-edit-needs-manifest-rebuild]] (the manifest-rehash half).
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 309d70e
+last-touched: 2026-08-17
 ---
+
+- **RE-VERIFIED 2026-08-17 — the core trap below is RESOLVED, and the outcome recurred anyway.** `project.json → test.cmd` is now `node .claude/skills/audit-baseline/audit.mjs --file={file} && node --test tests/*.test.mjs`: the "or makes `test.cmd` run both" fix this entry proposed was taken, so the binding stamp DOES observe the unit suite. Do not act on the audit-only premise below; it describes a configuration that no longer exists. Kept for the casualty record and because the diagnosis order still holds.
+- **And yet `309d70e` landed with two red unit tests under a `PASS` stamp, exactly as `79e41cb` did.** Same outcome, different mechanism: the verify no longer misses the suite, it runs *before the state that breaks it exists*. See [[a-binding-pass-stamp-goes-stale-before-the-commit-it-authorises]] for both doors. The lesson that survives is narrower than this entry's title: a green stamp is evidence about the tree **at stamp time**, never about the commit.
 
 - Path: `.claude/project.json → test.cmd` = `node .claude/skills/audit-baseline/audit.mjs --file={file}` (`test.kind: structural`) vs `package.json → scripts.test` = `node --test --test-reporter=spec tests/*.test.mjs`.
 - Trap: when developing the baseline ON the baseline, the BINDING verification (`verify-tick`, `/simplify` re-verify, `/integrate`) runs `test.cmd` = the STRUCTURAL AUDIT, not the unit suite. The `node --test tests/*.test.mjs` unit suite is a SEPARATE command (`npm test`); `/implement`'s RALPH loop drives the specific failing tests via `node --test <file>`, but no workflow phase runs the FULL unit suite as its binding stamp. So a change can pass every phase's audit and still have BROKEN UNIT TESTS no phase caught — and several unit tests inspect baseline SKILL.md bodies (`tier-dial-coverage.test.mjs` reads `simplify`/`security`/`spec-lint`/`integrate` SKILL.md for the tier-dial read-path line), so editing a checker skill can break a unit test the structural audit is blind to.

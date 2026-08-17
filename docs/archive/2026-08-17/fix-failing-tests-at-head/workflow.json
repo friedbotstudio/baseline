@@ -1,0 +1,55 @@
+{
+  "request": "Fix the two failing tests at HEAD 309d70e: a literal NUL byte at offset 13108 in tests/epic-heading-grammar.test.mjs, and the PATH_LEG_BASELINE census drift in tests/memory-scope-store-invariants.test.mjs:270 (scoped-memory.mjs 10 -> 11, process_lifecycle_guard.mjs 9 -> 10).",
+  "slug": "fix-failing-tests-at-head",
+  "track_id": "chore",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "tests/memory-scope-store-invariants.test.mjs:242-265 documents the established convention for this exact repair: a sibling census re-measured by hand three times (89->91 at 66fcb29, 91->94, 94->92 at the 2026-08-14 stale sweep), each bump carrying a written rationale for why the population moved and the policy did not. This workflow repeats that pattern on PATH_LEG_BASELINE. The NUL byte is a typo fix with no precedent needed.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "tests/epic-heading-grammar.test.mjs",
+    "tests/memory-scope-store-invariants.test.mjs"
+  ],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786957784,
+  "updated_at": 1786960437,
+  "rightsize_base": [
+    "docs/roadmap-execution-plan.md"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs reports {sensitive:false,matched:[]} — diff is tests/ only",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no user-facing prose, no count or inventory change, no new convention, no src/ template, no seed §16 follow-up",
+      "oracle": "chore-conditional"
+    }
+  ]
+}

@@ -300,15 +300,15 @@ const CORPUS = [
   '## Epic 12 — System spec delta  ✅  (system-spec-delta)',
 ];
 
-// Exactly the deltas §Behavior #4 declares, keyed by "site input".
+// Exactly the deltas §Behavior #4 declares, keyed by "site\u0000input".
 const DECLARED_DELTAS = new Set([
-  'sync.mjs ## Epic 5 —', // E1
-  'sync.mjs ## Epic 5 — ', // E1
-  'append.mjs ## Epic 5 — ', // E1
-  'sync.mjs ## Epic 5 —Title', // E3
-  'sync.mjs ##  Epic  5  —  Title', // E2
-  'append.mjs ##  Epic  5  —  Title', // E2
-  'append.mjs ## Epic 5 —  Title', // E4
+  'sync.mjs\u0000## Epic 5 —', // E1
+  'sync.mjs\u0000## Epic 5 — ', // E1
+  'append.mjs\u0000## Epic 5 — ', // E1
+  'sync.mjs\u0000## Epic 5 —Title', // E3
+  'sync.mjs\u0000##  Epic  5  —  Title', // E2
+  'append.mjs\u0000##  Epic  5  —  Title', // E2
+  'append.mjs\u0000## Epic 5 —  Title', // E4
 ]);
 
 function observedDeltas() {
@@ -367,18 +367,18 @@ describe('epic-heading grammar — declared edge deltas (AC-008)', () => {
 
 describe('epic-heading grammar — completeness of the delta table (AC-011)', () => {
   it('test_when_old_and_new_grammars_run_differentially_then_only_declared_deltas_appear', () => {
-    const observed = new Set(observedDeltas().map((d) => `${d.site} ${d.line}`));
+    const observed = new Set(observedDeltas().map((d) => `${d.site}\u0000${d.line}`));
 
     const undeclared = [...observed].filter((k) => !DECLARED_DELTAS.has(k));
     assert.deepEqual(
-      undeclared.map((k) => k.split(' ')),
+      undeclared.map((k) => k.split('\u0000')),
       [],
       'a divergence the spec does not declare — §Behavior #4 is incomplete',
     );
 
     const missing = [...DECLARED_DELTAS].filter((k) => !observed.has(k));
     assert.deepEqual(
-      missing.map((k) => k.split(' ')),
+      missing.map((k) => k.split('\u0000')),
       [],
       'the spec declares a delta that no longer occurs — §Behavior #4 is stale',
     );
@@ -390,8 +390,8 @@ describe('epic-heading grammar — completeness of the delta table (AC-011)', ()
     assert.ok(headings.length >= 12, 'the live plan carries at least 12 epic headings');
     for (const h of headings) {
       assert.ok(matchEpicHeadingLine(h), `live heading must parse: ${h}`);
-      assert.ok(!DECLARED_DELTAS.has(`sync.mjs ${h}`), `live heading hits an edge case: ${h}`);
-      assert.ok(!DECLARED_DELTAS.has(`append.mjs ${h}`), `live heading hits an edge case: ${h}`);
+      assert.ok(!DECLARED_DELTAS.has(`sync.mjs\u0000${h}`), `live heading hits an edge case: ${h}`);
+      assert.ok(!DECLARED_DELTAS.has(`append.mjs\u0000${h}`), `live heading hits an edge case: ${h}`);
     }
   });
 });

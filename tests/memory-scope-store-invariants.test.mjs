@@ -122,9 +122,16 @@ const PATH_LEG_BASELINE = {
   // this file should see the landmark for the module it consults. A census moving
   // because a genuinely related fact was filed is the mechanism working; the number
   // is re-measured, never defended.
-  '.claude/hooks/lib/scoped-memory.mjs': 10,
+  //
+  // 10 -> 11 at 309d70e, which filed the landmine
+  // `a-global-regex-with-test-fails-open-on-alternate-calls` with a `.claude/hooks/**`
+  // glob. That one entry moved BOTH path-leg literals here by one — the broad-glob
+  // blast radius the note above the census literal describes.
+  '.claude/hooks/lib/scoped-memory.mjs': 11,
   '.claude/skills/memory-index/resolve.mjs': 16,
-  '.claude/hooks/process_lifecycle_guard.mjs': 9,
+  // 9 -> 10 at 309d70e, the same single landmine reaching a second path through the
+  // same `.claude/hooks/**` glob. Both bumps have one cause; neither is defended.
+  '.claude/hooks/process_lifecycle_guard.mjs': 10,
   // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow
   // filed four backlog entries and left them uncommitted; harness-batch-fixes
   // committed them. Three of the four carried only `key` and `category`, so they
