@@ -11,22 +11,39 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+import {
+  matchEpicHeadingText,
+  PLANNED,
+  IN_PROGRESS,
+  DONE,
+  STATUS_EMOJI_SOURCE,
+} from '../lib/epic-heading.mjs';
+
 export const Status = Object.freeze({
   DONE: 'done',
-  IN_PROGRESS: 'in_progress',
+  IN_PROGRESS: 'in-progress',
   PLANNED: 'planned',
 });
 
 const DEFAULT_ROADMAP_PATH = 'docs/roadmap-execution-plan.md';
 
+// One status vocabulary. The emoji characters AND the status names both come
+// from the shared grammar's spelling — `in-progress`, hyphenated, matching
+// roadmap-sync. The two spellings diverged historically and standup/gather.mjs
+// carried a translation shim to bridge them; the shim is deleted and this enum
+// is the single spelling every consumer reads.
 const STATUS_BY_EMOJI = [
-  ['✅', Status.DONE],
-  ['🟡', Status.IN_PROGRESS],
-  ['⬜', Status.PLANNED],
+  [DONE, Status.DONE],
+  [IN_PROGRESS, Status.IN_PROGRESS],
+  [PLANNED, Status.PLANNED],
 ];
-
-const EPIC_HEADING_RE = /^Epic\s+(\d+)\s+—\s+(.+)$/;
-const TASK_ROW_RE = /^- (✅|🟡|⬜) ([A-Za-z0-9][A-Za-z0-9-]*)\. (.+)$/;
+// The heading's title ends where its status emoji begins; everything from the
+// first legal emoji onward is the status suffix, not part of the title.
+const HEADING_EMOJI_TAIL = new RegExp(`\\s*(?:${STATUS_EMOJI_SOURCE}).*$`, 'u');
+const TASK_ROW_RE = new RegExp(
+  `^- (${STATUS_EMOJI_SOURCE}) ([A-Za-z0-9][A-Za-z0-9-]*)\\. (.+)$`,
+  'u',
+);
 
 export function roadmapPathFor(rootDir) {
   const raw = readFileSafe(join(rootDir, '.claude/project.json'));
@@ -64,15 +81,15 @@ export function parseRoadmap(rootDir) {
 // ---- Domain: epic heading -----------------------------------------------
 
 function parseEpicHeading(heading) {
-  const m = EPIC_HEADING_RE.exec(heading);
+  const m = matchEpicHeadingText(heading);
   if (!m) return null;
-  const rest = m[2];
+  const rest = m.rest;
   const tag = field(rest, /\(([^)]*)\)/);
   const title = rest
-    .replace(/\s*(?:✅|🟡|⬜).*$/u, '')
+    .replace(HEADING_EMOJI_TAIL, '')
     .replace(/\s*\(.*$/, '')
     .trim();
-  return { num: Number(m[1]), title, tag: tag ? tag.trim() : null, status: statusFromHeadingEmoji(rest) };
+  return { num: m.num, title, tag: tag ? tag.trim() : null, status: statusFromHeadingEmoji(rest) };
 }
 
 function statusFromHeadingEmoji(text) {

@@ -1,36 +1,26 @@
 // roadmap-append — pure text->text transforms that add an epic section to the plan.
-// Foundation: the heading/row grammar. Domain: appendEpic, the additive-only merge.
-// The grammar mirrors roadmap/parse.mjs and sync.mjs; those two mutate rows that
-// already exist, this one is the only writer that creates them.
+// Domain: appendEpic, the additive-only merge. The heading grammar and the CWE-74
+// guard live in lib/epic-heading.mjs; this is the only writer that creates rows,
+// so it is the site that guard protects.
 
-const PLANNED = '⬜';
-const IN_PROGRESS = '🟡';
-const DONE = '✅';
+import {
+  matchEpicHeadingLine,
+  assertInert,
+  PLANNED,
+  IN_PROGRESS,
+  DONE,
+} from '../lib/epic-heading.mjs';
 
-const EPIC_HEADING = /^## Epic (\d+) — (.*)$/;
 const TAG = /\(([^)]*)\)\s*$/;
 const SLICE_ID = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
-const STATUS_EMOJI = /⬜|🟡|✅/u;
-
-// Security review 2026-08-15 (MEDIUM, CWE-74): a title carrying a status emoji
-// wins over the real marker, because parseRoadmap reads the EARLIEST emoji on the
-// heading — a planned epic then reports as shipped. A newline forges a whole
-// heading or row. Reject rather than sanitise: this is the only site that creates
-// headings, so it is the only place the one-emoji-per-heading contract is
-// enforceable. Same call as workspace/render.mjs and shards.mjs.
-function assertInert(value, field) {
-  const text = String(value ?? '');
-  if (/[\r\n]/.test(text)) throw new Error(`roadmap-append: ${field} must not contain a newline`);
-  if (STATUS_EMOJI.test(text)) throw new Error(`roadmap-append: ${field} must not contain a status emoji`);
-}
 
 // --- Foundation: read the epic headings already on the plan ------------------
 
 function epicHeadings(text) {
   const headings = [];
   for (const line of String(text ?? '').split('\n')) {
-    const m = EPIC_HEADING.exec(line);
-    if (m) headings.push({ num: Number(m[1]), tag: TAG.exec(m[2])?.[1]?.trim() ?? null });
+    const m = matchEpicHeadingLine(line);
+    if (m) headings.push({ num: m.num, tag: TAG.exec(m.rest)?.[1]?.trim() ?? null });
   }
   return headings;
 }
@@ -53,11 +43,29 @@ function impliedHeadingStatus(slices) {
   return IN_PROGRESS;
 }
 
+// --- Foundation: the summary is a whole line, so it needs a stricter guard ----
+
+// `title` and `tag` are interpolated INTO the middle of the heading line, so a
+// `## ` they carry can never land at a line start. `summary` is pushed as a line
+// of its own, which makes it the one field that can forge a heading outright:
+// `## Epic 99 — Injected (pwned)` carries no newline and no status emoji, so
+// assertInert passes it, and every reader that scans lines then sees a real
+// epic. The row grammars all require a status emoji, so assertInert already
+// covers those; the heading is the only residual and this closes it.
+function assertSummaryInert(summary) {
+  if (summary === undefined || summary === null || summary === '') return;
+  assertInert(summary, 'epic summary');
+  if (matchEpicHeadingLine(summary)) {
+    throw new Error('roadmap-append: epic summary must not be an epic heading');
+  }
+}
+
 // --- Domain: render one epic section -----------------------------------------
 
 export function renderEpicSection({ num, title, tag, summary, slices = [] }) {
   assertInert(title, 'epic title');
   assertInert(tag, 'epic tag');
+  assertSummaryInert(summary);
   for (const slice of slices) {
     if (!SLICE_ID.test(String(slice.id ?? ''))) {
       throw new Error(`roadmap-append: slice id ${JSON.stringify(slice.id)} must match ${SLICE_ID}`);

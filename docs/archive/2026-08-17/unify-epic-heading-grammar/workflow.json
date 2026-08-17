@@ -1,0 +1,43 @@
+{
+  "request": "Hoist the three independent epic-heading grammar declarations (roadmap/parse.mjs EPIC_HEADING_RE, roadmap-sync/sync.mjs EPIC_HEADING, roadmap-sync/append.mjs EPIC_HEADING) into one canonical module under .claude/skills/lib/, and move assertInert with it so the CWE-74 title-forgery guard sits at the canonical site.",
+  "slug": "unify-epic-heading-grammar",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "No spec chapter, roadmap item, or backlog entry derives this. Searched .claude/memory/backlog/ for 'epic.heading', 'EPIC_HEADING' and 'heading grammar' -> zero matches. It originates as a /simplify flagged row at 1aed0ae ('out-of-scope refactor, belongs in a new spec') plus the 'Out of scope / Noted' section of docs/archive/2026-08-15/epic-roadmap-and-backlog-retriage/security.md. Partial pattern precedent exists for the PLACEMENT only: .claude/skills/lib/argv.mjs is an established cross-skill shared module. The grammar merge itself has no precedent, because the three regexes accept different inputs (parse.mjs matches with '## ' stripped; the other two require the prefix) and return different captures, so unifying them is a behaviour decision rather than a copy.",
+  "track_reason": "Heavier than the leanest track (tdd-quickfix) by one written artifact and one gate. Justified because the three regexes are not interchangeable: the shared grammar's contract (does it accept a raw line or a stripped heading; does it return number, title, or both) is a design call that silently changes what standup/gather.mjs reports as shipped if chosen wrong. The spec records that contract for review BEFORE six call sites are rewired to it. User confirmed spec-entry over tdd-quickfix via AskUserQuestion.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/lib/**",
+    ".claude/skills/roadmap/parse.mjs",
+    ".claude/skills/roadmap-sync/sync.mjs",
+    ".claude/skills/roadmap-sync/append.mjs",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786794934,
+  "updated_at": 1786916218,
+  "rightsize_base": []
+}

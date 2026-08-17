@@ -179,3 +179,6 @@
 - discarded :: backlog → the-fix-is-to-name-the-module-in-8abe
 - discarded :: .claude/skills/roadmap-sync/epic-store.mjs → landmarks.md
 - discarded :: .claude/skills/triage/backlog-shard.mjs → landmarks.md
+- promoted :: .claude/skills/lib/epic-heading.mjs → landmarks.md
+- promoted :: .claude/skills/roadmap-sync/sync.mjs → landmarks.md
+- promoted :: .claude/skills/roadmap/parse.mjs → landmarks.md

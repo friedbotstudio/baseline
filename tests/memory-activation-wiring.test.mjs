@@ -18,6 +18,15 @@ const LIFECYCLE_GUARD = join(REPO_ROOT, '.claude/hooks/process_lifecycle_guard.m
 
 const VERBATIM = 'an outcome-AC with no diff line wedges drift_check';
 
+// Staleness is >= 30 days from `last-touched`, so a hardcoded date is a time
+// bomb: the fixture passes until the wall clock crosses the threshold, then
+// fails for a reason that has nothing to do with the code under test. Derive
+// the date from today so the entry is always comfortably fresh.
+function recentDate() {
+  const d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
 function seedMigratedStore(root) {
   const mem = join(root, '.claude/memory');
   for (const c of ['landmarks', 'libraries', 'decisions', 'landmines', 'conventions', 'pending-questions', 'backlog']) {
@@ -30,7 +39,7 @@ category: landmines
 scope: [spec]
 source: incident
 verified-at: abc1234
-last-touched: 2026-07-17
+last-touched: ${recentDate()}
 ---
 
 > verbatim (incident, 2026-07-10):

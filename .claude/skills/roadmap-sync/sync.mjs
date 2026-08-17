@@ -7,12 +7,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 
-const PLANNED = '⬜';
-const IN_PROGRESS = '🟡';
-const DONE = '✅';
-const STATUS_EMOJI = new RegExp(`${PLANNED}|${IN_PROGRESS}|${DONE}`, 'gu');
-const EPIC_HEADING = /^## Epic (\d+) —/;
-const TASK_LINE = /^\s*-\s+(⬜|🟡|✅)\s+(\S+?)\.\s/u;
+import {
+  matchEpicHeadingLine,
+  statusEmojiScanner,
+  PLANNED,
+  IN_PROGRESS,
+  DONE,
+  STATUS_EMOJI_SOURCE,
+} from '../lib/epic-heading.mjs';
+
+const TASK_LINE = new RegExp(`^\\s*-\\s+(${STATUS_EMOJI_SOURCE})\\s+(\\S+?)\\.\\s`, 'u');
 
 // --- Foundation: single task line ⬜/🟡 -> ✅ -------------------------------
 
@@ -32,7 +36,7 @@ export function flipTask(text, taskId) {
 // --- Foundation: locate an epic's task body [start heading, end) ------------
 
 function epicBodyRange(lines, epicNum) {
-  const start = lines.findIndex((l) => EPIC_HEADING.exec(l)?.[1] === String(epicNum));
+  const start = lines.findIndex((l) => matchEpicHeadingLine(l)?.num === Number(epicNum));
   if (start === -1) return null;
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i += 1) {
@@ -75,7 +79,7 @@ const HEADING_EMOJI_FOR = { done: DONE, 'in-progress': IN_PROGRESS, planned: PLA
 
 export function promoteEpicHeading(text, epicNum) {
   const lines = text.split('\n');
-  const headingIdx = lines.findIndex((l) => EPIC_HEADING.exec(l)?.[1] === String(epicNum));
+  const headingIdx = lines.findIndex((l) => matchEpicHeadingLine(l)?.num === Number(epicNum));
   if (headingIdx === -1) return { text, changed: false, status: 'unknown' };
 
   const status = impliedStatus(epicBodyTally(lines, headingIdx)) ?? 'planned';
@@ -83,10 +87,10 @@ export function promoteEpicHeading(text, epicNum) {
 
   const wanted = HEADING_EMOJI_FOR[status];
   const heading = lines[headingIdx];
-  if (heading.includes(wanted) && (heading.match(STATUS_EMOJI) || []).length === 1) {
+  if (heading.includes(wanted) && (heading.match(statusEmojiScanner()) || []).length === 1) {
     return { text, changed: false, status };
   }
-  lines[headingIdx] = heading.replace(STATUS_EMOJI, wanted);
+  lines[headingIdx] = heading.replace(statusEmojiScanner(), wanted);
   return { text: lines.join('\n'), changed: true, status };
 }
 
@@ -108,13 +112,16 @@ export function resolveRoadmapPath(cfg, repoRoot) {
 // separated by whitespace with no task label between, which a legitimate multi-task
 // line never has.
 
-const ADJACENT_EMOJI = /(?:⬜|🟡|✅)\s+(?:⬜|🟡|✅)/u;
+const ADJACENT_EMOJI = new RegExp(
+  `(?:${STATUS_EMOJI_SOURCE})\\s+(?:${STATUS_EMOJI_SOURCE})`,
+  'u',
+);
 
 function epicBodyTally(lines, headingIdx) {
   const tally = { done: 0, inProgress: 0, planned: 0 };
   for (let i = headingIdx + 1; i < lines.length; i += 1) {
     if (/^## /.test(lines[i])) break;
-    for (const e of lines[i].match(STATUS_EMOJI) || []) {
+    for (const e of lines[i].match(statusEmojiScanner()) || []) {
       if (e === DONE) tally.done += 1;
       else if (e === IN_PROGRESS) tally.inProgress += 1;
       else tally.planned += 1;
@@ -134,13 +141,13 @@ export function auditRoadmap(text) {
   const lines = text.split('\n');
   const anomalies = [];
   lines.forEach((line, idx) => {
-    const epic = EPIC_HEADING.exec(line);
+    const epic = matchEpicHeadingLine(line);
     if (epic) {
       const implied = impliedStatus(epicBodyTally(lines, idx));
       if (implied) {
-        const headingEmoji = (line.match(STATUS_EMOJI) || [])[0];
+        const headingEmoji = (line.match(statusEmojiScanner()) || [])[0];
         if (headingEmoji !== HEADING_EMOJI_FOR[implied]) {
-          anomalies.push(`Epic ${epic[1]} heading is ${headingEmoji ?? 'none'} but body implies ${implied}`);
+          anomalies.push(`Epic ${epic.num} heading is ${headingEmoji ?? 'none'} but body implies ${implied}`);
         }
       }
       return;

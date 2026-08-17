@@ -6,7 +6,9 @@
 // still the {done,inProgress,planned} TALLY object (parse.mjs calls that `tally`
 // and uses `tasks` for the row array — the projection must not leak the row
 // array into the recap), and epic status keeps its pre-extraction hyphenated
-// spelling ('in-progress'), not parse.mjs's Status enum spelling ('in_progress').
+// spelling ('in-progress'). The Status enum once spelled that state 'in_progress'
+// and gather.mjs translated between the two; the enum now carries the hyphenated
+// spelling itself, so the assertion below holds with no shim in between.
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -113,6 +115,6 @@ describe('T-005 — collectRoadmap delegates to parse.mjs, recap keeps its own s
     const recap = gatherSync({ rootDir: root });
 
     const epic = recap.roadmap.epics[0];
-    assert.equal(epic.status, 'in-progress', "the recap must keep its own spelling ('in-progress'), not parse.mjs's Status enum spelling ('in_progress')");
+    assert.equal(epic.status, 'in-progress', "the recap emits the hyphenated spelling, which is now also parse.mjs's Status enum spelling");
   });
 });

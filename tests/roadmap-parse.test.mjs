@@ -67,7 +67,7 @@ describe('T-003 — parseRoadmap: task rows carry id/epicNum/status/title (AC-00
     );
     assert.deepEqual(
       epic2.tasks.map((t) => ({ id: t.id, epicNum: t.epicNum, status: t.status, title: t.title })),
-      [{ id: 'T3', epicNum: 2, status: 'in_progress', title: 'Third task in progress.' }],
+      [{ id: 'T3', epicNum: 2, status: 'in-progress', title: 'Third task in progress.' }],
     );
     for (const epic of plan.epics) {
       for (const task of epic.tasks) {
@@ -134,7 +134,7 @@ describe('T-003 — parseRoadmap: tally reads the row marker, not a prose emoji 
       {},
     );
     assert.equal(epic.tally.done, rowCounts.done || 0);
-    assert.equal(epic.tally.inProgress, rowCounts.in_progress || 0);
+    assert.equal(epic.tally.inProgress, rowCounts['in-progress'] || 0);
     assert.equal(epic.tally.planned, rowCounts.planned || 0);
     assert.deepEqual(epic.tally, { done: 2, inProgress: 1, planned: 3 });
   });

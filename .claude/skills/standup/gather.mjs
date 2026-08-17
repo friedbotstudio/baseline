@@ -268,9 +268,10 @@ function describeQuestion(entry) {
 // front door) and projects its RoadmapPlan into the recap's OWN shape: `tasks`
 // here is the {done,inProgress,planned} tally object, where parse.mjs calls that
 // `tally` and uses `tasks` for the row array. The two must not be conflated —
-// rows reach the recap under `openTasks` instead. Epic status keeps the recap's
-// own hyphenated spelling ('in-progress') rather than parse.mjs's Status enum
-// spelling ('in_progress'). Fail-soft — a missing plan degrades, never throws.
+// rows reach the recap under `openTasks` instead. Epic status passes through
+// verbatim: parse.mjs's Status enum now spells the in-flight state 'in-progress',
+// the same spelling this recap emits, so the translation shim that used to bridge
+// the two vocabularies is gone. Fail-soft — a missing plan degrades, never throws.
 function collectRoadmap(rootDir, degraded) {
   const plan = parseRoadmap(rootDir);
   if (plan === null) {
@@ -281,7 +282,7 @@ function collectRoadmap(rootDir, degraded) {
     num: epic.num,
     title: epic.title,
     tag: epic.tag,
-    status: recapStatus(epic.status),
+    status: epic.status,
     tasks: epic.tally,
     openTasks: openRowsOf(epic),
   }));
@@ -297,15 +298,7 @@ const OPEN_STATUSES = new Set([Status.PLANNED, Status.IN_PROGRESS]);
 function openRowsOf(epic) {
   return epic.tasks
     .filter((row) => OPEN_STATUSES.has(row.status))
-    .map((row) => ({ id: row.id, status: recapStatus(row.status), title: row.title }));
-}
-
-// parse.mjs's Status enum spells the in-progress state with an underscore
-// ('in_progress'); the recap has always spelled it with a hyphen
-// ('in-progress'). Every other status spelling ('done', 'planned', 'unknown')
-// is shared verbatim between the two, so only that one state needs mapping.
-function recapStatus(status) {
-  return status === 'in_progress' ? 'in-progress' : status;
+    .map((row) => ({ id: row.id, status: row.status, title: row.title }));
 }
 
 // ---- Foundation: release rules + commit classification -----------------
