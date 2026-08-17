@@ -1,0 +1,66 @@
+{
+  "request": "Land the Epic 11 slice-E supersession row on the execution roadmap. The edit is already written to docs/roadmap-execution-plan.md; it was orphaned when its original workflow (epic11-slice-e-superseded) failed verify on a pre-existing red suite and its workflow.json was replaced. Recovery path for Q-004.",
+  "slug": "epic11-slice-e-superseded",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/init/seed.md:217 — Article X \"graduat[es] and supersed[es] the retired sprint-dispatch prototype and the mvp-sprint-parallel-cycles Slice E reserved-charter slot\". Genesis is the top rung of Art. I.4. Corroborated by the decision entry .claude/memory/decisions/epic-11-slice-e-superseded-by-article-x.md, landed in c9b4bc6. Genesis is cited deliberately: the landmine triage-classifies-novelty-from-state-that-genesis-has-already-retired (also c9b4bc6) records that the earlier triage of this same epic cited only epic state and the roadmap, both lower-rung, and reached the wrong track.",
+  "track_reason": "chore is the leanest track; no track_reason owed. Recorded only to note the deliberate narrowing: scope is the roadmap row alone. The /triage dirty-write-surface preflight that would answer Q-004 mechanically is NOT in scope — it is new runtime behaviour and would route to tdd-quickfix or higher.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "docs/roadmap-execution-plan.md"
+  ],
+  "roadmap_tasks": [],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "integrate",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1786964949,
+  "updated_at": 1786967078,
+  "rightsize_base": [
+    "docs/roadmap-execution-plan.md"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "1 file, 1 line; no refactor move, no duplication, no reuse pass owed",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "integrate",
+      "reason": "no test surface, no MCP/runtime config, no downstream phase affected by a roadmap row",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs -> {sensitive:false,matched:[]}; docs/** is not in security.sensitive_globs",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "internal planning artifact, not user-facing prose; no count or inventory change, no new convention, no src/ template",
+      "oracle": "chore-conditional"
+    }
+  ]
+}

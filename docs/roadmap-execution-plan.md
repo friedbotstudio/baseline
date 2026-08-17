@@ -172,7 +172,7 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ B. Baseline-owned MCP coordination channel server
 - ✅ C. Sandboxed sprint mode: lead-spawned bounded workers on the channel + RALPH yield
 - 🟡 D. Merge + integrate + single gate-C on the sprint result
-- 🟡 E. Bounded charter (§II.B) sanctioning the sprint sandbox — NOT a §4.2 rewrite
+- ✅ E. Bounded charter for the sprint sandbox — SUPERSEDED, not built: Article X absorbed this slot per seed.md §4.2
 ## Epic 12 — System spec delta  ✅  (system-spec-delta)
 
 - ✅ A. C2-1 — `## System delta` becomes a required spec section, with a spec-lint row validator

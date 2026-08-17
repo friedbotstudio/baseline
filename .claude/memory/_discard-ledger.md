@@ -182,3 +182,5 @@
 - promoted :: .claude/skills/lib/epic-heading.mjs → landmarks.md
 - promoted :: .claude/skills/roadmap-sync/sync.mjs → landmarks.md
 - promoted :: .claude/skills/roadmap/parse.mjs → landmarks.md
+- discarded :: backlog → so-the-fix-is-not-to-delete-them-a4c5
+- discarded :: backlog → intent-so-the-fix-is-not-to-delete-d93d
