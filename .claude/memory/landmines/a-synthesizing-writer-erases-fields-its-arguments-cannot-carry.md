@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [implement, simplify, security]
 governs: .claude/skills/workspace/shards.mjs
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Path: `.claude/skills/workspace/shards.mjs → writeDiagramShard`, and any writer whose output is "a pure function of the arguments".

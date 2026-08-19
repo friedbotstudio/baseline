@@ -3,8 +3,8 @@ key: editing-a-baseline-skill-invalidates-the-manifest-hash
 category: landmines
 scope: [tdd, simplify, integrate, document]
 governs: .claude/skills/**
-verified-at: c53a121
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Trap: editing ANY baseline-owned file under `.claude/skills/**` (including a SKILL.md) invalidates its sha256 in `obj/template/.claude/manifest.json`. `audit-baseline` then fails with `skill ownership: <slug>  FAIL  hash mismatch at <path>`, and because many tests call `runRepoAudit`, one stale hash reads as a broad suite failure.

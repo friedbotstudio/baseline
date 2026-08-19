@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/contribute.mjs:1
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/workspace/contribute.mjs, .claude/skills/workspace/conflicts.mjs, .claude/skills/workspace/reconcile.mjs, .claude/skills/workspace/refs.mjs
 verified-at: 8201af6
@@ -18,5 +19,3 @@ last-touched: 2026-08-14
   - The `remove` verb was a silent no-op: `applyAll` did `if (op.verb === REMOVABLE) continue;`, so it validated the id existed and then deleted nothing while reporting success. It now calls `removeElement` (Foundation owns the delete). The prior cycle's remove test only exercised the CONFLICT path (absent id), never the success path — which is why a whole verb was inert and green.
 - **`detectConflicts` is blind to sibling ops.** It compares each op against the pre-existing corpus only, so same-anchor siblings in ONE contribution apply cleanly and then reject that contribution atomically on re-apply. Known, documented in the `workspace-corpus-seed` spec, deliberately not fixed there — it is why the seed carries 14 uniquely-anchored elements rather than 17.
 - `reconcile`'s delta returns `changed` and `unreferenced` only. `added` and `stale` were removed at `/simplify` as stubs — `added` needs a prior snapshot that does not exist, and how an element becomes stale is an open question the spec itself records.
-
-- load_bearing: true

@@ -2,8 +2,8 @@
 key: src/memory/constraints.template.md:1
 category: landmarks
 scope: [scout]
-verified-at: ce8c7cd
-last-touched: 2026-08-12
+verified-at: 69c3259
+last-touched: 2026-08-19
 governs: src/memory/constraints.template.md
 ---
 

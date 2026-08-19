@@ -1,6 +1,7 @@
 ---
 key: .claude/hooks/lib/write-surface.mjs
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/hooks/lib/write-surface.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/skills/triage/SKILL.md
 verified-at: c92f82a
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - Two rejection rules, both REJECT rather than repair. Absolute paths, drive prefixes and `..` segments are dropped (CWE-22, defense in depth — a member is only ever string-compared, never used to build a path). A run of more than `MAX_STAR_RUN` (3) consecutive `*` is dropped (CWE-1333); no legitimate glob needs more than `**`.
 - The star bound and the `globToRegex` run-collapse are two layers, not one fix twice. The bound covers only this path; the matcher fix also covers the pre-existing `project.json` callers the bound never sees. Neither alone satisfies spec AC-011. Since 2026-08-14 both halves live in [[.claude/hooks/lib/glob-match.mjs]] — the collapse is the compiler's, and `MAX_STAR_RUN` is imported from there rather than declared here, so the bound has one definition.
 - Companion: `.claude/hooks/lib/scoped-memory.mjs` (`entryPaths` + `narrowToWriteSurface`, the consumer), `.claude/hooks/lib/write-set-profile.mjs` (`pathOverlapsWriteSet`, the one-directional predicate this feeds), `.claude/hooks/process_lifecycle_guard.mjs` (the caller that reads the surface and passes it to the phase leg).
-
-- load_bearing: true

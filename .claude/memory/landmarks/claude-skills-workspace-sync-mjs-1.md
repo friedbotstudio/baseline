@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/sync.mjs:1
 category: landmarks
+rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/sync.mjs, .claude/skills/spec-sync/SKILL.md, docs/system/**
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - Hostile-filename safe end to end: probed with `lib/..evil/x.mjs`, `lib/a b/y.mjs`, `lib/UPPER.mjs`, `lib/-lead.mjs` — 4 elements written, every filename matching `^[a-z0-9][a-z0-9-]*\.md$`, nothing written outside `specDir`.
 - Re-runnable. A second run over a populated corpus is not a reset; it proposes what is missing.
 - Companions: `.claude/skills/spec-sync/SKILL.md` (the operator-facing skill), `.claude/skills/workspace/materialize.mjs`, `.claude/skills/workspace/coverage.mjs`, `.claude/skills/workspace/surface.mjs`.
-
-- rests_on: zero-runtime-dependencies

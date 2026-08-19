@@ -2,8 +2,8 @@
 key: .claude/skills/spec-shippability-review/scan-shipped-skills.mjs:1
 category: landmarks
 scope: [scout]
-verified-at: ce8c7cd
-last-touched: 2026-08-12
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Role: Orchestration — aggregate scanner for **every shipped surface**, not just skills (WIDENED 2026-08-12, consumer-install-defects D4/D7). CLI unchanged: `[--root <skills-dir>] [--report-root <project-root>] [--manifest <path> | --shipped-tree <dir>]`. Iterates the exported `SCAN_ROOTS` descriptors — skills, commands, agents, hooks, mcp, output-styles — each carrying its own finder and a `strictDevPaths` flag; `SCAN_EXEMPTIONS` names the three surfaces that cannot carry a runtime path (bin, schemas, memory) with a written reason each. Skills use `findScannableSkillFiles` (slug dirs gated on `owner: baseline`, top level only); commands/agents/output-styles use `topLevelScannableFiles`; hooks/mcp use `findNestedScannableFiles` (recursive). Aggregates into `<report-root>/.claude/state/spec-shippability/shipped-skills.json`. Exit 0 CLEAN / 1 NEEDS_REVIEW / 2 BLOCKED / 3 missing root. `--shipped-tree <dir>` still derives the shipped set from a walk rather than manifest.json, sidestepping the chicken-egg on build-template.sh Stage 3.

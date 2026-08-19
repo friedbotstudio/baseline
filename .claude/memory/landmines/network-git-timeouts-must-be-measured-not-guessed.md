@@ -3,8 +3,8 @@ key: network-git-timeouts-must-be-measured-not-guessed
 category: landmines
 scope: [tdd, implement]
 governs: .claude/skills/standup/**
-verified-at: c53a121
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Trap: a plausible-looking timeout on a network git operation produces intermittent false failures that look like flakiness.

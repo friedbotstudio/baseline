@@ -3,8 +3,8 @@ key: claude-skills-workspace-restore-degraded-shards-mjs
 category: landmarks
 scope: [scout]
 governs: .claude/skills/workspace/restore-degraded-shards.mjs
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Role: the corpus's repair path. Restores diagram shards a rewrite collapsed to the three-argument `Component` form. Reached at `node .claude/skills/workspace/cli.mjs restore-shards [--dry-run]`; the module exports `restoreDegradedShards({rootDir, specDir, dryRun})`.

@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/memory-index/constraints.mjs:41
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/memory/constraints/**, .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-sync/**
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - `writeConstraint` refuses to write when `constraints` is absent from `CANONICAL` (AC-010, rollout prerequisite P1). Rejected, never repaired — a constraint written into an unregistered directory is present on disk, invisible to the index, and silently absent from every lookup. Key safety reuses `assertSafeFactKey` from `migrate.mjs` rather than adding a second validator (security review F-5, same class as the ledger's F-3).
 - `decisionsRestingOn` goes through `resolveCategory`, so it answers correctly on a flat (unmigrated) store too.
 - Companion: `.claude/skills/memory-index/categories.mjs:1` (registers the category), `.claude/hooks/lib/memory_session_start.mjs:1` (surfaces the flip).
-
-- load_bearing: true

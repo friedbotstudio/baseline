@@ -5,8 +5,8 @@ scope: [scenario, implement]
 source: assistant-deferral
 raised-on: 2026-08-12
 raised-in-context: consumer-install-defects
-verified-at: ce8c7cd
-last-touched: 2026-08-12
+verified-at: 69c3259
+last-touched: 2026-08-19
 governs: tests/build-template-memory-excludes.test.mjs
 ---
 

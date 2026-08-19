@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/store.mjs:1
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/workspace/**, .claude/memory/workspace/**
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - `writeElement` validates the element id with `assertSafeFactKey` BEFORE building any path, and every other field name and value through `assertSafeFieldValue` — added after security review F-2, where a `title` carrying newlines forged real `load_bearing: true` and `governs:` frontmatter fields.
 - `readCollection` isolates per-ENTRY, not per-directory: a malformed element file is skipped while its siblings still read. A per-directory `try` would silently blank the whole corpus (the shape of security F-1 last cycle).
 - Companion: `.claude/skills/workspace/contribute.mjs:1` (its main writer), `.claude/skills/workspace/placement.mjs:1` (borrows `splitFrontmatter`), `.claude/skills/memory-index/migrate.mjs` (both validators).
-
-- load_bearing: true

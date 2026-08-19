@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/lib/argv.mjs
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/lib/argv.mjs, .claude/skills/lib/output.mjs, .claude/skills/workspace/cli.mjs, .claude/skills/memory-sync/cli.mjs, .claude/skills/system-reconcile/cli.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/commit/cli.mjs, .claude/skills/document/cli.mjs, .claude/skills/harness/cli.mjs, .claude/skills/standup/cli.mjs, .claude/skills/spec/cli.mjs
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - **It owns argv and nothing else.** Path validation belongs to the skill that owns the path — each dispatcher imports its own `assertNoTraversal` from `workspace/tree.mjs`. A Foundation module reaching into a sibling skill to validate would invert the layer model. Rendering is the same boundary in the other direction: it lives in [[claude-skills-lib-output-mjs]].
 - `dispatch` is **async and awaits the handler** — see [[claude-skills-harness-cli-mjs]] for the build-mirror constraint that forced it.
 - Related: [[claude-skills-workspace-queries-mjs]] holds the corpus queries the workspace dispatcher wires.
-
-- load_bearing: true

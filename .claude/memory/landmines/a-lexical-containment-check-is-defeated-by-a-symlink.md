@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [implement, security, simplify]
 governs: .claude/skills/tdd/drift_check.mjs, .claude/skills/workspace/restore-degraded-shards.mjs, .claude/skills/workspace/tree.mjs
-verified-at: be0a351
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Landmine: **`resolve()` + `startsWith(root)` is a LEXICAL check. A symlink whose path is inside the root passes it, and the subsequent `readFileSync` follows the link straight out of the tree.** CWE-59. Second occurrence of the class in two days.

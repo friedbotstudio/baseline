@@ -3,8 +3,8 @@ key: a-wide-governs-glob-ripples-into-unrelated-literals
 category: landmines
 scope: [memory-sync]
 governs: .claude/memory/README.md, tests/memory-scope-store-invariants.test.mjs
-verified-at: be0a351
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Landmine: **a memory entry's `governs:` glob is cheap to author and expensive later. Every census that intersects it moves, and the cost is paid by whoever re-measures those literals in a workflow that had nothing to do with the entry.**

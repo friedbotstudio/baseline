@@ -1,6 +1,8 @@
 ---
 key: .claude/skills/document/document-gate.mjs:1
 category: landmarks
+rests_on: zero-runtime-dependencies
+load_bearing: true
 scope: [document]
 governs: .claude/skills/document/**,.claude/skills/prose/SKILL.md
 verified-at: 8201af6
@@ -14,6 +16,3 @@ last-touched: 2026-08-14
 - Known limitation, deliberately not fixed: the map is **page-granular, not change-granular**. A one-word fix inside a code fence draws the same obligation as a full paragraph rewrite. A false obligation is what trains people to override a gate, so this matters. Backlog: `document-gate-change-granularity`.
 - Not enforced: nothing makes `/document` *call* the gate. `document/SKILL.md` step 6a instructs it and a test asserts the instruction is present, but a future run could skip the call the same way the original routing rule was skipped. Closing that needs a hook.
 - Slug is validated by `assertSafeSlug` from `.claude/hooks/lib/slug.mjs` before any path is built — see the `frontmatter-values-reach-regex-and-structured-writes-unescaped` landmine for why.
-
-- rests_on: zero-runtime-dependencies
-- load_bearing: true

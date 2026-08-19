@@ -1,6 +1,7 @@
 ---
 key: .claude/hooks/lib/governed-memory.mjs:51
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/hooks/lib/governed-memory.mjs, .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/entry-body.mjs
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - Hydration is **per-entry** isolated: a malformed shard is skipped, its siblings still surface. A per-*category* `try` silently suppressed every decision in the category (security review F-1).
 - Advisory and fail-open throughout — every path returns `[]` rather than throwing, matching the `surfaceScopedMemory` contract, so an unmigrated consumer install no-ops instead of breaking.
 - Companion: `.claude/skills/memory-index/resolve.mjs:59` (the index it reads), `.claude/hooks/lib/entry-body.mjs` (the verbatim/interpretation split, Article IX.6 made mechanical), `.claude/hooks/process_lifecycle_guard.mjs:50` (its caller). See the `governs-globs-under-a-phase-prefix-never-surface` landmine before adding a `governs:` glob.
-
-- load_bearing: true

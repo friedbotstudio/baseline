@@ -3,8 +3,8 @@ key: drift-check-resolves-an-ac-against-the-first-matching-line
 category: landmines
 scope: [tdd, scenario, implement]
 governs: .claude/skills/tdd/drift_check.mjs
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Path: `.claude/skills/tdd/drift_check.mjs → scoreAgainstDiff`.

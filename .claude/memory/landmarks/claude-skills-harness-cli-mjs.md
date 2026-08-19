@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/harness/cli.mjs
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/harness/cli.mjs, .claude/skills/harness/workflow-migrator.js, .claude/skills/lib/argv.mjs
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - Only one subcommand by design: the other seventeen modules in this directory (`rightsize-gate`, `checker-fanout`, `notify`, `consolidate-open-questions`, …) already self-dispatch on `process.argv` and are cited that way. Adding second front doors beside working ones is scaffold, not reuse.
 - Error mapping is deliberate: a missing file raises `NotFoundError` (exit 2), an unmapped `entry_phase` stays a validation error (exit 1). Collapsing them would tell a caller to fix their config when the real problem is a typo in the path.
 - Related: [[claude-skills-lib-argv-mjs]] owns the dispatch contract this wires into.
-
-- load_bearing: true

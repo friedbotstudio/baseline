@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/lib/output.mjs
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/lib/output.mjs, .claude/skills/lib/argv.mjs
 verified-at: 8201af6
@@ -13,5 +14,3 @@ last-touched: 2026-08-14
 - `emit()` writes `result.text` **verbatim, with no trailing newline added**, because `workspace view` returns a composed PlantUML document whose bytes a test compares against `composeView` directly. Adding a newline here breaks that equality for every artifact-emitting subcommand.
 - `emit()` takes an injectable `sink` defaulted to `process.stdout`. Nothing on the shipped path passes a second sink; it exists so the verbatim-write contract is testable without capturing process stdout.
 - Related: [[claude-skills-lib-argv-mjs]] owns argv and the exit contract.
-
-- load_bearing: true

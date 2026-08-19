@@ -1,6 +1,7 @@
 ---
 key: .claude/hooks/process_lifecycle_guard.mjs:50
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/hooks/lib/governed-memory.mjs
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - **This hook carries the second trigger instead of a 27th hook existing.** The baseline's hook count (26) is a constitutional figure in Article VIII and in `audit-baseline`; extending an existing advisory hook kept it fixed. Do not add a hook to add a trigger.
 - Both surfacing helpers are **terminal** — every branch exits via `emitAllow()`, which is `process.exit(0)`. That makes the two triggers mutually exclusive, which is a real behavioural constraint, not a detail: see the `governs-globs-under-a-phase-prefix-never-surface` landmine.
 - Companion: `.claude/hooks/lib/scoped-memory.mjs` (phase trigger), `.claude/hooks/lib/governed-memory.mjs:51` (path trigger).
-
-- load_bearing: true

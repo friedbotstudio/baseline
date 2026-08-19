@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/memory-index/resolve.mjs:59
 category: landmarks
+load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/governed-memory.mjs, .claude/skills/memory-sync/**
 verified-at: 8201af6
@@ -15,5 +16,3 @@ last-touched: 2026-08-14
 - **`backfillScopeAny` is REMOVED (roadmap T8), and the reason matters.** It stamped `scope: any` on unscoped facts so no fact would be unreachable. The reader never honoured it — `scoped-memory.mjs` matches a phase with `asArray(scope).includes(phase)`, and `['any'].includes('spec')` is `false` — so all 47 stamped entries surfaced at **zero** phases. The repair produced the condition it was written to end, and `README.md` plus `memory-sync/SKILL.md` both documented the intent as though it worked.
 - Reachability is now a predicate over **both legs**, not a scope value: `isReachable(entry)` is true when `scope:` names a phase **or** `governs:` names a glob. That is what made removing the placeholder safe — a `governs:`-only entry was always reachable via the path leg, and it was the single-leg check that made it look orphaned. `assertWritable` additionally refuses a scope silently inherited from `SCOPE_BY_CATEGORY` (exported from `migrate.mjs` for exactly this check), because that inheritance is what stamped all 87 landmarks and all 49 landmines.
 - Companion: `.claude/skills/memory-index/index-io.mjs:12` (its Foundation), `.claude/hooks/lib/governed-memory.mjs:51` (its consumer).
-
-- load_bearing: true

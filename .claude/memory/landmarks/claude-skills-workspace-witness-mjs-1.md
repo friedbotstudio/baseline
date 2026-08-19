@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/witness.mjs:1
 category: landmarks
+rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/witness.mjs, .claude/skills/workspace/reconcile.mjs, .claude/skills/workspace/shards.mjs, .claude/project.json
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - **Fails open to `witness: none`.** A malformed, null, array-shaped or wrong-typed `witnesses` config yields `none` rather than throwing — the safe direction, since `none` is non-citable. Note this is the opposite policy to `surface.mjs`, which refuses; the asymmetry is intentional and each is documented at its own call site.
 - **Known gap, not fixed:** `anchor-digest` is vacuous for any file with no exports, which is every hook. See [[anchor-digest-is-vacuous-for-exportless-files-3f7c]] — a diagram over the hook layer is currently marked witnessed and citable while its witness can never change.
 - Companions: `.claude/skills/workspace/reconcile.mjs` (applies the binding in `withWitness`), `.claude/skills/workspace/shards.mjs` (parses `' @kind` / `' @witness` from PlantUML comments).
-
-- rests_on: zero-runtime-dependencies

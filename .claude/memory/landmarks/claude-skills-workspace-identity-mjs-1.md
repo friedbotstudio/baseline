@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/identity.mjs:1
 category: landmarks
+rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/identity.mjs, .claude/skills/workspace/materialize.mjs, .claude/skills/workspace/store.mjs, docs/system/elements/**
 verified-at: 8201af6
@@ -14,5 +15,3 @@ last-touched: 2026-08-14
 - **Authored ids were kept for the existing corpus.** Re-deriving all 112 would have renamed every file and thrown away semantic names like `slug-safety`. Derivation applies to new bare anchors, not retroactively.
 - Defence in depth: `store.writeRecord` and `removeElement` call `assertSafeSlug` independently, so a hostile id cannot reach a path build even if derivation were wrong (`docs/archive/2026-08-06/central-system-spec/security.md`).
 - Companions: `.claude/skills/workspace/materialize.mjs` (the caller), `.claude/skills/workspace/concepts.mjs` (where anchors are authored), `.claude/hooks/lib/slug.mjs` (`assertSafeSlug`).
-
-- rests_on: zero-runtime-dependencies

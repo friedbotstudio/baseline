@@ -1,6 +1,7 @@
 ---
 key: .claude/skills/workspace/annotations.mjs:1
 category: landmarks
+rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/annotations.mjs, .claude/skills/scout/SKILL.md, docs/annotations.md
 verified-at: 8201af6
@@ -15,5 +16,3 @@ last-touched: 2026-08-14
 - Fail-open throughout. No git work tree, unreadable file, or malformed `project.json` each degrade to scanning less, never to throwing. Always exits 0 — a dangling annotation is a scout-report finding, never a failed phase.
 - `files?` exists so fixtures can drive it (a `mkdtemp` root is not a git repo). Security review recorded it as LOW CWE-22: the parameter is not contained to `rootDir`, and `git ls-files` output cannot escape, so no untrusted caller reaches it. Report: `docs/archive/2026-08-04/tracking-annotations/security.md`.
 - Companions: `.claude/skills/workspace/refs.mjs` (the resolver + the verb map), `.claude/skills/workspace/placement.mjs` (the write side), `docs/annotations.md` (the format reference).
-
-- rests_on: zero-runtime-dependencies

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [memory-sync]
 governs: .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/lib/argv.mjs
-verified-at: 79e41cb
-last-touched: 2026-08-13
+verified-at: 69c3259
+last-touched: 2026-08-19
 ---
 
 - Path: `.claude/skills/memory-index/constraints.mjs → writeConstraint`, reached through `memory-index/cli.mjs constraint`.
