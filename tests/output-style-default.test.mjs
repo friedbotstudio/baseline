@@ -71,7 +71,7 @@ describe('output style — shipped default', () => {
     );
   });
 
-  it('test_when_style_file_read_then_frontmatter_and_two_modes_present', async () => {
+  it('test_when_style_file_read_then_frontmatter_and_single_voice_present', async () => {
     const style = await readRepoText(STYLE_PATH);
     const frontmatter = frontmatterOf(style);
     assert.ok(frontmatter, `${STYLE_PATH} must open with a YAML frontmatter block`);
@@ -81,8 +81,8 @@ describe('output style — shipped default', () => {
     assert.equal(frontmatter.name, 'Baseline', 'the frontmatter name is what outputStyle resolves against');
     assert.equal(
       modeHeadings(style).length,
-      2,
-      'the shipped style carries exactly two modes (Engineer, Analyst)'
+      0,
+      'the shipped style carries one voice — a `## ... Mode` section reintroduces the retired mode split'
     );
     assert.ok(!/quirky/i.test(style), 'Quirky Mode is deliberately excluded from the shipped style');
     assert.ok(/^##\s+Scope\s*$/m.test(style), 'the Scope section keeps STE out of code and skill-owned files');

@@ -1,0 +1,46 @@
+{
+  "request": "Restore an adapted ## Scope section to the rewritten Baseline output style, update tests/output-style-default.test.mjs to match the single-voice structure, and correct the two-modes claim in README.md",
+  "slug": "output-style-single-voice",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "tests/output-style-default.test.mjs:74 asserts exactly two mode sections plus a ## Scope heading; README.md:107 claims 'Two modes, Engineer and Analyst'. Both describe the structure the working-tree rewrite of .claude/output-styles/baseline.md replaced.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/output-styles/baseline.md",
+    "tests/output-style-default.test.mjs",
+    "README.md"
+  ],
+  "exceptions": [
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "created_at": 1787137659,
+  "updated_at": 1787138731,
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "diff intersects no security.sensitive_globs (sensitive-surface: false)",
+      "oracle": "chore-conditional"
+    }
+  ]
+}
