@@ -31,6 +31,7 @@ export const DISPATCHERS = {
   harness: '.claude/skills/harness/cli.mjs',
   standup: '.claude/skills/standup/cli.mjs',
   spec: '.claude/skills/spec/cli.mjs',
+  roadmap: '.claude/skills/roadmap/cli.mjs',
 };
 
 // Pattern B (spec dispatcher-sweep D1): a single-purpose helper carrying its own

@@ -1,0 +1,69 @@
+{
+  "request": "Add a /roadmap skill — a read-only front door onto the execution roadmap that lists epics with tallies, nests open task rows beneath their epic, collapses fully-done epics to a single rollup line, and ends with the next planned task. --all expands done rows. No narrative/Progress bullets. In the family of /standup. Carries the 58->59 baseline-skill count cascade.",
+  "slug": "roadmap-front-door",
+  "track_id": "spec-entry",
+  "novelty": "pattern-copy",
+  "novelty_evidence": ".claude/skills/standup/{SKILL.md,cli.mjs,render.mjs} is the precedent shape — owner: baseline, disable-model-invocation: true, read-only recap, dispatch via .claude/skills/lib/argv.mjs. The roadmap reader half already exists at .claude/skills/roadmap/{cli.mjs,parse.mjs} with tasks/epics/next verbs and lacks only a SKILL.md front door. Backlog seven-skill-sops-under-describe-their-cli-2f7d records that gap directly.",
+  "track_reason": "Leaner than spec-entry is tdd-quickfix, whose derived exceptions include spec-shippability-review. This cycle ships a new baseline-owned SKILL.md into consumer installs and rewrites obj/template/.claude/manifest.json, which is precisely the risk that checker covers (dev-tree path references in shipped SKILL.md prose; imports absent from the consumer manifest). spec-entry is the leanest track whose guardrails cover that risk.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/roadmap/**",
+    ".claude/skills/lib/**",
+    ".claude/skills/standup/**",
+    ".claude/skills/harness/checkers/**",
+    "tests/**",
+    "CLAUDE.md",
+    "src/CLAUDE.template.md",
+    "README.md",
+    ".claude/CONSTITUTION.md",
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "site-src/skills.njk",
+    "obj/template/.claude/manifest.json",
+    "docs/specs/roadmap-front-door.md",
+    "docs/system/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "terminal-sanitizer-duplicated-across-standup-and-deferral-checker"
+  ],
+  "created_at": 1787167105,
+  "updated_at": 1787175000,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "spec_amendments": [
+    {
+      "phase": "post-approve-direction",
+      "change": "Design calls column header Row -> Slug",
+      "reason": "drift_check parses the first cell of every Design calls row and skips only a header spelled Slug or Kind; Row was read as a second design call no code could satisfy",
+      "reapproved_at": 1787174292
+    }
+  ]
+}

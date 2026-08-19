@@ -3,13 +3,14 @@ key: terminal-sanitizer-duplicated-across-standup-and-deferral-checker
 category: backlog
 scope: [implement, simplify]
 governs: .claude/skills/harness/checkers/*.mjs
-status: open
+status: picked-up
 raised-on: 2026-08-13
 raised-in-context: skill-character-doctrine
 source: assistant-deferral
 deferred: cost
 verified-at: e36bcb9
 last-touched: 2026-08-13
+superseded-at: 2026-08-19
 ---
 
 > Extracting a shared module for two consumers is the premature abstraction code-structure's laziness ladder warns against — the third use is where it earns its place.

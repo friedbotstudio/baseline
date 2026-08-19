@@ -4,6 +4,7 @@
 // entry the diff never touched is an entry this checker never reads. The 57 entries
 // predating the rule stay untagged until someone reopens one.
 
+import { clip } from '../../lib/terminal-text.mjs';
 import { normalizeFinding } from '../../spec-diagram-review/oracle.mjs';
 
 export const phase = 'code-review';
@@ -11,19 +12,6 @@ export const phase = 'code-review';
 const BACKLOG_PREFIX = '.claude/memory/backlog/';
 const REASONS = ['dependency', 'risk', 'cost', 'human-directed'];
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---/;
-
-// A finding's text reaches an operator's terminal, and a backlog entry is
-// repository-controlled — `memory_stop.mjs` writes them from conversation text.
-// Left raw, `ESC [2K ESC [1G` in a key erases the line printed above the finding and
-// forges a passing row. Controls become spaces BEFORE the collapse absorbs them,
-// because ESC and BEL are not whitespace and `\s+` alone leaves them intact.
-const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/gu;
-const FIELD_WIDTH = 96;
-
-function safe(text) {
-  const flat = String(text ?? '').replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim();
-  return flat.length <= FIELD_WIDTH ? flat : `${flat.slice(0, FIELD_WIDTH - 1)}…`;
-}
 
 export function run({ changedFiles } = {}) {
   const findings = [];
@@ -47,7 +35,7 @@ function inspect(content) {
     return { check: 'deferral_untagged', reason: 'carries no `deferred:` key' };
   }
   if (!REASONS.includes(deferred)) {
-    return { check: 'deferral_invalid_reason', reason: `\`deferred: ${safe(deferred)}\` is outside the closed list` };
+    return { check: 'deferral_invalid_reason', reason: `\`deferred: ${clip(deferred)}\` is outside the closed list` };
   }
   return null;
 }
@@ -62,7 +50,7 @@ function parseFields(text) {
 }
 
 function finding(file, { check, reason }) {
-  const key = safe(keyOf(file));
+  const key = clip(keyOf(file));
   return normalizeFinding({
     check,
     file: file.path,

@@ -43,7 +43,7 @@ export const SKILL_CATEGORIES = {
   altTracks: 2,
   maintenance: 4,
   sprint: 5,
-  roadmap: 2,
+  roadmap: 3,
 };
 
 // Spell out a count for prose/word-form surfaces. Throws on an unmapped value so

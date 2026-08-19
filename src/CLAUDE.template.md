@@ -273,6 +273,6 @@ You SHALL:
 
 ## Appendix — Reference (in the annex)
 
-Read on demand from **`.claude/CONSTITUTION.md`**: **Appendix A — Where things live** and **Appendix B — Skill index** (58 skills by category).
+Read on demand from **`.claude/CONSTITUTION.md`**: **Appendix A — Where things live** and **Appendix B — Skill index** (59 skills by category).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 58 skills, `.claude/commands/` (6 commands), 8 memory files, 4 MCP servers, 1 output style, `docs/init/seed.md` (genesis).
+Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 59 skills, `.claude/commands/` (6 commands), 8 memory files, 4 MCP servers, 1 output style, `docs/init/seed.md` (genesis).

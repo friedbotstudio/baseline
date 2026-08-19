@@ -446,15 +446,19 @@ describe('AC-013 — the new modules are inert while the flag is off', () => {
 
 // ─── Governance — the count this slice moves ───
 
+// AC-011 is this block: the derived total, the authored category sum, and every
+// pinned prose surface must agree on one number. AC-012 — the manifest carrying
+// that many `owners.skills` entries with no hash mismatch — is audit-baseline's
+// to assert, and it runs as the first half of the binding test command.
 describe('slice B governance — one new baseline-owned skill', () => {
   it('test_when_skill_shipped_then_ownership_and_counts_agree', async () => {
     const deriver = await tryImport(DERIVER);
     assert.ok(deriver, `${DERIVER} does not exist`);
 
-    assert.equal(deriver.deriveCounts(REPO_ROOT).skills, 58, 'disk must carry 58 baseline-owned skills');
+    assert.equal(deriver.deriveCounts(REPO_ROOT).skills, 59, 'disk must carry 59 baseline-owned skills');
     assert.equal(
       Object.values(deriver.SKILL_CATEGORIES).reduce((a, b) => a + b, 0),
-      58,
+      59,
       'the authored category breakdown must sum to the derived total',
     );
 
@@ -462,25 +466,25 @@ describe('slice B governance — one new baseline-owned skill', () => {
     // is the failure mode of adding a skill, and it should fail here rather than
     // in audit-baseline at integrate.
     const surfaces = [
-      ['CLAUDE.md', /\b58 skills\b/],
-      ['src/CLAUDE.template.md', /\b58 skills\b/],
-      ['README.md', /\b58 skills\b/],
-      ['docs/init/seed.md', /§4\.3 Skills \(58\)/],
-      ['src/seed.template.md', /§4\.3 Skills \(58\)/],
-      ['site-src/skills.njk', /\b58 baseline-owned skills\b/],
+      ['CLAUDE.md', /\b59 skills\b/],
+      ['src/CLAUDE.template.md', /\b59 skills\b/],
+      ['README.md', /\b59 skills\b/],
+      ['docs/init/seed.md', /§4\.3 Skills \(59\)/],
+      ['src/seed.template.md', /§4\.3 Skills \(59\)/],
+      ['site-src/skills.njk', /\b59 baseline-owned skills\b/],
     ];
     for (const [rel, required] of surfaces) {
       const text = readFileSync(join(REPO_ROOT, rel), 'utf8');
       assert.match(text, required, `${rel} must claim the new count`);
       assert.ok(
-        !/\b57\s+(?:baseline-owned\s+)?skills?\b/.test(text),
-        `${rel} still claims 57 skills somewhere`,
+        !/\b58\s+(?:baseline-owned\s+)?skills?\b/.test(text),
+        `${rel} still claims 58 skills somewhere`,
       );
     }
 
     assert.match(
       readFileSync(join(REPO_ROOT, 'site-src/skills.njk'), 'utf8'),
-      /value:\s*"58"/,
+      /value:\s*"59"/,
       'the rendered stat tile must carry the new count',
     );
   });

@@ -12,28 +12,13 @@
 // Nothing here reads the filesystem, git, or the clock — the same recap always
 // renders the same lines.
 
+import { clip } from '../lib/terminal-text.mjs';
+
 const BUMP_RANK = { none: 0, patch: 1, minor: 2, major: 3 };
 const RANK_BUMP = ['none', 'patch', 'minor', 'major'];
 
 const COMMIT_DETAIL_MAX = 20;
 const OPEN_TASK_DETAIL_MAX = 20;
-const DETAIL_WIDTH = 96;
-
-// parse.mjs sets a task row's title to the full row text, and the live roadmap
-// carries rows past 1000 characters. Collapsing whitespace is what guarantees
-// "one row, one line" — a clipped-but-multiline title still breaks the block.
-//
-// Controls are neutralised BEFORE the collapse, and the order is load-bearing:
-// ESC and BEL are not whitespace, so `\s+` alone left them intact and every
-// commit subject, roadmap title and question body — all repository-controlled
-// content — reached the operator's terminal verbatim. Replacing them with a
-// space first means the collapse then absorbs the gap they leave behind.
-const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/gu;
-
-function clip(text) {
-  const flat = String(text ?? '').replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim();
-  return flat.length <= DETAIL_WIDTH ? flat : `${flat.slice(0, DETAIL_WIDTH - 1)}…`;
-}
 
 export function renderRecap(recap) {
   if (recap === null || typeof recap !== 'object' || Array.isArray(recap)) {

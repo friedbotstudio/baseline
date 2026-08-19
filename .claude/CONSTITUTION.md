@@ -171,7 +171,7 @@ Relocated from CLAUDE.md (2026-08-10, `warm-context-diet`) — it is a verbatim 
 fires only when `configured: false`, so a configured repository loaded it warm every session
 and never used it. When `configured: false`, greet with this exact framing:
 
-> "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 58 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+> "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 59 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
 
 ### Skill provenance and the manifest (Article XII / seed.md §17)
 
@@ -232,7 +232,7 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 |---|---|
 | `.claude/hooks/` | 26 hook scripts (21 write/run-boundary + 4 lifecycle + 1 input-boundary). Node ESM (.mjs), no jq. |
 | `.claude/agents/` | 1 baseline subagent: `swarm-worker` (rendered from `src/agents/swarm-worker.template.md`) |
-| `.claude/skills/` | 58 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (10) + audit (1) + alt tracks (2) + maintenance (4) + sprint (5) + roadmap (2) |
+| `.claude/skills/` | 59 skills: artifact (4) + phases (10) + workers (5) + spec helpers (5) + orchestration (3) + memory (1) + navigation (1) + phase helpers (1) + generators (4) + shared globals (10) + audit (1) + alt tracks (2) + maintenance (4) + sprint (5) + roadmap (3) |
 | `.claude/commands/` | 6 commands: 4 consent gates (`approve-direction`, `approve-swarm`, `grant-commit`, `grant-push`) + `init-project` (bootstrap) + `init-project-doctor` (doctor) |
 | `.claude/memory/` | 7 canonical knowledge categories — flat `<name>.md`, or `<category>/<key>.md` directories under the sharded store (`memory.sharded_store.enabled`, live here since 2026-07-17) — plus `_pending.md` (staging) + `_resume.md` (continuity snapshot) + `_thread.md` (durable local thread trail) + `README.md` |
 | `.claude/project.json` | per-project config (test/lint cmd, TDD globs, destructive patterns, swarm config, additions). Populated by `/init-project`. |
@@ -299,7 +299,8 @@ It is **model-internal**: Claude Code performs shelve and resume automatically; 
 - `gitignore` — generate or repair a project's `.gitignore`, composing the baseline must-ignore set (`baseline-ignores.json`) with optional gitignore.io enrichment; merges add-only so existing entries are never lost.
 - `upgrade-project` — reconcile the baseline-versioned files that `create-baseline upgrade` staged for LLM-assisted semantic merge; reads the stage manifest, reasons through each three-way delta in main context, writes a reconciled LOCAL, deletes the stage when every file lands.
 
-**Roadmap (2)** — derive and maintain the execution plan:
+**Roadmap (3)** — derive, read, and maintain the execution plan:
+- `roadmap` — read-only view of the plan: every epic with its tallies, open rows nested beneath their epic, wholly-finished epics folded into one rollup line, and the next planned task in file order. `--all` expands the rollup; `--epic N` scopes to one epic. Four verbs (`list`, `tasks`, `epics`, `next`), all `--json`-capable. Never writes; not a workflow phase.
 - `roadmap-planner` — re-derive an execution roadmap from the vision/spec corpus by first principles, then diff that derivation against the existing roadmap to prove task ORDER is correct (producer-after-consumer and seam-after-consumer errors, cycles, over-fragmentation). Never blindly overwrites a hand-crafted roadmap.
 - `roadmap-sync` — Phase 10.6. Flips the tasks named in `workflow.json → roadmap_tasks[]` from ⬜ to ✅ and promotes their epic headings, preserving the standup parser format contract. Fail-open; runs on every committing track. On the `epic` track it appends the epic's own heading plus one row per slice, and stamps `roadmap_epic` into the epic state so each child can name its row.
 
