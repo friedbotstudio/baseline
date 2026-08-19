@@ -1,3 +1,17 @@
+# [0.24.0](https://github.com/friedbotstudio/baseline/compare/v0.23.0...v0.24.0) (2026-08-19)
+
+
+### Bug Fixes
+
+* **tests:** repair the two tests that were red at HEAD ([88473c1](https://github.com/friedbotstudio/baseline/commit/88473c144f20136d4b81f2cd0020c7c227e8e85a))
+
+
+### Features
+
+* **memory:** a workflow's declared write surface narrows what a phase surfaces ([d3887df](https://github.com/friedbotstudio/baseline/commit/d3887df3445ad9da4d7949723de6005374fec0a5))
+* **output-style:** one voice replaces the Engineer and Analyst modes ([74e6f79](https://github.com/friedbotstudio/baseline/commit/74e6f799e31985a38e4f187edc39d64aa813b167))
+* **roadmap:** an epic lands on the roadmap when its discovery commits ([c2af635](https://github.com/friedbotstudio/baseline/commit/c2af63547dd7c2e3148db9b3d9811eca607aa3eb))
+
 # [0.23.0](https://github.com/friedbotstudio/baseline/compare/v0.22.0...v0.23.0) (2026-08-14)
 
 
