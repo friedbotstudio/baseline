@@ -184,3 +184,4 @@
 - promoted :: .claude/skills/roadmap/parse.mjs → landmarks.md
 - discarded :: backlog → so-the-fix-is-not-to-delete-them-a4c5
 - discarded :: backlog → intent-so-the-fix-is-not-to-delete-d93d
+- promoted :: @modelcontextprotocol/sdk → libraries.md

@@ -3,13 +3,14 @@ key: epic-close-has-no-superseded-status
 category: backlog
 scope: []
 governs: .claude/skills/commit/epic_close.mjs
-status: open
+status: picked-up
 source: inferred-from-code
 deferred: cost
 raised-on: 2026-08-17
 raised-in-context: epic11-slice-e-superseded
 verified-at: 309d70e
 last-touched: 2026-08-17
+superseded-at: 2026-08-19
 ---
 
 - **The defect.** `epic_close.mjs:50` reads `return children.filter((c) => c.status !== 'committed');`. The child-status vocabulary is therefore binary: `committed`, or open. There is no way to record a slice that was resolved *without* landing a commit.

@@ -3,13 +3,14 @@ key: epic-11-slice-d-needs-respec-against-org-dispatch
 category: backlog
 scope: []
 governs: .claude/skills/org-dispatch/SKILL.md, .claude/skills/org-dispatch/org-mode.mjs, .claude/state/epic/mvp-sprint-parallel-cycles.json
-status: open
+status: picked-up
 source: inferred-from-code
 deferred: dependency
 raised-on: 2026-08-17
 raised-in-context: epic11-slice-e-superseded
 verified-at: 309d70e
 last-touched: 2026-08-17
+superseded-at: 2026-08-19
 ---
 
 - **Respec before building.** Epic 11 slice D ("Merge + integrate + single gate-C on the sprint result") has acceptance criteria written against `sprint-dispatch`, which is retired and off disk. `.claude/skills/` now holds `org-dispatch`, `sprint-oracle`, `sprint-plan`, `sprint-planner` — no `sprint-dispatch`. Building D as written would target a component that does not exist.

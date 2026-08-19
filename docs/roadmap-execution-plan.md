@@ -181,3 +181,10 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ D. C2-4 — backfill the @kind witness annotation across every shard in docs/system/diagrams/ (depends on B)
 - ✅ E. C2-5 — research retrieves structurally over the corpus via source_spec, ranked beside term overlap
 - ✅ F. C2-6 — constitutional amendment: seed.md §4.8/§9/§12, CLAUDE.md Article IX clause 10, byte-equal mirrors, under the 38,800-char budget
+## Epic 13 — Baseline mcp  ⬜  (baseline-mcp)
+
+- ⬜ A. Rename sprint-channel to baseline
+- ⬜ B. Channel state root is worktree-safe
+- ⬜ C. General task management on the baseline server
+- ⬜ D. Native cross-session messaging as a push accelerator
+- ⬜ E. Org worktree isolation, merge audit, and the single landing

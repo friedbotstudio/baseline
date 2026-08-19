@@ -1,0 +1,60 @@
+{
+  "request": "Turn sprint-channel into the baseline MCP server: rename it, make its state root worktree-safe, add general task management, add native cross-session messaging as a push accelerator, then land org-mode worktree isolation with a merge audit, one integrate and one gate C. Supersedes Epic 11 row D.",
+  "slug": "baseline-mcp",
+  "track_id": "epic",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Four of five slices trace to cited artifacts: Epic 11 slice D (.claude/state/epic/mvp-sprint-parallel-cycles.json, docs/specs/mvp-sprint-parallel-cycles.md:367), backlog keys `epic-11-slice-d-needs-respec-against-org-dispatch` and `epic-close-has-no-superseded-status`, CLAUDE.md Article X and annex 5.6, and seed.md:344 (which already names sprint-pool the opt-in push accelerator this epic replaces). Slice D is the novel part: native cross-session messaging (ListAgents/SendMessage, code.claude.com/docs/en/cross-session-messaging) appears in no spec on disk. Searched docs/specs/ and docs/system/ for a native-messaging precedent and found none.",
+  "track_reason": "Epic over spec-entry because the work decomposes into five separately-committable slices, above epic.min_slices of 3, and one discovery pass amortizes across all of them.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/mcp/**",
+    ".claude/skills/org-dispatch/**",
+    ".claude/skills/companion/**",
+    ".claude/skills/commit/**",
+    ".claude/skills/audit-baseline/**",
+    ".claude/skills/upgrade-project/**",
+    ".mcp.json",
+    "src/**",
+    "docs/init/seed.md",
+    "CLAUDE.md",
+    ".claude/CONSTITUTION.md",
+    "docs/system/**",
+    "site-src/**",
+    "scripts/bundle-mcp-servers.mjs",
+    "README.md",
+    "PRODUCT.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "archive",
+    "chore",
+    "cli-copy-review",
+    "document",
+    "integrate",
+    "org-dispatch",
+    "security",
+    "simplify",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "epic-11-slice-d-needs-respec-against-org-dispatch",
+    "epic-close-has-no-superseded-status"
+  ],
+  "created_at": 1787000000,
+  "updated_at": 1787160366,
+  "rightsize_base": []
+}
