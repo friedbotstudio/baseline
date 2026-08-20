@@ -65,12 +65,21 @@ export function runCodeStructureOracle({ changedFiles } = {}, deps = {}) {
         message: `${file.path} has ${lines} substantive lines; split along layer lines (code-structure).`,
         suggested_fix: 'Extract sub-modules following the Orchestration / Domain / Foundation model.',
         artifact: { kind: 'file-length', file: file.path, lines },
-      }, { mandatory }));
+      }, { mandatory: mandatory && !isInheritedDebt(file) }));
     }
     const ratioFinding = commentRatioFinding(file, lines);
     if (ratioFinding) findings.push(ratioFinding);
   }
   return { findings };
+}
+
+// A file already over budget at HEAD carries debt this change did not create, so the
+// finding is named on every touch and blocks nothing. 93 of 300 baseline-owned files
+// are over the budget; blocking on inherited length would freeze a third of the tree.
+// `prior` is null for a file this change created — that length is the change's own.
+function isInheritedDebt(file) {
+  const prior = file && file.prior;
+  return typeof prior === 'string' && substantiveLineCount(prior) > LINE_BUDGET;
 }
 
 // mandatory is FORCED false, not read from the dial: D-2 lands this advisory for one

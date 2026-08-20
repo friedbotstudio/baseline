@@ -1,0 +1,54 @@
+{
+  "request": "Fix the ctx.changedFiles shape mismatch: assembleChangedFiles emits path strings but runCodeStructureOracle reads {path, content} objects, so the code-structure checker in the code-review fan-out returns CLEAN without checking anything. Name the ctx element type in the integrate SOP, hold it with a test, and decide in the spec whether the code-structure line budget is a property of the file or of the change.",
+  "slug": "changedfiles-shape-contract",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "backlog code-review-fanout-defects-from-dispatcher-sweep-9444, child entry 1-ctx-changedfiles-has-two-readers-that-disagree-on-its-shape (raised 2026-08-09, verified-at dd0e5d2, status open)",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/harness/assemble-context.mjs",
+    ".claude/skills/harness/checker-fanout.mjs",
+    ".claude/skills/harness/checkers/*.mjs",
+    ".claude/skills/code-structure/oracle.mjs",
+    ".claude/skills/simplify/oracle.mjs",
+    ".claude/skills/simplify/SKILL.md",
+    ".claude/skills/integrate/SKILL.md",
+    "docs/specs/changedfiles-shape-contract.md",
+    "tests/*.test.mjs"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "1. `ctx.changedFiles` has two readers that disagree on its shape"
+  ],
+  "created_at": 1787216812,
+  "updated_at": "2026-08-20T11:38:20.159Z",
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

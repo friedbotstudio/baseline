@@ -2,13 +2,14 @@
 key: 1. `ctx.changedFiles` has two readers that disagree on its shape
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-09
 raised-in-context: dispatcher-sweep
 verified-at: dd0e5d2
 last-touched: 2026-08-09
 governs: .claude/skills/code-structure/oracle.mjs, .claude/skills/harness/checkers/mutation-score.mjs, .claude/skills/harness/checker-fanout.mjs
+superseded-at: 2026-08-20
 ---
 
 - **The defect.** `code-structure/oracle.mjs → runCodeStructureOracle` reads

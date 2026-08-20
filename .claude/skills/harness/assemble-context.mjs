@@ -11,8 +11,17 @@
 // with no input, and the verdict it emits will be indistinguishable from a real
 // one. Both halves are fixed here: the input has an owner, and the verdict
 // carries which kind of zero it means.
+//
+// The element type is `{path, content, prior}` and `assertChangedFilesShape`
+// is the one export on this path that throws. Giving the input an owner was
+// not enough on its own: the owner emitted bare path strings while
+// `code-structure` and `backlog-deferral` read `file.content` and `file.path`,
+// so both stayed vacuous with no error and no skip marker. Every other function
+// here is fail-open by contract, which is exactly why that was silent.
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const CHANGED_FILES_ARGS = ['diff', '--name-only', 'HEAD'];
 
@@ -36,8 +45,54 @@ export function describeInputState(changedFiles, { probeFailed = false } = {}) {
   return 'measured';
 }
 
-export function assembleContext({ rootDir, exec = gitExec } = {}) {
-  const changedFiles = assembleChangedFiles({ rootDir, exec });
+// `prior` is the file's content at HEAD, or null when this change created it.
+// The code-structure oracle decides severity from it and never reads a file
+// itself, so the IO stays on this side of the boundary.
+function hydrateChangedFile(rootDir, path, { exec, readFile }) {
+  let content;
+  try {
+    content = String(readFile(join(rootDir, path)));
+  } catch {
+    return null;
+  }
+  let prior = null;
+  try {
+    prior = String(exec(rootDir, ['show', `HEAD:${path}`]));
+  } catch {
+    prior = null;
+  }
+  return { path, content, prior };
+}
+
+export function assertChangedFilesShape(changedFiles) {
+  if (!Array.isArray(changedFiles)) {
+    throw new TypeError(`ctx.changedFiles must be an array of {path, content, prior}; got ${typeof changedFiles}`);
+  }
+  changedFiles.forEach((file, index) => {
+    if (file === null || typeof file !== 'object') {
+      throw new TypeError(
+        `ctx.changedFiles[${index}] must be a {path, content, prior} object; got ${typeof file}`,
+      );
+    }
+    for (const field of ['path', 'content']) {
+      if (typeof file[field] !== 'string') {
+        throw new TypeError(
+          `ctx.changedFiles[${index}].${field} must be a string; got ${typeof file[field]}`,
+        );
+      }
+    }
+    if (file.prior !== null && typeof file.prior !== 'string') {
+      throw new TypeError(
+        `ctx.changedFiles[${index}].prior must be a string or null; got ${typeof file.prior}`,
+      );
+    }
+  });
+}
+
+export function assembleContext({ rootDir, exec = gitExec, readFile = readFileSync } = {}) {
+  const changedFiles = assembleChangedFiles({ rootDir, exec })
+    .map((path) => hydrateChangedFile(rootDir, path, { exec, readFile }))
+    .filter(Boolean);
   return { changedFiles, inputState: describeInputState(changedFiles) };
 }
 

@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assembleContext, describeInputState } from './assemble-context.mjs';
+import { assembleContext, assertChangedFilesShape, describeInputState } from './assemble-context.mjs';
 import { runDiagramOracle } from '../spec-diagram-review/oracle.mjs';
 import { runTraceabilityOracle } from '../spec-traceability-review/oracle.mjs';
 import { runRolloutOracle } from '../spec-rollout-enforceability-review/oracle.mjs';
@@ -159,6 +159,9 @@ export async function runCheckerFanout({ slug, rootDir, enabled, phase, ctx: ext
     ...(assembled ? { changedFiles: assembled.changedFiles } : {}),
     ...(extraCtx || {}),
   };
+  // Loud on purpose. Every other function on this path is fail-open, which is why a
+  // producer emitting bare strings left two object-reading checkers silently vacuous.
+  if (effectivePhase === 'code-review') assertChangedFilesShape(ctx.changedFiles || []);
   const names = checkers && checkers.length
     ? checkers
     : Object.keys(reg).filter((n) => entryPhase(reg[n]) === effectivePhase);

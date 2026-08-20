@@ -142,8 +142,12 @@ function splitEntries(text) {
   for (let i = 1; i < splits.length; i += 2) {
     const heading = splits[i];
     const tail = i + 1 < splits.length ? splits[i + 1] : '';
-    const trimmed = heading.slice(2).trim();
-    const key = trimmed ? trimmed.split(/\s+/)[0] : '';
+    // The whole heading is the key. Taking only the first token registered a
+    // sentence-keyed entry under a fragment, and findEntryBlock compares for exact
+    // equality — so four live backlog entries were unreachable by every mode.
+    // blockToFact and splitFlatIntoRecords already key on the full heading; this
+    // agrees with them.
+    const key = heading.slice(2).trim();
     entries.push([key, heading + tail]);
   }
   return entries;

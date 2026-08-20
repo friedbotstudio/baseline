@@ -43,6 +43,8 @@ simplify's deliverable is the **clean diff**, not a narrated analysis. Read ever
 - `cleaned` — you deleted dead code / collapsed duplication / removed a stub here (the edit is in the diff).
 - `flagged` — an out-of-scope refactor noted for a follow-up spec (name it; do **not** fix it).
 
+**Begin the reason with `inherited:` when the flag is for debt the file already carried at `HEAD`.** Measure it — a file over the 80-line budget at `HEAD` was over budget before this diff touched it — rather than judging by eye. The code-review fan-out reads the prefix and downgrades that row to ADVISORY, so a branch lands on what it introduced instead of what it inherited; 93 of 300 baseline files are already over budget, and blocking on their length freezes a third of the repository. An unprefixed row blocks, which is the right default, and the prefix does not count toward the 8-word reason. The prefix is anchored at the start of the cell, so a reason that merely contains the word still blocks.
+
 **Do not** quote or restate diff contents, paste file bodies, or narrate per-file reasoning ("Looking at X… this sits at the orchestration layer… abstraction levels are consistent…"). The reasoning happens silently in your head; only the verdict row is emitted. The `reason` clause is the *sole* place free text is allowed — keep it ≤ 8 words.
 
 When the table has zero `cleaned` rows, add one line — "no cleanups" — and proceed; do **not** write a paragraph explaining why each file was already clean. This restatement is the over-sampling Lever 4b targets: it carries near-zero decision-relevant information per token.
@@ -78,7 +80,7 @@ Invoke `Skill(code-structure)` and apply its Detection Rules to every file the b
 - Domain modules reaching directly for raw infrastructure.
 - Files longer than ~80 lines of substantive code — split along layer lines.
 
-Fixes here are in scope. Refactors that go beyond layering (new design patterns, interface changes) are **out of scope** — record them as a `flagged` row in the verdict table (see Output discipline) and leave for a follow-up spec; do not narrate the analysis that produced them.
+Fixes here are in scope. Refactors that go beyond layering (new design patterns, interface changes) are **out of scope** — record them as a `flagged` row in the verdict table (see Output discipline — including the `inherited:` prefix when the file was already over budget at `HEAD`) and leave for a follow-up spec; do not narrate the analysis that produced them.
 
 ## 4. Scope guardrails
 

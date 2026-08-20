@@ -31,6 +31,8 @@ export function verdictFromScore(score, { floor, mandatory } = {}) {
 }
 
 // One changed source module + its co-named test, drawn from the diff's file list.
+// Takes paths, not ChangedFile objects: the adapter maps them off ctx, because this
+// checker needs only the path where its two siblings also read the content.
 export function resolveMutationTarget(changedFiles = []) {
   const isTest = (f) => /\.test\.(mjs|js)$/.test(f);
   const src = changedFiles.find((f) => /\.(mjs|js)$/.test(f) && !isTest(f) && !f.startsWith('tests/'));
@@ -44,7 +46,7 @@ export const mutationScoreAdapter = {
   phase: 'code-review',
   async run(ctx) {
     if (!isEnabled(ctx.rootDir)) return { findings: [] };
-    const target = resolveMutationTarget(ctx.changedFiles);
+    const target = resolveMutationTarget((ctx.changedFiles || []).map((f) => f.path));
     if (!target || typeof ctx.oracleRunner !== 'function') return { findings: [] };
     let score;
     try {

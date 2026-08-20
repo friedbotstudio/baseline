@@ -189,3 +189,7 @@
 - discarded :: backlog → the-fix-is-a-one-word-rename-in-12ea
 - discarded :: .claude/hooks/git_commit_guard.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-to-add-the-ac-tokens-7364
+- promoted :: backlog → untracked-files-are-invisible-to-every-code-review-checker-7f21
+- promoted :: backlog → code-structure-oracle-has-no-test-file-exemption-3b8d
+- promoted :: backlog → a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04
+- promoted :: backlog → both-review-oracles-interpolate-an-unsanitised-path-9e12
