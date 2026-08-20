@@ -1,0 +1,44 @@
+{
+  "request": "Three measured cycle-time fixes: (1) stamp phase re-entries so the tdd/integrate auto-loop becomes visible in the timing JSONL; (2) add a scout node before spec in the spec-entry track, with the seed.md amendment it requires; (3) widen the right-size gate window to 8 files / 200 lines.",
+  "slug": "cycle-time-fixes",
+  "track_id": "tdd-quickfix",
+  "novelty": "novel",
+  "novelty_evidence": "Searched .claude/hooks/lib/timing.mjs, phase_timer.mjs and the 429-file test suite for an attempt/retry/re-entry concept on a phase stamp: none exists. stampFromWorkflow dedups on a bare phase name (const stamped = new Set(existing.map(s => s.phase))), so a phase re-entered by the harness integrate auto-loop (harness/SKILL.md:201, which re-invokes tdd and integrate in-place without touching completed[]) leaves no record. Items 2 and 3 are pattern-copy by contrast: intake-full already declares a scout node, and the right-size thresholds are already parameterised in configFromProject.",
+  "track_reason": "not required - tdd-quickfix is the leanest track covering the risk; all three changes have an existing test file to extend (tests/phase-timer-timing.test.mjs, tests/rightsize-gate.test.mjs, tests/byte-equivalent-migration.test.mjs). User confirmed the track and confirmed landing all three together.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/timing.mjs",
+    ".claude/hooks/phase_timer.mjs",
+    ".claude/skills/harness/SKILL.md",
+    ".claude/skills/harness/rightsize-gate.mjs",
+    ".claude/workflows.jsonl",
+    "docs/init/seed.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787230722,
+  "updated_at": 1787233665,
+  "rightsize_base": []
+}

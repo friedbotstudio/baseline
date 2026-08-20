@@ -396,3 +396,66 @@ describe('rightsize-gate — the base list and the diff share a vocabulary (AC-0
       'this workflow actually created is real change and must still be measured');
   });
 });
+
+// ---- widened default window (cycle-time-fixes, item 3) ---------------------
+//
+// The gate shipped a 4-file / 80-line window. Measured against the last 120
+// commits of this repo only 23 diffs qualified, and the gate may skip nothing
+// but `simplify` (median 1.8 min) and `document` (median 3.0 min) — so it was
+// recovering roughly one minute per run. Widening to 8 files / 200 lines lifts
+// qualifying diffs to 35 of 120.
+//
+// The window is also DECOUPLED from `simplify.min_files` here. The two numbers
+// answer different questions: `simplify.min_files` decides whether a diff is big
+// enough to deserve a cleanup pass, while the right-size window decides whether
+// a diff is small enough for that pass to be skipped outright. Reading the
+// former as the latter's default was incidental, and it silently pinned the gate
+// at 4 for every project that had ever tuned simplify — this repo included.
+//
+// Nothing about the gate's sanctioned envelope moves (seed.md): the skip set is
+// still a subset of {simplify, document}, security is still never auto-skipped,
+// and the gate is still fail-open.
+
+describe('rightsize-gate — widened default window', () => {
+  it('test_when_project_declares_nothing_then_window_is_eight_files_two_hundred_lines', () => {
+    const config = gate.configFromProject({});
+    assert.equal(config.min_files, 8);
+    assert.equal(config.max_lines, 200);
+    assert.equal(config.enabled, true, 'still on by default');
+  });
+
+  it('test_when_rightsize_declares_its_own_min_files_then_that_wins', () => {
+    const config = gate.configFromProject({ velocity: { rightsize: { min_files: 3, max_lines: 40 } } });
+    assert.equal(config.min_files, 3);
+    assert.equal(config.max_lines, 40);
+  });
+
+  it('test_when_only_simplify_min_files_is_set_then_the_window_default_is_unaffected', () => {
+    const config = gate.configFromProject({ simplify: { min_files: 4 } });
+    assert.equal(config.min_files, 8, 'the simplify threshold no longer narrows the gate');
+  });
+
+  it('test_when_diff_fits_the_widened_window_then_simplify_is_skipped', () => {
+    const config = gate.configFromProject({});
+    const measure = { files: 6, lines: 150, touched: ['a.mjs', 'b.mjs', 'c.mjs', 'd.mjs', 'e.mjs', 'f.mjs'] };
+    const decision = gate.decideSkip({ measure, config, securityRunning: true });
+    assert.ok(decision.skip.includes('simplify'), 'a 6-file / 150-line diff is now micro');
+    assert.ok(!decision.skip.includes('security'), 'security is never auto-skipped');
+  });
+
+  it('test_when_diff_exceeds_the_widened_window_then_nothing_is_skipped', () => {
+    const config = gate.configFromProject({});
+    const measure = { files: 9, lines: 150, touched: Array.from({ length: 9 }, (_, i) => `f${i}.mjs`) };
+    assert.deepEqual(gate.decideSkip({ measure, config, securityRunning: true }).skip, []);
+
+    const wordy = { files: 3, lines: 201, touched: ['a.mjs', 'b.mjs', 'c.mjs'] };
+    assert.deepEqual(gate.decideSkip({ measure: wordy, config, securityRunning: true }).skip, []);
+  });
+
+  it('test_when_project_json_is_read_then_the_shipped_config_uses_the_widened_window', () => {
+    const project = JSON.parse(readFileSync(path.join(REPO_ROOT, '.claude/project.json'), 'utf8'));
+    const config = gate.configFromProject(project);
+    assert.equal(config.min_files, 8);
+    assert.equal(config.max_lines, 200);
+  });
+});

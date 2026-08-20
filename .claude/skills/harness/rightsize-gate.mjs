@@ -19,6 +19,15 @@ import { matchesAnyGlob as sharedMatchesAnyGlob } from '../../hooks/lib/glob-mat
 const CANDIDATE_PHASES = ['simplify', 'security', 'document'];
 const DEFAULT_DOC_GLOBS = ['docs/**', '**/*.md', 'src/cli/**', 'bin/**'];
 
+// The micro-diff window. Measured against the last 120 commits of this repo, the
+// original 4-file / 80-line window admitted 23 diffs while the gate may skip only
+// `simplify` (median 1.8 min) and `document` (median 3.0 min) — about a minute a
+// run. 8 / 200 admits 35 of the same 120 and stays well inside the envelope
+// seed.md fixes for this gate: the skip set is unchanged, `security` is still
+// never auto-skipped, and the gate is still fail-open.
+const DEFAULT_MIN_FILES = 8;
+const DEFAULT_MAX_LINES = 200;
+
 // `segmentGlobstar` is this caller's dialect and the only one that asks for it:
 // `**/` matches zero or more leading path segments, so `**/*.md` matches a
 // top-level README.md. The default leaves `**/` as `.*/`, which requires one.
@@ -134,8 +143,14 @@ export function decideSkip({ measure, config, securityRunning }) {
 export function configFromProject(project) {
   return {
     enabled: project?.velocity?.rightsize?.enabled ?? true,
-    min_files: project?.simplify?.min_files ?? 4,
-    max_lines: project?.velocity?.rightsize?.max_lines ?? 80,
+    // Deliberately NOT defaulted from `simplify.min_files`. The two thresholds
+    // answer opposite questions — `simplify.min_files` decides whether a diff is
+    // big enough to deserve a cleanup pass, this one decides whether a diff is
+    // small enough for that pass to be skipped outright. Reading one as the
+    // other's default silently pinned the gate to whatever a project had tuned
+    // simplify to, which is why this repo's gate sat at 4 files.
+    min_files: project?.velocity?.rightsize?.min_files ?? DEFAULT_MIN_FILES,
+    max_lines: project?.velocity?.rightsize?.max_lines ?? DEFAULT_MAX_LINES,
     doc_globs: project?.velocity?.rightsize?.doc_globs ?? DEFAULT_DOC_GLOBS,
     sensitive_globs: project?.security?.sensitive_globs ?? [],
     test_globs: project?.tdd?.test_globs ?? [],

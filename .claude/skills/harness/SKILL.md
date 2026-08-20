@@ -200,6 +200,10 @@ When `/integrate` fails inside the loop, judge: is this a simple bug (auto-retry
 
 On auto-loop: invoke `Skill(tdd)` with a brief telling it to focus on the failing test(s) only, then invoke `Skill(integrate)` again — **both calls happen inside the same loop iteration** (no Stop-hook hop, no new user `/harness` invocation needed). Cap at 3 auto-loops within one iteration; if still red after 3, stop and surface (exit loop with yield).
 
+**Count the re-entry before you make it.** Immediately before each auto-loop's `Skill(tdd)` call, increment `workflow.json → attempts` for **both** `tdd` and `integrate`: `attempts` is an object of `{"<phase>": <n>}` where `n` counts how many times the phase has been ENTERED, so the first entry is 1 and the first auto-loop takes each to 2. Create the field (and seed a phase at 1) when it is absent. Also increment the phase's own counter on any other re-entry — the gate-A content-hash re-yield that removes `approve-direction` from `completed`, and an explicit user-requested re-run.
+
+This is the only record the auto-loop leaves. Because it re-invokes both skills in place without touching `completed[]`, and `stampFromWorkflow` deduplicates on the stamp label, retries were previously invisible: across 67 archived spec runs the timing logs recorded zero phase re-entries, while the post-approval implementation span was consuming 60-75% of every heavy run. `phase_timer` reads `attempts` and appends one `{"phase":"<phase>:attempt-<k>","event":"retry"}` row per counted re-entry, which is what makes that span measurable. Writing the counter is not optional bookkeeping — skip it and the retry is unmeasured.
+
 **Stop and surface** when **any** of these hold:
 - The failing test expects behavior the spec doesn't define → spec change needed.
 - The test exposes a contradiction between two spec ACs → spec change needed.

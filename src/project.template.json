@@ -255,7 +255,6 @@
   "velocity": {
     "rightsize": {
       "enabled": true,
-      "max_lines": 80,
       "doc_globs": [
         "docs/**",
         "**/*.md",

@@ -130,6 +130,29 @@ function sumTranscriptTokens(transcriptPath, beforeMs) {
   return seen ? { out_tokens: out, in_tokens: inp, cache_tokens: cache } : null;
 }
 
+// A phase re-entered by the harness integrate auto-loop leaves `completed[]`
+// untouched, so a dedup on the bare phase name recorded nothing for it — across 67
+// archived spec runs the timing logs showed zero re-entries. `workflow.json →
+// attempts: {"<phase>": <n>}` is the signal: n counts ENTRIES, so attempt 1 is the
+// original run the `completed` stamp already covers, and every k in 2..n earns its
+// own row labelled `<phase>:attempt-<k>`. Emitting the whole 2..n span rather than
+// only the newest means a batched increment cannot silently lose a retry.
+//
+// The whole field is ignored unless it is a plain object of safe positive integers.
+// Timing is best-effort and must never throw into a phase, and MAX_ATTEMPTS keeps a
+// nonsense count from spinning out a runaway label list.
+const MAX_ATTEMPTS = 100;
+
+function retryLabels(attempts) {
+  if (!attempts || typeof attempts !== 'object' || Array.isArray(attempts)) return [];
+  const labels = [];
+  for (const [phase, count] of Object.entries(attempts)) {
+    if (!phase || !Number.isSafeInteger(count) || count < 2) continue;
+    for (let k = 2; k <= Math.min(count, MAX_ATTEMPTS); k += 1) labels.push(`${phase}:attempt-${k}`);
+  }
+  return labels;
+}
+
 // The stamp a gate's wait is measured against: the last row already on disk, or
 // the run-start baseline when this call is the first for the slug. Every row in
 // one call shares a timestamp, so the gap is identical across the batch.
@@ -157,7 +180,10 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, sub
   const freshSub = subtickEnabled && Array.isArray(wf.tdd_ticks)
     ? wf.tdd_ticks.map((t) => `tdd:${t}`).filter((label) => !stamped.has(label))
     : [];
-  if (freshCompleted.length === 0 && freshSub.length === 0) return { appended: [] };
+  const freshRetries = retryLabels(wf.attempts).filter((label) => !stamped.has(label));
+  if (freshCompleted.length === 0 && freshSub.length === 0 && freshRetries.length === 0) {
+    return { appended: [] };
+  }
 
   const currentTokens = sumTranscriptTokens(transcriptPath) ?? {};
   const ts = now();
@@ -171,6 +197,7 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, sub
 
   const observed = [
     ...freshSub.map((phase) => [phase, 'sub']),
+    ...freshRetries.map((phase) => [phase, 'retry']),
     ...freshCompleted.map((phase) => [phase, 'completed']),
   ];
   const batchId = `${ts}-${existing.length}`;
@@ -190,7 +217,7 @@ export function stampFromWorkflow({ rootDir, now = Date.now, transcriptPath, sub
   const p = timingPath(rootDir, slug);
   mkdirSync(dirname(p), { recursive: true });
   appendFileSync(p, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
-  return { appended: [...freshSub, ...freshCompleted] };
+  return { appended: [...freshSub, ...freshRetries, ...freshCompleted] };
 }
 
 // ---- attribution + render --------------------------------------------------
@@ -216,18 +243,21 @@ function tokenDelta(prevStamp, curStamp, field) {
   return Number.isFinite(prev) && Number.isFinite(cur) ? cur - prev : 'n/a';
 }
 
-// Sub-rows for one parent phase: the worker-tick breakdown captured as `event:'sub'`
-// stamps (e.g. `tdd:scenario`). The first sub anchors at the parent's effective
-// start (so the sub model deltas sum to the parent rollup model in both the plain
-// and the gate-attributed case); each subsequent sub chains off the previous one.
-function subRowsForParent(parentPhase, subStamps, parentStart, parentPrevStamp) {
-  const subs = subStamps
+// Child rows for one parent phase, chained off an anchor. Two kinds ride this:
+//   * worker-tick subs (`event:'sub'`, e.g. `tdd:scenario`) anchor at the parent's
+//     effective START, so their model deltas sum to the parent rollup in both the
+//     plain and the gate-attributed case;
+//   * re-entry retries (`event:'retry'`, e.g. `tdd:attempt-2`) anchor at the
+//     parent's COMPLETION, because a retry begins where the first attempt ended.
+// Either way each subsequent row chains off the previous one.
+function childRowsForParent(parentPhase, childStamps, anchorTs, anchorStamp) {
+  const subs = childStamps
     .filter((s) => s.phase.startsWith(`${parentPhase}:`))
     .sort((a, b) => a.ts - b.ts);
 
   const rows = [];
-  let prevEnd = parentStart;
-  let prevStamp = parentPrevStamp;
+  let prevEnd = anchorTs;
+  let prevStamp = anchorStamp;
   for (const cur of subs) {
     rows.push({
       phase: cur.phase,
@@ -246,7 +276,7 @@ function subRowsForParent(parentPhase, subStamps, parentStart, parentPrevStamp) 
   return rows;
 }
 
-function attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps = [] }) {
+function attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps = [], retryStamps = [] }) {
   const specIdx = lastSpecFamilyIndex(stamps);
   const gatePhaseIdx = specIdx === -1 ? -1 : firstWorkPhaseAfter(stamps, specIdx);
 
@@ -276,7 +306,8 @@ function attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps =
       rows.push({ phase, model: Math.max(0, ts - prevEnd), human: 0, tokens });
     }
 
-    rows.push(...subRowsForParent(phase, subStamps, start, prevStamp));
+    rows.push(...childRowsForParent(phase, subStamps, start, prevStamp));
+    rows.push(...childRowsForParent(phase, retryStamps, ts, cur));
   }
   return rows;
 }
@@ -284,13 +315,16 @@ function attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps =
 export function renderTable({ rootDir, slug }) {
   const allStamps = readStamps(rootDir, slug);
   const baseline = allStamps.find((s) => s.event === 'baseline') || null;
-  const stamps = allStamps.filter((s) => s.event !== 'baseline' && s.event !== 'sub');
+  const stamps = allStamps.filter(
+    (s) => s.event !== 'baseline' && s.event !== 'sub' && s.event !== 'retry'
+  );
   const subStamps = allStamps.filter((s) => s.event === 'sub');
+  const retryStamps = allStamps.filter((s) => s.event === 'retry');
   const wf = readWorkflow(rootDir);
   const runStart = wf && Number.isFinite(wf.created_at) ? wf.created_at * 1000 : 0;
   const approveTokenMs = readApprovalMtimeMs(rootDir, slug);
 
-  const rows = attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps });
+  const rows = attributeGaps(stamps, { runStart, approveTokenMs, baseline, subStamps, retryStamps });
 
   const header = [
     `# Phase timing — ${slug}`,

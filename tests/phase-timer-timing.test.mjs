@@ -41,8 +41,10 @@ function withRoot(fn) {
 
 const statePath = (root, ...p) => join(root, '.claude/state', ...p);
 
-function writeWorkflow(root, { slug = 'demo', completed = [], created_at = 1000 } = {}) {
-  writeFileSync(statePath(root, 'workflow.json'), JSON.stringify({ slug, completed, created_at }));
+function writeWorkflow(root, { slug = 'demo', completed = [], created_at = 1000, attempts } = {}) {
+  const wf = { slug, completed, created_at };
+  if (attempts !== undefined) wf.attempts = attempts;
+  writeFileSync(statePath(root, 'workflow.json'), JSON.stringify(wf));
 }
 
 function jsonlPath(root, slug) { return statePath(root, 'timing', `${slug}.jsonl`); }
@@ -364,6 +366,112 @@ describe('regression — additive fields do not disturb existing consumers', () 
       ].join('\n') + '\n');
       const md = renderTable({ rootDir: root, slug: 'demo' });
       assert.match(md, rowRe('intake', 2_000_000, 0), 'anchored at created_at*1000 regardless of baseline.ts');
+    });
+  });
+});
+
+// ---- phase re-entry stamps (cycle-time-fixes, item 1) ----------------------
+//
+// The harness integrate auto-loop re-invokes `tdd` and `integrate` in place
+// (harness/SKILL.md), without touching `completed[]`. Because stampFromWorkflow
+// dedups on a bare phase name, every one of those retries was invisible: across
+// 67 archived spec runs the timing logs recorded zero phase re-entries, so the
+// span that actually dominates a run could not be measured at all.
+//
+// Contract pinned here:
+//   * workflow.json carries `attempts: {"<phase>": <n>}` — n counts how many
+//     times the phase has been ENTERED, so 1 is the original run and needs no
+//     extra row (the `completed` stamp already covers it).
+//   * stampFromWorkflow appends one row per not-yet-stamped attempt k in 2..n:
+//     {"phase":"<phase>:attempt-<k>","event":"retry", ...}. A jump from 1 to 3
+//     emits BOTH 2 and 3 — a batched increment must not silently lose a retry.
+//   * The composed label is the dedup key, so the hook stays idempotent under
+//     the unconditional Bash-leg invocation.
+//   * A malformed `attempts` is ignored whole. Timing is best-effort; it must
+//     never throw into a phase.
+
+const retryRows = (root, slug) => readStamps(root, slug).filter((s) => s.event === 'retry');
+
+describe('phase re-entry — attempts become durable retry stamps', () => {
+  it('test_when_attempts_exceeds_one_then_a_retry_row_is_appended', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 2 } });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      const rows = retryRows(root, 'demo');
+      assert.equal(rows.length, 1, 'one retry row for attempt 2');
+      assert.equal(rows[0].phase, 'tdd:attempt-2');
+      assert.equal(rows[0].ts, 5_000_000);
+    });
+  });
+
+  it('test_when_stamped_twice_with_same_attempts_then_no_duplicate_row', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 2 } });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      const second = stampFromWorkflow({ rootDir: root, now: () => 6_000_000 });
+      assert.deepEqual(second.appended, [], 'idempotent under the unconditional Bash leg');
+      assert.equal(retryRows(root, 'demo').length, 1);
+    });
+  });
+
+  it('test_when_attempts_jumps_by_more_than_one_then_every_missed_attempt_is_stamped', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['integrate'], created_at: 1000, attempts: { integrate: 4 } });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      assert.deepEqual(
+        retryRows(root, 'demo').map((r) => r.phase),
+        ['integrate:attempt-2', 'integrate:attempt-3', 'integrate:attempt-4']
+      );
+    });
+  });
+
+  it('test_when_attempts_grows_between_calls_then_only_the_new_attempt_is_stamped', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 2 } });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 3 } });
+      const out = stampFromWorkflow({ rootDir: root, now: () => 7_000_000 });
+      assert.deepEqual(out.appended, ['tdd:attempt-3']);
+      assert.deepEqual(retryRows(root, 'demo').map((r) => r.phase), ['tdd:attempt-2', 'tdd:attempt-3']);
+    });
+  });
+
+  it('test_when_attempts_is_one_then_no_retry_row', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 1 } });
+      stampFromWorkflow({ rootDir: root, now: () => 5_000_000 });
+      assert.deepEqual(retryRows(root, 'demo'), [], 'attempt 1 is the completed stamp');
+    });
+  });
+
+  it('test_when_attempts_is_malformed_then_it_is_ignored_and_nothing_throws', async () => {
+    const { stampFromWorkflow } = await importTiming();
+    for (const attempts of ['lots', 42, null, ['tdd'], { tdd: -3 }, { tdd: 1.5 }, { tdd: 'two' }, { tdd: Infinity }]) {
+      withRoot((root) => {
+        writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts });
+        assert.doesNotThrow(() => stampFromWorkflow({ rootDir: root, now: () => 5_000_000 }));
+        assert.deepEqual(retryRows(root, 'demo'), [], `ignored: ${JSON.stringify(attempts)}`);
+      });
+    }
+  });
+
+  it('test_when_a_retry_is_stamped_then_render_table_nests_it_under_its_parent', async () => {
+    const { renderTable } = await importTiming();
+    withRoot((root) => {
+      writeWorkflow(root, { slug: 'demo', completed: ['tdd'], created_at: 1000, attempts: { tdd: 2 } });
+      mkdirSync(dirname(jsonlPath(root, 'demo')), { recursive: true });
+      writeFileSync(jsonlPath(root, 'demo'), [
+        JSON.stringify({ phase: 'tdd', event: 'completed', ts: 3_000_000 }),
+        JSON.stringify({ phase: 'tdd:attempt-2', event: 'retry', ts: 8_000_000 }),
+      ].join('\n') + '\n');
+      const md = renderTable({ rootDir: root, slug: 'demo' });
+      assert.match(md, /\|\s*└ tdd:attempt-2\s*\|\s*5000000\s*\|/, 'retry renders nested, charged from the parent');
+      assert.match(md, rowRe('tdd', 2_000_000, 0), 'the parent row is unchanged');
     });
   });
 });

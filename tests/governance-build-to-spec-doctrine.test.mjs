@@ -45,11 +45,11 @@ function sectionOf(text, heading) {
 const PINNED_NODE_IDS = {
   '.claude/workflows.jsonl': {
     'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'spec-shippability-review', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'cli-copy-review', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'spec-shippability-review', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
+    'spec-entry': ['scout', 'spec', 'spec-shippability-review', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
   },
   'src/.claude/workflows.template.jsonl': {
     'intake-full': ['intake', 'approve-direction', 'scout', 'research', 'spec', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
-    'spec-entry': ['spec', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
+    'spec-entry': ['scout', 'spec', 'approve-direction', 'implementation', 'simplify', 'security', 'integrate', 'document', 'archive', 'roadmap-sync', 'memory-sync', 'grant-commit', 'commit'],
   },
 };
 
@@ -131,7 +131,7 @@ describe('workflows.jsonl entry-point rebalance is text-only (AC-004)', () => {
         const track = tracks.find((t) => t.track_id === trackId);
         assert.ok(track, `${rel} declares ${trackId}`);
         assert.deepEqual(track.nodes.map((n) => n.id), pinned,
-          `${trackId} DAG drifted. The entry-point rebalance was text-only; the ONLY sanctioned change since is harness-batch-fixes T6, which replaced the bare \`tdd\` node with the \`implementation\` selector so swarm is the default code-generation route. Any other delta is unintended.`);
+          `${trackId} DAG drifted. The entry-point rebalance was text-only. Exactly two sanctioned changes have landed since: harness-batch-fixes T6 replaced the bare \`tdd\` node with the \`implementation\` selector so swarm is the default code-generation route, and cycle-time-fixes gave \`spec-entry\` a \`scout\` node ahead of \`spec\` under the seed.md §18.1 amendment, because the track was measuring as the slowest of them all while shipping the smallest diffs. Any other delta is unintended.`);
       }
     });
   }
