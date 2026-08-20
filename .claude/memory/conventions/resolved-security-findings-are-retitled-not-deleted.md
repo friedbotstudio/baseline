@@ -3,8 +3,8 @@ key: resolved-security-findings-are-retitled-not-deleted
 category: conventions
 scope: [security, integrate]
 governs: docs/security/**
-verified-at: 87d3573
-last-touched: 2026-08-13
+verified-at: 1b4c320
+last-touched: 2026-08-20
 ---
 
 - A finding fixed inside its own workflow is **re-titled**, never deleted and never left bare. Use `### [HIGH — RESOLVED] <title>` or `### [MEDIUM — REMEDIATED] <title>`, and add a Remediation section carrying the fix, the file:line, and the measurement that proves it.

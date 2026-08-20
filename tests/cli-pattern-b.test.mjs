@@ -175,4 +175,38 @@ describe('the async writer — a Pattern A dispatcher, because its module is a b
     assert.equal(res.status, 1, 'malformed input JSON is a usage error');
     assert.ok(res.stderr.trim().length > 0, 'the parse failure must reach stderr as a named reason, not a bare stack');
   });
+
+  // The plain path is the one a human reads. `--json` was correct from the start,
+  // so a suite that only exercised `--json` watched the half that already worked
+  // while the default rendering returned the empty notice on every run.
+  const runPlanner = (input, flags = []) =>
+    runCli(patternBPath('sprint-planner/planner.mjs'), ['select', JSON.stringify(input), ...flags], { cwd: REPO_ROOT });
+
+  const READY = { id: 'P1', epic: 3, title: 'value types', deps: [], priority: 1 };
+  const ALSO_READY = { id: 'P2', epic: 3, title: 'activation', deps: [], priority: 2 };
+  const BLOCKED = { id: 'S1', epic: 3, title: 'declare storage', deps: ['W1'], priority: 3 };
+  const EMPTY_NOTICE = /no dependency-ready task/;
+
+  it('test_when_planner_plain_output_and_a_ready_task_exists_then_it_prints_the_task_id', () => {
+    const res = runPlanner({ tasks: [READY, BLOCKED], statusById: { W1: 'planned' } });
+    assertPresent(assert, res);
+    assert.equal(res.status, 0, 'a well-formed proposal is not an error');
+    assert.match(res.stdout, /P1/, 'the plain path must name the task it selected');
+    assert.doesNotMatch(res.stdout, EMPTY_NOTICE, 'a proposal with a ready task must not render as empty');
+  });
+
+  it('test_when_planner_plain_output_and_every_task_is_blocked_then_it_prints_the_empty_notice', () => {
+    const res = runPlanner({ tasks: [BLOCKED], statusById: { W1: 'planned' } });
+    assertPresent(assert, res);
+    assert.equal(res.status, 0, 'an empty proposal is a valid answer, not an error');
+    assert.match(res.stdout, EMPTY_NOTICE, 'nothing ready must still say so');
+  });
+
+  it('test_when_planner_plain_output_capacity_capped_then_it_prints_only_the_capped_tasks', () => {
+    const res = runPlanner({ tasks: [READY, ALSO_READY], statusById: {} }, ['--capacity', '1']);
+    assertPresent(assert, res);
+    assert.equal(res.status, 0, 'a capped proposal is not an error');
+    const named = ['P1', 'P2'].filter((id) => res.stdout.includes(id));
+    assert.deepEqual(named, ['P1'], 'the plain path must render the capacity-sliced selection, not every ready task');
+  });
 });

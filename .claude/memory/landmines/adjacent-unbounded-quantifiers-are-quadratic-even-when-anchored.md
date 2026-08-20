@@ -3,8 +3,8 @@ key: adjacent-unbounded-quantifiers-are-quadratic-even-when-anchored
 category: landmines
 scope: [implement, tdd, security]
 governs: .claude/skills/**, .claude/hooks/**, src/**
-verified-at: 87d3573
-last-touched: 2026-08-13
+verified-at: 1b4c320
+last-touched: 2026-08-20
 ---
 
 - Trap: two unbounded quantifiers over the same character class, separated only by an **optional** token, are `O(n²)`. `\s*[-*]?\s*` is the shape. When the optional token is absent (the common case), the two stars are mutually ambiguous: for each of the `n` split points the first star can take, the second star retries every remaining length. The engine does `sum(n-i)` work before failing.

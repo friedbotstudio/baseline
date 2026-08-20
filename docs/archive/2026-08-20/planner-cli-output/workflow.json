@@ -1,0 +1,77 @@
+{
+  "request": "Fix planner.mjs plain-text output path: selectSprint returns {features, excluded} but the CLI reads proposed.selected/proposed.tasks, so every non-JSON run prints \"(no dependency-ready task)\". Add a CLI-output test. Then flip roadmap epic 9 rows K, L1, L2 to done and promote the epic heading.",
+  "slug": "planner-cli-output",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/roadmap-execution-plan.md:159 (epic 9 row L1) commits proposal-only output for sprint-planner; .claude/skills/sprint-planner/planner.mjs:105 reads proposed.selected/proposed.tasks against a {features, excluded} return, so the plain-text path always renders empty.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/sprint-planner/planner.mjs",
+    ".claude/skills/sprint-planner/tests/**",
+    "docs/roadmap-execution-plan.md"
+  ],
+  "roadmap_tasks": [
+    "E9-K",
+    "E9-L1",
+    "E9-L2"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "simplify",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787237317,
+  "updated_at": 1787240638,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "below right-size threshold",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 10,
+        "touched": [
+          ".claude/skills/sprint-planner/planner.mjs"
+        ]
+      }
+    },
+    {
+      "phase": "document",
+      "reason": "below right-size threshold",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 10,
+        "touched": [
+          ".claude/skills/sprint-planner/planner.mjs"
+        ]
+      }
+    }
+  ]
+}

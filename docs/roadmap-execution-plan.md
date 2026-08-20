@@ -144,7 +144,7 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ⬜ A. Runtime-witness rule and the mcp-debugger declaration
 - ⬜ B. The /codebugger session and the explanation trace
 - ⬜ C. The debug track and the docs/debug artifact registration
-## Epic 9 — Erp portables  🟡  (erp-portables)
+## Epic 9 — Erp portables  ✅  (erp-portables)
 
 - ✅ A. Article II §4.2-A — read-only advisory subagents (binding-judgment scoping; scout/research gathering delegation)
 - ✅ B. branch_guard hook (25→26) — block workflow.json creation on a release branch under github-flow
@@ -155,9 +155,9 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ I. commit-planner + retrospective skills (owner: baseline, generalized; counts 46→48)
 - ✅ J1. CI/secrets posture working in this repo — gitleaks pre-commit hard-fail, branch-protection config-as-code (live: repo is public), low-risk auto-merge classifier with NEVER-list
 - ✅ J2. Ship CI posture to consumers behind an opt-out — obj/template artifacts + project.json knob; init-project/upgrade-project tailor per install
-- ⬜ K. Read-before-write state discipline — harness preflight reads state files once; state-write discipline text mandates Read before Write/Edit on existing files
-- ⬜ L1. sprint-planner skill + generic graph engine — source-adaptive sprint selection (tasks file / epic slices with optional deps[] / backlog), graph.mjs port with buckets-from-input, graceful status-only degradation, proposal-only output
-- ⬜ L2. power batch-sprint track + skill — amortized mechanical phases over tickets[], per-ticket security iteration, commit split via commit-split.mjs with closure last, velocity.power_mode.enabled opt-in (depends on L1)
+- ✅ K. Read-before-write state discipline — harness preflight reads state files once; state-write discipline text mandates Read before Write/Edit on existing files
+- ✅ L1. sprint-planner skill + generic graph engine — source-adaptive sprint selection (tasks file / epic slices with optional deps[] / backlog), graph.mjs port with buckets-from-input, graceful status-only degradation, proposal-only output
+- ✅ L2. power batch-sprint track + skill — amortized mechanical phases over tickets[], per-ticket security iteration, commit split via commit-split.mjs with closure last, velocity.power_mode.enabled opt-in (depends on L1)
 ## Epic 10 — Living system model  ✅  (living-system-model)
 
 - ✅ A. Decision node model

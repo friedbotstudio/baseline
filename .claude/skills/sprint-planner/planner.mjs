@@ -72,6 +72,11 @@ function readInput(given) {
   return readFileSync(given, 'utf8');
 }
 
+function renderProposal({ features }) {
+  if (!features.length) return '(no dependency-ready task)\n';
+  return features.map((feature) => `  ${feature.id}`).join('\n') + '\n';
+}
+
 function main(argv) {
   const subcommand = argv[0];
   if (!subcommand || subcommand === '--help') { process.stdout.write(USAGE); return 0; }
@@ -101,10 +106,7 @@ function main(argv) {
   });
 
   if (argv.includes('--json')) { process.stdout.write(JSON.stringify(proposed, null, 2) + '\n'); return 0; }
-  const chosen = Array.isArray(proposed) ? proposed : (proposed.selected ?? proposed.tasks ?? []);
-  process.stdout.write(chosen.length
-    ? chosen.map((t) => `  ${t.id ?? t}`).join('\n') + '\n'
-    : '(no dependency-ready task)\n');
+  process.stdout.write(renderProposal(proposed));
   return 0;
 }
 
