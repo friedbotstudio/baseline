@@ -6,8 +6,9 @@
 //   1. Bash matcher — branch-aware:
 //        - `git push` is no longer in FORBIDDEN_RE (was an unconditional
 //          hard-block; now policy-driven).
-//        - `git commit` and `git push` both consult `git rev-parse
-//          --abbrev-ref HEAD`. Detached HEAD ("HEAD") → DENY explicitly.
+//        - `git commit` and `git push` both consult `currentBranch()` from
+//          lib/common.mjs (`git symbolic-ref --short HEAD`, which resolves an
+//          unborn branch too). Detached HEAD ("HEAD") → DENY explicitly.
 //        - On a branch matched by project.json → git.protected_branches
 //          (or when that key is null/absent → every branch protected),
 //          commits require fresh commit_consent (900s) and pushes require
@@ -42,6 +43,8 @@ import {
   stripQuotedHeredocBodies,
   resolveWorkflowModel,
   isPrimaryWorkTree,
+  currentBranch,
+  isInsideWorkTree,
   CLAUDE_PROJECT_ROOT,
   STATE_DIR,
   CONSENT_MARKER_COMMIT,
@@ -87,24 +90,6 @@ const FORBIDDEN_RE = new RegExp(
     '|\\bgit\\s+add\\s+(-A|\\.)(?![A-Za-z0-9_/.\\-])' +
   ')'
 );
-
-function currentBranch() {
-  try {
-    const out = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd: CLAUDE_PROJECT_ROOT });
-    return out.trim();
-  } catch {
-    return null;
-  }
-}
-
-function isInsideWorkTree() {
-  try {
-    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], { stdio: 'ignore', cwd: CLAUDE_PROJECT_ROOT });
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 // Returns: { protected: bool, patternViolation: string|null, detached: bool, branch: string|null }
 function branchPolicy() {

@@ -1,0 +1,32 @@
+{
+  "request": "git_commit_guard is blind on a repository's first commit: currentBranch() shells `git rev-parse --abbrev-ref HEAD`, which exits 128 on an unborn branch, so branchPolicy() reports notGit and skips the detached, topology, and consent checks. The identical body in .claude/hooks/lib/common.mjs:900 degrades branch_guard the same way. Resolve the branch via `git symbolic-ref --short HEAD`, single-source it in lib/common.mjs, decide the fail-safe for an in-work-tree repo whose branch stays unresolvable, and amend docs/init/seed.md §18.4 + src/seed.template.md.",
+  "slug": "unborn-branch-consent-blindness",
+  "track_id": "spec-entry",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Corrects the shipped branch-aware-git-policy contract: docs/archive/2026-05-15/branch-aware-git-policy/spec.md:590 has a failure-mode row for detached HEAD (AC-005) and no row for an unborn branch, and scout.md:86 of the same workflow asserts the unborn case 'behaves the same as a normal branch. Fine.' Reproduced at d23c06b: the same scratch repo with protected_branches ['main'] returns allow before the first commit and deny after it.",
+  "track_reason": "tdd-quickfix is the leaner candidate and covers the code defect, but the fix changes a consent-boundary contract that docs/init/seed.md §18.4 and src/seed.template.md state verbatim, so it carries a genesis amendment (CLAUDE.md Art. I.4). .claude/hooks/** is also in project.json security.sensitive_globs, so the security phase applies. spec-entry is the leanest track whose guardrails cover both.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/git_commit_guard.mjs",
+    ".claude/hooks/lib/common.mjs",
+    ".claude/hooks/branch_guard.mjs",
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": ["spec", "spec-shippability-review", "approve-direction", "tdd", "simplify", "security", "integrate", "document", "archive", "roadmap-sync", "memory-sync", "grant-commit"],
+  "skipped_alternates": [],
+  "tdd_ticks": ["scenario", "implement", "verify", "scenario", "drift-check", "verify", "finalize"],
+  "source_backlog_keys": [],
+  "created_at": 1787205840,
+  "updated_at": 1787206600,
+  "rightsize_base": []
+}

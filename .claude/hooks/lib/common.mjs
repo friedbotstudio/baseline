@@ -892,20 +892,36 @@ export function isPrimaryWorkTree(cwd = CLAUDE_PROJECT_ROOT) {
   }
 }
 
-// Current git branch name via `git rev-parse --abbrev-ref HEAD`. Returns the
+// True iff `cwd` sits inside a git working tree. Total fn — never throws.
+export function isInsideWorkTree(cwd = CLAUDE_PROJECT_ROOT) {
+  try {
+    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], { stdio: 'ignore', cwd });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Current git branch name via `git symbolic-ref --short HEAD`. Returns the
 // branch name, the literal 'HEAD' when detached, or null when not a git repo /
 // git unavailable. Total fn — never throws. Single-sourced here so the
 // work-start gate (branch_guard) and the commit-time backstop (git_commit_guard)
 // cannot drift on what "current branch" means.
+//
+// symbolic-ref reads .git/HEAD, so it resolves an UNBORN branch (a repository
+// with no commit yet) where `rev-parse --abbrev-ref HEAD` exits 128 — reading
+// that exit as "not a repo" is what let a repository's first commit past every
+// branch check. symbolic-ref otherwise fails only on a detached HEAD or outside
+// a repository, and the work-tree probe separates those two, so inside a work
+// tree this never returns null.
 export function currentBranch(cwd = CLAUDE_PROJECT_ROOT) {
+  let branch = '';
   try {
-    const out = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+    branch = execFileSync('git', ['symbolic-ref', '--short', 'HEAD'], {
       encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], cwd,
     }).trim();
-    return out || null;
-  } catch {
-    return null;
-  }
+  } catch {}
+  return branch || (isInsideWorkTree(cwd) ? 'HEAD' : null);
 }
 
 // Parse the branch list out of a CI workflow's `push:` trigger

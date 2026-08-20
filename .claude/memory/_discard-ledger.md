@@ -187,3 +187,5 @@
 - promoted :: @modelcontextprotocol/sdk → libraries.md
 - promoted :: .claude/skills/lib/terminal-text.mjs → landmarks.md
 - discarded :: backlog → the-fix-is-a-one-word-rename-in-12ea
+- discarded :: .claude/hooks/git_commit_guard.mjs → landmarks.md
+- discarded :: backlog → the-fix-is-to-add-the-ac-tokens-7364
