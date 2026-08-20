@@ -194,3 +194,4 @@
 - promoted :: backlog → a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04
 - promoted :: backlog → both-review-oracles-interpolate-an-unsanitised-path-9e12
 - discarded :: backlog → i-ll-implement-it-but-i-m-going-f34e
+- discarded :: backlog → reuse-is-a-third-problem-and-the-poc-c810 (duplicate of spec-must-cite-the-existing-function-it-rejected-b3f1, promoted in a2bd4df)

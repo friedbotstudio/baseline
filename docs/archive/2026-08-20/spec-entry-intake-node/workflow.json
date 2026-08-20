@@ -1,0 +1,53 @@
+{
+  "request": "Add an intake node to the spec-entry track and move gate A to sit right after it, so the approval token hashes a small direction document instead of the spec.",
+  "slug": "spec-entry-intake-node",
+  "track_id": "tdd-quickfix",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "intake-full already declares the exact node pair being copied: intake (depends_on [], blocks approve-direction) then approve-direction (depends_on [intake], needs_user true). The same move landed for scout one commit ago in a2bd4df, including the seed.md amendment, golden-fixture regeneration and PINNED_NODE_IDS re-pin that this change repeats.",
+  "track_reason": "not required - tdd-quickfix is the leanest track covering the risk. Track chosen in main context rather than re-asked (CLAUDE.md XI.12 decision economy): the same batch was triaged to tdd-quickfix this session on the same evidence, and every test file this touches already exists.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/workflows.jsonl",
+    "src/.claude/workflows.template.jsonl",
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "simplify"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "rightsize_base": [],
+  "created_at": 1787235776,
+  "updated_at": 1787236837,
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "micro diff",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 4,
+        "lines": 8
+      }
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 {
   "track_id": "spec-entry",
-  "description": "Canonical TaskList for the spec-entry track (post scout-node amendment). Unlike the other three canonical goldens this one is NOT byte-equivalent to the pre-§18 hardcoded template: seed.md §18.1 sanctions the added scout node, so this fixture is pinned to the amended DAG.",
+  "description": "Canonical TaskList for the spec-entry track (post intake+scout amendment). Unlike the other three canonical goldens this one is NOT byte-equivalent to the pre-§18 hardcoded template: seed.md §18.1 sanctions the added intake and scout nodes, so this fixture is pinned to the amended DAG.",
   "tasks": [
     {
       "ord": 1,
-      "subject": "Run /scout for <slug>",
-      "activeForm": "Running scout",
+      "subject": "Run /intake for <slug>",
+      "activeForm": "Running intake",
       "metadata": {
-        "phase": "scout"
+        "phase": "intake"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -15,32 +15,6 @@
     },
     {
       "ord": 2,
-      "subject": "Run /spec for <slug>",
-      "activeForm": "Running spec",
-      "metadata": {
-        "phase": "spec"
-      },
-      "needs_user": false,
-      "can_parallel": false,
-      "blockedBy": [
-        1
-      ]
-    },
-    {
-      "ord": 3,
-      "subject": "Run /spec-shippability-review for <slug>",
-      "activeForm": "Reviewing spec shippability",
-      "metadata": {
-        "phase": "spec-shippability-review"
-      },
-      "needs_user": false,
-      "can_parallel": false,
-      "blockedBy": [
-        2
-      ]
-    },
-    {
-      "ord": 4,
       "subject": "Wait for /approve-direction <path>",
       "activeForm": "Awaiting direction approval",
       "metadata": {
@@ -50,15 +24,41 @@
       "needs_user": true,
       "can_parallel": false,
       "blockedBy": [
+        1
+      ]
+    },
+    {
+      "ord": 3,
+      "subject": "Run /scout for <slug>",
+      "activeForm": "Running scout",
+      "metadata": {
+        "phase": "scout"
+      },
+      "needs_user": false,
+      "can_parallel": false,
+      "blockedBy": [
+        2
+      ]
+    },
+    {
+      "ord": 4,
+      "subject": "Run /spec for <slug>",
+      "activeForm": "Running spec",
+      "metadata": {
+        "phase": "spec"
+      },
+      "needs_user": false,
+      "can_parallel": false,
+      "blockedBy": [
         3
       ]
     },
     {
       "ord": 5,
-      "subject": "Run /tdd for <slug>",
-      "activeForm": "Running TDD",
+      "subject": "Run /spec-shippability-review for <slug>",
+      "activeForm": "Reviewing spec shippability",
       "metadata": {
-        "phase": "tdd"
+        "phase": "spec-shippability-review"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -68,10 +68,10 @@
     },
     {
       "ord": 6,
-      "subject": "Run /simplify for <slug>",
-      "activeForm": "Running simplify",
+      "subject": "Run /tdd for <slug>",
+      "activeForm": "Running TDD",
       "metadata": {
-        "phase": "simplify"
+        "phase": "tdd"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -81,10 +81,10 @@
     },
     {
       "ord": 7,
-      "subject": "Run /security for <slug>",
-      "activeForm": "Running security",
+      "subject": "Run /simplify for <slug>",
+      "activeForm": "Running simplify",
       "metadata": {
-        "phase": "security"
+        "phase": "simplify"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -94,10 +94,10 @@
     },
     {
       "ord": 8,
-      "subject": "Run /integrate for <slug>",
-      "activeForm": "Running integrate",
+      "subject": "Run /security for <slug>",
+      "activeForm": "Running security",
       "metadata": {
-        "phase": "integrate"
+        "phase": "security"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -107,10 +107,10 @@
     },
     {
       "ord": 9,
-      "subject": "Run /document for <slug>",
-      "activeForm": "Running document",
+      "subject": "Run /integrate for <slug>",
+      "activeForm": "Running integrate",
       "metadata": {
-        "phase": "document"
+        "phase": "integrate"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -120,10 +120,10 @@
     },
     {
       "ord": 10,
-      "subject": "Run /archive for <slug>",
-      "activeForm": "Running archive",
+      "subject": "Run /document for <slug>",
+      "activeForm": "Running document",
       "metadata": {
-        "phase": "archive"
+        "phase": "document"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -133,10 +133,10 @@
     },
     {
       "ord": 11,
-      "subject": "Run /roadmap-sync for <slug>",
-      "activeForm": "Running roadmap-sync",
+      "subject": "Run /archive for <slug>",
+      "activeForm": "Running archive",
       "metadata": {
-        "phase": "roadmap-sync"
+        "phase": "archive"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -146,10 +146,10 @@
     },
     {
       "ord": 12,
-      "subject": "Run /memory-sync for <slug>",
-      "activeForm": "Running memory-sync",
+      "subject": "Run /roadmap-sync for <slug>",
+      "activeForm": "Running roadmap-sync",
       "metadata": {
-        "phase": "memory-sync"
+        "phase": "roadmap-sync"
       },
       "needs_user": false,
       "can_parallel": false,
@@ -159,6 +159,19 @@
     },
     {
       "ord": 13,
+      "subject": "Run /memory-sync for <slug>",
+      "activeForm": "Running memory-sync",
+      "metadata": {
+        "phase": "memory-sync"
+      },
+      "needs_user": false,
+      "can_parallel": false,
+      "blockedBy": [
+        12
+      ]
+    },
+    {
+      "ord": 14,
       "subject": "Wait for /grant-commit",
       "activeForm": "Awaiting commit consent",
       "metadata": {
@@ -168,11 +181,11 @@
       "needs_user": true,
       "can_parallel": false,
       "blockedBy": [
-        12
+        13
       ]
     },
     {
-      "ord": 14,
+      "ord": 15,
       "subject": "Run /commit for <slug>",
       "activeForm": "Running commit",
       "metadata": {
@@ -181,7 +194,7 @@
       "needs_user": false,
       "can_parallel": false,
       "blockedBy": [
-        13
+        14
       ]
     }
   ]
