@@ -193,3 +193,4 @@
 - promoted :: backlog → code-structure-oracle-has-no-test-file-exemption-3b8d
 - promoted :: backlog → a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04
 - promoted :: backlog → both-review-oracles-interpolate-an-unsanitised-path-9e12
+- discarded :: backlog → i-ll-implement-it-but-i-m-going-f34e

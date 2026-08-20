@@ -152,7 +152,14 @@ const PATH_LEG_BASELINE = {
   // below already records: the census gate's literalPattern matches `SYMBOL = <digits>`
   // and this site is an object property. Backlog
   // `census-gate-literal-pattern-matches-no-real-site` carries that repair.
-  '.claude/skills/harness/checker-fanout.mjs': 14,
+  // 14 -> 13 at 4c4836c, the `changedfiles-shape-contract` landing. Its closing
+  // commit stamped `1. \`ctx.changedFiles\` has two readers that disagree on its
+  // shape` as picked-up, and the next auto-close sweep deleted it. That entry's
+  // `governs:` named this module — it is the backlog entry this landing fixed — so
+  // closing it removed a hit. Second downward move of this same literal from the
+  // same cause, and re-measured by hand for the same reason: the census gate's
+  // literalPattern matches `SYMBOL = <digits>`, never an object property.
+  '.claude/skills/harness/checker-fanout.mjs': 13,
 };
 
 function liveShards() {
