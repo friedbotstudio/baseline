@@ -1,18 +1,18 @@
 ---
 layout: docs.njk
 title: "Velocity: ceremony you can prove you do not need · baseline"
-description: "Why the baseline has twelve velocity levers, what the right-size gate measures before it drops a phase, and the rule that keeps a speed-up from turning into a bypass."
+description: "Why the baseline has thirteen velocity levers, what the right-size gate measures before it drops a phase, and the rule that keeps a speed-up from turning into a bypass."
 heading: "Ceremony you can<br>prove you don't need."
-lead: "An eleven-phase workflow is right for a risky feature and absurd for a typo. The velocity levers close that gap. Each one is a config flag. Each removes work a machine can prove is unnecessary, and each stops short of any decision that belongs to you."
+lead: "An eleven-phase workflow is right for a risky feature and absurd for a typo. The velocity levers close that gap, and each one is a config flag. Most of them remove work a machine can prove is unnecessary. One runs the other way and offers you more to batch in when the phases would cost more than the work they carry. None of them decides anything that belongs to you."
 updated: 2026-07-29
 breadcrumb: ["docs", "concepts", "velocity"]
 facts:
-  - { label: "levers", value: "12" }
+  - { label: "levers", value: "13" }
   - { label: "on by default", value: "6" }
   - { label: "config", value: "project.json → velocity" }
 toc:
   - { id: "problem", label: "Cost of a fixed pipeline" }
-  - { id: "levers", label: "The twelve levers" }
+  - { id: "levers", label: "The thirteen levers" }
   - { id: "rightsize", label: "Right-size gate" }
   - { id: "boundaries", label: "Lever boundaries" }
   - { id: "failopen", label: "The fail-open default" }
@@ -28,7 +28,7 @@ toc:
 
 <p>So the pipeline gives ground deliberately, in the places where a machine can measure that the ground was empty to begin with.</p>
 
-<h2 id="levers"><span class="sec-mark" aria-hidden="true">§ II</span> The twelve levers</h2>
+<h2 id="levers"><span class="sec-mark" aria-hidden="true">§ II</span> The thirteen levers</h2>
 
 <p class="sec-lead">Every lever is a flag under <code class="tok">project.json → velocity</code>. {{ roster.velocity.onByDefault }} ship on, {{ roster.velocity.offByDefault }} ship off, and you can flip any of them.</p>
 

@@ -1,0 +1,60 @@
+{
+  "request": "Work-planner: define workflow envelope cost from historical timing data and enforce payload/envelope >= 3x soft floor, 4x optimal. Covers instrumentation repair (payload phase stamping + attempts re-entry counter), the envelope/payload split definition + cost heuristic, the two checkpoints (a-priori at triage, a-posteriori pre-tail), and composition with rightsize-gate.",
+  "slug": "work-planner-envelope",
+  "track_id": "intake-full",
+  "novelty": "novel",
+  "novelty_evidence": "No existing skill performs envelope-vs-payload cost accounting. Searched: .claude/skills/harness/rightsize-gate.mjs measures diff size to trim {simplify, document} and never computes a cost ratio; .claude/hooks/lib/timing.mjs renders per-phase cost but sets no threshold; no roadmap row or backlog entry covers it. The 3x/4x thresholds derive from the recorded decision .claude/memory/decisions/work-planner-envelope-ratio-3x-soft-4x-optimal.md.",
+  "track_reason": "User-selected over the recommended epic track. One landing rather than four epic-children; discovery still runs once, and the four work areas become spec sections rather than separately-committed slices.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/harness/rightsize-gate.mjs",
+    ".claude/hooks/lib/timing.mjs",
+    ".claude/hooks/phase_timer.mjs",
+    ".claude/skills/harness/SKILL.md",
+    ".claude/skills/triage/SKILL.md",
+    "docs/archive/**/timing.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "org-dispatch"
+  ],
+  "completed": [
+    "intake",
+    "scout",
+    "approve-direction",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787243164,
+  "updated_at": 1787249220,
+  "rightsize_base": [
+    ".claude/memory/_discard-ledger.md",
+    ".claude/memory/conventions/surface-deferrals-before-gate-c-and-batch-them.md",
+    ".claude/memory/decisions/work-planner-envelope-ratio-3x-soft-4x-optimal.md"
+  ],
+  "attempts": {
+    "approve-direction": 2,
+    "tdd": 2
+  },
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

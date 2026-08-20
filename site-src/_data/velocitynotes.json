@@ -10,5 +10,6 @@
   "org_mode": "Opens the pod of peer sessions behind the org track.",
   "notifier": "Tells you when a run stops and needs you.",
   "mutation_oracle": "Mutates your source to find out whether the tests would have caught it.",
-  "ac_conformance": "Checks each acceptance criterion against the test that claims to cover it."
+  "ac_conformance": "Checks each acceptance criterion against the test that claims to cover it.",
+  "work_planner": "Weighs the work a workflow carries against what the workflow itself costs, and offers you more to batch in when the balance is poor."
 }

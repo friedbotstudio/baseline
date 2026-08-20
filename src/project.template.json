@@ -308,6 +308,10 @@
     },
     "ac_conformance": {
       "enabled": false
+    },
+    "work_planner": {
+      "enabled": false,
+      "min_fit_samples": 5
     }
   },
   "ci_posture": {

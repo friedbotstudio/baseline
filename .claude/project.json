@@ -252,11 +252,11 @@
     },
     "workspace": {
       "enabled": true,
-      "note": "Gates scout reconciliation against the structural corpus. Ships DEFAULT FALSE in src/project.template.json; enabled here because this repository is the canary and its corpus is seeded (rollout step 4). Flip false to roll back — scout returns to discovery and the corpus stays on disk, inert."
+      "note": "Gates scout reconciliation against the structural corpus. Ships DEFAULT FALSE in src/project.template.json; enabled here because this repository is the canary and its corpus is seeded (rollout step 4). Flip false to roll back \u2014 scout returns to discovery and the corpus stays on disk, inert."
     },
     "architecture_map": {
       "enabled": true,
-      "note": "Gates the concept layer, the four derived edge classes, and the session-start concept map. Ships ABSENT from src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D9). Flip false to roll back — by_concept lookups return [], renderConceptMap returns '', and the concepts/ and diagrams/ directories stay on disk, inert.",
+      "note": "Gates the concept layer, the four derived edge classes, and the session-start concept map. Ships ABSENT from src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D9). Flip false to roll back \u2014 by_concept lookups return [], renderConceptMap returns '', and the concepts/ and diagrams/ directories stay on disk, inert.",
       "governed_surface": {
         "roots": [
           ".claude/hooks/",
@@ -315,7 +315,7 @@
     },
     "annotations": {
       "enabled": true,
-      "note": "Gates load_bearing-gated annotation placement by code-structure and annotation resolution by scout. Ships ABSENT in src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D7). Flip false to roll back — scout skips the scan, code-structure places nothing, and annotations already in source become inert text."
+      "note": "Gates load_bearing-gated annotation placement by code-structure and annotation resolution by scout. Ships ABSENT in src/project.template.json, so every consumer reads false; enabled here because this repository is the canary (spec D7). Flip false to roll back \u2014 scout skips the scan, code-structure places nothing, and annotations already in source become inert text."
     }
   },
   "plantuml": {
@@ -440,6 +440,10 @@
     },
     "ac_conformance": {
       "enabled": false
+    },
+    "work_planner": {
+      "enabled": false,
+      "min_fit_samples": 5
     }
   },
   "roadmap": {
@@ -486,7 +490,7 @@
           "technical-writer"
         ],
         "reader_target": 11,
-        "note": "Real documentation pages. docs/{specs,intake,scout,research,security,archive,brief,rca,tasklist,handoff,vision,design,audits,site,init}/ are WORKFLOW ARTIFACTS, not doc surfaces — they are excluded by omission from match. The roadmap is a machine-parsed tracker, not prose."
+        "note": "Real documentation pages. docs/{specs,intake,scout,research,security,archive,brief,rca,tasklist,handoff,vision,design,audits,site,init}/ are WORKFLOW ARTIFACTS, not doc surfaces \u2014 they are excluded by omission from match. The roadmap is a machine-parsed tracker, not prose."
       },
       {
         "match": [

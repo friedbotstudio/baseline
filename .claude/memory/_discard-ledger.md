@@ -197,3 +197,7 @@
 - discarded :: backlog → reuse-is-a-third-problem-and-the-poc-c810 (duplicate of spec-must-cite-the-existing-function-it-rejected-b3f1, promoted in a2bd4df)
 - promoted :: backlog → reuse-is-a-third-problem-and-the-poc-c810
 - discarded :: backlog → the-fix-is-proposed-features-665e
+- promoted :: conventions → surface-deferrals-before-gate-c-and-batch-them
+- promoted :: decisions → work-planner-envelope-ratio-3x-soft-4x-optimal
+- promoted :: backlog → ref-affordance-makes-the-swarm-predicate-always-resolve-solo-4f2c
+- promoted :: .claude/skills/harness/work-planner.mjs → landmarks.md
