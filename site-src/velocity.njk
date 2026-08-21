@@ -8,12 +8,13 @@ updated: 2026-07-29
 breadcrumb: ["docs", "concepts", "velocity"]
 facts:
   - { label: "levers", value: "13" }
-  - { label: "on by default", value: "6" }
+  - { label: "on by default", value: "7" }
   - { label: "config", value: "project.json → velocity" }
 toc:
   - { id: "problem", label: "Cost of a fixed pipeline" }
   - { id: "levers", label: "The thirteen levers" }
   - { id: "rightsize", label: "Right-size gate" }
+  - { id: "payload", label: "Payload against envelope" }
   - { id: "boundaries", label: "Lever boundaries" }
   - { id: "failopen", label: "The fail-open default" }
 ---
@@ -52,7 +53,7 @@ toc:
 
 <p>The gate runs once, right after your tests go green, and it is the clearest example of the whole idea: it measures the working tree and then decides whether a couple of phases can safely be dropped.</p>
 
-<p>If a diff touches fewer than 4 files and changes 80 lines or fewer, it counts as micro. Both numbers come from <code class="tok">project.json</code> (so you can move them if your changes typically run larger).</p>
+<p>If a diff touches fewer than 8 files and changes 200 lines or fewer, it counts as micro. Both numbers come from <code class="tok">project.json</code> (so you can move them if your changes typically run larger).</p>
 
 <div class="plate">
   <div class="plate-bar">
@@ -70,7 +71,33 @@ toc:
 
 <p>It also speaks up when it stays quiet. If <code class="tok">security</code> is being skipped for other reasons and the diff touched a path you marked sensitive, the gate raises an advisory, names those paths, and tells you to run <code class="tok">/security</code> yourself.</p>
 
-<h2 id="boundaries"><span class="sec-mark" aria-hidden="true">§ IV</span> What a lever may never do</h2>
+<h2 id="payload"><span class="sec-mark" aria-hidden="true">§ IV</span> Payload against envelope</h2>
+
+<p>The right-size gate asks whether a change is small enough to drop a phase. This lever asks the opposite. It wants to know whether the change is large enough to justify a workflow at all.</p>
+
+<p>Every run spends its tokens twice. Some go on the payload, which is the phase where code actually gets written. The rest go on everything wrapped around it: discovery, review, the consent gates, the archive. That second number is the envelope. It barely moves with the size of the change, so a two-line fix and a fortnight of work pay nearly identical ceremony.</p>
+
+<p>Dividing payload by envelope gives the ratio. Below 3x the verdict reads <code class="tok">under-floor</code>. From 3x it reads <code class="tok">acceptable</code>, and at 4x or better it reads <code class="tok">optimal</code>. Two further states cover the runs where no honest number exists: <code class="tok">not-applicable</code>, when the track has no payload phase, and <code class="tok">unfitted</code>, when nothing has been measured yet.</p>
+
+<p>The envelope is measured, not assumed. It is fitted from your own archived runs once a track has five of them. Until then a shipped default stands in, and the verdict is marked unfitted, so a borrowed number is never mistaken for a measurement. This repository holds 25 archived <code class="tok">tdd-quickfix</code> bundles. They put the envelope for that track at 37,348 tokens.</p>
+
+<p>You can ask for the ratio at any point in a run. The command reads the archived timing table once a workflow has landed, and the live timing log while it is still going. No flag withholds it. Asking for a measurement is a read.</p>
+
+<div class="plate">
+  <div class="plate-bar">
+    <span>node .claude/skills/harness/ratio.mjs --slug &lt;slug&gt;</span>
+  </div>
+  <pre class="plate-body">payload   <span class="t-ok">109,427</span> tokens <span class="t-dim">(live)</span>
+envelope  <span class="t-ok">37,348</span> tokens <span class="t-dim">(fitted, 25 samples)</span>
+ratio     <span class="t-ok">2.93</span>  <span class="t-dim">under-floor</span>
+shortfall <span class="t-ok">39,965</span> tokens <span class="t-dim">to the 4x target</span></pre>
+</div>
+
+<p>Two checkpoints run without being asked. The first fires at triage, before any work starts, from the shape of the request alone: how many acceptance criteria it carries, how many paths it says it will touch. That one is a projection, and it will be wrong early. Being wrong early is tolerable, because its job is to let you fold related work in while folding is still cheap. The second fires once your tests go green. It measures what the run actually spent.</p>
+
+<p>An under-floor verdict blocks nothing. The shortfall is reported, and the run continues if you override it. Both the override and your reason are written into <code class="tok">workflow.json</code>, so they ride into the archived bundle rather than evaporating with the session. Where the gap is small, the lever may also name open backlog entries sized to close it. It adds none of them without your approval.</p>
+
+<h2 id="boundaries"><span class="sec-mark" aria-hidden="true">§ V</span> What a lever may never do</h2>
 
 <p class="sec-lead">Three limits keep a speed-up from quietly becoming a bypass. They hold for every lever, present and future.</p>
 
@@ -80,7 +107,7 @@ toc:
 
 <p>Where a consent gate is involved, no lever reaches it. The three gates are commands you type, checked by a hook which runs before Claude is invoked, and no configuration flag touches that path at all. Turning every lever on therefore leaves the approvals exactly where they were.</p>
 
-<h2 id="failopen"><span class="sec-mark" aria-hidden="true">§ V</span> The fail-open default</h2>
+<h2 id="failopen"><span class="sec-mark" aria-hidden="true">§ VI</span> The fail-open default</h2>
 
 <p>Every lever fails toward the full pipeline. Disable one and you get the whole workflow; break one and you still get the whole workflow, because an error inside the gate returns an empty skip set (fail-open, by design).</p>
 

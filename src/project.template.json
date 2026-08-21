@@ -310,7 +310,7 @@
       "enabled": false
     },
     "work_planner": {
-      "enabled": false,
+      "enabled": true,
       "min_fit_samples": 5
     }
   },

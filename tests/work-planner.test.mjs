@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { REPO_ROOT, tryImport } from './helpers/memory-fixtures.mjs';
 
 const PLANNER = '.claude/skills/harness/work-planner.mjs';
+const RATIO = '.claude/skills/harness/ratio.mjs';
 
 const envelope = (tokens = 100) => ({ track: 't', envelope_tokens: tokens, fitted: true, sample_count: 9, source: 'corpus' });
 const payload = (tokens) => ({ track: 't', payload_tokens: tokens, measured: true, applicable: true });
@@ -157,5 +158,104 @@ describe('composition with rightsize-gate (AC-009)', () => {
     assert.ok(rightsize !== -1, 'the SOP must still name the rightsize check');
     assert.ok(planner < rightsize,
       'AC-009: the planner decides whether the payload should GROW before rightsize decides which tail phases it warrants');
+  });
+});
+
+// ─── the live measure ───
+//
+// `measurePayload` reads the ARCHIVED corpus, which is the right source once a
+// workflow has landed and the wrong one while it is still running. Every ratio a
+// person actually wants is for a workflow in flight — the number is only useful
+// while there is still a decision left to make with it. So the live reader exists
+// alongside the archived one, and the archived one still wins where both resolve.
+
+const timingRows = (root, slug, rows) => {
+  mkdirSync(join(root, '.claude/state/timing'), { recursive: true });
+  writeFileSync(join(root, '.claude/state/timing', `${slug}.jsonl`),
+    rows.map((r) => JSON.stringify(r)).join('\n') + '\n', 'utf8');
+};
+
+const baselineRow = (out) => ({ phase: 'run-start', event: 'baseline', ts: 1, out_tokens: out });
+const completedRow = (phase, out) => ({ phase, event: 'completed', ts: 2, out_tokens: out });
+
+describe('the live payload measure', () => {
+  it('test_when_workflow_is_live_then_payload_measures_from_the_timing_log', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+    timingRows(root, 'w', [baselineRow(10_000), completedRow('tdd', 119_000)]);
+
+    const measured = mod.measureLivePayload({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.equal(measured.measured, true, 'a timing log with a payload phase is measurable');
+    assert.equal(measured.payload_tokens, 109_000, 'the payload is the delta from the run-start baseline');
+    assert.equal(measured.source, 'live');
+  });
+
+  it('test_when_no_timing_log_exists_then_it_reports_unmeasured_rather_than_zero', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+
+    const measured = mod.measureLivePayload({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.equal(measured.measured, false, 'no log is not the same claim as zero work');
+    assert.equal(measured.payload_tokens, 0);
+  });
+
+  it('test_when_the_payload_phase_has_not_completed_then_it_reports_unmeasured', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+    timingRows(root, 'w', [baselineRow(10_000), completedRow('scout', 20_000)]);
+
+    const measured = mod.measureLivePayload({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.equal(measured.measured, false, 'a run that has not reached its payload phase has no payload yet');
+  });
+
+  it('test_when_slug_traverses_then_the_live_measure_refuses_before_reading', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+
+    assert.throws(
+      () => mod.measureLivePayload({ rootDir: root, slug: '../escape', track: 't' }),
+      /slug/i,
+      'it must refuse on the slug rule, not merely throw',
+    );
+  });
+});
+
+describe('the ratio verb', () => {
+  it('test_when_ratio_verb_runs_on_a_live_workflow_then_it_reports_a_verdict', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+    timingRows(root, 'w', [baselineRow(10_000), completedRow('tdd', 119_000)]);
+
+    const verdict = mod.ratio({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.ok(['optimal', 'acceptable', 'under-floor'].includes(verdict.state),
+      `a measurable run yields a real state, got ${verdict.state}`);
+    assert.equal(typeof verdict.ratio, 'number');
+    assert.equal(verdict.payload.source, 'live');
+  });
+
+  it('test_when_ratio_verb_runs_with_no_measurement_anywhere_then_it_says_unfitted', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+
+    const verdict = mod.ratio({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.equal(verdict.state, 'unfitted', 'nothing to measure is reported, never guessed');
+    assert.equal(verdict.ratio, null);
+  });
+
+  it('test_when_ratio_verb_runs_then_the_flag_does_not_gate_it', async () => {
+    const mod = await tryImport(RATIO);
+    const root = tempRepo();
+    timingRows(root, 'w', [baselineRow(10_000), completedRow('tdd', 119_000)]);
+    writeFileSync(join(root, '.claude/project.json'),
+      JSON.stringify({ velocity: { work_planner: { enabled: false } } }, null, 2), 'utf8');
+
+    const verdict = mod.ratio({ rootDir: root, slug: 'w', track: 'tdd-quickfix' });
+
+    assert.notEqual(verdict.state, 'disabled', 'asking for the number is a read, so no flag withholds it');
   });
 });
