@@ -6,6 +6,7 @@
 
 import { normalizeFinding } from '../spec-diagram-review/oracle.mjs';
 import { resolveCheckerThreshold } from '../../hooks/lib/tier-dial.mjs';
+import { clip } from '../lib/terminal-text.mjs';
 
 // tier-dial:read-path — this checker's mandatory/floor come from
 // resolveCheckerThreshold('code-structure') (D6/D8).
@@ -56,18 +57,19 @@ export function runCodeStructureOracle({ changedFiles } = {}, deps = {}) {
   const findings = [];
   for (const file of Array.isArray(changedFiles) ? changedFiles : []) {
     const lines = substantiveLineCount(file && file.content);
+    const named = clip(file && file.path);
     if (lines > LINE_BUDGET) {
       findings.push(normalizeFinding({
         check: 'file_length',
-        file: file.path,
+        file: named,
         line: null,
         evidence: `${lines} substantive lines (> ${LINE_BUDGET})`,
-        message: `${file.path} has ${lines} substantive lines; split along layer lines (code-structure).`,
+        message: `${named} has ${lines} substantive lines; split along layer lines (code-structure).`,
         suggested_fix: 'Extract sub-modules following the Orchestration / Domain / Foundation model.',
-        artifact: { kind: 'file-length', file: file.path, lines },
+        artifact: { kind: 'file-length', file: named, lines },
       }, { mandatory: mandatory && !isInheritedDebt(file) }));
     }
-    const ratioFinding = commentRatioFinding(file, lines);
+    const ratioFinding = commentRatioFinding(file, lines, named);
     if (ratioFinding) findings.push(ratioFinding);
   }
   return { findings };
@@ -84,18 +86,18 @@ function isInheritedDebt(file) {
 
 // mandatory is FORCED false, not read from the dial: D-2 lands this advisory for one
 // release so the first real measurement is free. A dial change must not promote it.
-function commentRatioFinding(file, substantive) {
+function commentRatioFinding(file, substantive, named) {
   if (substantive === 0) return null;
   const comments = bodyCommentCount(file && file.content);
   const ratio = comments / substantive;
   if (ratio <= COMMENT_RATIO_MAX) return null;
   return normalizeFinding({
     check: 'comment_ratio',
-    file: file.path,
+    file: named,
     line: null,
     evidence: `${comments} body comment lines / ${substantive} substantive = ${ratio.toFixed(2)} (> ${COMMENT_RATIO_MAX.toFixed(2)})`,
-    message: `${file.path} carries ${ratio.toFixed(2)} body comments per substantive line; the bar is ${COMMENT_RATIO_MAX.toFixed(2)}.`,
+    message: `${named} carries ${ratio.toFixed(2)} body comments per substantive line; the bar is ${COMMENT_RATIO_MAX.toFixed(2)}.`,
     suggested_fix: 'Delete what the code already says. A comment earns its line by saying why, never what.',
-    artifact: { kind: 'comment-ratio', file: file.path, ratio },
+    artifact: { kind: 'comment-ratio', file: named, ratio },
   }, { mandatory: false });
 }

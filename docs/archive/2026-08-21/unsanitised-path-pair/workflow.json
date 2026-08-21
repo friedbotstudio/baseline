@@ -1,0 +1,69 @@
+{
+  "request": "Sanitize repository-controlled file paths before interpolation in the two review oracles and the process-lifecycle guard advisory block",
+  "slug": "unsanitised-path-pair",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Two open backlog entries specify the defect, the governed files and the fix shape: .claude/memory/backlog/both-review-oracles-interpolate-an-unsanitised-path-9e12.md (code-structure/oracle.mjs, simplify/oracle.mjs) and .claude/memory/backlog/advisory-block-interpolates-an-unsanitised-file-path-8c7e.md (process_lifecycle_guard.mjs, two sites). Both cite measured round-trips and a /security archive finding.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/code-structure/oracle.mjs",
+    ".claude/skills/simplify/oracle.mjs",
+    ".claude/hooks/process_lifecycle_guard.mjs",
+    ".claude/skills/lib/terminal-text.mjs",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "both-review-oracles-interpolate-an-unsanitised-path-9e12",
+    "advisory-block-interpolates-an-unsanitised-file-path-8c7e"
+  ],
+  "created_at": 1787250218,
+  "updated_at": 1787305247,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "micro diff: 5 files / 71 lines",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 5,
+        "lines": 71
+      }
+    },
+    {
+      "phase": "simplify",
+      "reason": "reinstated: re-measured at 23 files / 562 lines, outside the micro window",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 23,
+        "lines": 562
+      },
+      "supersedes": "micro diff: 5 files / 71 lines"
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 
 import { normalizeFinding } from '../spec-diagram-review/oracle.mjs';
 import { resolveCheckerThreshold } from '../../hooks/lib/tier-dial.mjs';
+import { clip } from '../lib/terminal-text.mjs';
 
 const CHECKER = 'review';
 export const phase = 'code-review';
@@ -24,7 +25,7 @@ function tableRowCells(line) {
 }
 
 function flaggedRow(cells) {
-  const file = cells[0];
+  const file = clip(cells[0]);
   const reason = cells[2] === undefined ? '' : cells[2];
   return {
     file,

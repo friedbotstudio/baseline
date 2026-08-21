@@ -20,6 +20,9 @@ import { tryImport, REPO_ROOT } from './helpers/memory-fixtures.mjs';
 const TERMINAL_TEXT = '.claude/skills/lib/terminal-text.mjs';
 const STANDUP_RENDER = '.claude/skills/standup/render.mjs';
 const BACKLOG_DEFERRAL = '.claude/skills/harness/checkers/backlog-deferral.mjs';
+const CODE_STRUCTURE = '.claude/skills/code-structure/oracle.mjs';
+const SIMPLIFY = '.claude/skills/simplify/oracle.mjs';
+const LIFECYCLE_GUARD = '.claude/hooks/process_lifecycle_guard.mjs';
 
 const WIDTH = 96;
 const CONTROL_CLASS_LITERAL = 'u0000-\\u001f';
@@ -82,7 +85,13 @@ describe('terminal-text — the shared sanitizer', () => {
   });
 
   it('test_when_the_sanitizer_is_hoisted_then_no_consumer_declares_a_local_control_char_rule', () => {
-    const consumers = [STANDUP_RENDER, BACKLOG_DEFERRAL];
+    const consumers = [
+      STANDUP_RENDER,
+      BACKLOG_DEFERRAL,
+      CODE_STRUCTURE,
+      SIMPLIFY,
+      LIFECYCLE_GUARD,
+    ];
 
     for (const rel of consumers) {
       const text = read(rel);

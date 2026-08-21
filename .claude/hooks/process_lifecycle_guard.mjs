@@ -28,6 +28,7 @@ import {
   renderCorpusLocation,
 } from './lib/governed-memory.mjs';
 import { resolveCategory } from '../skills/memory-index/lift-fields.mjs';
+import { clipInline } from '../skills/lib/terminal-text.mjs';
 
 // Phase-artifact prefixes → the workflow phase whose scoped memory should surface
 // before the write. This is the decision-point-injection leg (roadmap T4): a Write
@@ -68,12 +69,12 @@ function surfaceGovernedMemoryFor(filePath) {
 
   if (!blocks.length) emitAllow();
 
-  emitInfo(`process_lifecycle_guard — context surfaced for \`${filePath}\`:
+  emitInfo(`process_lifecycle_guard — context surfaced for \`${clipInline(filePath)}\`:
 
 ${blocks.join('\n\n')}
 
 CLAUDE.md Article IX clause 7: treat the surfaced entry/entries as binding for this write; prefer verbatim over interpretation when they conflict.`);
-  logLine('process_lifecycle_guard', `surfaced ${blocks.length} block(s) for ${filePath}`);
+  logLine('process_lifecycle_guard', `surfaced ${blocks.length} block(s) for ${clipInline(filePath)}`);
   emitAllow();
 }
 
@@ -100,7 +101,7 @@ function governingMemoryBlock(filePath, rootDir) {
     ? rendered.hits
       .map((h) => `--- ${h.category}/${h.key} ---\n> ${h.verbatim.split('\n').join('\n> ')}\n\n${h.interpretation}`.trimEnd())
       .join('\n\n')
-    : `${hits.length} entries govern \`${filePath}\` (walk from \`${rendered.entryPoint}\`):\n${rendered.summary}`;
+    : `${hits.length} entries govern \`${clipInline(filePath)}\` (walk from \`${rendered.entryPoint}\`):\n${rendered.summary}`;
 }
 
 function corpusLocationBlock(filePath, rootDir) {
@@ -144,7 +145,7 @@ function surfacePhaseScopedMemory(filePath) {
 ${body}
 
 CLAUDE.md Article IX clause 7: treat the surfaced lesson(s) as binding for this write; prefer verbatim over interpretation when they conflict.`);
-  logLine('process_lifecycle_guard', `surfaced ${hits.length} scoped fact(s) for phase ${phase}: ${filePath}`);
+  logLine('process_lifecycle_guard', `surfaced ${hits.length} scoped fact(s) for phase ${phase}: ${clipInline(filePath)}`);
   emitAllow();
 }
 

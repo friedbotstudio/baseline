@@ -19,3 +19,14 @@ export function clip(text, width = DEFAULT_WIDTH) {
   const flat = String(text ?? '').replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim();
   return flat.length <= width ? flat : `${flat.slice(0, width - 1)}…`;
 }
+
+// A path printed INSIDE a backtick span needs one thing `clip` does not do: a
+// backtick in the text closes the span early, and whatever follows renders as
+// prose. The advisory blocks the hooks emit end by citing Article IX.7 as
+// binding, so a filename that escapes the span forges instruction text.
+//
+// The substitute is an apostrophe rather than a deletion, so the character
+// count is unchanged, so the width bound still measures what prints.
+export function clipInline(text, width = DEFAULT_WIDTH) {
+  return clip(String(text ?? '').replace(/`/g, "'"), width);
+}

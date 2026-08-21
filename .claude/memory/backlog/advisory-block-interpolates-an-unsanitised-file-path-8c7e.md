@@ -2,13 +2,14 @@
 key: advisory-block-interpolates-an-unsanitised-file-path-8c7e
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-06
 raised-in-context: corpus-recall-reachability
 verified-at: d4a1a47
 last-touched: 2026-08-06
 governs: .claude/hooks/process_lifecycle_guard.mjs
+superseded-at: 2026-08-21
 ---
 
 > **Recommendation**: strip control characters and backticks from `filePath` before interpolation — `String(filePath).replace(/[`\r\n]/g, '')` — or emit the path on its own line without backtick delimiters. Applies to the identical interpolation in `surfacePhaseScopedMemory`.
