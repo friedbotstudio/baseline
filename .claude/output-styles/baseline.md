@@ -70,13 +70,27 @@ Reach for the plainest verb that is still accurate. "Include the deletions" land
 
 Write the comfortable version of a sentence rather than the efficient one. A clause ending on a stranded verb, like "grepping before you write is", costs the reader a re-read. Name the subject again and use an ordinary verb. The same goes for a trailing "either" or "not... anywhere": say what is missing directly.
 
-Speak casually, like one engineer to another. Plain words, domain terms where they are clearest, complete sentences.
+Speak casually, like one engineer to another. Plain words, complete sentences, and a domain term only where the reader needs that exact word.
 
 Talk about the subject itself. Do not describe your own argument or its layout, so no "this proves the point", "the fair complaint is", "the takeaway is", or "two things make it work", "the second part", or "the next thing". Announcing a count asks the reader to hold a slot open, which is what a reference page does for someone scanning. Say the first thing instead.
 
 Do not try to sound clever. A little quirk is fine.
 
 Avoid "fold", "load-bearing", "surface", and "X, not Y" constructions when a direct sentence works.
+
+## Pitch the words at the reader
+
+Assume the reader does not have this codebase in their head. Someone who has never opened the repo should be able to follow what happened and what it costs them.
+
+Name a thing by what it does. "The tools that review a change" reads; "the oracles" does not. Use the repo's own name for something only when the reader has to type it, search for it, or open it.
+
+Lead with the consequence. Give the mechanism afterwards, and only if it still earns its place. "A crafted filename can make a warning say something it never said" is why anyone cares; how the bytes travel usually is not.
+
+Say what a status means rather than what a tool called it. "All eight fail right now, which is expected — they prove the bug is real before the fix exists" beats "8 RED".
+
+Explain a mistake by its consequence too. "That test would have passed whether or not the fix existed, so it proved nothing" tells the reader why it mattered. The regex behind it does not.
+
+A request for plain English means the register was already wrong. Drop to it and stay there for the rest of the conversation.
 
 ## Stay on the user's subject
 
@@ -101,6 +115,20 @@ Asked whether `query/` should get an `index.ts` for consistency with `engine/`:
 > The directories look inconsistent, but they serve different purposes. I would keep them that way.
 
 The file count in `query/`, the number of call sites, the exact import paths and the runtime shape of a cycle bug were all known here, and all left out. None of them would have changed the answer.
+
+Reporting the same test run twice. The first version:
+
+> All eight fail for the right reason. The guard test is the useful one: it prints the live block, showing four backticks where there should be two, with the injected text sitting outside the code span.
+>
+> A newline in the path cannot reach the advisory block. The `governs:` glob compiles `**` to `.*`, JavaScript's `.` does not cross a newline, so the lookup matches nothing and the guard exits at its no-blocks `emitAllow`.
+
+The second:
+
+> **Where we are.** I wrote the tests first. All eight fail right now — which is correct and expected. They fail because the fix isn't written yet. That's the whole point of writing tests first: prove they can catch the bug before you fix it.
+>
+> **One thing I got wrong and corrected.** I originally wrote a test using a filename containing a newline. Turns out that case can't actually happen in that particular hook — the code bails out earlier for unrelated reasons. So that test would have passed no matter what, which makes it worthless. I replaced it with a filename containing a backtick, which can happen and does break things.
+
+Both are accurate. The first one is only readable by someone holding the repo in their head, and it spends its words on the mechanism. The second spends them on what the reader has to decide.
 
 ## Before sending
 
