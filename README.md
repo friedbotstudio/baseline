@@ -10,7 +10,7 @@
 
 # Claude Code Baseline
 
-A discipline layer for Claude Code. Hooks at every tool boundary, a workflow that runs from intake to commit, and a small constitution the agent cannot bypass.
+An open-source governance layer for Claude Code. Hooks fire at every tool boundary and refuse a call that breaks the constitution. The workflow runs from intake to commit, and Claude cannot approve its own work at any of the three consent gates.
 
 <br/>
 
@@ -46,7 +46,7 @@ The baseline is that opinion, written down and enforced below the layer Claude c
 
 ## What this is
 
-A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **59 skills**, **1 subagent**, **9 workflow tracks**, **4 consent gates** you type yourself, and **1 output style** that changes how Claude writes back to you.
+A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **59 skills**, **1 subagent**, **9 workflow tracks**, **3 consent gates** you type yourself, and **1 output style** that changes how Claude writes back to you.
 
 The hooks run as separate processes, outside Claude's tool boundary, before the tool call resolves. So _"don't push"_, _"don't `--amend`"_, _"don't self-approve specs"_ stop being instructions Claude may follow and become operations it cannot perform. It cannot disable a hook with a flag, cannot write its own consent marker, and cannot reorder a phase without an exception `/triage` records on disk.
 
@@ -235,4 +235,4 @@ Apache License 2.0. See [`LICENSE`](LICENSE).
 
 ## About
 
-The Claude Code Baseline is built and maintained by [Friedbot Studio](https://friedbotstudio.com). We build the infrastructure that makes agentic tools usable on production systems: discipline layers, evaluation harnesses, and audit trails.
+The Claude Code Baseline is built and maintained by [Friedbot Studio](https://friedbotstudio.com). We build the infrastructure that makes agentic tools usable on production systems: governance layers, evaluation harnesses, and audit trails.

@@ -68,6 +68,20 @@ describe('ga4 event handlers — structural shape (AC-003, AC-004)', () => {
     );
   });
 
+  it('test_when_site_js_read_then_copy_event_carries_command_kind_defaulting_to_command', () => {
+    const text = readSiteJs();
+    assert.match(
+      text,
+      /command_kind:\s*\w+\(\s*\w+\s*\)/,
+      'copy_install_command must carry command_kind so an install copy is separable from a docs copy'
+    );
+    assert.match(
+      text,
+      /getAttribute\(\s*['"]data-copy-kind['"]\s*\)\s*\|\|\s*['"]command['"]/,
+      'a button with no [data-copy-kind] must read as "command", never as an install conversion'
+    );
+  });
+
   it('test_when_site_js_read_then_cta_and_copy_use_non_overlapping_selectors', () => {
     const text = readSiteJs();
     // CTA listener must NOT key off [data-copy], and copy handler must NOT key off [data-cta].

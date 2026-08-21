@@ -80,6 +80,17 @@
     else failed();
   }
 
+  /* Every .js-copy button reports under one event name, so the install-command
+   * conversion and a docs slash-command copy are told apart by command_kind
+   * rather than by parsing the copied text. A button with no [data-copy-kind]
+   * reads as "command": the generic case is the common one, and a new copy
+   * affordance that forgets the attribute lands in the bucket that does not
+   * inflate the conversion count.
+   */
+  function copyKind(button) {
+    return button.getAttribute("data-copy-kind") || "command";
+  }
+
   var copyButtons = document.querySelectorAll(".js-copy");
   for (var i = 0; i < copyButtons.length; i++) {
     copyButtons[i].addEventListener("click", function (event) {
@@ -87,7 +98,10 @@
       copyCommand(button);
       var command = button.getAttribute("data-copy") || "";
       if (analyticsReady()) {
-        window.gtag("event", "copy_install_command", { command: command });
+        window.gtag("event", "copy_install_command", {
+          command: command,
+          command_kind: copyKind(button),
+        });
       }
     });
   }

@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: baseline · A discipline layer for Claude Code
-description: A repository overlay that governs how Claude works in your codebase, intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.
+title: Baseline | Open-Source Governance Layer for Claude Code
+description: Baseline is an open-source governance layer for Claude Code. Hooks block a tool call before it runs, and by default no commit lands without your approval.
 ---
 
 {#
@@ -17,11 +17,11 @@ description: A repository overlay that governs how Claude works in your codebase
   <div class="wrap">
   <div class="hero-grid">
     <div>
-      <div class="hero-eyebrow">claude code · constitutional baseline</div>
-      <h1 id="hero-title">Claude cannot<br>self-approve.</h1>
-      <p class="hero-lead">{{ site.brand }} is a repository overlay that governs how Claude works in your codebase, intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.</p>
+      <div class="hero-eyebrow">claude code · governance layer</div>
+      <h1 id="hero-title">Claude Code cannot <br>self-approve.</h1>
+      <p class="hero-lead">{{ site.brand }} is an open-source governance layer for Claude Code. It covers your codebase from intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.</p>
       <div class="hero-actions">
-        <button type="button" class="btn-cmd js-copy" data-copy="npx @friedbotstudio/create-baseline@latest .">
+        <button type="button" class="btn-cmd js-copy" data-copy="npx @friedbotstudio/create-baseline@latest ." data-copy-kind="install">
           <span class="sigil" aria-hidden="true">$</span>
           <span class="cmd-long">npx @friedbotstudio/create-baseline@latest .</span><span class="cmd-short">npx create-baseline</span>
           <span class="copy-state" aria-hidden="true">click to copy</span>
@@ -55,23 +55,27 @@ description: A repository overlay that governs how Claude works in your codebase
   </div>
 </section>
 
-<section class="stat-strip" aria-label="What the overlay installs">
+{#
+  Claim-led, not count-led. PRODUCT.md recorded this as an open conflict on
+  2026-07-28 and required an explicit resolution; the engineer settled it on
+  2026-08-21 in favour of the clause. The count is evidence for an assertion,
+  never the assertion itself, so each cell reads as a continuation of the
+  hero's refusal rather than an inventory of what you are about to install.
+#}
+<section class="stat-strip" aria-label="What the overlay guarantees">
   <div class="wrap">
   <div class="grid-rule grid-3">
     <div class="stat">
-      <div class="num">{{ baseline.gates }}</div>
-      <div class="claim">consent gates</div>
-      <div class="qual">user-typed · unforgeable</div>
+      <div class="claim">Cannot self-approve.</div>
+      <div class="evidence"><span class="n">{{ baseline.phaseGates }}</span> user-typed gates</div>
     </div>
     <div class="stat">
-      <div class="num">{{ baseline.hooks.total }}</div>
-      <div class="claim">tool-boundary hooks</div>
-      <div class="qual">blocks, not advises</div>
+      <div class="claim">Cannot bypass a guard.</div>
+      <div class="evidence"><span class="n">{{ baseline.hooks.total }}</span> hooks, outside the tool boundary</div>
     </div>
     <div class="stat">
-      <div class="num">{{ baseline.skills.total }}</div>
-      <div class="claim">skills, {{ baseline.subagents.total }} subagent</div>
-      <div class="qual">sha256-verified · CI-enforced</div>
+      <div class="claim">Cannot silently skip a phase.</div>
+      <div class="evidence"><span class="n">{{ baseline.phases }}</span> phases, exceptions on the record</div>
     </div>
   </div>
   </div>
@@ -131,7 +135,7 @@ description: A repository overlay that governs how Claude works in your codebase
     <span class="sec-mark" aria-hidden="true">§ II</span>
     <h2 id="sec-2">A blocked tool call never runs.</h2>
   </div>
-  <p class="sec-lead">Enforcement here is a process that runs before the call, on the other side of a boundary the model has no path to. When a guard denies a call, Claude receives the refusal in place of a result and must work from that.</p>
+  <p class="sec-lead">Enforcement here is a process that runs before the call, on the other side of a boundary the model has no path to. These guardrails are not instructions Claude can choose to follow. When a guard denies a call, Claude receives the refusal in place of a result and must work from that.</p>
 
   <figure class="figure">
     {% include "diagram-boundary.njk" %}
@@ -155,15 +159,15 @@ description: A repository overlay that governs how Claude works in your codebase
 
     <div class="panel">
       <div>
-        <div class="panel-label">the {{ baseline.gates }} gates</div>
+        <div class="panel-label">the {{ baseline.phaseGates }} gates</div>
         <div class="gate-list">
           <span>■ /approve-direction</span>
           <span>■ /approve-swarm <span class="qual">· in phase 6</span></span>
           <span>■ /grant-commit</span>
-          <span>■ /grant-push <span class="qual">· runtime</span></span>
         </div>
       </div>
-      <p>All {{ baseline.gates }} are commands you type. Because Claude cannot reach the code path that writes the markers, and a guard blocks it from writing them directly, there is no route by which it can approve its own work.</p>
+      <p>All {{ baseline.phaseGates }} are commands you type. Because Claude cannot reach the code path that writes the markers, and a guard blocks it from writing them directly, there is no route by which it can approve its own work.</p>
+      <p><span class="mono">/grant-push</span> is a fourth command you type, but it is not one of these gates. It clears a single push at the moment the push runs, rather than opening a phase.</p>
       <p>Under <span class="mono">github-flow</span>, an autonomous feature on a non-protected branch omits <span class="mono">/grant-commit</span> and opens a pull request instead.</p>
       <a class="link-accent" href="#install">install and see all {{ baseline.tracks.canonical }} tracks →</a>
     </div>
@@ -171,7 +175,7 @@ description: A repository overlay that governs how Claude works in your codebase
   </div>
 </section>
 
-<section class="section parallel" id="swarm" aria-labelledby="sec-4">
+<section class="band band-sand" id="swarm" aria-labelledby="sec-4">
   <div class="wrap">
   <div class="sec-head">
     <span class="sec-mark" aria-hidden="true">§ IV</span>
@@ -233,7 +237,7 @@ description: A repository overlay that governs how Claude works in your codebase
       <div class="plate-bar">
         <span>~/your-repo · zsh</span>
         <span class="spacer"></span>
-        <button type="button" class="plate-copy js-copy" data-copy="npx @friedbotstudio/create-baseline@latest .">
+        <button type="button" class="plate-copy js-copy" data-copy="npx @friedbotstudio/create-baseline@latest ." data-copy-kind="install">
           <span class="copy-state">click to copy</span>
           <span class="visually-hidden">Copy the install command</span>
         </button>
@@ -313,7 +317,7 @@ description: A repository overlay that governs how Claude works in your codebase
   <div class="wrap">
   <div>
     <div class="panel-label">also ships · off by default</div>
-    <h2 id="sec-org">org mode and standup.</h2>
+    <h2 id="sec-org">A feature can span more than one session.</h2>
     <p>A flat pod of peer sessions can take one feature between them, governed by Article X. A second command reads your release state, backlog and open questions, then says what to pick up next.</p>
   </div>
   <div class="links">
@@ -330,7 +334,7 @@ description: A repository overlay that governs how Claude works in your codebase
     <h2 id="sec-cta">Install it in a clean tree.</h2>
     <p>{{ site.license }} · open source · public alpha, under active development.</p>
   </div>
-  <button type="button" class="btn-cmd js-copy" data-copy="npx @friedbotstudio/create-baseline@latest .">
+  <button type="button" class="btn-cmd js-copy" data-copy="npx @friedbotstudio/create-baseline@latest ." data-copy-kind="install">
     <span class="sigil" aria-hidden="true">$</span>
     <span class="cmd-long">npx @friedbotstudio/create-baseline@latest .</span><span class="cmd-short">npx create-baseline</span>
     <span class="copy-state" aria-hidden="true">click to copy</span>

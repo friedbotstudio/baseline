@@ -87,6 +87,7 @@
   --t-body: 1rem;
   --t-dense: 0.875rem;
   --t-label: 0.6875rem;
+  --t-micro: 0.75rem;
   --t-nav: 0.84375rem;
   --t-nav-sub: 0.78125rem;
   --t-meta: 0.78125rem;
@@ -317,7 +318,7 @@ button {
 }
 
 .sb-key {
-  font-size: 10px;
+  font-size: var(--t-label);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -532,7 +533,7 @@ body.is-docs {
   margin-left: 6px;
   padding-left: 12px;
   border-left: 1px solid var(--rule-dark-2);
-  font-size: 10px;
+  font-size: var(--t-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.55;
@@ -596,7 +597,7 @@ body.is-docs {
 }
 
 .hero-eyebrow {
-  font: 600 10.5px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-deep);
@@ -642,7 +643,7 @@ body.is-docs {
   gap: 8px;
   padding: 11px 14px;
   border-bottom: 1px solid var(--rule-dark);
-  font: 400 10.5px/1 var(--mono);
+  font: 400 var(--t-label)/1 var(--mono);
   color: var(--on-ink-dim);
 }
 
@@ -662,7 +663,7 @@ body.is-docs {
 .plate-body {
   margin: 0;
   padding: 20px 16px 24px;
-  font: 400 11.5px/1.85 var(--mono);
+  font: 400 var(--t-micro)/1.85 var(--mono);
   color: var(--on-ink-body);
   overflow-x: auto;
 }
@@ -671,7 +672,7 @@ body.is-docs {
   background: transparent;
   border: 1px solid var(--rule-dark-2);
   color: var(--on-ink-body);
-  font: 400 10px/1 var(--mono);
+  font: 400 var(--t-label)/1 var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 5px 9px;
@@ -717,23 +718,27 @@ body.is-docs {
   padding: 30px 28px;
 }
 
-.stat .num {
-  font: 600 48px/1 var(--sans);
-  letter-spacing: -0.04em;
-  color: var(--accent);
-  margin-bottom: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
+/* The assertion leads and carries the weight; the count sits under it as the
+   line you can go and check. Accent survives on the numeral alone, which is
+   where the reserved-accent contract permits it, without the strip taking the
+   silhouette of three big numbers over three small labels. */
 .stat .claim {
-  font: 600 var(--t-cell)/1.3 var(--sans);
-  letter-spacing: -0.012em;
-  margin-bottom: 6px;
+  font: 600 var(--t-sub)/1.25 var(--sans);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-wrap: balance;
 }
 
-.stat .qual {
+.stat .evidence {
   font: 400 var(--t-meta)/1.6 var(--mono);
   color: var(--text-dim);
+}
+
+.stat .evidence .n {
+  color: var(--accent);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------------------------------------------------------- hairline grid */
@@ -785,7 +790,7 @@ body.is-docs {
 }
 
 .cell-kicker {
-  font: 500 10.5px/1 var(--mono);
+  font: 500 var(--t-label)/1 var(--mono);
   letter-spacing: 0.08em;
   color: var(--accent);
   margin-bottom: 9px;
@@ -812,11 +817,22 @@ body.is-docs {
   margin-bottom: 8px;
 }
 
+/* The marker sits in the flex row before the heading, so without a floor the
+   H2 starts wherever the Roman numeral happens to end: measured at 210, 219 and
+   227px across the six sections, while every lead and grid below them sat flush.
+   On a page that draws structure with hairlines and commits to one left edge,
+   the largest type in each section was the only element that wandered.
+
+   3.6em is five mono advances at this tracking (0.6em glyph + 0.12em letter
+   spacing), which is the width of the widest marker in use, `§ III`. Declared in
+   em rather than px so it follows --t-micro instead of drifting from it. A
+   section numbered past six glyphs needs this bumped. */
 .sec-mark {
-  font: 600 11px/1 var(--mono);
+  font: 600 var(--t-micro)/1 var(--mono);
   letter-spacing: 0.12em;
   color: var(--accent);
   flex: none;
+  min-width: 3.6em;
 }
 
 .sec-head h2 {
@@ -850,7 +866,7 @@ body.is-docs {
 }
 
 .strata-label {
-  font: 600 10px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -865,7 +881,7 @@ body.is-docs {
 }
 
 .stratum .roman {
-  font: 600 9.5px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   color: var(--text-dim);
   width: 20px;
   flex: none;
@@ -876,7 +892,7 @@ body.is-docs {
 }
 
 .stratum .where {
-  font: 400 11.5px/1 var(--mono);
+  font: 400 var(--t-micro)/1 var(--mono);
   color: var(--text-dim);
   margin-left: auto;
 }
@@ -920,7 +936,7 @@ body.is-docs {
 }
 
 .chip {
-  font: 400 11px/1 var(--mono);
+  font: 400 var(--t-micro)/1 var(--mono);
   background: var(--sand);
   color: var(--text-muted);
   padding: 5px 8px;
@@ -1015,6 +1031,32 @@ body.is-docs {
 }
 
 @media (max-width: 760px) {
+  :root {
+    --t-label: 0.75rem;
+    --t-micro: 0.8125rem;
+  }
+
+  /* WCAG 2.5.8 target size. A link sitting alone in a list is a tap target, not
+     inline text, so the inline exception these would otherwise claim does not
+     apply. Vertical padding rather than a min-height, so each row grows from its
+     own baseline and the hairline rhythm above and below it is untouched. */
+  .footer-col a,
+  .util-collapse a,
+  .links a,
+  .footer-attribution a,
+  .link-quiet,
+  .link-accent {
+    display: inline-block;
+    padding-block: 7px;
+  }
+
+  /* The brand and byline are already inline-flex. Overriding display drops the
+     accent dot out of its flex context, where an inline span ignores width and
+     height and renders as a line-tall sliver instead of a 6px dot. */
+  .util-identity a {
+    padding-block: 7px;
+  }
+
   .dg-wide {
     display: none;
   }
@@ -1209,7 +1251,7 @@ body.is-docs {
 }
 
 .docs-note {
-  font: 400 11px/1.5 var(--mono);
+  font: 400 var(--t-micro)/1.5 var(--mono);
   color: var(--text-dim);
   border-top: 1px solid var(--rule-soft);
   padding-top: 14px;
@@ -1294,7 +1336,7 @@ body.is-docs {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font: 400 11.5px/1.4 var(--mono);
+  font: 400 var(--t-micro)/1.4 var(--mono);
   color: var(--text-muted);
 }
 
@@ -1309,7 +1351,7 @@ body.is-docs {
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 400 11px/1 var(--mono);
+  font: 400 var(--t-micro)/1 var(--mono);
   color: var(--text-dim);
   margin-bottom: 28px;
 }
@@ -1330,7 +1372,7 @@ body.is-docs {
 }
 
 .doc-chip {
-  font: 600 9.5px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   background: var(--sand);
@@ -1376,7 +1418,7 @@ body.is-docs {
 }
 
 .fact-label {
-  font: 500 9.5px/1 var(--mono);
+  font: 500 var(--t-label)/1 var(--mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -1523,7 +1565,7 @@ body.is-docs {
   height: 25px;
   background: var(--accent);
   color: #fff;
-  font: 600 11.5px/25px var(--mono);
+  font: 600 var(--t-micro)/25px var(--mono);
   text-align: center;
 }
 
@@ -1631,7 +1673,7 @@ a.pager-cell {
 }
 
 .pager-dir {
-  font: 500 10px/1 var(--mono);
+  font: 500 var(--t-label)/1 var(--mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -1691,6 +1733,29 @@ a.pager-cell {
   font-weight: 600;
 }
 
+/* § II is the page's only section with no internal horizontal container, and
+   the one place a full-width frame holds a fixed-width diagram: `.dg-wide` is
+   capped at 740px and centred, so 364px of the 1104px figure box was dead
+   paper. Sizing the frame to its content turns that into the section's
+   silhouette — a measured column against the full-width boxes of § I, § III
+   and § IV — rather than a seventh repetition of the same box.
+
+   The diagram is untouched at every width. max-content resolves to 810px while
+   the wide variant shows and to the stacked variant's own cap below 760px, and
+   max-width holds it inside the wrap on a phone. */
+#hooks .figure {
+  width: max-content;
+  max-width: 100%;
+}
+
+/* Prose, not a lead, so it takes --measure-ch. Spanning the wrap put the
+   sentence that carries the whole mechanism at 102ch, styled as a figure
+   credit; leading is tuned inversely to measure, so the narrower column is
+   also the one --lh-dense was set for. */
+#hooks .diagram-note {
+  max-width: var(--measure-ch);
+}
+
 .diagram-note .mono,
 .sec-lead .mono,
 .panel .mono,
@@ -1710,7 +1775,7 @@ a.pager-cell {
 }
 
 .panel-label {
-  font: 600 10px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
@@ -1785,7 +1850,7 @@ a.pager-cell {
 }
 
 .swarm-bridge .audit span {
-  font: 400 11.5px/1.6 var(--mono);
+  font: 400 var(--t-micro)/1.6 var(--mono);
   color: var(--text-dim);
 }
 
@@ -1838,7 +1903,7 @@ a.pager-cell {
 }
 
 .step-cell .n {
-  font: 600 11px/1 var(--mono);
+  font: 600 var(--t-micro)/1 var(--mono);
   color: var(--accent);
   margin-bottom: 10px;
 }
@@ -2030,7 +2095,7 @@ code.tok {
 }
 
 .footer-brand .legal {
-  font: 400 11px/1.5 var(--mono);
+  font: 400 var(--t-micro)/1.5 var(--mono);
   color: var(--on-ink-faint);
 }
 
@@ -2064,7 +2129,7 @@ code.tok {
 }
 
 .footer-col .head {
-  font: 600 10px/1 var(--mono);
+  font: 600 var(--t-label)/1 var(--mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--on-ink-faint);
@@ -2484,8 +2549,7 @@ code.tok {
     font-size: 17px;
   }
 
-  .cell h3,
-  .stat .claim {
+  .cell h3 {
     font-size: 18px;
   }
 }

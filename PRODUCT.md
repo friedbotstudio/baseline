@@ -24,7 +24,7 @@ The job to be done: *make it structurally impossible for an AI agent to violate 
 
 ## Product Purpose
 
-The Claude Code Baseline is a repository overlay. It ships twenty-six write-boundary and lifecycle hooks, fifty-three baseline-owned skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed workflow gates (plus `/grant-push`, a fourth gate that fires at runtime rather than at a phase), and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx @friedbotstudio/create-baseline ./my-target`.
+The Claude Code Baseline is a repository overlay. It ships twenty-six write-boundary and lifecycle hooks, fifty-three baseline-owned skills, one subagent (`swarm-worker`), an eleven-phase workflow with three user-typed consent gates (plus `/grant-push`, which clears a single push at runtime and is explicitly **not** a gate per `CLAUDE.md` Art. IV), and a small constitution (`CLAUDE.md`) that binds Claude's in-session behavior. It is distributed as `npx @friedbotstudio/create-baseline ./my-target`.
 
 Soft engineering rules — no force-push, no `--amend` of published commits, no mocks of internal modules, no self-approved specs, no skipped phases — become structural guarantees because the hooks run *outside* Claude's tool boundary. Claude cannot forge a consent marker, cannot bypass a guard with a flag, cannot reorder the workflow without an explicit exception written by `/triage`.
 
@@ -32,7 +32,7 @@ Success is a team that stops repeating "don't push, don't `--amend`, don't self-
 
 ## Positioning
 
-**A discipline layer for Claude Code.** A repository overlay that governs how Claude works in your codebase, intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.
+**An open-source governance layer for Claude Code.** A repository overlay that covers your codebase from intake to commit, and enforces every rule at the tool boundary, where Claude cannot reach.
 
 Two clauses carry the differentiation and neither is optional:
 
@@ -68,10 +68,10 @@ Verified against the repository on 2026-07-28. Every figure below is checkable; 
 | Fact | Value | Source of truth |
 |---|---|---|
 | Hooks | 26 | `.claude/hooks/*.mjs` |
-| Baseline-owned skills | 53 | `owner: baseline` frontmatter across `.claude/skills/*/SKILL.md` |
+| Baseline-owned skills | 59 | `owner: baseline` frontmatter across `.claude/skills/*/SKILL.md` |
 | Subagents | 1 (`swarm-worker`) | `.claude/agents/` |
 | Workflow phases | 11 | `CLAUDE.md` Article IV |
-| Consent gates | 4 — `/approve-direction`, `/approve-swarm`, `/grant-commit`, `/grant-push` | `.claude/commands/` |
+| Consent gates | 3 — `/approve-direction`, `/approve-swarm`, `/grant-commit`. `/grant-push` is runtime push consent, not a gate | `CLAUDE.md` Art. IV |
 | Workflow tracks | 11 declared, of which 9 are top-level selectable | `.claude/workflows.jsonl` |
 | MCP servers shipped | 4 — context7, plantuml, playwright, sprint-channel | `.mcp.json` |
 | Package | `@friedbotstudio/create-baseline` | `package.json` |
@@ -100,8 +100,8 @@ Explicitly undecided or unverified:
 ## Brand Commitments
 
 - **Name:** `baseline`, lowercase, in product chrome and copy. "The Claude Code Baseline" is the long form used in prose.
-- **Tagline:** "A discipline layer for Claude Code."
-- **Footer line:** "A discipline layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit."
+- **Tagline:** "An open-source governance layer for Claude Code."
+- **Footer line:** "An open-source governance layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit."
 - **Legal:** © 2026 baseline · Apache 2.0 · v0.20.0. Owning entity is Friedbot Studio Pvt Ltd.
 - **Status chip:** "public alpha", shown alongside version and license in the top chrome.
 - **Primary call to action, everywhere:** the install command itself, `npx @friedbotstudio/create-baseline@latest .`, rendered as a click-to-copy terminal affordance rather than a worded button. It appears in the top bar, the hero, the install section, and the closing band.
@@ -128,10 +128,10 @@ This scopes how the case is made, not what may be said. Every anti-reference bel
 
 This site SHALL NOT look or sound like:
 
-- **AI slop.** Gradient text, glassy cards, generic dashboard chrome, "magical AI assistant" framing. The category-reflex palette of "purple gradient on dark = AI tool" is banned. The **vanity hero-metric template** (big number + small label decorating an unfalsifiable claim — "10x faster", "99.9% uptime", "1M+ users") is also banned. A meta-strip of **structural counts naming load-bearing components** is permitted when each cell is verifiable from the codebase (`26 hooks`, `53 skills`, `1 subagent`, `11 phases`, `4 gates`) — those are the spec, not the brag. **As of 2026-07-26 the landing strip leads with the claim and carries the count as its label** ("Cannot self-approve / 3 structural gates") rather than the other way round: a count is evidence for an argument, and opening the page with six of them stated an inventory instead of making one. The verifiability rule is unchanged and still binding — a tile may only assert what the codebase can be checked against. Do not "restore" a count-led strip on the grounds that this section once encouraged it. **Open conflict (2026-07-28):** the newly pinned landing reference uses a count-led three-cell strip (numeral first, claim as label). This clause and that reference disagree. Resolve explicitly before the strip is next built; do not let either side win by default.
+- **AI slop.** Gradient text, glassy cards, generic dashboard chrome, "magical AI assistant" framing. The category-reflex palette of "purple gradient on dark = AI tool" is banned. The **vanity hero-metric template** (big number + small label decorating an unfalsifiable claim — "10x faster", "99.9% uptime", "1M+ users") is also banned. A meta-strip of **structural counts naming load-bearing components** is permitted when each cell is verifiable from the codebase (`26 hooks`, `59 skills`, `1 subagent`, `11 phases`, `3 gates`) — those are the spec, not the brag. **As of 2026-07-26 the landing strip leads with the claim and carries the count as its label** ("Cannot self-approve / 3 structural gates") rather than the other way round: a count is evidence for an argument, and opening the page with six of them stated an inventory instead of making one. The verifiability rule is unchanged and still binding — a tile may only assert what the codebase can be checked against. Do not "restore" a count-led strip on the grounds that this section once encouraged it. **Resolved (2026-08-21).** The engineer settled the 2026-07-28 conflict in favour of this clause: the landing strip is **claim-led**, and the pinned reference does not govern on this point. Each cell now asserts what cannot happen and carries its count as the evidence line beneath. A future build SHALL NOT return the strip to a count-led form on the authority of the comp.
 - **"AI-powered" marketing.** The product *powers* Claude Code; it is not powered by AI as a feature. Strike "AI-powered", "10x your productivity", "supercharge your workflow", "agentic" as a noun, and any vague intelligence claim from copy.
 - **Hyperbole.** No "revolutionary", "next-generation", "game-changing". The product is a baseline, not a revolution.
-- **Cute mascots, illustrated robots, or anthropomorphic AI.** The agent is a tool under a discipline layer, not a character.
+- **Cute mascots, illustrated robots, or anthropomorphic AI.** The agent is a tool under a governance layer, not a character.
 - **Fluffy SaaS landing tropes.** Identical card grids of three feature blurbs, decorative drop shadows on every surface, modals as the first thought, side-stripe colored borders.
 
 **Scope.** These anti-references — and the `impeccable` skill's broader Shared Design Laws they echo (no em dashes, no gradient text, no glassmorphism, no hero-metric vanity, etc.) — are scoped to **user-facing copy** per `CLAUDE.md` Art. XI.1. Internal governance documents (this file included), `README.md`, `.claude/skills/*/SKILL.md`, `.claude/memory/*.md`, CLI output, and inline code samples use the constitutional voice deliberately and SHALL NOT be edited to conform to the bans.

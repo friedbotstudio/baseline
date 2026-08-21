@@ -3,7 +3,7 @@
      is what crawlers get. Regenerate after editing:
        rsvg-convert -w 1200 -h 630 -b "#15130f" \
          docs/design/og-card.svg -o site-src/assets/og-card.png -->
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="baseline — a discipline layer for Claude Code">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="baseline — an open-source governance layer for Claude Code">
   <rect width="1200" height="630" fill="#15130f"/>
   <circle cx="88" cy="92" r="9" fill="#e0873f"/>
   <text x="112" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="30" font-weight="600" fill="#f4ede2">baseline</text>

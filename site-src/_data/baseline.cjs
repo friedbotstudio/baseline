@@ -34,7 +34,10 @@ module.exports = async () => {
     subagents: { total: c.subagents, totalWord: numToWord(c.subagents) },
     commands: c.commands,
     phases: 11,
-    gates: 4,
+    // No summed `gates`. CLAUDE.md Art. IV names three consent gates and says
+    // in as many words that `/grant-push` is Bash-time push consent, not a
+    // gate. A sum of the two is a number the constitution rejects, and the
+    // site asserted it for one release because the sum was the easy reach.
     phaseGates: 3,
     runtimeGates: 1,
     // `shipped` is the count a "ships in the pristine template" claim MUST use.

@@ -59,7 +59,7 @@ toc:
   <div class="plate-bar">
     <span>terminal</span>
     <span class="spacer"></span>
-    <button type="button" class="plate-copy js-copy" data-copy="npx @friedbotstudio/create-baseline ./my-project">
+    <button type="button" class="plate-copy js-copy" data-copy="npx @friedbotstudio/create-baseline ./my-project" data-copy-kind="install">
       <span class="copy-state">click to copy</span>
       <span class="visually-hidden">Copy the install command</span>
     </button>
@@ -68,7 +68,7 @@ toc:
 
 <span class="t-ok">Baseline installed at /abs/path/my-project (manifest v2).</span>
 <span class="t-dim">For reproducible installs, pin the exact version:</span>
-<span class="t-dim">@friedbotstudio/create-baseline@{{ site.pkgVersion }}</span></pre>
+<!--email_off--><span class="t-dim">@friedbotstudio/create-baseline@{{ site.pkgVersion }}</span><!--email_on--></pre>
 </div>
 
 <p>Pin that version wherever your team keeps its tool versions. Two people who install different versions will end up with different hooks and a different constitution, which is a confusing thing to debug later.</p>

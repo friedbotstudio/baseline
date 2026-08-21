@@ -49,7 +49,7 @@ module.exports = {
   url: `https://${cname}`,
   byline: 'by friedbotstudio',
   license: 'Apache 2.0',
-  tagline: 'A discipline layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit.',
+  tagline: 'An open-source governance layer for Claude Code. Hooks, skills, and a workflow that runs from intake to commit.',
   repo: 'https://github.com/friedbotstudio/baseline',
   repoSlug: 'friedbotstudio/baseline',
   year: '2026',
