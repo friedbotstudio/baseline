@@ -131,7 +131,12 @@ const PATH_LEG_BASELINE = {
   '.claude/skills/memory-index/resolve.mjs': 16,
   // 9 -> 10 at 309d70e, the same single landmine reaching a second path through the
   // same `.claude/hooks/**` glob. Both bumps have one cause; neither is defended.
-  '.claude/hooks/process_lifecycle_guard.mjs': 10,
+  // Back to 9 at the baseline-mcp landing: `/memory-sync` auto-closed
+  // `backlog/advisory-block-interpolates-an-unsanitised-file-path-8c7e` on its
+  // `superseded-at` stamp, and that entry is the very 8th hit the note above this
+  // census names. A closed entry leaving the store is the census moving for the
+  // reason a census exists, so this is re-measured rather than defended.
+  '.claude/hooks/process_lifecycle_guard.mjs': 9,
   // 5 -> 8, in two steps, both from the same cohort. The dispatcher-sweep workflow
   // filed four backlog entries and left them uncommitted; harness-batch-fixes
   // committed them. Three of the four carried only `key` and `category`, so they
