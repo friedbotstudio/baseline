@@ -1,3 +1,23 @@
+# [0.25.0](https://github.com/friedbotstudio/baseline/compare/v0.24.0...v0.25.0) (2026-08-22)
+
+
+### Bug Fixes
+
+* **harness:** give ctx.changedFiles one element type every checker reads ([4c4836c](https://github.com/friedbotstudio/baseline/commit/4c4836caddfabc80cba5bd4f26ba4b8a8668d364))
+* **hooks:** resolve the branch on an unborn HEAD so the first commit is governed ([2367f5e](https://github.com/friedbotstudio/baseline/commit/2367f5e5b7ea430de62bbf4c436ccc576a12be50))
+* **security:** sanitise repository-controlled paths before interpolation ([cdeec9e](https://github.com/friedbotstudio/baseline/commit/cdeec9e7126871ecabddbe1df6237ed2846e1cea))
+* **site:** correct three constitutional claims and refresh the search surface ([a82e9e1](https://github.com/friedbotstudio/baseline/commit/a82e9e13f147979eb6c319f110f3d6247b47589b))
+* **sprint-planner:** render the proposal on the plain CLI path ([b93a5e4](https://github.com/friedbotstudio/baseline/commit/b93a5e42699f5bcc6a38413088827efe2f87e0e7))
+* **workflows:** give spec-entry an intake node so gate A stops hashing the spec ([1b4c320](https://github.com/friedbotstudio/baseline/commit/1b4c320066d72e1a658f0977c26a4af9ecd238fe))
+
+
+### Features
+
+* **harness:** weigh a workflow's payload against the envelope it pays for ([a163ec5](https://github.com/friedbotstudio/baseline/commit/a163ec590e174e6494ea214acbec9cfd4263cbc3))
+* **roadmap:** read front door onto the execution roadmap ([69c3259](https://github.com/friedbotstudio/baseline/commit/69c3259f28428df0d68cd68d7145c181d96c2460))
+* **velocity:** measure phase re-entries, scout before spec, widen the right-size window ([a2bd4df](https://github.com/friedbotstudio/baseline/commit/a2bd4df9ec1e194e142cf57b1f5285d2104e13b3))
+* **velocity:** ship work-planner on by default and a read-only ratio command ([1b945e7](https://github.com/friedbotstudio/baseline/commit/1b945e72ba5028a10b4d098c639389cde28971a6))
+
 # [0.24.0](https://github.com/friedbotstudio/baseline/compare/v0.23.0...v0.24.0) (2026-08-19)
 
 
