@@ -7,6 +7,9 @@
 import { normalizeFinding } from '../spec-diagram-review/oracle.mjs';
 import { resolveCheckerThreshold } from '../../hooks/lib/tier-dial.mjs';
 import { clip } from '../lib/terminal-text.mjs';
+import { isJudgedByCodeStructure } from './scope.mjs';
+
+export { isJudgedByCodeStructure };
 
 // tier-dial:read-path — this checker's mandatory/floor come from
 // resolveCheckerThreshold('code-structure') (D6/D8).
@@ -51,11 +54,12 @@ export function bodyCommentCount(content) {
   return count;
 }
 
-export function runCodeStructureOracle({ changedFiles } = {}, deps = {}) {
+export function runCodeStructureOracle({ changedFiles, testGlobs } = {}, deps = {}) {
   const tierDial = deps.tierDial || resolveCheckerThreshold;
   const { mandatory } = tierDial(CHECKER);
   const findings = [];
   for (const file of Array.isArray(changedFiles) ? changedFiles : []) {
+    if (!isJudgedByCodeStructure(file && file.path, testGlobs)) continue;
     const lines = substantiveLineCount(file && file.content);
     const named = clip(file && file.path);
     if (lines > LINE_BUDGET) {
