@@ -386,7 +386,9 @@ The rename touches three docs-site surfaces inside `project.json → tdd.ui_glob
 
 **ACs**: AC-001, AC-002, AC-003, AC-004.
 
-**Write surface**: `.claude/mcp/sprint-channel/lib/root.mjs`, `.claude/mcp/sprint-channel/server.mjs`, `.claude/mcp/sprint-pool/server.mjs`, `tests/**`.
+**Write surface**: `.claude/mcp/baseline/lib/root.mjs`, `.claude/mcp/baseline/server.mjs`, `.claude/mcp/sprint-pool/server.mjs`, `tests/**`.
+
+**Ordering note**: Slice A lands first and renames `.claude/mcp/sprint-channel/` to `.claude/mcp/baseline/`, so this slice's write surface names the post-rename paths. `.claude/mcp/sprint-pool/server.mjs` is still correct here — sprint-pool does not retire until Slice D.
 
 ## Slice C — General task management on the baseline server
 

@@ -1,0 +1,184 @@
+{
+  "request": "Run Epic 13 (baseline-mcp) in power mode - batch its five spec-committed slices A-E into one power-track cycle.",
+  "slug": "baseline-mcp",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/specs/baseline-mcp.md carries five ## Slice sections (A-E) with 27 acceptance criteria; .claude/state/epic/baseline-mcp.json has approved: true and a live gate-A token at .claude/state/spec_approvals/baseline-mcp.approval whose sha256 matches docs/intake/baseline-mcp.md unchanged on disk.",
+  "track_reason": "Power over five separate epic-child runs: the mechanical phases amortize once over the batch instead of being paid five times, while security still runs per ticket. Human named the track explicitly.",
+  "skip_brainstorm": true,
+  "epic": "baseline-mcp",
+  "tickets": [
+    {
+      "id": "A",
+      "title": "Rename sprint-channel to baseline",
+      "acs": 5,
+      "risk": [
+        "simplify",
+        "document"
+      ],
+      "status": "implemented-green",
+      "landed_tests": [
+        "tests/mcp-rename-merge.test.mjs"
+      ]
+    },
+    {
+      "id": "B",
+      "title": "Channel state root is worktree-safe",
+      "acs": 4,
+      "risk": [
+        "security"
+      ],
+      "status": "implemented-green",
+      "landed_tests": [
+        "tests/baseline-state-root.test.mjs"
+      ]
+    },
+    {
+      "id": "C",
+      "title": "General task management on the baseline server",
+      "acs": 5,
+      "risk": [
+        "security",
+        "document"
+      ],
+      "status": "implemented-green",
+      "landed_tests": [
+        "tests/baseline-task-management.test.mjs"
+      ]
+    },
+    {
+      "id": "D",
+      "title": "Native cross-session messaging as a push accelerator",
+      "acs": 6,
+      "risk": [
+        "security",
+        "document"
+      ],
+      "status": "implemented-green",
+      "landed_tests": [
+        "tests/baseline-native-messaging.test.mjs"
+      ]
+    },
+    {
+      "id": "E",
+      "title": "Org worktree isolation, merge audit, and the single landing",
+      "acs": 7,
+      "risk": [
+        "security",
+        "simplify",
+        "document"
+      ],
+      "status": "implemented-green",
+      "landed_tests": [
+        "tests/org-worktree-landing.test.mjs"
+      ]
+    }
+  ],
+  "pinned_artifacts": {
+    "intake": "docs/intake/baseline-mcp.md",
+    "scout": "docs/scout/baseline-mcp.md",
+    "research": "docs/research/baseline-mcp.md",
+    "spec": "docs/specs/baseline-mcp.md"
+  },
+  "write_surface": [
+    ".claude/mcp/**",
+    ".mcp.json",
+    "src/.mcp.template.json",
+    "src/cli/renames.js",
+    "src/cli/mcp.js",
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "CLAUDE.md",
+    "src/CLAUDE.template.md",
+    ".claude/CONSTITUTION.md",
+    ".claude/skills/audit-baseline/expected-baseline.mjs",
+    ".claude/skills/org-dispatch/**",
+    ".claude/skills/companion/SKILL.md",
+    ".claude/skills/swarm-dispatch/swarm_merge.mjs",
+    ".claude/skills/commit/epic_close.mjs",
+    ".claude/workflows.jsonl",
+    ".claude/state/epic/mvp-sprint-parallel-cycles.json",
+    "docs/system/elements/*.md",
+    "docs/system/diagrams/*.puml",
+    "docs/roadmap-execution-plan.md",
+    "site-src/mcp.njk",
+    "site-src/org/setup.njk",
+    "site-src/_data/mcpnotes.json",
+    "scripts/bundle-mcp-servers.mjs",
+    "obj/template/.claude/manifest.json",
+    "README.md",
+    "PRODUCT.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "implementation",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [
+    {
+      "node": "implementation",
+      "alternate": "swarm-implementation",
+      "reason": "requires_min_components(1) evaluated false: the spec satisfies its C4 kinds via @ref element: references to docs/system/elements/ rather than Component( blocks, so the count is 0. Resolved to the tdd-worker-chain alternate.",
+      "resolved_to": "tdd-worker-chain"
+    }
+  ],
+  "roadmap_tasks": [
+    "E13-A",
+    "E13-B",
+    "E13-C",
+    "E13-D",
+    "E13-E"
+  ],
+  "source_backlog_keys": [],
+  "created_at": 1787200000,
+  "updated_at": 1787428101,
+  "rightsize_base": [],
+  "power_batch_reviews": [
+    {
+      "ticket": "A",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "B",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "C",
+      "verdict": "CLEAN",
+      "findings": 0
+    },
+    {
+      "ticket": "D",
+      "verdict": "MEDIUM",
+      "findings": 2
+    },
+    {
+      "ticket": "E",
+      "verdict": "LOW",
+      "findings": 1
+    }
+  ],
+  "attempts": {
+    "tdd": 2,
+    "integrate": 2
+  }
+}

@@ -217,3 +217,16 @@
 - discarded :: backlog → i-am-going-to-recommend-keeping-it-and-aa05
 - discarded :: backlog → rationale-i-want-you-to-test-it-asserts-7187
 - promoted :: backlog → phase-budget-tripwires-have-re-armed-8e44
+- promoted :: backlog → live-workflows-jsonl-drifted-from-its-shipped-template
+- promoted :: backlog → shipped-power-track-is-selectable-without-its-flag
+- promoted :: backlog → shipped-chore-track-declares-no-internal-phases
+- promoted :: backlog → shipped-sensitive-globs-never-covered-hooks-or-commands
+- promoted :: backlog → no-track-declares-a-review-node
+- promoted :: backlog → integrate-prereq-rejects-an-excepted-simplify
+- promoted :: backlog → terminal-text-does-not-neutralise-bidi-overrides
+- promoted :: backlog → triage-step-4-5-omits-the-module-on-its-third-call
+- promoted :: backlog → the-fix-is-one-line-gate-the-read-9826
+- promoted :: backlog → the-fix-is-one-token-running-the-sync-e222
+- discarded :: backlog → so-the-fix-is-mine-not-the-cap-2239
+- discarded :: backlog → and-let-this-cycle-land-with-the-discrepancy-be97
+- discarded :: backlog → i-d-take-the-first-the-wall-argument-284e
