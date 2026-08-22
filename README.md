@@ -103,7 +103,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 | **Subagent** — `swarm-worker`, executes pre-decided recipes within a declared write set | 1 | `.claude/agents/` |
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
 | **Consent gates** — three workflow-phase gates plus `/grant-push` at runtime. All user-typed, all structurally un-invokable by Claude | 3 + 1 | `consent_gate_grant` UserPromptSubmit hook |
-| **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke), `sprint-channel` (coordination channel) | 4 | `.mcp.json` |
+| **MCP servers** declared in `.mcp.json` — `context7` (third-party API docs), `plantuml` (diagram render), `playwright` (cross-engine smoke), `baseline` (coordination channel) | 4 | `.mcp.json` |
 | **Output style** — `Baseline`, written to ASD-STE100 Simplified Technical English, the controlled language used in aerospace maintenance manuals. One voice: a senior engineer telling another engineer what they concluded. It shapes Claude's chat messages only, and stays out of code, skill-owned files, and governance documents. Enabled by default through `outputStyle` in the shipped `.claude/settings.json` | 1 | `.claude/output-styles/` |
 
 This is the only installed component that changes behavior you might not want. Your own `.claude/settings.local.json` overrides it; set `outputStyle` there to any other style. To switch it off for the whole project, delete the single `outputStyle` line from `.claude/settings.json`. If you are upgrading, that file goes through `/upgrade-project` rather than an automatic merge, so a copy you have edited is never silently overwritten.
@@ -129,7 +129,7 @@ When the constitution and the implementation conflict, the constitution governs 
 ### Requirements
 
 - **Node 18.17+** — the CLI runs as a Node script
-- **`git`** — required for the commit phase, swarm worktrees, and the post-archive consent gate. Workflows on non-git projects auto-except `commit` and end at `/archive`
+- **`git`** — required for the commit phase, swarm and org-peer worktrees, and the post-archive consent gate. Workflows on non-git projects auto-except `commit` and end at `/archive`
 - **`java` (JDK 8+)** — needed by the `plantuml_syntax_guard` hook and `/spec-render`. Install fetches the SHA-pinned `plantuml.jar` (~19 MB); you supply the JVM. Skip with `--no-plantuml`, or pass `--require-plantuml` to make a missing Java a fatal install error
 
 <details>

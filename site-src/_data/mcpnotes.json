@@ -2,5 +2,5 @@
   "context7": "Current documentation for third-party libraries. Article VI.5 requires a third-party API to be checked against current docs before code is written against it, and this is the shipped default for satisfying that. A project may swap it for a library's own llms.txt or a pinned local cache.",
   "plantuml": "Renders the PlantUML diagrams a spec declares. Pairs with the jar fetched to .claude/bin/plantuml.jar at install time and with the plantuml_syntax_guard hook, which validates diagram source at the write boundary.",
   "playwright": "Drives a real browser for cross-engine smoke checks. Wired with --browser chrome --isolated so a run leaves no profile state behind.",
-  "sprint-channel": "The coordination channel behind org mode. Backed by a file-locked directory under .claude/state/sprint/<channel_id>/, which is why every session in a pod must sit on one machine and in one checkout."
+  "baseline": "The coordination channel behind org mode. Backed by a file-locked directory under .claude/state/sprint/<channel_id>/, which is why every session in a pod must sit on one machine and in one checkout."
 }

@@ -102,7 +102,7 @@ Peer sessions coordinating on one body of work (Article X). Opt-in, off by defau
 - ✅ S1. Sprint completeness oracle, the MCP coordination channel core, the dispatch engine, and the org-team charter with broker-pool coordination.
 - ✅ S2. Deliver the SDK-to-consumer path so the MCP SDK reaches consumer installs while the baseline stays zero-runtime-dep — landed via **esbuild build-time bundling** (`scripts/bundle-mcp-servers.mjs` + `build-template.sh` Stage 1.7), which inlines the SDK + zod into self-contained shipped `server.mjs` artifacts. This **supersedes** the original own-package/`npx` mechanism (first-party servers are compiled, not published). Backlog `sprint-channel-own-package-sdk-delivery-ac005-slice-c`. Unblocks the dogfood.
 - ✅ S3. Stale-lock TTL recovery in `sprint-channel/lib/lock.mjs` — a holder that dies mid-task currently leaks the lock permanently and the task becomes unclaimable.
-- ✅ S4. Sprint-mode dogfood config — register the `sprint-channel` stdio server in `.mcp.json` + `src/.mcp.template.json` (a three-to-four MCP-count cascade across the governance surfaces). `sprint-pool` stays a dev-launched channel server (broker over `--dangerously-load-development-channels`), not a shipped stdio entry; `velocity.sprint_mode.enabled` is already on. The SDK-to-consumer path is provided by S2's bundle, so consumers no longer get a broken server.
+- ✅ S4. Sprint-mode dogfood config — register the `sprint-channel` stdio server in `.mcp.json` + `src/.mcp.template.json` (a three-to-four MCP-count cascade across the governance surfaces). `sprint-pool` stayed a dev-launched channel server rather than a shipped stdio entry, and retired entirely in 0.26.0; `velocity.sprint_mode.enabled` is already on. The SDK-to-consumer path is provided by S2's bundle, so consumers no longer get a broken server.
 
 ## Epic 6 — Debt and hardening  ✅  (debt)
 
@@ -171,7 +171,7 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ A. Sprint completeness oracle
 - ✅ B. Baseline-owned MCP coordination channel server
 - ✅ C. Sandboxed sprint mode: lead-spawned bounded workers on the channel + RALPH yield
-- ⬜ D. Merge + integrate + single gate-C on the sprint result
+- ✅ D. Merge + integrate + single gate-C on the sprint result — SUPERSEDED by `baseline-mcp`: Epic 13 slice E builds the worktree-per-peer isolation, the write_set merge audit and the single integrate-under-one-gate-C over the org pod, which is the same landing this row described for the sprint pod.
 - ✅ E. Bounded charter for the sprint sandbox — SUPERSEDED, not built: Article X absorbed this slot per seed.md §4.2
 ## Epic 12 — System spec delta  ✅  (system-spec-delta)
 
@@ -181,10 +181,10 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ D. C2-4 — backfill the @kind witness annotation across every shard in docs/system/diagrams/ (depends on B)
 - ✅ E. C2-5 — research retrieves structurally over the corpus via source_spec, ranked beside term overlap
 - ✅ F. C2-6 — constitutional amendment: seed.md §4.8/§9/§12, CLAUDE.md Article IX clause 10, byte-equal mirrors, under the 38,800-char budget
-## Epic 13 — Baseline mcp  ⬜  (baseline-mcp)
+## Epic 13 — Baseline mcp  ✅  (baseline-mcp)
 
-- ⬜ A. Rename sprint-channel to baseline
-- ⬜ B. Channel state root is worktree-safe
-- ⬜ C. General task management on the baseline server
-- ⬜ D. Native cross-session messaging as a push accelerator
-- ⬜ E. Org worktree isolation, merge audit, and the single landing
+- ✅ A. Rename sprint-channel to baseline
+- ✅ B. Channel state root is worktree-safe
+- ✅ C. General task management on the baseline server
+- ✅ D. Native cross-session messaging as a push accelerator
+- ✅ E. Org worktree isolation, merge audit, and the single landing

@@ -41,7 +41,7 @@ The caller's prompt SHALL contain two recipes and the swarm metadata. You SHALL 
 
 # Sprint channel protocol (only when dispatched into a sprint)
 
-When your spawn prompt names a sprint channel (`sprint_id` + the `sprint-channel` MCP tools are present), you are a **channel peer**. Coordinate mid-flight over the channel instead of running standalone:
+When your spawn prompt names a sprint channel (`sprint_id` + the `baseline` MCP tools are present), you are a **channel peer**. Coordinate mid-flight over the channel instead of running standalone:
 
 - **On start:** `register_peer({sprint_id, peer_id, pclass: "worker", role, workspace})`.
 - **Before working:** `claim_task({sprint_id, peer_id, task_id})`. If `{claimed:false}` (held by another peer, or an unmet dependency), do not work that task.

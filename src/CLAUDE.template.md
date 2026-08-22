@@ -204,7 +204,7 @@ Memory accelerates triage. It NEVER authorizes a skip.
 
 ## Article X — Multi-session coordinated workflows
 
-Article II governs the **intra-session** axis; this governs the **inter-session** axis — up to four peer sessions over the MCP broker pool, one wearing the lead hat. Orthogonal; **Article II is unchanged**. **Opt-in, OFF by default** (`velocity.org_mode.enabled`), requires git, runs the `org` track via `org-dispatch`. You SHALL:
+Article II governs the **intra-session** axis; this governs the **inter-session** axis — up to four peer sessions over the baseline MCP channel, one wearing the lead hat. Orthogonal; **Article II is unchanged**. **Opt-in, OFF by default** (`velocity.org_mode.enabled`), requires git, runs the `org` track via `org-dispatch`. You SHALL:
 
 1. **Decide in-lane; escalate out-of-lane.** An un-decidable or cross-lane fork SHALL escalate, never be guessed (`yield_fork` task-bound, `ask_lead` free-form).
 2. **Escalate to the human for human-judgment forks.** The chain is peer→lead→human (`answer_peer`).

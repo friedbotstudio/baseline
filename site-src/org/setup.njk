@@ -3,8 +3,8 @@ layout: docs.njk
 title: "Org mode setup: stand up a peer pod in ten minutes · baseline"
 description: A hands-on run. Stand up a lead session and a peer pod, dispatch one feature across lanes, and watch a question travel peer to lead to human.
 heading: "Stand up a pod<br>in ten minutes."
-lead: A hands-on run, end to end. You will stand up a lead session and a peer pod, dispatch one small feature across lanes, and watch a question travel peer to lead to human.
-updated: 2026-07-28
+lead: "Four sessions work one repository at once, and none of them sees another's half-finished edits, because every peer gets a git worktree of its own. This run is hands-on: you will open a lead and a peer pod, dispatch one small feature across lanes, and watch a question travel peer to lead to human."
+updated: 2026-08-23
 breadcrumb: ["docs", "modes", "org", "setup"]
 chips:
   - { label: "experimental", tone: "warn" }
@@ -13,6 +13,7 @@ facts:
   - { label: "you need", value: "git · 2+ terminals" }
   - { label: "pod size", value: "up to 4, incl. lead" }
   - { label: "runs on", value: "one machine, one repo" }
+  - { label: "isolation", value: "a worktree per peer" }
 toc:
   - { id: "prerequisites", label: "Prerequisites" }
   - { id: "the-run", label: "The run" }
@@ -33,7 +34,7 @@ pagestate:
   <span class="callout-mark" aria-hidden="true">!</span>
   <div>
     <div class="callout-title">Experimental, and opt-in.</div>
-    <p>Org mode is off by default and needs git. The channel the sessions talk over is a file-locked directory under <code class="tok">.claude/state/sprint/&lt;channel_id&gt;/</code>, which means every session in the pod has to sit on the same machine and in the same checkout. The <code class="tok">sprint-channel</code> server ships already registered in <code class="tok">.mcp.json</code>, and a peer is just an ordinary Claude Code session with no launcher and no special flags.</p>
+    <p>Org mode is off by default and needs git. The channel the sessions talk over is a file-locked directory under <code class="tok">.claude/state/sprint/&lt;channel_id&gt;/</code>, so every session in the pod has to sit on the same machine and in the same repository. The channel finds that directory through <code class="tok">git rev-parse --git-common-dir</code>, which answers the same from every worktree in a repository (a linked worktree included). Peers therefore share one store while <code class="tok">org-dispatch</code> gives each of them a working tree of its own. The <code class="tok">baseline</code> server ships already registered in <code class="tok">.mcp.json</code>, and a peer is just an ordinary Claude Code session with no launcher and no special flags.</p>
   </div>
 </div>
 
@@ -74,7 +75,7 @@ pagestate:
     <div class="step-num" aria-hidden="true">2</div>
     <div class="step-body">
       <h3>Open the lead session</h3>
-      <p>In your first terminal, from the repository root. The lead is an ordinary session; what makes it the lead is simply that it runs triage and settles whatever the peers escalate.</p>
+      <p>In your first terminal, from the repository root. The lead is an ordinary session that runs triage and settles whatever the peers escalate. It can also take the hat explicitly with <code class="tok">acquire_lead</code>, which one session holds at a time. Ask for a channel someone already leads and the refusal names the holder, so you know who to escalate to.</p>
       <div class="plate">
         <div class="plate-bar">
           <span>terminal 1 · lead</span>
@@ -85,9 +86,9 @@ pagestate:
           </button>
         </div>
         <pre class="plate-body"><span class="t-prompt">$</span> claude
-<span class="t-prompt">$</span> claude mcp list   <span class="t-dim"># sprint-channel ... Connected</span></pre>
+<span class="t-prompt">$</span> claude mcp list   <span class="t-dim"># baseline ... Connected</span></pre>
       </div>
-      <p class="step-note">If <code class="tok">sprint-channel</code> is missing, the session started before the server registered, so restart it.</p>
+      <p class="step-note">If <code class="tok">baseline</code> is missing, the session started before the server registered, so restart it.</p>
     </div>
   </li>
 
@@ -118,6 +119,8 @@ pagestate:
     <div class="step-body">
       <h3>Dispatch a feature from the lead</h3>
       <p>Put a small change through triage, one that genuinely does split into two lanes, and pick the <code class="tok">org</code> track when it is offered. Drive it as far as phase 6, where <code class="tok">org-dispatch</code> splits the approved spec into lane-tagged tasks and writes them to the channel.</p>
+
+      <p>Before any lane can be claimed, each peer is given its own git worktree and branch. Two peers sharing one working tree would each read the other's half-finished edits as their own, and whichever committed first would carry both. Where isolation fails, the dispatch stops and names the reason (your own tree is left exactly as it was).</p>
       <div class="plate">
         <div class="plate-bar">
           <span>terminal 1 · lead</span>
@@ -196,6 +199,14 @@ enqueue_task { task_id: <span class="t-ok">"lane-b"</span>, brief: <span class="
     <div class="cell-kicker">release_task</div>
     <p>Returns a claimed or yielded lane to the pool so another peer can take it.</p>
   </div>
+  <div class="cell">
+    <div class="cell-kicker">the worktrees</div>
+    <p>A peer's tree is removed once its diff has been audited against the lane's declared write_set and applied to the main tree. A lane that strayed outside that write_set keeps its worktree and lands nothing, so you can still read what it did.</p>
+  </div>
+  <div class="cell">
+    <div class="cell-kicker">release_lead</div>
+    <p>Hands the lead hat back, so another session can take it. The holder is the one session with standing to release it.</p>
+  </div>
 </div>
 
 <h3 id="stalls">If something stalls</h3>
@@ -214,7 +225,7 @@ enqueue_task { task_id: <span class="t-ok">"lane-b"</span>, brief: <span class="
       <span class="label">Peer tools missing: <code class="tok">ask_lead</code> or <code class="tok">claim_task</code> not found</span>
       <span class="sign" aria-hidden="true">–</span>
     </button>
-    <p class="faq-a" id="stall-2">The session started before the server registered. Restart it; <code class="tok">claude mcp list</code> should show <code class="tok">sprint-channel</code> connected.</p>
+    <p class="faq-a" id="stall-2">The session started before the server registered. Restart it; <code class="tok">claude mcp list</code> should show <code class="tok">baseline</code> connected.</p>
   </div>
   <div class="faq-item">
     <button type="button" class="faq-q" aria-expanded="true" aria-controls="stall-3">

@@ -46,7 +46,7 @@ Adopted 2026-07-28 from the pinned landing reference; supersedes any earlier one
 - **Adoption is one command.** `npx @friedbotstudio/create-baseline@latest .` run inside a clean git working tree lays down the overlay: hooks, skills, subagent, MCP servers, constitutional documents, and a CI posture by default. The user then opens the repo in Claude Code (CLI, desktop, or the JetBrains / VS Code extensions), runs `/init-project` to tailor config to the stack, and drives work through `/triage` or `/harness`.
 - **Project-agnostic mode is a sanctioned state.** Before `/init-project` runs, hooks are active but `test_runner` and `lint_runner` are in guide mode. Installing and never configuring is allowed, not broken.
 - **Upgrades reconcile, they do not clobber.** `create-baseline upgrade` performs a per-file three-way reconcile against the shipped manifest: untouched files refresh, tier-2 merges mechanically, tier-3 stages for semantic reconciliation in main context via `/upgrade-project`, and locally customized tier-1 files prompt first.
-- **Org mode is a multi-terminal ritual.** Up to four peer sessions including the lead, one terminal each, coordinating over the `sprint-channel` MCP server that ships in `.mcp.json`. A peer is an ordinary Claude Code session that runs `/companion on <channel_id>`; the channel id is chosen, not defaulted, and the peer id defaults to `companion-1`. The channel is a file-locked directory under `.claude/state/sprint/<channel_id>/`, so every session must be on one machine and in one checkout. The lead dispatches lane-tagged tasks; peers claim, execute in-lane, and escalate what they cannot settle. Requires git and two or more terminals. *(Corrected 2026-07-29: this previously described `SPRINT_POOL_CHANNEL` and a `lobby` default, which belong to `scripts/companion-pool-launch.sh` — a dev-only push-dispatch launcher that is never copied into `obj/template` and so does not exist in a consumer install.)*
+- **Org mode is a multi-terminal ritual.** Up to four peer sessions including the lead, one terminal each, coordinating over the `baseline` MCP server that ships in `.mcp.json`. A peer is an ordinary Claude Code session that runs `/companion on <channel_id>`; the channel id is chosen, not defaulted, and the peer id defaults to `companion-1`. The channel is a file-locked directory under `.claude/state/sprint/<channel_id>/`, so every session must be on one machine and in one checkout. The lead dispatches lane-tagged tasks; peers claim, execute in-lane, and escalate what they cannot settle. Requires git and two or more terminals. *(Corrected 2026-07-29: this previously described `SPRINT_POOL_CHANNEL` and a `lobby` default, which belonged to a dev-only push-dispatch launcher that never reached a consumer install; that launcher retired in 0.26.0.)*
 - **Documentation is grouped by what the reader is doing, not by topic** (amended 2026-07-29). The surface commits to **16 pages**; those that do not yet exist are debt rather than fiction. Groups follow [Diátaxis](https://diataxis.fr/), whose governing rule is that the four types are not mixed on one page:
   - *(lead)* — Overview
   - **Start here** *(Tutorial)* — Install, Org tutorial
@@ -73,7 +73,7 @@ Verified against the repository on 2026-07-28. Every figure below is checkable; 
 | Workflow phases | 11 | `CLAUDE.md` Article IV |
 | Consent gates | 3 — `/approve-direction`, `/approve-swarm`, `/grant-commit`. `/grant-push` is runtime push consent, not a gate | `CLAUDE.md` Art. IV |
 | Workflow tracks | 11 declared, of which 9 are top-level selectable | `.claude/workflows.jsonl` |
-| MCP servers shipped | 4 — context7, plantuml, playwright, sprint-channel | `.mcp.json` |
+| MCP servers shipped | 4 — context7, plantuml, playwright, baseline | `.mcp.json` |
 | Package | `@friedbotstudio/create-baseline` | `package.json` |
 | Version | 0.20.0 | `package.json` |
 | License | Apache-2.0 | `package.json` |
@@ -86,7 +86,7 @@ Constraints that bind product claims:
 - **Git is a hard prerequisite for swarm, org, and power.** On a non-git tree those phases are excepted at triage and the workflow ends after `/archive`. Solo `/tdd` still works.
 - **Org mode and power mode are opt-in and off by default**, behind `velocity.org_mode.enabled` and `velocity.power_mode.enabled`.
 - **Org mode is experimental and local for now.** The coordination channel runs inside the baseline's own repo through a dev launcher; the server ships bundled and needs no runtime dependency of its own.
-- **`sprint-pool` is not a shipped MCP server.** It is registered ad hoc by `scripts/companion-pool-launch.sh` for a pool session. The four servers in `.mcp.json` are the shipped set.
+- **`baseline` is the only first-party MCP server.** The `sprint-pool` channel server, its `sprint-broker` socket transport and the dev-only launcher that started them retired in 0.26.0. The servers in `.mcp.json` are the shipped set.
 - **Disabling a hook is constitutional, not silent.** It takes an explicit `seed.md` §4.1 amendment plus the matching settings edit.
 - **Secrets never enter the baseline.** `env_guard` blocks every write targeting `.env` files except `.env.example`.
 - **Status: public alpha, under active development.** Already stated in the shipping site chrome; the references restate it.
@@ -95,7 +95,7 @@ Explicitly undecided or unverified:
 
 - **Project-local workflow tracks surviving upgrades verbatim.** The landing reference's FAQ asserts this. No supporting implementation was found in `.claude/workflows.jsonl`, `seed.md`, or the triage skill on 2026-07-28. Do not publish the claim until the mechanism exists or is located.
 - **Skill count in the pinned landing reference is stale.** It says 52 ("browse the 52 skills"); the repository has 53 baseline-owned skills. The repository is authority.
-- **Launcher path in the pinned docs reference is stale.** Steps 2 and 3 invoke `.claude/skills/companion/launch.sh`, which has been retired. The current launcher is `scripts/companion-pool-launch.sh`.
+- **Launcher paths in the pinned docs reference are stale.** Steps 2 and 3 invoke `.claude/skills/companion/launch.sh`, and its replacement `scripts/companion-pool-launch.sh` retired in 0.26.0 with the pool server it launched. A peer is now an ordinary session running `/companion on <channel_id>`; there is no launcher.
 
 ## Brand Commitments
 

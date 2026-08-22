@@ -3,8 +3,8 @@ layout: docs.njk
 title: "MCP servers: what the overlay registers · baseline"
 description: "Reference for the four MCP servers the baseline registers in .mcp.json: what each provides, how it is launched, and how the file merges on install and upgrade."
 heading: "Four servers,<br>registered on install."
-lead: "Reference for the servers declared in .mcp.json. Three of them are fetched from npm the first time they launch, while the fourth is the coordination broker that ships inside the overlay itself and needs no separate install."
-updated: 2026-07-29
+lead: "Coordination needs no separate download. Three of these servers are pulled from npm the first time they launch, and the one the baseline ships runs from the overlay. When the baseline renames a server of its own, your .mcp.json drops the stale entry instead of carrying it for good."
+updated: 2026-08-23
 breadcrumb: ["docs", "reference", "mcp servers"]
 facts:
   - { label: "servers", value: "4" }
@@ -13,6 +13,7 @@ facts:
 toc:
   - { id: "servers", label: "The servers" }
   - { id: "launch", label: "Launch commands" }
+  - { id: "tools", label: "Channel tools" }
   - { id: "merge", label: "Merge behaviour" }
   - { id: "replacing", label: "Replacement" }
 ---
@@ -44,17 +45,35 @@ toc:
 {% endfor %}</pre>
 </div>
 
-<p>The three <code class="tok">npx</code> entries pull from npm the first time they launch, whereas <code class="tok">sprint-channel</code> runs from the overlay itself. That is why org mode needs no extra install, and also why every session in a pod must share a single checkout.</p>
+<p>The three <code class="tok">npx</code> entries pull from npm the first time they launch, whereas <code class="tok">baseline</code> runs from the overlay itself. That is why org mode needs no extra install, and also why every session in a pod must share a single checkout. To find its store the channel asks <code class="tok">git rev-parse --git-common-dir</code>. A linked worktree and the tree it came from therefore reach one directory instead of each opening its own.</p>
 
-<h2 id="merge"><span class="sec-mark" aria-hidden="true">§ III</span> Merge behaviour</h2>
+<h2 id="tools"><span class="sec-mark" aria-hidden="true">§ III</span> Channel tools</h2>
+
+<p class="sec-lead">Eighteen calls, on the one server that ships inside the overlay.</p>
+
+<p>To join a pod a session calls <code class="tok">register_peer</code>, and it leaves with <code class="tok">leave_peer</code>. Peers talk through <code class="tok">send_message</code> and <code class="tok">broadcast</code>. The lane board is <code class="tok">enqueue_task</code>, <code class="tok">claim_task</code>, <code class="tok">update_task</code>, <code class="tok">cancel_task</code>, <code class="tok">list_tasks</code>, <code class="tok">release_task</code> and <code class="tok">signal_done</code>.</p>
+
+<p>When a peer cannot settle something itself, it raises it rather than guessing. <code class="tok">raise_conflict</code> reports a write-set collision. <code class="tok">yield_fork</code> hands back a decision bound to one task. <code class="tok">ask_lead</code> and <code class="tok">answer_peer</code> carry a free-form question, which the lead may pass on to the human.</p>
+
+<p>Where a pushed notification can go missing, <code class="tok">sprint_status</code> cannot. It returns the whole channel: tasks, peers, messages and yields. Its <code class="tok">all_done</code> flag is true exactly when every enqueued lane has drained, so a lost message can never strand a pod.</p>
+
+<p>Every call accepts <code class="tok">sprint_id</code> and every call may omit it. An omitted id resolves to <code class="tok">default</code>, one channel per repository, so the board works for a single session with org mode switched off. Name the id when you want a channel of your own.</p>
+
+<p><code class="tok">acquire_lead</code> and <code class="tok">release_lead</code> hold one lead per channel. A second session that asks for a channel someone already leads is refused, and the refusal names the holder, so it knows who to escalate to.</p>
+
+<h2 id="merge"><span class="sec-mark" aria-hidden="true">§ IV</span> Merge behaviour</h2>
+
+<p class="sec-lead">An upgrade refreshes what the baseline owns and leaves what you added exactly as it was.</p>
 
 <p>If you already have a <code class="tok">.mcp.json</code>, install and upgrade will merge into it rather than replace it. Servers the template names belong to the baseline and refresh from it, which is how you pick up new baseline arguments and environment settings. Servers the template does not name are yours, and those stay byte for byte as they were.</p>
 
 <p>To keep a change of your own, put it under a name the template does not use. Change one of the template's own servers and the next upgrade will overwrite it, because for those names the template wins.</p>
 
+<p>Where the baseline has renamed one of its own servers, that rule has an exception. A name the template has stopped using is normally yours to keep, but a renamed one is dropped and its replacement takes over. <code class="tok">src/cli/renames.js</code> holds the record, one entry today: <code class="tok">sprint-channel</code> became <code class="tok">baseline</code> in 0.26.0. Without it you would carry both names for good, one of them pointing at a directory the overlay no longer ships. A rename applies only once the template carries the replacement, so merging an older template that still ships the old name keeps it.</p>
+
 <p>Top-level keys outside <code class="tok">mcpServers</code> behave the same way: the merge adds template keys you are missing and leaves the keys you already have. Where the result would match your file exactly, nothing is written at all and the upgrade reports the file unchanged.</p>
 
-<h2 id="replacing"><span class="sec-mark" aria-hidden="true">§ IV</span> Replacement</h2>
+<h2 id="replacing"><span class="sec-mark" aria-hidden="true">§ V</span> Replacement</h2>
 
 <p>Article VI.5 requires that a third-party API be checked against current documentation before any code is written against it. The rule names the outcome and leaves the tool open, so while <code class="tok">context7</code> is the shipped default you may swap it out or drop it entirely, provided the checking still happens. A library's own <code class="tok">llms.txt</code> will do, and so will a pinned local copy of the docs.</p>
 
