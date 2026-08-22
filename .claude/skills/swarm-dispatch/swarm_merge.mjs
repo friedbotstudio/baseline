@@ -25,7 +25,34 @@
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+
+/**
+ * The audit rule: a task may change only what its lane declared.
+ *
+ * Extracted from the CLI below so org mode's merge and the swarm's merge apply
+ * one rule rather than two that drift apart. Pure — it compares two lists and
+ * returns a verdict; the caller decides what to do about it.
+ *
+ * An empty write_set is a refusal, not a pass. A lane that declared nothing has
+ * not been given permission to change anything, and reading a missing field as
+ * "everything is allowed" is how an audit stops auditing.
+ */
+export function auditChangedPaths({ changed, writeSet }) {
+  const declared = new Set(Array.isArray(writeSet) ? writeSet : []);
+  const touched = Array.isArray(changed) ? changed.filter(Boolean) : [];
+
+  if (touched.length === 0) return { ok: true, violations: [], reason: null };
+  if (declared.size === 0) {
+    return { ok: false, violations: [...touched].sort(), reason: 'empty write_set: the lane declared nothing it may change' };
+  }
+
+  const violations = touched.filter((f) => !declared.has(f)).sort();
+  return violations.length > 0
+    ? { ok: false, violations, reason: `changed ${violations.length} path(s) outside the declared write_set` }
+    : { ok: true, violations: [], reason: null };
+}
 
 function fail(msg) { process.stderr.write(`swarm_merge: ${msg}\n`); }
 
@@ -87,7 +114,7 @@ function main(argv) {
     process.exit(0);
   }
 
-  const violations = changed.filter(f => !writeSet.has(f));
+  const { violations } = auditChangedPaths({ changed, writeSet: [...writeSet] });
   if (violations.length > 0) {
     process.stdout.write(`swarm_merge: AUDIT FAIL — task ${taskId} modified files outside its declared write_set:\n`);
     for (const v of [...violations].sort()) process.stdout.write(`  + ${v}\n`);
@@ -128,4 +155,8 @@ function main(argv) {
   for (const f of [...changed].sort()) process.stdout.write(`  + ${f}\n`);
 }
 
-main(process.argv.slice(2));
+// Guarded so the audit rule above can be imported without the CLI running (and
+// exiting the importing process on its way past).
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  main(process.argv.slice(2));
+}

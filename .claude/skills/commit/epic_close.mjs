@@ -4,7 +4,8 @@
 // CLI:
 //   node epic_close.mjs <epic>
 //
-// When every declared slice of <epic> is covered by a `committed` child and the
+// When every declared slice of <epic> is covered by a CLOSED child — committed,
+// or superseded by work that made the slice unnecessary — and the
 // epic is not already closed, archives the live discovery bundle into
 // docs/archive/<UTC-date>/<epic>/ (by delegating to the shipped archive.sh — git
 // mv for tracked files) and merges closed:true + closed_at into the gitignored
@@ -15,8 +16,8 @@
 //
 // Completion is gated on slices[] coverage, not on the registered-children set:
 // children register lazily (one per epic-child /triage), so an "all registered
-// children committed" test fires on the FIRST slice and closes the epic
-// prematurely. A slice is covered only when it has a committed child. Legacy
+// children closed" test fires on the FIRST slice and closes the epic
+// prematurely. A slice is covered only when it has a closed child. Legacy
 // epics that carry no slices[] fall back to the registered-children gate.
 //
 // Exit codes:
@@ -27,10 +28,80 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ARCHIVE_SCRIPT = path.join(HERE, '..', 'archive', 'archive.sh');
+
+/**
+ * A slice is finished when it landed OR when something else made it unnecessary.
+ *
+ * Counting only `committed` left a superseded slice open forever, which kept its
+ * whole epic open and hid every genuinely open row behind it. Superseded work is
+ * a decision that was made and recorded, not work still waiting.
+ */
+export const CLOSED_STATUSES = Object.freeze(['committed', 'superseded']);
+
+export function isClosed(status) {
+  return typeof status === 'string' && CLOSED_STATUSES.includes(status);
+}
+
+/**
+ * Register a batch of slices as closed children, so a power batch can close its
+ * epic the way a chain of epic-children does.
+ *
+ * An epic-child flips exactly one child on its way to a commit. A power batch
+ * lands every slice in one cycle and has no per-slice commit to hang that flip
+ * on, so without this the epic keeps zero registered children forever while its
+ * roadmap rows read done.
+ *
+ * Two things it will not do. It never overwrites a slice that is already closed:
+ * a superseded slice carries the reason it closed, and restamping it `committed`
+ * would claim a commit that never happened. And it refuses a slice the epic never
+ * declared, because registering one would close an epic against work outside its
+ * own plan — the mis-close this epic's record already suffered once.
+ */
+export function registerClosedChildren({ rootDir, epic, slices }) {
+  if (typeof epic !== 'string' || !/^[A-Za-z0-9_-]+$/.test(epic)) {
+    return { ok: false, registered: [], reason: `invalid epic slug: ${JSON.stringify(epic)}` };
+  }
+  const wanted = Array.isArray(slices) ? slices.filter(Boolean) : [];
+  if (wanted.length === 0) return { ok: false, registered: [], reason: 'no slices given to register' };
+
+  const statePath = epicStatePath(rootDir || resolveRoot(), epic);
+  let state;
+  try {
+    state = readState(statePath);
+  } catch (err) {
+    return { ok: false, registered: [], reason: `epic ${epic}: state unreadable at ${statePath} (${err.message})` };
+  }
+
+  const declared = new Set((Array.isArray(state.slices) ? state.slices : []).map((sl) => sl.id));
+  const undeclared = wanted.filter((id) => !declared.has(id));
+  if (undeclared.length > 0) {
+    return {
+      ok: false,
+      registered: [],
+      reason: `epic ${epic} does not declare slice(s): ${undeclared.sort().join(', ')}`,
+    };
+  }
+
+  const children = Array.isArray(state.children) ? state.children.map((c) => ({ ...c })) : [];
+  const registered = [];
+  for (const id of wanted) {
+    const existing = children.find((c) => c.slice === id);
+    if (existing && isClosed(existing.status)) continue;
+    if (existing) existing.status = 'committed';
+    else children.push({ slice: id, status: 'committed' });
+    registered.push(id);
+  }
+
+  if (registered.length === 0) return { ok: true, registered: [], reason: null };
+
+  const now = Math.floor(Date.now() / 1000);
+  fs.writeFileSync(statePath, JSON.stringify({ ...state, children, updated_at: now }, null, 2) + '\n');
+  return { ok: true, registered, reason: null };
+}
 
 function resolveRoot() {
   return process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -47,12 +118,12 @@ function readState(statePath) {
 
 function openChildren(state) {
   const children = Array.isArray(state.children) ? state.children : [];
-  return children.filter((c) => c.status !== 'committed');
+  return children.filter((c) => !isClosed(c.status));
 }
 
 function committedSliceIds(state) {
   const children = Array.isArray(state.children) ? state.children : [];
-  return new Set(children.filter((c) => c.status === 'committed').map((c) => c.slice));
+  return new Set(children.filter((c) => isClosed(c.status)).map((c) => c.slice));
 }
 
 function uncoveredSlices(state) {
@@ -147,4 +218,8 @@ function main(argv) {
   return 0;
 }
 
-process.exit(main(process.argv));
+// Guarded so CLOSED_STATUSES and isClosed can be imported without the CLI running
+// and exiting the importing process.
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  process.exit(main(process.argv));
+}
