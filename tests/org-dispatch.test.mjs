@@ -41,7 +41,7 @@ test('test_when_isOrgModeEnabled_reads_flag_then_defaults_off', async () => {
 test('test_when_decompose_then_tasks_are_lane_tagged_and_claim_any_ready', async () => {
   const { toLaneTasks } = await mod();
   const lanes = [
-    { id: 'L1', lane: 'channel', write_set: ['.claude/mcp/sprint-broker/**'], depends_on: [] },
+    { id: 'L1', lane: 'channel', write_set: ['.claude/mcp/baseline/**'], depends_on: [] },
     { id: 'L2', lane: 'constitution', write_set: ['CLAUDE.md'], depends_on: [] },
     { id: 'L3', lane: 'skill', write_set: ['.claude/skills/org-dispatch/**'], depends_on: ['L1'] },
   ];

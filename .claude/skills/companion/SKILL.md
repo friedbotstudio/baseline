@@ -26,7 +26,7 @@ Execute a claimed lane **within its declared `write_set`** only. Every PreToolUs
 ## Prerequisites
 
 1. **Org mode is enabled** for this repo (`velocity.org_mode.enabled` in `.claude/project.json`). Off → stop; the fence is closed by design.
-2. **The `sprint-channel` MCP server is loaded.** It ships registered in `.mcp.json`, so a normally-started session has it. Verify with `claude mcp list` (expect `sprint-channel … Connected`). If the tools are missing, the session started before the server was registered — restart it.
+2. **The `baseline` MCP server is loaded.** It ships registered in `.mcp.json`, so a normally-started session has it. Verify with `claude mcp list` (expect `baseline … Connected`). If the tools are missing, the session started before the server was registered — restart it.
 3. **Same repo, same machine as the lead.** The channel is a file-locked on-disk directory under `.claude/state/sprint/<channel_id>/`. A peer elsewhere cannot see it.
 4. **A git repository.** Org mode requires git.
 
@@ -74,7 +74,7 @@ Read any markers under `.claude/state/companion/` and report `channel_id`, `peer
 
 The shipped path above **polls** — `sprint_status` is the authoritative check, and the watcher blocks between ticks. That is deliberate: it depends on nothing outside the project.
 
-A push-dispatch path exists via a sibling channel server, but it is **not part of the shipped path** and this skill does not use it. Claude Code channels are in research preview: custom channels are not on the approved allowlist and require a `--dangerously-load-development-channels` launch flag, and Team and Enterprise organizations must explicitly enable channels before any of them load. None of those can be assumed on a consumer install, so the shipped peer path avoids them entirely.
+A push-dispatch path used to exist via a sibling channel server. It needed a launch flag no consumer install can assume, so it was never part of the shipped path, and it retired in 0.26.0. Polling `sprint_status` is the whole peer path. A pointer naming a claimable lane may arrive from the host and shorten the wait, but nothing here waits for one.
 
 If you are experimenting with push dispatch, treat it as research-preview tooling with the failure modes that implies. Nothing in the claim loop above changes: `sprint_status` remains the never-dropped completion check, and a lost push is recoverable by reconciling from it.
 

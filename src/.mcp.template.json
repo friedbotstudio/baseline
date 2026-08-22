@@ -20,9 +20,9 @@
         "--isolated"
       ]
     },
-    "sprint-channel": {
+    "baseline": {
       "command": "node",
-      "args": [".claude/mcp/sprint-channel/server.mjs"]
+      "args": [".claude/mcp/baseline/server.mjs"]
     }
   }
 }

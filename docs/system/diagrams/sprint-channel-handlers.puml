@@ -1,4 +1,0 @@
-!startsub sprint_channel_handlers
-' @kind c4_component
-Component(sprint_channel_handlers, ".claude/mcp/sprint-channel/handlers.mjs", "component", "Sprint channel handlers — dependency tracking, yield relay")
-!endsub

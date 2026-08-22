@@ -10,6 +10,8 @@ import {
 import { withLock } from './lib/lock.mjs';
 import { validateMessage } from './lib/schema.mjs';
 import { isSafeId } from './lib/safe-id.mjs';
+import { isClaimable, isValidStatus, satisfiesDependency } from './lib/tasks.mjs';
+import { notifyClaimable } from './notify.mjs';
 
 const findTask = (tasks, id) => tasks.find((t) => t.id === id);
 
@@ -50,17 +52,17 @@ export function claimTask({ channelRoot, peer_id, task_id }) {
   // claim it; every other peer is rejected even while it is pending (the lead's
   // allocation control). A task with no assignee stays claim-any.
   if (target.assignee && target.assignee !== peer_id) return { claimed: false, reason: `task ${task_id} is assigned to ${target.assignee}` };
-  if (target.status !== 'pending') return { claimed: false, reason: `task ${task_id} is not claimable (status ${target.status})` };
+  if (!isClaimable(target.status)) return { claimed: false, reason: `task ${task_id} is not claimable (status ${target.status})` };
   const unmet = (target.depends_on || []).filter((dep) => {
     const d = findTask(tasks, dep);
-    return !d || d.status !== 'done';
+    return !d || !satisfiesDependency(d.status);
   });
   if (unmet.length) return { claimed: false, reason: `unmet dependency: ${unmet.join(', ')}` };
 
   const lock = withLock(channelRoot, `task-${task_id}`, () => {
     const fresh = readTasks(channelRoot);
     const ft = findTask(fresh, task_id);
-    if (!ft || ft.status !== 'pending') return false;
+    if (!ft || !isClaimable(ft.status)) return false;
     ft.status = 'claimed';
     ft.claimed_by = peer_id;
     writeTasks(channelRoot, fresh);
@@ -70,7 +72,7 @@ export function claimTask({ channelRoot, peer_id, task_id }) {
   return lock.result ? { claimed: true } : { claimed: false, reason: 'task already claimed' };
 }
 
-export function signalDone({ channelRoot, peer_id, task_id, commit_sha }) {
+export function signalDone({ channelRoot, peer_id, task_id, commit_sha, notify }) {
   if (!isSafeId(task_id) || !isSafeId(peer_id)) return { ok: false, error: 'invalid task_id or peer_id' };
   const tasks = readTasks(channelRoot);
   const target = findTask(tasks, task_id);
@@ -81,11 +83,15 @@ export function signalDone({ channelRoot, peer_id, task_id, commit_sha }) {
   // supplies one so the lead can trace which commit closed the lane. Optional by
   // contract, so an absent value leaves the existing field untouched.
   if (typeof commit_sha === 'string' && commit_sha !== '') target.commit_sha = commit_sha;
-  const done = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id));
+  const done = new Set(tasks.filter((t) => satisfiesDependency(t.status)).map((t) => t.id));
   const unblocked = tasks
     .filter((t) => t.status === 'pending' && (t.depends_on || []).length > 0 && (t.depends_on || []).every((d) => done.has(d)))
     .map((t) => t.id);
   writeTasks(channelRoot, tasks);
+  // The store is written before the pointers go out. A peer woken by a pointer
+  // reconciles against the file, so the file has to already say what the pointer
+  // claims — and a delivery failure after this line costs nothing but the wait.
+  notifyClaimable(notify, tasks.filter((t) => unblocked.includes(t.id)));
   return { ok: true, unblocked };
 }
 
@@ -142,7 +148,7 @@ export function sprintStatus({ channelRoot }) {
   };
 }
 
-export function enqueueTask({ channelRoot, task_id, brief, write_set, depends_on, assignee }) {
+export function enqueueTask({ channelRoot, task_id, brief, write_set, depends_on, assignee, notify }) {
   if (!isSafeId(task_id)) return { ok: false, error: 'invalid task_id' };
   if (assignee !== undefined && assignee !== null && !isSafeId(assignee)) {
     return { ok: false, error: 'invalid assignee' };
@@ -162,7 +168,49 @@ export function enqueueTask({ channelRoot, task_id, brief, write_set, depends_on
     commit_sha: null,
   });
   writeTasks(channelRoot, tasks);
+  // A lane with unmet dependencies is not claimable yet; its pointer goes out
+  // when signal_done unblocks it, not now.
+  const enqueued = tasks[tasks.length - 1];
+  if (enqueued.depends_on.length === 0) notifyClaimable(notify, [enqueued]);
   return { ok: true, task_id };
+}
+
+/**
+ * Move a claimed task to another status. The claim is what authorises the move:
+ * without that check any peer could drive another peer's lane.
+ */
+export function updateTask({ channelRoot, peer_id, task_id, status }) {
+  if (!isSafeId(task_id) || !isSafeId(peer_id)) return { ok: false, error: 'invalid task_id or peer_id' };
+  if (!isValidStatus(status)) return { ok: false, error: `invalid status: ${String(status)}` };
+  const tasks = readTasks(channelRoot);
+  const target = findTask(tasks, task_id);
+  if (!target) return { ok: false, error: 'unknown task' };
+  if (target.claimed_by !== peer_id) return { ok: false, error: `peer ${peer_id} does not hold the claim on ${task_id}` };
+  target.status = status;
+  writeTasks(channelRoot, tasks);
+  return { ok: true, task_id, status };
+}
+
+/**
+ * Retire a task that will never be worked. Completed work is refused: cancelling
+ * it would erase the record that it happened.
+ */
+export function cancelTask({ channelRoot, task_id }) {
+  if (!isSafeId(task_id)) return { ok: false, error: 'invalid task_id' };
+  const tasks = readTasks(channelRoot);
+  const target = findTask(tasks, task_id);
+  if (!target) return { ok: false, error: 'unknown task' };
+  if (target.status === 'done') return { ok: false, error: `task ${task_id} is done and cannot be cancelled` };
+  if (target.status === 'cancelled') return { ok: true, task_id, already_cancelled: true };
+  target.status = 'cancelled';
+  target.claimed_by = null;
+  writeTasks(channelRoot, tasks);
+  return { ok: true, task_id };
+}
+
+/** Read the lane board. Read-only by contract — it never normalises what it finds. */
+export function listTasks({ channelRoot }) {
+  return { ok: true, tasks: readTasks(channelRoot) };
 }
 
 export function raiseConflict({ channelRoot, peer_id, task_id, path }) {

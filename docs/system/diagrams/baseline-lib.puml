@@ -1,0 +1,4 @@
+!startsub baseline_lib
+' @kind c4_component
+Component(baseline_lib, ".claude/mcp/baseline/lib/*.mjs", "subsystem", "Baseline channel store, lock, schema")
+!endsub

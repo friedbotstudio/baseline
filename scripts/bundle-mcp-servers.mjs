@@ -23,8 +23,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 export const TARGETS = [
-  { server: 'sprint-channel', entry: '.claude/mcp/sprint-channel/server.mjs' },
-  { server: 'sprint-pool', entry: '.claude/mcp/sprint-pool/server.mjs' },
+  { server: 'baseline', entry: '.claude/mcp/baseline/server.mjs' },
 ];
 
 // A specifier is bundled-away unless it is a Node builtin. `node:` covers the

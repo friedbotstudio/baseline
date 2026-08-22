@@ -1,4 +1,5 @@
 import { readFile, writeFile, access } from 'node:fs/promises';
+import { applyServerRenames } from './renames.js';
 
 /**
  * Compute the deep-merged `.mcp.json` content (in memory) without writing.
@@ -19,7 +20,9 @@ import { readFile, writeFile, access } from 'node:fs/promises';
  *     and env updates (e.g., the `--browser chrome --isolated` flags on
  *     playwright). A user who customized a baseline-named server loses that
  *     customization; intentional customizations belong under a non-baseline name.
- *   - Servers absent from the template are user-added and are preserved byte-for-byte.
+ *   - Servers absent from the template are user-added and are preserved byte-for-byte,
+ *     EXCEPT one a recorded rename in `renames.js` has replaced: that entry is dropped,
+ *     but only once the template actually carries its replacement.
  *   - Top-level JSON keys outside `mcpServers` follow the same rule: template
  *     keys are added when missing; target's existing keys are preserved.
  *   - When the target is absent, the merged output is the template text verbatim.
@@ -48,7 +51,7 @@ export async function computeMergedMcpServers(templatePath, targetPath) {
     mergedServers[name] = cfg;
   }
 
-  const merged = { ...target, mcpServers: mergedServers };
+  const merged = { ...target, mcpServers: applyServerRenames(mergedServers, tplServers) };
 
   for (const [key, value] of Object.entries(template || {})) {
     if (key === 'mcpServers') continue;

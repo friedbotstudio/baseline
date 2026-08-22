@@ -1,4 +1,0 @@
-!startsub sprint_channel_server
-' @kind c4_component
-Component(sprint_channel_server, ".claude/mcp/sprint-channel/server.mjs", "component", "Sprint channel MCP server — tool registry, locks, mailbox")
-!endsub

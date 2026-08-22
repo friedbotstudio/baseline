@@ -1,4 +1,0 @@
-!startsub sprint_channel_lib
-' @kind c4_component
-Component(sprint_channel_lib, ".claude/mcp/sprint-channel/lib/*.mjs", "subsystem", "Sprint channel store, lock, schema")
-!endsub

@@ -1,5 +1,5 @@
 // Tests for scripts/bundle-mcp-servers.mjs — the build-time esbuild bundling of
-// the first-party MCP servers (sprint-channel, sprint-pool) into self-contained
+// the first-party MCP servers into self-contained
 // single-file artifacts. Spec: docs/specs/bundle-mcp-servers-esbuild.md.
 //
 // RED-before-green: scripts/bundle-mcp-servers.mjs does not exist yet, so the
@@ -17,8 +17,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..');
-const MCP_DIRS = ['sprint-channel', 'sprint-pool', 'sprint-broker'];
-const BUNDLED_TARGETS = ['sprint-channel', 'sprint-pool'];
+const MCP_DIRS = ['baseline'];
+const BUNDLED_TARGETS = ['baseline'];
 
 // Attempt to load the not-yet-written source. Stash the error so each test can
 // fail RED with a descriptive message instead of the whole file erroring.
@@ -105,7 +105,7 @@ describe('bundle-mcp-servers', () => {
     const sandbox = await mkdtemp(path.join(os.tmpdir(), 'bundle-sandbox-'));
     try {
       await m.bundleServers(dir);
-      const bundle = path.join(dir, '.claude', 'mcp', 'sprint-channel', 'server.mjs');
+      const bundle = path.join(dir, '.claude', 'mcp', 'baseline', 'server.mjs');
       const bundleUrl = pathToFileURL(bundle).href;
       // Importing (not running as main) exercises the whole module graph without
       // starting the stdio transport (server.mjs guards on import.meta.url === argv[1]).
@@ -166,13 +166,13 @@ describe('bundle-mcp-servers', () => {
     // Covers AC-004.
     const m = requireModule();
     const dir = await mkdtemp(path.join(os.tmpdir(), 'bundle-bad-'));
-    await mkdir(path.join(dir, '.claude', 'mcp', 'sprint-channel'), { recursive: true });
+    await mkdir(path.join(dir, '.claude', 'mcp', 'baseline'), { recursive: true });
     // no server.mjs entry present → esbuild has nothing to bundle
     try {
       await assert.rejects(() => m.bundleServers(dir),
         'bundleServers must reject when a target entry is missing');
-      const contents = existsSync(path.join(dir, '.claude', 'mcp', 'sprint-channel'))
-        ? await readdir(path.join(dir, '.claude', 'mcp', 'sprint-channel')) : [];
+      const contents = existsSync(path.join(dir, '.claude', 'mcp', 'baseline'))
+        ? await readdir(path.join(dir, '.claude', 'mcp', 'baseline')) : [];
       assert.ok(!contents.includes('server.mjs'), 'no partial bundle written on failure');
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -182,7 +182,7 @@ describe('bundle-mcp-servers', () => {
   it('test_when_dev_tree_server_read_then_still_imports_sdk', async () => {
     // Regression trap: only obj/template's copy is bundled; the dev-tree source
     // stays readable/unbundled (still imports the SDK by bare specifier).
-    const src = await readFile(path.join(REPO_ROOT, '.claude', 'mcp', 'sprint-channel', 'server.mjs'), 'utf8');
+    const src = await readFile(path.join(REPO_ROOT, '.claude', 'mcp', 'baseline', 'server.mjs'), 'utf8');
     assert.match(src, /@modelcontextprotocol\/sdk/, 'dev-tree server.mjs must remain unbundled (bare SDK import)');
   });
 });

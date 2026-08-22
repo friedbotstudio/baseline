@@ -1,0 +1,4 @@
+!startsub baseline_tools
+' @kind c4_component
+Component(baseline_tools, ".claude/mcp/baseline/tools.mjs", "component", "Baseline channel tool table — tool names, input schemas, handler bindings")
+!endsub

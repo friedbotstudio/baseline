@@ -15,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const p = (rel) => path.join(REPO_ROOT, rel);
 
-const { TOOL_NAMES } = await import(pathToFileURL(p('.claude/mcp/sprint-channel/server.mjs')).href);
+const { TOOL_NAMES } = await import(pathToFileURL(p('.claude/mcp/baseline/server.mjs')).href);
 
 const selectableTracks = (file) =>
   readFileSync(file, 'utf8')
@@ -91,7 +91,7 @@ describe('T3 — org mode reaches the consumer', () => {
   it('test_when_fresh_install_then_org_runs_without_dev_channel_flag', () => { // AC-010
     // The consumer path must not depend on the experimental channel launcher.
     const registered = JSON.parse(readFileSync(p('.mcp.json'), 'utf8')).mcpServers;
-    assert.ok(registered['sprint-channel'], 'sprint-channel must stay registered — it is the consumer path');
+    assert.ok(registered['baseline'], 'baseline must stay registered — it is the consumer path');
 
     const orgSkill = readFileSync(p('.claude/skills/org-dispatch/SKILL.md'), 'utf8');
     const required = [...orgSkill.matchAll(/\b(ask_lead|answer_peer|sprint_status|enqueue_task|claim_task|signal_done|yield_fork|release_task)\b/g)]
@@ -99,32 +99,18 @@ describe('T3 — org mode reaches the consumer', () => {
     const needed = [...new Set(required)];
     assert.ok(needed.length >= 4, 'org-dispatch must declare the tools it depends on');
 
-    const channelSrc = readFileSync(p('.claude/mcp/sprint-channel/server.mjs'), 'utf8');
+    // Ask the module what it registers rather than grepping its source: the tool
+    // table moved to tools.mjs, and a name appearing in a file was never the claim.
     for (const tool of needed) {
       assert.ok(
-        channelSrc.includes(`'${tool}'`),
-        `org-dispatch needs "${tool}"; sprint-channel must expose it so no --dangerously-load-development-channels is required`,
+        TOOL_NAMES.includes(tool),
+        `org-dispatch needs "${tool}"; baseline must expose it so no --dangerously-load-development-channels is required`,
       );
     }
   });
 
-  it('test_when_org_shipped_then_seed_records_accurate_pool_rationale', () => { // AC-010
-    // D-2: seed.md:335 says sprint-pool is "not a stdio server", but
-    // sprint-pool/server.mjs:237 connects StdioServerTransport. The real reason
-    // it stays unregistered is the experimental-channel launch flag.
-    const seed = readFileSync(p('docs/init/seed.md'), 'utf8');
-    assert.ok(
-      !/not a stdio server/.test(seed),
-      'seed.md must drop the inaccurate "not a stdio server" rationale for sprint-pool (D-2)',
-    );
-    assert.ok(
-      /--dangerously-load-development-channels/.test(seed),
-      'seed.md must name the real reason: the experimental-channel launch flag',
-    );
-  });
-
   it('test_when_channel_gains_tools_then_seed_tool_count_follows', () => { // AC-010
-    // seed.md:335 enumerates sprint-channel's tools and states the count in
+    // seed.md:335 enumerates baseline's tools and states the count in
     // prose. Adding four tools without updating it recreates the T2 defect
     // class: a document asserting a count the code does not have.
     const seed = readFileSync(p('docs/init/seed.md'), 'utf8');
@@ -134,6 +120,8 @@ describe('T3 — org mode reaches the consumer', () => {
     const actual = TOOL_NAMES.length;
     const WORDS = {
       9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen',
+      15: 'fifteen', 16: 'sixteen', 17: 'seventeen', 18: 'eighteen',
+      19: 'nineteen', 20: 'twenty', 21: 'twenty-one', 22: 'twenty-two',
     };
     const word = WORDS[actual];
     assert.ok(word, `unexpected tool count ${actual}; extend the word map`);
