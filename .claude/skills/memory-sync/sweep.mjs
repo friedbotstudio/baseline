@@ -31,11 +31,10 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './shape.mjs';
 import { strandedFieldBullets } from '../memory-index/lift-fields.mjs';
+import { isStaleFromFields, splitList, usableStamp } from '../../hooks/lib/staleness.mjs';
 import {
   CANONICAL,
   PENDING_FILE,
-  STALE_EXEMPT,
-  SUPERSESSION_DRIVEN,
   closureFieldFor,
 } from '../memory-index/categories.mjs';
 
@@ -62,8 +61,6 @@ export function assertRelifted(memdir) {
     + `Sweeping now would curate against a stale-set the other readers cannot see. Sample: ${sample}`);
 }
 
-const STALE_COMMITS = 30;
-const STALE_DAYS = 30;
 const BACKLOG_DECAY_DAYS_DEFAULT = 90;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -219,11 +216,12 @@ function headSha(root) {
   return r.status === 0 ? r.stdout.trim() : '';
 }
 
-function commitDistance(root, stamp) {
-  const r = spawnSync('git', ['-C', root, 'rev-list', '--count', `${stamp}..HEAD`], { encoding: 'utf8' });
+// null means "could not resolve a changed set", which the predicate treats as
+// unknown and falls back to the date leg. It must never read as "nothing moved".
+function changedSince(root, stamp) {
+  const r = spawnSync('git', ['-C', root, 'diff', '--name-only', `${stamp}..HEAD`], { encoding: 'utf8' });
   if (r.status !== 0) return null;
-  const out = r.stdout.trim();
-  return /^\d+$/.test(out) ? parseInt(out, 10) : null;
+  return r.stdout.split('\n').filter(Boolean);
 }
 
 function daysSince(iso) {
@@ -252,24 +250,16 @@ function proseMatches(block) {
 }
 
 export function isStale(block, name, head, root) {
-  if (STALE_EXEMPT.has(name)) return false;
-  if (isClosed(block, name)) return false;
-  // A supersession-driven category expires by being superseded, never by elapsed
-  // time. Omitting this guard is what made the sweep surface 40 open decisions
-  // the session-start hook never considered stale.
-  if (SUPERSESSION_DRIVEN.has(name)) return false;
   const stamp = readFieldValue(block, 'verified-at');
-  if (head && stamp && stamp !== 'HEAD') {
-    const dist = commitDistance(root, stamp);
-    return dist === null || dist >= STALE_COMMITS;
-  }
-  // Fallback: date-based decay on `last-touched`. Used for non-git projects
-  // AND for git projects where `verified-at: HEAD` means the writer didn't
-  // have an actual SHA at stamp time. Closes the prior decay-evasion hatch
-  // where `verified-at: HEAD` on a git repo was treated as permanently fresh.
-  const touched = readFieldValue(block, 'last-touched');
-  const days = touched ? daysSince(touched) : null;
-  return days !== null && days >= STALE_DAYS;
+  const resolvable = Boolean(head) && usableStamp(stamp);
+  return isStaleFromFields({
+    category: name,
+    hasClosure: isClosed(block, name),
+    governs: splitList(readFieldValue(block, 'governs')),
+    lastTouched: readFieldValue(block, 'last-touched') || '',
+    changedPaths: resolvable ? changedSince(root, stamp) : null,
+    today: new Date(),
+  });
 }
 
 // --- Domain: per-mode sweepers ----------------------------------------------

@@ -165,10 +165,18 @@ describe('sweep vs session-start — the staleness predicate has one meaning', (
       source, /^\s*function closureFieldFor\s*\(/m,
       'sweep.mjs must not redeclare closureFieldFor — categories.mjs exports it',
     );
+    // The decay classes moved with the predicate. sweep.mjs no longer consults them
+    // at all, so requiring the import here would force an unused one; what the rule
+    // has always meant is that exactly one module reads them from the registry.
+    assert.doesNotMatch(
+      source, /^\s*const (STALE_EXEMPT|SUPERSESSION_DRIVEN)\s*=/m,
+      'sweep.mjs must not declare its own decay classes — categories.mjs owns them',
+    );
+    const predicate = readFileSync(join(REPO_ROOT, '.claude/hooks/lib/staleness.mjs'), 'utf8');
     assert.match(
-      source,
-      /import\s*\{[^}]*\bSUPERSESSION_DRIVEN\b[^}]*\}\s*from\s*'\.\.\/memory-index\/categories\.mjs'/,
-      'sweep.mjs must import the decay classes from the registry that owns them',
+      predicate,
+      /import\s*\{[^}]*\bSUPERSESSION_DRIVEN\b[^}]*\}\s*from\s*'[^']*categories\.mjs'/,
+      'the shared predicate must import the decay classes from the registry that owns them',
     );
   });
 });

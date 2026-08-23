@@ -77,7 +77,20 @@ const LANDMINE_CATEGORY_DEFAULT = '[scout, spec, tdd, security, integrate]';
 // about the context cost the budget exists to bound — and that decision is its
 // own ticket, recorded in the spec's Open questions. This is the repair, not the
 // answer.
-const PHASE_BUDGETS = { spec: 88, security: 30, research: 20 };
+// 88 -> 89 at staleness-witness (2026-08-24). The 20% headroom above is now spent:
+// 88 was 73 plus room for about fifteen entries, and sixteen have landed. Verified by
+// enumeration, not assumed — `git grep -l '^scope: \[.*spec' HEAD -- .claude/memory/`
+// returns 88 and the worktree returns 89, the one addition being
+// `backlog/delta-fold-writes-a-degraded-shard-for-every-new-element-7f3a.md`. That
+// entry keeps `spec` scope deliberately: it is about what the delta fold writes for a
+// `## System delta` row, so the spec phase is where it has to surface, and narrowing it
+// to `archive` to stay under the cap would hide it from the only reader who can act on
+// it at the right time.
+//
+// This bump buys nothing. The next entry trips the same line, which is the signal that
+// the open question above — measure surfaced volume, not entry count — is now due
+// rather than deferrable.
+const PHASE_BUDGETS = { spec: 89, security: 30, research: 20 };
 
 // Captured at HEAD 2bf79ef. The phase leg is what this spec rewrites; the path leg
 // must not drift except where the curation deliberately ADDS a `governs:` to an

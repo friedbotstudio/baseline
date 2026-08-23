@@ -1,0 +1,4 @@
+!startsub staleness_predicate
+' @kind c4_component
+Component(staleness_predicate, ".claude/hooks/lib/staleness.mjs", "module", "Staleness predicate")
+!endsub

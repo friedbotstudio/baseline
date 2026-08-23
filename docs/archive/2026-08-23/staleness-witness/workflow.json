@@ -1,0 +1,86 @@
+{
+  "request": "Replace the commit leg of the memory staleness predicate with a witness on the entry governs: paths, falling back to the 30-day last-touched leg when governs is absent. Collapse the duplicated STALE_COMMITS/STALE_DAYS constants into one shared module. Decay exemptions unchanged.",
+  "slug": "staleness-witness",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Derives from the recorded convention `a-rule-shared-by-a-guard-and-its-preflight-lives-in-one-module` (.claude/memory/conventions/), which names this exact smell and its rationale. Measured on disk 2026-08-23: 132 commits in 30 days makes STALE_COMMITS=30 expire an entry after 4 days; 259 of 291 non-exempt entries read stale while only 33 entries repo-wide are 30+ days old. Witnessing governs: against verified-at splits the non-exempt set 63 stale / 44 fresh / 184 recent-and-unwitnessable / 0 old-and-unwitnessable. The constant is duplicated at sweep.mjs:65-66 and hooks/lib/memory_session_start.mjs:28-29, with tests/sweep-staleness-parity.test.mjs existing because the two already drifted once (287 vs 248 at 1b2b0c7).",
+  "track_reason": "Heavier than chore because the predicate is code with measurable failing cases; lighter than spec-entry because the design is settled, the failing cases are already measured, and gate A would re-ask a direction the human just chose. Security runs regardless — the write set intersects .claude/hooks/lib/**.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/staleness.mjs",
+    ".claude/skills/memory-sync/sweep.mjs",
+    ".claude/hooks/lib/memory_session_start.mjs",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "roadmap_tasks": [],
+  "decisions": [
+    {
+      "point": "Where does the shared predicate live?",
+      "chosen": "A new stdlib-only module .claude/hooks/lib/staleness.mjs that both callers import; each caller keeps its own parsing and git call and passes the results in.",
+      "owner": "engineer",
+      "rationale": "The recorded convention names two worked examples, hooks/lib/design-calls.mjs and hooks/lib/write-set-profile.mjs, and both put the shared rule in hooks/lib. It also keeps the reuse of matchesAnyGlob from the sibling hooks/lib/glob-match.mjs a local import."
+    },
+    {
+      "point": "What happens to an entry with no governs: list?",
+      "chosen": "Fall back to the 30-day last-touched leg, unchanged.",
+      "owner": "human",
+      "rationale": "184 of 291 non-exempt entries carry no governs:, and none of them is 30+ days old, so the fallback flags zero entries today. Dropping them from decay entirely would be a silent coverage loss."
+    },
+    {
+      "point": "Do the decay exemptions change?",
+      "chosen": "No. backlog stays STALE_EXEMPT and decisions stays SUPERSESSION_DRIVEN.",
+      "owner": "engineer",
+      "rationale": "Widening or narrowing the exempt classes is a separate decision with its own rationale recorded in categories.mjs. Art. VI.4 — not this workflows scope."
+    },
+    {
+      "point": "Route the witness through the derived by_path index instead of matching globs?",
+      "chosen": "No. Match the governs globs directly in the pure predicate.",
+      "owner": "engineer",
+      "rationale": "governed-memory.mjs warns against a reader re-scanning categories and matching globs itself, because that left the derived index unreachable. That defect was about answering `which entries govern path P` for surfacing, which the index does own. This predicate asks the different question `did entry E surface move since ITS verified-at`, which needs a per-entry changed set the index has no notion of. Keeping the predicate pure also keeps it testable without git."
+    }
+  ],
+  "created_at": 1787506848,
+  "updated_at": 1787512930,
+  "rightsize_base": [
+    "docs/design/mcp-page-before.png",
+    "docs/design/org-setup-before.png"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "finalize"
+  ],
+  "attempts": {
+    "tdd": 4
+  },
+  "auto_skipped": [
+    {
+      "phase": "cli-copy-review",
+      "reason": "diff touches no CLI surface",
+      "oracle": "phase-conditional"
+    }
+  ]
+}

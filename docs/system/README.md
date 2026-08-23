@@ -8,9 +8,9 @@ The layer sits behind `memory.architecture_map.enabled`, which defaults to false
 
 | Directory | Holds | Count |
 |---|---|---|
-| `elements/` | component records, each anchored to a path or a glob | 119 |
+| `elements/` | component records, each anchored to a path or a glob | 120 |
 | `concepts/` | cross-cutting concept nodes, no anchor | 15 |
-| `diagrams/` | one PlantUML shard per element | 119 |
+| `diagrams/` | one PlantUML shard per element | 120 |
 
 `readme-gate.mjs` reads that Count column and fails the suite when a number disagrees with the directory it names. It checks both directions: a count that is too low is as untrue as one that is too high. `verifyAndApplyDelta` writes that column. It counts the directory again on every confirmed `add` row it applies, in the same call, so the fold cannot leave its own README wrong.
 

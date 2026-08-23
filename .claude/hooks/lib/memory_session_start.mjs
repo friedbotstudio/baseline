@@ -18,15 +18,12 @@ import { parseFrontmatter } from './frontmatter-parser.mjs';
 import {
   CANONICAL,
   PENDING_FILE,
-  STALE_EXEMPT,
-  SUPERSESSION_DRIVEN,
   closureFieldFor,
 } from '../../skills/memory-index/categories.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
+import { isStaleFromFields, splitList, usableStamp } from './staleness.mjs';
 import { decisionsRestingOn } from '../../skills/memory-index/constraints.mjs';
 
-const STALE_COMMITS = 30;
-const STALE_DAYS = 30;
 const DEFAULT_SIZE_CAP = 500;
 
 // The injection is loaded warm on every session start, so it is charged against
@@ -129,17 +126,14 @@ function gitHead(root) {
   return '';
 }
 
-function commitDistance(root, stamp) {
-  try {
-    const r = spawnSync('git', ['-C', root, 'rev-list', '--count', `${stamp}..HEAD`], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    if (r.status !== 0) return null;
-    const out = (r.stdout || '').trim();
-    if (/^\d+$/.test(out)) return parseInt(out, 10);
-  } catch {}
-  return null;
+// null means "could not resolve a changed set", which the predicate treats as
+// unknown and falls back to the date leg. It must never read as "nothing moved".
+function changedSince(root, stamp) {
+  const r = spawnSync('git', ['-C', root, 'diff', '--name-only', `${stamp}..HEAD`], {
+    encoding: 'utf8', timeout: 5000,
+  });
+  if (r.status !== 0) return null;
+  return r.stdout.split('\n').filter(Boolean);
 }
 
 function daysSince(iso) {
@@ -183,24 +177,16 @@ function splitBlocks(body) {
 
 // @decision:decay-is-per-category-three-reasons-2026-08-04
 export function isStale(block, name, head, root) {
-  if (STALE_EXEMPT.has(name)) return false;
-  if (getField(block, closureFieldFor(name))) return false;
-  // A supersession-driven category expires by being superseded, never by elapsed
-  // time — an open decision is still in force no matter how old the commit that
-  // verified it. Re-verification pressure comes from Article IX.2 (every skill
-  // re-verifies an entry before citing it), not from the decay sweep.
-  if (SUPERSESSION_DRIVEN.has(name)) return false;
   const stamp = getField(block, 'verified-at');
-  if (head && stamp && stamp !== 'HEAD') {
-    const dist = commitDistance(root, stamp);
-    return dist === null || dist >= STALE_COMMITS;
-  }
-  // Fallback: date-based decay on `last-touched`. Used for non-git projects
-  // AND for git projects where `verified-at: HEAD` means the writer didn't
-  // have an actual SHA at stamp time. Closes the prior decay-evasion hatch
-  // where `verified-at: HEAD` on a git repo was treated as permanently fresh.
-  const days = daysSince(getField(block, 'last-touched') || '');
-  return days !== null && days >= STALE_DAYS;
+  const resolvable = Boolean(head) && usableStamp(stamp);
+  return isStaleFromFields({
+    category: name,
+    hasClosure: Boolean(getField(block, closureFieldFor(name))),
+    governs: splitList(getField(block, 'governs')),
+    lastTouched: getField(block, 'last-touched') || '',
+    changedPaths: resolvable ? changedSince(root, stamp) : null,
+    today: new Date(),
+  });
 }
 
 // Presence-based sharded read: when `<memDir>/<name>` is a directory (post
