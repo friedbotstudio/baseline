@@ -166,7 +166,7 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ D. Capture leg
 - ✅ E. Structural corpus
 - ✅ F. Tracking comments
-## Epic 11 — Mvp sprint parallel cycles  🟡  (mvp-sprint-parallel-cycles)
+## Epic 11 — Mvp sprint parallel cycles  ✅  (mvp-sprint-parallel-cycles)
 
 - ✅ A. Sprint completeness oracle
 - ✅ B. Baseline-owned MCP coordination channel server

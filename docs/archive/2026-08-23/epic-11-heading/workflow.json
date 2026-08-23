@@ -1,0 +1,67 @@
+{
+  "request": "roadmap-sync leaves an epic heading stale when the run flips no row in that epic. Make the sync promote every heading its own auditRoadmap flags, and have Phase 10.6 call it on every committing workflow rather than only when roadmap_tasks is non-empty. Also lands the Epic 11 heading correction already on disk.",
+  "slug": "epic-11-heading",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Reproduced on disk: docs/roadmap-execution-plan.md Epic 11 heading read 🟡 while slices A-E were all ✅. sync.mjs syncRoadmap() promotes only epics in affectedEpics (populated solely by a successful flipTaskInEpic), and roadmap-sync/SKILL.md Step 1 skips syncRoadmap entirely when roadmap_tasks is empty. auditRoadmap() already detects the condition and its anomalies are reported but never acted on.",
+  "track_reason": "Behavior-contract change to a phase that runs on every commit, but localized to one function plus one SKILL.md step with a precise failing case; sync.test.mjs already pins the contract across 14 tests including a standup-parser roundtrip.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/roadmap-sync/sync.mjs",
+    ".claude/skills/roadmap-sync/SKILL.md",
+    ".claude/skills/roadmap-sync/tests/sync.test.mjs",
+    "docs/roadmap-execution-plan.md"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "roadmap_tasks": [],
+  "decisions": [
+    {
+      "point": "When does the self-heal pass run?",
+      "chosen": "Every committing workflow — the phase calls syncRoadmap unconditionally and the sync promotes every heading auditRoadmap flags.",
+      "owner": "human",
+      "rationale": "A touched-epics-only heal would not have caught Epic 11: the workflow that found it named no roadmap tasks. Accepts that a commit diff may carry a heading change unrelated to that workflow."
+    },
+    {
+      "point": "Demote a heading wrongly ✅ over an all-planned body?",
+      "chosen": "Out of scope.",
+      "owner": "engineer",
+      "rationale": "promoteEpicHeading returns early on implied status planned, so that one case stays flagged-but-unhealed. No instance exists on the roadmap today, and building for it is speculation (Art. VI.4). The audit keeps reporting it if one appears."
+    }
+  ],
+  "created_at": 1787491962,
+  "updated_at": 1787505770,
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "cli-copy-review",
+      "reason": "diff touches no CLI surface: no src/cli/**, no bin/**, no TUI copy",
+      "oracle": "phase-conditional"
+    }
+  ]
+}

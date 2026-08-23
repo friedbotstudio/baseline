@@ -1,6 +1,7 @@
 // roadmap-sync — flip roadmap status markers deterministically, fail-open.
 // Foundation: pure text->text transforms (flipTask, promoteEpicHeading, auditRoadmap,
-// resolveRoadmapPath). Orchestration: syncRoadmap does the single file read/write.
+// resolveRoadmapPath). Orchestration: syncRoadmap does the single file read/write,
+// and recomputes every epic heading before writing — not only the ones it flipped.
 // The format contract mirrors standup/gather.mjs: task lines carry exactly one of
 // ⬜/🟡/✅; epic headings are `## Epic N — Title  <emoji>  (tag)` (em-dash, one emoji).
 
@@ -159,6 +160,17 @@ export function auditRoadmap(text) {
   return { anomalies };
 }
 
+// --- Foundation: every epic number the roadmap declares, in file order ------
+
+function epicNumbers(text) {
+  const nums = [];
+  for (const line of text.split('\n')) {
+    const epic = matchEpicHeadingLine(line);
+    if (epic) nums.push(epic.num);
+  }
+  return nums;
+}
+
 // --- Foundation: parse a `E<num>-<taskId>` token ----------------------------
 
 function parseTaskToken(token) {
@@ -175,7 +187,7 @@ function parseTaskToken(token) {
 
 export function syncRoadmap({ roadmapPath, roadmapTasks } = {}) {
   const tasks = Array.isArray(roadmapTasks) ? roadmapTasks : [];
-  const noopResult = { flipped: [], promoted: [], skipped: tasks, noop: true, anomalies: [] };
+  const noopResult = { flipped: [], promoted: [], healed: [], skipped: tasks, noop: true, anomalies: [] };
   if (!roadmapPath) return noopResult;
 
   try {
@@ -198,9 +210,19 @@ export function syncRoadmap({ roadmapPath, roadmapTasks } = {}) {
       if (changed) { text = next; promoted.push(`Epic ${epicNum}`); }
     }
 
-    const noop = flipped.length === 0 && promoted.length === 0;
+    // A heading is derived data, so every one gets recomputed — not only the epics
+    // this run flipped. A slice marked done by hand leaves its heading stale, and
+    // nothing else on the per-commit path repairs it.
+    const healed = [];
+    for (const epicNum of epicNumbers(text)) {
+      if (affectedEpics.has(epicNum)) continue; // already resolved above; keeps the two arrays disjoint
+      const { text: next, changed } = promoteEpicHeading(text, epicNum);
+      if (changed) { text = next; healed.push(`Epic ${epicNum}`); }
+    }
+
+    const noop = flipped.length === 0 && promoted.length === 0 && healed.length === 0;
     if (!noop) writeFileSync(roadmapPath, text, 'utf8');
-    return { flipped, promoted, skipped, noop, anomalies: auditRoadmap(text).anomalies };
+    return { flipped, promoted, healed, skipped, noop, anomalies: auditRoadmap(text).anomalies };
   } catch {
     return noopResult;
   }

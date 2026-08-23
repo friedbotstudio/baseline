@@ -4,13 +4,12 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-// Module under test — does not exist yet, so this import fails RED until /implement lands sync.mjs.
 import {
   flipTask, flipTaskInEpic, promoteEpicHeading, resolveRoadmapPath,
   auditRoadmap, taskTokenResolves, syncRoadmap,
-} from '../sync.mjs';
+} from '../.claude/skills/roadmap-sync/sync.mjs';
 // Real standup parser — imported, never mocked (VI.3), for the round-trip test.
-import { gatherSync } from '../../standup/gather.mjs';
+import { gatherSync } from '../.claude/skills/standup/gather.mjs';
 
 // --- fixtures (exact roadmap format: em-dash headings, one status emoji per line) ---
 
@@ -228,4 +227,94 @@ test('test_when_written_then_real_standup_parser_roundtrips', () => {
 
   const epic4 = roadmap.epics.find((e) => e.num === 4);
   assert.ok(epic4 && epic4.status === 'planned');
+});
+
+// --- self-heal: recompute every heading auditRoadmap flags, not only touched epics ---
+
+const STALE_UNTOUCHED = [ROADMAP, ALL_DONE_EPIC].join('\n');
+
+const DONE_OVER_PARTIAL = [
+  '## Epic 12 — Overclaimed  ✅  (platform)',
+  '',
+  '- ✅ M1. **A** — done',
+  '- ⬜ M2. **B** — planned',
+  '',
+].join('\n');
+
+const DONE_OVER_PLANNED = [
+  '## Epic 13 — Not started  ✅  (platform)',
+  '',
+  '- ⬜ N1. **A** — planned',
+  '- ⬜ N2. **B** — planned',
+  '',
+].join('\n');
+
+test('test_when_untouched_epic_heading_is_stale_then_heal_promotes_it', () => {
+  const { path } = writeRoadmap(STALE_UNTOUCHED);
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: ['E3-H1'] });
+
+  assert.ok(report.flipped.includes('E3-H1'));
+  assert.ok(report.healed.includes('Epic 9'), 'the epic this run never touched is healed');
+
+  const after = readFileSync(path, 'utf8');
+  assert.match(after, /^## Epic 9 — .*✅/m);
+  assert.match(after, /^## Epic 3 — .*🟡/m);
+});
+
+test('test_when_no_tasks_named_then_heal_still_runs_and_writes', () => {
+  const { path } = writeRoadmap(ALL_DONE_EPIC);
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  assert.equal(report.noop, false);
+  assert.deepEqual(report.flipped, []);
+  assert.ok(report.healed.includes('Epic 9'));
+  assert.match(readFileSync(path, 'utf8'), /^## Epic 9 — .*✅/m);
+});
+
+test('test_when_heal_runs_then_report_anomalies_are_clean', () => {
+  const { path } = writeRoadmap(ALL_DONE_EPIC);
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  assert.deepEqual(report.anomalies, [], 'audit runs against the post-heal text');
+});
+
+test('test_when_roadmap_consistent_then_heal_is_noop_and_file_untouched', () => {
+  const { path } = writeRoadmap(ROADMAP);
+  const before = readFileSync(path, 'utf8');
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  assert.equal(report.noop, true);
+  assert.deepEqual(report.healed, []);
+  assert.equal(readFileSync(path, 'utf8'), before);
+});
+
+test('test_when_heading_done_over_partial_body_then_heal_demotes_to_in_progress', () => {
+  const { path } = writeRoadmap(DONE_OVER_PARTIAL);
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  assert.ok(report.healed.includes('Epic 12'), 'the heal recomputes, it does not only promote');
+  assert.match(readFileSync(path, 'utf8'), /^## Epic 12 — .*🟡/m);
+});
+
+test('test_when_body_implies_planned_then_heal_skips_and_anomaly_persists', () => {
+  const { path } = writeRoadmap(DONE_OVER_PLANNED);
+  const before = readFileSync(path, 'utf8');
+  const report = syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  assert.deepEqual(report.healed, []);
+  assert.equal(readFileSync(path, 'utf8'), before);
+  assert.ok(report.anomalies.some((a) => a.includes('Epic 13')), 'the unhealable case stays reported');
+});
+
+test('test_when_healed_then_real_standup_parser_roundtrips', () => {
+  const { root, path } = writeRoadmap(STALE_UNTOUCHED);
+  syncRoadmap({ roadmapPath: path, roadmapTasks: [] });
+
+  const { roadmap, degraded } = gatherSync({ rootDir: root });
+  assert.ok(!degraded.includes('no-roadmap-plan'));
+
+  const epic9 = roadmap.epics.find((e) => e.num === 9);
+  assert.ok(epic9, 'Epic 9 parsed after the heal rewrote its heading');
+  assert.equal(epic9.status, 'done');
+  assert.equal(epic9.tasks.done, 2);
 });

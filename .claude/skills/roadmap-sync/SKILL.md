@@ -16,10 +16,10 @@ The phase does one of two things depending on the track. On a track that lands c
 
 ## Steps
 
-1. **Resolve inputs.** Read `project.json → roadmap.path` and resolve it against the repo root with `resolveRoadmapPath` (empty/absent/absolute/repo-escaping → `null`). Read `workflow.json → roadmap_tasks[]` (absent → `[]`) — `/triage` populates this with validated `E<epic>-<taskId>` tokens when the request is `spec-derived` against a roadmap item. If the path resolves to `null` or `roadmap_tasks` is empty, the phase is a clean no-op — skip to Step 3.
-2. **Sync.** Call `syncRoadmap({ roadmapPath, roadmapTasks })` from `sync.mjs`. It flips each `E<num>-<taskId>` token's task line ⬜→✅, recomputes each affected epic heading ⬜→🟡→✅, and writes the roadmap file only if something changed. It never throws — on any error it returns a no-op result and writes nothing.
+1. **Resolve inputs.** Read `project.json → roadmap.path` and resolve it against the repo root with `resolveRoadmapPath` (empty/absent/absolute/repo-escaping → `null`). Read `workflow.json → roadmap_tasks[]` (absent → `[]`) — `/triage` populates this with validated `E<epic>-<taskId>` tokens when the request is `spec-derived` against a roadmap item. If the path resolves to `null`, the phase is a clean no-op — skip to Step 3. **An empty `roadmap_tasks` does not skip the sync**: the heal pass in Step 2 is why the phase runs on every committing workflow, and an epic whose rows this workflow never touched is exactly the one whose heading nothing else repairs.
+2. **Sync.** Call `syncRoadmap({ roadmapPath, roadmapTasks })` from `sync.mjs`. It flips each `E<num>-<taskId>` token's task line ⬜→✅, recomputes each affected epic heading ⬜→🟡→✅, then **heals** — recomputes every remaining epic heading against its own task body and reports the ones that moved under `healed[]`. It writes the roadmap file only if something changed. It never throws — on any error it returns a no-op result and writes nothing.
 3. **Record the phase.** Append `"roadmap-sync"` to `workflow.json → completed` and refresh `updated_at`.
-4. **Report.** Emit the `SyncReport` JSON (`{flipped, promoted, skipped, noop, anomalies}`) and append a one-line `roadmap-sync` entry to `.claude/state/harness/<slug>.log` (`flipped=[..] promoted=[..] noop=<bool>`). Surface any `anomalies[]` to the user as non-blocking notes.
+4. **Report.** Emit the `SyncReport` JSON (`{flipped, promoted, healed, skipped, noop, anomalies}`) and append a one-line `roadmap-sync` entry to `.claude/state/harness/<slug>.log` (`flipped=[..] promoted=[..] healed=[..] noop=<bool>`). Surface any `anomalies[]` to the user as non-blocking notes, and name any `healed[]` epic explicitly — a heading that moved for a reason unrelated to this workflow is the one change in the diff the author cannot otherwise account for.
 
 ## Steps — the `epic` track
 
@@ -43,7 +43,8 @@ It is **not a workflow phase** — it reads state and appends, never blocks a co
 ## Constraints
 
 - **Fail-open, never a gate.** The phase never blocks a commit. Any error, an unset/absent/escaping `roadmap.path`, a missing file, or an unmatched task → no-op, exit 0, commit proceeds.
-- **Deterministic, not inferential.** Flip only the tasks named in `workflow.json → roadmap_tasks[]`. Never infer which task shipped from the diff.
+- **Deterministic, not inferential.** Flip only the tasks named in `workflow.json → roadmap_tasks[]`. Never infer which task shipped from the diff. The heal pass is not an exception: a heading is derived from the task rows already on the page, so recomputing it reads the roadmap rather than guessing at the work.
+- **Task rows are the truth; headings are derived.** The heal rewrites a heading to match its body, never the reverse. One case is out of reach by design — `promoteEpicHeading` returns early when the body implies `planned`, so a heading wrongly ✅ over an all-⬜ body stays flagged by the audit and unhealed.
 - **Writes only the roadmap file.** Never mutate `workflow.json` beyond the `completed[]` append (Step 3), never write consent tokens or `.claude/state/` beyond the harness log.
 - **Preserve the format contract.** Task lines keep exactly one `⬜/🟡/✅`; epic headings keep the `## Epic N — Title  <emoji>  (tag)` em-dash + single-emoji shape (load-bearing for `standup/gather.mjs`). `syncRoadmap` enforces this; do not hand-edit the roadmap here.
 - **Advisory `--audit` mode** (`auditRoadmap`) reports heading/task-body inconsistencies + malformed lines; it never mutates. Use it to re-validate the roadmap, not as part of the per-commit path.
