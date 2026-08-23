@@ -24,6 +24,84 @@ describe('security oracle (AC-002)', () => {
     assert.ok(findings.length >= 1, 'a Critical must produce a finding');
     assert.ok(findings.some(grounded), 'the finding is grounded (artifact != null)');
   });
+
+  // /security names three outcomes, one of which is "fix now". Without a way to say
+  // so the oracle blocks a landing on a finding that no longer exists, which is what
+  // happened to `staleness-witness`: it found its own HIGH, fixed it in-cycle, and was
+  // then blocked by the report recording that it had.
+  it('test_when_a_high_finding_is_marked_resolved_then_no_finding_is_emitted', async () => {
+    const m = await import(SEC);
+    const report = [
+      '# Security Review',
+      '',
+      '### [HIGH] Argument injection via a stamp',
+      '- **File**: a.mjs:10',
+      '- **Resolved**: validated the stamp; re-ran the exploit, nothing written.',
+      '',
+    ].join('\n');
+    const { findings } = m.runSecurityOracle({ securityReport: report });
+    assert.deepEqual(findings, [], 'a resolved finding must not block the landing');
+  });
+
+  it('test_when_a_high_finding_has_no_resolved_marker_then_it_still_blocks', async () => {
+    const m = await import(SEC);
+    const report = '# Security Review\n\n### [HIGH] Still open\n- **File**: a.mjs:10\n';
+    const { findings } = m.runSecurityOracle({ securityReport: report });
+    assert.equal(findings.length, 1, 'an unresolved finding must still be emitted');
+  });
+
+  it('test_when_one_of_two_findings_is_resolved_then_only_the_open_one_is_emitted', async () => {
+    // The marker is scoped to its own section. A single resolution note must never
+    // silence a sibling finding that is still open.
+    const m = await import(SEC);
+    const report = [
+      '# Security Review',
+      '',
+      '### [HIGH] Fixed one',
+      '- **Resolved**: closed in-cycle.',
+      '',
+      '### [CRITICAL] Open one',
+      '- **File**: b.mjs:2',
+      '',
+    ].join('\n');
+    const { findings } = m.runSecurityOracle({ securityReport: report });
+    assert.equal(findings.length, 1);
+    assert.match(findings[0].message, /Open one/);
+  });
+
+  it('test_when_a_resolved_marker_sits_outside_every_finding_then_nothing_is_silenced', async () => {
+    const m = await import(SEC);
+    const report = [
+      '# Security Review',
+      '',
+      '## Resolution',
+      '- **Resolved**: some prose that belongs to no finding.',
+      '',
+      '### [HIGH] Still open',
+      '- **File**: a.mjs:10',
+      '',
+    ].join('\n');
+    const { findings } = m.runSecurityOracle({ securityReport: report });
+    assert.equal(findings.length, 1, 'a stray marker must not reach into a later section');
+  });
+
+  it('test_when_a_finding_uses_the_legacy_retitled_heading_then_it_is_still_suppressed', async () => {
+    // `- **Resolved**:` is canonical now, but eight archived reports carry the older
+    // heading-suffix spelling across three variants. Retiring a convention must not
+    // change how the reports written under it are read.
+    const m = await import(SEC);
+    for (const heading of ['### [HIGH — RESOLVED] Fixed', '### [CRITICAL — REMEDIATED] Fixed', '### [HIGH — FIXED] Fixed']) {
+      const { findings } = m.runSecurityOracle({ securityReport: `# Security Review\n\n${heading}\n- **File**: a.mjs:1\n` });
+      assert.deepEqual(findings, [], `the legacy spelling ${heading} must stay suppressed`);
+    }
+  });
+
+  it('test_when_report_is_absent_or_empty_then_no_findings_and_no_throw', async () => {
+    const m = await import(SEC);
+    for (const input of [undefined, null, '', '# Security Review\n\nNothing found.\n']) {
+      assert.deepEqual(m.runSecurityOracle({ securityReport: input }).findings, []);
+    }
+  });
 });
 
 describe('simplify oracle (AC-002)', () => {
