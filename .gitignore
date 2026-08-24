@@ -23,6 +23,13 @@ reports/
 .claude/memory/_pending.md
 .claude/memory/_pending.md.body
 
+# Curation decisions from /memory-sync, append-only per session. Nothing in
+# Article IX governs it as canonical (no frontmatter, no size cap, no decay),
+# and its shape guarantees a merge conflict on every branch sync: two branches
+# both appending to the same file collide on every rebase. Same class of
+# problem as _pending.md above, so it gets the same answer. 2026-08-24.
+.claude/memory/_discard-ledger.md
+
 # Cross-session continuity snapshot (PreCompact + Stop hooks write,
 # SessionStart hook reads). Pure session state, not project knowledge.
 .claude/memory/_resume.md
