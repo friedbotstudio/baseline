@@ -57,37 +57,40 @@ function main(argv) {
   const memdir = resolve(values['memory-dir']);
   const message = values['message-file'] !== undefined ? readFileSync(values['message-file'], 'utf8') : '';
 
+  // Check both shapes unconditionally, per key — never branch on which shape the
+  // store "is". A migrated store can carry a leftover empty `backlog.md` stub
+  // alongside the real `backlog/` shard directory, and a single either/or guess
+  // (`!existsSync(flat) && existsSync(sharded)`) reads flat in that case and looks
+  // for the entry in the stub, where it can never be. This mirrors
+  // `evaluateClosure` in closure-check.mjs (D3, the guard's own source of truth),
+  // which never chose a shape either — see landmine
+  // closure-preflight-guesses-a-store-shape-the-guard-never-does.
   const flatPath = join(memdir, 'backlog.md');
   const shardedDir = join(memdir, 'backlog');
-  const sharded = !existsSync(flatPath) && existsSync(shardedDir);
+  const flatText = existsSync(flatPath) ? readFileSync(flatPath, 'utf8') : '';
 
-  let unstamped;
-  let backlogStaged;
-  let unreconciledCloses;
-
-  if (sharded) {
-    // Sharded store: each backlog entry is `backlog/<slug>.md`; the stamp lives in
-    // frontmatter and the staged path is the fact file, not a flat `backlog.md`.
-    const byKey = {};
+  const byKey = {};
+  if (existsSync(shardedDir)) {
     for (const f of readdirSync(shardedDir).filter((n) => n.endsWith('.md'))) {
       const text = readFileSync(join(shardedDir, f), 'utf8');
       const m = /^key:\s*(.+)$/m.exec(text);
       if (m) byKey[m[1].trim()] = { rel: `.claude/memory/backlog/${f}`, text };
     }
-    const stamped = (k) => byKey[k]
-      && /^status:\s*picked-up\s*$/m.test(byKey[k].text)
-      && /^superseded-at:\s*\S/m.test(byKey[k].text);
-    unstamped = keys.filter((k) => !stamped(k));
-    backlogStaged = keys.length > 0 && keys.every((k) => byKey[k] && stagedPaths.includes(byKey[k].rel));
-    unreconciledCloses = closesKeys(message).filter((k) => !keys.includes(k) || !stamped(k));
-  } else {
-    const backlogText = readFileSync(flatPath, 'utf8');
-    unstamped = unsatisfiedKeys(backlogText, keys);
-    backlogStaged = stagedPaths.includes(BACKLOG_REL);
-    unreconciledCloses = closesKeys(message).filter(
-      (k) => !keys.includes(k) || unsatisfiedKeys(backlogText, [k]).length > 0,
-    );
   }
+  const shardedStamped = (k) => byKey[k]
+    && /^status:\s*picked-up\s*$/m.test(byKey[k].text)
+    && /^superseded-at:\s*\S/m.test(byKey[k].text);
+  const shardedStaged = (k) => Boolean(byKey[k]) && stagedPaths.includes(byKey[k].rel);
+  const flatHasEntry = (k) => new RegExp(`^##\\s+${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'm').test(flatText);
+  const flatStamped = (k) => flatHasEntry(k) && unsatisfiedKeys(flatText, [k]).length === 0;
+  const flatStaged = stagedPaths.includes(BACKLOG_REL);
+
+  const stamped = (k) => shardedStamped(k) || flatStamped(k);
+  const staged = (k) => shardedStaged(k) || (flatStaged && flatHasEntry(k));
+
+  const unstamped = keys.filter((k) => !stamped(k));
+  const backlogStaged = keys.length > 0 && keys.every((k) => staged(k));
+  const unreconciledCloses = closesKeys(message).filter((k) => !keys.includes(k) || !stamped(k));
 
   const ok = keys.length === 0
     ? unreconciledCloses.length === 0
