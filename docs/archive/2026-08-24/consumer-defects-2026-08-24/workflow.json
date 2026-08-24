@@ -1,0 +1,182 @@
+{
+  "request": "fix the seven live defects from the 2026-08-24 consumer-install report (items 1,2,4,5,6,7,9; item 3 already fixed in 05d8fec, item 8 is not this repo)",
+  "slug": "consumer-defects-2026-08-24",
+  "track_id": "power",
+  "novelty": "novel",
+  "novelty_evidence": "Defects reported from a consumer install and independently verified against this tree during triage: #4 reproduced live twice (a grep and a node -e each hard-blocked), #2 reproduced verbatim (identical error text for a valid and an unreachable entry), #8 shown absent from disk and all git history. Classified novel rather than spec-derived because two tickets add mechanism that does not exist yet: #1 needs subagent context exposed to hooks (feasibility unknown), #6 adds a spec-lint check with no precedent in lint.mjs's seven existing checks.",
+  "track_reason": "power over per-ticket tdd: the seven fixes share one theme (guards that misreport their cause or never run), overlap in review surface, and power amortizes spec/simplify/integrate/document once while commit-split preserves one Conventional Commit per concern for bisect. Human confirmed the batch and the ticket set; sprint-planner was not the proposer because it selects from the roadmap and memory backlog, and these defects are on neither.",
+  "skip_brainstorm": true,
+  "tickets": [
+    {
+      "id": "T1",
+      "title": "No subagent guard on .claude/state/** — a subagent can widen track_guard's authorization by appending to completed",
+      "surface": [
+        ".claude/hooks/state_write_guard.mjs",
+        ".claude/settings.json",
+        "CLAUDE.md",
+        "src/CLAUDE.template.md",
+        "docs/init/seed.md"
+      ],
+      "risk": [
+        "security"
+      ],
+      "note": "FEASIBILITY RESOLVED at spec time: the hook payload carries agent_id/agent_type, populated only inside a subagent (current Claude Code docs; NOT observed on this machine — no hook here logs raw payloads, so implementation step 1 is to confirm empirically). Engineer directed a dedicated 27th hook, state_write_guard, over extending an existing guard. That costs a seed.md 4.1 amendment first (Article I.4), an Article VIII roster entry, and count updates across five surfaces. CLAUDE.md has 14 characters of headroom under MAX_CLAUDE_MD_CHARS=28000, so the roster entry is paid for by compressing prose OUTSIDE Article VI, whose slice is sha256-pinned byte-identical. Raising the cap was declined by the engineer previously and again here. If agent_id does not arrive empirically, AC-007/008/009 become a documented limitation and AC-016/017 drop with them."
+    },
+    {
+      "id": "T2",
+      "title": "assert-writable reports malformed input as an unreachable entry, so a curator edits an already-correct entry",
+      "surface": [
+        ".claude/skills/memory-index/resolve.mjs",
+        ".claude/skills/memory-index/cli.mjs"
+      ],
+      "risk": [],
+      "note": "resolve.mjs reads entry?.fields?.scope and entry?.fields?.governs; a flat {key,category,scope,governs} yields undefined for both. Reproduced: a valid flat entry and a genuinely unreachable {fields:{}} entry emit byte-identical text. cli.mjs's own header states the intent this code fails to deliver."
+    },
+    {
+      "id": "T4",
+      "title": "Hard-block patterns match anywhere in the command string, so read-only commands that merely mention a destructive verb are blocked",
+      "surface": [
+        ".claude/hooks/destructive_cmd_guard.mjs",
+        ".claude/project.json",
+        "src/project.template.json"
+      ],
+      "risk": [
+        "security"
+      ],
+      "note": "Reported as one instance; it is a class. destructive_cmd_guard.mjs:33-34 does `new RegExp(p).test(cmd)` against the WHOLE command string. Of the 8 hard_block_patterns only 0 and 1 (the rm pair) anchor with ^\\s*rm\\s+. Confirmed-live instances: pattern 5 \\b(shutdown|halt|poweroff|reboot)\\b — reproduced twice during triage, once on a grep and once on a node -e whose only offence was the word inside a regex literal; and pattern 4 \\bmkfs(\\.[a-z0-9]+)?\\b — same shape, fires on any command mentioning mkfs. Patterns 3, 6, 7 share the shape at lower severity (they need a longer exact literal to false-positive). Fix the matching, not just the two strings. DESIGN CHOICE for the spec: copying the rm shape (^\\s*verb\\s+) only catches position zero, so `sudo shutdown` and `foo && shutdown` escape — it trades false positives for false negatives; the alternative is reusing the tokenizer git_commit_guard already carries under tests/git-commit-guard-tokenize.test.mjs. TEMPLATE PARITY: the pattern list is byte-identical in .claude/project.json and src/project.template.json; if the fix touches the pattern strings, both files SHALL change in the same commit or it is template drift."
+    },
+    {
+      "id": "T5",
+      "title": "roadmap-sync cannot correlate a workflow with a hand-authored epic, so it appends a duplicate",
+      "surface": [
+        ".claude/skills/roadmap-sync/append.mjs",
+        ".claude/skills/roadmap-sync/epic-store.mjs"
+      ],
+      "risk": [],
+      "note": "append.mjs TAG=/\\(([^)]*)\\)\\s*$/ and epicPresent matches heading tag === slug. Category-tagged epics ((foundation), (module)) can never match a slug. roadmap_epic exists only as an output stamp, never an input. This repo's own epics are all slug-tagged, which is why it was never hit here."
+    },
+    {
+      "id": "T6",
+      "title": "/spec-lint does not check the epic AC-to-slice assignment rule seed.md 18.9 requires",
+      "surface": [
+        ".claude/skills/spec-lint/lint.mjs"
+      ],
+      "risk": [],
+      "note": "lint.mjs has seven checks and zero occurrences of 'epic'. The rule lives in prose at spec/SKILL.md only. Add the AC-to-slice check plus a spec-vs-epic-state consistency check, conditional on the epic track."
+    },
+    {
+      "id": "T7",
+      "title": "harness_continuation cannot be told to stand down while a caller owns the session",
+      "surface": [
+        ".claude/hooks/harness_continuation.mjs",
+        ".claude/skills/swarm-dispatch/SKILL.md",
+        ".claude/skills/harness/SKILL.md",
+        "docs/init/seed.md",
+        "src/seed.template.md"
+      ],
+      "risk": [],
+      "note": "CORRECTED at implement time. The triage note claimed the hook fired spuriously three times while blocked on the test suite. Both halves are wrong: a synchronous Bash call cannot end a turn, so a blocking suite never reaches a Stop hook, and all three fires that day were legitimate Path B consent-resumes. The full 3358-line log shows no misfire in this repo. The real gap is swarm-dispatch: run_in_background workers outlive the turn, so Path A re-fires into a phase whose predecessor is still running. Engineer rejected the background-work registry (a detector a crashed wave leaves behind silences the hook forever) in favour of `parked`, a fourth harness_state value the owning caller declares and clears. Declare, do not detect."
+    },
+    {
+      "id": "T9",
+      "title": "Commit SOP Step 1 does not say that the workflow.json move is a plain mv on a gitignored path",
+      "surface": [
+        ".claude/skills/commit/SKILL.md"
+      ],
+      "risk": [],
+      "note": "Step 1 says a generic 'move', so it does not command the failing operation — but archive/SKILL.md Step 4 and commit Step 2.8 both say git mv, and .claude/state/ is gitignored, so the reader generalizes wrongly. Confirmed by hitting it during the memory-curation-flush landing. Docs-only, no test."
+    },
+    {
+      "id": "T10",
+      "title": "A reference token written as prose is read as a real corpus reference, silently forcing the full diagram set",
+      "surface": [
+        ".claude/hooks/lib/write-set-profile.mjs",
+        ".claude/hooks/spec_diagram_presence_guard.mjs",
+        ".claude/skills/spec-lint/lint.mjs"
+      ],
+      "risk": [],
+      "note": "Reported by the consumer after the original nine. REF_TOKEN excludes the backtick from its body, which stops a token SPANNING a code span but not one STARTING inside it. Verified: the shipped spec/template.md trips its own check, so every spec derived from it inherits the full-set requirement with no explanation. Fix masks inline code and drops bracketed placeholders; fenced blocks are deliberately NOT masked, because the template presents the declaration slot as a fence and masking it would deny the carve-out to everyone who copies the template correctly."
+    },
+    {
+      "id": "T11",
+      "title": "The binding verify verdict measures machine load, not the code under test",
+      "surface": [
+        "tests/publish-check.test.mjs"
+      ],
+      "risk": [],
+      "note": "Found at the verify phase of this cycle, not in the consumer report. check-files-diff.mjs runs npm pack --dry-run under a 30s cap: 2s standalone (measured three times), killed under full-suite load, and spawnSync reports a kill as status=null, so last_test_result read FAIL. It failed, passed, then failed across three runs the same day. Raised to 180s, matching the heavyweight spawns already in that file. Scoped to that one spawn: fourteen other caps sit below the same floor, but a short cap is correct for a test asserting a fast failure path, and raising them on a measurement of a different script would be guessing."
+    }
+  ],
+  "write_surface": [
+    ".claude/hooks/**",
+    ".claude/project.json",
+    "src/project.template.json",
+    ".claude/skills/memory-index/**",
+    ".claude/skills/roadmap-sync/**",
+    ".claude/skills/spec-lint/**",
+    ".claude/skills/commit/**",
+    "tests/**",
+    "CLAUDE.md",
+    "src/CLAUDE.template.md",
+    "docs/init/seed.md",
+    ".claude/settings.json",
+    "site-src/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787995000,
+  "updated_at": "2026-08-24T19:52:59Z",
+  "rightsize_base": [
+    "docs/specs/consumer-defects-2026-08-24.md"
+  ],
+  "attempts": {
+    "approve-direction": 2
+  },
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "power_batch_reviews": {
+    "reviewed": [
+      "T1",
+      "T2",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T9",
+      "T10",
+      "T11"
+    ],
+    "blocker": null,
+    "resolved": [
+      "HIGH/T4 -> AC-023+AC-025",
+      "MEDIUM/T1 -> AC-024"
+    ],
+    "report": "docs/security/consumer-defects-2026-08-24-2026-08-24.md"
+  }
+}
