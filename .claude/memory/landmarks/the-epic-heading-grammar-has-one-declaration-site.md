@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: [scout, spec, implement, simplify]
 governs: .claude/skills/lib/**, .claude/skills/roadmap/**, .claude/skills/roadmap-sync/**, .claude/skills/standup/**
-verified-at: 19631b7
-last-touched: 2026-08-17
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **Landmark.** The roadmap epic-heading grammar `## Epic N — Title  <emoji>  (tag)` is declared **once**, at `.claude/skills/lib/epic-heading.mjs`. Three modules import it: `roadmap/parse.mjs`, `roadmap-sync/sync.mjs`, `roadmap-sync/append.mjs`. A grammar change is now one edit, not three.

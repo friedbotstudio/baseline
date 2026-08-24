@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [implement, tdd, simplify]
 governs: .claude/skills/**/cli.mjs, .claude/skills/lib/**
-verified-at: 18204a1
-last-touched: 2026-08-15
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** A shared CLI dispatcher already exists at `.claude/skills/lib/argv.mjs` (`dispatch` at :112, `lines` at :57), and **every** skill CLI in the repo routes through it. A new `cli.mjs` with a hand-rolled `parseArgs` looks fine, runs fine by hand, and then fails `probeRunnable` — because the probe asserts the dispatcher's contract, not merely that the file executes.

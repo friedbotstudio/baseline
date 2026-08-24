@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/hooks/lib/scoped-memory.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** `process_lifecycle_guard`'s two write-leg surfacing triggers are **mutually exclusive**, not additive. A `governs:` glob that matches a path under `docs/specs/`, `docs/intake/`, `docs/scout/`, `docs/research/` or `docs/security/` surfaces **nothing** — the entry looks correctly tagged and is silently unreachable at that path.

@@ -4,8 +4,8 @@ category: conventions
 scope: [security, simplify, integrate, document]
 governs: .claude/skills/harness/SKILL.md, .claude/skills/security/SKILL.md, .claude/skills/commit/SKILL.md
 source: user-feedback
-verified-at: b93a5e4
-last-touched: 2026-08-20
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 > bro, in future, I want you to highlight these "things" that we silently file in

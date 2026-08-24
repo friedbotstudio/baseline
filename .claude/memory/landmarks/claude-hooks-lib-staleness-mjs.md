@@ -4,7 +4,7 @@ category: landmarks
 scope: [tdd, integrate]
 governs: .claude/hooks/lib/staleness.mjs, .claude/skills/memory-sync/sweep.mjs, .claude/hooks/lib/memory_session_start.mjs
 source: inferred-from-code
-verified-at: 2542786
+verified-at: 05d8fec
 last-touched: 2026-08-24
 ---
 

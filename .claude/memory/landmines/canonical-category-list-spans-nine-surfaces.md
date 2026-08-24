@@ -5,8 +5,8 @@ rests_on: zero-runtime-dependencies
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/**, .claude/skills/audit-baseline/**, site-src/_data/memorynotes.json, tests/helpers/memory-fixtures.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Adding or removing a canonical memory category touches **nine** surfaces. Since 2026-08-04 they all import `CANONICAL` from `.claude/skills/memory-index/categories.mjs`, so the correct edit is one line there — but if that import is ever unwound, this is the inventory.

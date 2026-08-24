@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-sync/**, .claude/hooks/lib/memory_stop.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** Shipping `ledger.mjs` does not make AC-006 true. `memory_stop` folds `decidedKeys()` into its dedup set correctly, and the module's own tests pass, but `.claude/memory/_discard-ledger.md` is only ever created by `/memory-sync` **Step 4.5** calling `recordCuration` per candidate. Skip that step and the ledger stays absent, `readLedger` correctly degrades to "no prior decision" (AC-012), and every candidate just curated is re-offered as fresh.

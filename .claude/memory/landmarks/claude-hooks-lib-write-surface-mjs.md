@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/hooks/lib/write-surface.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/skills/triage/SKILL.md
-verified-at: c92f82a
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/hooks/lib/write-surface.mjs`. Reads the workflow's declared write surface, the oracle the phase-scoped memory filter narrows against (roadmap Epic 6 T11).

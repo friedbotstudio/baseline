@@ -5,8 +5,8 @@ scope: [intake, spec]
 governs: .claude/skills/triage/SKILL.md, .claude/skills/standup/SKILL.md, .claude/state/epic
 load_bearing: true
 source: incident
-verified-at: 309d70e
-last-touched: 2026-08-17
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **Trap: `/triage` Step 0 cites runtime state as `novelty_evidence`, and runtime state is the LOWEST rung of Art. I.4 precedence.** `spec-derived` feels well-evidenced precisely when the citation is concrete — an epic slice, a `children[]` row, a roadmap line. All three are implementation records. `seed.md` outranks every one of them and is the document most likely to have retired the work.

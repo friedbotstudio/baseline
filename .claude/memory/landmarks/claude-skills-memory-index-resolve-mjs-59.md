@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/governed-memory.mjs, .claude/skills/memory-sync/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/memory-index/resolve.mjs`. The derived index (spec ticket C, epic decision D8).

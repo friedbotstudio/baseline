@@ -3,8 +3,8 @@ key: resolved-security-findings-are-retitled-not-deleted
 category: conventions
 scope: [security, integrate]
 governs: docs/security/**, .claude/skills/security/oracle.mjs
-verified-at: 2542786
-last-touched: 2026-08-23
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - A finding fixed inside its own workflow is **marked resolved in place**, never deleted and never left bare. Add `- **Resolved**: <date, what changed, and the measurement that proves it>` as a bullet inside that finding's own section. The severity heading stays exactly as written, so the report keeps recording what was found at the severity it was found at.

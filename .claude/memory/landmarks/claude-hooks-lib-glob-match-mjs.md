@@ -3,8 +3,8 @@ key: .claude/hooks/lib/glob-match.mjs
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/glob-match.mjs, .claude/hooks/lib/common.mjs, .claude/hooks/lib/write-set-profile.mjs, .claude/hooks/lib/write-surface.mjs, .claude/hooks/spec_design_calls_guard.mjs, .claude/skills/harness/rightsize-gate.mjs, .claude/skills/triage/governance-class.mjs, .claude/skills/spec-lint/lint.mjs
-verified-at: c92f82a
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/hooks/lib/glob-match.mjs`. The one glob-to-RegExp compiler. Six hand-rolled copies collapsed into it (spec `globtoregex-shared-module-hoist`, 2026-08-14).

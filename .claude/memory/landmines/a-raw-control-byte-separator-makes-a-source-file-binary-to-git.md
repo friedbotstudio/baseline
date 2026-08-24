@@ -5,8 +5,8 @@ scope: []
 governs: tests/epic-heading-grammar.test.mjs
 load_bearing: true
 source: incident
-verified-at: 309d70e
-last-touched: 2026-08-17
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 > control bytes make a file binary to git diff, blinding review and every diff-reading check

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [tdd, integrate, document]
 governs: .claude/skills/**,tests/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** A gate, flag, or module can be fully built, fully tested, and called by nothing. Its unit tests pass because they exercise the thing directly. `drift_check` reports CLEAN because the AC tokens appear in the diff. Nothing in the machine review notices that no consumer invokes it.

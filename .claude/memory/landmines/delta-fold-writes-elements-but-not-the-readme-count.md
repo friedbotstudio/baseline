@@ -3,8 +3,8 @@ key: delta-fold-writes-elements-but-not-the-readme-count
 category: landmines
 scope: [archive, integrate]
 governs: .claude/skills/workspace/delta.mjs,.claude/skills/workspace/readme-gate.mjs,docs/system/README.md,tests/system-spec-relocation.test.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** `/archive` Step 3 calls `verifyAndApplyDelta`, which writes the element record and its shard for every confirmed `add` row — and never touches the Count column in `docs/system/README.md`. `readme-gate.checkReadmeCounts` enforces that column. So the corpus moves to N+1 while the README still claims N, and the suite goes red at the END of a workflow that was green a minute earlier.

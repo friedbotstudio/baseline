@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/scoped-memory.mjs, .claude/hooks/lib/governed-memory.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/hooks/process_lifecycle_guard.mjs`. Advisory PreToolUse hook on Bash + Edit/Write/MultiEdit (CLAUDE.md Article VIII, Article IX.7). Never blocks.

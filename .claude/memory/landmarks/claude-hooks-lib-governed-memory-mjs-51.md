@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/hooks/lib/governed-memory.mjs, .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/entry-body.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/hooks/lib/governed-memory.mjs`. The path-keyed surfacing trigger (spec ticket C, epic decision D3).

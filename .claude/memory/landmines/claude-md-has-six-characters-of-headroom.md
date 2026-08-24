@@ -3,8 +3,8 @@ key: claude-md-has-six-characters-of-headroom
 category: landmines
 scope: [spec, chore, document, integrate]
 governs: CLAUDE.md,src/CLAUDE.template.md,tests/warm-context-diet.test.mjs
-verified-at: 8fb72a5
-last-touched: 2026-08-15
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `CLAUDE.md` (+ byte-equal mirror `src/CLAUDE.template.md`), pinned by `tests/warm-context-diet.test.mjs:25` (`MAX_CLAUDE_MD_CHARS = 28000`, asserted at `:222`) and `:30` (`ARTICLE_VI_SHA256`, asserted at `:252-257`).

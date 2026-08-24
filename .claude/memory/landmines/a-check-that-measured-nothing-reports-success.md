@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [tdd, integrate, document, security]
 governs: tests/**,.claude/skills/scenario/SKILL.md,.claude/skills/implement/SKILL.md
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** A verification step that measured nothing looks exactly like one that measured everything and passed. Silence and green are the same pixel. This is the operator-side twin of the false-clean *oracle* family ([[reader-level-grades-rendered-html-so-markdown-passes-vacuously]], [[drift-check-resolves-acs-by-literal-mention-not-implementation]], [[security-oracle-reads-any-high-heading-as-an-open-finding]]) — there a shipped tool misreads its input; here the check never ran at all.

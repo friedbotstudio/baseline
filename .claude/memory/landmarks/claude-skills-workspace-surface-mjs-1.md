@@ -4,8 +4,8 @@ category: landmarks
 rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/surface.mjs, .claude/skills/workspace/coverage.mjs, .claude/skills/workspace/witness.mjs, .claude/project.json
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/workspace/surface.mjs`. Foundation — resolves which files a project's central system spec is expected to cover. Added by ticket B of `central-system-spec` (2026-08-06).

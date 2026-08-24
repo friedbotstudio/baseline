@@ -4,8 +4,8 @@ category: landmarks
 scope: [spec, tdd]
 governs: .claude/skills/spec-lint/lint.mjs
 source: inferred-from-code
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Role: the `/spec-lint` preflight — runs the same checks as the write-boundary hooks against a spec draft without saving, and prints a `check / status / detail` table. Exit 0 CLEAN, 1 FAIL.

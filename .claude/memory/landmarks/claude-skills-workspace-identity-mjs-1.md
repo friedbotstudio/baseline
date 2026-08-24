@@ -4,8 +4,8 @@ category: landmarks
 rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/identity.mjs, .claude/skills/workspace/materialize.mjs, .claude/skills/workspace/store.mjs, docs/system/elements/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/workspace/identity.mjs`. Foundation — derives a deterministic element id from an anchor. Added by ticket B of `central-system-spec` (2026-08-06).

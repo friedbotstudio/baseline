@@ -4,8 +4,8 @@ category: landmarks
 rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/witness.mjs, .claude/skills/workspace/reconcile.mjs, .claude/skills/workspace/shards.mjs, .claude/project.json
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/workspace/witness.mjs`. Domain — binds a diagram kind to the thing that would prove it wrong. Added by ticket C of `central-system-spec` (2026-08-06).

@@ -3,8 +3,8 @@ key: .claude/skills/memory-index/scope-narrow.mjs
 category: landmarks
 scope: []
 governs: .claude/skills/memory-index/*.mjs, .claude/skills/memory-sync/SKILL.md
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/memory-index/scope-narrow.mjs`. Proposes a narrowed `scope:` for a memory entry, and applies a confirmed one (roadmap T8).

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [security, integrate, tdd]
 governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-sync/**,.claude/skills/roadmap-sync/**
-verified-at: 19631b7
-last-touched: 2026-08-17
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** Every frontmatter/fact writer in this repo validates its own inputs at its own call site. There is no shared guarded writer. So a module written next week starts from zero and reproduces whichever hole its author did not happen to remember.

@@ -3,8 +3,8 @@ key: .claude/skills/spec-sync/SKILL.md:1
 category: landmarks
 scope: []
 governs: .claude/skills/spec-sync/SKILL.md, .claude/skills/workspace/sync.mjs, docs/system/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/spec-sync/SKILL.md`. The 57th baseline-owned skill, added by ticket F of `central-system-spec` (2026-08-06). Category **maintenance** (now 3: `upgrade-project`, `gitignore`, `spec-sync`).

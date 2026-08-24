@@ -4,8 +4,8 @@ category: landmines
 scope: [triage, tdd]
 governs: .claude/skills/triage/derive-exceptions.mjs, .claude/workflows.jsonl
 source: incident
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/triage/derive-exceptions.mjs` → `deriveExceptions`, and any track in `.claude/workflows.jsonl` carrying a `type: selector` node.

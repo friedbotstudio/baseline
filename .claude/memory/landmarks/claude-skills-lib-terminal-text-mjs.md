@@ -3,8 +3,8 @@ key: .claude/skills/lib/terminal-text.mjs
 category: landmarks
 scope: []
 governs: .claude/skills/lib/terminal-text.mjs, .claude/skills/standup/render.mjs, .claude/skills/harness/checkers/backlog-deferral.mjs, .claude/skills/roadmap/render.mjs
-verified-at: 45b9b22
-last-touched: 2026-08-19
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Path: `.claude/skills/lib/terminal-text.mjs`. Foundation — the one place a repository-controlled string is made safe to print. Fourth module in `skills/lib/`, after `probe.mjs`, `argv.mjs` and `output.mjs`.

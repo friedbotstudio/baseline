@@ -1,0 +1,57 @@
+{
+  "request": "commit the memory-sync curation flush — 6 closed backlog entries swept, 62 stale entries re-verified, 4 stale entries deleted",
+  "slug": "memory-curation-flush",
+  "track_id": "chore",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "d23c06b chore(memory): re-verify the nineteen entries that crossed the staleness threshold — same operation, smaller scale; 2909d59 chore(memory): close the changedFiles backlog entry covers the backlog-closure half",
+  "skip_brainstorm": true,
+  "write_surface": [".claude/memory/**"],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs reports {\"sensitive\":false,\"matched\":[]} — diff is confined to .claude/memory/** and intersects no path in security.sensitive_globs",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "simplify",
+      "reason": "file-count trigger fires (74 files) but every path is a .md memory data entry; code-structure judges only CODE_EXTENSIONS, which excludes .md, so the pass has no code to review and no shared structure to consolidate",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no count, inventory, README, CLAUDE.md, seed.md, skill description, or src/ template changed — diff is entirely memory data under .claude/memory/**",
+      "oracle": "chore-conditional"
+    }
+  ],
+  "completed_notes": {
+    "verify": "full suite green: 3237 tests, 3221 pass, 0 fail, 16 skipped, exit 0. Audit bare: PASS fails=0 warns=0. Stamped .claude/state/last_test_result at 2026-08-24T09:06:22Z.",
+    "integrate": "satisfied by the same full-suite run that stamped verify — integrate's contract is run-full-suite + stamp-binding-verdict, and that command completed green. No second execution."
+  },
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787961600,
+  "updated_at": 1787994382
+}

@@ -5,8 +5,8 @@ state_verified_at: f7da5a7
 scope: []
 state: true
 governs: .claude/hooks/**, .claude/skills/**, scripts/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Constraint: baseline runtime code takes no third-party runtime dependency. `package.json → dependencies` is `["@clack/prompts"]` (CLI-only); every hook, skill helper, and build script is zero-dep `.mjs` on Node builtins, `engines: {"node": ">=18.17.0"}`. `state: true` means the constraint HOLDS.

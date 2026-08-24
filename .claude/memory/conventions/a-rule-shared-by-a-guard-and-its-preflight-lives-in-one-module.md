@@ -3,8 +3,8 @@ key: a-rule-shared-by-a-guard-and-its-preflight-lives-in-one-module
 category: conventions
 scope: [spec, tdd, simplify, integrate]
 governs: .claude/hooks/lib/write-set-profile.mjs,.claude/hooks/lib/design-calls.mjs,.claude/hooks/spec_diagram_presence_guard.mjs,.claude/skills/spec-lint/lint.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The convention.** When a write-boundary guard and its `/spec-lint` preflight judge the same property, the rule lives in **one** module that both import. Never a copy in each.

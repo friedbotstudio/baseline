@@ -3,8 +3,8 @@ key: a-verdict-must-distinguish-checked-from-nothing-to-compare
 category: conventions
 scope: [spec, tdd, implement]
 governs: .claude/skills/**
-verified-at: 69c3259
-last-touched: 2026-08-19
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - Rule: a verdict must never collapse "checked and equal" into "could not check" or "nothing to compare". Each is a different claim about what the tool actually did, and only one of them is a verification.

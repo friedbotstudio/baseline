@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [archive, tdd, integrate, verify, chore]
 governs: .claude/skills/*/SKILL.md,.claude/hooks/**,scripts/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 05d8fec
+last-touched: 2026-08-24
 ---
 
 - **The trap.** This repo's shell is zsh (`ZSH_VERSION=5.9`, `/bin/zsh`). Unlike bash, zsh does **not** word-split an unquoted parameter expansion. So `node -e "...process.argv.slice(1)..." $PATHS` passes **one** argument containing spaces, not N arguments. Any helper that expects a list receives a single malformed string.
