@@ -30,8 +30,19 @@ export function nextEpicNumber(text) {
   return nums.length === 0 ? 1 : Math.max(...nums) + 1;
 }
 
-export function epicPresent(text, slug) {
-  return epicHeadings(text).some((h) => h.tag === slug);
+// Two ways an epic can already be on the plan. A workflow-authored epic carries
+// the slug as its tag and dedupes on that. A hand-authored one is tagged by
+// category — (foundation), (module) — so the slug can never match it, and the
+// caller has to say which epic it means by number. Without the number the tag
+// path is unchanged, which is why an absent `roadmapEpic` reads as "no opinion"
+// rather than "no match".
+export function epicPresent(text, slug, roadmapEpic = null) {
+  const headings = epicHeadings(text);
+  const num = Number(roadmapEpic);
+  if (roadmapEpic !== null && roadmapEpic !== undefined && Number.isInteger(num)) {
+    return headings.some((h) => h.num === num);
+  }
+  return headings.some((h) => h.tag === slug);
 }
 
 // --- Foundation: the heading emoji a body of rows implies --------------------
@@ -82,9 +93,9 @@ export function renderEpicSection({ num, title, tag, summary, slices = [] }) {
 
 // --- Domain: additive-only merge, deduped on the slug tag --------------------
 
-export function appendEpic(text, { slug, title, summary, slices = [] }) {
+export function appendEpic(text, { slug, title, summary, slices = [], roadmapEpic = null }) {
   const body = String(text ?? '');
-  if (epicPresent(body, slug)) return { text: body, changed: false, epicNum: null };
+  if (epicPresent(body, slug, roadmapEpic)) return { text: body, changed: false, epicNum: null };
 
   const epicNum = nextEpicNumber(body);
   const section = renderEpicSection({ num: epicNum, title, tag: slug, summary, slices });

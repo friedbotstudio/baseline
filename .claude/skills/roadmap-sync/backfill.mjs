@@ -28,6 +28,7 @@ function sliceStatus(children, id) {
 function epicSpecFor({ slug, state }) {
   return {
     slug,
+    roadmapEpic: Number.isInteger(state.roadmap_epic) ? state.roadmap_epic : null,
     title: titleFor(state, slug),
     slices: (Array.isArray(state.slices) ? state.slices : []).map((slice) => ({
       id: slice.id,

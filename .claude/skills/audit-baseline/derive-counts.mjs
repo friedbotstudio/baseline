@@ -19,7 +19,7 @@ import { CANONICAL as CANONICAL_MEMORY } from '../memory-index/categories.mjs';
 const SPELLED = {
   1: 'one', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 10: 'ten',
   11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', 15: 'fifteen',
-  22: 'twenty-two', 24: 'twenty-four', 26: 'twenty-six', 40: 'forty',
+  22: 'twenty-two', 24: 'twenty-four', 26: 'twenty-six', 27: 'twenty-seven', 40: 'forty',
   41: 'forty-one', 42: 'forty-two', 43: 'forty-three', 44: 'forty-four', 45: 'forty-five',
   46: 'forty-six', 48: 'forty-eight', 50: 'fifty', 52: 'fifty-two', 53: 'fifty-three', 56: 'fifty-six',
 };

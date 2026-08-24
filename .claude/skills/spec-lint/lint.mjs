@@ -7,7 +7,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
+import { resolveProfile } from '../../hooks/lib/write-set-profile.mjs';
+import { STRUCTURAL_KINDS, elementReferences } from '../../hooks/lib/corpus-reference.mjs';
+import { plantumlBlocks, missingKinds } from '../../hooks/lib/plantuml-blocks.mjs';
 import { parseDesignCalls, findRowDefects } from '../../hooks/lib/design-calls.mjs';
 import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseDelta } from '../workspace/delta.mjs';
@@ -19,14 +21,6 @@ function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 function hasPlantumlCli() {
   const r = spawnSync('plantuml', ['-version'], { encoding: 'utf8' });
   return !r.error && r.status === 0;
-}
-
-const FENCE_RE = /^[ \t]*```[ \t]*plantuml[ \t]*$([\s\S]*?)^[ \t]*```[ \t]*$/gim;
-
-function extractBlocks(spec) {
-  const blocks = [];
-  for (const m of spec.matchAll(FENCE_RE)) blocks.push(m[1]);
-  return blocks;
 }
 
 function checkSyntax(blocks, hasPuml) {
@@ -51,38 +45,27 @@ function checkSyntax(blocks, hasPuml) {
 
 function checkPresence(blocks, pj, spec, root) {
   let required;
+  let profile = {};
   try {
     // Honor the write-set-gated diagram profile (same resolver the
     // spec_diagram_presence_guard hook uses) so spec-lint and the write-boundary
     // guard never disagree on a non-architectural spec's reduced diagram set.
     const projectGet = (dotted) =>
       dotted.replace(/^\./, '').split('.').reduce((n, k) => (n == null ? undefined : n[k]), pj);
-    required = resolveProfile(spec, projectGet).required_diagrams;
+    profile = resolveProfile(spec, projectGet);
+    required = profile.required_diagrams;
   } catch {
     return ['SKIP', 'required_diagrams.spec not configured'];
   }
   if (!required || typeof required !== 'object') {
     return ['SKIP', 'required_diagrams.spec not configured'];
   }
-  const missing = [];
-  for (const [kind, rule] of Object.entries(required)) {
-    const need = parseInt(rule.min || 1, 10);
-    const marker = rule.marker;
-    const anyOf = rule.any_of || [];
-    let found = 0;
-    for (const b of blocks) {
-      if (marker && b.includes(marker)) { found += 1; continue; }
-      for (const pat of anyOf) {
-        try {
-          if (new RegExp(pat, 'm').test(b)) { found += 1; break; }
-        } catch { /* ignore bad regex */ }
-      }
-    }
-    if (found < need) missing.push({ kind, label: `${kind} (need ${need}, found ${found})` });
-  }
+  // Same rule the guard applies, from the module that owns it.
+  const missing = missingKinds(blocks, required)
+    .map(({ kind, need, found }) => ({ kind, label: `${kind} (need ${need}, found ${found})` }));
 
   // Spec-as-diff, resolved exactly as spec_diagram_presence_guard resolves it. The
-  // shared rule lives in write-set-profile; only the verdict differs — the guard
+  // shared rule lives in corpus-reference; only the verdict differs — the guard
   // blocks an unresolvable id at the write boundary, the preflight reports it here.
   const unresolved = unresolvedReferences(spec, root);
   if (unresolved.length) {
@@ -94,9 +77,13 @@ function checkPresence(blocks, pj, spec, root) {
     }
   }
 
+  // Reported on PASS too. A spec that draws every diagram anyway satisfies the
+  // full set without the author ever learning their reduction was refused, which
+  // is how the shipped template's own broken reference stayed invisible.
+  const because = profile.reason ? ` (full set forced: ${profile.reason})` : '';
   return missing.length === 0
-    ? ['PASS', 'all kinds present']
-    : ['FAIL', 'missing: ' + missing.map((m) => m.label).join(', ')];
+    ? ['PASS', 'all kinds present' + because]
+    : ['FAIL', 'missing: ' + missing.map((m) => m.label).join(', ') + because];
 }
 
 function unresolvedReferences(spec, root) {
@@ -254,6 +241,97 @@ function checkCodesignDecisions(spec, root) {
   return ['PASS', '## Decisions section present'];
 }
 
+// --- Foundation: the epic spec's two AC-to-slice records ---------------------
+
+const AC_SECTION_RE = /##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
+const SLICE_SECTION_RE = /^##\s+Slice\s+(\S+)\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/gim;
+
+function acIdsInSpec(spec) {
+  const m = String(spec ?? '').match(AC_SECTION_RE);
+  if (!m) return [];
+  return [...new Set([...m[1].matchAll(/\|\s*(AC-\d+)\s*\|/g)].map((r) => r[1]))];
+}
+
+// Spec-side ownership: slice id -> the ACs its section claims.
+function sliceOwnershipInSpec(spec) {
+  const owners = new Map();
+  for (const m of String(spec ?? '').matchAll(SLICE_SECTION_RE)) {
+    const acs = [...m[2].matchAll(/AC-\d+/g)].map((r) => r[0]);
+    owners.set(m[1], [...new Set(acs)]);
+  }
+  return owners;
+}
+
+// State-side ownership, from the file an epic-child actually inherits.
+function sliceOwnershipInState(slug, rootDir) {
+  const path = join(rootDir, '.claude', 'state', 'epic', `${slug}.json`);
+  if (!existsSync(path)) return null;
+  let state;
+  try { state = JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+  const owners = new Map();
+  for (const slice of Array.isArray(state.slices) ? state.slices : []) {
+    owners.set(String(slice?.id), (Array.isArray(slice?.acs) ? slice.acs : []).map(String));
+  }
+  return owners;
+}
+
+function claimantsOf(owners) {
+  const claims = new Map();
+  for (const [sliceId, acs] of owners) {
+    for (const ac of acs) claims.set(ac, [...(claims.get(ac) ?? []), sliceId]);
+  }
+  return claims;
+}
+
+// --- Domain: the epic AC-to-slice rule seed.md §18.9 states in prose ----------
+
+// Every AC in an epic spec belongs to exactly one slice. An AC owned by nobody is
+// an exit criterion the epic silently drops; an AC owned twice is two children
+// building the same thing. Epic-only — every other track has no slices, so the
+// check reports SKIP rather than inventing a failure.
+export function checkEpicSliceAssignment(spec, workflow) {
+  if (workflow?.track_id !== 'epic') return ['SKIP', 'not the epic track'];
+
+  const acs = acIdsInSpec(spec);
+  if (acs.length === 0) return ['SKIP', 'no AC rows to assign'];
+
+  const claims = claimantsOf(sliceOwnershipInSpec(spec));
+  const orphaned = acs.filter((ac) => !claims.has(ac));
+  const doubled = acs.filter((ac) => (claims.get(ac) ?? []).length > 1);
+
+  const problems = [];
+  if (orphaned.length) problems.push(`assigned to no slice: ${orphaned.join(', ')}`);
+  for (const ac of doubled) problems.push(`${ac} claimed by ${claims.get(ac).join(' and ')}`);
+  if (problems.length) return ['FAIL', `epic-slice-assignment: ${problems.join('; ')}`];
+
+  return ['PASS', `${acs.length} ACs each assigned to exactly one slice`];
+}
+
+// The spec and the epic state file both record AC-to-slice ownership, and an
+// epic-child reads the spec. When they disagree the state's claim is invisible to
+// the thing that builds from it, which is how an exit criterion goes missing while
+// both records look populated.
+export function checkEpicStateConsistency(spec, workflow) {
+  if (workflow?.track_id !== 'epic') return ['SKIP', 'not the epic track'];
+
+  const root = workflow?.rootDir ?? process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+  const stateOwners = sliceOwnershipInState(workflow?.slug, root);
+  if (!stateOwners) return ['SKIP', 'no readable epic state file'];
+
+  const specClaims = claimantsOf(sliceOwnershipInSpec(spec));
+  const problems = [];
+  for (const [sliceId, acs] of stateOwners) {
+    for (const ac of acs) {
+      const inSpec = specClaims.get(ac) ?? [];
+      if (inSpec.length === 0) problems.push(`state assigns ${ac} to slice ${sliceId}; the spec assigns it to no slice`);
+      else if (!inSpec.includes(sliceId)) problems.push(`state assigns ${ac} to slice ${sliceId}; the spec assigns it to ${inSpec.join(' and ')}`);
+    }
+  }
+  if (problems.length) return ['FAIL', `epic-state-consistency: ${problems.join('; ')}`];
+
+  return ['PASS', 'the spec and the epic state file agree on every slice'];
+}
+
 // D7 of swarm-mode-first-run-hardening (-e3f2) — advisory check that a
 // swarm-bound spec (>= swarm.min_tasks_worth_swarming C4 Components) pins each
 // component's API surface in the Contracts table, so swarm-plan's decomposition
@@ -302,7 +380,7 @@ function main(argv) {
   let pj = {};
   try { pj = JSON.parse(readFileSync(projectJsonPath, 'utf8')); } catch { /* ignore */ }
   const hasPuml = hasPlantumlCli();
-  const blocks = extractBlocks(spec);
+  const blocks = plantumlBlocks(spec);
 
   const results = [
     ['plantuml_syntax', ...checkSyntax(blocks, hasPuml)],
@@ -319,6 +397,19 @@ function main(argv) {
   const codesignResult = checkCodesignDecisions(spec, root);
   if (codesignResult[0] !== 'SKIP') {
     results.push(['codesign_decisions', ...codesignResult]);
+  }
+
+  // Epic-only, and suppressed off the epic track for the same reason as
+  // codesign_decisions: a SKIP row for a rule that cannot apply is noise.
+  let workflow = {};
+  try { workflow = JSON.parse(readFileSync(join(root, '.claude', 'state', 'workflow.json'), 'utf8')); } catch { /* ignore */ }
+  const epicContext = { track_id: workflow.track_id, slug, rootDir: root };
+  for (const [name, check] of [
+    ['epic_slice_assignment', checkEpicSliceAssignment],
+    ['epic_state_consistency', checkEpicStateConsistency],
+  ]) {
+    const result = check(spec, epicContext);
+    if (result[0] !== 'SKIP') results.push([name, ...result]);
   }
 
   const nameW = Math.max(...results.map(r => r[0].length));

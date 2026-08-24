@@ -143,6 +143,17 @@ export class UnreachableScopeError extends Error {
   }
 }
 
+// Distinct from UnreachableScopeError on purpose. Both legs live under `.fields`,
+// so an entry handed over flat reads as having neither and looks unreachable. The
+// curator then edits an entry that was already correct.
+export class MalformedEntryError extends Error {
+  constructor(key, reason) {
+    super(`malformed memory entry ${JSON.stringify(key)}: ${reason}`);
+    this.name = 'MalformedEntryError';
+    this.key = key;
+  }
+}
+
 function phaseScopeOf(entry) {
   return asList(entry?.fields?.scope).filter((s) => s !== SCOPE_PLACEHOLDER);
 }
@@ -175,11 +186,33 @@ function inheritsCategoryDefault(entry) {
   return [...scope].sort().join(',') === [...fallback].sort().join(',');
 }
 
+// Why a shape check has to run before the reachability check: both legs are read
+// through `.fields`, so any entry that does not carry that wrapper reads as having
+// neither leg. Without this, a correct entry handed over flat is reported
+// unreachable and the curator edits the wrong thing.
+function malformedShapeReason(entry) {
+  if (!entry || typeof entry !== 'object') return 'not an object';
+  const fields = entry.fields;
+  const misplaced = ['scope', 'governs'].filter((leg) => entry[leg] !== undefined);
+  if (fields === undefined || fields === null) {
+    return misplaced.length
+      ? `no \`fields\` wrapper — ${misplaced.map((l) => `\`${l}:\``).join(' and ')} sits at the top level, where no reader looks for it`
+      : 'no `fields` wrapper';
+  }
+  if (typeof fields !== 'object' || Array.isArray(fields)) return '`fields` is not an object';
+  if (misplaced.length) {
+    return `${misplaced.map((l) => `\`${l}:\``).join(' and ')} duplicated outside \`fields\`, where no reader looks`;
+  }
+  return null;
+}
+
 // The write boundary. `/memory-sync` calls this before promoting or re-verifying an
 // entry, so an unreachable fact is refused at the moment it would be written rather
 // than discovered later by a reader that silently returns nothing.
 export function assertWritable(entry) {
   const key = entry?.key ?? entry?.fields?.key ?? '(unkeyed)';
+  const shapeProblem = malformedShapeReason(entry);
+  if (shapeProblem) throw new MalformedEntryError(key, shapeProblem);
   if (asList(entry?.fields?.scope).includes(SCOPE_PLACEHOLDER)) {
     throw new UnreachableScopeError(key, `\`scope: ${SCOPE_PLACEHOLDER}\` is not a stored value — it matches no phase`);
   }
