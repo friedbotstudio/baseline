@@ -18,21 +18,28 @@ A single `Skill(harness)` invocation **loops through every non-gated phase bound
 - **Done**: `workflow.json → completed` now contains every non-excepted phase. Write `harness_state: done`; surface completion; exit.
 - **(Rare) Mid-loop interruption**: the model decides to stop emitting before any of the above (context pressure, runtime limit, external interruption). The on-disk state stays `state: continue` with the marker present — the Stop hook safety net handles this.
 
-`.claude/state/harness_state` is flat JSON with one of three states:
+`.claude/state/harness_state` is flat JSON with one of four states:
 
 - `continue` — the harness is in the loop body (or was interrupted mid-loop). The Stop hook safety net is armed.
 - `yielded` — the loop exited cleanly at a gate or failure. Stop hook stays silent.
 - `done` — the loop exited cleanly at workflow completion. Stop hook stays silent.
+- `parked` — a caller owns this session and the loop is not to be resumed. Stop hook stays silent, and stays silent even with the marker present, because a park happens inside an armed loop. Preflight step 6 clears it on the next `/harness`.
 
 The state file shape:
 
 ```json
 {
-  "state": "continue|yielded|done",
+  "state": "continue|yielded|done|parked",
   "slug": "<workflow slug>",
   "reason": "<one sentence>"
 }
 ```
+
+**Parking (the fourth state).** `swarm-dispatch` sets `parked` before it raises a wave barrier and clears it on every exit from that wave. It exists because `run_in_background: true` workers keep running past the turn boundary, so Path A would re-fire the loop into a phase whose predecessor has not finished.
+
+The rule is **declare, don't detect**. The rejected alternative was a registry the hook reads to infer whether work is in flight; every version of that fails in the wrong direction, because a registry left behind by a crashed wave silences the Stop hook permanently with no signal. A park left behind by a crashed wave costs the human one `/harness`.
+
+Anything that needs to own the session uses this same state. Do not add a per-blocker boolean.
 
 Exactly three fields. No `written_at`, no `tick_count` — those tunables were removed in the active-marker redesign. The internal-loop redesign retains the shape; the meaning of `state: continue` shifted from "next tick will be auto-fired by the hook" to "the harness is inside the loop body (or was interrupted)".
 
@@ -91,7 +98,7 @@ Same `enabled` gate, same delivery chain, same always-exit-0 contract. The **shi
 3a. **Pre-§18 workflow.json migrator (post-§18 baseline).** If `workflow.json` carries the pre-§18 shape (has `entry_phase`, no `track_id`), run a one-shot migrator before continuing: `node .claude/skills/harness/cli.mjs migrate .claude/state/workflow.json` (wraps `workflow-migrator.js -> migrateWorkflowJsonInPlace`). The migrator derives `track_id` from `entry_phase` via the canonical map (intake → intake-full, spec → spec-entry, tdd → tdd-quickfix, chore → chore), remaps `completed[]` phase-names to node-ids, initializes `skipped_alternates: []`, refreshes `updated_at`, and removes `entry_phase`. Idempotent: already-post-§18 input is a no-op. Unmapped `entry_phase` throws; halt with the migrator's error message and tell the user to re-run `/triage` to restart this workflow.
 4. **Ground the user before acting.** When `_resume.md` is present, open with one sentence summarizing where things stood. Grounding only — do not invent state not in `workflow.json`.
 5. **Detect divergence.** If `_resume.md`'s recent prompts contradict `workflow.json` (e.g., the user said "actually skip security" mid-session and `exceptions` doesn't reflect it), do **not** auto-proceed. Surface as a clarifying question. Memory accelerates triage; it never authorizes a skip.
-6. **Arm the safety net.** Marker FIRST: `echo "<slug>" > .claude/state/.harness_active`. Then write `harness_state` with `{state: "continue", slug, reason: "loop armed; preflight passed"}`. This pair stays in place for the entire loop; mid-loop crashes are now covered by the Stop hook.
+6. **Arm the safety net.** Marker FIRST: `echo "<slug>" > .claude/state/.harness_active`. Then write `harness_state` with `{state: "continue", slug, reason: "loop armed; preflight passed"}`. This pair stays in place for the entire loop; mid-loop crashes are now covered by the Stop hook. **This is also the rearm after a park** — the write replaces `parked` unconditionally, which is what makes typing `/harness` the whole recovery from a swarm wave that died mid-flight. Say so in the terminal message when the state you replaced was `parked`, so the user knows the loop resumed rather than started over.
 6a. **Capture the right-size baseline (first arm only).** Run `node .claude/skills/harness/rightsize-gate.mjs baseline --slug <slug>`. This records the set of paths already dirty/untracked at the workflow's first arm into `workflow.json → rightsize_base[]`, and is **idempotent** — a resume finds the field present and no-ops, so the baseline is fixed at the true start. The gate later excludes these paths from its measure, so pre-existing cruft (prior-`/memory-sync` shards, scratch files) and the workflow's own scaffolding do not inflate the change size; the workflow's real source/test files, written later by `/tdd`, are created after the snapshot and are always measured. Fail-open: any error leaves the field absent, and the gate falls back to the whole-tree measure.
 
 Log every transition to `.claude/state/harness/<slug>.log` with timestamp + `entered <phase>` / `completed <phase>` / `yielded at <gate>`.

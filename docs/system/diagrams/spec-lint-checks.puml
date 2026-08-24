@@ -1,0 +1,4 @@
+!startsub spec_lint_checks
+' @kind c4_component
+Component(spec_lint_checks, "spec-lint-checks", "c4_component")
+!endsub

@@ -171,7 +171,7 @@ Relocated from CLAUDE.md (2026-08-10, `warm-context-diet`) — it is a verbatim 
 fires only when `configured: false`, so a configured repository loaded it warm every session
 and never used it. When `configured: false`, greet with this exact framing:
 
-> "This repo has the Claude Code baseline installed (26 hooks, 1 subagent, 59 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
+> "This repo has the Claude Code baseline installed (27 hooks, 1 subagent, 59 skills). It's in **project-agnostic mode** — `test_runner` and `lint_runner` are in guide mode and nothing is tailored to your stack. Run **`/init-project`** to scout the codebase, run the recommender, and generate a config. Skip it if you want baseline-only behavior, but you'll miss stack-specific tailoring."
 
 ### Skill provenance and the manifest (Article XII / seed.md §17)
 
@@ -442,4 +442,4 @@ Relocated from CLAUDE.md Article IV's entry-point list per Art. I.6. The binding
 
 **`freeform` — the blanket exception list.** Every pre-commit phase is excepted: `intake`, `brd`, `scout`, `research`, `spec`, `review`, `tdd`, `simplify`, `security`, `integrate`, `document`, `archive`. The DAG carries only `roadmap-sync` → `memory-sync` → `/grant-commit` → `/commit`.
 
-**`freeform` — what stays live.** All 26 hooks fire normally, including `tdd_order_guard` (still blocks a new source file without a paired test), `git_commit_guard`, `destructive_cmd_guard`, `env_guard`, `verify_pass_guard`, and every consent gate. Use freeform only when the work is genuinely heterogeneous — an optimization sweep across unrelated landmines, exploratory cleanup, drive-by fixes. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.
+**`freeform` — what stays live.** All 27 hooks fire normally, including `tdd_order_guard` (still blocks a new source file without a paired test), `git_commit_guard`, `destructive_cmd_guard`, `env_guard`, `verify_pass_guard`, and every consent gate. Use freeform only when the work is genuinely heterogeneous — an optimization sweep across unrelated landmines, exploratory cleanup, drive-by fixes. Anything single-purpose with a clear failing-test path SHALL route to `tdd` or higher.

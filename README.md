@@ -46,7 +46,7 @@ The baseline is that opinion, written down and enforced below the layer Claude c
 
 ## What this is
 
-A repository overlay. It installs **26 hooks** at Claude's tool boundaries, **59 skills**, **1 subagent**, **9 workflow tracks**, **3 consent gates** you type yourself, and **1 output style** that changes how Claude writes back to you.
+A repository overlay. It installs **27 hooks** at Claude's tool boundaries, **59 skills**, **1 subagent**, **9 workflow tracks**, **3 consent gates** you type yourself, and **1 output style** that changes how Claude writes back to you.
 
 The hooks run as separate processes, outside Claude's tool boundary, before the tool call resolves. So _"don't push"_, _"don't `--amend`"_, _"don't self-approve specs"_ stop being instructions Claude may follow and become operations it cannot perform. It cannot disable a hook with a flag, cannot write its own consent marker, and cannot reorder a phase without an exception `/triage` records on disk.
 
@@ -98,7 +98,7 @@ Each gate writes a short-lived consent marker via a UserPromptSubmit hook that r
 
 | What | Count | Where it lives |
 | --- | ---: | --- |
-| **Hooks** on PreToolUse, PostToolUse, SessionStart, Stop, PreCompact, and UserPromptSubmit | 26 | `.claude/hooks/` |
+| **Hooks** on PreToolUse, PostToolUse, SessionStart, Stop, PreCompact, and UserPromptSubmit | 27 | `.claude/hooks/` |
 | **Skills** across fifteen categories: artifact drafting, workflow phases, phase workers, spec helpers, orchestration, memory, navigation, phase helpers, generators, audit, alternate tracks, shared globals, maintenance, sprint, and roadmap | 59 | `.claude/skills/` |
 | **Subagent** — `swarm-worker`, executes pre-decided recipes within a declared write set | 1 | `.claude/agents/` |
 | **Workflow tracks** — `intake-full` (the full 11-phase pipeline), `spec-entry`, `tdd-quickfix`, `chore`, `freeform`, `epic`, `epic-child`, `org` and `power` (both opt-in, off by default). Two sub-tracks (`swarm-implementation`, `tdd-worker-chain`) are referenced by selector nodes inside the canonical set | 9 + 2 sub | `.claude/workflows.jsonl`, enforced by `track_guard` |
@@ -112,7 +112,7 @@ The roster counts are asserted by `audit-baseline` against `docs/init/seed.md` a
 
 ## How the enforcement works
 
-The 26 hooks declared in `.claude/settings.json` fire at Claude's tool boundaries: PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, and UserPromptSubmit. Each is a Node ESM script (`.mjs`) invoked as a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
+The 27 hooks declared in `.claude/settings.json` fire at Claude's tool boundaries: PreToolUse for Bash / Write / Edit / MultiEdit, PostToolUse for the same, plus SessionStart, Stop, PreCompact, Notification, and UserPromptSubmit. Each is a Node ESM script (`.mjs`) invoked as a subprocess outside Claude's reach. Their output is JSON; their exit decides whether the tool call proceeds.
 
 The architectural rule is short: **decisions live in main context; subagents only execute pre-decided recipes.** The baseline ships exactly one subagent, `swarm-worker`, and its only sanctioned use is parallel dispatch of fully-specified recipes during `/swarm-dispatch`. Workers share your working tree by default; set `swarm.isolation` to give each one its own git worktree. Every other capability that might have been a subagent (code authoring, scenario design, scouting, security review, prose writing, UI design) is a **skill** running in main context with full conversation visibility.
 

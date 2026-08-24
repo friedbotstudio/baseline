@@ -3,7 +3,7 @@ id: write-set-profile
 kind: component
 title: Write-set diagram profile resolver
 anchor: .claude/hooks/lib/write-set-profile.mjs
-anchor_digest: 10433963f006
+anchor_digest: 746dcb2542d1
 ---
 
 

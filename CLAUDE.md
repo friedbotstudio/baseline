@@ -4,7 +4,7 @@ This file binds Claude's behavior — Claude Code, in this codebase, in this ses
 
 **Genesis prompt.** `docs/init/seed.md` is the governing specification of this baseline. When it and this constitution conflict, **seed.md governs** and you SHALL stop and surface the drift before acting. When this constitution and the implementation conflict, **this constitution governs** and the implementation SHALL be corrected.
 
-**Enforcement.** The 26 hooks in `.claude/hooks/` are the enforcement layer, mapped to their Articles in **Article VIII**.
+**Enforcement.** The 27 hooks in `.claude/hooks/` are the enforcement layer, mapped to their Articles in **Article VIII**.
 
 ---
 
@@ -88,7 +88,7 @@ The 11-phase workflow is the only sanctioned path from request to commit. Phase 
 
 - New feature → `intake`. Bugfix → `spec` or `tdd`. Quickfix → `tdd`.
 - Chore → the `chore` track when the request needs **no failing-test-driven code change**. Skips `/scenario` and `/implement`; `verify` / `simplify` / `integrate` / `document` resolve on the diff; `archive`, gate C, `/commit` stay mandatory.
-- Freeform → ad-hoc **heterogeneous** batches. Every pre-commit phase is excepted; all 26 hooks stay active, including `tdd_order_guard` and the gates.
+- Freeform → ad-hoc **heterogeneous** batches. Every pre-commit phase is excepted; all 27 hooks stay active, including `tdd_order_guard` and the gates.
 - Chore/freeform: work needing a failing test SHALL route to `tdd` or higher.
 - Epic / Epic-child → a multi-subtask feature runs `epic` once (discovery + sliced spec + one approval); each slice then runs an `epic-child` inheriting it via `track_guard`. seed.md §18.9.
 - Power → a batch of related, spec-committed tickets (`workflow.json → tickets[]`, proposed by `sprint-planner`, confirmed by the human). `security` runs **once per ticket**; any BLOCKER yields the batch. Opt-in via `velocity.power_mode.enabled`; requires git.
@@ -179,9 +179,9 @@ Spelling table + the `git worktree remove --force` exemption: annex.
 
 ## Article VIII — Hooks (the enforcement layer)
 
-The 26 hooks in `.claude/hooks/` structurally enforce this constitution. Modifying, disabling, or bypassing one requires explicit user approval and a `seed.md` §4.1 amendment. A hook names itself when it blocks, so the constitution carries the roster and the rule; the per-hook table lives in the annex.
+The 27 hooks in `.claude/hooks/` structurally enforce this constitution. Modifying, disabling, or bypassing one requires explicit user approval and a `seed.md` §4.1 amendment. A hook names itself when it blocks, so the constitution carries the roster and the rule; the per-hook table lives in the annex.
 
-**By event.** Write boundary (`PreToolUse` on `Edit|Write|MultiEdit`, all wired on `NotebookEdit` too): `setup_guard`, `env_guard`, `direction_approval_guard`, `swarm_approval_guard`, `epic_approval_guard`, `verify_pass_guard`, `track_guard`, `branch_guard`, `artifact_template_guard`, `plantuml_syntax_guard`, `spec_diagram_presence_guard`, `spec_design_calls_guard`, `swarm_boundary_guard`. `tdd_order_guard` is the one true `Write`-only guard. Bash: `destructive_cmd_guard`, `gitignore_leak_guard`. Both: `git_commit_guard`, `process_lifecycle_guard`. `PostToolUse`: `lint_runner`, `test_runner`, `phase_timer`. Lifecycle: `memory_session_start` (SessionStart), `memory_stop` + `harness_continuation` (Stop), `memory_pre_compact` (PreCompact), `consent_gate_grant` (UserPromptSubmit) — the one hook outside the tool boundary, which is what makes consent unforgeable.
+**By event.** Write boundary (`PreToolUse` on `Edit|Write|MultiEdit`, all wired on `NotebookEdit` too): `setup_guard`, `env_guard`, `direction_approval_guard`, `swarm_approval_guard`, `epic_approval_guard`, `verify_pass_guard`, `track_guard`, `branch_guard`, `state_write_guard`, `artifact_template_guard`, `plantuml_syntax_guard`, `spec_diagram_presence_guard`, `spec_design_calls_guard`, `swarm_boundary_guard`. `tdd_order_guard` is the one true `Write`-only guard. Bash: `destructive_cmd_guard`, `gitignore_leak_guard`. Both: `git_commit_guard`, `process_lifecycle_guard`. `PostToolUse`: `lint_runner`, `test_runner`, `phase_timer`. Lifecycle: `memory_session_start` (SessionStart), `memory_stop` + `harness_continuation` (Stop), `memory_pre_compact` (PreCompact), `consent_gate_grant` (UserPromptSubmit) — the one hook outside the tool boundary, which is what makes consent unforgeable.
 
 `git_commit_guard` also hard-blocks a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. Per-hook events, Articles, behavior: annex §2.
 
@@ -273,6 +273,6 @@ You SHALL:
 
 ## Appendix — Reference (in the annex)
 
-Read on demand from **`.claude/CONSTITUTION.md`**: **Appendix A — Where things live** and **Appendix B — Skill index** (59 skills by category).
+Read on demand from **`.claude/CONSTITUTION.md`**: **Appendix A — Where things live** and **Appendix B — Skill index** (59 skills).
 
-Quick orientation: 26 hooks, 1 subagent (`swarm-worker`), 59 skills, `.claude/commands/` (6 commands), 8 memory files, 4 MCP servers, 1 output style, `docs/init/seed.md` (genesis).
+Quick orientation: 27 hooks, 1 subagent (`swarm-worker`), 59 skills, `.claude/commands/` (6 commands), 8 memory files, 4 MCP servers, 1 output style, `docs/init/seed.md` (genesis).

@@ -55,9 +55,13 @@ For every task in the wave, produce:
 
 This is where the heavy thinking lives. Do it before dispatch — once a worker is running, the recipe cannot be changed.
 
-### 2. Raise the barrier
+### 2. Park the harness, then raise the barrier
 
-Write `.claude/state/swarm/active_wave.json`:
+**Park first.** Write `.claude/state/harness_state` as `{state: "parked", slug, reason: "swarm wave <n> in flight"}`. This dispatch owns the session until the wave resolves, and `harness_continuation`'s Path A would otherwise re-fire the loop into a phase whose predecessor is still running — the marker is present by definition, because the wave runs inside an armed loop.
+
+Park is a **declaration, not a detector**. Nothing infers that workers are running; this skill says so, and says when it stops. Clearing it is step 7's job and is unconditional — see **Unparking** below.
+
+Then write `.claude/state/swarm/active_wave.json`:
 
 ```json
 {
@@ -177,9 +181,13 @@ Outcomes:
 - **Exit 1**: audit failed OR `git apply` failed. Worktree preserved for inspection. Update task `status: "failed"` with a `note` naming the offending file(s).
 - **No worktree path returned** (worker made no changes): the harness auto-cleans the empty worktree. Mark task per the worker's self-reported JSON.
 
-### 7. Clear the barrier
+### 7. Clear the barrier and unpark
 
 Delete `.claude/state/swarm/active_wave.json`.
+
+**Unparking.** Rewrite `harness_state` back to `{state: "continue", slug, reason: "<n> waves done; next: <phase>"}` when the plan continues, or to `{state: "yielded", slug, reason: "<one sentence>"}` when the wave failed and the human must look. Do this on **every** exit from a wave — success, task failure, audit failure, and an aborted prereq after step 2 ran — so a park never outlives the thing that set it.
+
+If the session dies mid-wave the park stays on disk. That is the correct residue and the reason park beats a background registry: the human returns, types `/harness`, and preflight rearms. The failure mode is one command, not a loop that spins or a hook silenced with no signal.
 
 ### 8. Decide the wave's fate
 
@@ -202,12 +210,13 @@ When isolation is `"shared"`:
 - `swarm_boundary_guard` is the runtime enforcer: writes in enforced paths must be in the union of active write_sets, else denied. **But the guard exempts `.claude/` (D2 blind spot)** — so for baseline self-dev under `.claude/skills/**` it enforces nothing.
 - **Post-wave diff-audit (D2).** After each shared wave completes, run `swarm_wave_audit.mjs <plan-path> <wave-index>`. It diffs the wave's actual changes (current `git status` minus `pre_wave_changed`) against the union write_set **directly — not via the guard's exempt list** — so `.claude/skills/**` drift IS caught. Exit 1 (a path outside the union) → treat the wave as failed: stop, surface the offending paths, do not advance. This is the shared-mode analogue of worktree mode's per-task merge-audit.
 - Cross-task bleed *within* a wave (two tasks in the same wave writing each other's files) remains a known limitation — the audit catches out-of-union drift, not intra-union misattribution.
-- After each wave: run the post-wave audit, then clear `active_wave.json`, update per-task status from the worker's self-reported JSON (classified via §5.5, D4).
+- After each wave: run the post-wave audit, then clear `active_wave.json`, unpark the harness (step 7), update per-task status from the worker's self-reported JSON (classified via §5.5, D4).
 
 Use shared mode deliberately — it trades real safety (physical isolation) for runtime permissiveness. Worktree mode is preferred whenever git is available.
 
 ## Failure recovery
 
+- **Unpark before surfacing.** A failed wave still leaves the harness parked unless step 7 ran. Write `harness_state` as `yielded` with the failure reason so the human is notified and `/harness` is not needed to get their attention.
 - Plan stays in `"failed"` state for user inspection.
 - In worktree mode, failed tasks' worktrees are preserved. The user can `cd` in, read the worker's changes, and either:
   - Manually finish + commit to main, then mark the task done in the plan.
