@@ -202,12 +202,24 @@ module.exports = async () => {
       `missing: [${missingNotes.join(', ')}] stale: [${staleNotes.join(', ')}]`,
     );
   }
+  // A hook's cell leads with what becomes true for the reader and puts the
+  // mechanism underneath (CLAUDE.md XI.1). Failing the build on a missing
+  // `value` is what keeps that ordering true for hook 28: a note added without
+  // one would otherwise render a cell with no claim, and nothing would say so.
+  const missingValues = names.hooks.filter((h) => !notes[h].value);
+  if (missingValues.length) {
+    throw new Error(
+      `_data/roster.cjs: hooknotes.json entries missing a \`value\` claim: ` +
+      `[${missingValues.join(', ')}]. The claim asserts what becomes true; the note is the mechanism.`,
+    );
+  }
 
   return {
     hooks: names.hooks.map((h) => ({
       name: h,
       events: [...byHook.get(h)].sort(),
       article: notes[h].article,
+      value: notes[h].value,
       note: notes[h].note,
     })),
     events,

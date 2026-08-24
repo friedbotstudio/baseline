@@ -4,10 +4,14 @@ title: "Hooks: every guard and where it is wired · baseline"
 description: "Reference for the baseline hooks: every guard, the lifecycle event it is wired on, the Article it enforces, and what it does when it fires."
 heading: "Every guard, and<br>where it is wired."
 lead: Reference for the hooks. Each one is a Node ESM script that Claude Code runs as a subprocess when a lifecycle event fires, and what the script writes back decides whether the pending tool call may go ahead. The roster below is derived from the files on disk and their wiring in settings.json, so a hook added to the directory shows up here without an edit to this page.
-updated: 2026-07-30
+updated: 2026-08-25
 breadcrumb: ["docs", "reference", "hooks"]
 facts:
-  - { label: "hooks", value: "26" }
+  # design call hooks-page-count: this tile is the one place the hook count is
+  # authored by hand. The roster in section II and the per-event tallies in
+  # section I both derive from disk, so a new hook reaches them without an edit.
+  # It went stale at 26 when the 27th hook landed; if you add one, change it here.
+  - { label: "hooks", value: "27" }
   - { label: "events", value: "7" }
   - { label: "declared in", value: ".claude/settings.json" }
 toc:
@@ -37,7 +41,7 @@ toc:
 
 <h2 id="roster"><span class="sec-mark" aria-hidden="true">§ II</span> The roster</h2>
 
-<p class="sec-lead">{{ roster.hooks | length }} hooks in alphabetical order, each naming the Article it enforces. Article VIII of <code class="tok">CLAUDE.md</code> is the record; if this table and the constitution ever disagree, the table is the drift.</p>
+<p class="sec-lead">{{ roster.hooks | length }} hooks in alphabetical order. Each cell leads with what the hook makes true for you, then how it does it, then the event it is wired on and the Article it enforces. Article VIII of <code class="tok">CLAUDE.md</code> is the record; if this table and the constitution ever disagree, the table is the drift.</p>
 
 {# Two columns of hairline cells, the same component the CLI flag table uses.
    Each cell carries an id so a hook can be linked to directly. #}
@@ -45,6 +49,7 @@ toc:
   {% for h in roster.hooks %}
   <div class="cell" id="hook-{{ h.name }}">
     <div class="cell-kicker">{{ h.name }}</div>
+    <p>{{ h.value }}</p>
     <p class="excerpt">{{ h.note }}</p>
     <p class="cell-note">{{ h.events | join(", ") }} · {{ h.article }}</p>
   </div>

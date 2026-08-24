@@ -29,9 +29,9 @@ toc:
 
 <p>What matters is where the rule lives. If you put it in a prompt, a memory entry or a <code class="tok">CLAUDE.md</code> paragraph, you are asking the model to follow it, and a model may comply unevenly. Put the same rule in a hook and it becomes a program which runs before the tool call and decides whether that call happens at all.</p>
 
-<p>The hooks run on seven events. Nineteen of them sit on <code class="tok">PreToolUse</code>, where they see a Write, Edit or Bash call before it runs and may answer block, ask or allow; three run on <code class="tok">PostToolUse</code> and can only report on what the call produced. The rest cover the session itself: one on <code class="tok">UserPromptSubmit</code>, one at <code class="tok">SessionStart</code>, three on <code class="tok">Stop</code>, one on <code class="tok">Notification</code>, and one before context is compacted.</p>
+<p>The hooks run on seven events. Twenty of them sit on <code class="tok">PreToolUse</code>, where they see a Write, Edit or Bash call before it runs and may answer block, ask or allow; three run on <code class="tok">PostToolUse</code> and can only report on what the call produced. The rest cover the session itself: one on <code class="tok">UserPromptSubmit</code>, one at <code class="tok">SessionStart</code>, three on <code class="tok">Stop</code>, one on <code class="tok">Notification</code>, and one before context is compacted.</p>
 
-<p>Add those up and you get 29, which is more than the {{ baseline.hooks.total }} scripts under <code class="tok">.claude/hooks/</code>. One script, <code class="tok">notify</code>, is wired on three events and counts once in each, and it also lives outside that directory. Every other hook runs on exactly one event.</p>
+<p>Add those up and you get 30, which is more than the {{ baseline.hooks.total }} scripts under <code class="tok">.claude/hooks/</code>. One script, <code class="tok">notify</code>, is wired on three events and counts once in each, and it also lives outside that directory. Every other hook runs on exactly one event.</p>
 
 <p>Because a guard runs before the model is consulted, a blocked call ends at the guard: Claude receives the refusal in place of a result and has to work from that.</p>
 
