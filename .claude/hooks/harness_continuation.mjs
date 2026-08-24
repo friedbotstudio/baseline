@@ -97,7 +97,17 @@ function anyConsentNewerThan(reference, slug) {
 }
 
 let emitLogDetail = '';
-if (stateValue === 'continue') {
+if (stateValue === 'parked') {
+  // Both emission paths assume the session stopped with a phase available to
+  // advance to. `parked` is how a caller that owns the session — swarm-dispatch
+  // during a wave — says that is not true. Checked BEFORE Path A because a
+  // parked loop is an armed loop: the marker is present by definition.
+  //
+  // Recognised explicitly rather than left to the catch-all below. The
+  // fallthrough would silence it today by accident, and an accident is not
+  // something a future refactor of that branch has to preserve.
+  silent('silent: parked (a caller owns this session; /harness rearms)');
+} else if (stateValue === 'continue') {
   if (!existsSync(marker)) silent('silent: rung2 marker missing for Path A (state=continue)');
   emitLogDetail = 'Path A (state=continue + marker present)';
 } else if (stateValue === 'yielded') {

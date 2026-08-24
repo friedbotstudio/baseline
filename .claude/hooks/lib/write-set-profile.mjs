@@ -16,6 +16,9 @@
 //
 // globToRegex is re-exported because in-repo callers already import it here.
 import { globToRegex, matchesAnyGlob } from './glob-match.mjs';
+// The `@ref` grammar lives in its own module — this one only needs to know
+// whether a spec's references are malformed, so it imports that one predicate.
+import { malformedReferences } from './corpus-reference.mjs';
 
 export { globToRegex };
 
@@ -85,50 +88,18 @@ function coversEntirely(profile, writeSetPaths) {
     && writeSetPaths.every((p) => matchesAnyGlob(p, profile.when));
 }
 
-// A spec may satisfy the structural diagram kinds by REFERENCING a corpus element
-// instead of redrawing it. Only the SYNTAX is judged here: resolving the id needs
-// the corpus on disk, and this module deliberately reads no files.
-//
-// A malformed reference forces the full set rather than throwing. An author who
-// meant to reference something and mistyped it must not get a QUIETER requirement
-// than one who referenced nothing at all — that would make a typo the cheapest way
-// to thin a spec.
-const REF_TOKEN = /@ref\b[^\n`]*/g;
-// ONE constant, two readers: `hasMalformedReference` tests it, `elementReferences`
-// reads its capture. A second copy of this rule is precisely what let the write
-// guard and /spec-lint disagree about the same bytes — the guard carved the
-// structural kinds out on a resolvable reference and the preflight never did, so
-// every spec-as-diff spec failed its own preflight while passing the boundary.
-const REF_WELL_FORMED = /^@ref\s+element:([a-z0-9][a-z0-9-]*)$/;
-
-// The kinds a corpus element stands in for. Shared for the same reason the regex
-// is: a caller holding its own copy is a caller that can drift.
-export const STRUCTURAL_KINDS = new Set(['c4_context', 'c4_container', 'c4_component']);
-
-export function referenceTokens(content) {
-  return String(content).match(REF_TOKEN) ?? [];
-}
-
-export function hasMalformedReference(content) {
-  return referenceTokens(content).some((token) => !REF_WELL_FORMED.test(token.trim()));
-}
-
-// Well-formed ids only. Resolving them needs the corpus on disk, and this module
-// is deliberately content-only and reads no files, so each caller resolves its own —
-// which is also where the two legitimately differ: the guard blocks an
-// unresolvable id, the preflight reports it.
-export function elementReferences(content) {
-  return referenceTokens(content)
-    .map((token) => REF_WELL_FORMED.exec(token.trim()))
-    .filter(Boolean)
-    .map((match) => match[1]);
-}
-
 export function resolveProfile(content, projectGet) {
-  const fullSet = () => ({ id: 'full', required_diagrams: projectGet('.artifacts.required_diagrams.spec') });
+  const fullSet = (reason) => ({
+    id: 'full',
+    required_diagrams: projectGet('.artifacts.required_diagrams.spec'),
+    ...(reason ? { reason } : {}),
+  });
   try {
     if (projectGet('.artifacts.compression.enabled') === false) return fullSet();
-    if (hasMalformedReference(content)) return fullSet();
+    const malformed = malformedReferences(content);
+    if (malformed.length) {
+      return fullSet(`malformed corpus reference: ${malformed.map((t) => t.trim()).join(', ')}`);
+    }
 
     const writeSetPaths = extractWriteSet(content);
     if (writeSetPaths.length === 0) return fullSet();

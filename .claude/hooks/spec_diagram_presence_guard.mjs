@@ -24,7 +24,9 @@ import {
   computeProposedContent,
 } from './lib/common.mjs';
 import { assertSafeSlug } from './lib/slug.mjs';
-import { STRUCTURAL_KINDS, elementReferences, resolveProfile } from './lib/write-set-profile.mjs';
+import { resolveProfile } from './lib/write-set-profile.mjs';
+import { STRUCTURAL_KINDS, elementReferences } from './lib/corpus-reference.mjs';
+import { plantumlBlocks, missingKinds } from './lib/plantuml-blocks.mjs';
 
 const payload = await readPayload();
 
@@ -43,32 +45,13 @@ if (base.startsWith('_TEMPLATE_') || /TEMPLATE.*\.md$/.test(base)) emitAllow();
 const content = computeProposedContent(tool, payload, file);
 if (!content.trim()) emitAllow();
 
-const required = resolveProfile(content, projectGet).required_diagrams;
+const profile = resolveProfile(content, projectGet);
+const required = profile.required_diagrams;
 if (!required || typeof required !== 'object' || Array.isArray(required)) emitAllow();
 
-// Extract bodies of ```plantuml``` fences (case-insensitive, multiline).
-const fenceRe = /^[ \t]*```[ \t]*plantuml[ \t]*$([\s\S]*?)^[ \t]*```[ \t]*$/gmi;
-const blocks = [];
-let m;
-while ((m = fenceRe.exec(content)) !== null) blocks.push(m[1]);
-
-const blockMatches = (body, rule) => {
-  if (rule.marker && body.includes(rule.marker)) return true;
-  for (const pat of (rule.any_of || [])) {
-    try {
-      if (new RegExp(pat, 'm').test(body)) return true;
-    } catch {}
-  }
-  return false;
-};
-
-const missing = [];
-for (const [kind, rule] of Object.entries(required)) {
-  if (!rule || typeof rule !== 'object') continue;
-  const need = Number.isFinite(rule.min) ? Math.trunc(rule.min) : 1;
-  const found = blocks.filter((b) => blockMatches(b, rule)).length;
-  if (found < need) missing.push({ kind, need, found });
-}
+// Fence extraction and the kind-match rule are shared with /spec-lint so the
+// guard and its preflight cannot drift on the same bytes.
+const missing = missingKinds(plantumlBlocks(content), required);
 
 // Spec-as-diff: a reference to a corpus element stands in for the STRUCTURAL kinds,
 // which are exactly what the corpus models. Behavioural kinds still have to be drawn
@@ -111,5 +94,8 @@ for (const { kind, need, found } of missing) {
 }
 lines.push('See .claude/skills/spec/template.md for the canonical diagram skeletons (C4 Context/Container/Component, class, sequence, dependency graph).');
 lines.push('Required kinds are configured at .claude/project.json → artifacts.required_diagrams.spec.');
+// Without this the author sees only the missing kinds and never learns a typo
+// refused their reduction.
+if (profile.reason) lines.push(`The full set was required because of a ${profile.reason}.`);
 
 emitBlock(lines.join('\n'));

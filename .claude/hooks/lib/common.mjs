@@ -289,13 +289,21 @@ export function computeProposedContent(tool, payload, filePath) {
 // True if `cmd` matches any pattern in `patterns` (a JS array of regex strings).
 // Used by destructive_cmd_guard for project.json destructive patterns.
 // Returns false if patterns is null/undefined/empty or all patterns are invalid.
+//
+// Each pattern is tested against the raw command AND against every effective
+// command (see `effectiveCommands`). A `^`-anchored verb pattern therefore fires
+// only where the verb actually leads a command — `sudo poweroff` and
+// `make build && reboot` match, `grep -n "shutdown" doc.md` does not. An
+// unanchored signature pattern (the fork bomb, a `> /dev/sda` redirect) keeps
+// matching the raw string, which segment splitting would otherwise tear apart.
 export function cmdMatchesAny(cmd, patterns) {
   if (!Array.isArray(patterns) || patterns.length === 0) return false;
+  const candidates = [cmd, ...effectiveCommands(cmd)];
   for (const p of patterns) {
     if (typeof p !== 'string' || p === '') continue;
     let re;
     try { re = new RegExp(p); } catch { continue; }
-    if (re.test(cmd)) return true;
+    if (candidates.some((c) => re.test(c))) return true;
   }
   return false;
 }
@@ -399,6 +407,45 @@ const PREFIX_EXECUTORS = new Set([
   'command', 'env', 'sudo', 'doas', 'nice', 'time', 'nohup', 'setsid', 'xargs', 'timeout', 'stdbuf', 'ionice',
 ]);
 
+// A leading `VAR=val` assignment, or a wrapper word whose remaining argv IS the
+// command. Both hide the real verb from a head-anchored pattern.
+const COMMAND_HEAD_PREFIX_RE = new RegExp(
+  '^(?:'
+  + '[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|\'[^\']*\'|\\S*)\\s+'
+  + '|(?:' + [...PREFIX_EXECUTORS].join('|') + ')\\s+(?:--\\s+)?'
+  + ')'
+);
+
+// Every command line `cmd` actually runs, each also offered with its command-head
+// prefixes removed, so a `^`-anchored verb pattern sees the real verb.
+//
+// Built on `executedFragments` rather than on `splitShellSegments` alone. Segment
+// splitting sees only top-level separators, so `sh -c "shutdown -h now"` reads as
+// one command whose head is `sh` — which is how anchoring the verb patterns opened
+// five bypasses that were blocked before it. `executedFragments` already peels
+// `sh -c`, `eval`, subshells, brace groups and `$( )` bodies, and it distinguishes
+// executed text from quoted data, so recursing into wrappers does not undo the
+// false-positive fix. `gitSegments` reads the same list; two walkers answering
+// "what does this run" is the drift this file already has one rule against.
+//
+// Raw fragments are kept alongside the stripped ones because a redirect signature
+// (`> /dev/sda`) is not a verb, and stripping is anchored at the head.
+export function effectiveCommands(cmd) {
+  if (typeof cmd !== 'string' || cmd === '') return [];
+  const out = new Set();
+  for (const fragment of executedFragments(cmd)) {
+    let s = fragment.trim();
+    if (s) out.add(s);
+    let prefix = COMMAND_HEAD_PREFIX_RE.exec(s);
+    while (prefix) {
+      s = s.slice(prefix[0].length).trim();
+      prefix = COMMAND_HEAD_PREFIX_RE.exec(s);
+    }
+    if (s) out.add(s);
+  }
+  return [...out];
+}
+
 // Every command line that `cmd` actually EXECUTES, dequoted and flattened.
 // Beyond the top-level segments this peels subshells `( … )` / brace groups
 // `{ …; }`, extracts command-substitution `$( … )` and backtick bodies, and
@@ -407,9 +454,18 @@ const PREFIX_EXECUTORS = new Set([
 // a wrapped `git commit` classify as a commit (security HIGH fix) WITHOUT
 // re-introducing the Q-003 false-positive: only EXECUTED strings recurse, so a
 // `grep "git commit"` pattern or an `echo "git commit"` literal stays data.
-function executedFragments(cmd, depth = 0) {
+// Heredoc bodies are dropped by `stripQuotedHeredocBodies`, which already ships
+// here and is the ONLY correct version of this: a quoted heredoc is data for a
+// SINK (`cat`, `tee`) but a script for an EXECUTOR — `bash <<'EOF'` really runs
+// its body — so it preserves the body when the opener verb is an executor. A
+// blanket strip written here instead would hide a real command; measured, it did.
+//
+// Applied at depth 0 only. Without it, recursing into substitutions makes
+// backticks inside a heredoc read as command substitution, so markdown prose
+// quoting a shell command starts matching a verb pattern.
+export function executedFragments(cmd, depth = 0) {
   if (!cmd || depth > 6) return [];
-  const src = depth === 0 ? cmd.replace(/\\\r?\n/g, ' ') : cmd;
+  const src = depth === 0 ? stripQuotedHeredocBodies(cmd.replace(/\\\r?\n/g, ' ')) : cmd;
   const frags = [];
   for (const seg of splitShellSegments(src)) {
     let s = seg.trim();
@@ -691,12 +747,50 @@ function resolveAssignments(scan) {
 // with no consent reference is never a consent write. Over-inclusion (a consent
 // path read-out by `cp consent /tmp`, or a write verb whose operand merely
 // co-occurs) is the safe direction for a guard.
-function fragmentWritesConsentTarget(fragment) {
-  if (!CONSENT_REF_RE.test(fragment)) return false;
+function fragmentWritesTarget(fragment, refRe) {
+  if (!refRe.test(fragment)) return false;
   if (CONSENT_WRITE_VERB_RE.test(fragment)) return true;
   if (CONSENT_SED_INPLACE_RE.test(fragment)) return true;
   if (CONSENT_PROG_WRITE_RE.test(fragment)) return true;
   return false;
+}
+
+// The write-intent machinery, with the path family as a parameter. The three
+// write-signal regexes above are family-independent — only the anchor differs —
+// so a second family reuses the expansion pass, the redirect check and the
+// per-fragment scan rather than cloning them. Cloning is what let a guard and its
+// preflight drift apart before; the same argument applies to two Bash detectors.
+function writesPathFamily(cmd, { refRe, redirectRe, prefilterRe }) {
+  if (typeof cmd !== 'string') return false;
+  const scan = sanitizeGitCommitForScan(cmd);
+  if (!prefilterRe.test(scan) && !COMMAND_START_ASSIGN_RE.test(scan)) return false;
+  const expanded = expandWithEnv(scan, resolveAssignments(scan));
+  if (!refRe.test(expanded)) return false;
+  if (redirectRe.test(expanded)) return true;
+  for (const fragment of executedFragments(expanded)) {
+    if (fragmentWritesTarget(fragment, refRe)) return true;
+  }
+  return false;
+}
+
+// `.claude/state/**` — workflow state, which Article II reserves to main context.
+// A directory prefix rather than a basename set, so the anchor is simpler than the
+// consent family's, but the write-vs-read distinction is the same one: a subagent
+// that cannot READ workflow.json cannot do its job, so only writes are denied.
+const STATE_PATH = '\\.claude/state/';
+const STATE_REF_RE = new RegExp(STATE_PATH);
+const STATE_REDIRECT_RE = new RegExp('(?:>>?\\|?)\\s*[\'"]?[^\'">\\s|;&]*?' + STATE_PATH);
+// Every state path contains the literal `state`, and expansion can only introduce
+// one through a command-start assignment — the same soundness argument the consent
+// prefilter rests on.
+const STATE_PREFILTER_SUBSTR_RE = /state/i;
+
+export function writesWorkflowStatePath(cmd) {
+  return writesPathFamily(cmd, {
+    refRe: STATE_REF_RE,
+    redirectRe: STATE_REDIRECT_RE,
+    prefilterRe: STATE_PREFILTER_SUBSTR_RE,
+  });
 }
 
 // True iff the Bash command writes (not merely references) a consent
@@ -712,29 +806,23 @@ function fragmentWritesConsentTarget(fragment) {
 // .../commit_consent; git mv a b`) is allowed — the consent reference and the
 // write signal live in DIFFERENT fragments. The git-commit message carve-out
 // (sanitizeGitCommitForScan) is applied first and retained.
+// The prefilter (6f65) skips the resolveAssignments + expandWithEnv pass when the
+// raw command can carry no consent path — no consent-basename substring AND no
+// command-start assignment to assemble one. Sound because expansion can only
+// INTRODUCE a consent substring via a mapped variable, which requires an
+// assignment (see the constant's comment).
+//
+// The ref reject inside writesPathFamily MUST stay AFTER expansion — do not
+// "optimize" it onto the raw scan. A slash-terminated basename (`spec_approvals/`,
+// `swarm_approvals/`) can be ASSEMBLED only at expansion: `VAR=spec_approvals; tee
+// $VAR/x.approval` has no literal `spec_approvals/` in the raw command, so an early
+// raw-scan reject would let it through.
 export function writesConsentPath(cmd) {
-  if (typeof cmd !== 'string') return false;
-  const scan = sanitizeGitCommitForScan(cmd);
-  // Necessary-condition prefilter (6f65): skip the resolveAssignments +
-  // expandWithEnv pass when the raw command can carry no consent path — no
-  // consent-basename substring AND no command-start assignment to assemble one.
-  // Sound because expansion can only INTRODUCE a consent substring via a mapped
-  // variable, which requires an assignment (see the constant's comment).
-  if (!CONSENT_PREFILTER_SUBSTR_RE.test(scan) && !COMMAND_START_ASSIGN_RE.test(scan)) return false;
-  const expanded = expandWithEnv(scan, resolveAssignments(scan));
-  // This reject MUST stay AFTER expansion — do not "optimize" it onto raw `scan`.
-  // A slash-terminated basename (`spec_approvals/`, `swarm_approvals/`) can be
-  // ASSEMBLED only at expansion: `VAR=spec_approvals; tee $VAR/x.approval` has no
-  // literal `spec_approvals/` in the raw command, so an early raw-scan reject
-  // would let it through. Expansion can only INTRODUCE a consent basename whose
-  // literal already lives in a `VAR=...` assignment in `scan`, so testing
-  // `expanded` is both sound and complete here.
-  if (!CONSENT_REF_RE.test(expanded)) return false;
-  if (CONSENT_REDIRECT_RE.test(expanded)) return true;
-  for (const fragment of executedFragments(expanded)) {
-    if (fragmentWritesConsentTarget(fragment)) return true;
-  }
-  return false;
+  return writesPathFamily(cmd, {
+    refRe: CONSENT_REF_RE,
+    redirectRe: CONSENT_REDIRECT_RE,
+    prefilterRe: CONSENT_PREFILTER_SUBSTR_RE,
+  });
 }
 
 // --- Epic approved:true Bash-write detection (backlog -abad) ---

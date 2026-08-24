@@ -23,18 +23,8 @@ import {
   logLine,
   writesConsentPath,
   writesEpicApproval,
+  cmdMatchesAny,
 } from './lib/common.mjs';
-
-function cmdMatchesAny(cmd, patterns) {
-  if (!Array.isArray(patterns) || patterns.length === 0) return false;
-  for (const p of patterns) {
-    if (typeof p !== 'string' || p === '') continue;
-    let re;
-    try { re = new RegExp(p); } catch { continue; }
-    if (re.test(cmd)) return true;
-  }
-  return false;
-}
 
 // Finding B — consent tokens/markers may be written ONLY by the gate flow (the
 // Write tool, after a /grant-* command primes a marker). The approval guards
