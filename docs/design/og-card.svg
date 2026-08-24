@@ -7,7 +7,7 @@
   <rect width="1200" height="630" fill="#15130f"/>
   <circle cx="88" cy="92" r="9" fill="#e0873f"/>
   <text x="112" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="30" font-weight="600" fill="#f4ede2">baseline</text>
-  <text x="252" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="24" fill="#8a837a">by friedbotstudio</text>
+  <text x="265" y="101" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace" font-size="24" fill="#8a837a">by friedbotstudio</text>
   <text x="88" y="266" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="92" font-weight="600" fill="#f4ede2" letter-spacing="-2">Claude cannot</text>
   <text x="88" y="368" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="92" font-weight="600" fill="#f4ede2" letter-spacing="-2">self-approve.</text>
   <text x="88" y="438" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="30" fill="#c8c0b3">Rules enforced at the tool boundary, where the model cannot reach.</text>
