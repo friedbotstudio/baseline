@@ -9,7 +9,9 @@
     "kind": "structural",
     "affected_resolver": null,
     "file_globs": [
-      "**/*"
+      "src/**",
+      "scripts/**",
+      "bin/**"
     ],
     "timeout_seconds": 600
   },
@@ -73,11 +75,11 @@
       "^\\s*rm\\s+.*-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*\\s+/(\\s|$)",
       "^\\s*rm\\s+.*-[a-zA-Z]*f[a-zA-Z]*r[a-zA-Z]*\\s+/(\\s|$)",
       ":\\(\\)\\s*\\{\\s*:\\|:&\\s*\\};:",
-      "\\bdd\\b.*of=/dev/(sd|nvme|hd|disk)",
-      "\\bmkfs(\\.[a-z0-9]+)?\\b",
-      "\\b(shutdown|halt|poweroff|reboot)\\b",
+      "^\\s*dd\\b.*of=/dev/(sd|nvme|hd|disk)",
+      "^\\s*mkfs(\\.[a-z0-9]+)?\\b",
+      "^\\s*(shutdown|halt|poweroff|reboot)\\b",
       ">\\s*/dev/sda",
-      "\\bchmod\\s+-R\\s+000\\s+/"
+      "^\\s*chmod\\s+-R\\s+000\\s+/"
     ],
     "ask_patterns": [
       "\\brm\\s+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*\\b",

@@ -14,6 +14,7 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/destructive_cmd_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state_write_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/git_commit_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gitignore_leak_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/process_lifecycle_guard.mjs" }
@@ -31,6 +32,7 @@
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/verify_pass_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/track_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/branch_guard.mjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state_write_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/artifact_template_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/plantuml_syntax_guard.mjs" },
           { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/spec_diagram_presence_guard.mjs" },

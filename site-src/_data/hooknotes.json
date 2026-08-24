@@ -1,106 +1,137 @@
 {
   "setup_guard": {
     "article": "Art. III",
+    "value": "You can evaluate the baseline without configuring it first.",
     "note": "Advisory reminder when `configured: false` (rate-limited). Never blocks."
   },
   "destructive_cmd_guard": {
     "article": "Art. IV, VII",
+    "value": "A catastrophic command never reaches your shell.",
     "note": "Hard-block catastrophic commands; ask on risky. Also closes the Bash surface of consent: writes to a consent path, and epic `approved` flips."
   },
   "git_commit_guard": {
     "article": "Art. IV gate C, Art. VII",
+    "value": "Claude cannot rewrite published history, or commit on a protected branch without consent.",
     "note": "Branch-aware consent; hard-block forbidden flags; gate consent writes; hard-block a closing commit whose staged `backlog.md` lacks the `source_backlog_keys` closure stamp. (annex)"
   },
   "gitignore_leak_guard": {
     "article": "Art. VII",
+    "value": "A file you told git to ignore cannot be staged into a commit.",
     "note": "Hard-block a commit staging a must-ignore path. Fail-closed on an inspection error; fail-open on missing baseline data."
   },
   "env_guard": {
     "article": "Art. VII",
+    "value": "Your .env files stay untouched.",
     "note": "Block writes to `.env*` (allows `.env.example`)"
   },
   "direction_approval_guard": {
     "article": "Art. IV gate A",
+    "value": "Claude cannot approve its own direction.",
     "note": "Allow direction-approval token write only on fresh marker; block self-approval + marker writes; opt-in provenance-anchor arm. (annex)"
   },
   "swarm_approval_guard": {
     "article": "Art. IV gate B",
+    "value": "Parallel dispatch waits until you authorize it.",
     "note": "Allow swarm-approval write only on fresh marker; block marker writes"
   },
   "epic_approval_guard": {
     "article": "Art. IV (§18.9)",
+    "value": "An epic cannot mark itself approved.",
     "note": "Allow an epic-state `approved: true` flip only when the matching `spec_approvals/<slug>.approval` token exists; other writes pass. (annex)"
   },
   "verify_pass_guard": {
     "article": "Art. V, VI",
+    "value": "A failing test suite cannot be written up as passing.",
     "note": "Block writing PASS to verify artifacts when truth source says FAIL"
   },
   "track_guard": {
     "article": "Art. IV",
+    "value": "A phase cannot run before the phase it depends on.",
     "note": "Enforce 11-phase ordering for workflow artifacts"
   },
   "branch_guard": {
     "article": "Art. IV, VII",
+    "value": "Work cannot start on a release branch under PR discipline.",
     "note": "Deny `workflow.json` creation on a release branch under `github-flow`; fail-open otherwise"
+  },
+  "state_write_guard": {
+    "article": "Art. II",
+    "value": "A subagent cannot widen what it is allowed to do next.",
+    "note": "Deny a subagent write to `.claude/state/**` on both the Bash and edit-tool boundaries; reads and the main session pass"
   },
   "artifact_template_guard": {
     "article": "Art. IV",
+    "value": "A spec or intake missing its required sections never lands.",
     "note": "Block artifact writes missing required `##` sections"
   },
   "plantuml_syntax_guard": {
     "article": "Art. IV phase 4",
+    "value": "You learn a diagram is broken at the boundary when strict checking is on.",
     "note": "Advisory by default (no JVM); strict `java -checkonly` only when `plantuml.strict_syntax_check` true."
   },
   "spec_diagram_presence_guard": {
     "article": "Art. IV phase 4",
+    "value": "A spec cannot skip a diagram it is required to draw.",
     "note": "Block specs missing required diagram kinds"
   },
   "spec_design_calls_guard": {
     "article": "Art. XI.2",
+    "value": "A UI spec cannot ship without naming what it designs against.",
     "note": "Block UI specs whose `## Design calls` rows lack a Reference target/Quality criteria"
   },
   "swarm_boundary_guard": {
     "article": "Art. IV phase 6c",
+    "value": "A parallel worker cannot write outside the files it was given.",
     "note": "Enforce write_set discipline whenever a wave is active (both isolation modes)"
   },
   "tdd_order_guard": {
     "article": "Art. VI.4",
+    "value": "No source file appears without a test.",
     "note": "Require test before new source file"
   },
   "process_lifecycle_guard": {
     "article": "Art. IX",
+    "value": "You see what this project already learned about a command before you run it.",
     "note": "Advisory. Bash leg surfaces process-management entries by category and key; write leg carries three triggers — phase-scoped, path-governed, and corpus location. Never blocks. (annex)"
   },
   "lint_runner": {
     "article": "Art. VI",
+    "value": "Lint runs on every code change once the project is configured.",
     "note": "Run `lint.cmd` on code changes (guide mode until configured); `exit 2` on failure"
   },
   "test_runner": {
     "article": "Art. VI",
+    "value": "Tests run on every code change once the project is configured.",
     "note": "Run `test.cmd` on code changes (guide mode until configured); `exit 2` on failure"
   },
   "phase_timer": {
     "article": "Art. V",
+    "value": "You can see where a workflow spent its time.",
     "note": "Observe-only; stamps per-phase timing on `completed[]` growth, incl. Bash-driven `workflow.json` writes. Never blocks or mutates."
   },
   "memory_session_start": {
     "article": "Art. III, IX",
+    "value": "A new session starts knowing what the last one learned.",
     "note": "Inject memory index + resume snapshot at session start"
   },
   "memory_stop": {
     "article": "Art. IX",
+    "value": "What you decide in conversation is captured before the session ends.",
     "note": "Auto-extract memory candidates each turn-end"
   },
   "harness_continuation": {
     "article": "Art. V",
-    "note": "Three-rung gate re-fires `Skill(harness)` only mid-flow; silent otherwise; never writes consent. (annex)"
+    "value": "A workflow interrupted mid-flow picks itself back up.",
+    "note": "Disjunctive gate: Path A re-fires `Skill(harness)` when the loop stopped mid-flow, Path B resumes after a consent command. Silent on `parked` and `done`; never writes consent. (annex)"
   },
   "memory_pre_compact": {
     "article": "Art. IX",
+    "value": "A compaction cannot lose your place.",
     "note": "Capture resume snapshot before context compaction"
   },
   "consent_gate_grant": {
     "article": "Art. IV gates A/B/C, Art. VII",
+    "value": "Claude cannot forge your consent.",
     "note": "Detect consent commands in user input and write the gate marker, OUTSIDE Claude's tool boundary"
   }
 }
