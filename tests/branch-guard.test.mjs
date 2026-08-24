@@ -5,7 +5,7 @@
 // The decision is a pure exported `decide(inputs)`; main() gathers inputs and
 // emits. We test the pure function across the spec's AC-002 matrix, the new
 // `currentBranch()` common.mjs primitive it composes, and the governance
-// lockstep (on disk + wired after track_guard + roster 26 reconciled).
+// lockstep (on disk + wired after track_guard + roster 27 reconciled).
 //
 // Run: node --test tests/branch-guard.test.mjs
 
@@ -105,7 +105,7 @@ describe('currentBranch — lib/common.mjs primitive', () => {
   });
 });
 
-describe('branch_guard — governance lockstep (roster 26)', () => {
+describe('branch_guard — governance lockstep (roster 27)', () => {
   it('test_when_governance_surfaces_then_hook_wired_and_counted', () => {
     const guardSrc = read('.claude/hooks/branch_guard.mjs');
     assert.match(guardSrc, /export function decide/, 'pure decide() is exported');
@@ -121,7 +121,7 @@ describe('branch_guard — governance lockstep (roster 26)', () => {
 
     const roster = read('.claude/skills/audit-baseline/expected-baseline.mjs');
     assert.match(roster, /'branch_guard'/, 'EXPECTED_HOOKS roster includes branch_guard');
-    assert.equal(EXPECTED_HOOKS.size, 26, 'declared hook roster is 26');
+    assert.equal(EXPECTED_HOOKS.size, 27, 'declared hook roster is 27');
 
     const claude = read('CLAUDE.md');
     assert.match(claude, new RegExp(`${EXPECTED_HOOKS.size} hooks`),

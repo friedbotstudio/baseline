@@ -218,11 +218,19 @@ describe('executable-shape derivation drives subcommand classification', () => {
       'the shape `git commit -m "$(git restore x)"` is denied',
       'ENTRY',
     ].join('\n');
-    assert.equal(gitSubcommandInvoked(cmd, 'commit'), true, 'raw string DOES look like a commit (the bug)');
+    // The raw string used to misclassify, and every caller had to remember to
+    // pre-strip. `executedFragments` now strips at its own entry, so the walker
+    // is correct at the source rather than correct-if-you-remember. Callers that
+    // still pre-strip are unaffected — stripping twice is a no-op.
+    assert.equal(
+      gitSubcommandInvoked(cmd, 'commit'),
+      false,
+      'the walker strips heredoc bodies itself; a cat heredoc body is data'
+    );
     assert.equal(
       gitSubcommandInvoked(stripQuotedHeredocBodies(cmd), 'commit'),
       false,
-      'the executable shape is not a commit — a cat heredoc body is data'
+      'pre-stripping stays idempotent'
     );
   });
 

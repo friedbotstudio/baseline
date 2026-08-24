@@ -23,8 +23,12 @@ describe('gate-collapse rename — governance lockstep (AC-005)', () => {
     assert.ok(!EXPECTED_HOOKS.has('spec_approval_guard'), 'spec_approval_guard must be gone (renamed)');
   });
 
-  it('test_when_hook_count_read_then_still_26', () => {
-    assert.equal(EXPECTED_HOOKS.size, 26, 'rename is count-neutral — hook count stays 26');
+  // The claim is that the gate-collapse rename was count-neutral, not that the
+  // roster is any particular size. The literal moves when a hook is genuinely
+  // added — state_write_guard took it from 26 to 27 — and a rename must never
+  // move it.
+  it('test_when_hook_count_read_then_still_27', () => {
+    assert.equal(EXPECTED_HOOKS.size, 27, 'rename is count-neutral — hook count stays 27');
   });
 
   it('test_when_expected_commands_read_then_approve_direction_present_approve_spec_absent', () => {

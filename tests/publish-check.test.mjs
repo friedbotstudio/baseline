@@ -128,7 +128,12 @@ describe('check-files-diff (AC-002, AC-007)', () => {
     const result = spawnSync('node', [CHECK_FILES_DIFF], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
-      timeout: 30_000,
+      // 180s, matching the heavyweight spawns elsewhere in this file. The script
+      // runs `npm pack --dry-run` over the whole package — 2s on an idle machine,
+      // but the old 30s cap killed it under full-suite load, and spawnSync reports
+      // a kill as status=null, so the binding verify verdict read FAIL on machine
+      // load rather than on anything under test.
+      timeout: 180_000,
     });
     assert.equal(
       result.status,

@@ -26,6 +26,7 @@ import { writeWorkspaceConcept, writeWorkspaceElement } from './helpers/workspac
 const SESSION_START = '.claude/hooks/lib/memory_session_start.mjs';
 const GOVERNED_MEMORY = '.claude/hooks/lib/governed-memory.mjs';
 const WRITE_SET_PROFILE = '.claude/hooks/lib/write-set-profile.mjs';
+const CORPUS_REFERENCE = '.claude/hooks/lib/corpus-reference.mjs';
 const RESOLVE = '.claude/skills/memory-index/resolve.mjs';
 const STALE_ELEMENTS = '.claude/skills/memory-sync/stale-elements.mjs';
 const DIGEST = '.claude/skills/workspace/digest.mjs';
@@ -584,7 +585,7 @@ describe('AC-010 — the preflight agrees with the guard', () => {
   });
 
   it('test_when_ref_is_malformed_then_both_require_the_full_diagram_set', async () => {
-    const profile = await importFresh(WRITE_SET_PROFILE);
+    const profile = await importFresh(CORPUS_REFERENCE);
     assert.deepEqual(profile.elementReferences('@ref element:Bad_Id'), [],
       'a malformed token yields no id, so no caller strips the structural kinds');
 
@@ -601,7 +602,7 @@ describe('AC-010 — the preflight agrees with the guard', () => {
   });
 
   it('test_when_element_references_extracted_then_it_shares_the_module_regex', async () => {
-    const profile = await importFresh(WRITE_SET_PROFILE);
+    const profile = await importFresh(CORPUS_REFERENCE);
     assert.ok(profile.STRUCTURAL_KINDS instanceof Set, 'the kind set is shared, not restated per caller');
     assert.deepEqual(
       [...profile.STRUCTURAL_KINDS].sort(),
