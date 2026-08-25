@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+    "gitmcp": {
+      "type": "http",
+      "url": "https://gitmcp.io/docs"
     },
     "plantuml": {
       "command": "npx",
