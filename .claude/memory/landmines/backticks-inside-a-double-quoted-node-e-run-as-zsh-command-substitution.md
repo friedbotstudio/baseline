@@ -4,7 +4,6 @@ category: landmines
 scope: [tdd, chore, implement, simplify, integrate]
 verified-at: 290a41b
 last-touched: 2026-08-25
-governs: .claude/skills/**
 ---
 
 - **The trap.** `node -e "…"` under this repo's default shell (zsh) still performs command substitution inside the double quotes. A backtick in the JavaScript — common when the snippet builds a template literal or prints a markdown code fence — is read by the shell, not by node. The shell runs whatever sits between the backticks and splices its stdout into the program before node ever sees it.
