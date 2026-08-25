@@ -1,3 +1,10 @@
+## [0.26.2](https://github.com/friedbotstudio/baseline/compare/v0.26.1...v0.26.2) (2026-08-25)
+
+
+### Bug Fixes
+
+* **track-guard:** move gate A off the retired review phase, correct spec-entry's entry phase ([3c08c8a](https://github.com/friedbotstudio/baseline/commit/3c08c8a7de19d14e429d866652b3284c170ad636))
+
 ## [0.26.1](https://github.com/friedbotstudio/baseline/compare/v0.26.0...v0.26.1) (2026-08-25)
 
 
