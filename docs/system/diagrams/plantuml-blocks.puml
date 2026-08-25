@@ -1,4 +1,4 @@
 !startsub plantuml_blocks
 ' @kind c4_component
-Component(plantuml_blocks, "plantuml-blocks", "c4_component")
+Component(plantuml_blocks, ".claude/hooks/lib/plantuml-blocks.mjs", "component", "Review fanout")
 !endsub

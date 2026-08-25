@@ -1,7 +1,7 @@
 ---
 name: research
 owner: baseline
-description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs (context7 MCP is the default source) — never in training-data recall. Output lives at `docs/research/<slug>.md`. Candidate ranking and the memo execute in main context; doc/source gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
+description: Workflow Phase 3 — Research and Solution Exploration. Surfaces 2–4 candidate solution approaches with concrete tradeoffs, grounded in current library docs (fetched through the provider named in `.claude/docs-provider.json`) — never in training-data recall. Output lives at `docs/research/<slug>.md`. Candidate ranking and the memo execute in main context; doc/source gathering MAY be delegated to read-only advisory subagents (seed.md §4.2-A).
 ---
 
 You are surfacing a small set of candidate approaches to a task, with honest tradeoffs, so the spec author can pick one. Decisions are not made here — the human reviewer decides at `/spec`. Your job is to lay out the option space.
@@ -17,14 +17,13 @@ You are surfacing a small set of candidate approaches to a task, with honest tra
 - The BRD at `docs/brd/<slug>.md` if present — NFR-### requirements (latency, compliance, etc.).
 - The existing tech stack — read `package.json`, `pyproject.toml`, `go.mod`, lockfiles.
 
-# Mandatory: verify library APIs against current docs (context7 is the default)
+# Mandatory: verify library APIs against current docs (the provider is a default)
 
-For any library you intend to cite, verify its API against current documentation — never training recall. The default source is the `context7` MCP:
+For any library you intend to cite, verify its API against current documentation — never training recall.
 
-1. `mcp__plugin_context7_context7__resolve-library-id`
-2. `mcp__plugin_context7_context7__query-docs`
+The MCP server that fetches those docs is named in `.claude/docs-provider.json`; resolve it with `readDocsProvider` from `.claude/skills/lib/docs-provider.mjs`, which falls back to the shipped default when the pointer is absent or unreadable. Use that server's own library-resolution and documentation-fetch tools — read their names from the tool list rather than assuming a shape, because a project may point at a different provider.
 
-**Never cite an API from memory.** Record the version present in the lockfile and confirm the docs match that major version. If context7 has no coverage (or the project doesn't ship it), fall back to `WebFetch` against the library's official docs / `llms.txt` and note the source. Any current-docs source satisfies the rule — context7 is the convenient default, not a hard requirement (seed.md §2.5).
+**Never cite an API from memory.** Record the version present in the lockfile and confirm the docs match that major version. If the provider has no coverage (or the project ships none), fall back to `WebFetch` against the library's official docs / `llms.txt` and note the source. Any current-docs source satisfies the rule — the declared provider is the convenient default, not a hard requirement (seed.md §2.5).
 
 # Method
 
@@ -46,7 +45,7 @@ For any library you intend to cite, verify its API against current documentation
 
    For every hit you reuse, cite its `path`; consume `docs/scout/<slug>.md` when present; then derive only the genuine **delta** not already covered. Empty archive → no hits → derive fresh as below.
 1. **Identify libraries and frameworks** the solution would likely touch.
-2. **Verify each library API** against current docs (context7 default, above).
+2. **Verify each library API** against current docs (the declared provider, above).
 3. **For each candidate**, evaluate against:
    - Fit with existing patterns (per scout report).
    - YAGNI: does it need abstractions beyond what this task requires?
@@ -69,7 +68,7 @@ Write the memo to `docs/research/<slug>.md`. Format:
 ## Candidate A: <short name>
 - **Summary**: <1–2 sentences>
 - **API references (current)**:
-  - `<lib>@<version>` — <specific API> — <context7 or doc URL>
+  - `<lib>@<version>` — <specific API> — <provider citation or doc URL>
 - **Fits**: <yes/no — anchored to a Scout observation>
 - **Tests it enables**: <kinds of tests>
 - **Tradeoffs**: <honest, not marketing>
@@ -90,7 +89,7 @@ Tell the user: `Research memo at <path>. Next: /spec.`
 # Constraints
 
 - **No code generation.** Memo only.
-- **No API assertion without a context7/docs reference.** "Unable to verify" is the honest answer when you hit a gap; do not guess.
+- **No API assertion without a provider or docs reference.** "Unable to verify" is the honest answer when you hit a gap; do not guess.
 - **No reimplementing what an approved dependency provides** (YAGNI, per seed.md).
 - **Prefer 2–3 candidates over 6+.** Half-baked options are noise.
 - **The recommendation is a recommendation.** The human reviewer decides at `/spec`.

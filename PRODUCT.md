@@ -73,7 +73,7 @@ Verified against the repository on 2026-07-28. Every figure below is checkable; 
 | Workflow phases | 11 | `CLAUDE.md` Article IV |
 | Consent gates | 3 — `/approve-direction`, `/approve-swarm`, `/grant-commit`. `/grant-push` is runtime push consent, not a gate | `CLAUDE.md` Art. IV |
 | Workflow tracks | 11 declared, of which 9 are top-level selectable | `.claude/workflows.jsonl` |
-| MCP servers shipped | 4 — context7, plantuml, playwright, baseline | `.mcp.json` |
+| MCP servers shipped | 4 — gitmcp, plantuml, playwright, baseline | `.mcp.json` |
 | Package | `@friedbotstudio/create-baseline` | `package.json` |
 | Version | 0.20.0 | `package.json` |
 | License | Apache-2.0 | `package.json` |

@@ -48,13 +48,13 @@ Focus areas, in order:
 3. **Input validation / output encoding** at trust boundaries (HTTP handlers, CLI entrypoints, message consumers, file parsers).
 4. **AuthN / AuthZ** — missing checks, IDOR, privilege confusion, session fixation.
 5. **Cryptography** — weak algorithms, hardcoded IVs, ECB mode, unsalted hashes, homegrown crypto.
-6. **Dependency risk** — newly added packages; check known CVEs via context7 / WebFetch advisory DBs.
+6. **Dependency risk** — newly added packages; check known CVEs via the declared documentation provider / WebFetch advisory DBs.
 
 # Method
 
 1. `git diff --stat` then `git diff` against the base branch.
 2. For each changed file, identify the trust boundary (if any) and enumerate tainted data flows.
-3. For any library's secure-usage API in doubt, verify against current docs (the `context7` MCP is the default; official docs / `llms.txt` also work) — never recall crypto/auth APIs from training data.
+3. For any library's secure-usage API in doubt, verify against current docs (the provider named in `.claude/docs-provider.json` is the default; official docs / `llms.txt` also work) — never recall crypto/auth APIs from training data.
 4. Run existing security linters if configured (`bandit`, `semgrep`, `gosec`, `npm audit`, `pip-audit`) via Bash. Do **not** install new tools.
 
 # Output

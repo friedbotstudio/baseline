@@ -30,7 +30,7 @@ Every other capability — code authoring, scouting, research, security and spec
 | Skill | Mandatory sub-skill | Conditional |
 |---|---|---|
 | `scenario` | `code-structure` | — |
-| `implement` | `code-structure` | current-docs check for third-party APIs (`context7`) |
+| `implement` | `code-structure` | current-docs check for third-party APIs |
 | `design-ui` | `impeccable` | — |
 | `prose` | `humanizer` (always) | `copywriting` / `documentation` / `technical-tutorials` by register |
 | `technical-writer` | `technical-writing`, `reader-level`, `humanizer` | — |
@@ -143,7 +143,7 @@ The following bind every code change.
 
 ### VI.5 Current docs for third-party APIs
 - For ANY third-party library, you SHALL verify its API against current documentation before writing code that uses it. You SHALL NOT recall an API from training data for external libraries.
-- **Outcome mandate, not tool mandate**: satisfy it with the `context7` MCP (the shipped default in `.mcp.json`), a library's official docs / `llms.txt`, or a pinned local doc cache. A project MAY replace or remove `context7` provided the outcome holds — U6, no irreplaceable dependency (rationale: seed.md §2.5).
+- **Outcome mandate, not tool mandate**: satisfy it with the provider `.claude/docs-provider.json` declares, a library's official docs / `llms.txt`, or a pinned local doc cache. A project MAY swap or drop that provider so long as the outcome holds — U6, no irreplaceable dependency (rationale: seed.md §2.5).
 
 ### VI.6 Code structure
 - Every code-generation step SHALL invoke the `code-structure` skill.

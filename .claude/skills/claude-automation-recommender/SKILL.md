@@ -21,7 +21,7 @@ The baseline already provides the following. **Do not recommend any of these as 
 - **1 subagent**: `swarm-worker` — the only subagent in the baseline. It executes pre-decided recipes from main context inside isolated git worktrees during `/swarm-dispatch`. **No new subagents should be recommended.** All decision-making lives in skills running in main context, where conversational nuance and full file visibility are preserved.
 - **36 skills**: artifact drafting (4), workflow phases (10), phase workers — `scenario`, `implement`, `verify`, `prose`, `design-ui` (5), spec helpers — `spec-lint`, `spec-render`, `spec-diagram-review`, `spec-traceability-review` (4), orchestration — `harness`, `swarm-plan`, `swarm-dispatch` (3), memory — `memory-sync` (1), audit — `audit-baseline` (1), alternate tracks — `chore` (1), plus seven shared globals: `claude-automation-recommender`, `code-structure`, `humanizer`, `documentation`, `technical-tutorials`, `copywriting`, `impeccable`. Several skills mandatorily invoke another skill: `scenario` and `implement` invoke `code-structure`; `design-ui` invokes `impeccable`; `prose` invokes `humanizer` (always) and `copywriting` (when persuasive). The `technical-tutorials` skill carries its audience-context reference doc inline at `.claude/skills/technical-tutorials/references/audience-context.md` (consolidated 2026-04-28 from the upstream `developer-audience-context` skill).
 - **4 commands**: `/approve-direction`, `/approve-swarm`, `/grant-commit`, `/init-project`.
-- **3 MCP servers**: `context7` (library docs), `plantuml` (diagram rendering), `playwright` (Microsoft-official browser automation; used by `design-ui` for cross-engine visual verification, by `integrate` for optional cross-engine smoke).
+- **3 MCP servers**: the documentation provider named in `.claude/docs-provider.json` (library docs), `plantuml` (diagram rendering), `playwright` (Microsoft-official browser automation; used by `design-ui` for cross-engine visual verification, by `integrate` for optional cross-engine smoke).
 
 Your job is to surface **gaps** the baseline doesn't cover for *this project*. Examples of valuable recommendations:
 
@@ -92,7 +92,7 @@ Schema for the recommendation:
 Rules:
 
 - **Every skill listed must exist on disk** *or* appear earlier in `additions.skills[]` so it's installed before the worker re-render runs. `/init-project` enforces this; emit it correctly and the render lands cleanly.
-- **Stack skills only.** Generic discipline (`code-structure`, `humanizer`) is already invoked by the worker's two mandatory skills (`scenario` → `code-structure`; `implement` → `code-structure` + `context7`). Don't duplicate.
+- **Stack skills only.** Generic discipline (`code-structure`, `humanizer`) is already invoked by the worker's two mandatory skills (`scenario` → `code-structure`; `implement` → `code-structure` + the documentation provider). Don't duplicate.
 - **Don't recommend new subagent types.** The worker's job is execution, not judgment; specialization happens via skills loaded into its context, not via parallel agent personas. New decision-making roles belong in skills, which run in main context where context richness matters.
 
 ## Output Guidelines
@@ -141,7 +141,7 @@ ls -la src/ app/ lib/ tests/ components/ pages/ api/ 2>/dev/null
 | Frontend stack | React, Vue, Angular, Next.js | Playwright MCP, frontend skills |
 | Backend stack | Express, FastAPI, Django | API documentation tools |
 | Database | Prisma, Supabase, raw SQL | Database MCP servers |
-| External APIs | Stripe, OpenAI, AWS SDKs | context7 MCP for docs |
+| External APIs | Stripe, OpenAI, AWS SDKs | the declared documentation provider for docs |
 | Testing | Jest, pytest, Playwright configs | Testing hooks, subagents |
 | CI/CD | GitHub Actions, CircleCI | GitHub MCP server |
 | Issue tracking | Linear, Jira references | Issue tracker MCP |
@@ -157,7 +157,7 @@ See [references/mcp-servers.md](references/mcp-servers.md) for detailed patterns
 
 | Codebase Signal | Recommended MCP Server |
 |-----------------|------------------------|
-| Uses popular libraries (React, Express, etc.) | **context7** - Live documentation lookup |
+| Uses popular libraries (React, Express, etc.) | **the documentation provider** - Live documentation lookup, already shipped |
 | Frontend with UI testing needs | **Playwright** - Browser automation/testing |
 | Uses Supabase | **Supabase MCP** - Direct database operations |
 | PostgreSQL/MySQL database | **Database MCP** - Query and schema tools |
@@ -245,9 +245,9 @@ I've analyzed your codebase and identified the top automations for each category
 
 ### 🔌 MCP Servers
 
-#### context7
+#### [server name]
 **Why**: [specific reason based on detected libraries]
-**Install**: `claude mcp add context7`
+**Install**: `claude mcp add [server name]`
 
 ---
 

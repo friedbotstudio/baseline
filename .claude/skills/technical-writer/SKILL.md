@@ -20,7 +20,7 @@ Nothing is drafted until this is done. Produce a source table before writing a s
 1. **Read the implementation, not the description of it.** For each claim the page will make, open the file that makes it true — the hook script, the config key, the CLI parser, the schema. Record `path:line`.
 2. **Run the thing** where running it is cheap. A flag table copied from a parser is right; a flag table recalled is not. Capture real output for the examples.
 3. **Reconcile against the governing docs.** Where this repository has a constitution, a genesis spec, or a manifest, the page must not contradict it. Note the Article or section each claim answers to.
-4. **Check third-party APIs against current documentation** before describing them (`context7`, official docs, or a pinned local cache). Never from recall.
+4. **Check third-party APIs against current documentation** before describing them (the declared documentation provider, official docs, or a pinned local cache). Never from recall.
 5. **List what you could not verify.** Anything left unverified is cut from the draft or written as an explicit open question. It is never softened into a vague sentence.
 
 Output of this step is a working note: claim → source → verified date. Every factual sentence in the finished page traces back to a row in it.

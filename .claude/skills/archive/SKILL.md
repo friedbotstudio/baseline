@@ -74,13 +74,21 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 
 5. **Do NOT move `workflow.json`.** `/commit` archives it as its first step so the phase ordering is preserved until the end.
 
-5.5. **Report corpus health, and repair nothing** (same flag gate as Step 3; skip when false):
+5.5. **Gate on corpus health, and repair nothing** (same flag gate as Step 3; skip when false):
 
    ```
-   node .claude/skills/system-reconcile/cli.mjs report --json
+   node .claude/skills/system-reconcile/cli.mjs report --gate --json
    ```
 
-   This invocation is **report-only**. Surface the seven sections to the user; repair nothing here. `docs/system/` SHALL be byte-identical between Step 3 completing and the workflow ending — Step 3 is the corpus's single writer on the primary tree, and `/system-reconcile` exposes no apply path a workflow phase can reach. A repair the report suggests is a human-confirmed invocation of `/system-reconcile`, never an automatic follow-up to archiving.
+   **A non-zero exit fails the phase.** Do not read the JSON and decide; the exit code is the verdict. Six of the seven sections gate — `stale`, `dangling`, `duplicateAnchors`, `orphanShards`, `unillustrated`, `missingKind` — and a breach names the section and the offending members. `gaps` is reported and never gates, because two gaps pre-date this rule and blocking on them would fail every workflow until two unrelated modules are anchored.
+
+   The gate also fails when the report **could not be produced**. Seven empty arrays are what a clean corpus, an opted-out project and a crashed read all return, so emptiness alone is not health — `reconcileForGate` carries the discriminator that tells them apart (security review 2026-08-07, MEDIUM #2, deferred until this gate needed it).
+
+   Until 2026-08-25 this step only printed, and that is precisely how a degraded corpus write reached a commit: it surfaced the breach and left the decision to a reader. A blocking rule nobody is obliged to act on is advice, so it is now an exit code.
+
+   **Still no repair path.** `docs/system/` SHALL be byte-identical between Step 3 completing and the workflow ending — Step 3 is the corpus's single writer on the primary tree, and `/system-reconcile` exposes no apply path a workflow phase can reach. A repair the gate demands is a human-confirmed invocation of `/system-reconcile`, never an automatic follow-up to archiving.
+
+   Ordering is load-bearing: Step 3 re-stamps the digest of every element whose anchor this landing touched, so a `stale` breach here is a real drift rather than the workflow's own edit awaiting its stamp.
 
 6. Append `"archive"` to `workflow.json → completed`.
 7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`." Include any non-empty `drift` or `unclaimed` from Step 3 and the Step 5.5 report — an unread gap report is the same as no gap report. A `specMissing: true` from Step 3 is reported too, and it invalidates the other arrays rather than joining them.

@@ -123,6 +123,17 @@ When you genuinely cannot disambiguate intent — the conflict has multiple plau
 
 Use this fallback sparingly. The rework's whole point is that LLM judgment exceeds `git merge-file` for structural conflicts; if you punt to NEEDS_USER_INPUT for trivial reconciliations, you defeat the purpose.
 
+## Changing the documentation provider
+
+An upgrade may bring a new default documentation provider — the MCP server that Article VI.5's current-docs check fetches through. The CLI carries a record of each retirement, so the merge drops the entry a rename replaced instead of leaving you carrying both forever. A provider you swapped in yourself is never touched: the merge only drops a server whose recorded replacement the incoming template actually ships.
+
+To change providers by hand, at any time:
+
+- **Self-hosting the current provider** — change that server's `url` in `.mcp.json` and stop. `.claude/docs-provider.json` already names it.
+- **A different provider entirely** — replace the server entry in `.mcp.json`, then set `provider` in `.claude/docs-provider.json` to the new entry's key. Do both, or the skills resolve a name nothing declares.
+
+Never reconcile a provider change into `CLAUDE.md` or `docs/init/seed.md`. Governance names the pointer, not the vendor, so a swap is a config edit and never an amendment.
+
 ## Constraints
 
 - **Validate `rel` before writing.** Before writing reconciled bytes to LOCAL, you SHALL verify that the resolved absolute path of `<target>/<rel>` is a descendant of `target`. A `rel` value that escapes the target tree (`../`, absolute path, symlink-resolved escape) SHALL be rejected as a `NEEDS_USER_INPUT` fallback with the reason `path-traversal-rejected`. The CLI's stage writer never produces escaping `rel` values, so this catches only tampered stage manifests from a local attacker with `.claude/state/` write access — defense in depth.

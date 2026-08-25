@@ -14,12 +14,16 @@ This runbook is operator-actionable from cold. No `@friedbotstudio/create-baseli
 
 | Prefix | Bump |
 |---|---|
-| `fix:`, `perf:` | patch (`X.Y.Z → X.Y.(Z+1)`) |
+| `fix:`, `perf:`, `refactor:` | patch (`X.Y.Z → X.Y.(Z+1)`) |
 | `feat:` | minor (`X.Y.Z → X.(Y+1).0`) |
-| `feat!:`, footer with `BREAKING CHANGE:` | major (`X.Y.Z → (X+1).0.0`) |
-| `chore:`, `docs:`, `style:`, `refactor:`, `test:`, `ci:` only | **no release** — workflow exits 0 without publishing |
+| `feat!:`, footer with `BREAKING CHANGE:` | minor (`X.Y.Z → X.(Y+1).0`) — **not** major |
+| `chore:`, `docs:`, `style:`, `test:`, `ci:` only | **no release** — workflow exits 0 without publishing |
 
 Multiple commit types: the highest bump wins.
+
+**A breaking change bumps minor, not major, and that is deliberate.** `.releaserc.json` carries `{"breaking": true, "release": "minor"}`, added in `0682a28` ("cap main at 0.x + breaking → minor") as an alpha safety belt while the package stays on `0.x`. Read the preset default instead of the config and you will predict `1.0.0` where the pipeline produces `0.26.0`. `tests/releaserc-runbook-parity.test.mjs` compares this table against the config on every run, so the two can no longer drift apart in silence.
+
+The `refactor:` row is the second place the stock preset would mislead you. Angular's default publishes nothing for a refactor; `{"type": "refactor", "release": "patch"}` promotes it, so a branch carrying only refactors still cuts a patch.
 
 ### Scope contract (which commits actually move the version)
 
@@ -28,15 +32,19 @@ The version bump is *the version of the package consumers install via `npx @frie
 | Scope | Bumps version? | Examples |
 |---|---|---|
 | `feat:`/`fix:` with no scope (or any product scope) | yes | `feat: add foo skill`, `fix(audit): correct hook count` |
+| any type scoped `(constitution)` | yes, always minor | `docs(constitution):`, `refactor(constitution):` |
 | `feat(release):`, `fix(release):` | no | release workflow, `.releaserc.json`, release scripts |
-| `feat(site):`, `fix(site):`, `docs(site):` | no | `site-src/**`, page-relative URL filter, Pages CNAME |
+| `feat(site):`, `fix(site):`, `docs(site):` | no | page-relative URL filter, Pages CNAME |
+| `feat(site-src):`, `fix(site-src):`, `docs(site-src):` | no | `site-src/**` — the docs-site source tree |
 | `feat(ci):`, `feat(actions):`, `chore(actions)(deps):` | no | `.github/workflows/**`, dependabot config, action SHA bumps |
 | `build:` | no | build scripts, `prepack`, manifest generation |
-| `chore:`, `docs:`, `style:`, `refactor:`, `test:` | no (preset default) | — |
+| `chore:`, `docs:`, `style:`, `test:` | no (preset default) | — |
 
 What ships to consumers (and therefore *can* bump the version): `.claude/**`, `src/**`, `bin/**`, `obj/template/**`, and `README.md`. Anything outside those prefixes should carry a non-product scope.
 
-The contract is enforced by `releaseRules` in `.releaserc.json` — scopes `release`, `site`, `ci`, `actions` and type `build` are demoted to `release: false`, which overrides the default rules even for a stray `feat!:` or `BREAKING CHANGE:` footer. The rule is a safety net, not a substitute for discipline: misclassified commits still pollute the changelog and surprise reviewers. When in doubt, ask whether `npx @friedbotstudio/create-baseline` consumers will see a behavioural difference. If no, the scope is non-product.
+`releaseRules` in `.releaserc.json` enforces the contract. Five scopes are demoted to `release: false` (`release`, `site`, `site-src`, `ci`, `actions`) along with the `build` type, and that demotion overrides the default rules even for a stray `feat!:` or a `BREAKING CHANGE:` footer. Two rules push the other way. `refactor` is promoted to `patch`, and any type scoped `constitution` is promoted to `minor`, which is why a `docs(constitution):` commit publishes where a bare `docs:` commit publishes nothing.
+
+The rules catch the common mistakes, but the commit message is still yours to get right. A misclassified commit pollutes the changelog and surprises reviewers, so when a scope is unclear, ask whether `npx @friedbotstudio/create-baseline` consumers will see a behavioural difference. If they will not, the scope is non-product.
 
 ### Channels
 

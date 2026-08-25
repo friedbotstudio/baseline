@@ -1,4 +1,4 @@
 !startsub state_write
 ' @kind c4_component
-Component(state_write, "state-write", "c4_component")
+Component(state_write, ".claude/hooks/lib/state-write.mjs", "component", "Guard substrate")
 !endsub

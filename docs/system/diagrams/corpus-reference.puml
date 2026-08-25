@@ -1,4 +1,4 @@
 !startsub corpus_reference
 ' @kind c4_component
-Component(corpus_reference, "corpus-reference", "c4_component")
+Component(corpus_reference, ".claude/hooks/lib/corpus-reference.mjs", "component", "Review fanout")
 !endsub

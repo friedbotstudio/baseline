@@ -17,7 +17,7 @@ Mechanical check that the baseline implementation matches its specification. Det
 | **Helper scripts** | `validate.mjs`, `swarm_merge.mjs`, `render.mjs`, `lint.mjs`, `archive.sh` present + executable |
 | **settings.json** | Every baseline hook is wired in the correct event/matcher block |
 | **project.json** | Every key listed in `seed.md` §13 Step 8 exists (values may be null pre-init) |
-| **.mcp.json** | `context7` and `plantuml` servers declared |
+| **.mcp.json** | the declared documentation provider and the `plantuml` server present |
 | **Vendored licenses** | `claude-automation-recommender/{LICENSE,NOTICE}` present (Apache 2.0 attribution) |
 | **Cross-doc counts** | Numeric claims in `CLAUDE.md`, `README.md`, and `docs/init/seed.md` match disk |
 
@@ -69,7 +69,7 @@ hook wired: setup_guard                    PASS
 …
 project.json: test.cmd                     PASS
 …
-mcp server: context7                       PASS
+mcp server: gitmcp                         PASS
 mcp server: plantuml                       PASS
 mcp server: playwright                     PASS
 recommender LICENSE                        PASS

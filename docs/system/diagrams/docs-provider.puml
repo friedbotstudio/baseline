@@ -1,0 +1,4 @@
+!startsub docs_provider
+' @kind c4_component
+Component(docs_provider, ".claude/skills/lib/docs-provider.mjs", "c4_component", "Project config")
+!endsub

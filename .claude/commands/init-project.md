@@ -114,6 +114,11 @@ Do each sub-step in order; if any fails, stop and surface the error before conti
    mkdir -p .claude/state/{spec_approvals,swarm_approvals,swarm,harness,init}
    ```
 2. **Add new MCP servers** (if any) → merge into `.mcp.json → mcpServers`.
+2a. **Confirm the documentation provider.** Article VI.5 requires a third-party API to be checked against current documentation before code is written against it, and `.claude/docs-provider.json` names the MCP server that does the fetching. The shipped default works out of the box; leave it alone unless the user wants something else. Two cases:
+   - **Self-hosting the shipped provider** — change only that server's `url` in `.mcp.json`. The pointer already names it, so it stays untouched.
+   - **A different provider entirely** — replace the server entry in `.mcp.json`, then set `provider` in `.claude/docs-provider.json` to the new entry's key. Both edits, or the skills resolve a name nothing declares.
+
+   Never edit `CLAUDE.md` or `docs/init/seed.md` to change a provider. Governance names the pointer, not the vendor, precisely so a swap is a config change.
 3. **Add new skills** (if any) → write `.claude/skills/<name>/SKILL.md`. Skills are landed *before* the swarm-worker re-render so any skill referenced by `additions.swarm_worker_skills` exists on disk when the worker file is written.
 4. **Re-render `swarm-worker`** with stack-specific skills, by rewriting its `skills:` block in place:
    - Read the installed worker at `.claude/agents/swarm-worker.md`. This file is already the fully-substituted body, so rewriting one frontmatter block is byte-identical to re-substituting the template — and unlike the template, it exists in every install. (The token template is a baseline **development** artifact; a consumer install has no `src/`, so a step that reads it there can never run.)
