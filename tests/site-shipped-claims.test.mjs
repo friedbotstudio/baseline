@@ -82,3 +82,52 @@ describe('T2 — shipped-count claims resolve from the shipped template', () => 
     }
   });
 });
+
+// The velocity page quotes this repository's own fitted envelope — a sample count
+// and a token figure, both hand-copied from a live measurement. Measured
+// 2026-08-25: the page said 25 samples and 37,348 tokens while the fitter read 28
+// and 39,536, and the sample terminal block beneath it still carried the older
+// pair, so the page disagreed with itself as well as with the corpus.
+//
+// A number nobody re-derives goes stale the moment the corpus grows. This asserts
+// the page against `envelopeFor` rather than against a second hand-copied literal,
+// so the only way to satisfy it is to read the real value.
+describe('site — a quoted envelope measurement matches the fitter', () => {
+  it('test_when_the_velocity_page_quotes_an_envelope_then_it_equals_envelopeFor', async () => {
+    const source = readFileSync(path.join(REPO_ROOT, 'site-src/velocity.njk'), 'utf8');
+    const mod = await import('../.claude/skills/harness/envelope.mjs');
+    const fitted = mod.envelopeFor({ rootDir: REPO_ROOT, track: 'tdd-quickfix' });
+
+    // Only assert while the fit is real. An unfitted repo quotes a shipped default,
+    // and pinning the page to that would be pinning it to a placeholder.
+    if (!fitted?.fitted) {
+      assert.ok(true, 'envelope is unfitted here; nothing measured to hold the page to');
+      return;
+    }
+
+    const grouped = (n) => Number(n).toLocaleString('en-US');
+    const stale = [];
+    for (const quoted of source.matchAll(/([\d,]{4,})\s*<\/span>\s*tokens\s*<span[^>]*>\(fitted, (\d+) samples\)/g)) {
+      if (quoted[1] !== grouped(fitted.envelope_tokens)) {
+        stale.push(`sample block says ${quoted[1]} tokens, fitter says ${grouped(fitted.envelope_tokens)}`);
+      }
+      if (Number(quoted[2]) !== fitted.sample_count) {
+        stale.push(`sample block says ${quoted[2]} samples, fitter says ${fitted.sample_count}`);
+      }
+    }
+    for (const quoted of source.matchAll(/has (\d+) archived <code[^>]*>tdd-quickfix<\/code> runs[^.]*\.\s*They put the envelope for that track at ([\d,]+) tokens/g)) {
+      if (Number(quoted[1]) !== fitted.sample_count) {
+        stale.push(`prose says ${quoted[1]} runs, fitter says ${fitted.sample_count}`);
+      }
+      if (quoted[2] !== grouped(fitted.envelope_tokens)) {
+        stale.push(`prose says ${quoted[2]} tokens, fitter says ${grouped(fitted.envelope_tokens)}`);
+      }
+    }
+
+    assert.deepEqual(
+      stale,
+      [],
+      'the velocity page quotes this repo\'s own envelope fit; re-read it from `envelopeFor` rather than leaving a number the corpus has already moved past',
+    );
+  });
+});
