@@ -498,3 +498,60 @@ describe('package.json — semantic-release devDeps + release script', () => {
       'package.json `files:` must remain ["bin/", "src/", "obj/template/", "README.md"] — regression guard for the pack contract');
   });
 });
+
+// ---------- Domain: release-safety-2026-08-25 T2 — AC-005 / AC-006 ----------
+//
+// The pre-publish gate ran a pack dry-run, a files-diff and a tarball smoke test.
+// Those prove the tarball is intact and installable; they ran none of the suite.
+// `release` already declares `needs: pre-publish-checks`, so wiring the suite into
+// that dependency blocks the publish inside the same run — no branch protection
+// involved, because protection gates merges and this gates the release.
+
+const SUITE_RUN_RE = /npm\s+(run\s+)?test\b|node\s+--test\b/;
+
+describe('release-workflow — a red suite cannot publish (T2)', () => {
+  it('test_when_release_workflow_parsed_then_release_needs_a_job_that_runs_the_suite', () => {
+    const text = readReleaseYaml();
+    const releaseBlock = jobBlock(text, 'release');
+    assert.ok(releaseBlock, 'the `release` job must exist');
+
+    const needs = releaseBlock.match(/^ {4}needs:\s*(.+)$/m);
+    assert.ok(needs, 'the `release` job must declare `needs:`');
+
+    const dependency = needs[1].trim().replace(/^\[|\]$/g, '').split(',')[0].trim();
+    const scripts = jobRunScripts(text, dependency);
+    assert.match(
+      scripts,
+      SUITE_RUN_RE,
+      `the job \`release\` depends on (${dependency}) must run the full test suite; a red suite currently reaches npm because no job does`,
+    );
+  });
+
+  it('test_when_the_suite_step_is_read_then_it_declares_no_continue_on_error', () => {
+    const text = readReleaseYaml();
+    const block = jobBlock(text, 'pre-publish-checks');
+    assert.ok(block, 'the `pre-publish-checks` job must exist');
+    assert.doesNotMatch(
+      block,
+      /continue-on-error:\s*true/,
+      'a step allowed to continue on error cannot gate the release',
+    );
+  });
+
+  it('test_when_prepublish_steps_ordered_then_the_suite_precedes_publish_check', () => {
+    const text = readReleaseYaml();
+    const block = jobBlock(text, 'pre-publish-checks');
+    assert.ok(block, 'the `pre-publish-checks` job must exist');
+
+    const lines = block.split('\n');
+    const suiteAt = lines.findIndex((line) => /^\s*run:/.test(line) && SUITE_RUN_RE.test(line));
+    const publishCheckAt = lines.findIndex((line) => /^\s*run:.*publish:check/.test(line));
+
+    assert.ok(suiteAt >= 0, 'pre-publish-checks must run the suite');
+    assert.ok(publishCheckAt >= 0, 'pre-publish-checks must still run publish:check');
+    assert.ok(
+      suiteAt < publishCheckAt,
+      `the suite must run before publish:check so the cheap failure comes first; suite at line ${suiteAt}, publish:check at ${publishCheckAt}`,
+    );
+  });
+});

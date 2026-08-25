@@ -27,7 +27,13 @@ const MAX_INFLIGHT_ROWS = 8;
 
 // Captured from CLAUDE.md before the Lever 3 relocation. Article VI is the
 // non-negotiable engineering rules; it ships byte-identical or this fails.
-const ARTICLE_VI_SHA256 = 'f0db0f6aa06360eb4b9914ef8f6f62955d2b8d02360b05222e8caff9b0b06a02';
+//
+// Re-pinned 2026-08-25 (release-safety, T7 — AC-021): VI.5 stopped naming a documentation
+// vendor and now cites `.claude/docs-provider.json`, so the outcome mandate reads
+// the same whichever provider a project configures. Re-pin and rewrite land in
+// ONE commit — split across two, the suite is red in between for a reason
+// indistinguishable from the accidental edit this pin exists to catch.
+const ARTICLE_VI_SHA256 = 'cf7bbd5e32758b228630c6561884245f9e8e7976109e44ba4cab746de55759d6';
 
 const DELETED_SKILLS = [
   'google-analytics',

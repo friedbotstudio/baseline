@@ -214,3 +214,59 @@ describe('Slice A — renamed tree is internally consistent', () => {
     assert.equal(result.exitCode, 0, 'a drifted mirror exits non-zero');
   });
 });
+
+// ---------- release-safety-2026-08-25 T7 — AC-018 / AC-019 ----------
+//
+// The context7 -> gitmcp retirement rides the same mechanism the sprint-channel
+// rename established. One frozen record, no new logic: without it a consumer
+// upgrading past the retirement would carry BOTH the retired stdio entry and its
+// replacement, forever, with no way to shed the stale one short of hand-editing.
+
+const GITMCP_SERVER = { type: 'http', url: 'https://gitmcp.io/docs' };
+
+describe('T7 — the docs-provider retirement rides the rename record', () => {
+  it('test_when_an_upgrade_merges_a_template_carrying_the_replacement_then_the_retired_entry_is_dropped', async () => {
+    const { tplDir, target } = await makeFixture({
+      templateMcp: { mcpServers: { gitmcp: GITMCP_SERVER, baseline: BASELINE_SERVER } },
+      targetMcp: { mcpServers: { context7: CONTEXT7, baseline: BASELINE_SERVER } },
+    });
+
+    const { merged } = await computeMergedMcpServers(join(tplDir, '.mcp.json'), join(target, '.mcp.json'));
+    const servers = JSON.parse(merged).mcpServers;
+
+    assert.ok('gitmcp' in servers, 'the replacement must be present after the merge');
+    assert.ok(
+      !('context7' in servers),
+      'the retired provider must be dropped, not carried alongside its replacement',
+    );
+  });
+
+  it('test_when_the_template_predates_the_replacement_then_the_retired_entry_is_kept', async () => {
+    const { tplDir, target } = await makeFixture({
+      templateMcp: { mcpServers: { context7: CONTEXT7, baseline: BASELINE_SERVER } },
+      targetMcp: { mcpServers: { context7: CONTEXT7, baseline: BASELINE_SERVER } },
+    });
+
+    const { merged } = await computeMergedMcpServers(join(tplDir, '.mcp.json'), join(target, '.mcp.json'));
+    const servers = JSON.parse(merged).mcpServers;
+
+    assert.ok(
+      'context7' in servers,
+      'the replacement must exist before the thing it replaces may be dropped, or the merge strips a server the consumer still needs',
+    );
+  });
+
+  it('test_when_a_consumer_added_server_is_merged_then_the_rename_record_leaves_it_alone', async () => {
+    const thirdParty = { command: 'npx', args: ['-y', 'acme-docs-mcp'] };
+    const { tplDir, target } = await makeFixture({
+      templateMcp: { mcpServers: { gitmcp: GITMCP_SERVER, baseline: BASELINE_SERVER } },
+      targetMcp: { mcpServers: { context7: CONTEXT7, 'acme-docs': thirdParty, baseline: BASELINE_SERVER } },
+    });
+
+    const { merged } = await computeMergedMcpServers(join(tplDir, '.mcp.json'), join(target, '.mcp.json'));
+    const servers = JSON.parse(merged).mcpServers;
+
+    assert.deepEqual(servers['acme-docs'], thirdParty, 'a server the template never named survives verbatim');
+    assert.ok(!('context7' in servers), 'the retired provider is still dropped alongside it');
+  });
+});

@@ -354,9 +354,15 @@ describe('AC-008 — /system-reconcile reports seven checks and writes nothing',
   it('test_when_reconcile_report_module_inspected_then_it_exports_no_writer', async () => {
     const report = await loadReport();
 
+    // Amended 2026-08-25 (release-safety, T8). The module gained two read-only
+    // exports so /archive Step 5.5 could gate on corpus health: reconcileForGate
+    // returns the report plus a produced flag (seven empty arrays mean "clean",
+    // "flag off" and "crashed" alike, so emptiness alone is not health), and
+    // gatingFailures projects it to the six sections that block. Neither writes.
+    // What D9 forbids is an apply path, and that is what is asserted here.
     assert.deepEqual(
       Object.keys(report).sort(),
-      ['runReconcile'],
+      ['gatingFailures', 'reconcileForGate', 'runReconcile'],
       'D9 — the module exposes no apply path a workflow phase could reach',
     );
 

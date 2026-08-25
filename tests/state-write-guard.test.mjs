@@ -174,8 +174,13 @@ describe('AC-016 — CLAUDE.md stays within its cap and Article VI is byte-ident
   // sha256-pinned. Both are asserted together so neither can be satisfied by
   // breaking the other.
   const MAX_CHARS = 28000;
+  // Re-pinned 2026-08-25 (release-safety, T7 — AC-021) alongside the copy in
+  // warm-context-diet.test.mjs: VI.5 stopped naming a documentation vendor and
+  // now cites `.claude/docs-provider.json`. Both pins move in the same commit as
+  // the rewrite — split apart, the suite is red in between for a reason
+  // indistinguishable from the accidental edit these pins exist to catch.
   const ARTICLE_VI_SHA256 =
-    'f0db0f6aa06360eb4b9914ef8f6f62955d2b8d02360b05222e8caff9b0b06a02';
+    'cf7bbd5e32758b228630c6561884245f9e8e7976109e44ba4cab746de55759d6';
 
   function articleSixSlice(text) {
     const start = text.indexOf('## Article VI ');

@@ -530,8 +530,13 @@ describe('AC-014 — the delta path is inert while the architecture-map flag is 
 
 // ─── The archive SOP — a verifier nothing calls is not a verifier ───
 
-describe('slice C wiring — /archive Step 5 calls the verifier and Step 5.5 only reports', () => {
-  it('test_when_the_archive_skill_is_read_then_step_5_calls_verify_and_apply_delta_and_step_5_5_is_report_only', () => {
+// Amended 2026-08-25 (release-safety, T8). Step 5.5 was report-only, and that is
+// exactly how a degraded corpus write reached a commit: it printed the breach and
+// left the decision to a reader. AC-023/AC-024 made it gate on a non-zero exit.
+// What this guard defends is unchanged and was never the printing — Step 5.5 must
+// still repair nothing, because Step 3 is the corpus's single writer.
+describe('slice C wiring — /archive Step 5 calls the verifier and Step 5.5 repairs nothing', () => {
+  it('test_when_the_archive_skill_is_read_then_step_5_calls_verify_and_apply_delta_and_step_5_5_repairs_nothing', () => {
     const text = readFileSync(ARCHIVE_SKILL, 'utf8');
 
     assert.match(text, /verifyAndApplyDelta/, 'Step 5 must invoke the one entry point D1 names');
@@ -541,7 +546,8 @@ describe('slice C wiring — /archive Step 5 calls the verifier and Step 5.5 onl
     );
     assert.match(text, /^\s*5\.5\.?\s/m, 'a Step 5.5 must exist');
     assert.match(text, /system-reconcile/, 'Step 5.5 must name the report skill');
-    assert.match(text, /report-only|report only/i, 'Step 5.5 must state that it repairs nothing');
+    assert.match(text, /repair nothing|no repair path/i, 'Step 5.5 must state that it repairs nothing');
+    assert.match(text, /--gate/, 'Step 5.5 must invoke the gating form, not the bare report');
 
     // Two things the rewrite must carry forward rather than drop. The quoted-array
     // warning is a landmine that already cost one silent no-op; the flag gate is
