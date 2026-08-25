@@ -2,7 +2,7 @@
 key: delta-fold-writes-a-degraded-shard-for-every-new-element-7f3a
 category: backlog
 scope: [archive, spec]
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-24
 raised-in-context: staleness-witness
@@ -10,6 +10,7 @@ verified-at: 2542786
 last-touched: 2026-08-24
 governs: .claude/skills/workspace/delta.mjs, .claude/skills/workspace/shards.mjs
 deferred: dependency
+superseded-at: 2026-08-25
 ---
 
 > The fold added one element and the corpus guard went red on the shard it wrote.

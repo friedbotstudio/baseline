@@ -1,0 +1,176 @@
+{
+  "request": "Fix the release-safety findings at HEAD 290a41b (degraded-shard fold turning the suite red, absent CI test gate, runbook bump table contradicting the release config, site-src escaping the no-release rule, spec-review verdict hiding a checker that never ran) AND retire context7, isolating the documentation provider behind a pointer file with gitmcp as the shipped default. Branch protection deferred to backlog by the engineer.",
+  "slug": "release-safety-2026-08-25",
+  "track_id": "power",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Four of the five derive from an artifact already on disk. T1 is backlog `delta-fold-writes-a-degraded-shard-for-every-new-element-7f3a`, raised 2026-08-24 against 2542786, which names the fix: the fold already holds the anchor and title and need only pass them as label and description. T4 and T5 are drift between two shipped files each, both read during the review: docs/runbooks/npm-publish.md:19 against .releaserc.json's `{breaking: true, release: minor}` from 0682a28, and the releaseRules `site` demotion against 12 commits using that scope versus 1 using `site-src`. T6 copies an in-repo pattern: checker-fanout.mjs:172 already calls describeInputState for the code-review phase; extending it to spec-review is the same call at a second site. T2 and T7 are novel — grepped .github/workflows/*.yml for `npm test` and `node --test` and found no match in any of the three workflows, so there is no precedent job to copy. T7 was folded in mid-spec on engineer instruction, before gate A, so one approval still covers the batch; it is novel in that no pointer indirection exists for any vendor in this repo today, but its upgrade half is pattern-copy from 6eebd07, which recorded the sprint-channel->baseline rename in src/cli/renames.js.",
+  "track_reason": "power over spec-entry, chosen by the engineer from a presented comparison. The six tickets touch six disjoint surfaces — workspace corpus code, CI workflow YAML, a runbook, the release config, the harness, and the MCP/governance chain — and only the power track's commit phase splits a landing into ordered Conventional Commits. Landing a product bugfix, a CI gate and a release-config change as one commit would make reverting any of them a revert of all three. The ticket set is human-confirmed: it is the enumerated finding list from the release-safety review, confirmed by the engineer's instruction to fix them.",
+  "skip_brainstorm": true,
+  "tickets": [
+    {
+      "id": "T1",
+      "title": "The delta fold writes a degraded shard for every new element, and the standing corpus guard is red because of it",
+      "surface": [
+        ".claude/skills/workspace/delta.mjs",
+        ".claude/skills/workspace/shards.mjs",
+        "docs/system/diagrams/corpus-reference.puml",
+        "docs/system/diagrams/plantuml-blocks.puml",
+        "docs/system/diagrams/spec-lint-checks.puml",
+        "docs/system/diagrams/state-write-guard.puml",
+        "docs/system/diagrams/state-write.puml"
+      ],
+      "risk": [],
+      "note": "BLOCKER — main is red. `delta.mjs:257` calls writeDiagramShard with `{kind, rootDir}` and nothing else. For an element with an existing shard, mergedFields preserves the real label/technology/description; for a NEW element the defaults land (label = elementId, technology = kind, description = null), a null description drops the fourth argument, and the line renders as the forbidden three-argument form. Five shards landed that way this cycle and tests/corpus-shard-preservation.test.mjs AC-007 fails naming all five. Two shipped guards contradict each other on this path and neither is wrong alone: `test_when_no_shard_exists_then_label_and_technology_take_their_defaults` pins the defaults, AC-007 forbids what they produce. The fold already holds what it needs — the same loop writes the element record, whose `anchor` is the label and whose `title` is the description. The five existing shards must be corrected in the same change or the guard stays red. VERIFY GAP worth recording: integrate ran green, then /archive wrote these shards, and no phase after /archive re-runs the suite. The guard's own failure message anticipates it — 'including this workflow's own /archive'."
+    },
+    {
+      "id": "T2",
+      "title": "No CI job runs the test suite, so a red suite publishes to npm",
+      "surface": [
+        ".github/workflows/release.yml"
+      ],
+      "risk": [
+        "security"
+      ],
+      "note": "Grepped all three workflows for `npm test` and `node --test`: no match. pre-publish-checks runs verify-action-shas, npm ci, npm audit signatures and `npm run publish:check` (pack dry-run + files-diff + smoke-tarball). Those prove the tarball is intact and installable; they run none of the 3310 tests. DESIGN NOTE resolved at triage: this does NOT require branch protection. `release` already declares `needs: pre-publish-checks`, so wiring the suite into that dependency blocks the publish inside the same run. Protection gates merges; this gates the release. Open question for the spec: whether the suite becomes a step in pre-publish-checks or a sibling job that `release` also needs — a sibling parallelises but costs a second `npm ci`."
+    },
+    {
+      "id": "T4",
+      "title": "The publish runbook contradicts the release config on the one bump that matters right now",
+      "surface": [
+        "docs/runbooks/npm-publish.md"
+      ],
+      "risk": [],
+      "note": "Runbook line 19 states `feat!:` and a BREAKING CHANGE footer bump major (X.Y.Z -> (X+1).0.0). `.releaserc.json` carries `{\"breaking\": true, \"release\": \"minor\"}`, added deliberately in 0682a28 ('cap main at 0.x + breaking -> minor (alpha safety belt)'). The runbook was never updated. It matters now: the unreleased set contains 6eebd07 `feat(mcp)!`, the first breaking commit since that override, so a reader following the runbook predicts 1.0.0 and gets 0.26.0. Docs-only. The fix states the override and names the commit that introduced it, so the next reader can see it was a choice. WIDENED at gate-A review by engineer: parity covers all four bump-table rows (fix/perf->patch, feat->minor, breaking->minor, chore/docs/test->no release) AND the channels table (main->latest X.Y.Z, next->next X.Y.Z-next.N) against .releaserc.json branches[]. Same test file and parser; marginal cost is a few assertions."
+    },
+    {
+      "id": "T5",
+      "title": "A docs-site commit scoped site-src escapes the no-release demotion the runbook declares",
+      "surface": [
+        ".releaserc.json",
+        "docs/runbooks/npm-publish.md"
+      ],
+      "risk": [],
+      "note": "releaseRules demote scopes `release`, `site`, `ci`, `actions` and type `build`. The runbook's scope contract names `site` and lists what ships to consumers as .claude/**, src/**, bin/**, obj/template/** and README.md — site-src/** is deliberately not on that list. 12 commits in history use `(site)`; exactly one uses `(site-src)`, 7fb7391 from the batch immediately before this one, and it is a docs-site-only change that will appear in the consumer changelog as a feature. That commit is landed and Article VII forbids amending it, so the repair is structural: demote `site-src` alongside `site`. Shares the runbook surface with T4 — the scope table needs the same edit — so the two must not be split across commits that contradict each other."
+    },
+    {
+      "id": "T6",
+      "title": "A spec-review CLEAN produced by a checker that could not run reads identically to a real one",
+      "surface": [
+        ".claude/skills/harness/checker-fanout.mjs"
+      ],
+      "risk": [],
+      "note": "checker-fanout.mjs:172 attaches `inputState` only when effectivePhase is 'code-review'. The spec-review phase gets no such annotation. It matters because spec-shippability is genuinely inert on every consumer install: `spec-shippability-review` carries no `owner: baseline`, build-template.sh prunes it, and the adapter loads its analyzer dynamically and returns `{findings: []}` on the catch. That fail-open is correct and deliberate — security review 2026-08-09 finding F-3 documents it, and a top-level import would break the whole fan-out at module load. What is missing is the annotation saying the checker never ran, so a consumer's spec-review verdict is indistinguishable from one where every checker executed and found nothing. Pre-existing, not introduced by the batch under review. Lowest priority of the five; it makes a verdict honest rather than fixing a break."
+    },
+    {
+      "id": "T7",
+      "title": "Retire context7 and isolate the documentation provider behind a pointer file",
+      "surface": [
+        ".claude/docs-provider.json",
+        "src/docs-provider.template.json",
+        ".claude/skills/lib/docs-provider.mjs",
+        ".mcp.json",
+        "src/cli/renames.js",
+        "CLAUDE.md",
+        "src/CLAUDE.template.md",
+        "docs/init/seed.md",
+        "src/seed.template.md",
+        ".claude/CONSTITUTION.md",
+        ".claude/skills/research/SKILL.md",
+        ".claude/skills/implement/SKILL.md",
+        ".claude/skills/spec/SKILL.md",
+        ".claude/skills/security/SKILL.md",
+        ".claude/skills/memory-sync/SKILL.md",
+        ".claude/skills/technical-writer/SKILL.md",
+        ".claude/skills/audit-baseline/SKILL.md",
+        ".claude/skills/claude-automation-recommender/SKILL.md",
+        ".claude/skills/audit-baseline/expected-baseline.mjs",
+        ".claude/skills/audit-baseline/checks/mcp-servers.mjs",
+        "README.md",
+        "PRODUCT.md",
+        ".claude/skills/upgrade-project/SKILL.md"
+      ],
+      "risk": [
+        "security"
+      ],
+      "note": "Engineer-directed, folded in pre-gate-A. MEASURED, not recalled: gitmcp.io/docs answers a streamable-HTTP initialize (200, mcp-session-id header, serverInfo GitMCP 1.1.0, protocol 2025-03-26), so the .mcp.json entry is {type:\"http\", url:\"https://gitmcp.io/docs\"} and NOT sse — Claude Code deprecates sse (\"Use HTTP servers instead\") and a url entry with no type is a configuration error that silently skips the server. Live tools/list returns five: match_common_libs_owner_repo_mapping, fetch_generic_documentation, search_generic_documentation, search_generic_code, fetch_generic_url_content. The first resolves a library NAME to owner/repo, which closes the shape gap against context7 library-id lookup; note the README says fetch_url_content but the wire says fetch_generic_url_content. DESIGN (engineer-directed): a pointer file names the MCP server acting as documentation fetcher; the constitution, seed and all 8 SKILL.md files stop naming a vendor and cite the pointer. A consumer self-hosting gitmcp changes only the .mcp.json url; a consumer switching provider changes the .mcp.json entry and the pointer name. TWO DELIBERATE ACTS: Article VI holds VI.5 and is sha256-pinned byte-identical (ARTICLE_VI_SHA256 f0db0f6a..., slice 3354 chars), so the rewrite re-pins the hash; CLAUDE.md is 27,995 chars against the 28,000 advisory target, five characters of headroom, and dropping the vendor name is expected to buy rather than spend. src/cli/renames.js records {from: context7, to: gitmcp, since: 0.26.0} so an upgrade sheds the old entry — same mechanism 6eebd07 used for sprint-channel->baseline. audit-baseline DEFAULT_MCP_SERVERS currently hardcodes context7 and becomes pointer-derived. RESOLVED at gate-A review: (a) the provider-replacement PROCEDURE lives in /init-project and /upgrade-project SKILL.md, not the constitution; (b) no pointer-vs-.mcp.json validation for now, engineer-confirmed; (c) gitmcp ships out of the box as the default, which the design already had."
+    },
+    {
+      "id": "T8",
+      "title": "The corpus health report at /archive Step 5.5 blocks instead of only reporting",
+      "surface": [
+        ".claude/skills/system-reconcile/cli.mjs",
+        ".claude/skills/system-reconcile/reconcile-report.mjs",
+        ".claude/skills/archive/SKILL.md"
+      ],
+      "risk": [],
+      "note": "Engineer-directed at gate-A review, answering the spec Open question about /archive being the one phase whose output nothing re-checks. Chosen shape: make the ALREADY-RUNNING seven-section report blocking on the six sections that are clean today (stale, dangling, duplicateAnchors, orphanShards, unillustrated, missingKind), and leave `gaps` advisory because 2 pre-exist (`.claude/skills/commit/cli.mjs` and `closure-precommit-check.mjs`, both unanchored) and blocking on them would fail every workflow until two unrelated modules are anchored. Measured today: gaps 2, every other section 0. IMPLEMENTATION NOTE: the gate must be an exit code from a helper, not prose in `archive/SKILL.md`. SOP prose is advisory to the model, and the entire theme of this batch is checks that do not actually check — a blocking rule that depends on Claude reading a JSON and choosing to stop is the same defect wearing a different hat. Adds a `--gate` flag to the existing `report` verb in `system-reconcile/cli.mjs`. This does NOT contradict spec §Behavior #3, which argued against re-running the full SUITE after /archive; that argument was about cost and about fixing shape at the writer. Making an already-running report blocking costs nothing and covers the categories the writer fix does not."
+    }
+  ],
+  "write_surface": [
+    ".claude/skills/**",
+    ".claude/hooks/**",
+    ".claude/*.json",
+    ".mcp.json",
+    "docs/system/diagrams/**",
+    ".github/workflows/**",
+    "docs/runbooks/**",
+    "docs/init/seed.md",
+    ".releaserc.json",
+    "CLAUDE.md",
+    "src/**",
+    "README.md",
+    "PRODUCT.md",
+    "tests/**",
+    ".claude/commands/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout"
+  ],
+  "completed": [
+    "spec",
+    "spec-shippability-review",
+    "approve-direction",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "delta-fold-writes-a-degraded-shard-for-every-new-element-7f3a"
+  ],
+  "created_at": 1787603000,
+  "updated_at": "2026-08-25T07:11:08.653Z",
+  "rightsize_base": [
+    "docs/handoff/consumer-defect-report-2026-08-24-response.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "attempts": {
+    "approve-direction": 4,
+    "tdd": 3
+  },
+  "power_batch_reviews": [
+    "T1:CLEAN",
+    "T2:CLEAN",
+    "T4:CLEAN",
+    "T5:CLEAN",
+    "T6:CLEAN",
+    "T7:CLEAN",
+    "T8:MEDIUM x1 (resolved in-cycle)"
+  ]
+}
