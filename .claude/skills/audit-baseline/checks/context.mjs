@@ -86,6 +86,6 @@ export function buildContext({ root, skipHashCheck }) {
     diskBaselineHooks, diskBaselineAgents, diskBaselineSkills,
     seedText: readText('docs/init/seed.md'),
     settingsText: readText('.claude/settings.json'),
-    srcExists, skipSrc: !srcExists, consumerManifest,
+    srcExists, skipSrc: consumerManifest, consumerManifest,
   });
 }

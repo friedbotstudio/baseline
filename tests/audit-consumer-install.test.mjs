@@ -68,7 +68,7 @@ describe('D2 — config parity across both tree shapes (AC-002, AC-003)', () => 
     );
   });
 
-  it('test_when_src_present_but_template_missing_then_config_parity_fails', async () => {
+  it('test_when_manifest_present_and_consumer_has_its_own_src_then_config_parity_passes', async () => {
     const { root } = makeProject();
     seedProjectJson(root);
     seedManifest(root);
@@ -78,8 +78,27 @@ describe('D2 — config parity across both tree shapes (AC-002, AC-003)', () => 
 
     assert.equal(
       status,
+      'PASS',
+      `manifest present means this is a consumer install; its own src/ (Rust, Python, Node, ...) is not ours to inspect and must not be searched for baseline templates. Got: ${detail}`,
+    );
+    assert.match(
+      detail,
+      /consumer install/i,
+      'the PASS must name the consumer-install reason so a skipped comparison is never mistaken for a verified one',
+    );
+  });
+
+  it('test_when_src_present_and_no_manifest_then_config_parity_fails', async () => {
+    const { root } = makeProject();
+    seedProjectJson(root);
+    mkdirSync(join(root, 'src'), { recursive: true });
+
+    const [, status, detail] = await parityRowFor(root);
+
+    assert.equal(
+      status,
       'FAIL',
-      'src/ present means this is a dev tree, so a missing project.template.json is a real defect and must stay a FAIL',
+      'no manifest means this is the baseline dev tree, so a missing project.template.json is a real defect and must stay a FAIL',
     );
     assert.match(detail, /src\/project\.template\.json/, 'the FAIL must name the file it could not read');
   });
