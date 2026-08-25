@@ -76,6 +76,13 @@ jobs:
         run: npm ci
       - name: Verify provenance + signatures of installed dependencies
         run: npm audit signatures
+      # Ordered before publish:check so the cheap failure comes first: the suite is
+      # the long pole, but a pack + install + smoke run costs more than re-running it.
+      # `release` declares `needs: pre-publish-checks`, so a red suite fails this job
+      # and the publish never starts. That gates the RELEASE; branch protection gates
+      # merges, and is not involved.
+      - name: Run the test suite
+        run: npm test
       - name: Pre-publish checks (precheck + files-diff + smoke-tarball)
         run: npm run publish:check
 
