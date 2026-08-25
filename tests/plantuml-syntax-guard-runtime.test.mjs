@@ -21,6 +21,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { JAR_SKIP } from './helpers/plantuml-jar.mjs';
+
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '..');
 const HOOK_SRC = join(REPO_ROOT, '.claude/hooks/plantuml_syntax_guard.mjs');
@@ -38,6 +40,8 @@ function buildSandbox({ withJar, strict = false }) {
     join(root, '.claude/project.json'),
     JSON.stringify({ configured: true, plantuml: { strict_syntax_check: strict } }, null, 2),
   );
+  // `withJar` degrades to a jar-less sandbox when the gitignored jar is absent,
+  // so any test whose assertion needs the jar must carry `{ skip: JAR_SKIP }`.
   if (withJar && existsSync(REAL_JAR)) {
     mkdirSync(join(root, '.claude/bin'), { recursive: true });
     cpSync(REAL_JAR, join(root, '.claude/bin/plantuml.jar'));
@@ -157,7 +161,7 @@ describe('plantuml_syntax_guard — opt-in strict syntax check', () => {
     assert.match(surfaced, /guide mode/i, 'guide-mode message must include "guide mode"');
   });
 
-  it('test_when_strict_on_and_java_absent_then_guide_mode_allows', () => {
+  it('test_when_strict_on_and_java_absent_then_guide_mode_allows', { skip: JAR_SKIP }, () => {
     const root = buildSandbox({ withJar: true, strict: true });
     const result = runGuard(root, specPayload(root, 'sample', `# spec\n\n${VALID_FENCE}`), {
       PATH: pathWithoutJava(),

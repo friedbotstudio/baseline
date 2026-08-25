@@ -1,9 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
+
+import { JAR_SKIP, vendoredJarBytes } from './helpers/plantuml-jar.mjs';
 
 const plantuml = await import('../src/cli/plantuml.js');
 
@@ -15,10 +17,6 @@ function fakeFetchOk(buffer) {
 
 function fakeFetchNetworkFail() {
   return async () => { throw new Error('ECONNREFUSED'); };
-}
-
-async function realJarBytes() {
-  return readFile('.claude/bin/plantuml.jar');
 }
 
 describe('fetchPlantumlIfMissing', () => {
@@ -42,10 +40,10 @@ describe('fetchPlantumlIfMissing', () => {
     assert.equal(result.outcome, 'SKIPPED_DRY_RUN');
   });
 
-  it('skips when target jar already present with matching sha256', async () => {
+  it('skips when target jar already present with matching sha256', { skip: JAR_SKIP }, async () => {
     const target = await mkdtemp(join(tmpdir(), 'pu-target-'));
     await mkdir(join(target, '.claude/bin'), { recursive: true });
-    await writeFile(join(target, '.claude/bin/plantuml.jar'), await realJarBytes());
+    await writeFile(join(target, '.claude/bin/plantuml.jar'), vendoredJarBytes());
 
     const result = await plantuml.fetchPlantumlIfMissing(target, {
       systemPlantumlPath: null,
@@ -54,9 +52,9 @@ describe('fetchPlantumlIfMissing', () => {
     assert.equal(result.outcome, 'SKIPPED_ALREADY_PRESENT');
   });
 
-  it('writes the jar when bytes match the pinned sha256', async () => {
+  it('writes the jar when bytes match the pinned sha256', { skip: JAR_SKIP }, async () => {
     const target = await mkdtemp(join(tmpdir(), 'pu-target-'));
-    const bytes = await realJarBytes();
+    const bytes = vendoredJarBytes();
 
     const result = await plantuml.fetchPlantumlIfMissing(target, {
       systemPlantumlPath: null,

@@ -80,7 +80,9 @@ function makeRepo({ commits = [], tag = null, releaserc = true, withRemote = fal
   for (const subject of commits) commit(dir, subject);
   if (withRemote) {
     const origin = tempDir('origin');
-    git(origin, 'init', '-q', '--bare');
+    // `-b main` explicitly — see the note in standup-remote-freshness.test.mjs:
+    // a bare init otherwise inherits the machine's `init.defaultBranch`.
+    git(origin, 'init', '-q', '--bare', '-b', 'main');
     git(dir, 'remote', 'add', 'origin', origin);
     git(dir, 'push', '-q', '-u', 'origin', 'HEAD');
   }

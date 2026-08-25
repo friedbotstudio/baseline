@@ -16,6 +16,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { JAR_SKIP } from './helpers/plantuml-jar.mjs';
+
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '..');
 const RENDER_SRC = join(REPO_ROOT, '.claude/skills/spec-render/render.mjs');
@@ -36,6 +38,8 @@ function buildSandbox({ withJar }) {
   mkdirSync(join(root, 'docs/specs'), { recursive: true });
   cpSync(RENDER_SRC, join(root, '.claude/skills/spec-render/render.mjs'));
   writeFileSync(join(root, 'docs/specs/sample.md'), FIXTURE_SPEC);
+  // `withJar` degrades to a jar-less sandbox when the gitignored jar is absent,
+  // so any test whose assertion needs the jar must carry `{ skip: JAR_SKIP }`.
   if (withJar && existsSync(REAL_JAR)) {
     mkdirSync(join(root, '.claude/bin'), { recursive: true });
     cpSync(REAL_JAR, join(root, '.claude/bin/plantuml.jar'));
@@ -99,7 +103,7 @@ describe('spec-render/render.mjs — java -jar rendering (B4)', () => {
     assert.ok(svgs.length > 0, `at least one .svg must exist under ${renderedDir}; got: "${svgs}"`);
   });
 
-  it('test_when_spec_render_runs_with_java_absent_then_exits_2_with_named_remedy', () => {
+  it('test_when_spec_render_runs_with_java_absent_then_exits_2_with_named_remedy', { skip: JAR_SKIP }, () => {
     const root = buildSandbox({ withJar: true });
     const r = runRender(root, { PATH: pathWithoutJava() });
     assert.equal(r.status, 2, `render must exit 2 when java is absent.\nstderr: ${r.stderr}`);

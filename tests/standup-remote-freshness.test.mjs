@@ -61,7 +61,12 @@ function makeOriginAndClone(prefix = 'standup-remote-') {
 
   git(work, 'init', '-q', '-b', 'main', '.');
   commitInto(work, 'seed');
-  spawnSync('git', ['init', '-q', '--bare', origin], { encoding: 'utf8' });
+  // `-b main` explicitly: a bare init otherwise inherits the machine's
+  // `init.defaultBranch`, so on a runner defaulting to `master` the origin's
+  // HEAD points at a branch nothing ever pushes. The clone then lands on an
+  // unborn branch with no upstream and every head comparison reads
+  // `not-comparable` — a green fixture that tests nothing.
+  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', origin], { encoding: 'utf8' });
   git(work, 'remote', 'add', 'origin', origin);
   git(work, 'push', '-q', 'origin', 'main');
 

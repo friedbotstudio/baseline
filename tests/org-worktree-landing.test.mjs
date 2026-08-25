@@ -248,11 +248,9 @@ test('test_when_the_roadmap_is_read_then_epic_11_row_d_is_superseded_by_this_epi
   assert.deepEqual(open, [], 'Epic 11 has no open rows left');
 });
 
-test('test_when_the_epic_state_is_read_then_no_slice_is_still_open', () => {
-  const state = JSON.parse(readFileSync(join(ROOT, '.claude/state/epic/mvp-sprint-parallel-cycles.json'), 'utf8'));
-  const open = (state.children || []).filter((c) => !CLOSED_STATUSES.includes(c.status));
-  assert.deepEqual(open.map((c) => c.slice), [], 'every registered child is closed');
-});
+// A companion assertion read `.claude/state/epic/*.json` to confirm every child
+// closed. That path is gitignored runtime state, so it exists only in the tree
+// that ran the epic. The roadmap assertion above carries the durable half.
 
 // --- AC-027: org mode ships off ---------------------------------------------
 

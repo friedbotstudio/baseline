@@ -67,6 +67,12 @@ jobs:
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history: site-updated-date-truth.test.mjs walks each page's commit
+          # log to find the last commit that changed its CONTENT (not just its date
+          # line). Under the default depth-1 checkout every page reports the push
+          # commit as its last edit, so every page looks staler than its frontmatter.
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
@@ -86,6 +92,13 @@ jobs:
       # `npm ci` runs `prepare`, not `prepack`, so nothing builds it implicitly.
       - name: Build the shipped template
         run: npm run build
+      # Four test files read the RENDERED docs site (obj/site/**) to check that
+      # every hook, track and nav link a page claims to list is actually on it.
+      # obj/ is gitignored build output, so a fresh checkout has none and those
+      # tests die on ENOENT. deploy-pages builds the site too, but that job runs
+      # after release — far too late to gate anything.
+      - name: Build the docs site
+        run: npm run build:site
       - name: Run the test suite
         run: npm test
       - name: Pre-publish checks (precheck + files-diff + smoke-tarball)

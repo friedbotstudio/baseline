@@ -13,15 +13,13 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, stat } from 'node:fs/promises';
+import { mkdtemp, mkdir, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const plantuml = await import('../src/cli/plantuml.js');
+import { JAR_SKIP, vendoredJarBytes } from './helpers/plantuml-jar.mjs';
 
-async function realJarBytes() {
-  return readFile('.claude/bin/plantuml.jar');
-}
+const plantuml = await import('../src/cli/plantuml.js');
 
 function fakeFetchOk(buffer) {
   return async () => buffer;
@@ -47,12 +45,12 @@ describe('plantuml.js — detectSystemPlantuml removed (D5)', () => {
 });
 
 describe('plantuml.js — fetchPlantumlIfMissing always-download (D5 + D1)', () => {
-  it('test_when_fetchPlantumlIfMissing_receives_systemPlantumlPath_opt_then_it_is_ignored_and_fetch_proceeds', async () => {
+  it('test_when_fetchPlantumlIfMissing_receives_systemPlantumlPath_opt_then_it_is_ignored_and_fetch_proceeds', { skip: JAR_SKIP }, async () => {
     const target = await mkdtemp(join(tmpdir(), 'pu-target-'));
     await mkdir(join(target, '.claude/bin'), { recursive: true });
     const result = await plantuml.fetchPlantumlIfMissing(target, {
       systemPlantumlPath: '/usr/local/bin/plantuml',
-      fetch: fakeFetchOk(await realJarBytes()),
+      fetch: fakeFetchOk(vendoredJarBytes()),
     });
     assert.equal(
       result.outcome,

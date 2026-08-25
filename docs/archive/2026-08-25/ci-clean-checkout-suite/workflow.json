@@ -1,0 +1,58 @@
+{
+  "request": "Make the test suite pass in a clean CI checkout: build the docs site and use a full-depth checkout in the release workflow, fix the bare-origin git fixture in two standup tests, gate the five PlantUML jar tests on jar presence, and delete the epic-state test that reads a gitignored live state file.",
+  "slug": "ci-clean-checkout-suite",
+  "track_id": "chore",
+  "novelty": "novel",
+  "novelty_evidence": "No spec chapter, roadmap item, or backlog entry covers CI portability of the test suite; searched .claude/memory/backlog/ and docs/specs/. The request derives from GitHub Actions run 32843157541 (17 failures) and a clean-clone replica that reproduced 16 of them.",
+  "track_reason": "",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".github/workflows/release.yml",
+    "tests/standup-remote-freshness.test.mjs",
+    "tests/standup-gather.test.mjs",
+    "tests/plantuml.test.mjs",
+    "tests/plantuml-fetch-always.test.mjs",
+    "tests/plantuml-syntax-guard-runtime.test.mjs",
+    "tests/spec-render-runtime.test.mjs",
+    "tests/org-worktree-landing.test.mjs"
+  ],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787659980,
+  "updated_at": 1787662487,
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs reported sensitive:false — the diff touches .github/workflows/ and tests/ only, no path in security.sensitive_globs",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no user-facing prose, count, or src/ template in the diff; tests/helpers/plantuml-jar.mjs follows the existing tests/helpers/ convention rather than introducing one",
+      "oracle": "chore-conditional"
+    }
+  ]
+}
