@@ -8,7 +8,8 @@ import { isAbsolute, join } from 'node:path';
 
 import { dispatch } from '../lib/argv.mjs';
 import { assertNoTraversal } from '../workspace/tree.mjs';
-import { runReconcile } from './reconcile-report.mjs';
+import { gatingFailures, reconcileForGate } from './reconcile-report.mjs';
+import { countRows, gateVerdict } from './gate-render.mjs';
 
 function corpusDir({ flags, root }) {
   const given = flags['spec-dir'];
@@ -18,18 +19,24 @@ function corpusDir({ flags, root }) {
   return join(root, given);
 }
 
+// `--gate` turns the report into an exit code. Step 5.5 of /archive used to print
+// this and leave the decision to a reader, which is how a wrong corpus write
+// reached a commit: a blocking rule nobody is obliged to act on is advice.
 function report(ctx) {
-  const data = runReconcile({ specDir: corpusDir(ctx), rootDir: ctx.root });
-  const rows = Object.entries(data).map(([check, result]) => {
-    const count = Array.isArray(result) ? result.length : Number(result ?? 0);
-    return `${check}: ${count}`;
-  });
-  return { data, text: rows.join('\n') + '\n' };
+  const { report: data, produced } = reconcileForGate({ specDir: corpusDir(ctx), rootDir: ctx.root });
+  if (!ctx.flags.gate) return { data, text: countRows(data).join('\n') + '\n' };
+
+  const failures = gatingFailures(data, { produced });
+  return {
+    data: { ...data, produced, failures },
+    text: [...countRows(data), ...gateVerdict(failures)].join('\n') + '\n',
+    exitCode: failures.length > 0 ? 1 : 0,
+  };
 }
 
 dispatch({
   name: 'system-reconcile',
   subcommands: {
-    report: { summary: 'the seven-check corpus health report', run: report },
+    report: { summary: 'the seven-check corpus health report (--gate to exit non-zero on a breach)', run: report },
   },
 });

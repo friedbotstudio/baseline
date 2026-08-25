@@ -25,8 +25,8 @@ import { stampElement } from './digest.mjs';
 import { architectureMapEnabled } from './flags.mjs';
 import { materialize } from './materialize.mjs';
 import { COUNT_ROW as README_COUNT_ROW, checkReadmeCounts } from './readme-gate.mjs';
-import { writeDiagramShard } from './shards.mjs';
-import { assertNoTraversal, readAll, readSourceText, writeSourceText } from './store.mjs';
+import { readShard, writeDiagramShard } from './shards.mjs';
+import { assertNoTraversal, readAll, readRecords, readSourceText, writeSourceText } from './store.mjs';
 
 const SECTION_RE = /^##\s+System\s+delta\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/im;
 const NONE_RE = /^\*?\(?\s*none\s*\)?\*?$/i;
@@ -230,6 +230,17 @@ function declareAnchor(specDir, { elementId, anchor, concept: conceptId }) {
 // batch reflects an intent nobody had. It also runs `materialize` once per landing
 // instead of once per row, which matters because it rewrites concept records whether
 // or not they changed.
+// Contributed ONLY to a shard that does not exist yet. `mergedFields` reads a
+// supplied field as an override, so passing the record's anchor unconditionally
+// would overwrite a hand-authored label — the destruction the writer's preservation
+// rule exists to prevent. Withholding them is what keeps both true: a fresh shard
+// gets the element's real anchor and title, an existing one keeps what it has.
+function seedFieldsFor(specDir, elementId, recordsById) {
+  if (readShard(specDir, elementId)) return {};
+  const record = recordsById.get(elementId);
+  return { label: record?.anchor ?? null, description: record?.title ?? null };
+}
+
 export function applyDelta({ confirmed = [], specDir, rootDir = process.cwd() } = {}) {
   if (!confirmed.length) return nothingApplied();
 
@@ -243,6 +254,20 @@ export function applyDelta({ confirmed = [], specDir, rootDir = process.cwd() } 
   for (const row of confirmed) declareAnchor(specDir, row);
   materialize({ specDir, rootDir });
 
+  // Read once, after materialize has written the records and before the loop reads
+  // them. Supplying label and description here is what stops a NEW element getting
+  // the writer's defaults — label = elementId, technology = kind, description = null
+  // — which drops the fourth argument and renders the three-argument form the
+  // corpus guard forbids. There is no absent-record branch: materialize creates the
+  // record from the anchor declaration above, so every confirmed row has one.
+  //
+  // AC-001 pins this reader as `readRecords(specDir, 'elements')`. The fold wants
+  // element records and nothing else, so it asks for exactly those — `readAll`
+  // would also read the `views` collection the fold never touches.
+  const recordsById = new Map(
+    readRecords(specDir, 'elements').map((element) => [element.id, element]),
+  );
+
   const result = nothingApplied();
   for (const row of confirmed) {
     // Partitioned rather than counted (backlog `syncback-applied-overstates-what-it-
@@ -254,7 +279,11 @@ export function applyDelta({ confirmed = [], specDir, rootDir = process.cwd() } 
     if (stamped.state === 'not-applicable') result.skippedGlob.push(row.elementId);
     result.applied.push(row.elementId);
 
-    const shard = writeDiagramShard(specDir, row.elementId, { kind: row.kind, rootDir });
+    const shard = writeDiagramShard(specDir, row.elementId, {
+      kind: row.kind,
+      ...seedFieldsFor(specDir, row.elementId, recordsById),
+      rootDir,
+    });
     if (shard.written) result.shardsWritten.push(shard.path);
   }
 

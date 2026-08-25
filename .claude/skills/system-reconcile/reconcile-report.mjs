@@ -27,6 +27,12 @@ const CHECKS = [
   'gaps', 'stale', 'dangling', 'duplicateAnchors', 'orphanShards', 'unillustrated', 'missingKind',
 ];
 
+// Every check except `gaps`. Two gaps pre-date the gate — `.claude/skills/commit/cli.mjs`
+// and `closure-precommit-check.mjs`, both unanchored — so gating on them would fail
+// every workflow until two unrelated modules are anchored. The exclusion is
+// arithmetic, not principle: re-include `gaps` once it reads zero.
+const GATING_CHECKS = CHECKS.filter((name) => name !== 'gaps');
+
 function emptyReport() {
   return Object.fromEntries(CHECKS.map((name) => [name, []]));
 }
@@ -83,4 +89,32 @@ export function runReconcile({ specDir, rootDir = process.cwd() } = {}) {
     process.stderr.write(`system-reconcile: corpus unreadable at ${specDir}: ${error.message}\n`);
     return emptyReport();
   }
+}
+
+// AC-028 — the discriminator the header above scoped to slice C (security review
+// 2026-08-07, MEDIUM #2). A clean corpus, a flag-off project and a crashed read
+// all render as seven empty arrays, so emptiness alone is not health: `produced`
+// is what tells them apart, and `gatingFailures` fails a report it never got.
+// `runReconcile` keeps its seven-array shape because AC-008 elsewhere pins it, so
+// the gate gets a sibling rather than an amended return.
+export function reconcileForGate({ specDir, rootDir = process.cwd() } = {}) {
+  if (!architectureMapEnabled({ rootDir })) return { report: emptyReport(), produced: true };
+  try {
+    return { report: collect(specDir, rootDir), produced: true };
+  } catch (error) {
+    process.stderr.write(`system-reconcile: corpus unreadable at ${specDir}: ${error.message}\n`);
+    return { report: emptyReport(), produced: false };
+  }
+}
+
+// Empty means the gate passes. An unproduced report is NOT empty-and-fine: seven
+// empty arrays are what a crashed read returns too, so reading emptiness as health
+// would pass a corpus nobody managed to open.
+export function gatingFailures(report, { produced = true } = {}) {
+  if (!produced) {
+    return [{ section: 'report', members: ['corpus report could not be produced'] }];
+  }
+  return GATING_CHECKS
+    .map((section) => ({ section, members: report?.[section] ?? [] }))
+    .filter(({ members }) => members.length > 0);
 }

@@ -6,8 +6,9 @@ import { existsSync, readFileSync, readdirSync, statSync, accessSync, constants 
 import { join } from 'node:path';
 import {
   EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
-  EXPECTED_MCP_SERVERS, DEFAULT_MCP_SERVERS,
+  EXPECTED_MCP_SERVERS,
 } from '../expected-baseline.mjs';
+import { readDocsProvider } from '../../lib/docs-provider.mjs';
 import { EXEMPT_RELPATHS, hasDerivedHeader } from '../../../hooks/lib/derived-header.mjs';
 import { checkMemoryShape } from '../memory-shape.mjs';
 import { deriveCounts, SKILL_CATEGORIES } from '../derive-counts.mjs';
@@ -64,6 +65,10 @@ export function buildContext({ root, skipHashCheck }) {
   const diskBaselineAgents = new Set([...diskAgents].filter(a => !addAgents.has(a)));
   const diskBaselineSkills = new Set([...diskSkills].filter(s => readSkillOwner(s) === 'baseline'));
 
+  // Read against `root`, not cwd: an audit of a consumer tree must expect the
+  // provider THAT tree points at, not whichever one the dev repo happens to use.
+  const defaultMcpServers = new Set([readDocsProvider({ rootDir: root })]);
+
   const srcExists = existsSync(join(root, 'src')) && statSync(join(root, 'src')).isDirectory();
   const consumerManifest = existsSync(join(root, '.claude', 'manifest.json'));
 
@@ -74,7 +79,8 @@ export function buildContext({ root, skipHashCheck }) {
     isDir: (rel) => existsSync(join(root, rel)) && statSync(join(root, rel)).isDirectory(),
     accessX: (rel) => { try { accessSync(join(root, rel), fsc.X_OK); return true; } catch { return false; } },
     hasDerivedHeader, EXEMPT_RELPATHS, checkMemoryShape, deriveCounts, SKILL_CATEGORIES,
-    EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES, EXPECTED_MCP_SERVERS, DEFAULT_MCP_SERVERS,
+    EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES, EXPECTED_MCP_SERVERS,
+    DEFAULT_MCP_SERVERS: defaultMcpServers,
     pj, additions, addAgents, addSkills, addHooks,
     diskHooks, diskAgents, diskSkills, diskCommands,
     diskBaselineHooks, diskBaselineAgents, diskBaselineSkills,

@@ -49,8 +49,12 @@ export const specShippabilityAdapter = {
     const manifest = readManifest(rootDir);
     if (!manifest) return { findings: [] };
 
-    const analyzer = await loadAnalyzer();
-    if (!analyzer) return { findings: [] };
+    // Injectable because the default loader resolves relative to THIS module, not
+    // to ctx.rootDir — so in a dev tree the analyzer always imports and the catch
+    // below is unreachable from a test. Same seam runCheckerFanout exposes for
+    // `registry` and `readFile`.
+    const analyzer = await (ctx.loadAnalyzer ?? loadAnalyzer)();
+    if (!analyzer) return { findings: [], ran: false };
     const { collectMarkdownCode, runDevTreeAndUnshippedChecks } = analyzer;
 
     const sourcePath = `docs/specs/${ctx.slug}.md`;

@@ -31,7 +31,12 @@ export function mergeVerdicts(verdicts) {
       || (a.check || '').localeCompare(b.check || '')
       || (a.severity || '').localeCompare(b.severity || ''));
   const verdict = findings.some((f) => f.severity === 'BLOCKER') ? 'BLOCKED' : 'CLEAN';
-  return { checkers, findings, verdict };
+  // Absence of `ran` reads as true, so an adapter that does not speak it is
+  // untouched. Only an explicit false lands here: a CLEAN produced by a checker
+  // that could not run is otherwise indistinguishable from one where everything
+  // executed and found nothing.
+  const notRun = verdicts.filter((v) => v.ran === false).map((v) => v.checker).sort();
+  return { checkers, findings, verdict, notRun };
 }
 
 /** Enforce seed.md §II.A clause 6: no LLM-agent fan-out until the amendment lands. */
@@ -122,8 +127,8 @@ function readOptional(readFile, p) {
 async function runOne(registry, name, ctx) {
   const adapter = registry[name];
   if (!adapter) return { checker: name, findings: [] };
-  const { findings } = await entryRun(adapter)(ctx);
-  return { checker: name, findings };
+  const { findings, ran } = await entryRun(adapter)(ctx);
+  return { checker: name, findings, ran };
 }
 
 /**

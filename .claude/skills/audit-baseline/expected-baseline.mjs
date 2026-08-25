@@ -1,4 +1,5 @@
 import { CANONICAL as CANONICAL_MEMORY_CATEGORIES } from '../memory-index/categories.mjs';
+import { readDocsProvider } from '../lib/docs-provider.mjs';
 
 // Single source of truth for the baseline's declared rosters.
 //
@@ -49,8 +50,12 @@ export const CANONICAL_MEMORY_FILES = new Set(
   [...EXPECTED_MEMORY_FILES].filter((name) => !name.startsWith('_')),
 );
 
-// Required MCP servers (hard). context7 is the DEFAULT §2.5 satisfier but is optional/replaceable.
+// Required MCP servers (hard).
 export const EXPECTED_MCP_SERVERS = new Set(['plantuml', 'playwright', 'baseline']);
-export const DEFAULT_MCP_SERVERS = new Set(['context7']);
+
+// The §2.5 documentation-fetcher satisfier: expected to be declared, but replaceable.
+// Its name is read from the pointer rather than written here, so a project that swaps
+// providers changes one config file instead of editing the audit's own expectations.
+export const DEFAULT_MCP_SERVERS = new Set([readDocsProvider()]);
 
 export const EXPECTED_TRACKS = { canonical: 9, subTracks: 2 };
