@@ -9,6 +9,7 @@
         { "scope": "release", "release": false },
         { "scope": "site", "release": false },
         { "scope": "site-src", "release": false },
+        { "scope": "tests", "release": false },
         { "scope": "ci", "release": false },
         { "scope": "actions", "release": false },
         { "type": "build", "release": false },

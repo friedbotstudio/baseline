@@ -58,6 +58,21 @@ function breakingRelease(releaserc) {
   return rule ? rule.release : null;
 }
 
+// Rules that PROMOTE — a type or scope the preset would publish nothing for, or
+// would publish less for. `breaking` has its own reader above; these are the ones
+// keyed on `type` or `scope` alone.
+function promotingRules(releaserc) {
+  return commitAnalyzerRules(releaserc).filter(
+    (rule) => typeof rule.release === 'string' && rule.breaking === undefined,
+  );
+}
+
+// Every row of both tables, flattened. A promoting rule may be documented in
+// either one: a type belongs in the bump table, a scope in the scope contract.
+function allDocumentedRows(text) {
+  return [...tableRows(text, 'Bump'), ...tableRows(text, 'Bumps version?')];
+}
+
 // The bump table's first cell names the prefixes; the second names the bump.
 const BUMP_EXPECTATIONS = [
   { match: /fix|perf/i, bump: 'patch' },
@@ -151,6 +166,68 @@ describe('T5 — every demoted scope is documented, and vice versa (AC-009, AC-0
       { undocumented, undemoted },
       { undocumented: [], undemoted: [] },
       `demoted-scope sets differ. Demoted but absent from ${RUNBOOK}: [${undocumented}]. Documented but not demoted in ${RELEASERC}: [${undemoted}]`,
+    );
+  });
+});
+
+// The parity test shipped reading only the demoting rules and the breaking rule.
+// It went green while the runbook said `refactor:` publishes nothing (the config
+// promotes it to patch) and never mentioned the `constitution` scope (which
+// promotes any type to minor). Two more contradictions of the exact kind T4 exists
+// to end, surviving inside the test that ends them. Backlog
+// `releaserc-runbook-parity-covers-only-the-demoting-rules`.
+describe('every promoting rule is documented, and vice versa', () => {
+  it('test_when_a_rule_promotes_then_a_table_row_names_it_and_its_bump', () => {
+    const text = readRunbook();
+    const rows = allDocumentedRows(text);
+
+    const undocumented = [];
+    for (const rule of promotingRules(readReleaserc())) {
+      const token = rule.scope ?? rule.type;
+      const row = rows.find(([first]) => new RegExp(`\\b${token}\\b`).test(first));
+      if (!row) {
+        undocumented.push(`${token} promotes to ${rule.release} and no table row names it`);
+        continue;
+      }
+      if (!new RegExp(rule.release, 'i').test(row.slice(1).join(' '))) {
+        undocumented.push(`${token} promotes to ${rule.release}; its row says "${row[1]}"`);
+      }
+    }
+
+    assert.deepEqual(
+      undocumented,
+      [],
+      `a promoting rule the runbook does not state is a reader predicting no release and getting one — ${RUNBOOK} vs ${RELEASERC}`,
+    );
+  });
+
+  it('test_when_a_table_row_claims_a_bump_the_preset_denies_then_the_config_grants_it', () => {
+    const granted = new Set(promotingRules(readReleaserc()).map((rule) => rule.scope ?? rule.type));
+
+    // Types the angular preset publishes nothing for. A runbook row promising one
+    // of these a bump is only true while `releaseRules` says so.
+    const presetSilent = ['refactor', 'build', 'ci', 'chore', 'docs', 'style', 'test'];
+    const unbacked = [];
+    for (const [first, ...rest] of allDocumentedRows(readRunbook())) {
+      const bumpCell = rest.join(' ');
+      if (!/\b(patch|minor|major)\b/i.test(bumpCell)) continue;
+      for (const type of presetSilent) {
+        if (new RegExp(`\`${type}[:(]`).test(first) && !granted.has(type)) {
+          unbacked.push(`the runbook promises \`${type}\` a bump ("${bumpCell}") that ${RELEASERC} does not grant`);
+        }
+      }
+    }
+
+    assert.deepEqual(unbacked, [], `runbook rows must not promise a bump the config never makes`);
+  });
+});
+
+describe('a non-product scope is demoted, so it cannot reach the consumer changelog', () => {
+  it('test_when_releaserc_read_then_tests_is_demoted', () => {
+    const scopes = demotedScopes(readReleaserc());
+    assert.ok(
+      scopes.includes('tests'),
+      `\`tests\` names a surface the runbook's own ship list excludes, so a \`fix(tests):\` commit publishes a consumer-facing fix for files no consumer receives. Observed on c2149d5, which touched tests/unsanitised-path-sinks.test.mjs and nothing else. Demoted: ${scopes.join(', ')}`,
     );
   });
 });

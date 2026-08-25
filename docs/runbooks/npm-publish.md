@@ -37,12 +37,13 @@ The version bump is *the version of the package consumers install via `npx @frie
 | `feat(site):`, `fix(site):`, `docs(site):` | no | page-relative URL filter, Pages CNAME |
 | `feat(site-src):`, `fix(site-src):`, `docs(site-src):` | no | `site-src/**` — the docs-site source tree |
 | `feat(ci):`, `feat(actions):`, `chore(actions)(deps):` | no | `.github/workflows/**`, dependabot config, action SHA bumps |
+| `feat(tests):`, `fix(tests):` | no | `tests/**` — the suite is not in the published tarball |
 | `build:` | no | build scripts, `prepack`, manifest generation |
 | `chore:`, `docs:`, `style:`, `test:` | no (preset default) | — |
 
 What ships to consumers (and therefore *can* bump the version): `.claude/**`, `src/**`, `bin/**`, `obj/template/**`, and `README.md`. Anything outside those prefixes should carry a non-product scope.
 
-`releaseRules` in `.releaserc.json` enforces the contract. Five scopes are demoted to `release: false` (`release`, `site`, `site-src`, `ci`, `actions`) along with the `build` type, and that demotion overrides the default rules even for a stray `feat!:` or a `BREAKING CHANGE:` footer. Two rules push the other way. `refactor` is promoted to `patch`, and any type scoped `constitution` is promoted to `minor`, which is why a `docs(constitution):` commit publishes where a bare `docs:` commit publishes nothing.
+`releaseRules` in `.releaserc.json` enforces the contract. Six scopes are demoted to `release: false` (`release`, `site`, `site-src`, `tests`, `ci`, `actions`) along with the `build` type, and that demotion overrides the default rules even for a stray `feat!:` or a `BREAKING CHANGE:` footer. Two rules push the other way. `refactor` is promoted to `patch`, and any type scoped `constitution` is promoted to `minor`, which is why a `docs(constitution):` commit publishes where a bare `docs:` commit publishes nothing.
 
 The rules catch the common mistakes, but the commit message is still yours to get right. A misclassified commit pollutes the changelog and surprises reviewers, so when a scope is unclear, ask whether `npx @friedbotstudio/create-baseline` consumers will see a behavioural difference. If they will not, the scope is non-product.
 
