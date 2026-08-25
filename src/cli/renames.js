@@ -21,6 +21,7 @@
 /** @type {ReadonlyArray<{from: string, to: string, since: string}>} */
 export const MCP_SERVER_RENAMES = Object.freeze([
   Object.freeze({ from: 'sprint-channel', to: 'baseline', since: '0.26.0' }),
+  Object.freeze({ from: 'context7', to: 'gitmcp', since: '0.26.0' }),
 ]);
 
 /**
