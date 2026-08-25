@@ -1,3 +1,10 @@
+## [0.26.1](https://github.com/friedbotstudio/baseline/compare/v0.26.0...v0.26.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* **audit:** gate src/ template checks on consumer-manifest presence ([cb39122](https://github.com/friedbotstudio/baseline/commit/cb3912295ee9eb201eb3648008da52ffb486129a))
+
 # [0.26.0](https://github.com/friedbotstudio/baseline/compare/v0.25.0...v0.26.0) (2026-08-25)
 
 
