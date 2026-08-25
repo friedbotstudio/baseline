@@ -1,3 +1,58 @@
+# [0.26.0](https://github.com/friedbotstudio/baseline/compare/v0.25.0...v0.26.0) (2026-08-25)
+
+
+* feat(mcp)!: name the documentation provider in a pointer file ([99692c2](https://github.com/friedbotstudio/baseline/commit/99692c2962e2a42d454af3d5b708a9b89cc05545))
+* feat(mcp)!: rename the coordination server to baseline and retire the pool and broker ([6eebd07](https://github.com/friedbotstudio/baseline/commit/6eebd0775e61ddb7871ad61f4aceccd0dbccd1e4))
+
+
+### Bug Fixes
+
+* **ci:** make the test suite runnable in a clean checkout ([a21c502](https://github.com/friedbotstudio/baseline/commit/a21c5023e00ccbe7e156748c8999d0d35bc05ab1))
+* **code-structure:** scope the review oracle to source code ([202920d](https://github.com/friedbotstudio/baseline/commit/202920d858440f12a04cf473a7dda270ae9c55bf))
+* **commit:** stop the closure preflight from guessing a store shape the guard never does ([05d8fec](https://github.com/friedbotstudio/baseline/commit/05d8fec4520433dd35d35d196c5c2785c90d54fb))
+* **mcp:** stop naming the retired server outside the rename record ([f9e7071](https://github.com/friedbotstudio/baseline/commit/f9e7071a4302501b0c3c16d64d4bba917700309e))
+* **memory:** narrow the zsh-quoting landmine off the whole skills tree ([743c644](https://github.com/friedbotstudio/baseline/commit/743c644f985472e5dd5e1f089e8f838d38e22b52))
+* **memory:** witness the governed paths instead of counting commits ([c217347](https://github.com/friedbotstudio/baseline/commit/c217347c84ae8b70ae301a1699a6a2890016f6c2))
+* **release:** build the shipped template before the suite reads it ([c430b5a](https://github.com/friedbotstudio/baseline/commit/c430b5a08fd7a5bcbf799c4cbea1975a4495b43d))
+* **release:** demote site-src alongside site ([9a3bcd7](https://github.com/friedbotstudio/baseline/commit/9a3bcd77f5efa70d264bbf2f436d14de9a4f0af2))
+* **release:** demote the tests scope and read the promoting rules too ([c09e566](https://github.com/friedbotstudio/baseline/commit/c09e5669f715e4bc2ad2c45602a55f090515a012))
+* **roadmap-sync:** repair every stale epic heading, not only the ones a run flips ([2542786](https://github.com/friedbotstudio/baseline/commit/25427863e32ece492944ff336d7146c194f8f182))
+* **security:** let a report mark a finding resolved in place ([216fdac](https://github.com/friedbotstudio/baseline/commit/216fdace221e2bb3e6be9dbbf5620f30c659e416))
+* **site:** stop the date guard demanding a date its own correction invalidates ([b256cbe](https://github.com/friedbotstudio/baseline/commit/b256cbeebbb96ec32ce5afb4f32a9ec120c71c4f))
+* **site:** stop the docs pages claiming a freshness and a measurement they had lost ([476de12](https://github.com/friedbotstudio/baseline/commit/476de12b6ee83bc1b74d36b10a2164ce0cdccfbd))
+* **site:** widen the gap after the baseline wordmark ([13afc2d](https://github.com/friedbotstudio/baseline/commit/13afc2d83b15bf412a331f72b890119e3636fe5e))
+* **tests:** escape the control bytes in the unsanitised-path-sinks fixtures ([c2149d5](https://github.com/friedbotstudio/baseline/commit/c2149d5b35a16b5f481273d110c3197d84584142))
+
+
+### Features
+
+* **ci:** run the test suite before publish ([2a9209c](https://github.com/friedbotstudio/baseline/commit/2a9209ccf031a63871478d1f8d5c37d30fc08494))
+* **cli:** record the context7 to gitmcp rename ([1989de7](https://github.com/friedbotstudio/baseline/commit/1989de73a81aafb5a46608af78c6ced46f4f5009))
+* **hooks:** guard workflow state against subagents, and read a hard block in command position ([6fdc3df](https://github.com/friedbotstudio/baseline/commit/6fdc3df6e5b0def8f0fb07765d63e0b5f9ef2a04))
+* **org:** give every peer its own worktree and audit its diff before landing ([c7c0dae](https://github.com/friedbotstudio/baseline/commit/c7c0dae2b12d908d3dc647782b9a0c69311bb249))
+* **site-src:** state that the current-docs rule is not tied to a vendor ([0364246](https://github.com/friedbotstudio/baseline/commit/036424628290f6a644f6dd84e10c9a50b8a8b464))
+* **site-src:** the hook roster leads with what each guard makes true ([7fb7391](https://github.com/friedbotstudio/baseline/commit/7fb739198aadffe3e54343c967abe6918b02450d))
+* **skills:** assert-writable names the real fault, and roadmap-sync finds a hand-authored epic ([694f131](https://github.com/friedbotstudio/baseline/commit/694f131a7d36d69119d7167fd465c2d99f75ca03))
+* **skills:** resolve the docs provider from a pointer, and gate the corpus report ([1c6f9ea](https://github.com/friedbotstudio/baseline/commit/1c6f9ea027390fa0421fdafaed4c8a8ee45e58df))
+
+
+### BREAKING CHANGES
+
+* the `context7` MCP server declaration is replaced by
+`gitmcp`. An upgrade sheds the stale entry via the rename record; a consumer
+who declared it by hand should replace the entry or name their own provider in
+`.claude/docs-provider.json`.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01B2XHFoVEfTfen1PW1Fmk8k
+* the MCP server `sprint-channel` is now `baseline`, and the
+`sprint-pool` and `sprint-broker` servers are removed. An upgrade rewrites the
+entry in .mcp.json; a project that referenced the old server by name must update
+that reference.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011KefVkHNoEc5WPoBtHCkGd
+
 # [0.25.0](https://github.com/friedbotstudio/baseline/compare/v0.24.0...v0.25.0) (2026-08-22)
 
 
