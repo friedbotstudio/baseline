@@ -86,7 +86,7 @@ const completed = new Set(ws.completed || []);
 // `entry_phase`. Accept both via this map (mirrors workflow-migrator's).
 const TRACK_ID_TO_ENTRY_PHASE = {
   'intake-full': 'intake',
-  'spec-entry': 'spec',
+  'spec-entry': 'intake',
   'tdd-quickfix': 'tdd',
   'chore': 'chore',
   'epic': 'intake',
@@ -138,9 +138,8 @@ function existsForPhase(ph) {
       const relAbs = relative(CLAUDE_PROJECT_ROOT, abs);
       if (relAbs === '') continue;
       const top = relAbs.split('/')[0];
-      // .claude is allowed for review (review artifacts live under .claude/state/)
       if (SKIP_TOP.has(top)) continue;
-      if (top === '.claude' && ph !== 'review') continue;
+      if (top === '.claude') continue;
       let st;
       try { st = statSync(abs); } catch { continue; }
       if (st.isDirectory()) { stack.push(abs); continue; }

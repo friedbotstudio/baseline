@@ -164,9 +164,11 @@ function informativeCommands(commands, limit) {
 
 const TRACK_ID_TO_ENTRY_PHASE = {
   'intake-full': 'intake',
-  'spec-entry': 'spec',
+  'spec-entry': 'intake',
   'tdd-quickfix': 'tdd',
   'chore': 'chore',
+  'epic': 'intake',
+  'epic-child': 'tdd',
 };
 
 export function composeSnapshot({ transcript, projectDir, trigger }) {
