@@ -75,6 +75,10 @@ toc:
 
 <h2 id="replacing"><span class="sec-mark" aria-hidden="true">§ V</span> Replacement</h2>
 
-<p>Article VI.5 requires that a third-party API be checked against current documentation before any code is written against it. The rule names the outcome and leaves the tool open, so while <code class="tok">context7</code> is the shipped default you may swap it out or drop it entirely, provided the checking still happens. A library's own <code class="tok">llms.txt</code> will do, and so will a pinned local copy of the docs.</p>
+<p>Nothing here locks you to a vendor. Article VI.5 requires that a third-party API be checked against current documentation before any code is written against it, and it names that outcome without naming a tool.</p>
 
-<p><code class="tok">audit-baseline</code> checks these servers by name and not by count. If you swap one out, the audit will tell you which name it expected to find.</p>
+<p>Which server does the fetching is named in <code class="tok">.claude/docs-provider.json</code>. Replacing it is a config edit, and your governance files stay as they are. <code class="tok">gitmcp</code> ships as the default, but a library's own <code class="tok">llms.txt</code> will do instead, and so will a pinned local copy of the docs.</p>
+
+<p>If you want a different provider, that is two edits: replace the server entry in <code class="tok">.mcp.json</code>, then name the new entry in the pointer. Self-hosting the shipped one takes a single edit, since only the URL changes and the pointer already names it. Should the pointer go missing or stop parsing, the resolver falls back to the shipped default, so a broken pointer never stops a skill from checking an API.</p>
+
+<p><code class="tok">audit-baseline</code> matches these servers by name, and it reads the provider name from the same pointer you edit. Adding a server of your own does not trip it. Swap a server without updating the pointer and the audit will tell you which name it expected to find.</p>
