@@ -58,12 +58,27 @@ function declaredDate(abs) {
 function lastChangedDate(rel) {
   const untracked = git(['ls-files', '--others', '--exclude-standard', '--', rel]) !== '';
   if (untracked) return today();
-  if (hasContentEdit(rel)) return today();
-  return git(['log', '-1', '--format=%ad', '--date=short', '--', rel]);
+  if (touchesContent(git(['diff', '--unified=0', 'HEAD', '--', rel]))) return today();
+
+  // Walk history newest-first for the last commit that changed something other
+  // than the date line. `git log -1` is wrong here and was the first version's
+  // defect: the commit that CORRECTS a wrong date is itself the newest commit
+  // touching the file, so the rule would demand the date be stamped forward to
+  // that commit's own day — the same circularity the working-tree carve-out
+  // above removes, displaced into history rather than solved.
+  for (const line of git(['log', '--format=%H %ad', '--date=short', '--', rel]).split('\n')) {
+    const [sha, date] = line.split(' ');
+    if (!sha) continue;
+    if (touchesContent(git(['show', '--unified=0', '--format=', sha, '--', rel]))) return date;
+  }
+
+  // Every commit in this file's history was date-only. Nothing to hold it to.
+  return '';
 }
 
-function hasContentEdit(rel) {
-  const diff = git(['diff', '--unified=0', 'HEAD', '--', rel]);
+// True when a diff changes any line other than the `updated:` frontmatter value.
+// Correcting a date is bookkeeping about the page; it is not a change to it.
+function touchesContent(diff) {
   if (diff === '') return false;
   return diff
     .split('\n')
