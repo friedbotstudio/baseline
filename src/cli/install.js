@@ -41,6 +41,7 @@ export const COPY_EXCLUDE = Object.freeze([]);
 
 async function listFiles(root, base = root, acc = []) {
   for (const entry of await readdir(root, { withFileTypes: true })) {
+    if (entry.name === '.git') continue;
     const full = join(root, entry.name);
     if (entry.isDirectory()) {
       await listFiles(full, base, acc);
@@ -61,12 +62,18 @@ async function readPackageVersion() {
   }
 }
 
-async function writeBaselineManifest(target, baseline_version) {
-  const files = await listFiles(target);
-  const filtered = files.filter((p) =>
-    p !== '.claude/.baseline-manifest.json' && !p.startsWith('.claude/.baseline-prior/')
-  );
-  const m = await buildManifestFromDir(target, filtered, { baseline_version });
+// The manifest records what the baseline SHIPS, so the file list comes from
+// templateDir, never from target. Walking target captured consumer-owned files
+// (Cargo.toml, src/main.rs, .git/**) as baseline-owned, and the next upgrade
+// pruned them for being absent from the real template manifest.
+async function writeBaselineManifest(templateDir, target, baseline_version) {
+  const shipped = await listFiles(templateDir);
+  const installed = [];
+  for (const rel of shipped) {
+    if (COPY_EXCLUDE.includes(rel)) continue;
+    if (await pathExists(join(target, rel))) installed.push(rel);
+  }
+  const m = await buildManifestFromDir(target, installed, { baseline_version });
   await mkdir(join(target, '.claude'), { recursive: true });
   await saveManifest(join(target, '.claude/.baseline-manifest.json'), m);
 }
@@ -190,7 +197,7 @@ export async function freshInstall(templateDir, target, opts = {}) {
   await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);
   const baseline_version = await readPackageVersion();
-  await writeBaselineManifest(target, baseline_version);
+  await writeBaselineManifest(templateDir, target, baseline_version);
   await refreshBaselineVersion(target, baseline_version);
 }
 
@@ -207,6 +214,6 @@ export async function forceInstall(templateDir, target, opts = {}) {
   await materializeGitignore(target);
   await writeBaselinePriorMirror(templateDir, target);
   const baseline_version = await readPackageVersion();
-  await writeBaselineManifest(target, baseline_version);
+  await writeBaselineManifest(templateDir, target, baseline_version);
   await refreshBaselineVersion(target, baseline_version);
 }

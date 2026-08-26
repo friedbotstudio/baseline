@@ -3,8 +3,8 @@ key: an-epic-spec-cannot-be-scored-against-its-own-landing-commit
 category: landmines
 scope: [spec, implement, integrate]
 governs: .claude/skills/tdd/drift_check.mjs, .claude/skills/harness/SKILL.md
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Landmine: **an `epic` spec's landing commit carries discovery ONLY. Its promises land later, in its children's commits. Any oracle that scores "a spec against the commit that landed it" reports an epic as broken and is measuring the track's shape rather than the code.**

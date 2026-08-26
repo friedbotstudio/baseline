@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [document]
 governs: .claude/skills/reader-level/**,.claude/skills/technical-writer/SKILL.md,.claude/skills/document/**
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **The trap.** `.claude/skills/reader-level/score.mjs:36` extracts prose with `src.matchAll(/<p\b([^>]*)>([\s\S]*?)<\/p>/g)` — it grades **rendered HTML**. Run against a markdown source file it finds zero paragraphs, prints `no prose paragraphs found`, and then prints `all files at or below grade 11` and exits 0.

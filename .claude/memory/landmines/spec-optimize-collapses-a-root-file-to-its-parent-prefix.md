@@ -3,8 +3,8 @@ key: spec-optimize-collapses-a-root-file-to-its-parent-prefix
 category: landmines
 scope: [spec]
 governs: .claude/skills/spec/cli.mjs,.claude/hooks/lib/write-set-profile.mjs
-verified-at: 8fb72a5
-last-touched: 2026-08-15
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/skills/spec/cli.mjs optimize` (the `/spec` Step 6.5 advisory pass), resolving write-set entries through `.claude/hooks/lib/write-set-profile.mjs → directoryPrefix`.

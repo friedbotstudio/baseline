@@ -5,8 +5,8 @@ scope: [spec]
 governs: .claude/hooks/lib/write-set-profile.mjs, .claude/skills/spec/optimize.mjs
 load_bearing: true
 source: incident
-verified-at: 45b9b22
-last-touched: 2026-08-19
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **Trap: `patternsOverlap` in `.claude/hooks/lib/write-set-profile.mjs` calls `directoryPrefix` on BOTH sides, then compares with a bidirectional `startsWith`.** A write_set entry naming one file at a shallow directory — `.claude/CONSTITUTION.md` — reduces to `.claude/`, and every element anchored anywhere beneath it then matches.

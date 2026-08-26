@@ -5,8 +5,8 @@ scope: [scout, document, simplify, integrate]
 source: assistant-deferral
 raised-on: 2026-08-10
 raised-in-context: warm-context-diet
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 governs: .claude/skills/**/SKILL.md
 ---
 

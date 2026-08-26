@@ -4,8 +4,8 @@ category: landmarks
 rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/sync.mjs, .claude/skills/spec-sync/SKILL.md, docs/system/**
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/skills/workspace/sync.mjs`. Orchestration — the engine behind `/spec-sync`, which bootstraps a central system spec for a repository that has never had one. Added by ticket F of `central-system-spec` (2026-08-06).

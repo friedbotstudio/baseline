@@ -4,8 +4,8 @@ category: landmines
 scope: [archive, integrate]
 governs: .claude/skills/workspace/delta.mjs, .claude/skills/archive/SKILL.md, .claude/skills/harness/rightsize-gate.mjs
 source: incident
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 > verbatim (incident, 2026-08-08):

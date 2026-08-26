@@ -3,8 +3,8 @@ key: .claude/skills/memory-index/index-io.mjs:12
 category: landmarks
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/governed-memory.mjs
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/skills/memory-index/index-io.mjs`. Foundation layer under the derived index — the only place in `memory-index/` that touches the filesystem or builds a regex.

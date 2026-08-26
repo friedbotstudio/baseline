@@ -3,8 +3,8 @@ key: security-oracle-reads-any-high-heading-as-an-open-finding
 category: landmines
 scope: [security, integrate]
 governs: .claude/skills/security/**,.claude/skills/harness/checker-fanout.mjs
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - `.claude/skills/security/oracle.mjs:12` matches `/^###\s+\[(CRITICAL|HIGH)\]\s+(.+)$/gim` and emits a BLOCKER per hit. It has **no notion of a fixed finding**. The report format the `security` skill prescribes has no "resolved" convention either.

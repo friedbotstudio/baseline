@@ -3,8 +3,8 @@ key: piping-a-command-to-tail-masks-its-exit-status
 category: landmines
 scope: [tdd, integrate, verify]
 governs: .claude/skills/**
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Trap: `cmd 2>&1 | tail -N` reports **tail's** exit status, not the command's. A pipeline's status is its LAST stage.

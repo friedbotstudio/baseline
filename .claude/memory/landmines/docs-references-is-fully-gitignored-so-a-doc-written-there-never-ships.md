@@ -3,8 +3,8 @@ key: docs-references-is-fully-gitignored-so-a-doc-written-there-never-ships
 category: landmines
 scope: [spec, document]
 governs: docs/references/**,.claude/skills/document/**,.claude/skills/spec/**
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **The trap.** `docs/references/.gitignore` contains `**/**`. The entire directory is ignored, and `git ls-files docs/references/` returns nothing — `token-efficiency.md` and `task-parity.md` are on disk but untracked. A documentation page written there is invisible to `git status`, never staged, and never reaches a consumer.

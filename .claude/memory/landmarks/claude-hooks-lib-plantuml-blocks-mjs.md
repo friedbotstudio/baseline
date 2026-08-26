@@ -3,8 +3,8 @@ key: .claude/hooks/lib/plantuml-blocks.mjs
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/plantuml-blocks.mjs, .claude/hooks/spec_diagram_presence_guard.mjs, .claude/skills/spec-lint/lint.mjs
-verified-at: 0336688
-last-touched: 2026-08-25
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/hooks/lib/plantuml-blocks.mjs`. Exports `plantumlBlocks(content)`, `blockSatisfies(body, rule)` and `missingKinds(blocks, required)` — the diagram-kind detection shared by `spec_diagram_presence_guard` and `/spec-lint`.

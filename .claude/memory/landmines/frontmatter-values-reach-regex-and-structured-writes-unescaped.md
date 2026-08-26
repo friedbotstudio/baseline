@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/index-io.mjs, .claude/skills/memory-index/resolve.mjs, .claude/skills/memory-sync/ledger.mjs, .claude/skills/memory-index/constraints.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Memory frontmatter is authored content, not a trusted pattern language. Three defects of this shape were confirmed by execution in the 2026-08-04 security review (`docs/archive/2026-08-04/living-system-model-abcd/security.md`, findings F-1/F-2/F-3). Assume a fourth exists wherever a frontmatter value reaches a regex or a line-delimited file.

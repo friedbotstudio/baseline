@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [spec, tdd, integrate]
 governs: docs/specs/**, .claude/skills/tdd/**, .claude/skills/spec/**
-verified-at: 18204a1
-last-touched: 2026-08-15
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **The trap.** `drift_check.mjs → probeRunnable` (`.claude/skills/tdd/drift_check.mjs:276`, called at :307) treats any Contracts row whose **Name** cell looks like a path as an **invocation entry point** and tries to run it. A library function written as `` `append.mjs → nextEpicNumber` `` is not runnable, so the row lands as unresolved and `drift_check` exits 1. The row is correct English and wrong grammar.

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [spec, tdd, archive]
 governs: .claude/hooks/artifact_template_guard.mjs,.claude/project.json
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `artifact_template_guard.mjs:44` reads `project.json → artifacts.required_sections.spec` and denies any write to a spec missing one of them. It checks the file being written, not the file's age.

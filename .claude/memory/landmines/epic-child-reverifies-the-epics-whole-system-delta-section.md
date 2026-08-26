@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [archive, spec, triage]
 governs: .claude/skills/workspace/delta.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `/archive` Step 5 → `delta.verifyAndApplyDelta`, on any `epic-child` track.

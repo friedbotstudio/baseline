@@ -3,8 +3,8 @@ key: new-governed-files-are-anchored-at-the-concept
 category: conventions
 scope: [archive, tdd, spec]
 governs: .claude/skills/archive/SKILL.md,.claude/skills/workspace/contribute.mjs,.claude/skills/workspace/materialize.mjs,docs/system/concepts/**
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - When a landing **adds** a file under `memory.architecture_map.governed_surface`, `/archive` Step 5's `syncBack` will not cover it. `syncBack` re-stamps elements whose anchors match the touched paths; a brand-new file matches no anchor, so it is reported as neither `applied` nor `proposed` — it simply opens a coverage gap that `findGaps` then reports as `unanchored`.

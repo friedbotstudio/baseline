@@ -5,8 +5,8 @@ scope: [document, implement]
 source: inferred-from-code
 raised-on: 2026-08-25
 raised-in-context: docs-site analytics review
-verified-at: 743c644
-last-touched: 2026-08-25
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 governs: site-src/assets/site.js,tests/ga4-event-hooks-rendered.test.mjs
 ---
 

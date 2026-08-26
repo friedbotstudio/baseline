@@ -3,8 +3,8 @@ key: .claude/hooks/lib/state-write.mjs
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/state-write.mjs, .claude/hooks/state_write_guard.mjs
-verified-at: 0336688
-last-touched: 2026-08-25
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/hooks/lib/state-write.mjs`. Exports `decideStateWrite(payload) -> {allow, reason?}`, the whole rule behind [[.claude/hooks/state_write_guard.mjs]].

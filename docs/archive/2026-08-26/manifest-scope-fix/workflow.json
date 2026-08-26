@@ -1,0 +1,61 @@
+{
+  "request": "Fix writeBaselineManifest in src/cli/install.js: listFiles(target) walks the entire target directory unfiltered when building .claude/.baseline-manifest.json, capturing consumer-owned files (e.g. Cargo.toml, src/main.rs) and everything under .git/ as if they were baseline-shipped files. A later upgrade prunes them because they're absent from the real template manifest. Fix: scope the manifest to the actual shipped file set already computed at install time (tplFiles/newManifest.files keys), and unconditionally exclude .git/.",
+  "slug": "manifest-scope-fix",
+  "track_id": "spec-entry",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "bin/cli.js:124 listShippedFiles(templateDir) and src/cli/tui/upgrade.js:212 listShippedFiles both already build the shipped-file list by walking templateDir, not target, for the same reason this fix needs; install.js's listFiles(target) is the one place that still walks the wrong tree.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "src/cli/install.js",
+    "tests/install.test.mjs"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "org-dispatch",
+    "research",
+    "simplify"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787774400,
+  "updated_at": 1787733613,
+  "rightsize_base": [
+    "docs/intake/manifest-scope-fix.md",
+    "docs/scout/manifest-scope-fix.md",
+    "docs/specs/manifest-scope-fix.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "micro diff",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 23
+      }
+    }
+  ]
+}

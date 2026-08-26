@@ -4,8 +4,8 @@ category: landmines
 scope: [tdd, integrate, spec]
 governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/**
 load_bearing: true
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - `drift_check.mjs` marks an acceptance criterion `resolved` when the literal token (`AC-015`) appears in an ADDED diff line. It does not check that the AC's behavior exists. A comment is enough.

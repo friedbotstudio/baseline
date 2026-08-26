@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/skills/lib/argv.mjs, .claude/skills/lib/output.mjs, .claude/skills/workspace/cli.mjs, .claude/skills/memory-sync/cli.mjs, .claude/skills/system-reconcile/cli.mjs, .claude/skills/memory-index/cli.mjs, .claude/skills/commit/cli.mjs, .claude/skills/document/cli.mjs, .claude/skills/harness/cli.mjs, .claude/skills/standup/cli.mjs, .claude/skills/spec/cli.mjs
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/skills/lib/argv.mjs`. Foundation — the argv layer every skill dispatcher shares. Second module in `skills/lib/`, after `probe.mjs`, which is the precedent for a shared non-skill helper directory.

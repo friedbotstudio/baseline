@@ -2,9 +2,10 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 const install = await import('../src/cli/install.js');
+const tuiUpgrade = await import('../src/cli/tui/upgrade.js');
 
 async function makeTemplateFixture() {
   const tplDir = await mkdtemp(join(tmpdir(), 'install-tpl-'));
@@ -273,5 +274,113 @@ describe('freshInstall — baseline_version + .baseline-prior cache (upgrade-flo
     const gi = await readFile(join(target, '.claude/.baseline-prior/.gitignore'), 'utf8');
     assert.equal(gi, '*\n',
       'freshInstall must write ".claude/.baseline-prior/.gitignore" with exactly "*\\n" so the cache is git-invisible per-project (no root .gitignore touch)');
+  });
+});
+
+describe('writeBaselineManifest — scoped to shipped template files (manifest-scope-fix, AC-001, AC-002, AC-003)', () => {
+  const FOREIGN_FILES = {
+    'Cargo.toml': '[package]\nname = "demo"\n',
+    'Cargo.lock': '# lockfile\n',
+    'README.md': '# demo crate\n',
+    'src/main.rs': 'fn main() {}\n',
+    'src/types.rs': 'pub struct Foo;\n',
+  };
+
+  async function seedForeignFilesAndGit(target) {
+    for (const [rel, body] of Object.entries(FOREIGN_FILES)) {
+      const full = join(target, rel);
+      await mkdir(dirname(full), { recursive: true });
+      await writeFile(full, body);
+    }
+    await mkdir(join(target, '.git/refs/heads'), { recursive: true });
+    await mkdir(join(target, '.git/objects/ab'), { recursive: true });
+    await writeFile(join(target, '.git/HEAD'), 'ref: refs/heads/main\n');
+    await writeFile(join(target, '.git/refs/heads/main'), 'a'.repeat(40) + '\n');
+    await writeFile(join(target, '.git/objects/ab/cdef0123456789'), 'binary-ish blob content');
+  }
+
+  it('AC-003 test_when_target_empty_then_manifest_matches_shipped_set', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-scope-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    const expected = ['CLAUDE.md', '.mcp.json', '.claude/project.json', 'docs/init/seed.md'].sort();
+    assert.deepEqual(Object.keys(m.files).sort(), expected,
+      `manifest files must be exactly the shipped template set; got: ${JSON.stringify(Object.keys(m.files).sort())}`);
+  });
+
+  it('AC-001 test_when_target_has_foreign_files_and_git_then_manifest_excludes_them', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-scope-target-'));
+    await seedForeignFilesAndGit(target);
+
+    await install.freshInstall(tpl, target);
+
+    const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    const keys = Object.keys(m.files);
+    for (const rel of Object.keys(FOREIGN_FILES)) {
+      assert.ok(!keys.includes(rel), `manifest must not record foreign file ${rel}; got keys: ${JSON.stringify(keys)}`);
+    }
+    assert.ok(!keys.some((k) => k.startsWith('.git/')),
+      `manifest must not record any .git/* path; got keys: ${JSON.stringify(keys)}`);
+  });
+
+  it('AC-003 test_when_ci_posture_disabled_then_skipped_file_absent_from_manifest', async () => {
+    const tpl = await makeTemplateFixture();
+    await mkdir(join(tpl, '.githooks'), { recursive: true });
+    await writeFile(join(tpl, '.githooks/pre-commit'), '#!/bin/sh\nexit 0\n');
+    const target = await mkdtemp(join(tmpdir(), 'install-scope-target-'));
+
+    await install.freshInstall(tpl, target, { ciPosture: false });
+
+    const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    assert.ok(!Object.keys(m.files).includes('.githooks/pre-commit'),
+      'manifest must not record a shipped file the ciPosture opt-out skipped copying');
+  });
+
+  it('AC-002 test_when_install_then_upgrade_with_foreign_files_then_survive', async () => {
+    const tpl = await makeTemplateFixture();
+    const target = await mkdtemp(join(tmpdir(), 'install-scope-target-'));
+    await seedForeignFilesAndGit(target);
+    await install.freshInstall(tpl, target);
+
+    const trackedPaths = [...Object.keys(FOREIGN_FILES), '.git/HEAD', '.git/refs/heads/main'];
+    const before = {};
+    for (const rel of trackedPaths) before[rel] = await readFile(join(target, rel), 'utf8');
+
+    const stub = {
+      intro() {}, outro() {}, cancel() {},
+      log: { info() {}, warn() {}, error() {}, success() {}, step() {} },
+      spinner: () => ({ start() {}, message() {}, stop() {}, error() {} }),
+      select: async () => { throw new Error('no customized-file prompt expected in this fixture'); },
+      isCancel: () => false,
+    };
+
+    const exitCode = await tuiUpgrade.run({ target, opts: { templateDir: tpl }, prompts: stub });
+
+    assert.equal(exitCode, 0, 'upgrade against an unchanged template should exit 0');
+    for (const rel of trackedPaths) {
+      const after = await readFile(join(target, rel), 'utf8');
+      assert.equal(after, before[rel], `${rel} must survive upgrade byte-identical`);
+    }
+  });
+
+  it('AC-003 test_when_never_touch_and_special_merge_present_then_manifest_has_correct_hashes', async () => {
+    const tpl = await makeTemplateFixture();
+    await writeFile(join(tpl, '.claude/workflows.jsonl'), '{"id":"chore"}\n');
+    const target = await mkdtemp(join(tmpdir(), 'install-scope-target-'));
+
+    await install.freshInstall(tpl, target);
+
+    const m = JSON.parse(await readFile(join(target, '.claude/.baseline-manifest.json'), 'utf8'));
+    for (const rel of ['.claude/workflows.jsonl', '.mcp.json', '.claude/project.json']) {
+      assert.ok(rel in m.files, `manifest must include ${rel}; got keys: ${JSON.stringify(Object.keys(m.files))}`);
+      const entry = m.files[rel];
+      const sha = typeof entry === 'string' ? entry : entry?.sha256;
+      assert.ok(typeof sha === 'string' && sha.length === 64,
+        `${rel} must have a sha256 hash entry; got: ${JSON.stringify(entry)}`);
+    }
   });
 });

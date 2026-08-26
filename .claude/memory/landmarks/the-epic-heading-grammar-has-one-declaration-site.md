@@ -4,11 +4,11 @@ category: landmarks
 load_bearing: true
 scope: [scout, spec, implement, simplify]
 governs: .claude/skills/lib/**, .claude/skills/roadmap/**, .claude/skills/roadmap-sync/**, .claude/skills/standup/**
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
-- **Landmark.** The roadmap epic-heading grammar `## Epic N — Title  <emoji>  (tag)` is declared **once**, at `.claude/skills/lib/epic-heading.mjs`. Three modules import it: `roadmap/parse.mjs`, `roadmap-sync/sync.mjs`, `roadmap-sync/append.mjs`. A grammar change is now one edit, not three.
+- **Landmark.** The roadmap epic-heading grammar `## Epic N — Title  <emoji>  (tag)` is declared **once**, at `.claude/skills/lib/epic-heading.mjs`. Four modules import it as of 2026-08-26: `roadmap/parse.mjs`, `roadmap/render.mjs`, `roadmap-sync/sync.mjs`, `roadmap-sync/append.mjs`. A grammar change is one edit whatever that count reaches — which is the point, so do not re-derive the number to keep this line current.
 - **Supersedes the three-declaration landmark** (2026-08-17, workflow `unify-epic-heading-grammar`). That entry described the pre-hoist state and is deleted, not amended — its central claim inverted.
 - **Two entry points, on purpose.** `matchEpicHeadingLine` requires the `## ` prefix; `matchEpicHeadingText` matches heading text a caller already stripped it from (`splitSections` strips it before `parse.mjs` ever sees the line). One entry point with an *optional* prefix would let a body line reading `Epic 3 — foo` match inside `sync.mjs`, which scans every line. Do not "simplify" the two into one.
 - **The format stays load-bearing for `standup/gather.mjs`**, which tallies heading emoji to answer "what shipped?". Exactly one `⬜/🟡/✅` per heading, and `statusFromHeadingEmoji` takes the **earliest** one on the line.

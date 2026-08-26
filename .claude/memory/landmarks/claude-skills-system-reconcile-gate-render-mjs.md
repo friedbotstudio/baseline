@@ -2,8 +2,8 @@
 key: .claude/skills/system-reconcile/gate-render.mjs
 category: landmarks
 scope: [tdd, chore]
-verified-at: 290a41b
-last-touched: 2026-08-25
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 governs: .claude/skills/system-reconcile/gate-render.mjs,.claude/skills/system-reconcile/cli.mjs
 ---
 

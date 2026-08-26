@@ -3,8 +3,8 @@ key: path-keyed-surfacing-needs-a-repo-relative-path-payload-is-absolute
 category: landmines
 scope: []
 governs: .claude/hooks/process_lifecycle_guard.mjs, .claude/hooks/lib/governed-memory.mjs, .claude/skills/memory-index/resolve.mjs
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **The trap.** The PreToolUse payload's `tool_input.file_path` is an **absolute** path. Everything a path is looked up against is **repo-relative**: `governs:` globs in memory frontmatter, and `anchor:` values in `docs/system/elements/`. Hand the absolute path to either lookup and it matches nothing, silently.

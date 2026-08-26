@@ -5,8 +5,8 @@ scope: [integrate, tdd]
 governs: .claude/state/last_test_result, .claude/skills/integrate/SKILL.md, .claude/skills/memory-sync/SKILL.md, tests/control-bytes.test.mjs
 load_bearing: true
 source: incident
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - **Trap: `PASS` in `.claude/state/last_test_result` is evidence about the tree at stamp time, not about the commit it authorises.** Two phases run after `/integrate` stamps, and both can change what the suite would say. The gap is structural, not a slip, so no amount of care at integrate closes it.

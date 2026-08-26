@@ -5,8 +5,8 @@ scope: [spec, integrate]
 source: assistant-deferral
 raised-on: 2026-08-09
 raised-in-context: read-front-door-sweep
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 governs: .claude/skills/harness/checkers/spec-shippability.mjs
 ---
 

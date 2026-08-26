@@ -5,8 +5,8 @@ state_verified_at: 79e41cb
 scope: []
 state: false
 governs: .claude/hooks/plantuml_syntax_guard.mjs, .claude/skills/spec/**, docs/specs/**
-verified-at: 69c3259
-last-touched: 2026-08-19
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Constraint: `state: false` means the constraint DOES NOT hold. This environment has a JVM. Flipped 2026-08-13 by the entry's own re-verification command: `java -version` reports OpenJDK 17.0.17 (Zulu17.62+17-CA) at `/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home/bin/java`, and `plantuml` is on `PATH` at `/usr/local/bin/plantuml` (a shell wrapper) reporting PlantUML 1.2026.2.

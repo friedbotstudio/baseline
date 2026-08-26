@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/hooks/state_write_guard.mjs, .claude/hooks/lib/state-write.mjs
-verified-at: 0336688
-last-touched: 2026-08-25
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/hooks/state_write_guard.mjs`. The 27th hook, landed 2026-08-25. Denies a **subagent** write to `.claude/state/**` on both the Bash and the edit-tool boundary. Wired on `Bash` and on `Edit|Write|MultiEdit|NotebookEdit` — two `PreToolUse` matchers, still one event.

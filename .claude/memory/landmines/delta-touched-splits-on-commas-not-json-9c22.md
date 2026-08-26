@@ -5,8 +5,8 @@ scope: [archive]
 source: assistant-deferral
 raised-on: 2026-08-10
 raised-in-context: warm-context-diet
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 3c08c8a
+last-touched: 2026-08-26
 governs: .claude/skills/archive/SKILL.md, .claude/skills/workspace/queries.mjs, .claude/skills/workspace/delta.mjs
 ---
 
