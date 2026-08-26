@@ -290,9 +290,21 @@ describe('memory scope — the landmark deferral is enforced, not assumed (AC-00
     // directory) and `site-src/_includes/install-pill.njk:1` (deleted in d2761fb).
     // The deferral this asserts is untouched — the population shrank, the policy
     // did not. Re-measured by hand again, for the reason the paragraph above gives.
+    //
+    // 92 -> 93 at `review-gate-input-measurement` (2026-08-26), which filed one
+    // landmark for `changed-files-shape.mjs`. Verified as an addition rather than a
+    // re-homing: one new shard, zero removed, zero moved off `[scout]`.
+    //
+    // This one reached CI red, and the reason is worth more than the number. The
+    // binding verify runs at `/integrate`; `/memory-sync` writes to the store two
+    // phases LATER, and nothing re-runs the suite after it. So a census literal
+    // pinned to the store can be broken by a phase that runs after the last thing
+    // that could have caught it — no amount of care at integrate helps. Backlog
+    // `census-gate-literal-pattern-matches-no-real-site` carries the gate repair;
+    // the ordering is the other half.
     assert.equal(
       atScout.length,
-      92,
+      93,
       'D4 defers re-homing landmarks to the path leg (deferred: risk) — scout writes docs/scout/<slug>.md, which no landmark governs, so re-homing would remove landmark surfacing from scout entirely. This asserts the deferral so a later cycle cannot silently re-home them.',
     );
   });

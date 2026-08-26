@@ -49,11 +49,26 @@ const dir = dirname(rel);
 
 // Extension family — when source is .js/.mjs/.cjs, tests may use any of
 // the JS-ESM-family extensions. Same for .ts/.tsx/.mts/.cts.
+//
+// A shell script bridges to its own family AND to JS, because a shell script has
+// no test runner of its own and gets tested from whichever one the project
+// already has. In this repo that is node: scripts/publish-check.sh is covered by
+// tests/publish-check.test.mjs. The guard could not see that pairing, so a NEW
+// shell script could not be written the way every existing one is tested.
+// seed.md §4.1 carried the defect as an open follow-up.
+//
+// Every branch here is additive: each family list starts with the source's own
+// extension, so every candidate accepted before is still accepted. That matters
+// because this hook ships to consumer installs — a narrowing would start
+// blocking writes those projects make today, and the fallback below is left
+// untouched so a project on any other stack keeps matching its own convention.
 const JS_FAMILY = new Set(['js', 'mjs', 'cjs']);
 const TS_FAMILY = new Set(['ts', 'tsx', 'mts', 'cts']);
+const SHELL_FAMILY = new Set(['sh', 'bash', 'zsh']);
 let extVariants;
 if (JS_FAMILY.has(ext)) extVariants = [...JS_FAMILY];
 else if (TS_FAMILY.has(ext)) extVariants = [...TS_FAMILY];
+else if (SHELL_FAMILY.has(ext)) extVariants = [...SHELL_FAMILY, ...JS_FAMILY];
 else extVariants = [ext];
 
 // Strip a source-root prefix so candidates can mirror the layout under a

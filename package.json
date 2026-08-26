@@ -22,6 +22,7 @@
     "sync:constitution": "node scripts/sync-constitution-mirror.mjs --write",
     "test": "node --test --test-reporter=spec tests/*.test.mjs",
     "test:full": "PUBLISH_TESTS=1 PLANTUML_TESTS=1 node --test --test-reporter=spec tests/*.test.mjs",
+    "test:ci": "bash scripts/test-ci.sh",
     "test:mutation": "node scripts/mutation-oracle.mjs",
     "build:site": "eleventy",
     "dev:site": "eleventy --serve --port=4321",
