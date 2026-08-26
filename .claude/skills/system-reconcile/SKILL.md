@@ -45,12 +45,12 @@ property `/archive` Step 5.5 depends on.
 
 | Check | What a non-empty result means | The repair, once confirmed |
 |---|---|---|
-| `gaps` | A governed-surface file no element anchors. The map is no longer total over what it claims to describe. | Add an element whose anchor covers it, or widen an existing anchor to a glob. |
+| `gaps` | A governed-surface file no element anchors. The map is no longer total over what it claims to describe. Reported only — `/archive` Step 5.5 never gates on it. | Add an element whose anchor covers it, or widen an existing anchor to a glob. |
 | `stale` | The element's stored `anchor_digest` no longer matches the file's structural interface — something another file could depend on moved. | Re-stamp the element after confirming the diagram still describes it. |
 | `dangling` | The anchor resolves to nothing. A broken route, not an unfalsifiable drawing. | Repoint the anchor, or remove the element if the subject is gone. |
 | `duplicateAnchors` | Two ids claim one anchor — usually a merge where each branch derived the same anchor under a different name. | Reported, never auto-resolved: two meanings sharing one anchor cannot be told apart mechanically. Ask which id survives. |
 | `orphanShards` | A `.puml` section naming no element. The corpus cannot say what the diagram shows. | Add the missing element, or delete the shard. |
-| `unillustrated` | An element with no shard. Advisory — a gap in illustration, not a broken model. | Draw it with `writeDiagramShard`, or leave it. |
+| `unillustrated` | An element with no shard. Advisory as a severity — a gap in illustration, not a broken model — but `/archive` Step 5.5 gates on it, so an unillustrated element blocks the next commit until it is drawn. | Draw it with `writeDiagramShard`. |
 | `missingKind` | A shard carrying no `' @kind`, so `witness.bindingFor` returns `witness: none` and the element routes but is never citable as evidence. | Write the kind the shard already declares structurally with `writeDiagramShard`. |
 
 An empty array is a real answer, not a missing one. All seven empty means the model

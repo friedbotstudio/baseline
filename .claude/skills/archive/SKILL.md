@@ -88,7 +88,7 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
    node .claude/skills/system-reconcile/cli.mjs report --gate --json
    ```
 
-   **A non-zero exit fails the phase.** Do not read the JSON and decide; the exit code is the verdict. Six of the seven sections gate — `stale`, `dangling`, `duplicateAnchors`, `orphanShards`, `unillustrated`, `missingKind` — and a breach names the section and the offending members. `gaps` is reported and never gates, because two gaps pre-date this rule and blocking on them would fail every workflow until two unrelated modules are anchored.
+   **A non-zero exit fails the phase.** Do not read the JSON and decide; the exit code is the verdict. Six of the seven sections gate — `stale`, `dangling`, `duplicateAnchors`, `orphanShards`, `unillustrated`, `missingKind` — and a breach names the section and the offending members. `gaps` is reported and never gates, because unanchored files pre-date this rule and blocking on them would fail every workflow until each one is anchored.
 
    The gate also fails when the report **could not be produced**. Seven empty arrays are what a clean corpus, an opted-out project and a crashed read all return, so emptiness alone is not health — `reconcileForGate` carries the discriminator that tells them apart (security review 2026-08-07, MEDIUM #2, deferred until this gate needed it).
 

@@ -1,0 +1,61 @@
+{
+  "request": "Resolve the wording conflict between system-reconcile's seven-check table and /archive Step 5.5: unillustrated is advisory inside the report and blocking at the archive gate. Drop 'or leave it' from its repair column and correct the stale 'two gaps pre-date this rule' count in archive/SKILL.md. Docs-only, no behavior change.",
+  "slug": "unillustrated-gate-wording",
+  "track_id": "chore",
+  "novelty": "spec-derived",
+  "novelty_evidence": "docs/archive/2026-08-25/release-safety-2026-08-25/spec.md AC-023 and that workflow's gate-A decision note fix which six sections gate; this change only makes the skill prose describe that decided behavior.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/system-reconcile/SKILL.md",
+    ".claude/skills/archive/SKILL.md"
+  ],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "integrate",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "simplify",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787776651,
+  "updated_at": 1787777242,
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs reported {sensitive:false,matched:[]} — the diff touches only .claude/skills/**/SKILL.md prose, outside security.sensitive_globs",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "simplify",
+      "reason": "diff is 3 changed lines across 2 files, no rename/relocation/duplication",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "no count, description: line, convention, src/ template, or docs-site page changes — the diff IS the documentation change and has no downstream copy (grep of site-src/ and docs/site/ found none)",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "integrate",
+      "reason": "no trigger fired — the diff touches no test command, fixture, hook script, settings.json wiring, MCP declaration, or audit EXPECTED set; the fresh verify stamp (full suite, 3440 pass / 0 fail, audit PASS) covers it",
+      "oracle": "chore-conditional"
+    }
+  ]
+}
