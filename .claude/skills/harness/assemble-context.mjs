@@ -12,37 +12,64 @@
 // one. Both halves are fixed here: the input has an owner, and the verdict
 // carries which kind of zero it means.
 //
-// The element type is `{path, content, prior}` and `assertChangedFilesShape`
-// is the one export on this path that throws. Giving the input an owner was
-// not enough on its own: the owner emitted bare path strings while
-// `code-structure` and `backlog-deferral` read `file.content` and `file.path`,
-// so both stayed vacuous with no error and no skip marker. Every other function
-// here is fail-open by contract, which is exactly why that was silent.
+// The element type is `{path, content, prior}`; `changed-files-shape.mjs` holds the one
+// assertion on this path that throws. Every function here is fail-open by contract.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const CHANGED_FILES_ARGS = ['diff', '--name-only', 'HEAD'];
+// Re-exported so `assertChangedFilesShape` keeps its import site while its body lives
+// with the other type-contract code.
+export { assertChangedFilesShape } from './changed-files-shape.mjs';
 
-export function assembleChangedFiles({ rootDir, exec = gitExec } = {}) {
-  try {
-    return String(exec(rootDir, CHANGED_FILES_ARGS))
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
+// Two probes, because `git diff` answers only for paths the index already knows. A file
+// this change CREATED is untracked until it is staged, and under TDD that is most of the
+// change — so a single-probe input let a brand-new module reach no checker at all.
+//
+// `-z` on both: without it git QUOTES a path containing a newline or a quote, and
+// splitting that on '\n' yields fragments that fail their read and vanish with no error.
+const PROBES = [
+  { name: 'modified', args: ['diff', '--name-only', '-z', 'HEAD'] },
+  { name: 'created', args: ['ls-files', '--others', '--exclude-standard', '-z'] },
+];
+
+export function probeChangedFiles({ rootDir, exec = gitExec } = {}) {
+  const paths = [];
+  const seen = new Set();
+  const failedProbes = [];
+  for (const probe of PROBES) {
+    let out;
+    try {
+      out = exec(rootDir, probe.args);
+    } catch {
+      failedProbes.push(probe.name);
+      continue;
+    }
+    for (const path of String(out).split('\0')) {
+      if (path === '' || seen.has(path)) continue;
+      seen.add(path);
+      paths.push(path);
+    }
   }
+  return { paths, failedProbes };
 }
 
-// `no-input` and a measured zero are the same empty array, so the distinction
-// has to be carried alongside it. Without this, "we reviewed everything and found
-// nothing" and "we reviewed nothing" render identically — which is how a blind
-// gate reported CLEAN for its entire life.
-export function describeInputState(changedFiles, { probeFailed = false } = {}) {
-  if (probeFailed || changedFiles.length === 0) return 'no-input';
-  return 'measured';
+// Kept as a `string[]` projection of the probe above: tests/checker-fanout.test.mjs pins
+// that return type, and the richer result has exactly one reader.
+export function assembleChangedFiles(options = {}) {
+  return probeChangedFiles(options).paths;
+}
+
+// `no-input` and a measured zero are the same empty array, so the distinction has to be
+// carried alongside it — "we reviewed everything and found nothing" and "we reviewed
+// nothing" otherwise render identically, which is how a blind gate reported CLEAN for its
+// entire life. A run that lost one probe and kept the other is a third case: it measured
+// something, but not the whole change.
+export function describeInputState(changedFiles, { probeFailed = false, failedProbes = [] } = {}) {
+  const lost = probeFailed ? PROBES.length : failedProbes.length;
+  if (lost >= PROBES.length || changedFiles.length === 0) return 'no-input';
+  return lost > 0 ? 'partial' : 'measured';
 }
 
 // `prior` is the file's content at HEAD, or null when this change created it.
@@ -64,36 +91,12 @@ function hydrateChangedFile(rootDir, path, { exec, readFile }) {
   return { path, content, prior };
 }
 
-export function assertChangedFilesShape(changedFiles) {
-  if (!Array.isArray(changedFiles)) {
-    throw new TypeError(`ctx.changedFiles must be an array of {path, content, prior}; got ${typeof changedFiles}`);
-  }
-  changedFiles.forEach((file, index) => {
-    if (file === null || typeof file !== 'object') {
-      throw new TypeError(
-        `ctx.changedFiles[${index}] must be a {path, content, prior} object; got ${typeof file}`,
-      );
-    }
-    for (const field of ['path', 'content']) {
-      if (typeof file[field] !== 'string') {
-        throw new TypeError(
-          `ctx.changedFiles[${index}].${field} must be a string; got ${typeof file[field]}`,
-        );
-      }
-    }
-    if (file.prior !== null && typeof file.prior !== 'string') {
-      throw new TypeError(
-        `ctx.changedFiles[${index}].prior must be a string or null; got ${typeof file.prior}`,
-      );
-    }
-  });
-}
-
 export function assembleContext({ rootDir, exec = gitExec, readFile = readFileSync } = {}) {
-  const changedFiles = assembleChangedFiles({ rootDir, exec })
+  const { paths, failedProbes } = probeChangedFiles({ rootDir, exec });
+  const changedFiles = paths
     .map((path) => hydrateChangedFile(rootDir, path, { exec, readFile }))
     .filter(Boolean);
-  return { changedFiles, inputState: describeInputState(changedFiles) };
+  return { changedFiles, inputState: describeInputState(changedFiles, { failedProbes }) };
 }
 
 function gitExec(rootDir, args) {

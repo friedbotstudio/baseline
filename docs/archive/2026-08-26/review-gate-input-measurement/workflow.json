@@ -1,0 +1,69 @@
+{
+  "request": "Fix the four defects that make the code-review gate mis-measure its input. (1) assemble-context.mjs builds changedFiles from `git diff --name-only HEAD`, so every file a change CREATES is invisible to the code-structure and backlog-deferral checkers; union in `git ls-files --others --exclude-standard` with prior: null. (2) The same run reports inputState `measured` when it saw only the tracked half, so a partial review is indistinguishable from a complete one. (3) swarm_wave_audit.mjs runs `git status --porcelain` without -uall, so a wholly-new untracked directory collapses to one path string that never matches the file-level union write_set and false-fails the wave. (4) simplify/oracle.mjs tableRowCells splits a verdict row on `|`, so a path containing a pipe shifts every cell and the row is silently dropped; a newline in a filename does the same one layer up in assembleChangedFiles's `.split('\\n')`. Reported by a user of the installed baseline; shipped consumers carry the identical code. Needs failing tests first.",
+  "slug": "review-gate-input-measurement",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Four open backlog entries name these defects and prescribe the fix shape. `.claude/memory/backlog/untracked-files-are-invisible-to-every-code-review-checker-7f21.md` (\"Union the probe with `git ls-files --others --exclude-standard`, then decide what `prior` means for a path with no HEAD version\", verified-at 2367f5e) and `fanout-changedfiles-omits-untracked-files-6b07.md` (\"Union in `git ls-files --others --exclude-standard`, with `prior: null` for each\", verified-at a163ec5) both measure the cost on named runs. `swarm-wave-audit-collapses-untracked-dirs-4c19.md` names the one-flag fix (\"Add `-uall` to the `spawnSync` args at line 72\", verified-at 7f7b582). `a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04.md` names the delimiter fix and its sibling newline case in assembleChangedFiles (verified-at 2367f5e). Re-confirmed on disk at e27219d: `assemble-context.mjs:26` still reads ['diff','--name-only','HEAD'], and obj/template carries the same line.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/harness/assemble-context.mjs",
+    ".claude/skills/swarm-dispatch/swarm_wave_audit.mjs",
+    ".claude/skills/simplify/oracle.mjs",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "simplify"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "untracked-files-are-invisible-to-every-code-review-checker-7f21",
+    "fanout-changedfiles-omits-untracked-files-6b07",
+    "swarm-wave-audit-collapses-untracked-dirs-4c19",
+    "a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04"
+  ],
+  "created_at": 1787738400,
+  "updated_at": 1787742958,
+  "rightsize_base": [
+    "site-src/velocity.njk"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "micro diff",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 5,
+        "lines": 95
+      }
+    }
+  ],
+  "attempts": {
+    "tdd": 3,
+    "integrate": 2
+  }
+}

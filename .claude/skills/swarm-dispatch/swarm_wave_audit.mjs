@@ -69,7 +69,10 @@ function main(argv) {
   try { active = JSON.parse(readFileSync(activePath, 'utf8')); }
   catch (e) { fail(`active_wave.json unreadable: ${e.message}`); process.exit(2); }
 
-  const status = spawnSync('git', ['-C', root, 'status', '--porcelain'], { encoding: 'utf8' });
+  // `-uall` is load-bearing: plain `--porcelain` collapses a wholly-new untracked
+  // directory to one path (`newdir/`), which never matches a union write_set that lists
+  // files, so a task that creates a directory false-fails its wave.
+  const status = spawnSync('git', ['-C', root, 'status', '--porcelain', '-uall'], { encoding: 'utf8' });
   if (status.status !== 0) { fail(`git status failed: ${status.stderr}`); process.exit(2); }
 
   const preWave = new Set(active.pre_wave_changed || []);

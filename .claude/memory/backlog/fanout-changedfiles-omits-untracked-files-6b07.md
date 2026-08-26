@@ -2,7 +2,7 @@
 key: fanout-changedfiles-omits-untracked-files-6b07
 category: backlog
 scope: [integrate]
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-21
 raised-in-context: unsanitised-path-pair
@@ -10,6 +10,7 @@ verified-at: a163ec5
 last-touched: 2026-08-21
 governs: .claude/skills/harness/assemble-context.mjs
 deferred: risk
+superseded-at: 2026-08-26
 ---
 
 > A gate whose verdict is indistinguishable from a real one when its input is short. The module's own header documents that failure class; this is another instance of it.

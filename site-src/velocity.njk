@@ -4,7 +4,7 @@ title: "Velocity: ceremony you can prove you do not need · baseline"
 description: "Why the baseline has thirteen velocity levers, what the right-size gate measures before it drops a phase, and the rule that keeps a speed-up from turning into a bypass."
 heading: "Ceremony you can<br>prove you don't need."
 lead: "An eleven-phase workflow is right for a risky feature and absurd for a typo. The velocity levers close that gap, and each one is a config flag. Most of them remove work a machine can prove is unnecessary. One runs the other way and offers you more to batch in when the phases would cost more than the work they carry. None of them decides anything that belongs to you."
-updated: 2026-08-25
+updated: 2026-08-26
 breadcrumb: ["docs", "concepts", "velocity"]
 facts:
   - { label: "levers", value: "13" }
@@ -79,7 +79,7 @@ toc:
 
 <p>Dividing payload by envelope gives the ratio. Below 3x the verdict reads <code class="tok">under-floor</code>. From 3x it reads <code class="tok">acceptable</code>, and at 4x or better it reads <code class="tok">optimal</code>. Two further states cover the runs where no honest number exists: <code class="tok">not-applicable</code>, when the track has no payload phase, and <code class="tok">unfitted</code>, when nothing has been measured yet.</p>
 
-<p>The envelope is measured, not assumed. It is fitted from your own archived runs once a track has five of them. Until then a shipped default stands in, and the verdict is marked unfitted, so a borrowed number is never mistaken for a measurement. This repository has 28 archived <code class="tok">tdd-quickfix</code> runs the fitter can read. They put the envelope for that track at 39,536 tokens.</p>
+<p>The envelope is measured, not assumed. It is fitted from your own archived runs once a track has five of them. Until then a shipped default stands in, and the verdict is marked unfitted, so a borrowed number is never mistaken for a measurement. This repository has 29 archived <code class="tok">tdd-quickfix</code> runs the fitter can read. They put the envelope for that track at 39,105 tokens.</p>
 
 <p>You can ask for the ratio at any point in a run. The command reads the archived timing table once a workflow has landed, and the live timing log while it is still going. No flag withholds it. Asking for a measurement is a read.</p>
 
@@ -88,9 +88,9 @@ toc:
     <span>node .claude/skills/harness/ratio.mjs --slug &lt;slug&gt;</span>
   </div>
   <pre class="plate-body">payload   <span class="t-ok">109,427</span> tokens <span class="t-dim">(live)</span>
-envelope  <span class="t-ok">39,536</span> tokens <span class="t-dim">(fitted, 28 samples)</span>
-ratio     <span class="t-ok">2.77</span>  <span class="t-dim">under-floor</span>
-shortfall <span class="t-ok">48,717</span> tokens <span class="t-dim">to the 4x target</span></pre>
+envelope  <span class="t-ok">39,105</span> tokens <span class="t-dim">(fitted, 29 samples)</span>
+ratio     <span class="t-ok">2.80</span>  <span class="t-dim">under-floor</span>
+shortfall <span class="t-ok">46,993</span> tokens <span class="t-dim">to the 4x target</span></pre>
 </div>
 
 <p>Two checkpoints run without being asked. The first fires at triage, before any work starts, from the shape of the request alone: how many acceptance criteria it carries, how many paths it says it will touch. That one is a projection, and it will be wrong early. Being wrong early is tolerable, because its job is to let you fold related work in while folding is still cheap. The second fires once your tests go green. It measures what the run actually spent.</p>

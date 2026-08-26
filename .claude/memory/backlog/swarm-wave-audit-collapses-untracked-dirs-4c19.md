@@ -2,13 +2,14 @@
 key: swarm-wave-audit-collapses-untracked-dirs-4c19
 category: backlog
 scope: []
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-09
 raised-in-context: read-front-door-sweep
 verified-at: 7f7b582
 last-touched: 2026-08-09
 governs: .claude/skills/swarm-dispatch/swarm_wave_audit.mjs
+superseded-at: 2026-08-26
 ---
 
 > The audit fails — but on a path shape, not a stray write. `git status --porcelain` collapses a new untracked directory to `.claude/skills/roadmap/`, which never string-matches the file entry in the union.

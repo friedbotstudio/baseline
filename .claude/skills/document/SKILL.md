@@ -54,7 +54,7 @@ Multiple can fire on one diff. A feature that ships an API, needs a quickstart, 
 
    Never hand-write a receipt for work that was not done. The receipt asserts the delegate ran; forging one converts the gate into decoration.
 
-2a. **Survey the diff for anything the config does not cover.** `git diff --name-status <merge-base>..HEAD`. Classify touched files:
+2a. **Survey the diff for anything the config does not cover.** `git diff --name-status <merge-base>..HEAD`, then `git status --porcelain -uall` for the uncommitted and untracked work. The first command sees only what is already committed, so a file this change created is invisible to it. Classify touched files:
    - A page on a documentation surface → `technical-writer` candidate (takes precedence over the two below for that page).
    - Public API / CLI / contract surfaces → `documentation` candidate.
    - New capability a user learns by doing → `technical-tutorials` candidate.

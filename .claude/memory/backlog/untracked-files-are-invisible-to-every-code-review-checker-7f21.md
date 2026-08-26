@@ -2,7 +2,7 @@
 key: untracked-files-are-invisible-to-every-code-review-checker-7f21
 category: backlog
 scope: [integrate]
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-20
 raised-in-context: changedfiles-shape-contract
@@ -10,6 +10,7 @@ verified-at: 2367f5e
 last-touched: 2026-08-20
 governs: .claude/skills/harness/assemble-context.mjs
 deferred: risk
+superseded-at: 2026-08-26
 ---
 
 > The gate is weaker than the spec implies until it is addressed.

@@ -24,9 +24,25 @@ function tableRowCells(line) {
   return cells.length >= 2 && cells[0].length > 0 ? cells : null;
 }
 
-function flaggedRow(cells) {
-  const file = clip(cells[0]);
-  const reason = cells[2] === undefined ? '' : cells[2];
+// The verdict column is the fixed vocabulary simplify/SKILL.md defines. A path may
+// legally contain a pipe and so may a reason, so counting cells from either end drops
+// the row silently — which is how a file the reviewer explicitly flagged left the gate
+// with zero findings. Find the vocabulary instead, and rejoin whatever sits on each side.
+const VERDICT = /^(clean|cleaned|flagged)$/i;
+
+function splitOnVerdict(cells) {
+  const at = cells.findIndex((cell, index) => index >= 1 && VERDICT.test(cell));
+  if (at === -1) return null;
+  return {
+    file: cells.slice(0, at).join('|'),
+    verdict: cells[at],
+    reason: cells.slice(at + 1).join('|'),
+  };
+}
+
+function flaggedRow(row) {
+  const file = clip(row.file);
+  const { reason } = row;
   return {
     file,
     reason,
@@ -44,8 +60,10 @@ export function runSimplifyOracle({ simplifyTable } = {}, deps = {}) {
   const text = String(simplifyTable == null ? '' : simplifyTable);
   for (const line of text.split(/\r?\n/)) {
     const cells = tableRowCells(line);
-    if (!cells || !/^flagged$/i.test(cells[1])) continue;
-    const row = flaggedRow(cells);
+    if (!cells) continue;
+    const parsed = splitOnVerdict(cells);
+    if (!parsed || !/^flagged$/i.test(parsed.verdict)) continue;
+    const row = flaggedRow(parsed);
     findings.push(normalizeFinding({
       check: 'simplify_flag',
       file: row.file,

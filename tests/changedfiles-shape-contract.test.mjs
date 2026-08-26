@@ -42,11 +42,18 @@ function changed(filePath, lines, priorLines) {
 
 // exec and readFile are parameters of the producer's public API, so injecting them is
 // dependency injection rather than mocking an internal module (Art. VI.3).
-function execStub({ diff, show }) {
+// Both probes are `-z`, so a faithful stub joins on NUL. A newline-joined stub models a
+// command this module no longer runs, and `created` defaults to empty so a call site
+// that names only modified paths keeps meaning exactly that.
+function execStub({ diff, show, created = '' }) {
   return (rootDir, args) => {
     if (args[0] === 'diff') {
       if (typeof diff === 'function') return diff();
       return diff;
+    }
+    if (args[0] === 'ls-files') {
+      if (typeof created === 'function') return created();
+      return created;
     }
     if (args[0] === 'show') {
       if (typeof show === 'function') return show(args[1]);
@@ -101,7 +108,7 @@ describe('assembleContext — the declared element type (AC-001, AC-004)', () =>
   it('test_when_context_assembled_then_elements_are_hydrated_objects', () => {
     const result = assembler.assembleContext({
       rootDir: '/repo',
-      exec: execStub({ diff: 'a.mjs\nb.mjs\n', show: 'prior body\n' }),
+      exec: execStub({ diff: 'a.mjs\0b.mjs\0', show: 'prior body\n' }),
       readFile: readFileStub({ 'a.mjs': 'working a\n', 'b.mjs': 'working b\n' }),
     });
 
@@ -121,7 +128,7 @@ describe('assembleContext — the declared element type (AC-001, AC-004)', () =>
   it('test_when_diff_path_is_deleted_then_it_is_dropped_and_siblings_hydrate', () => {
     const result = assembler.assembleContext({
       rootDir: '/repo',
-      exec: execStub({ diff: 'gone.mjs\nkept.mjs\n', show: 'prior body\n' }),
+      exec: execStub({ diff: 'gone.mjs\0kept.mjs\0', show: 'prior body\n' }),
       readFile: readFileStub({ 'kept.mjs': 'still here\n' }),
     });
 
@@ -134,7 +141,7 @@ describe('assembleContext — the declared element type (AC-001, AC-004)', () =>
     const result = assembler.assembleContext({
       rootDir: '/repo',
       exec: execStub({
-        diff: 'fresh.mjs\n',
+        diff: 'fresh.mjs\0',
         show: () => { throw new Error('fatal: path does not exist in HEAD'); },
       }),
       readFile: readFileStub({ 'fresh.mjs': 'brand new\n' }),
@@ -160,7 +167,7 @@ describe('assembleContext — the declared element type (AC-001, AC-004)', () =>
   it('test_when_assemble_changed_files_is_called_then_it_still_returns_path_strings', () => {
     const paths = assembler.assembleChangedFiles({
       rootDir: '/repo',
-      exec: execStub({ diff: 'a.mjs\nb.mjs\n', show: '' }),
+      exec: execStub({ diff: 'a.mjs\0b.mjs\0', show: '' }),
     });
 
     assert.deepEqual(paths, ['a.mjs', 'b.mjs'],
@@ -175,7 +182,7 @@ describe('code-structure oracle — real findings and honest severity (AC-002, A
     const body = contentWith(120);
     const { changedFiles } = assembler.assembleContext({
       rootDir: '/repo',
-      exec: execStub({ diff: 'big.mjs\n', show: body }),
+      exec: execStub({ diff: 'big.mjs\0', show: body }),
       readFile: readFileStub({ 'big.mjs': body }),
     });
 
@@ -275,7 +282,7 @@ describe('the remaining code-review consumers (AC-005, AC-006)', () => {
 
     const { changedFiles } = assembler.assembleContext({
       rootDir: '/repo',
-      exec: execStub({ diff: `${rel}\n`, show: entry }),
+      exec: execStub({ diff: `${rel}\0`, show: entry }),
       readFile: readFileStub({ [rel]: entry }),
     });
 

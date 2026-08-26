@@ -52,7 +52,7 @@ Focus areas, in order:
 
 # Method
 
-1. `git diff --stat` then `git diff` against the base branch.
+1. `git diff --stat` then `git diff` against the base branch, then `git ls-files --others --exclude-standard` for the files this change created. A created file stays untracked until it is staged, so `git diff` alone never shows it — and under TDD the new files are most of the change.
 2. For each changed file, identify the trust boundary (if any) and enumerate tainted data flows.
 3. For any library's secure-usage API in doubt, verify against current docs (the provider named in `.claude/docs-provider.json` is the default; official docs / `llms.txt` also work) — never recall crypto/auth APIs from training data.
 4. Run existing security linters if configured (`bandit`, `semgrep`, `gosec`, `npm audit`, `pip-audit`) via Bash. Do **not** install new tools.

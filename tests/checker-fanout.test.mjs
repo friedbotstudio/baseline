@@ -167,7 +167,7 @@ describe('checker-fanout — real input, and an honest zero (AC-007)', () => {
 
     const files = assembleChangedFiles({
       rootDir: ROOT,
-      exec: () => 'a.mjs\nb.mjs\n',
+      exec: (rootDir, args) => (args[0] === 'diff' ? 'a.mjs\0b.mjs\0' : ''),
     });
 
     assert.deepEqual(files, ['a.mjs', 'b.mjs'],

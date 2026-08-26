@@ -2,7 +2,7 @@
 key: a-pipe-in-a-filename-removes-its-row-from-the-review-gate-5c04
 category: backlog
 scope: [simplify, integrate]
-status: open
+status: picked-up
 source: assistant-deferral
 raised-on: 2026-08-20
 raised-in-context: changedfiles-shape-contract
@@ -10,6 +10,7 @@ verified-at: 2367f5e
 last-touched: 2026-08-20
 governs: .claude/skills/simplify/oracle.mjs
 deferred: risk
+superseded-at: 2026-08-26
 ---
 
 > Closing one silent escape while leaving the other undocumented would misrepresent how tight that gate is.
