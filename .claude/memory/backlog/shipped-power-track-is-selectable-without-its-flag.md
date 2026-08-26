@@ -2,7 +2,7 @@
 key: shipped-power-track-is-selectable-without-its-flag
 category: backlog
 scope: []
-status: open
+status: picked-up
 raised-on: 2026-08-22
 raised-in-context: baseline-mcp
 source: user-feedback
@@ -11,6 +11,7 @@ verified-at: 3eafe4f
 last-touched: 2026-08-22
 caveat: reported from a CONSUMER INSTALL, not this dev tree. Re-verify against `src/*.template.*` and `obj/template/`, never against the live `.claude/` tree — the dev tree runs ahead of what ships, and an earlier pass in this session verified against it and wrongly cleared three of these items. All seven were re-confirmed against the shipped payload at 3eafe4f.
 governs: src/.claude/workflows.template.jsonl
+superseded-at: 2026-08-26
 ---
 
 > verbatim (user-feedback, 2026-08-22): "fyi, these issues are reported from user installed baseline; so note accordingly"

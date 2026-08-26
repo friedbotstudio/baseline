@@ -1,0 +1,69 @@
+{
+  "request": "Fix the shipped workflow-track template drift. src/.claude/workflows.template.jsonl diverges from the live .claude/workflows.jsonl in five ways that reach consumers: the epic and epic-child descriptions still document the retired `approved: true` epic-state authorization instead of the direction-approval token; the power track declares `requires_git` alone and is missing the `requires_config_flag` fence on velocity.power_mode.enabled; the chore track declares no internal_phases so all five conditionals derive into exceptions at triage; and the epic track is missing its roadmap-sync node. Deliberate differences to preserve: the dev-only spec-shippability-review and cli-copy-review nodes belong only in the live file. Needs a parity regression test first.",
+  "slug": "shipped-track-template-parity",
+  "track_id": "tdd-quickfix",
+  "novelty": "spec-derived",
+  "novelty_evidence": "Three open backlog entries name this defect and its two halves: .claude/memory/backlog/shipped-workflows-template-drifted-from-the-live-track-file.md, shipped-power-track-is-selectable-without-its-flag.md (\"the shipped power track declares preconditions: [{name: requires_git}] only ... Confirmed at 3eafe4f\"), and shipped-chore-track-declares-no-internal-phases.md (\"the shipped chore track has no internal_phases[] ... Confirmed at 3eafe4f\"). The five divergences were re-measured field by field against src/.claude/workflows.template.jsonl at 504baae.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    "src/.claude/workflows.template.jsonl",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "simplify",
+    "document"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "shipped-workflows-template-drifted-from-the-live-track-file",
+    "shipped-power-track-is-selectable-without-its-flag",
+    "shipped-chore-track-declares-no-internal-phases"
+  ],
+  "created_at": 1787733596,
+  "updated_at": 1787737236,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "micro diff",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 12
+      }
+    },
+    {
+      "phase": "document",
+      "reason": "micro diff, no doc surface touched",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 1,
+        "lines": 12
+      }
+    }
+  ]
+}
