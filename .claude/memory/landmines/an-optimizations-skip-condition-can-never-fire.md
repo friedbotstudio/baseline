@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: []
 governs: .claude/skills/archive/*.mjs, .claude/skills/simplify/reverify-guard.mjs, .claude/skills/tdd/drift-reverify-guard.mjs
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - **The trap.** A guard that skips expensive work when nothing relevant changed is only worth its code if the skip actually fires. Build the "did anything change" test out of the wrong signal and it answers *yes* every time. The guard is then correct, fully tested, green — and a pure cost. Nothing fails, so nothing tells you.

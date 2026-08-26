@@ -4,13 +4,14 @@ category: landmines
 scope: []
 governs: .claude/**, src/**, tests/**, docs/**
 load_bearing: true
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - On macOS/BSD, `file` classifies a perfectly valid UTF-8 source containing an em dash as `binary data`, and plain `grep` then reports **no match** and exits 1 rather than warning. There is no error, no "Binary file matches" line, nothing. It looks exactly like a clean result.
 - Reproduced 2026-08-04 against `.claude/skills/document/document-gate.mjs`: `grep -c "export function" <file>` exited 1 with no output while the file demonstrably contained two such lines. `grep -a -c` returned 2. `od -c` confirmed a normal 3-byte UTF-8 em dash (`E2 80 94`) in the header comment.
 - Why this is dangerous here specifically: this repo puts em dashes in almost every SKILL.md, hook header and source comment as a matter of house voice. So the failure mode is not rare, and it silently answers "that symbol does not exist" during exactly the searches that matter, such as a dead-code scan during `/simplify`.
+- **Re-checked 2026-08-27 at `5f52ba2`: the cited reproduction no longer reproduces.** Against the same `.claude/skills/document/document-gate.mjs`, `file` reports `Unicode text, UTF-8 text` rather than `binary data`, and a plain `grep -c "export function"` returns 3 and exits 0. Whatever made that file read as binary in 2026-08-04 is not present now, so treat the 2026-08-04 measurement as history rather than as a currently-observable behaviour. The advice below still stands, because it costs one flag and the failure it guards against is silent.
 - **Always pass `-a` when grepping repo sources.** `grep -a -rn "<pattern>" <paths>`. Treat an empty grep result on a file you have not opened as unproven, not as absence.
 - **Re-verified 2026-08-26 and the repro did NOT reproduce.** On the same file, `grep -c "export function"` returns 3 and exits 0, under both `en_US.UTF-8` and `LC_ALL=C`, and `file` now reports it as `Unicode text, UTF-8 text` rather than `binary data`. The file has been edited since, and the grep or `file` build may have changed too. What that establishes is that the cited evidence no longer stands, not that the failure mode is gone — I could not construct a current case either way. The `-a` habit costs nothing and is worth keeping; the 2026-08-04 measurement is what you should stop citing.
 - Second-order trap from the same session: `grep ... | head` reports `head`'s exit code, not grep's. When the exit code is the signal, capture first (`OUT=$(cmd 2>&1); EC=$?`) and inspect `$EC`.

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [spec, scenario, implement, simplify, integrate]
 governs: tests/**, .claude/skills/**
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Landmine: **this baseline's recurring failure is not a missing checker. It is a checker that exists, is loud, passes, and is aimed one axis off the thing that breaks.** A green result from an adjacent axis reads as coverage, so nobody looks again.

@@ -4,8 +4,8 @@ category: landmines
 load_bearing: true
 scope: [security, implement, simplify, integrate]
 governs: .claude/skills/lib/**, .claude/skills/roadmap/**, .claude/skills/roadmap-sync/**, .claude/hooks/**
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - **The trap.** `.test()` on a regex carrying the `g` flag advances `lastIndex` and returns **false on every second call** for the same input. A regex used as a *predicate* must never be global.

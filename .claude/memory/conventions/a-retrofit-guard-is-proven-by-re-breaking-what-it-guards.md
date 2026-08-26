@@ -5,8 +5,8 @@ scope: [scenario, implement, tdd, simplify, document]
 source: assistant-deferral
 raised-on: 2026-08-25
 raised-in-context: release-safety-2026-08-25 follow-on
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 governs: tests/**
 ---
 

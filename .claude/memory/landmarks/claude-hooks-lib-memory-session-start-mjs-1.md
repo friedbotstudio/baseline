@@ -3,8 +3,8 @@ key: .claude/hooks/lib/memory_session_start.mjs:1
 category: landmarks
 scope: []
 governs: .claude/hooks/lib/memory_session_start.mjs, .claude/hooks/memory_session_start.mjs, .claude/skills/memory-sync/sweep.mjs
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Role: SessionStart memory-index builder — invoked by `.claude/hooks/memory_session_start.mjs` (the hook). Reads the **eight** canonical categories (flat or sharded), counts entries + stale entries, counts pending candidates in `_pending.md`, scans `.claude/state/upgrade/*/manifest.json` for `status: PENDING`, and composes the additionalContext envelope: index table, a **three**-entry stale sample (`STALE_SAMPLE`, line 48), pending-flush nag (debt-mode only when no active workflow), pending-stage nag, and resume-snapshot injection from `_resume.md` when fresh.
@@ -13,4 +13,5 @@ last-touched: 2026-08-26
 - `suspectDecisions(memDir)` (line 295) is AC-004's payoff and the edge that earns `constraints` its own category: every constraint whose `state` reads false is paired with the decisions naming it in `rests_on:` and surfaced under "## Decisions resting on a constraint that no longer holds". `decisionsRestingOn` existed for a while with nothing walking it, so a flipped constraint invalidated nothing anywhere a human would see it. Fail-open — no constraints, or an unreadable store, yields `[]`.
 - Companion: `.claude/skills/memory-index/categories.mjs:1` (the category + decay source), `.claude/skills/memory-index/constraints.mjs:41` (the invalidation walk), `.claude/skills/memory-sync/sweep.mjs:1` (Step 0c re-derives the same stale predicate), `.claude/hooks/lib/resume_writer.mjs:1` (writes the `_resume.md` this injects).
 - **The budget is 4096 characters and it covers what the HOOK WRITES, not what `buildIndex` returns.** The hook writes the envelope plus a newline, so `buildIndex` clamps against `SESSION_START_BUDGET - STDOUT_NEWLINE`. Measuring only the envelope put stdout at 4097 the first time the payload grew enough for the re-clamp to run. Every tail-section gate measures in ENVELOPE characters via `envelopeRoom`, because JSON escaping doubles each newline and a gate sized in raw characters is undone by it — that is what left the standup section one character from being cut off the end.
-- Caveat: originally ported byte-for-byte from `lib/memory_session_start.py` (2026-05-27 perf pass). The stale predicate is duplicated with `sweep.mjs` Step 0c — keep in lockstep.
+- Caveat: originally ported byte-for-byte from `lib/memory_session_start.py` (2026-05-27 perf pass).
+- **The duplication with `sweep.mjs` is gone.** The predicate moved to `staleness.mjs` at `staleness-witness` (2026-08-24) and the last copied piece, a private `changedSince` in each file, moved to `.claude/hooks/lib/memory_changed_set.mjs` at `session-start-stale-cache` (2026-08-26). Both callers now import `isStaleFromFields`, `needsChangedSet` and `asResolver`, so there is nothing left to keep in lockstep. `buildIndex` creates one resolver and calls `persist()` before returning.

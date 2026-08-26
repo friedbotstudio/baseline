@@ -140,7 +140,16 @@ const PATH_LEG_BASELINE = {
   // `a-global-regex-with-test-fails-open-on-alternate-calls` with a `.claude/hooks/**`
   // glob. That one entry moved BOTH path-leg literals here by one — the broad-glob
   // blast radius the note above the census literal describes.
-  '.claude/hooks/lib/scoped-memory.mjs': 11,
+  //
+  // 11 -> 12 at 5f52ba2, the memory re-verification sweep. Re-verifying
+  // `security-fixes-are-per-call-site-and-new-modules-inherit-none` found its
+  // `governs:` named four `.claude/skills/**` trees and not `.claude/hooks/lib/**`,
+  // so it surfaced at zero phases for a new writer added under hooks — the exact
+  // failure the entry itself describes. Widening it to cover that tree is the
+  // repair, and this literal moving by one is the widening being visible. Only
+  // this path moved: `resolve.mjs` and `process_lifecycle_guard.mjs` sit outside
+  // `.claude/hooks/lib/**`.
+  '.claude/hooks/lib/scoped-memory.mjs': 12,
   '.claude/skills/memory-index/resolve.mjs': 16,
   // 9 -> 10 at 309d70e, the same single landmine reaching a second path through the
   // same `.claude/hooks/**` glob. Both bumps have one cause; neither is defended.

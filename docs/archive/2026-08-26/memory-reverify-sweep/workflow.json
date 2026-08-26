@@ -1,0 +1,51 @@
+{
+  "request": "Commit the memory re-verification sweep: 37 entries re-verified against live code at 5f52ba2, nine corrected, one marked closed. No code changes.",
+  "slug": "memory-reverify-sweep",
+  "track_id": "chore",
+  "novelty": "pattern-copy",
+  "novelty_evidence": "A routine /memory-sync curation flush, precedented by the standing Step 0c SOP in .claude/skills/memory-sync/SKILL.md and by this session's earlier chore (docs/archive/2026-08-26/unillustrated-gate-wording/). No new surface.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/memory/**",
+    "tests/memory-scope-store-invariants.test.mjs"
+  ],
+  "exceptions": [
+    "cli-copy-review",
+    "document",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "security",
+    "spec",
+    "spec-shippability-review",
+    "swarm-dispatch",
+    "swarm-plan",
+    "tdd"
+  ],
+  "completed": [
+    "chore",
+    "verify",
+    "simplify",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787783504,
+  "updated_at": 1787783894,
+  "auto_skipped": [
+    {
+      "phase": "security",
+      "reason": "sensitive-surface.mjs reported {sensitive:false,matched:[]} — .claude/memory/** and tests/** are outside security.sensitive_globs",
+      "oracle": "chore-conditional"
+    },
+    {
+      "phase": "document",
+      "reason": "document-gate CLEAN — no documentation surface in the diff; memory bodies and a test comment are neither a doc page nor user-facing copy",
+      "oracle": "chore-conditional"
+    }
+  ]
+}

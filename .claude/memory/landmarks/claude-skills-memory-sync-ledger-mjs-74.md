@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-sync/**, .claude/hooks/lib/memory_stop.mjs
-verified-at: 3c08c8a
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Path: `.claude/skills/memory-sync/ledger.mjs`, writing `.claude/memory/_discard-ledger.md`. The discard ledger (spec ticket D).

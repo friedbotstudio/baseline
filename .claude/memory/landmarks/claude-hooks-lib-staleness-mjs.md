@@ -4,8 +4,8 @@ category: landmarks
 scope: [tdd, integrate]
 governs: .claude/hooks/lib/staleness.mjs, .claude/skills/memory-sync/sweep.mjs, .claude/hooks/lib/memory_session_start.mjs
 source: inferred-from-code
-verified-at: e8e2283
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Role: Foundation. The memory decay predicate, declared once. Landed by `staleness-witness` (2026-08-24) and anchored in the corpus as element `staleness-predicate`.

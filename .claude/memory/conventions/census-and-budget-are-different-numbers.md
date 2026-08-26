@@ -3,8 +3,8 @@ key: census-and-budget-are-different-numbers
 category: conventions
 scope: [scenario, implement, simplify, integrate]
 governs: tests/**
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Convention: **when a numeric literal in a test goes red, first decide whether it is a CENSUS or a BUDGET.** They look identical and are repaired oppositely.

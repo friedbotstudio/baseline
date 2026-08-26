@@ -3,9 +3,9 @@ key: security-fixes-are-per-call-site-and-new-modules-inherit-none
 category: landmines
 load_bearing: true
 scope: [security, integrate, tdd]
-governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-sync/**,.claude/skills/roadmap-sync/**
-verified-at: 3c08c8a
-last-touched: 2026-08-26
+governs: .claude/skills/memory-index/**,.claude/skills/workspace/**,.claude/skills/memory-sync/**,.claude/skills/roadmap-sync/**,.claude/hooks/lib/**
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - **The trap.** Every frontmatter/fact writer in this repo validates its own inputs at its own call site. There is no shared guarded writer. So a module written next week starts from zero and reproduces whichever hole its author did not happen to remember.
@@ -15,5 +15,6 @@ last-touched: 2026-08-26
 - **Fifth instance, 2026-08-15, a NEW output grammar rather than frontmatter.** `roadmap-sync/append.mjs → renderEpicSection` interpolated an epic title and every slice title straight into the roadmap's `## Epic N — Title  <emoji>  (tag)` line. A title carrying `✅` forged a shipped status (`statusFromHeadingEmoji` takes the EARLIEST emoji, so the title beats the real marker), and a title carrying a newline forged a whole extra heading and degraded the adjacent real one to `status=unknown, tag=null`. Fixed by `assertInert` rejecting both classes. Same lesson, one axis over: the class is not "frontmatter writers", it is **any writer emitting a grammar a parser later trusts**. A roadmap line is as forgeable as a YAML key. (`assertInert` moved to `.claude/skills/lib/epic-heading.mjs` on 2026-08-17 when the grammar was hoisted; `append.mjs` imports it.)
 - **Sixth instance, 2026-08-17 — a guard that was necessary but NOT sufficient.** The same `renderEpicSection` guarded `title`, `tag` and each `slice.title` and left `summary` unguarded. `assertInert` alone could not have fixed it: `title` and `tag` are interpolated into the **middle** of the heading line, so a `## ` they carry can never reach a line start, but `summary` is pushed as **a line of its own** (`lines.push(summary, '')`). A newline-free, emoji-free `## Epic 99 — Injected (pwned)` therefore passes `assertInert` and still forges a real heading. Fixed by `assertSummaryInert` — `assertInert` **plus** a `matchEpicHeadingLine` rejection.
 - **Practical rule for the sixth instance.** Before choosing a guard for a new interpolated field, classify it by **position**: mid-line fields need only the character-class guard; whole-line fields need the character-class guard *and* a rejection of every grammar that can start a line. Do not reuse a sibling field's guard because the fields look alike — `title` and `summary` are both free text and need different guards.
+- **The `governs:` list was narrower than the class, and that was found the hard way.** `session-start-stale-cache` (2026-08-26) added `.claude/hooks/lib/memory_changed_set.mjs`, a writer that emits JSON and reads it back — squarely the fifth instance's generalized class. This entry governed only four `.claude/skills/**` trees, so it surfaced at zero phases for that work and the `usableStamp` gate got applied because the author happened to remember it, which is the exact failure the entry describes. `.claude/hooks/lib/**` is now in scope. Five files under it already write: `common.mjs`, `timing.mjs`, `thread_store.mjs`, `resume_writer.mjs`, and the new cache.
 - **Do not "fix" this by normalizing.** `canonicalSlug` in `common.mjs` is a NORMALIZER, not a validator; using it here MASKS a traversal by silently writing to a different path. REJECT, never repair.
 - The shared writer that would end this class is real but non-trivial: the seven writers span three different operations (render new shard / patch existing frontmatter / write flat canonical file), so one API either grows modes or covers a subset and creates false confidence. It needs its own spec. Backlog.

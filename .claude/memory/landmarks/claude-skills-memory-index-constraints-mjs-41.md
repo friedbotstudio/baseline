@@ -4,8 +4,8 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/memory/constraints/**, .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-sync/**
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Path: `.claude/skills/memory-index/constraints.mjs`. The constraint node and the invalidation edge that earns it a category of its own (spec ticket B, epic decision D2).

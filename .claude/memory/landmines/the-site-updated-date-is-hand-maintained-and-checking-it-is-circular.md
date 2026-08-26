@@ -5,8 +5,8 @@ scope: [document, simplify]
 source: assistant-deferral
 raised-on: 2026-08-25
 raised-in-context: docs-site review
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 governs: site-src/**,tests/site-updated-date-truth.test.mjs
 ---
 

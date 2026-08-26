@@ -4,8 +4,8 @@ category: landmarks
 scope: [tdd, integrate]
 governs: .claude/hooks/lib/memory_changed_set.mjs, .claude/hooks/lib/memory_session_start.mjs, .claude/skills/memory-sync/sweep.mjs
 source: inferred-from-code
-verified-at: e8e2283
-last-touched: 2026-08-26
+verified-at: 5f52ba2
+last-touched: 2026-08-27
 ---
 
 - Role: Foundation. The changed-set behind the staleness witness — the `git diff --name-only <stamp>..HEAD` call, memoized per stamp within a run and cached on disk across runs. Landed by `session-start-stale-cache` (2026-08-26).
