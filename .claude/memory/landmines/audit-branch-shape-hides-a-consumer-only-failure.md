@@ -4,7 +4,7 @@ category: landmines
 load_bearing: true
 scope: []
 governs: .claude/skills/audit-baseline/checks/**, .claude/skills/audit-baseline/expected-baseline.mjs, scripts/build-template.sh
-verified-at: c88acfb
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

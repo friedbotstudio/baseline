@@ -3,7 +3,7 @@ key: .claude/skills/spec-sync/SKILL.md:1
 category: landmarks
 scope: []
 governs: .claude/skills/spec-sync/SKILL.md, .claude/skills/workspace/sync.mjs, docs/system/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

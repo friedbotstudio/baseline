@@ -4,7 +4,7 @@ category: landmarks
 rests_on: zero-runtime-dependencies
 scope: []
 governs: .claude/skills/workspace/sync.mjs, .claude/skills/spec-sync/SKILL.md, docs/system/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

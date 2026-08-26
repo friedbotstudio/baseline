@@ -4,8 +4,8 @@ category: landmines
 load_bearing: false
 scope: [implement, security, integrate]
 governs: .claude/hooks/lib/staleness.mjs, .claude/skills/memory-sync/sweep.mjs, .claude/hooks/lib/memory_session_start.mjs
-verified-at: 05d8fec
-last-touched: 2026-08-24
+verified-at: 7d7039c
+last-touched: 2026-08-26
 ---
 
 - **The trap.** `spawnSync('git', [...args])` with an array and no shell stops *command* injection and does nothing about *argument* injection. git reads any argument beginning with `-` as an option, so a value interpolated into a revision position is an option sink.

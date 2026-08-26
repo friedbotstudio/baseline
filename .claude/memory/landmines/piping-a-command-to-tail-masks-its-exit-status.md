@@ -3,7 +3,7 @@ key: piping-a-command-to-tail-masks-its-exit-status
 category: landmines
 scope: [tdd, integrate, verify]
 governs: .claude/skills/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

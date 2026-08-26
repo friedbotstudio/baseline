@@ -4,7 +4,7 @@ category: landmarks
 load_bearing: true
 scope: []
 governs: .claude/memory/constraints/**, .claude/skills/memory-index/constraints.mjs, .claude/skills/memory-sync/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

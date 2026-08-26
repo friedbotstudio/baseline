@@ -49,6 +49,14 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 
    Only confirmed rows are written. A declared row the diff cannot confirm applies **nothing** — no anchor appended, no shard, no digest — which is what makes this step evidence rather than a re-stamp. There is no bulk-refresh path: re-stamping untouched elements would make the model permanently green and launder the drift the digest exists to catch.
 
+3.9. **Snapshot the corpus before anything moves.**
+
+   ```
+   node .claude/skills/archive/reverify-guard.mjs capture <slug>
+   ```
+
+   This must run BEFORE Step 4, for the same reason Steps 2 and 3 do: after the move there is no pre-archive state left to compare against, and `check` would then have nothing to prove a skip with and would re-verify every time.
+
 4. Run the archive script (move-only; it never touches the already-rendered `timing.md`):
    ```
    .claude/skills/archive/archive.sh <slug>
@@ -90,8 +98,20 @@ The archival *bundle* is planned at spec time — the spec's slug determines whi
 
    Ordering is load-bearing: Step 3 re-stamps the digest of every element whose anchor this landing touched, so a `stale` breach here is a real drift rather than the workflow's own edit awaiting its stamp.
 
+5.7. **Re-verify when the archive invalidated the binding verdict.**
+
+   `/integrate` stamped `.claude/state/last_test_result` at Phase 9. Step 4 has just changed the tree, and `/commit` will stage that change, so the verdict no longer covers what is about to be committed. Measured 2026-08-26: the `discard-ledger-audit-allowance` bundle re-fitted the `tdd-quickfix` envelope from 39,105 to 38,227 tokens and turned CI red on the commit that had just landed.
+
+   ```
+   node .claude/skills/archive/reverify-guard.mjs check <slug>
+   ```
+
+   Exit **3** — no per-track fitted envelope moved, no archived `spec.md` appeared or changed, and no new artifact filename entered a bundle. Those three are what the live-tree checks read; the digest covers them and deliberately omits bundle count and bundle paths, which move on every archive. Keep the existing stamp, say so in the Step 7 report, and continue. Exit **0** (changed, missing snapshot, unreadable tree, or any error) — re-run `project.json → test.cmd` and re-stamp `last_test_result` in the canonical four-line format, exactly as `/integrate` Step 2 does. A FAIL here is a real failure: do NOT record the phase, write `harness_state` `{state: "yielded", slug, reason: "post-archive verify FAIL"}` (marker delete first), and surface the output.
+
+   The guard only ever skips on a positive match. Everything else re-verifies, because a verdict that does not cover the tree being committed is worth nothing.
+
 6. Append `"archive"` to `workflow.json → completed`.
-7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`." Include any non-empty `drift` or `unclaimed` from Step 3 and the Step 5.5 report — an unread gap report is the same as no gap report. A `specMissing: true` from Step 3 is reported too, and it invalidates the other arrays rather than joining them.
+7. Tell the user: "Archived to `docs/archive/<date>/<slug>/`. Ready for `/grant-commit` → `/commit`." Include any non-empty `drift` or `unclaimed` from Step 3 and the Step 5.5 report — an unread gap report is the same as no gap report. A `specMissing: true` from Step 3 is reported too, and it invalidates the other arrays rather than joining them. Say which way Step 5.7 went — re-verified and green, or skipped and why — so a reader can tell a verdict that covers this tree from one that predates it.
 
 ## Constraints
 

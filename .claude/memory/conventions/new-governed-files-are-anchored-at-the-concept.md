@@ -3,7 +3,7 @@ key: new-governed-files-are-anchored-at-the-concept
 category: conventions
 scope: [archive, tdd, spec]
 governs: .claude/skills/archive/SKILL.md,.claude/skills/workspace/contribute.mjs,.claude/skills/workspace/materialize.mjs,docs/system/concepts/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

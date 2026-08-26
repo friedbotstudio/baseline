@@ -5,8 +5,8 @@ rests_on: zero-runtime-dependencies
 load_bearing: true
 scope: [document]
 governs: .claude/skills/document/**,.claude/skills/prose/SKILL.md
-verified-at: 8201af6
-last-touched: 2026-08-14
+verified-at: 7d7039c
+last-touched: 2026-08-26
 ---
 
 - Path: `.claude/skills/document/document-gate.mjs`, with its producer half at `.claude/skills/document/receipts.mjs`. Together they make Phase 10's routing mechanical.

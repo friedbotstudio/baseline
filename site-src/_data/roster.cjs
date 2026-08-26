@@ -161,6 +161,16 @@ module.exports = async () => {
   ).href;
   const { CANONICAL: memoryCanonical } = await import(memoryUrl);
 
+  // The work-planner's own fitter, so the velocity page reports the envelope this
+  // repository actually measures rather than a number someone typed. The page
+  // quoted a literal until 2026-08-26, and it went stale on the very commit that
+  // moved it: a workflow's `/archive` bundle is a new sample, and it lands in the
+  // same commit the test then measures.
+  const envelopeUrl = pathToFileURL(
+    path.resolve(repoRoot, '.claude/skills/harness/envelope.mjs'),
+  ).href;
+  const { envelopeFor } = await import(envelopeUrl);
+
   const predicatesUrl = pathToFileURL(
     path.resolve(repoRoot, 'src/cli/workflows-validator-predicates.js'),
   ).href;
@@ -332,11 +342,39 @@ module.exports = async () => {
         on: levers[k].enabled === true,
         note: notes[k],
       }));
+      // The track the page uses as its worked example. `fitted` is carried through
+      // rather than dropped: an unfitted repo is quoting a shipped default, and the
+      // page has to be able to say so instead of presenting it as a measurement.
+      const fit = envelopeFor({ rootDir: repoRoot, track: 'tdd-quickfix' });
+
+      // The page shows a worked `ratio.mjs` verdict, and deriving only its envelope
+      // line left the other three numbers describing a different run. The whole
+      // verdict is computed from one fit. The illustrated RATIO is the fixed part:
+      // the surrounding prose explains an under-floor verdict, so the example has
+      // to stay under the floor whatever the corpus does to the envelope. Payload
+      // is solved back from it rather than declared.
+      const EXAMPLE_RATIO = 2.8;
+      const TARGET_RATIO = 4;
+      const envelopeTokens = Number(fit.envelope_tokens);
+      const examplePayload = Math.round(EXAMPLE_RATIO * envelopeTokens);
+      const group = (n) => Number(n).toLocaleString('en-US');
       return {
         levers: rows,
         total: rows.length,
         onByDefault: rows.filter((r) => r.on).length,
         offByDefault: rows.filter((r) => !r.on).length,
+        envelope: {
+          track: fit.track,
+          tokens: group(envelopeTokens),
+          samples: fit.sample_count,
+          fitted: fit.fitted === true,
+        },
+        example: {
+          payload: group(examplePayload),
+          ratio: EXAMPLE_RATIO.toFixed(2),
+          target: TARGET_RATIO,
+          shortfall: group(TARGET_RATIO * envelopeTokens - examplePayload),
+        },
       };
     })(),
   };

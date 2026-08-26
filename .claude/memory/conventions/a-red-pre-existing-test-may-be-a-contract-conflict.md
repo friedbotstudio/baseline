@@ -3,7 +3,7 @@ key: a-red-pre-existing-test-may-be-a-contract-conflict
 category: conventions
 scope: [scenario, implement, integrate]
 governs: tests/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

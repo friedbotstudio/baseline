@@ -3,7 +3,7 @@ key: census-and-budget-are-different-numbers
 category: conventions
 scope: [scenario, implement, simplify, integrate]
 governs: tests/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

@@ -1,0 +1,4 @@
+!startsub archive_helpers
+' @kind c4_component
+Component(archive_helpers, ".claude/skills/archive/*.mjs", "subsystem", "Post-archive verdict guard")
+!endsub

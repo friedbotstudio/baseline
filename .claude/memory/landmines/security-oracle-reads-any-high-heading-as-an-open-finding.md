@@ -3,7 +3,7 @@ key: security-oracle-reads-any-high-heading-as-an-open-finding
 category: landmines
 scope: [security, integrate]
 governs: .claude/skills/security/**,.claude/skills/harness/checker-fanout.mjs
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

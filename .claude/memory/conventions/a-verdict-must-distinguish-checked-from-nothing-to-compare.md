@@ -3,7 +3,7 @@ key: a-verdict-must-distinguish-checked-from-nothing-to-compare
 category: conventions
 scope: [spec, tdd, implement]
 governs: .claude/skills/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

@@ -3,7 +3,7 @@ key: docs-references-is-fully-gitignored-so-a-doc-written-there-never-ships
 category: landmines
 scope: [spec, document]
 governs: docs/references/**,.claude/skills/document/**,.claude/skills/spec/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

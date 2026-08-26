@@ -5,7 +5,7 @@ rests_on: zero-runtime-dependencies
 load_bearing: true
 scope: []
 governs: .claude/skills/memory-index/**, .claude/hooks/lib/**, .claude/skills/audit-baseline/**, site-src/_data/memorynotes.json, tests/helpers/memory-fixtures.mjs
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

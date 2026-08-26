@@ -4,7 +4,7 @@ category: conventions
 scope: [security, simplify, integrate, document]
 governs: .claude/skills/harness/SKILL.md, .claude/skills/security/SKILL.md, .claude/skills/commit/SKILL.md
 source: user-feedback
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

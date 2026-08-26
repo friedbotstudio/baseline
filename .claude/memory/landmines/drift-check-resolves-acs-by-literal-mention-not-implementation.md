@@ -4,7 +4,7 @@ category: landmines
 scope: [tdd, integrate, spec]
 governs: .claude/skills/tdd/drift_check.mjs,.claude/skills/harness/**
 load_bearing: true
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 

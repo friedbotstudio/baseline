@@ -4,7 +4,7 @@ category: landmines
 load_bearing: true
 scope: [tdd, integrate, document]
 governs: .claude/skills/**,tests/**
-verified-at: 3c08c8a
+verified-at: 7d7039c
 last-touched: 2026-08-26
 ---
 
