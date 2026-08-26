@@ -21,7 +21,8 @@ import {
   closureFieldFor,
 } from '../../skills/memory-index/categories.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
-import { isStaleFromFields, splitList, usableStamp } from './staleness.mjs';
+import { isStaleFromFields, needsChangedSet, splitList, usableStamp } from './staleness.mjs';
+import { asResolver, createResolver } from './memory_changed_set.mjs';
 import { decisionsRestingOn } from '../../skills/memory-index/constraints.mjs';
 
 const DEFAULT_SIZE_CAP = 500;
@@ -163,16 +164,6 @@ function gitHead(root) {
   return '';
 }
 
-// null means "could not resolve a changed set", which the predicate treats as
-// unknown and falls back to the date leg. It must never read as "nothing moved".
-function changedSince(root, stamp) {
-  const r = spawnSync('git', ['-C', root, 'diff', '--name-only', `${stamp}..HEAD`], {
-    encoding: 'utf8', timeout: 5000,
-  });
-  if (r.status !== 0) return null;
-  return r.stdout.split('\n').filter(Boolean);
-}
-
 function daysSince(iso) {
   if (!iso) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -213,23 +204,26 @@ function splitBlocks(body) {
 }
 
 // @decision:decay-is-per-category-three-reasons-2026-08-04
-export function isStale(block, name, head, root) {
+export function isStale(block, name, head, rootOrResolver) {
   const stamp = getField(block, 'verified-at');
-  const resolvable = Boolean(head) && usableStamp(stamp);
-  return isStaleFromFields({
+  const fields = {
     category: name,
     hasClosure: Boolean(getField(block, closureFieldFor(name))),
     governs: splitList(getField(block, 'governs')),
     lastTouched: getField(block, 'last-touched') || '',
-    changedPaths: resolvable ? changedSince(root, stamp) : null,
     today: new Date(),
+  };
+  const resolvable = Boolean(head) && usableStamp(stamp) && needsChangedSet(fields);
+  return isStaleFromFields({
+    ...fields,
+    changedPaths: resolvable ? asResolver(rootOrResolver, head).changedSince(stamp) : null,
   });
 }
 
 // Presence-based sharded read: when `<memDir>/<name>` is a directory (post
 // migration), each `.md` is one fact. Reconstruct a bulleted pseudo-block from
 // its frontmatter so the exact `isStale` predicate applies unchanged.
-function readShardedCategory(dir, name, head, root) {
+function readShardedCategory(dir, name, head, resolver) {
   const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
   let stale = 0;
   const staleRecords = [];
@@ -243,7 +237,7 @@ function readShardedCategory(dir, name, head, root) {
     const pseudoBlock = Object.entries(fm)
       .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? v.join(',') : v}`)
       .join('\n');
-    if (isStale(pseudoBlock, name, head, root)) {
+    if (isStale(pseudoBlock, name, head, resolver)) {
       stale++;
       staleRecords.push([name, fm.key || f.replace(/\.md$/, ''), fm['last-touched'] || '']);
     }
@@ -339,6 +333,7 @@ export function renderConceptMap(specDir, { rootDir = process.cwd() } = {}) {
 
 export function buildIndex({ memDir, projectRoot, sessionSource }) {
   const head = gitHead(projectRoot);
+  const resolver = createResolver({ rootDir: projectRoot, head });
 
   const rows = [];
   let totalEntries = 0;
@@ -349,7 +344,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   for (const name of CANONICAL) {
     const dir = join(memDir, name);
     if (existsSync(dir) && statSync(dir).isDirectory()) {
-      const c = readShardedCategory(dir, name, head, projectRoot);
+      const c = readShardedCategory(dir, name, head, resolver);
       totalEntries += c.n;
       totalStale += c.stale;
       staleRecords.push(...c.staleRecords);
@@ -372,7 +367,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
     totalEntries += n;
     let stale = 0;
     for (const [key, blk] of blocks) {
-      if (!isStale(blk, name, head, projectRoot)) continue;
+      if (!isStale(blk, name, head, resolver)) continue;
       stale++;
       staleRecords.push([name, key, getField(blk, 'last-touched') || '']);
     }
@@ -615,6 +610,8 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       out = out + '\n\n---\n\n' + renderStandupSection(projectRoot);
     }
   } catch {}
+
+  resolver.persist();
 
   return envelopeWithin(out, LIMIT);
 }

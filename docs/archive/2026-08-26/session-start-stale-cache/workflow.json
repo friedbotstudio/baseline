@@ -1,0 +1,56 @@
+{
+  "request": "Speed up memory_session_start.mjs cold start. isStale() spawns one `git diff --name-only <stamp>..HEAD` per memory entry (433 spawns, 74 distinct stamps, 62s measured). Add memoization of the changed-set by stamp within a run, plus an on-disk cache under .claude/state/ keyed by HEAD so an unmoved HEAD costs nothing, and a cheap `git log --name-only` superset prefilter so provably-fresh entries need no exact diff. The staleness predicate's semantics must stay exact.",
+  "slug": "session-start-stale-cache",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "No precedent found. Searched .claude/memory/backlog/ (only stale-count-is-dominated-by-a-migration-cohort-15a1, which is about the stale COUNT under the retired commit-distance predicate, not the hook's cost), .claude/hooks/lib/ and .claude/skills/workspace/ for an existing HEAD-keyed disk cache (none), and docs/specs/ for a prior perf spec on this hook (none). Cost measured directly this session: 62s for the hook, 8.1s for 50 git diffs, 11.6s for the 74 distinct stamps.",
+  "track_reason": "Heavier than tdd-quickfix by the user's choice at triage. A cache that answers wrong reports a stale entry as fresh, silently, inside the one SessionStart hook every consumer install runs; and the git-log superset prefilter needs a written argument that it is exactly equivalent to the current predicate before it is built. The spec plus gate A is where that argument gets reviewed.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/memory_session_start.mjs",
+    ".claude/hooks/lib/staleness.mjs",
+    ".claude/hooks/memory_session_start.mjs",
+    ".claude/skills/memory-sync/sweep.mjs",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "org-dispatch",
+    "research"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787778177,
+  "updated_at": 1787782038,
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "drift-check",
+      "reason": "AC-010 unresolved: a manual live-store smoke check with no diff artifact; check was performed and passed (stale keys identical pre/post at e8e2283). Operator resumed the loop rather than amending the spec.",
+      "oracle": "operator-override"
+    }
+  ]
+}

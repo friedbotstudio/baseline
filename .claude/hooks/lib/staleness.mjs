@@ -68,6 +68,18 @@ export function governsMatches(governs, changedPaths) {
   return witness(governs, changedPaths) === true;
 }
 
+// The four false cases mirror the four early returns below, so an entry meeting
+// one gets the same verdict whether `changedPaths` is computed or null. The two
+// statements of that condition must not drift;
+// `test_when_needs_changed_set_is_false_then_verdict_matches_a_computed_changed_set`
+// is what holds them equal.
+export function needsChangedSet({ category, hasClosure = false, governs = [] } = {}) {
+  if (STALE_EXEMPT.has(category)) return false;
+  if (hasClosure) return false;
+  if (SUPERSESSION_DRIVEN.has(category)) return false;
+  return Array.isArray(governs) && governs.length > 0;
+}
+
 /**
  * `changedPaths` is null whenever the caller could not resolve a changed set —
  * `verified-at: HEAD`, a non-git project, a failed git call. Null falls through to

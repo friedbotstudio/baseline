@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { isStaleFromFields, STALE_DAYS, governsMatches, usableStamp } from '../.claude/hooks/lib/staleness.mjs';
+import { isStaleFromFields, STALE_DAYS, governsMatches, usableStamp, needsChangedSet } from '../.claude/hooks/lib/staleness.mjs';
 
 const TODAY = new Date('2026-08-23');
 
@@ -170,4 +170,62 @@ test('test_when_governs_glob_is_refused_then_the_predicate_falls_back_rather_tha
   assert.equal(isStaleFromFields(old), true);
 
   assert.equal(governsMatches([refused], ['a/b/c.mjs']), false, 'the refusal is absorbed here, not re-thrown');
+});
+
+// --- needsChangedSet (AC-001): do not pay git for an answer nothing reads ---
+//
+// isStaleFromFields returns before it touches `changedPaths` in four cases. On the
+// live store at 7fd51c0 those four covered 314 of 433 stamped entries, and every
+// one of them spawned a `git diff` whose result was then discarded.
+//
+// The claim these tests defend is an equivalence, not a heuristic: for an entry
+// meeting any of the four, the verdict is the same whether changedPaths holds the
+// computed array or null.
+
+test('test_when_category_is_stale_exempt_then_changed_set_not_needed', () => {
+  assert.equal(needsChangedSet({ category: 'backlog', hasClosure: false, governs: ['.claude/**'] }), false);
+});
+
+test('test_when_category_is_supersession_driven_then_changed_set_not_needed', () => {
+  assert.equal(needsChangedSet({ category: 'decisions', hasClosure: false, governs: ['.claude/**'] }), false);
+});
+
+test('test_when_closure_field_present_then_changed_set_not_needed', () => {
+  assert.equal(needsChangedSet({ category: 'landmarks', hasClosure: true, governs: ['.claude/**'] }), false);
+});
+
+test('test_when_governs_is_empty_then_changed_set_not_needed', () => {
+  // witness() returns null on an empty governs before it looks at its second
+  // argument, so the changed-set cannot affect the answer.
+  assert.equal(needsChangedSet({ category: 'landmarks', hasClosure: false, governs: [] }), false);
+});
+
+test('test_when_entry_has_governs_and_no_closure_then_changed_set_is_needed', () => {
+  assert.equal(needsChangedSet({ category: 'landmarks', hasClosure: false, governs: ['.claude/a.mjs'] }), true);
+});
+
+test('test_when_category_is_unrecognised_then_changed_set_is_needed', () => {
+  // Fail open. An unknown category might be neither exempt nor supersession-driven,
+  // and computing an answer nobody reads is cheap next to skipping one that matters.
+  assert.equal(needsChangedSet({ category: 'not-a-real-category', hasClosure: false, governs: ['.claude/a.mjs'] }), true);
+});
+
+test('test_when_needs_changed_set_is_false_then_verdict_matches_a_computed_changed_set', () => {
+  const computed = ['.claude/a.mjs'];
+  const shortCircuits = [
+    { category: 'backlog', hasClosure: false, governs: ['.claude/a.mjs'] },
+    { category: 'decisions', hasClosure: false, governs: ['.claude/a.mjs'] },
+    { category: 'landmarks', hasClosure: true, governs: ['.claude/a.mjs'] },
+    { category: 'landmarks', hasClosure: false, governs: [] },
+  ];
+
+  for (const fields of shortCircuits) {
+    assert.equal(needsChangedSet(fields), false, `${fields.category} should short-circuit`);
+    const base = { ...fields, lastTouched: daysAgo(STALE_DAYS + 1), today: TODAY };
+    assert.equal(
+      isStaleFromFields({ ...base, changedPaths: null }),
+      isStaleFromFields({ ...base, changedPaths: computed }),
+      `${fields.category}: skipping the git call must not change the verdict`,
+    );
+  }
 });

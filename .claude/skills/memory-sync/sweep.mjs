@@ -31,7 +31,8 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './shape.mjs';
 import { strandedFieldBullets } from '../memory-index/lift-fields.mjs';
-import { isStaleFromFields, splitList, usableStamp } from '../../hooks/lib/staleness.mjs';
+import { isStaleFromFields, needsChangedSet, splitList, usableStamp } from '../../hooks/lib/staleness.mjs';
+import { asResolver } from '../../hooks/lib/memory_changed_set.mjs';
 import {
   CANONICAL,
   PENDING_FILE,
@@ -216,14 +217,6 @@ function headSha(root) {
   return r.status === 0 ? r.stdout.trim() : '';
 }
 
-// null means "could not resolve a changed set", which the predicate treats as
-// unknown and falls back to the date leg. It must never read as "nothing moved".
-function changedSince(root, stamp) {
-  const r = spawnSync('git', ['-C', root, 'diff', '--name-only', `${stamp}..HEAD`], { encoding: 'utf8' });
-  if (r.status !== 0) return null;
-  return r.stdout.split('\n').filter(Boolean);
-}
-
 function daysSince(iso) {
   if (!validIso(iso)) return null;
   const d = new Date(`${iso}T00:00:00Z`).getTime();
@@ -249,16 +242,19 @@ function proseMatches(block) {
   return PROSE_PATTERNS.some(p => p.test(block));
 }
 
-export function isStale(block, name, head, root) {
+export function isStale(block, name, head, rootOrResolver) {
   const stamp = readFieldValue(block, 'verified-at');
-  const resolvable = Boolean(head) && usableStamp(stamp);
-  return isStaleFromFields({
+  const fields = {
     category: name,
     hasClosure: isClosed(block, name),
     governs: splitList(readFieldValue(block, 'governs')),
     lastTouched: readFieldValue(block, 'last-touched') || '',
-    changedPaths: resolvable ? changedSince(root, stamp) : null,
     today: new Date(),
+  };
+  const resolvable = Boolean(head) && usableStamp(stamp) && needsChangedSet(fields);
+  return isStaleFromFields({
+    ...fields,
+    changedPaths: resolvable ? asResolver(rootOrResolver, head).changedSince(stamp) : null,
   });
 }
 
