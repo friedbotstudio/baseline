@@ -5,8 +5,8 @@ status: open
 raised-on: 2026-08-04
 raised-in-context: living-system-model-abcd
 source: assistant-deferral
-verified-at: f7da5a7
-last-touched: 2026-08-04
+verified-at: 75cb997
+last-touched: 2026-08-26
 scope: []
 governs: .claude/skills/document/document-gate.mjs
 ---
@@ -18,6 +18,9 @@ governs: .claude/skills/document/document-gate.mjs
 **Over-demand — a small change draws a full obligation.** The gate cannot see how much of a page changed, so a factual one-word correction inside a code fence demands the same `technical-writer` + `copywriting` pass as a rewritten section.
 
 - Observed 2026-08-04: `site-src/install.njk` changed by one word ("seven" to "eight" inside a directory-tree comment) and drew both registers. Resolved that run by verifying the claim and confirming both gates pass (measure 0.34), which is the delegate's real job, but the obligation was disproportionate to the change.
+- **Twice more on 2026-08-26, and the two outcomes differed, which is the useful part.** `site-src/velocity.njk` replaced four hardcoded numbers with template expressions and drew `technical-writer` + `copywriting`; `docs/system/README.md` changed two table cells and drew `prose`. Both were substitutions with no sentence reworded, so a line-count or hunk-size threshold would have exempted both.
+- **One of the two found a real defect anyway.** The scoped `technical-writer` pass on `velocity.njk` caught that the code plate could render "shipped default" while the sentence above it still credited the archived runs with producing the number — an inconsistency introduced by the change itself, invisible to its diff, and fixed that run. The `docs/system/README.md` pass found nothing to change. **So the over-demand half is not pure waste, and a threshold tuned on change SIZE would have skipped the run that paid.** Whatever replaces path-granularity has to keep firing on a small edit that changes what a page ASSERTS, which is not a function of how many lines moved.
+- Both runs cost a delegate invocation each and neither tempted an override, because the SOP's third option — correct `document.surfaces` when the obligation is genuinely wrong — was not the honest answer either time. The obligation was right for the page and wrong for the change, which is exactly this entry's subject.
 
 **Under-demand — behavior changes and no page does, so the gate says CLEAN.** This is the more dangerous half, because the gate reports success.
 
