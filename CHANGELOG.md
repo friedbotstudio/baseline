@@ -1,3 +1,13 @@
+## [0.26.3](https://github.com/friedbotstudio/baseline/compare/v0.26.2...v0.26.3) (2026-08-26)
+
+
+### Bug Fixes
+
+* **ci:** correct the census literal and close the gap that let it reach CI ([c88acfb](https://github.com/friedbotstudio/baseline/commit/c88acfb8b03b62dd6e4fc8042550c7d01c423f8d))
+* **cli:** scope the installed manifest to shipped template files ([696c347](https://github.com/friedbotstudio/baseline/commit/696c3472ec0af4189ec26af1e35f871f7d78dbd8))
+* **review-gate:** measure the files a change creates ([0a1f4d8](https://github.com/friedbotstudio/baseline/commit/0a1f4d8f972b26e3c59fe09185a2cede5dd1d1af))
+* **templates:** restore shipped workflow-track parity with the live file ([e27219d](https://github.com/friedbotstudio/baseline/commit/e27219d8243ce002dc97722ff6d175a7161e6891))
+
 ## [0.26.2](https://github.com/friedbotstudio/baseline/compare/v0.26.1...v0.26.2) (2026-08-25)
 
 
