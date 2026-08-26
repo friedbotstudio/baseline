@@ -1,3 +1,11 @@
+## [0.26.4](https://github.com/friedbotstudio/baseline/compare/v0.26.3...v0.26.4) (2026-08-26)
+
+
+### Bug Fixes
+
+* **archive:** re-verify after the archive that invalidates the verdict ([75cb997](https://github.com/friedbotstudio/baseline/commit/75cb997cfbf7bd070b1fc9b30bb2da6424e00295))
+* **audit:** allow the runtime discard ledger in a flat memory store ([7d7039c](https://github.com/friedbotstudio/baseline/commit/7d7039c55c9a8ebf25dc4863e4be212e2590e105))
+
 ## [0.26.3](https://github.com/friedbotstudio/baseline/compare/v0.26.2...v0.26.3) (2026-08-26)
 
 
