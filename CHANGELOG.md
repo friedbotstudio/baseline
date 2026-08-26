@@ -1,3 +1,10 @@
+## [0.26.5](https://github.com/friedbotstudio/baseline/compare/v0.26.4...v0.26.5) (2026-08-26)
+
+
+### Performance Improvements
+
+* **memory:** ask the staleness predicate what it needs before paying git for it ([5f52ba2](https://github.com/friedbotstudio/baseline/commit/5f52ba2d9c594469312531fff97f7f03ecd67728))
+
 ## [0.26.4](https://github.com/friedbotstudio/baseline/compare/v0.26.3...v0.26.4) (2026-08-26)
 
 
