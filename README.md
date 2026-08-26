@@ -173,6 +173,8 @@ By default the scaffolder writes inside `.claude/`, plus `CLAUDE.md`, `.mcp.json
 
 If your project already runs its own secrets scanning or branch protection, pass `--no-ci-posture`: the install skips those files and sets `ci_posture.enabled: false` in `project.json`, and later upgrades will not re-deliver them or touch your own hooks.
 
+The shipped pre-commit hook is meant to be extended. It calls the gitleaks script rather than replacing the shell with it, so a check you add below that line still runs, and `set -e` aborts the commit when either one fails.
+
 Pass `--with-npmrc` to also drop `ignore-scripts=true` and `min-release-age=7` into `target/.npmrc`. Those defaults blunt the npm post-install-hook attack class and delay consumption of fresh malicious publishes. An existing `target/.npmrc` is preserved verbatim. Operators who already set these defaults in `~/.npmrc` do not need the flag.
 
 </details>

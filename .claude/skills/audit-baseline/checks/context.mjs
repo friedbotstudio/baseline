@@ -6,7 +6,7 @@ import { existsSync, readFileSync, readdirSync, statSync, accessSync, constants 
 import { join } from 'node:path';
 import {
   EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
-  EXPECTED_MCP_SERVERS,
+  OPTIONAL_MEMORY_FILES, EXPECTED_MCP_SERVERS,
 } from '../expected-baseline.mjs';
 import { readDocsProvider } from '../../lib/docs-provider.mjs';
 import { EXEMPT_RELPATHS, hasDerivedHeader } from '../../../hooks/lib/derived-header.mjs';
@@ -79,7 +79,8 @@ export function buildContext({ root, skipHashCheck }) {
     isDir: (rel) => existsSync(join(root, rel)) && statSync(join(root, rel)).isDirectory(),
     accessX: (rel) => { try { accessSync(join(root, rel), fsc.X_OK); return true; } catch { return false; } },
     hasDerivedHeader, EXEMPT_RELPATHS, checkMemoryShape, deriveCounts, SKILL_CATEGORIES,
-    EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES, EXPECTED_MCP_SERVERS,
+    EXPECTED_HOOKS, EXPECTED_AGENTS, EXPECTED_COMMANDS, EXPECTED_MEMORY_FILES,
+    OPTIONAL_MEMORY_FILES, EXPECTED_MCP_SERVERS,
     DEFAULT_MCP_SERVERS: defaultMcpServers,
     pj, additions, addAgents, addSkills, addHooks,
     diskHooks, diskAgents, diskSkills, diskCommands,

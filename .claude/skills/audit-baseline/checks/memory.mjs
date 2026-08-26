@@ -32,7 +32,12 @@ export function run(ctx) {
   } else {
     const diskMemory = new Set(ctx.listDir('.claude/memory').filter(n => n.endsWith('.md') && n !== 'README.md').map(n => n.replace(/\.md$/, '')));
     const missing = [...ctx.EXPECTED_MEMORY_FILES].filter(x => !diskMemory.has(x)).sort();
-    const unexpected = [...diskMemory].filter(x => !ctx.EXPECTED_MEMORY_FILES.has(x)).sort();
+    // Subtracted here and deliberately absent from `missing` above: an optional
+    // file is allowed in either state, so neither its presence nor its absence
+    // is a finding.
+    const unexpected = [...diskMemory]
+      .filter(x => !ctx.EXPECTED_MEMORY_FILES.has(x) && !ctx.OPTIONAL_MEMORY_FILES.has(x))
+      .sort();
     if (missing.length || unexpected.length) {
       const bits = [];
       if (missing.length) bits.push(`missing: ${JSON.stringify(missing)}`);

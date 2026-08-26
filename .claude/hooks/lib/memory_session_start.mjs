@@ -29,7 +29,18 @@ const DEFAULT_SIZE_CAP = 500;
 // The injection is loaded warm on every session start, so it is charged against
 // the context budget before the user types. Every optional tail section below
 // checks its remaining room against this.
-const SESSION_START_BUDGET = 4096;
+export const SESSION_START_BUDGET = 4096;
+
+// The hook writes the envelope followed by a newline, and the budget is a
+// property of what the hook WRITES, so that newline spends one character of it.
+// Leaving it out put stdout at 4097 the first time the payload grew large enough
+// for the re-clamp to run — a payload that grows on its own, because the injected
+// staleness counts are derived from today's date rather than from any commit.
+export const STDOUT_NEWLINE = 1;
+
+// What the builder is allowed to return, so that what the hook writes fits the
+// budget. Every section gate below measures against this, in envelope characters.
+const LIMIT = SESSION_START_BUDGET - STDOUT_NEWLINE;
 
 // The index table above already reports the stale COUNT per file, and the index
 // prompts no action on staleness. The named sample is orientation, not a
@@ -85,11 +96,37 @@ function serialize(text) {
 // the JSON wrapper adds a fixed prefix and escaping expands every newline to two
 // characters. Clamping the inner text to the budget therefore overshoots by a
 // few hundred characters. Re-clamp by the measured overage instead of estimating
-// it — one pass is enough because shrinking the text never grows the envelope.
-function envelopeWithin(text, limit) {
-  const envelope = serialize(text);
-  if (envelope.length <= limit) return envelope;
-  return serialize(clampTo(text, text.length - (envelope.length - limit)));
+// it.
+//
+// Shrinking the text by the measured overage was the estimate, and it does not
+// hold: clampTo appends the truncation notice, whose two newlines each cost two
+// characters once JSON escapes them, so a single pass sized to the overage can
+// land back over the limit — by one character, in the case that turned this
+// repo's own suite red. Searching for the cut instead of predicting it is exact,
+// and it removes the retry cap the estimate needed. The search is valid because
+// serialize(clampTo(text, n)) never shrinks as n grows.
+export function clampToEnvelope(text, limit) {
+  if (serialize(text).length <= limit) return text;
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (serialize(clampTo(text, mid)).length <= limit) low = mid;
+    else high = mid - 1;
+  }
+  return clampTo(text, low);
+}
+
+export function envelopeWithin(text, limit) {
+  return serialize(clampToEnvelope(text, limit));
+}
+
+// What the hook may still write after `text`, measured the way the budget is:
+// in envelope characters, so a section sized against it cannot be undone by JSON
+// escaping. Sizing the tail sections in raw characters is what left the standup
+// section one character from being cut off the end.
+function envelopeRoom(text) {
+  return LIMIT - serialize(text).length;
 }
 
 function readSizeCap(text) {
@@ -546,10 +583,10 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   // older sections stay on disk; the read is bounded so the SessionStart
   // envelope holds. Best-effort — absence/parse failure injects nothing.
   try {
-    out = clampTo(out, SESSION_START_BUDGET - TAIL_RESERVE);
+    out = clampToEnvelope(out, LIMIT - TAIL_RESERVE);
     const threadMd = stripThreadDataComment(readMostRecentMarkdown({ memDir }));
     if (threadMd) {
-      const budget = SESSION_START_BUDGET - out.length - 80 - TRAILING_SECTIONS_RESERVE;
+      const budget = envelopeRoom(out) - 80 - TRAILING_SECTIONS_RESERVE;
       if (budget > 300) {
         const block = threadMd.length > budget
           ? threadMd.slice(0, budget).replace(/\s+$/, '') + '\n\n…(thread section truncated)'
@@ -564,7 +601,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   try {
     const wt = readWorkingThread({ memDir });
     const whatWhy = wt && Array.isArray(wt.verbatim_cues) ? wt.verbatim_cues.join(' ') : '';
-    if (whatWhy && (SESSION_START_BUDGET - out.length) > 200) {
+    if (whatWhy && envelopeRoom(out) > 200) {
       out = out + '\n\n---\n\n## Working thread (durable what/why)\n\n'
         + `> ${whatWhy.slice(0, 400)}\n\nNext: ${wt.next_step || '(continue)'}`;
     }
@@ -574,10 +611,10 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
   // snapshot above. Best-effort: a gather failure omits the section rather
   // than breaking session start.
   try {
-    if ((SESSION_START_BUDGET - out.length) > 250) {
+    if (envelopeRoom(out) > 250) {
       out = out + '\n\n---\n\n' + renderStandupSection(projectRoot);
     }
   } catch {}
 
-  return envelopeWithin(out, SESSION_START_BUDGET);
+  return envelopeWithin(out, LIMIT);
 }

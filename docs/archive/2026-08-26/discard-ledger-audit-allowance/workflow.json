@@ -1,0 +1,49 @@
+{
+  "request": "Fix the audit rejection of the runtime-created _discard-ledger.md in flat memory stores, and drop the exec from the shipped .githooks/pre-commit so consumers can extend it.",
+  "slug": "discard-ledger-audit-allowance",
+  "track_id": "tdd-quickfix",
+  "novelty": "novel",
+  "novelty_evidence": "No backlog or pending-questions entry covers it: grep for discard-ledger across .claude/memory/backlog/ and pending-questions/ returned only a cross-reference inside simplify-prereq-omits-exceptions-escape-7b56.md. Reported from a consumer install upgrade report, reproduced by reading checks/memory.mjs (flat branch only) against build-template.sh:190 which excludes the file from the shipped flat template.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/skills/audit-baseline/expected-baseline.mjs",
+    ".claude/skills/audit-baseline/checks/memory.mjs",
+    ".claude/skills/audit-baseline/checks/src-templates-b.mjs",
+    ".claude/skills/audit-baseline/memory-shape.mjs",
+    ".githooks/pre-commit",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1787748830,
+  "updated_at": 1787755754,
+  "rightsize_base": [
+    ".claude/hooks/lib/memory_session_start.mjs",
+    ".claude/skills/audit-baseline/checks/context.mjs",
+    ".claude/skills/audit-baseline/checks/memory.mjs",
+    ".claude/skills/audit-baseline/expected-baseline.mjs",
+    ".githooks/pre-commit",
+    "tests/audit-optional-memory-files.test.mjs"
+  ]
+}

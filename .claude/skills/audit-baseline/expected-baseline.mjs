@@ -44,6 +44,12 @@ const CONTINUITY_TRAILS = ['_pending', '_resume', '_thread'];
 
 export const EXPECTED_MEMORY_FILES = new Set([...CANONICAL_MEMORY_CATEGORIES, ...CONTINUITY_TRAILS]);
 
+// Allowed, never required. `/memory-sync` creates `_discard-ledger.md` on the
+// first flush and build-template.sh keeps it out of the shipped template, so a
+// fresh install is correct with it or without it — putting it in EXPECTED would
+// only trade the "unexpected" failure for a "missing" one.
+export const OPTIONAL_MEMORY_FILES = new Set(['_discard-ledger']);
+
 // Canonical memory files = the roster minus the underscore-prefixed session files
 // (_pending / _resume / _thread). deriveCounts().memoryFiles counts these.
 export const CANONICAL_MEMORY_FILES = new Set(

@@ -9,4 +9,7 @@
 set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
-exec "$repo_root/scripts/ci/require-gitleaks.sh"
+# Called, not exec'd: this hook ships to consumer projects as a starting point,
+# and `exec` replaces the shell, so any check a project appends below would be
+# silently skipped. `set -e` above still aborts the commit on a non-zero exit.
+"$repo_root/scripts/ci/require-gitleaks.sh"
