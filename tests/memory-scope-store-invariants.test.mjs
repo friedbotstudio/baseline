@@ -186,7 +186,16 @@ const PATH_LEG_BASELINE = {
   // closing it removed a hit. Second downward move of this same literal from the
   // same cause, and re-measured by hand for the same reason: the census gate's
   // literalPattern matches `SYMBOL = <digits>`, never an object property.
-  '.claude/skills/harness/checker-fanout.mjs': 13,
+  //
+  // AC-005 and AC-010 of docs/specs/stale-keying-and-glob-scope.md.
+  //
+  // 13 -> 14 at the `stale-keying-and-glob-scope` landing. Mechanism A now resolves its
+  // path signal through the shared helper, which carries the path-shaped-`key:` fallback
+  // it never had (spec D7). The new hit is the landmark keyed
+  // `.claude/skills/harness/checker-fanout.mjs` — a fact about this exact file that had
+  // never surfaced on an edit to it, because it declares no path field and only 8 of 92
+  // category-default landmarks do. A widening, re-measured rather than defended.
+  '.claude/skills/harness/checker-fanout.mjs': 14,
 };
 
 function liveShards() {
@@ -206,6 +215,192 @@ function scopeLineOf(file) {
 function relative(file) {
   return file.slice(LIVE_MEM.length + 1);
 }
+
+function governsOf(file) {
+  const match = /^governs:(.*)$/m.exec(frontmatterOf(file));
+  return match ? match[1].split(',').map((s) => s.trim()).filter(Boolean) : [];
+}
+
+function keyOf(file) {
+  const match = /^key:(.*)$/m.exec(frontmatterOf(file));
+  return match ? match[1].trim() : null;
+}
+
+// Nine entries carried `governs: tests/**` at 5f52ba2, so a commit touching any test
+// file re-staled all nine at once. A stale queue that fires on every test edit stops
+// distinguishing "this entry's subject moved" from "a test changed somewhere", which
+// is the same signal-death the commit-distance leg had before witnessed staleness
+// replaced it.
+//
+// The curator narrowed five and deliberately kept three. The rule applied: `governs:`
+// answers "what change should make me re-check this entry", NOT "where does this
+// advice apply". The five have file-specific evidence; the three are advice about any
+// red test and have no narrower oracle, which the backlog entry allows for — "some
+// genuinely describe test-suite-wide conventions and a broad glob is honest for them".
+//
+// The allowlist is the point of this test. Without it the assertion reads as "no entry
+// may say tests/**", which is not the policy and would be repaired by re-widening the
+// five. Re-measure with:
+//   grep -rl '^governs:.*tests/\*\*' .claude/memory
+const NARROWED_OFF_TESTS_GLOB = [
+  'claude-skills-lib-tests-is-executed-by-nothing',
+  'a-check-that-measured-nothing-reports-success',
+  'a-cycle-that-adds-a-gate-must-assert-the-consumer-calls-it',
+  'a-checker-aimed-one-axis-off-passes-loudly',
+];
+
+// SUPERSEDED by the split. This table recorded a trade that no longer has to be made.
+//
+// `governs:` used to serve two purposes with opposite pressures — staleness witness
+// (narrow) and surfacing audience (wide) — so an entry whose evidence and audience
+// differed had to pick one, and this table is where each pick was recorded.
+//
+// `surfaces-on:` now carries the audience and `governs:` keeps the witness, so all
+// four entries below hold the WIDE value in `surfaces-on:` and a narrow `governs:`.
+// They are asserted by `test_when_the_four_entries_are_read_then_each_declares_a_narrow_governs_and_a_wide_surfaces_on`
+// above. What remains here is the guard that they still reach their audience.
+const TESTS_GLOB_KEPT_DELIBERATELY = {
+  'a-red-pre-existing-test-may-be-a-contract-conflict': 'how to repair ANY red pre-existing assertion',
+  'a-retrofit-guard-is-proven-by-re-breaking-what-it-guards': 'how to prove ANY retrofit guard is connected',
+  'census-and-budget-are-different-numbers': 'how to classify ANY red numeric literal in a test',
+  // Narrowed to tests/control-bytes.test.mjs on 2026-08-27 and REVERTED the same run.
+  // It is load_bearing, it has recurred four times — the fourth inside a memory file
+  // while its own author was documenting it — and its body records that it "governed
+  // .claude/** when the trap recurred". Narrowing it stopped it surfacing to anyone
+  // editing .claude/**, which is precisely where it recurs. The 4 governs-hit counts
+  // in PATH_LEG_BASELINE each dropped by one and named the cost out loud.
+  'grep-reports-no-match-on-utf8-files-it-calls-binary': 'a silent trap in ANY tracked text file',
+};
+
+// AC-001, AC-003, AC-009 of docs/specs/stale-keying-and-glob-scope.md.
+// Covers §Behavior #1.
+//
+// These four are the entries the earlier narrowing pass could NOT fix. Each needs a
+// wide path glob to keep surfacing and a narrow one to stop churning, and one field
+// cannot be both. After the split each declares a narrow `governs:` (staleness) and a
+// wide `surfaces-on:` (audience), and the churn goes to zero.
+//
+// Re-measure the churn with:
+//   node -e "import('./.claude/hooks/lib/staleness.mjs').then(m => console.log(
+//     m.governsMatches(m.splitList('<governs value>'), ['tests/some-unrelated-suite.test.mjs'])))"
+const SPLIT_ENTRIES = [
+  'a-red-pre-existing-test-may-be-a-contract-conflict',
+  'a-retrofit-guard-is-proven-by-re-breaking-what-it-guards',
+  'census-and-budget-are-different-numbers',
+  'grep-reports-no-match-on-utf8-files-it-calls-binary',
+];
+
+// One edit to one unrelated repo-root test file — the exact churn the source backlog
+// entry names. Not a string match on the glob: `.claude/skills/lib/tests/**` contains
+// the characters `tests/**` and is NOT wide, which is how an earlier count read 5
+// where the predicate said 4.
+const UNRELATED_TEST_EDIT = ['tests/some-unrelated-suite.test.mjs'];
+
+function surfacesOnOf(file) {
+  const match = /^surfaces-on:(.*)$/m.exec(frontmatterOf(file));
+  return match ? match[1].split(',').map((s) => s.trim()).filter(Boolean) : [];
+}
+
+function shardFor(key) {
+  return liveShards().find((f) => keyOf(f) === key);
+}
+
+describe('memory scope — the split ends the churn without narrowing the audience', () => {
+  it('test_when_an_unrelated_test_file_changes_then_none_of_the_four_entries_are_restaled', async () => {
+    const staleness = await tryImport('.claude/hooks/lib/staleness.mjs');
+    assert.ok(staleness, 'staleness.mjs must import cleanly');
+
+    const churning = SPLIT_ENTRIES.filter((key) => {
+      const file = shardFor(key);
+      if (!file) return true;
+      return staleness.isStaleFromFields({
+        category: 'landmines',
+        governs: governsOf(file),
+        lastTouched: '2026-08-27',
+        changedPaths: UNRELATED_TEST_EDIT,
+      });
+    });
+
+    assert.deepEqual(
+      churning, [],
+      'a stale queue that fires on every test edit stops distinguishing "check this entry" from '
+      + '"a test changed somewhere", which is the signal-death witnessed staleness replaced commit-distance to avoid',
+    );
+  });
+
+  it('test_when_the_four_entries_are_read_then_each_declares_a_narrow_governs_and_a_wide_surfaces_on', async () => {
+    const staleness = await tryImport('.claude/hooks/lib/staleness.mjs');
+    assert.ok(staleness, 'staleness.mjs must import cleanly');
+
+    const broken = [];
+    for (const key of SPLIT_ENTRIES) {
+      const file = shardFor(key);
+      if (!file) { broken.push(`${key}: shard not found`); continue; }
+      const governs = governsOf(file);
+      const surfacesOn = surfacesOnOf(file);
+      if (!surfacesOn.length) broken.push(`${key}: no surfaces-on — its audience is undeclared`);
+      if (staleness.governsMatches(governs, UNRELATED_TEST_EDIT)) {
+        broken.push(`${key}: governs still matches an unrelated test edit`);
+      }
+    }
+
+    assert.deepEqual(
+      broken, [],
+      'each entry must end up narrow for staleness AND wide for surfacing; declaring only one half '
+      + 'trades the churn for silence, which is the trap that forced the grep-landmine revert',
+    );
+  });
+});
+
+describe('memory scope — a wide tests glob no longer re-stales unrelated entries', () => {
+  it('test_when_the_store_is_scanned_then_no_narrowed_entry_declares_a_bare_tests_glob', () => {
+    const offenders = liveShards()
+      .filter((f) => NARROWED_OFF_TESTS_GLOB.includes(keyOf(f)))
+      .filter((f) => governsOf(f).includes('tests/**'))
+      .map(relative);
+
+    assert.deepEqual(
+      offenders, [],
+      'each of these entries has file-specific evidence, so a bare tests/** re-verifies it on every '
+      + 'unrelated test edit and never on the change that actually moves its subject',
+    );
+  });
+
+  it('test_when_the_deliberately_kept_entries_are_scanned_then_they_still_declare_it', () => {
+    // Guards the narrowing from overshooting into "no entry may ever say tests/**".
+    // These four have no narrower AUDIENCE; the broad glob is the honest answer, and
+    // after the split it lives in `surfaces-on:` rather than in `governs:`.
+    const missing = Object.keys(TESTS_GLOB_KEPT_DELIBERATELY).filter((key) => {
+      const file = liveShards().find((f) => keyOf(f) === key);
+      if (!file) return true;
+      const audience = surfacesOnOf(file);
+      return !audience.some((glob) => glob === 'tests/**' || glob === '.claude/**');
+    });
+
+    assert.deepEqual(
+      missing, [],
+      'these entries are advice about any test, not about a named file; narrowing their AUDIENCE '
+      + 'would stop them reaching the readers who need them — the trade the split removed',
+    );
+  });
+
+  it('test_when_an_unrelated_test_file_changes_then_a_narrowed_entry_is_not_restaled', async () => {
+    const staleness = await tryImport('.claude/hooks/lib/staleness.mjs');
+    assert.ok(staleness, 'staleness.mjs must import cleanly');
+
+    const changedPaths = ['tests/some-unrelated-suite.test.mjs'];
+    const fields = { category: 'landmines', lastTouched: '2026-08-27', changedPaths };
+
+    assert.equal(
+      staleness.isStaleFromFields({ ...fields, governs: ['tests/**'] }), true,
+      'the defect, stated: a bare tests/** witnesses any test edit as movement in this entry',
+    );
+    assert.equal(
+      staleness.isStaleFromFields({ ...fields, governs: ['tests/control-bytes.test.mjs'] }), false,
+      'the narrowed form witnesses only the gate that actually closes this entry',
+    );
+  });
+});
 
 describe('memory scope — no entry is left unreachable or placeheld (AC-004)', () => {
   it('test_when_scope_narrow_check_runs_over_live_store_then_exit_zero', () => {

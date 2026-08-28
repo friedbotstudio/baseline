@@ -3,7 +3,7 @@ key: a-checker-aimed-one-axis-off-passes-loudly
 category: landmines
 load_bearing: true
 scope: [spec, scenario, implement, simplify, integrate]
-governs: tests/**, .claude/skills/**
+governs: .claude/skills/**
 verified-at: 5f52ba2
 last-touched: 2026-08-27
 ---

@@ -13,6 +13,7 @@
 import { CANONICAL, asList } from './categories.mjs';
 import { resolveCategory } from './lift-fields.mjs';
 import { matchesGlob } from './index-io.mjs';
+import { surfacingPathsOf } from '../../hooks/lib/memory-entries.mjs';
 import { SCOPE_BY_CATEGORY } from './migrate.mjs';
 import { architectureMapEnabled } from '../workspace/flags.mjs';
 import { readConcepts } from '../workspace/concepts.mjs';
@@ -40,6 +41,7 @@ function indexEntries(memDir) {
         key: entry.key,
         category,
         governs: asList(entry.fields.governs),
+        surfacingPaths: surfacingPathsOf(entry),
         rests_on: asList(entry.fields.rests_on),
         element: entry.fields.element ?? null,
       });
@@ -104,7 +106,7 @@ export function resolveLookup(kind, needle, { rootDir, specDir } = {}) {
     return entries.filter((e) => e.element === needle).map(structural);
   }
   return entries
-    .filter((e) => e.governs.some((glob) => matchesGlob(glob, needle)))
+    .filter((e) => e.surfacingPaths.some((glob) => matchesGlob(glob, needle)))
     .map(structural);
 }
 
@@ -158,11 +160,14 @@ function phaseScopeOf(entry) {
   return asList(entry?.fields?.scope).filter((s) => s !== SCOPE_PLACEHOLDER);
 }
 
-// Reachability spans BOTH legs. The phase leg (`scope:`) fires when a workflow
-// artifact is written; the path leg (`governs:`, from epic slice C) fires when the
-// governed code is edited. An entry needs only one of them. Checking the phase leg
-// alone is what made a perfectly reachable path-governed entry look orphaned and
-// earn a placeholder that orphaned it for real.
+// Reachability spans ALL THREE legs. The phase leg (`scope:`) fires when a workflow
+// artifact is written; `governs:` fires when the code that would invalidate the entry
+// is edited; `surfaces-on:` fires across the area the entry warns about. An entry needs
+// only one of them. Counting only two is a silent data-loss path: an entry whose reach
+// lives solely in `surfaces-on:` would fail assertWritable and never be written at all.
+//
+// Checking the phase leg alone is what made a perfectly reachable path-governed entry
+// look orphaned and earn a placeholder that orphaned it for real.
 //
 // No phase roster is validated here: the memory layer does not own the workflow's
 // phase list, and importing one would couple the store to `workflows.jsonl`. This
@@ -170,7 +175,9 @@ function phaseScopeOf(entry) {
 // correctly" — a misspelt phase is a curation defect the proposal surfaces, not a
 // reachability question.
 export function isReachable(entry) {
-  return phaseScopeOf(entry).length > 0 || asList(entry?.fields?.governs).length > 0;
+  return phaseScopeOf(entry).length > 0
+    || asList(entry?.fields?.governs).length > 0
+    || asList(entry?.fields?.['surfaces-on']).length > 0;
 }
 
 // The category default is refused for the same reason the placeholder is: it is a
@@ -217,7 +224,7 @@ export function assertWritable(entry) {
     throw new UnreachableScopeError(key, `\`scope: ${SCOPE_PLACEHOLDER}\` is not a stored value — it matches no phase`);
   }
   if (!isReachable(entry)) {
-    throw new UnreachableScopeError(key, 'reachable by neither leg — give it a phase `scope:` or a `governs:` glob');
+    throw new UnreachableScopeError(key, 'reachable by neither leg — give it a phase `scope:`, a `governs:` glob, or a `surfaces-on:` glob');
   }
   if (inheritsCategoryDefault(entry)) {
     throw new UnreachableScopeError(key, `scope equals the \`${entry.category}\` category default with no narrowing evidence`);

@@ -428,3 +428,34 @@ describe('relevance filter — the declaration surfaces are documented (AC-007, 
     );
   });
 });
+// AC-002 of docs/specs/stale-keying-and-glob-scope.md. Covers §Behavior #2.
+//
+// Mechanism B is the other surfacing site: it narrows already-phase-scoped hits to
+// the workflow's declared write surface. `scope:` gates (a hard AND), `governs:`
+// narrows. After the split the narrowing leg reads the surfacing scope, so an entry
+// whose evidence is one file still reaches every write surface its audience covers.
+//
+// Both mechanisms resolve through the same helper (spec D5) — this asserts mechanism
+// B gets the same answer mechanism A does, which is the property that keeps them from
+// drifting apart again.
+describe('write-surface narrowing reads the surfacing scope (AC-002)', () => {
+  it('test_when_a_phase_scoped_hit_is_narrowed_then_mechanism_b_reads_the_surfacing_scope', async () => {
+    const { entryPaths } = await importScoped();
+
+    const narrowEvidenceWideAudience = {
+      key: 'a-prose-keyed-convention',
+      category: 'landmines',
+      fields: {
+        scope: [PHASE],
+        governs: ['tests/control-bytes.test.mjs'],
+        'surfaces-on': ['.claude/**', 'src/**'],
+      },
+    };
+
+    assert.deepEqual(
+      entryPaths(narrowEvidenceWideAudience), ['.claude/**', 'src/**'],
+      'the narrowing leg must filter on the audience, not on the evidence; filtering on `governs:` here '
+      + 'is what dropped the entry from four write surfaces and forced the revert',
+    );
+  });
+});

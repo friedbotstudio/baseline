@@ -68,13 +68,20 @@ export function proposeNarrowing(entry) {
 // Frontmatter-only rewrite. The body is never re-serialised — it is sliced off by
 // `splitFrontmatter` and concatenated back verbatim, so quoted `scope:` lines inside
 // entry prose (this corpus documents its own schema constantly) cannot be rewritten.
-export function applyNarrowing({ path, scope, governs }) {
+// `surfacesOn` is written only when supplied. An omitted argument leaves any existing
+// `surfaces-on:` line exactly where it was, so narrowing an entry's staleness witness
+// never narrows its audience as a side effect — that coupling is what this field was
+// split out to remove.
+export function applyNarrowing({ path, scope, governs, surfacesOn }) {
   const text = readFileSync(path, 'utf8');
   const split = splitFrontmatter(text);
   if (!split) throw new Error(`no frontmatter block in ${path}`);
 
-  const front = withField(split.front, 'scope', `[${asList(scope).join(', ')}]`);
-  const patched = ['---', ...(governs ? withField(front, 'governs', asList(governs).join(', ')) : front), ...split.rest].join('\n');
+  let front = withField(split.front, 'scope', `[${asList(scope).join(', ')}]`);
+  if (governs) front = withField(front, 'governs', asList(governs).join(', '));
+  if (surfacesOn) front = withField(front, 'surfaces-on', asList(surfacesOn).join(', '));
+
+  const patched = ['---', ...front, ...split.rest].join('\n');
   if (patched !== text) writeFileSync(path, patched, 'utf8');
   return { path, changed: patched !== text };
 }

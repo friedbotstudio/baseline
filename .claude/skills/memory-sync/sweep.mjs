@@ -33,6 +33,7 @@ import { categoryIsSharded, readShardedAsFlat, writeShardedFromFlat } from './sh
 import { strandedFieldBullets } from '../memory-index/lift-fields.mjs';
 import { isStaleFromFields, needsChangedSet, splitList, usableStamp } from '../../hooks/lib/staleness.mjs';
 import { asResolver } from '../../hooks/lib/memory_changed_set.mjs';
+import { splitFlatEntries, stripFrontmatter } from '../../hooks/lib/memory-entries.mjs';
 import {
   CANONICAL,
   PENDING_FILE,
@@ -120,35 +121,13 @@ function writeFile(memdir, name, text) {
   writeFileSync(filePath(memdir, name), text, 'utf8');
 }
 
-function splitEntries(text) {
-  // #13: strip frontmatter via line-anchored `^---$` lookup so a body
-  // horizontal rule before the actual close doesn't silently truncate
-  // content. Mirrors the safer stripFrontmatter in memory_session_start.
-  let body = text;
-  if (text.startsWith('---')) {
-    const lines = text.split(/\r?\n/);
-    if (lines[0].trim() === '---') {
-      let closeIdx = -1;
-      for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim() === '---') { closeIdx = i; break; }
-      }
-      if (closeIdx >= 0) body = lines.slice(closeIdx + 1).join('\n');
-    }
-  }
-  const splits = body.split(/(^##\s+\S.*)$/m);
-  const entries = [];
-  for (let i = 1; i < splits.length; i += 2) {
-    const heading = splits[i];
-    const tail = i + 1 < splits.length ? splits[i + 1] : '';
-    // The whole heading is the key. Taking only the first token registered a
-    // sentence-keyed entry under a fragment, and findEntryBlock compares for exact
-    // equality — so four live backlog entries were unreachable by every mode.
-    // blockToFact and splitFlatIntoRecords already key on the full heading; this
-    // agrees with them.
-    const key = heading.slice(2).trim();
-    entries.push([key, heading + tail]);
-  }
-  return entries;
+// A sharded read already knows every key on disk, so pass that list through: it is
+// what stops an entry's own `## ` sub-section being read as a new entry. A flat
+// category has no such list — its entries ARE its headings — so it splits naively,
+// which is what shape.splitFlatIntoRecords has always done for a caller with no map.
+function knownKeysFor(memdir, name) {
+  const keyToFile = _shardMeta.get(`${memdir}::${name}`);
+  return keyToFile ? Object.keys(keyToFile) : null;
 }
 
 function escapeRegex(s) {
@@ -268,7 +247,7 @@ function modeAutoClose(memdir) {
     const valid = closureFieldFor(name);
     const wrong = invariantFieldFor(name);
     let newText = text;
-    for (const [key, block] of splitEntries(text)) {
+    for (const [key, block] of splitFlatEntries(stripFrontmatter(text), { knownKeys: knownKeysFor(memdir, name) })) {
       if (hasField(block, wrong)) {
         report.invariant_violation.push({ file: `${name}.md`, key, field: wrong });
         continue;
@@ -315,7 +294,7 @@ function modeProseScan(memdir) {
     const text = readFile(memdir, name);
     if (!text) continue;
     let newText = text;
-    for (const [, block] of splitEntries(text)) {
+    for (const [, block] of splitFlatEntries(stripFrontmatter(text), { knownKeys: knownKeysFor(memdir, name) })) {
       if (isClosed(block, name)) continue;
       if (!proseMatches(block)) continue;
       report.surfaced += 1;
@@ -334,8 +313,8 @@ function modeProseScan(memdir) {
   return report;
 }
 
-function findEntryBlock(text, key) {
-  for (const [entryKey, block] of splitEntries(text)) {
+function findEntryBlock(text, key, knownKeys = null) {
+  for (const [entryKey, block] of splitFlatEntries(stripFrontmatter(text), { knownKeys })) {
     if (entryKey === key) return block;
   }
   return null;
@@ -353,7 +332,7 @@ function modeStampClosure(memdir, keysCsv) {
   let newText = text;
   const today = todayIso();
   for (const key of keys) {
-    const block = findEntryBlock(newText, key);
+    const block = findEntryBlock(newText, key, knownKeysFor(memdir, 'backlog'));
     if (block === null) {
       report.missing.push(key);
       continue;
@@ -401,7 +380,7 @@ function modeBacklogDecay(memdir, thresholdDays) {
   const today = todayIso();
   const cutoff = Number.isFinite(thresholdDays) ? thresholdDays : BACKLOG_DECAY_DAYS_DEFAULT;
   let newText = text;
-  for (const [, block] of splitEntries(text)) {
+  for (const [, block] of splitFlatEntries(stripFrontmatter(text), { knownKeys: knownKeysFor(memdir, 'backlog') })) {
     if (isClosed(block, 'backlog')) continue;
     const raised = readFieldValue(block, 'raised-on') || readFieldValue(block, 'last-touched');
     const days = raised ? daysSince(raised) : null;
@@ -439,7 +418,7 @@ function modeStaleSweep(memdir) {
     const text = readFile(memdir, name);
     if (!text) continue;
     let newText = text;
-    for (const [, block] of splitEntries(text)) {
+    for (const [, block] of splitFlatEntries(stripFrontmatter(text), { knownKeys: knownKeysFor(memdir, name) })) {
       if (!isStale(block, name, head, root)) continue;
       const reply = stdinReplies();
       newText = applyStaleAction(newText, block, name, reply, head, today, report);

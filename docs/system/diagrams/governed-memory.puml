@@ -1,4 +1,4 @@
 !startsub governed_memory
 ' @kind c4_component
-Component(governed_memory, ".claude/hooks/lib/governed-memory.mjs", "component", "Path-keyed surfacing over governs: anchors")
+Component(governed_memory, ".claude/hooks/lib/governed-memory.mjs", "component", "Path-keyed surfacing over resolved surfacing globs")
 !endsub

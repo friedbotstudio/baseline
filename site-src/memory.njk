@@ -4,7 +4,7 @@ title: "Memory: what the repo remembers about itself · baseline"
 description: "How project memory works: eight canonical files, a curated inbox, the verbatim rule, how an entry closes or ages out, and why a commit can be blocked until memory catches up."
 heading: "What the repo<br>remembers about itself."
 lead: "Every session starts from nothing unless something carries facts forward. Project memory is that carrier. It holds eight files of durable knowledge and keeps your exact words where your words matter. It re-checks a fact before anyone leans on it, and it can hold a commit until the record is straight."
-updated: 2026-08-25
+updated: 2026-08-28
 breadcrumb: ["docs", "concepts", "memory"]
 facts:
   - { label: "canonical files", value: "7" }
@@ -113,7 +113,7 @@ toc:
 
 <p>People usually write closure in prose rather than stamping it, so a second sweep scans entry bodies for the phrasings they actually use, along the lines of "superseded by", "resolved on" and "resolution path taken". Every match is surfaced for you to answer: close it, keep it, or leave it for next time.</p>
 
-<p><strong>It ages out when its subject moves.</strong> An entry names the paths it governs, and it goes stale when one of those paths changes after the entry was last verified. An entry that governs nothing falls back to 30 days. The next phase that touches a stale entry either re-checks it or removes it. What you get is a queue of entries whose subject actually moved, instead of everything written in the last few days. Two categories sit outside that rule. A decision expires when something supersedes it, so one you made a year ago still holds today. Backlog holds intent, and code can confirm a fact but never an intention. A constraint ages like everything else, and deliberately so: it records whether something about your environment is still true, and that is exactly what changes while you are looking elsewhere.</p>
+<p><strong>It ages out when its subject moves.</strong> An entry names the paths whose change would invalidate it, and it goes stale when one of those paths changes after the entry was last verified. An entry that names none falls back to 30 days. A warning can reach every file it could bite in without going stale on any of them, because <code class="tok">surfaces-on</code> declares the audience for a fact and the paths above decide only when it needs re-checking. The next phase that touches a stale entry either re-checks it or removes it. What you get is a queue of entries whose subject actually moved, instead of everything written in the last few days. Two categories sit outside that rule. A decision expires when something supersedes it, so one you made a year ago still holds today. Backlog holds intent, and code can confirm a fact but never an intention. A constraint ages like everything else, and deliberately so: it records whether something about your environment is still true, and that is exactly what changes while you are looking elsewhere.</p>
 
 <p>When a constraint stops holding, flipping it does more than close one entry. Every decision that named it in <code class="tok">rests_on</code> is listed at your next session start, grouped under the constraint that changed. A superseded constraint does not supersede the reasoning built on top of it, so those decisions stay exactly as they were until someone looks at them again. That edge is the whole reason a constraint is a category of its own rather than a field on a decision.</p>
 
@@ -141,7 +141,7 @@ toc:
 
 <p>What gets surfaced is the quote, first and whole. A paraphrase is Claude's reading, and the reading is the part that drifts, so the words you actually said are what reaches the decision.</p>
 
-<p>Scoping a fact to a phase is coarse on its own, because a busy phase can carry more entries than anyone reads. When a workflow declares which paths it expects to touch, phase surfacing narrows to the facts governing those paths, so a scout write shows the landmarks for the code this work actually reaches.</p>
+<p>Scoping a fact to a phase is coarse on its own, because a busy phase can carry more entries than anyone reads. When a workflow declares which paths it expects to touch, phase surfacing narrows to the facts that surface on those paths, so a scout write shows the landmarks for the code this work actually reaches.</p>
 
 <p>A workflow that declares no surface loses nothing. Every fact scoped to the phase surfaces exactly as it did before, and a fact carrying no path of its own is never dropped for lack of one. Narrowing removes an entry only when the declared surface proves the work will not reach it.</p>
 

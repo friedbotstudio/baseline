@@ -4,12 +4,13 @@ category: backlog
 load_bearing: false
 scope: [triage, memory-sync]
 governs: .claude/memory/**, .claude/hooks/lib/staleness.mjs
-status: open
+status: picked-up
 raised-on: 2026-08-27
 raised-in-context: memory-reverify-sweep
 source: assistant-deferral
 verified-at: 5f52ba2
 last-touched: 2026-08-27
+superseded-at: 2026-08-28
 ---
 
 > verbatim (assistant, 2026-08-27):

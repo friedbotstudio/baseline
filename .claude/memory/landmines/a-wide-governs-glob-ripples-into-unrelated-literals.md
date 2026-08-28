@@ -3,8 +3,8 @@ key: a-wide-governs-glob-ripples-into-unrelated-literals
 category: landmines
 scope: [memory-sync]
 governs: .claude/memory/README.md, tests/memory-scope-store-invariants.test.mjs
-verified-at: 7d7039c
-last-touched: 2026-08-26
+verified-at: e9a5893
+last-touched: 2026-08-29
 ---
 
 - Landmine: **a memory entry's `governs:` glob is cheap to author and expensive later. Every census that intersects it moves, and the cost is paid by whoever re-measures those literals in a workflow that had nothing to do with the entry.**
@@ -22,4 +22,5 @@ The suite went red in the NEXT workflow's verify tick, on a ticket about drift-c
 - **This is not [[a-checker-aimed-one-axis-off-passes-loudly]].** That one is about a check pointed at the wrong axis. Here every check is aimed correctly and reports honestly; what surprises is the blast radius of a declaration. Filed separately because the fix differs: aim the checker there, narrow the glob here.
 - **Before writing a `governs:`, ask what it intersects.** `.claude/skills/**` covers ~345 modules and every path-leg literal under them. Name the module or the directory that actually needs the entry surfaced, not the tree it happens to sit in. The path leg exists to surface a fact when someone edits a governed file — a glob that governs everything surfaces it nowhere useful and moves every count on the way.
 - **Corollary for the reviewer.** A census literal going red in a workflow that never touched memory is a signal to look at the last `/memory-sync`, not at the ticket in front of you. Three of the four census corrections in the 2026-08-12/13 session had that shape.
+- **Update 2026-08-29 — there is now a right answer instead of a tradeoff.** This entry told you to narrow the glob, which was the best advice available while one field did two jobs: `governs:` was both the staleness witness and the leg that decides who sees the entry. Narrowing it stopped the ripple and also stopped the warning reaching anyone. `surfaces-on:` now carries the audience and `governs:` keeps the witness, so the correct move is **both** — narrow `governs:` to the file whose change would actually disprove the entry, and declare a wide `surfaces-on:` for everyone who needs to read it. An entry declaring neither still falls back to a path-shaped `key:`, so absence stays inert. See [[.claude/hooks/lib/memory-entries.mjs]] for the precedence.
 - Related: [[anti-drift-tests-compare-against-the-live-oracle-b4d2]] (why the literals exist at all) and [[census-and-budget-are-different-numbers]] (how to repair one when it moves).

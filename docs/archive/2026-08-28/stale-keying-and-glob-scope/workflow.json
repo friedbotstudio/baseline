@@ -1,0 +1,89 @@
+{
+  "request": "Split the two jobs `governs:` currently serves in the memory schema. It is the staleness witness (staleness.mjs \u2014 narrow means less churn) AND the path leg scoped memory filters on when deciding which entries surface at a phase (scoped-memory.mjs:43 \u2014 narrow means fewer readers reached). One field, opposite pressures, so an entry whose evidence and audience differ cannot be scoped correctly for both. Candidate shape (the spec decides): an additive frontmatter field for surfacing scope that defaults to `governs:` when absent, leaving every existing entry and every consumer install unchanged. Acceptance criteria are driven by the four entries that still churn and cannot be narrowed today. Continues the in-flight `stale-keying-and-glob-scope` workflow; the splitter extraction and four narrowings already landed under the quickfix track and the spec expands onto them.",
+  "slug": "stale-keying-and-glob-scope",
+  "track_id": "spec-entry",
+  "novelty": "novel",
+  "novelty_evidence": "Searched .claude/memory for an existing entry naming the staleness-vs-surfacing conflict in `governs:` and found none \u2014 the closest, tests-glob-restales-nine-entries-on-every-test-edit-4c7a, records the CHURN symptom only and prescribes narrowing, which is what turned out to be unsafe for one of its own nine. No spec under docs/specs/ covers the memory frontmatter schema. The fix adds a new frontmatter field, which has no in-repo precedent. The conflict itself is measured, not inferred: churn moved 9 of 9 -> 4 of 9 and all four remaining are blocked by it, and the PATH_LEG_BASELINE comments record the inverse failure at 5f52ba2 where the repair was to WIDEN an entry that 'surfaced at zero phases for a new writer added under hooks'.",
+  "track_reason": "Upgraded from tdd-quickfix (the leanest track, and the one this workflow started on) because the root-cause fix is a shipped-contract change: it adds a field to the memory frontmatter schema that every consumer install must tolerate, and it changes which entries surface at which phase. A quickfix carries no spec and no gate A, so the change would ship unreviewed. Upgrading ADDS the human approval rather than routing around it. Re-triaged mid-flight on 2026-08-27 with the engineer's explicit approval.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/scoped-memory.mjs",
+    ".claude/hooks/lib/staleness.mjs",
+    ".claude/hooks/lib/memory-entries.mjs",
+    ".claude/hooks/lib/memory_session_start.mjs",
+    ".claude/skills/memory-index/lift-fields.mjs",
+    ".claude/skills/memory-index/scope-narrow.mjs",
+    ".claude/skills/memory-sync/sweep.mjs",
+    ".claude/skills/memory-sync/shape.mjs",
+    ".claude/memory/README.md",
+    ".claude/memory/landmines/**",
+    ".claude/memory/conventions/**",
+    ".claude/memory/backlog/**",
+    "docs/specs/stale-keying-and-glob-scope.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "org-dispatch",
+    "research"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [
+    "tests-glob-restales-nine-entries-on-every-test-edit-4c7a"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ],
+  "prior_track": {
+    "track_id": "tdd-quickfix",
+    "retriaged_at": "2026-08-27",
+    "reason": "Root cause found mid-execution; see track_reason.",
+    "landed_before_retriage": [
+      "New Foundation module .claude/hooks/lib/memory-entries.mjs owning stripFrontmatter, entryKeyFromHeading, splitFlatEntries. Four readers repointed (sweep.mjs, memory_session_start.mjs, shape.mjs) and their private copies deleted. Byte-exactness preserved for sweep's replaceBlock/deleteBlock write path, which locates a block by text.indexOf and silently no-ops on a miss.",
+      "splitBlocks first-word keying fixed \u2014 the flat-store index now names an entry by its whole heading, matching sweep.",
+      "The known-key guard now applies to sharded reads, so an entry's own `## ` sub-section is no longer minted as a separate entry. Limit recorded: a flat store has no external key list, so the naive split remains there.",
+      "Four governs: narrowings applied via applyNarrowing with body bytes, scope, verified-at and last-touched verified unchanged.",
+      "One narrowing REVERTED: grep-reports-no-match-on-utf8-files-it-calls-binary. Narrowing it stopped it surfacing on .claude/** where it has recurred four times. That revert is the worked example the spec argues from.",
+      "22 tests across tests/memory-entry-splitter.test.mjs, tests/sweep-multiword-key.test.mjs, tests/sweep-staleness-parity.test.mjs, tests/memory-scope-store-invariants.test.mjs."
+    ],
+    "spec_treatment": "This work is CONTEXT for the spec, never retro-fitted acceptance criteria. Writing ACs to describe code already written is rubber-stamping. The spec's ACs cover the unwritten split only."
+  },
+  "expected_failures": [
+    {
+      "check": "audit-baseline manifest hash drift, and the 15 tests that shell out to it",
+      "reason": "This landing edits three manifest-pinned baseline files (memory_session_start.mjs, sweep.mjs, shape.mjs) and adds one new module (hooks/lib/memory-entries.mjs). obj/template/.claude/manifest.json is stamped by scripts/build-template.sh, which takes no stage argument and rewrites the entire shipped tree \u2014 too large a diff to carry through the TDD loop, where it would also inflate the right-size gate measure and the review diff.",
+      "measured": "15 of 3496 tests as of 2026-08-27, every one tracing to the single stale sha256 for .claude/skills/memory-sync/shape.mjs. Scoped and full audit both exit 1. Zero non-audit failures.",
+      "verify_tick_protocol": "test.cmd is `audit && node --test`, so the audit leg short-circuits the suite. For this workflow's verify ticks run `node --test tests/*.test.mjs` directly and record the audit leg as deferred. This is a NAMED, time-bounded suppression with an owner, not a muted alarm \u2014 the distinction the a-check-that-measured-nothing-reports-success landmine turns on.",
+      "discharged_by": "integrate",
+      "discharge_check": "Run scripts/build-template.sh, then `node .claude/skills/audit-baseline/audit.mjs` SHALL exit 0 and the full suite SHALL be green under the unmodified test.cmd. An audit still red at integrate is a real failure and not this debt; do not carry this entry past integrate under any circumstances.",
+      "discharged_at": "verify-tick, 2026-08-27",
+      "discharge_evidence": "scripts/build-template.sh restamped the manifest; the UNMODIFIED test.cmd (audit && node --test) exits 0 with 3510 tests, 3494 pass, 0 fail. The verify-tick override in project_conventions was not used: the suite is honestly green, so no leg was skipped and the four-line stamp needs no caveat. obj/template/.claude/hooks/lib/memory-entries.mjs ships and is hashed.",
+      "status": "DISCHARGED"
+    }
+  ],
+  "created_at": 1787786818,
+  "updated_at": 1787937310,
+  "rightsize_base": []
+}

@@ -21,6 +21,8 @@ import {
   tryImport,
   makeProject,
   writeShard,
+  writeFlatCategory,
+  additionalContextOf,
   copyLiveCorpus,
   CANONICAL_CATEGORIES,
 } from './helpers/memory-fixtures.mjs';
@@ -177,6 +179,56 @@ describe('sweep vs session-start — the staleness predicate has one meaning', (
       predicate,
       /import\s*\{[^}]*\bSUPERSESSION_DRIVEN\b[^}]*\}\s*from\s*'[^']*categories\.mjs'/,
       'the shared predicate must import the decay classes from the registry that owns them',
+    );
+  });
+});
+
+// Agreeing on WHICH entries are stale is not the same as agreeing on what they are
+// CALLED, and the two readers diverged on the second one long after the first was
+// pinned above. `sweep.splitEntries` keys a flat entry on its whole heading;
+// `memory_session_start.splitBlocks` still keys on the first whitespace-delimited
+// token. So the sweep addresses `a wide governs glob ripples into unrelated
+// literals` and the index calls the same entry `a`.
+//
+// Neither splitter is exported, and neither should be — each is pinned through the
+// surface a caller can actually reach. That means the two halves cannot share one
+// fixture: `stamp-closure` addresses `backlog` only, and `backlog` is STALE_EXEMPT
+// so it never reaches the index's stale list. What IS shared is the heading, and
+// that is the thing the two readers have to agree about.
+const SHARED_MULTIWORD_HEADING = 'a wide governs glob ripples into unrelated literals';
+const LEADING_FRAGMENT = 'a';
+
+describe('sweep vs session-start — the two readers give a flat entry the same name', () => {
+  it('test_when_the_same_flat_heading_is_read_by_both_readers_then_the_entry_key_sets_are_identical', () => {
+    const { root: sweepRoot, memDir: sweepMem } = makeProject();
+    writeShard(sweepMem, 'backlog', 'shared-multiword-heading', {
+      key: SHARED_MULTIWORD_HEADING,
+      fields: { status: 'open', governs: '.claude/**', 'verified-at': 'abc1234', 'last-touched': '2026-08-20' },
+      bodyLines: ['- One line, so the block round-trips.'],
+    });
+    const addressedBySweep = sweep.runSweep({
+      mode: 'stamp-closure',
+      rootDir: sweepRoot,
+      memoryDir: sweepMem,
+      backlogKeys: SHARED_MULTIWORD_HEADING,
+    }).stamped === 1;
+
+    const { root: hookRoot, memDir: hookMem } = makeProject();
+    writeFlatCategory(hookMem, 'constraints', [
+      { key: SHARED_MULTIWORD_HEADING, bodyLines: ['- verified-at: HEAD', '- last-touched: 2020-01-01'] },
+    ]);
+    const index = additionalContextOf(hook.buildIndex({ memDir: hookMem, projectRoot: hookRoot, sessionSource: 'startup' }));
+    const namedByHook = [...index.matchAll(/^- `constraints\.md` `(.+?)`/gm)].map((m) => m[1]);
+
+    assert.ok(addressedBySweep, 'precondition: the sweep must reach the entry by its whole heading');
+    assert.deepEqual(
+      namedByHook, [SHARED_MULTIWORD_HEADING],
+      'both readers must call this entry by the same name; the index truncates it to a fragment, so a '
+      + 'curator copying the label back finds nothing',
+    );
+    assert.ok(
+      !namedByHook.includes(LEADING_FRAGMENT),
+      'the leading fragment addresses no entry in either reader — sweep already reports it missing by its own name',
     );
   });
 });

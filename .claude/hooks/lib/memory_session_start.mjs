@@ -14,6 +14,7 @@ import { architectureMapEnabled } from '../../skills/workspace/flags.mjs';
 import { readConcepts } from '../../skills/workspace/concepts.mjs';
 import { gatherSync } from '../../skills/standup/gather.mjs';
 import { parseFrontmatter } from './frontmatter-parser.mjs';
+import { splitFlatEntries, stripFrontmatter } from './memory-entries.mjs';
 
 import {
   CANONICAL,
@@ -181,28 +182,6 @@ function getField(block, name) {
   return m ? m[1].trim() : null;
 }
 
-// Split body on '## <key>...' headings, returning [key, block] pairs.
-// Mirrors `re.split(r'(?m)^(##\s+\S.*)$', body)` semantics in the original .py
-// closely enough that block boundaries match. The block content includes its
-// own heading + everything up to the next heading (or EOF).
-function splitBlocks(body) {
-  const lines = body.split(/\r?\n/);
-  const out = [];
-  let cur = null;
-  for (const ln of lines) {
-    const m = /^##\s+(\S.*)$/.exec(ln);
-    if (m) {
-      if (cur) out.push(cur);
-      const key = m[1].trim().split(/\s+/)[0] || '';
-      cur = { key, block: ln + '\n' };
-    } else if (cur) {
-      cur.block += ln + '\n';
-    }
-  }
-  if (cur) out.push(cur);
-  return out.map(({ key, block }) => [key, block]);
-}
-
 // @decision:decay-is-per-category-three-reasons-2026-08-04
 export function isStale(block, name, head, rootOrResolver) {
   const stamp = getField(block, 'verified-at');
@@ -243,23 +222,6 @@ function readShardedCategory(dir, name, head, resolver) {
     }
   }
   return { n: files.length, stale, staleRecords };
-}
-
-function stripFrontmatter(text) {
-  // #13: parse line-anchored `^---$` delimiters instead of substring
-  // `indexOf('---')`. The previous substring search matched a `---`
-  // appearing anywhere — including a body horizontal rule that occurs
-  // before the actual frontmatter close — and silently lost content.
-  // Strict YAML frontmatter delimiters are bare `---` on their own line.
-  if (!text.startsWith('---')) return text;
-  const lines = text.split(/\r?\n/);
-  if (lines[0].trim() !== '---') return text;
-  let closeIdx = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') { closeIdx = i; break; }
-  }
-  if (closeIdx < 0) return text;
-  return lines.slice(closeIdx + 1).join('\n');
 }
 
 function renderStandupSection(projectRoot) {
@@ -362,7 +324,7 @@ export function buildIndex({ memDir, projectRoot, sessionSource }) {
       continue;
     }
     const body = stripFrontmatter(text);
-    const blocks = splitBlocks(body);
+    const blocks = splitFlatEntries(body);
     const n = blocks.length;
     totalEntries += n;
     let stale = 0;

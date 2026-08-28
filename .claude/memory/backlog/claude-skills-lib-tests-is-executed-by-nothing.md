@@ -3,8 +3,9 @@ key: claude-skills-lib-tests-is-executed-by-nothing
 category: backlog
 load_bearing: false
 scope: [triage, integrate, implement]
-governs: .claude/skills/lib/**, .claude/skills/sprint-planner/**, .claude/skills/power/**, tests/**
+governs: .claude/skills/lib/tests/**, .claude/skills/sprint-planner/tests/**, .claude/skills/power/tests/**, .claude/project.json
 status: open
+deferred: risk
 raised-on: 2026-08-17
 raised-in-context: unify-epic-heading-grammar
 source: assistant-deferral

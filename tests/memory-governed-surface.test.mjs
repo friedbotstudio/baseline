@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { makeProject, writeShard, writeFlatCategory, tryImport } from './helpers/memory-fixtures.mjs';
+import { makeProject, writeShard, writeFlatCategory, tryImport, REPO_ROOT } from './helpers/memory-fixtures.mjs';
 import { runPreToolUseHook, writeEditPayload, runTestFile } from './helpers/memory-git-fixtures.mjs';
 
 const GOVERNED_MODULE = '.claude/hooks/lib/governed-memory.mjs';
@@ -166,6 +166,39 @@ describe('governed (path-triggered) surfacing (ticket C)', () => {
     assert.ok(
       result.ok,
       `the existing phase-scoped surfacing suite must still pass unmodified — scope: keeps meaning workflow phases and scopedFactsIn stays a membership test.\n${result.stdout}\n${result.stderr}`,
+    );
+  });
+});
+// AC-002 of docs/specs/stale-keying-and-glob-scope.md. Covers §Behavior #2.
+//
+// Mechanism A is the surfacing path that actually reaches a maintainer: it fires on
+// EDITING a governed file, at any phase, and never consults `scope:`. A split that
+// teaches only scoped-memory.entryPaths would leave this one still reading `governs:`
+// — a silent half-fix, and the narrower half.
+//
+// The entry under test is load_bearing, has recurred four times (the fourth inside a
+// memory file while its own author was documenting it), and carries `scope: []`, so
+// this path is the ONLY way it reaches anyone.
+describe('governed surfacing reads the surfacing scope, not the staleness witness (AC-002)', () => {
+  const AUDIENCE_PATHS = [
+    '.claude/hooks/lib/some-module.mjs',
+    'src/cli/some-file.js',
+    'docs/some-page.md',
+  ];
+
+  it('test_when_a_governed_path_is_written_then_mechanism_a_still_surfaces_the_entry', async () => {
+    const mod = await tryImport(GOVERNED_MODULE);
+    assert.ok(mod, `${GOVERNED_MODULE} must exist`);
+
+    const unreached = AUDIENCE_PATHS.filter((path) => {
+      const hits = mod.surfaceGovernedMemory(path, { rootDir: REPO_ROOT });
+      return !hits.some((hit) => hit.key === 'grep-reports-no-match-on-utf8-files-it-calls-binary');
+    });
+
+    assert.deepEqual(
+      unreached, [],
+      'narrowing this entry for staleness must not narrow its audience — each of these paths is somewhere '
+      + 'the trap has actually recurred, and an entry that stops surfacing there warns nobody',
     );
   });
 });

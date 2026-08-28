@@ -38,6 +38,48 @@ function seedEntry(memDir, slug, fields) {
   });
 }
 
+// AC-006 of docs/specs/stale-keying-and-glob-scope.md. Covers §Behavior #5.
+//
+// `isReachable` counts the legs that can surface an entry. The split adds a third —
+// `surfaces-on:` — and an entry whose reach lives only there would otherwise fail
+// `assertWritable`, so `/memory-sync` would write no file at all. That is silent data
+// loss, not a surfacing miss, which is why D4 makes the disjunct mandatory rather
+// than optional.
+//
+// The margin is real, not hypothetical: `grep-reports-no-match-on-utf8-files-it-calls-binary`
+// carries `scope: []`, so the path leg is its ONLY reachability.
+describe('memory scope — the surfacing leg is a third way to be reachable (AC-006)', () => {
+  it('test_when_only_the_surfacing_scope_is_declared_then_assert_writable_does_not_throw', async () => {
+    const { isReachable, assertWritable } = await loadResolve();
+    const entry = entryWith({ key: 'reachable-by-surfacing-only', scope: [], governs: [], 'surfaces-on': ['.claude/**'] });
+
+    assert.equal(
+      isReachable(entry), true,
+      'an entry whose audience is declared and whose evidence is not is still reachable — the whole '
+      + 'point of the split is that those two are different questions',
+    );
+    assert.doesNotThrow(
+      () => assertWritable(entry),
+      'refusing to write it would lose the entry entirely, which is worse than the churn this change fixes',
+    );
+  });
+
+  it('test_when_all_three_legs_are_empty_then_assert_writable_still_throws', async () => {
+    const { isReachable, assertWritable } = await loadResolve();
+    const entry = entryWith({ key: 'reachable-by-nothing', scope: [], governs: [], 'surfaces-on': [] });
+
+    assert.equal(
+      isReachable(entry), false,
+      'adding a disjunct must not make everything reachable — an entry no leg can surface is still orphaned',
+    );
+    assert.throws(
+      () => assertWritable(entry),
+      /reachable by neither leg|reachable by no leg|UnreachableScopeError/i,
+      'the refusal is what stops a placeholder being invented again to make an orphan look reachable',
+    );
+  });
+});
+
 describe('memory scope — reachability predicate (AC-001)', () => {
   it('test_when_scope_intersects_phase_then_isReachable_true', async () => {
     const { memDir } = makeProject();

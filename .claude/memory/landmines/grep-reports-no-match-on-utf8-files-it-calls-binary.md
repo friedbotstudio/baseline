@@ -2,10 +2,11 @@
 key: grep-reports-no-match-on-utf8-files-it-calls-binary
 category: landmines
 scope: []
-governs: .claude/**, src/**, tests/**, docs/**
+governs: tests/control-bytes.test.mjs
 load_bearing: true
 verified-at: 5f52ba2
 last-touched: 2026-08-27
+surfaces-on: .claude/**, src/**, tests/**, docs/**
 ---
 
 - On macOS/BSD, `file` classifies a perfectly valid UTF-8 source containing an em dash as `binary data`, and plain `grep` then reports **no match** and exits 1 rather than warning. There is no error, no "Binary file matches" line, nothing. It looks exactly like a clean result.

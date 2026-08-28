@@ -2,9 +2,10 @@
 key: a-red-pre-existing-test-may-be-a-contract-conflict
 category: conventions
 scope: [scenario, implement, integrate]
-governs: tests/**
+governs: tests/memory-scope-store-invariants.test.mjs
 verified-at: 5f52ba2
 last-touched: 2026-08-27
+surfaces-on: tests/**
 ---
 
 - Convention: **a pre-existing test that goes red under a new spec is a CONTRACT CONFLICT, not a break, and the two are repaired differently.** Read the old assertion as a statement of the old contract. Keep every clause the new spec does not touch, replace only the superseded one, and name the AC that supersedes it in a comment.

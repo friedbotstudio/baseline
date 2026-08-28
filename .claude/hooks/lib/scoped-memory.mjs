@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { asArray } from './frontmatter-parser.mjs';
 import { extractVerbatim, extractInterpretation, firstHook } from './entry-body.mjs';
 import { pathOverlapsWriteSet } from './write-set-profile.mjs';
+import { surfacingPathsOf } from './memory-entries.mjs';
 import { resolveCategory } from '../../skills/memory-index/lift-fields.mjs';
 
 import { CANONICAL as CANONICAL_CATEGORIES, readLoadBearing } from '../../skills/memory-index/categories.mjs';
@@ -31,20 +32,11 @@ function scopedFactsIn(entries, category, phase) {
   return hits;
 }
 
-// The path signal a hit can be narrowed by. `governs:` is the declared answer;
-// a landmark's `key:` is a repo path by convention (`<path>:<line>`), which is
-// what makes the 92 category-default landmarks filterable at all — only 8 of
-// them declare `governs:`.
-//
-// An entry with neither returns [], and narrowToWriteSurface keeps it. A missing
-// signal is not evidence of irrelevance, and hiding a fact for lack of metadata
-// is the one failure this filter must never produce.
+// An entry with no path signal at all returns [], and narrowToWriteSurface keeps it.
+// A missing signal is not evidence of irrelevance, and hiding a fact for lack of
+// metadata is the one failure this filter must never produce.
 export function entryPaths(entry) {
-  const governs = asArray(entry?.fields?.governs);
-  if (governs.length) return governs;
-  const key = entry?.key;
-  if (typeof key !== 'string' || !key.includes('/')) return [];
-  return [key.replace(/:\d+$/, '')];
+  return surfacingPathsOf(entry);
 }
 
 function narrowToWriteSurface(hits, writeSurface) {

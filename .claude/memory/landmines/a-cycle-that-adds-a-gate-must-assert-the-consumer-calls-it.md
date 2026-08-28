@@ -3,7 +3,7 @@ key: a-cycle-that-adds-a-gate-must-assert-the-consumer-calls-it
 category: landmines
 load_bearing: true
 scope: [tdd, integrate, document]
-governs: .claude/skills/**,tests/**
+governs: .claude/skills/**
 verified-at: 5f52ba2
 last-touched: 2026-08-27
 ---

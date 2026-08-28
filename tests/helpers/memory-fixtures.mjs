@@ -121,6 +121,13 @@ export function writeFlatCategory(memDir, category, blocks) {
   return path;
 }
 
+// buildIndex returns the SessionStart hook envelope, not the markdown it renders.
+// Asserting line-anchored patterns against the envelope fails on the escaped
+// newlines whatever the index actually says — red, while measuring nothing.
+export function additionalContextOf(envelope) {
+  return JSON.parse(envelope).hookSpecificOutput.additionalContext;
+}
+
 export function everyShardFile(memDir) {
   const out = [];
   for (const category of CANONICAL_CATEGORIES) {

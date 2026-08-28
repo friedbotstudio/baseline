@@ -111,3 +111,51 @@ describe('memory scope — the category default is never re-inherited (AC-008)',
     );
   });
 });
+// AC-004 of docs/specs/stale-keying-and-glob-scope.md.
+//
+// scope-narrow is the tool that produced the narrowing this workflow had to revert.
+// It proposes and applies `governs:` values, and after the split it must stay on the
+// staleness side of the line: a proposer that also narrowed `surfaces-on:` would
+// re-create the defect one curator run later.
+describe('scope-narrow stays on the staleness side of the split (AC-004)', () => {
+  it('test_when_a_narrowing_is_proposed_then_it_never_targets_the_surfacing_field', async () => {
+    const { proposeNarrowing } = await loadNarrow();
+
+    const proposal = proposeNarrowing(frozenEntry({
+      key: '.claude/hooks/lib/common.mjs:1',
+      category: 'landmarks',
+      governs: ['.claude/**'],
+      'surfaces-on': ['.claude/**', 'src/**'],
+    }));
+
+    const leaked = Object.keys(proposal).filter((k) => k.toLowerCase().includes('surface'));
+    assert.deepEqual(
+      leaked, [],
+      'a proposal touching the surfacing field would narrow an entry\'s audience on evidence about its '
+      + 'subject — exactly the conflation this change removes',
+    );
+  });
+
+  it('test_when_a_narrowing_is_applied_then_an_existing_surfacing_line_survives', async () => {
+    const { applyNarrowing } = await loadNarrow();
+    const { memDir } = makeProject();
+
+    const path = writeShard(memDir, 'landmines', 'wide-audience-narrow-evidence', {
+      key: 'wide-audience-narrow-evidence',
+      fields: { governs: '.claude/**', 'surfaces-on': '.claude/**, src/**', 'verified-at': 'abc1234' },
+      bodyLines: ['Body prose that must survive byte-identical.'],
+    });
+    const before = readFileSync(path, 'utf8');
+
+    applyNarrowing({ path, scope: [], governs: 'tests/control-bytes.test.mjs' });
+
+    const after = readFileSync(path, 'utf8');
+    assert.match(after, /^surfaces-on: \.claude\/\*\*, src\/\*\*$/m,
+      'rewriting the staleness witness must leave the audience declaration untouched');
+    assert.match(after, /^governs: tests\/control-bytes\.test\.mjs$/m, 'the narrowing itself still applies');
+    assert.equal(
+      after.slice(after.indexOf('---', 3)), before.slice(before.indexOf('---', 3)),
+      'body bytes must be byte-identical — applyNarrowing rewrites frontmatter only',
+    );
+  });
+});

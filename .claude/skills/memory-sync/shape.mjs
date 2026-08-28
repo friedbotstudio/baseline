@@ -9,6 +9,7 @@ import { readdirSync, readFileSync, writeFileSync, existsSync, statSync, rmSync 
 import { join } from 'node:path';
 import { parseFrontmatter } from '../../hooks/lib/frontmatter-parser.mjs';
 import { parseFieldBullet } from '../memory-index/lift-fields.mjs';
+import { entryKeyFromHeading, splitFlatEntries } from '../../hooks/lib/memory-entries.mjs';
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -34,7 +35,7 @@ function factToBlock(frontmatter, body) {
 function blockToFact(block, category) {
   const lines = block.split('\n');
   const headingIdx = lines.findIndex((l) => /^##\s+/.test(l));
-  const key = headingIdx >= 0 ? lines[headingIdx].replace(/^##\s+/, '').trim() : '';
+  const key = headingIdx >= 0 ? entryKeyFromHeading(lines[headingIdx]) : '';
   const fields = [];
   const bodyLines = [];
   // Policy note (deliberately NOT the migrate/relift allowlist): this reads back
@@ -84,29 +85,13 @@ export function readShardedAsFlat(memdir, name) {
 // the old positional split, so a flat store with no prior read is unaffected — and
 // a caller ADDING an entry must include its key in the map, which is the same thing
 // as knowing the entry exists.
-function splitFlatIntoRecords(newText, keyToFile) {
-  const known = new Set(Object.keys(keyToFile ?? {}));
-  if (known.size === 0) {
-    return newText.split(/^## /m).slice(1).map((b) => `## ${b.trimEnd()}`).filter((b) => b.trim() !== '##');
-  }
-  const blocks = [];
-  let current = null;
-  for (const line of newText.split('\n')) {
-    if (line.startsWith('## ') && known.has(line.slice(3).trim())) {
-      if (current !== null) blocks.push(current.join('\n').trimEnd());
-      current = [line];
-    } else if (current !== null) {
-      current.push(line);
-    }
-  }
-  if (current !== null) blocks.push(current.join('\n').trimEnd());
-  return blocks.filter((b) => b.trim() !== '##');
-}
-
 export function writeShardedFromFlat(memdir, name, newText, keyToFile) {
   const dir = join(memdir, name);
   const present = new Set();
-  const blocks = splitFlatIntoRecords(newText, keyToFile);
+  const knownKeys = Object.keys(keyToFile ?? {});
+  const blocks = splitFlatEntries(newText, { knownKeys: knownKeys.length ? knownKeys : null })
+    .map(([, block]) => block.trimEnd())
+    .filter((b) => b.trim() !== '##');
   for (const block of blocks) {
     const { key, content } = blockToFact(block, name);
     if (!key) continue;

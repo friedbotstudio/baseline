@@ -108,16 +108,18 @@ Three optional fields on `decisions` entries support it:
 
 | Field | Meaning |
 |---|---|
-| `governs:` | Path globs. Anchors the decision to the code it governs, so it surfaces when that code is edited rather than only when a spec is written. |
+| `governs:` | Path globs. The code whose change would invalidate this entry — the staleness witness. Also surfaces the entry when that code is edited, unless `surfaces-on:` overrides where it surfaces. |
+| `surfaces-on:` | Path globs. Where this entry should surface, when that is wider than the code that would invalidate it. Absent falls back to `governs:`. |
 | `rests_on:` | Constraint keys this decision's rationale depends on. |
 | `load_bearing:` | Boolean. Absent reads as `false` (incidental), never undefined. |
 
-An entry is **reachable** when either leg can surface it.
+An entry is **reachable** when any leg can surface it.
 
 | Leg | Field | Fires when |
 |---|---|---|
 | Phase | `scope:` names at least one workflow phase | that phase starts |
-| Path | `governs:` names at least one path glob | matching code is edited |
+| Evidence | `governs:` names at least one path glob | matching code is edited |
+| Audience | `surfaces-on:` names at least one path glob | anything under it is edited |
 
 One leg is enough. The entry below has no phase scope and is still fully reachable:
 
@@ -126,7 +128,18 @@ scope: []
 governs: .claude/hooks/**
 ```
 
-`assertWritable` refuses to write an entry that neither leg can reach. Two near-misses are refused too: the retired placeholder value, and a scope that still matches the default its category was migrated with, where nobody showed why it should stay that broad.
+**`governs:` and `surfaces-on:` answer different questions, and they want opposite widths.** `governs:` is the staleness witness: it names the files whose change would actually invalidate the entry, so a narrow value means fewer false re-verifications. `surfaces-on:` is the audience: it names the area the entry warns about, so a wide value means the entry reaches everyone who might trip over it.
+
+Most entries need only `governs:`, and an entry that omits `surfaces-on:` surfaces exactly as it always did — the audience falls back to `governs:`, then to a path-shaped `key:`. Reach for `surfaces-on:` when an entry's evidence and its audience genuinely differ:
+
+```yaml
+governs: tests/control-bytes.test.mjs
+surfaces-on: .claude/**, src/**, tests/**, docs/**
+```
+
+That is a landmine about a trap that can bite in any tracked text file, guarded by one test. Before the two were separable it had to pick one: a narrow value stopped it warning anyone, and a wide one re-staled it on every unrelated test edit.
+
+`assertWritable` refuses to write an entry that no leg can reach. Two near-misses are refused too: the retired placeholder value, and a scope that still matches the default its category was migrated with, where nobody showed why it should stay that broad.
 
 Know why the placeholder went, or you will reach for it again the first time an entry looks orphaned. A retired backfill stamped unscoped facts with a literal `any`, so that nothing would be unreachable. It did the reverse. The reader checks whether the scope list contains the phase, `any` matches no phase name, and all 47 stamped entries surfaced nowhere.
 

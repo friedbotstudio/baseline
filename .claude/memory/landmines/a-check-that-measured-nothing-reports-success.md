@@ -3,7 +3,7 @@ key: a-check-that-measured-nothing-reports-success
 category: landmines
 load_bearing: true
 scope: [tdd, integrate, document, security]
-governs: tests/**,.claude/skills/scenario/SKILL.md,.claude/skills/implement/SKILL.md
+governs: tests/workspace-coverage.test.mjs, tests/system-spec-sync-back.test.mjs, .claude/skills/scenario/SKILL.md, .claude/skills/implement/SKILL.md
 verified-at: 5f52ba2
 last-touched: 2026-08-27
 ---

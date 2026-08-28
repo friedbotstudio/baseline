@@ -1,0 +1,4 @@
+!startsub surfacing_path_signal
+' @kind c4_component
+Component(surfacing_path_signal, ".claude/hooks/lib/memory-entries.mjs", "component", "Memory model")
+!endsub

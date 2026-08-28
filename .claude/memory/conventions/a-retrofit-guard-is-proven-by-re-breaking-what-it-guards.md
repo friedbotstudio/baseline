@@ -7,7 +7,8 @@ raised-on: 2026-08-25
 raised-in-context: release-safety-2026-08-25 follow-on
 verified-at: 5f52ba2
 last-touched: 2026-08-27
-governs: tests/**
+governs: tests/control-bytes.test.mjs
+surfaces-on: tests/**
 ---
 
 - Convention: when a test is written for a defect that has **already been fixed by hand**, it is green on its first run, and that green is evidence of nothing. Before keeping it, put the defect back, watch the test name it, then restore. A guard that has never failed has never been shown to be connected to anything.
