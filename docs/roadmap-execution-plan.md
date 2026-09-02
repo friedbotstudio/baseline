@@ -188,3 +188,50 @@ reconstructed from the four archived bundles, crediting each slice to the cycle 
 - ✅ C. General task management on the baseline server
 - ✅ D. Native cross-session messaging as a push accelerator
 - ✅ E. Org worktree isolation, merge audit, and the single landing
+## Epic 14 — Oracles that measure nothing  ⬜  (oracles-that-measure-nothing)
+
+Twenty backlog entries share one shape: a check reports success because it read nothing. This epic is
+sequenced first because every other guarantee in the repo rests on a check being honest.
+
+- ⬜ A. Interface digest for exportless files — extract `interface-digest.mjs` and repoint importers, then digest the parsed body shape so a hook script has an interface. 26 element shards currently carry sha256 of the empty string.
+- ⬜ B. Fixtures that hand their check nothing — corpus-decay alarm derives zero elements, the census gate pattern matches no real site shape, the spec-lint System-delta fixture leaves 3 tests skipped, and the archive ordering test keys on prose mentions.
+- ⬜ C. `drift_check` resolves per-AC, not per-range — a `(AC-001..AC-010)` header comment currently marks nine ACs resolved with no test behind eight of them. Adds the declared exception mechanism for an AC a diff cannot evidence.
+- ⬜ D. Unrun and unwitnessed — `.claude/skills/lib/tests/probe.test.mjs` is executed by nothing, and a track without a spec has no path to witness a new element.
+- ⬜ E. Swarm predicate counts components in `@ref` specs — the `^\s*Component\(` count is zero for any spec satisfying its structural kinds by reference, so every such spec silently routes solo.
+- ⬜ F. Reporters that overstate what they did — `syncBack` applied, `ratio.mjs` out-of-phase undercount, archive `timing.md` human-wait always zero, Epic 11 row D progress, and the page-granular document gate.
+
+## Epic 15 — What ships unverified  ⬜  (what-ships-unverified)
+
+Fifteen entries about the integrity of what reaches a consumer install and what a terminal renders.
+Second in sequence: the gaps are individually small and each one reaches installs.
+
+- ⬜ A. `memory-index` enters the shipped manifest — `categories.mjs` is the single oracle four modules derive from and carries zero manifest entries, so an edit there changes what the build ships undetected.
+- ⬜ B. Scan descriptors cover what they claim — `commands/`, `agents/` and `output-styles/` are scanned top-level only, and the shipped sensitive globs never covered hooks or commands.
+- ⬜ C. Terminal output neutralises bidi overrides and lone surrogates — the clip helper handles C0/C1 only.
+- ⬜ D. Validate at the named call sites — `assertNoTraversal(named)` before the join, `applyNarrowing`'s three unvalidated field values, the baseline channel `peer_id` reaching MCP instructions, and `roadmap-list` printing the plan path without the shared sanitizer.
+- ⬜ E. GA4 consent on the public docs site — production pages load GA4 with no banner and no `gtag('consent', ...)` anywhere.
+- ⬜ F. Consent and lock lifecycle — the commit consent token is never consumed after use, the sprint channel lock has no stale-TTL recovery, `deriveExceptions` throws on a node missing `metadata.phase`, and branch protection on `main` is config-as-code but not applied.
+
+## Epic 16 — SOPs that describe code that isn't there  ⬜  (sop-code-divergence)
+
+Nineteen entries where shipped prose and shipped code disagree. Almost all are prose edits against a
+verified CLI, so this batches well on the `chore` track.
+
+- ⬜ A. `roadmap-sync --audit` — the SKILL.md documents an audit mode; the CLI prints `unknown subcommand`. Expose it or delete the claim.
+- ⬜ B. Archive and commit SOPs — the `.jsonl` overlay row missing from `archive.sh`'s move table, the SOP prose contradicting the touched parser, and commit SOP step 2 naming the wrong neighbour.
+- ⬜ C. Seven skill SOPs under-describe their own CLI — the docs gate only sees pages, so none of the seven is caught.
+- ⬜ D. Site surfaces — the install claim omitting the output style, `skills.njk` §IV contradicting CLAUDE.md, and `memory.njk` owing the second census refusal paragraph.
+- ⬜ E. Central system spec — the dispatcher sweep spec's write-set under-describes what shipped, and the surfacing triggers are stale.
+- ⬜ F. Track and prerequisite text — no track declares a review node, the integrate prereq rejects an excepted `simplify`, the simplify prereq omits the exceptions escape, `/triage` step 4.5 omits the module on its third call, the spec-lint add-row check requires the file to exist, and the kind column has no validator.
+
+## Epic 17 — Structural debt  ⬜  (structural-debt)
+
+Thirteen entries. Blocks nothing today. Slice A is the one that keeps getting worse — all three files
+have grown since their entries were raised.
+
+- ⬜ A. Split three modules past the size guideline — `memory_stop.mjs` (464 lines), `tdd/drift_check.mjs` (487, six concerns plus a test-only export that ships), `standup/gather.mjs` (502), plus the three files the eighty-line budget check first flagged.
+- ⬜ B. De-duplicate the status map — `epic-heading.mjs` exports `STATUS_BY_EMOJI` and `STATUS_EMOJI` that only tests read, while `roadmap/parse.mjs:35` keeps an equivalent local map.
+- ⬜ C. Test-run cost — chaining the node suite into `test.cmd` made the binding verdict honest and made every source edit cost a full suite run. Both come from the same line.
+- ⬜ D. Reuse rule — a spec must cite the existing function it rejected, and the overlap helper must stop reporting directory-prefix noise as an undeclared write.
+- ⬜ E. `third-party` owner value and the six unannotated baseline skills — genesis amendment first, then the count cascade across the doc surfaces and a manifest rebuild.
+- ⬜ F. Fixture placement — move the flagged project fixture into `tests/helpers/workspace-fixtures.mjs` and repoint its two importers.

@@ -66,7 +66,7 @@ describe('T-005 — collectRoadmap delegates to parse.mjs, recap keeps its own s
     const recap = gatherSync({ rootDir: REPO_ROOT });
 
     assert.ok(recap.roadmap, 'the live repo has a roadmap plan');
-    assert.equal(recap.roadmap.epics.length, 13, 'live repo must still yield 13 epics');
+    assert.equal(recap.roadmap.epics.length, 17, 'live repo must still yield 17 epics');
     const epic6 = recap.roadmap.epics.find((e) => e.num === 6);
     assert.ok(epic6, 'expected Epic 6');
     // Epics 8-12 arrived at 1aed0ae via the first real run of
@@ -81,6 +81,10 @@ describe('T-005 — collectRoadmap delegates to parse.mjs, recap keeps its own s
     // planned row (T11) to done, which promoted the epic heading 🟡 -> ✅. These
     // are live-repo values by design, so they move when the roadmap moves —
     // re-measure against `roadmap/cli.mjs epics`, do not defend the old numbers.
+    //
+    // Epics 14-17 were planned in the same landing as the drift-check slice-scoping
+    // fix, taking the count 13 -> 17. Epic 6's tally and the progress bullets are
+    // untouched by an append, which is why only the one number moves here.
     assert.equal(epic6.status, 'done');
     assert.deepEqual(epic6.tasks, { done: 11, inProgress: 0, planned: 0 });
     assert.equal(recap.roadmap.progress.length, 8, 'live repo must still yield 8 progress bullets');

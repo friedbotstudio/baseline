@@ -171,7 +171,7 @@ describe('epic-heading grammar — the live plan parses unchanged (AC-009)', () 
   it('test_when_live_roadmap_parsed_then_epic_and_progress_counts_are_unchanged', () => {
     const plan = parseRoadmap(REPO_ROOT);
     assert.ok(plan, 'the live plan must parse');
-    assert.equal(plan.epics.length, 13);
+    assert.equal(plan.epics.length, 17);
     assert.equal(plan.progress.length, 8);
     assert.deepEqual(
       plan.epics.find((e) => e.num === 6).tally,

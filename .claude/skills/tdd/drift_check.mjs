@@ -18,9 +18,11 @@
 // `resolved | unresolved | unknown` plus evidence.
 //
 // On an epic-child the scan is SCOPED to the pinned slice: the slice's
-// `- **ACs**:` bullet names its ids and the spec's top-level AC table is filtered
+// `**ACs**:` label names its ids and the spec's top-level AC table is filtered
 // by them. Not the other way round — a slice section carries no `| AC-004 |` rows,
 // so scoping the table regex to the section would match zero and report clean.
+// When that scoping fails, the report says so and the run counts one unresolved
+// item; it never falls back to the spec's full AC list.
 //
 // Exit codes:
 //   0  zero unresolved
@@ -148,15 +150,40 @@ function addedLines(diffText) {
 }
 
 // The spec's top-level AC table, narrowed to the pinned slice when there is one.
-// The narrowing runs on the TABLE's ids, filtered by the slice bullet's — a slice
+// The narrowing runs on the TABLE's ids, filtered by the slice label's — a slice
 // section has no table rows of its own, so matching AC_ROW_RE against the section
 // text would yield an empty scan that reports clean.
+//
+// An empty scope used to fall through to the full list. That made a scoping failure
+// indistinguishable from a slice owning every AC, and one child's tick scored its
+// whole epic — 31 of 37 criteria unresolved, every one owned by an unbuilt slice.
+// The two failures are named instead, and neither substitutes anything.
+// An id the label claims and the table lacks is the same defect one branch deeper:
+// filtering the table by it silently drops it, and when it is the ONLY id claimed
+// the scan covers nothing and the gate goes green. Both are named instead.
 function parseAcs(specText, sliceId) {
-  const out = [];
-  for (const m of specText.matchAll(AC_ROW_RE)) out.push(m[1]);
-  const scoped = sliceAcIds(sliceSection(specText, sliceId));
-  return scoped.length ? out.filter((id) => scoped.includes(id)) : out;
+  const all = [];
+  for (const m of specText.matchAll(AC_ROW_RE)) all.push(m[1]);
+  if (!sliceId) return { acs: all, scoping: 'unscoped', unknown: [] };
+
+  const section = sliceSection(specText, sliceId);
+  if (section === null) return { acs: [], scoping: 'section-missing', unknown: [] };
+
+  const claimed = sliceAcIds(section);
+  if (claimed.length === 0) return { acs: [], scoping: 'acs-missing', unknown: [] };
+
+  const acs = all.filter((id) => claimed.includes(id));
+  const unknown = claimed.filter((id) => !all.includes(id));
+  if (unknown.length === 0) return { acs, scoping: 'scoped', unknown };
+  return { acs, scoping: acs.length === 0 ? 'acs-unknown' : 'acs-partial', unknown };
 }
+
+const SCOPING_FAILURE_REASON = {
+  'section-missing': ({ sliceId }) => `no \`## Slice ${sliceId}\` heading resolves in the spec`,
+  'acs-missing': ({ sliceId }) => `the \`## Slice ${sliceId}\` section carries no AC list`,
+  'acs-unknown': ({ unknown }) => `the AC list names ${unknown.join(', ')}, and the spec's AC table has none of them`,
+  'acs-partial': ({ unknown }) => `the AC list names ${unknown.join(', ')}, which the spec's AC table does not carry`,
+};
 
 function parseDesignCalls(specText) {
   const m = specText.match(DESIGN_CALLS_SECTION_RE);
@@ -387,20 +414,35 @@ function scoreAgainstDiff(itemId, diffAdded) {
   return ['unresolved', 'no diff added-line references this item'];
 }
 
-function renderReport(slug, acs, designRows, contractRows) {
+// A scoping failure leads the section, because a reader who does not see it reads
+// the AC rows as drift. The banner says it in prose and the first table row says it
+// in a form a script can match.
+function acSectionLines(rows, scoping, sliceId, unknown) {
+  const reason = SCOPING_FAILURE_REASON[scoping];
+  const lines = ['## Acceptance criteria', ''];
+  const text = reason ? reason({ sliceId, unknown }) : '';
+  if (reason) {
+    lines.push(
+      `**SCOPING FAILED** — slice \`${sliceId}\` pinned, but ${text}. The spec's full AC list was NOT substituted.`,
+      '',
+    );
+  }
+  lines.push('| kind | id | verdict | evidence |', '|---|---|---|---|');
+  if (reason) lines.push(`| scoping | ${sliceId} | unresolved | ${scoping}: ${text} |`);
+  for (const [acId, verdict, evidence] of rows) {
+    lines.push(`| ac | ${acId} | ${verdict} | ${evidence} |`);
+  }
+  return lines;
+}
+
+function renderReport(slug, acSection, designRows, contractRows) {
   const lines = [
     `# Drift report — ${slug}`,
     '',
     `Generated at: ${nowIso()}`,
     '',
-    '## Acceptance criteria',
-    '',
-    '| kind | id | verdict | evidence |',
-    '|---|---|---|---|',
+    ...acSectionLines(acSection.rows, acSection.scoping, acSection.sliceId, acSection.unknown),
   ];
-  for (const [acId, verdict, evidence] of acs) {
-    lines.push(`| ac | ${acId} | ${verdict} | ${evidence} |`);
-  }
   lines.push('');
   lines.push('## Design calls');
   lines.push('');
@@ -461,15 +503,20 @@ function main(argv) {
   // Design calls stay unscoped: the section is top-level with no per-slice
   // attribution, so there is nothing to scope them by. On the sliced specs this
   // repo writes today the section is `*(none)*`, which parses to zero rows.
-  const acResults = parseAcs(specText, sliceId).map(acId => [acId, ...scoreAgainstDiff(acId, diffAdded)]);
+  const { acs, scoping, unknown } = parseAcs(specText, sliceId);
+  const acResults = acs.map(acId => [acId, ...scoreAgainstDiff(acId, diffAdded)]);
   const designResults = parseDesignCalls(specText).map(s => [s, ...scoreAgainstDiff(s, diffAdded)]);
 
   const contractResults = extractContractRows(specText).map((row) => [row.name, ...scoreContractRow(row, diffAdded, projectRoot)]);
 
-  const report = renderReport(values.slug, acResults, designResults, contractResults);
+  const report = renderReport(values.slug, { rows: acResults, scoping, sliceId, unknown }, designResults, contractResults);
   writeReport(projectRoot, values.slug, report);
 
-  const unresolved = [...acResults, ...designResults, ...contractResults].filter(([, v]) => v === 'unresolved').length;
+  // A scoping failure scores no AC, so without counting it the gate would go green
+  // on the one input it understands least.
+  const scopingUnresolved = SCOPING_FAILURE_REASON[scoping] ? 1 : 0;
+  const unresolved = scopingUnresolved
+    + [...acResults, ...designResults, ...contractResults].filter(([, v]) => v === 'unresolved').length;
   return unresolved === 0 ? 0 : 1;
 }
 

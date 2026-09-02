@@ -1,0 +1,91 @@
+{
+  "request": "Fix the silent slice-scoping fallback in the epic-child drift check. (1) sliceSection anchors the slice heading with \\s*$, so a titled heading `## Slice B1 — ports and the server composition root` returns null. (2) sliceAcIds requires a leading `-` bullet, but every epic spec on disk writes `**ACs**: AC-001.` with no dash. (3) drift_check.parseAcs widens an empty scope to the spec's full AC list with no marker, so a scoping failure is indistinguishable from a slice that owns every AC and reports the whole epic as unresolved drift. Primary fix: make the empty-scope case distinguishable and report it. Follow-on: widen both regexes, backward compatible.",
+  "slug": "drift-check-slice-scoping",
+  "track_id": "tdd-quickfix",
+  "novelty": "novel",
+  "novelty_evidence": "Searched .claude/memory/backlog/ (no key for slice scoping or pinned-spec) and docs/roadmap-execution-plan.md (line 198 Epic 16 item C is a DIFFERENT drift_check defect — per-AC vs per-range resolution; line 232 Epic 17 slice A is a size refactor of the same file). No spec chapter or precedent commit covers slice-scoping failure reporting. Defect reproduced externally on a baseline 0.26.5 consumer and re-verified against live code here: sliceSection(titledHeading,'B1') returns null, sliceAcIds on a dashless `**ACs**:` label returns [].",
+  "track_reason": "Leanest safe track. Known failing case at three named lines with a reproduction in hand; no discovery to buy. tdd-quickfix retains verify, security, integrate, archive and gate C, which is the guardrail set this blast radius needs.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/pinned-spec.mjs",
+    ".claude/skills/tdd/drift_check.mjs",
+    "obj/template/.claude/hooks/lib/pinned-spec.mjs",
+    "obj/template/.claude/skills/tdd/drift_check.mjs",
+    "obj/template/.claude/manifest.json",
+    "tests/**",
+    "site-src/memory.njk",
+    "docs/roadmap-execution-plan.md",
+    "tests/epic-heading-grammar.test.mjs",
+    "tests/standup-roadmap-parity.test.mjs"
+  ],
+  "exceptions": [
+    "chore",
+    "cli-copy-review",
+    "document",
+    "intake",
+    "org-dispatch",
+    "research",
+    "scout",
+    "simplify",
+    "spec",
+    "spec-shippability-review"
+  ],
+  "completed": [
+    "tdd",
+    "security",
+    "integrate",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "grant-commit"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1788353900,
+  "updated_at": 1788359191,
+  "rightsize_base": [
+    "docs/roadmap-execution-plan.md"
+  ],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize",
+    "implement",
+    "verify"
+  ],
+  "auto_skipped": [
+    {
+      "phase": "simplify",
+      "reason": "change size below the right-size threshold",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 3,
+        "lines": 96,
+        "touched": [
+          ".claude/hooks/lib/pinned-spec.mjs",
+          ".claude/skills/tdd/drift_check.mjs",
+          "site-src/memory.njk"
+        ]
+      }
+    },
+    {
+      "phase": "document",
+      "reason": "change size below the right-size threshold",
+      "oracle": "rightsize-gate",
+      "measured": {
+        "files": 3,
+        "lines": 96,
+        "touched": [
+          ".claude/hooks/lib/pinned-spec.mjs",
+          ".claude/skills/tdd/drift_check.mjs",
+          "site-src/memory.njk"
+        ]
+      }
+    }
+  ],
+  "attempts": {
+    "tdd": 2
+  }
+}

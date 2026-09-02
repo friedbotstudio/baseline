@@ -86,25 +86,27 @@ export function resolveSpecPath({ rootDir = process.cwd(), slug } = {}) {
 
 // The `## Slice <id>` body, bounded by the next `##` heading. Returns null when the
 // spec carries no such section, so a caller can tell "scoped to nothing" from
-// "scoped to an empty slice".
+// "scoped to an empty slice". The heading may carry a title after the id, which
+// every epic spec on disk writes; `(?![\w-])` is what keeps `B1` off `## Slice B10`.
 export function sliceSection(specText, sliceId) {
   if (!sliceId) return null;
   const pattern = new RegExp(
-    `^##\\s+Slice\\s+${String(sliceId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$([\\s\\S]*?)(?=^##\\s|$(?![\\s\\S]))`,
+    `^##\\s+Slice\\s+${String(sliceId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])[^\\n]*$([\\s\\S]*?)(?=^##\\s|$(?![\\s\\S]))`,
     'im',
   );
   return pattern.exec(String(specText))?.[1] ?? null;
 }
 
-// A slice section lists its ACs as a `- **ACs**: AC-004, AC-005` BULLET. It carries
-// no `| AC-004 |` table rows — those live once, at the spec's top level.
+// A slice section lists its ACs on a bold-labelled line — `**ACs**: AC-004, AC-005`,
+// with or without a leading bullet, and under either label the specs on disk use. It
+// carries no `| AC-004 |` table rows; those live once, at the spec's top level.
 //
 // This is the whole reason the function exists. Scoping a table-row regex to the
 // section text matches zero rows and reports clean, which is the same vacuous green
-// one layer deeper. The bullet supplies the id set; the caller filters the spec's
+// one layer deeper. The label supplies the id set; the caller filters the spec's
 // top-level table by it.
 export function sliceAcIds(sectionText) {
-  const bullet = /^[-*]\s*\*\*ACs?\*\*\s*:\s*(.+)$/im.exec(String(sectionText ?? ''));
-  if (!bullet) return [];
-  return [...new Set(bullet[1].match(/AC-\d+/g) ?? [])];
+  const label = /^[-*]?\s*\*\*(?:ACs?|Acceptance criteria)\*\*\s*:\s*(.+)$/im.exec(String(sectionText ?? ''));
+  if (!label) return [];
+  return [...new Set(label[1].match(/AC-\d+/g) ?? [])];
 }
