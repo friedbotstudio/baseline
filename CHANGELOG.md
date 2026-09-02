@@ -1,3 +1,10 @@
+## [0.26.6](https://github.com/friedbotstudio/baseline/compare/v0.26.5...v0.26.6) (2026-09-02)
+
+
+### Bug Fixes
+
+* **tdd:** report a slice-scoping failure instead of scanning the whole epic ([efea9a0](https://github.com/friedbotstudio/baseline/commit/efea9a08b025411e6a59331ae7b99234efd61d37))
+
 ## [0.26.5](https://github.com/friedbotstudio/baseline/compare/v0.26.4...v0.26.5) (2026-08-26)
 
 
