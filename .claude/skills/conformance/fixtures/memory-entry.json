@@ -1,0 +1,63 @@
+{
+  "artifact": "memory-entry",
+  "note": "Adversarial by construction: every reader agrees on the real specs in docs/specs/ while a live divergence goes undetected, so a representative fixture proves nothing. Each expected value is REVIEWED against the spec Decisions (D6 reader-facing-wins, D7 reject-never-repair) and the enumerated deltas — never captured from whatever the readers happen to do. Edit these values by hand; a reader that disagrees is the finding.",
+  "rows": [
+    {
+      "id": "memory/stamp-in-frontmatter",
+      "why": "the shape the commit obligation is meant to accept.",
+      "doc": "---\nkey: some-entry-1a2b\ncategory: backlog\nstatus: picked-up\nsuperseded-at: 2026-09-03\n---\n\n- Closed in this cycle.\n",
+      "artifact": "memory-entry",
+      "expect": {
+        "closure-check:stamp": true,
+        "frontmatter-parser:keys": [
+          "category",
+          "key",
+          "status",
+          "superseded-at"
+        ]
+      }
+    },
+    {
+      "id": "memory/stamp-only-in-body",
+      "why": "scout row 9 — the commit-path check matched the whole file, so an open entry quoting the stamp satisfied it.",
+      "doc": "---\nkey: some-entry-1a2b\ncategory: backlog\nstatus: open\n---\n\n- We agreed the entry should read:\nstatus: picked-up\nsuperseded-at: 2026-09-03\n- but nobody has done the work.\n",
+      "artifact": "memory-entry",
+      "expect": {
+        "closure-check:stamp": false,
+        "frontmatter-parser:keys": [
+          "category",
+          "key",
+          "status"
+        ]
+      }
+    },
+    {
+      "id": "memory/crlf-frontmatter",
+      "why": "scout row 7 — the shared parser anchors on LF and returns {} for a CRLF entry, silently, while two other readers parse it.",
+      "doc": "---\r\nkey: crlf-entry-9f0a\r\ncategory: backlog\r\nstatus: open\r\n---\r\n\r\n- body\r\n",
+      "artifact": "memory-entry",
+      "expect": {
+        "closure-check:stamp": false,
+        "frontmatter-parser:keys": [
+          "category",
+          "key",
+          "status"
+        ]
+      }
+    },
+    {
+      "id": "memory/colon-with-no-space",
+      "why": "scout row 8 — the shared parser requires the two-character `: ` separator; the backlog-deferral reader accepts `key:value`.",
+      "doc": "---\nkey:nospace-entry-4c1d\ncategory:backlog\nstatus:open\n---\n\n- body\n",
+      "artifact": "memory-entry",
+      "expect": {
+        "closure-check:stamp": false,
+        "frontmatter-parser:keys": [
+          "category",
+          "key",
+          "status"
+        ]
+      }
+    }
+  ]
+}

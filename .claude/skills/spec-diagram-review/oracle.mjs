@@ -100,14 +100,29 @@ function checkClassDDL(content, mandatory) {
   return out;
 }
 
+/** The `## Acceptance criteria` body. `^` anchored so a prose mention of the
+ * heading inside another section cannot hijack the match. Exported so the
+ * conformance check calls this reader rather than a copy of its pattern. */
+export function acceptanceCriteriaSection(content) {
+  return (/^##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(String(content ?? '')) || [null, ''])[1];
+}
+
+/** Behavior ids this spec declares as `### Behavior #N` headings. */
+export function behaviorHeadingIds(content) {
+  return [...String(content ?? '').matchAll(/^###\s+Behavior\s*#(\d+)\b/gim)].map((m) => Number(m[1]));
+}
+
 // (b) Every AC row's §Behavior #N must resolve to a titled sequence.
 function checkAcSequence(content, mandatory) {
   const titles = new Set();
   for (const t of content.matchAll(/title\s+Behavior\s*#(\d+)/gim)) titles.add(Number(t[1]));
-  for (const t of content.matchAll(/^###\s+Behavior\s*#(\d+)/gim)) titles.add(Number(t[1]));
-  const section = (/^##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/im.exec(content) || [null, ''])[1];
+  // `\b` guard: `### Behavior #12b` must not resolve to behavior 12, or two
+  // headings collapse onto one id and an AC row anchors to the wrong section.
+  // Matches spec-lint's reader (lint.mjs), which already carried the guard.
+  for (const t of content.matchAll(/^###\s+Behavior\s*#(\d+)\b/gim)) titles.add(Number(t[1]));
+  const section = acceptanceCriteriaSection(content);
   const out = [];
-  for (const r of section.matchAll(/\|\s*(AC-\d+)\s*\|[^\n]*?§?Behavior\s*#(\d+)/g)) {
+  for (const r of section.matchAll(/^\|\s*(AC-\d+)\s*\|[^\n]*?§?Behavior\s*#(\d+)/gm)) {
     const n = Number(r[2]);
     if (!titles.has(n)) {
       out.push(normalizeFinding({

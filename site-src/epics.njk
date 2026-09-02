@@ -4,7 +4,7 @@ title: "Epics: run discovery once, ship it in slices · baseline"
 description: "How to run a multi-slice feature as an epic: discovery once, a sliced spec approved a single time, then one child workflow per slice inheriting that discovery."
 heading: "Run discovery once,<br>land it in slices."
 lead: "Some features split into tasks that ship separately. Run each task as its own workflow and you pay for the same background work every time. An epic makes you pay once: intake, scout, research and spec run one time, and every slice inherits them."
-updated: 2026-08-15
+updated: 2026-09-02
 breadcrumb: ["docs", "how-to", "epics"]
 chips:
   - { label: "needs git" }
@@ -47,9 +47,13 @@ toc:
 
 <p>Your roadmap tracks a multi-slice feature on its own. The epic adds itself when its discovery commits, and each child turns its own row green as it lands, so nobody keeps the plan current by hand. Epics that predate this go on with <code class="tok">node .claude/skills/roadmap-sync/cli.mjs backfill</code>. Add <code class="tok">--dry-run</code> to read the report first.</p>
 
-<p>What you get is a sliced spec at <code class="tok">docs/specs/&lt;epic&gt;.md</code>, in which each future child has its own <code class="tok">## Slice &lt;id&gt;</code> section holding that child's acceptance criteria. You approve the whole document once, at gate A.</p>
+<p>What you get is a sliced spec at <code class="tok">docs/specs/&lt;epic&gt;.md</code>, in which each future child has its own <code class="tok">## Slice &lt;id&gt;</code> section. You approve the whole document once, at gate A.</p>
 
-<p>That single approval has two consequences worth planning around. Write each slice so that it can ship on its own, because you get one approval and no later chance to redraw the lines. Put each acceptance criterion in exactly one slice as well, since an AC appearing in two slices will simply be built twice.</p>
+<p>Write the heading the way you already would. A title after the id is fine, so both <code class="tok">## Slice A</code> and <code class="tok">## Slice A &mdash; ports and the composition root</code> work. You do not have to go back and reformat a spec you already drafted.</p>
+
+<p>Ownership is one bold line: <code class="tok">**Acceptance criteria**: AC-001, AC-002</code>, or <code class="tok">- **ACs**: AC-001, AC-002</code>. Only that line counts. You can discuss a sibling's criterion in the prose around it and the slice will not pick it up, so two children never build the same thing.</p>
+
+<p>That single approval has two consequences worth planning around. Write each slice so that it can ship on its own, because you get one approval and no later chance to redraw the lines. Settle which slice owns each acceptance criterion before you approve, for the same reason.</p>
 
 <p>The discovery bundle commits live, which means the spec, scout and research stay exactly where they are. If a child runs three weeks later it must still be able to find them, so archiving them now would break every child still waiting.</p>
 
@@ -86,7 +90,7 @@ toc:
   <pre class="plate-body">{
   <span class="t-ok">"epic"</span>: <span class="t-val">"erp-portables"</span>,
   <span class="t-ok">"artifacts"</span>: { <span class="t-dim">scout, research, spec — the pinned paths</span> },
-  <span class="t-ok">"slices"</span>: [ { <span class="t-ok">"id"</span>: <span class="t-val">"A"</span>, <span class="t-ok">"title"</span>: …, <span class="t-ok">"acs"</span>: […], <span class="t-ok">"risk"</span>: […] } ],
+  <span class="t-ok">"slices"</span>: [ { <span class="t-ok">"id"</span>: <span class="t-val">"A"</span>, <span class="t-ok">"title"</span>: …, <span class="t-ok">"acs"</span>: <span class="t-val">["AC-001", "AC-002"]</span>, <span class="t-ok">"risk"</span>: […] } ],
   <span class="t-ok">"approved"</span>: <span class="t-val">true</span>,
   <span class="t-ok">"children"</span>: [ { <span class="t-ok">"slice"</span>: <span class="t-val">"A"</span>, <span class="t-ok">"slug"</span>: <span class="t-val">"…-slice-a"</span>, <span class="t-ok">"status"</span>: <span class="t-val">"committed"</span> } ]
 }</pre>

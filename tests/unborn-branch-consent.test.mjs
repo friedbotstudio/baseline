@@ -31,6 +31,10 @@ const HOOK_DEPS = [
   '.claude/hooks/lib/closure-check.mjs',
   '.claude/hooks/lib/consent-decision.mjs',
   '.claude/hooks/lib/slug.mjs',
+  // closure-check.mjs imports it. A lib the spawned guard needs but the sandbox
+  // omits kills the guard on ERR_MODULE_NOT_FOUND, and its empty stdout reads as
+  // ALLOW — a fail-open that silently passes every deny assertion below.
+  '.claude/hooks/lib/frontmatter-parser.mjs',
 ];
 
 const PROTECT_MAIN = {

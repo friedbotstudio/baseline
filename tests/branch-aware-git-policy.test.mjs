@@ -26,6 +26,10 @@ const DECISION = join(REPO_ROOT, '.claude/hooks/lib/consent-decision.mjs');
 // ERR_MODULE_NOT_FOUND and its empty stdout is read as ALLOW — a fail-open that
 // silently passes every deny assertion below.
 const SLUG = join(REPO_ROOT, '.claude/hooks/lib/slug.mjs');
+// closure-check.mjs imports ./frontmatter-parser.mjs — the stamp is read from the
+// entry's frontmatter block, not from anywhere in the file. Same fail-open as above
+// if it is missing from the sandbox.
+const FRONTMATTER = join(REPO_ROOT, '.claude/hooks/lib/frontmatter-parser.mjs');
 
 // Build a temp CLAUDE_PROJECT_DIR with copies of the hooks + a writable
 // project.json + state dir. Returns the temp path.
@@ -38,6 +42,7 @@ function buildSandbox(projectJson) {
   cpSync(CLOSURE, join(root, '.claude/hooks/lib/closure-check.mjs'));
   cpSync(DECISION, join(root, '.claude/hooks/lib/consent-decision.mjs'));
   cpSync(SLUG, join(root, '.claude/hooks/lib/slug.mjs'));
+  cpSync(FRONTMATTER, join(root, '.claude/hooks/lib/frontmatter-parser.mjs'));
   cpSync(GUARD, join(root, '.claude/hooks/git_commit_guard.mjs'));
   cpSync(GRANT, join(root, '.claude/hooks/consent_gate_grant.mjs'));
   writeFileSync(join(root, '.claude/project.json'), JSON.stringify(projectJson, null, 2));

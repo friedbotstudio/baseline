@@ -22,7 +22,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { sliceSection, sliceAcIds } from '../.claude/hooks/lib/pinned-spec.mjs';
+import { sliceSection, sliceAcIds } from '../.claude/skills/lib/slice-grammar.mjs';
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const DRIFT = join(REPO_ROOT, '.claude/skills/tdd/drift_check.mjs');

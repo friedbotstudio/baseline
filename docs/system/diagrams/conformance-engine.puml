@@ -1,0 +1,4 @@
+!startsub conformance_engine
+' @kind c4_component
+Component(conformance_engine, ".claude/skills/conformance/*.mjs", "c4_component", "Review fanout")
+!endsub

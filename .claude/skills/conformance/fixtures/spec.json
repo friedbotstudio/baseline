@@ -1,0 +1,255 @@
+{
+  "artifact": "spec",
+  "note": "Adversarial by construction: every reader agrees on the real specs in docs/specs/ while a live divergence goes undetected, so a representative fixture proves nothing. Each expected value is REVIEWED against the spec Decisions (D6 reader-facing-wins, D7 reject-never-repair) and the enumerated deltas — never captured from whatever the readers happen to do. Edit these values by hand; a reader that disagrees is the finding.",
+  "rows": [
+    {
+      "id": "spec/titled-slice-heading",
+      "why": "scout row 1 — pinned-spec resolved a titled heading, spec-lint returned []. Every epic spec on disk writes one.",
+      "doc": "# Epic\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-002 | b |\n\n## Slice B1 — ports and the composition root\n\n**Acceptance criteria**: AC-001.\n\n## Slice B10 — a later slice whose id starts with B1\n\n- **ACs**: AC-002\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {
+          "B1": [
+            "AC-001"
+          ],
+          "B10": [
+            "AC-002"
+          ]
+        },
+        "spec-lint:slice-ownership": {
+          "B1": [
+            "AC-001"
+          ],
+          "B10": [
+            "AC-002"
+          ]
+        },
+        "slice-grammar:presence": true,
+        "spec-lint:ac-section": [
+          "AC-001",
+          "AC-002"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-002 | b |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          "| AC-002 | b |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001",
+          "AC-002"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/ac-mentioned-in-slice-prose",
+      "why": "scout row 2 — spec-lint scraped every AC-NNN in the slice body, claiming one the slice merely referred to.",
+      "doc": "# Epic\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-014 | b |\n\n## Slice A — one\n\n**Acceptance criteria**: AC-001.\n\nDepends on AC-014 from an earlier slice, which is built first.\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {
+          "A": [
+            "AC-001"
+          ]
+        },
+        "spec-lint:slice-ownership": {
+          "A": [
+            "AC-001"
+          ]
+        },
+        "slice-grammar:presence": true,
+        "spec-lint:ac-section": [
+          "AC-001",
+          "AC-014"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-014 | b |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          "| AC-014 | b |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001",
+          "AC-014"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/heading-quoted-in-prose",
+      "why": "landmine spec-lint-and-guard-section-regexes-are-not-line-anchored — an unanchored opener matches the prose mention first and the body runs past the real table.",
+      "doc": "# Spec\n\n## Non-goals\n\n- Not touching the `## Acceptance criteria` table.\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-002 | b |\n\n## Rollout\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {},
+        "spec-lint:slice-ownership": {},
+        "slice-grammar:presence": false,
+        "spec-lint:ac-section": [
+          "AC-001",
+          "AC-002"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n| AC-002 | b |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          "| AC-002 | b |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001",
+          "AC-002"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/ac-id-alone-in-a-later-column",
+      "why": "scout row 4, found live by this fixture — an unanchored cell scan also claimed an id sitting in a Supersedes column.",
+      "doc": "# Spec\n\n## Acceptance criteria\n\n| ID | Criterion | Supersedes |\n|---|---|---|\n| AC-001 | a | AC-014 |\n\n## Rollout\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {},
+        "spec-lint:slice-ownership": {},
+        "slice-grammar:presence": false,
+        "spec-lint:ac-section": [
+          "AC-001"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion | Supersedes |\n|---|---|---|\n| AC-001 | a | AC-014 |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion | Supersedes |",
+          "|---|---|---|",
+          "| AC-001 | a | AC-014 |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/suffixed-behavior-heading",
+      "why": "scout row 6 — spec-lint rejected `#12b`, diagram-review read it as 12. Two headings must not collapse onto one id (D7).",
+      "doc": "# Spec\n\n### Behavior #12b — retry path\n\n### Behavior #13 — the ordinary one\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {},
+        "spec-lint:slice-ownership": {},
+        "slice-grammar:presence": false,
+        "spec-lint:ac-section": [
+          "AC-001"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001"
+        ],
+        "diagram-review:behavior-headings": [
+          13
+        ]
+      }
+    },
+    {
+      "id": "spec/bare-slice-heading",
+      "why": "the form the parser originally required. It must keep working — widening a reader is a fix, narrowing one breaks installs.",
+      "doc": "# Epic\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n\n## Slice A\n\n- **ACs**: AC-001\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {
+          "A": [
+            "AC-001"
+          ]
+        },
+        "spec-lint:slice-ownership": {
+          "A": [
+            "AC-001"
+          ]
+        },
+        "slice-grammar:presence": true,
+        "spec-lint:ac-section": [
+          "AC-001"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/no-slice-section",
+      "why": "census-gate-literal-pattern-matches-no-real-site — a probe must answer honestly on a document its pattern does not reach.",
+      "doc": "# Spec\n\n## Goal\n\nNo slices here.\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {},
+        "spec-lint:slice-ownership": {},
+        "slice-grammar:presence": false,
+        "spec-lint:ac-section": [
+          "AC-001"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    },
+    {
+      "id": "spec/no-system-delta-section",
+      "why": "spec-lint-fixture-omits-system-delta-3f7a — the fixture that omitted this section left two tests red behind an env gate for weeks.",
+      "doc": "# Spec\n\n## Acceptance criteria\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n\n## Rollout\n\n- nothing\n",
+      "artifact": "spec",
+      "expect": {
+        "slice-grammar:acs": {},
+        "spec-lint:slice-ownership": {},
+        "slice-grammar:presence": false,
+        "spec-lint:ac-section": [
+          "AC-001"
+        ],
+        "diagram-review:ac-section": "\n\n| ID | Criterion |\n|---|---|\n| AC-001 | a |\n\n",
+        "traceability:ac-section": [
+          "",
+          "| ID | Criterion |",
+          "|---|---|",
+          "| AC-001 | a |",
+          ""
+        ],
+        "drift-check:ac-rows": [
+          "AC-001"
+        ],
+        "diagram-review:behavior-headings": []
+      }
+    }
+  ]
+}

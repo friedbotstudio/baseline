@@ -37,6 +37,7 @@ import { run as licenses } from './checks/licenses.mjs';
 import { run as designUiSurface } from './checks/design-ui-surface.mjs';
 import { run as crossDocCounts } from './checks/cross-doc-counts.mjs';
 import { run as quickfixInvariants } from './checks/quickfix-invariants.mjs';
+import { run as conformance } from './checks/conformance.mjs';
 import { run as derivedCountSurfaces } from './checks/derived-count-surfaces.mjs';
 import { run as docsiteDrift } from './checks/docsite-drift.mjs';
 import { run as hookDecisionPaths } from './checks/hook-decision-paths.mjs';
@@ -59,7 +60,7 @@ const IS_MAIN = (() => {
 const CHECKS = [
   counts, skillOwnership, skillCharacter, constitution, memory, srcTemplatesA, srcTemplatesB,
   helperScripts, settingsWiring, projectJson, mcpServers, licenses, designUiSurface,
-  crossDocCounts, quickfixInvariants, derivedCountSurfaces, docsiteDrift,
+  crossDocCounts, quickfixInvariants, conformance, derivedCountSurfaces, docsiteDrift,
   hookDecisionPaths,
 ];
 

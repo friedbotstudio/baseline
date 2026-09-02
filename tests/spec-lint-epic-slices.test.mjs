@@ -43,9 +43,9 @@ const AC_ROWS = [
   '| AC-030 | given x when y then z | behavior | u | §Behavior #3 |',
 ];
 
-const SLICE_A_OWNS_ONLY_001 = ['## Slice A', '', 'ACs: AC-001', ''];
-const SLICES_COVER_ALL = ['## Slice A', '', 'ACs: AC-001', '', '## Slice B', '', 'ACs: AC-029, AC-030', ''];
-const SLICES_DOUBLE_CLAIM = ['## Slice A', '', 'ACs: AC-001, AC-029', '', '## Slice B', '', 'ACs: AC-029, AC-030', ''];
+const SLICE_A_OWNS_ONLY_001 = ['## Slice A', '', '**ACs**: AC-001', ''];
+const SLICES_COVER_ALL = ['## Slice A', '', '**ACs**: AC-001', '', '## Slice B', '', '**ACs**: AC-029, AC-030', ''];
+const SLICES_DOUBLE_CLAIM = ['## Slice A', '', '**ACs**: AC-001, AC-029', '', '## Slice B', '', '**ACs**: AC-029, AC-030', ''];
 
 function withTempRoot(fn) {
   const dir = mkdtempSync(join(tmpdir(), 'epic-slice-'));

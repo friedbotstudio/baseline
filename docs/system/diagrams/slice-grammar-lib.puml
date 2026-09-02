@@ -1,0 +1,4 @@
+!startsub slice_grammar_lib
+' @kind c4_component
+Component(slice_grammar_lib, ".claude/skills/lib/slice-grammar.mjs", "c4_component", "Workflow tracks")
+!endsub

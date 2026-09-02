@@ -24,6 +24,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { assertSafeSlug } from './slug.mjs';
+import { assertInertSliceId } from '../../skills/lib/slice-grammar.mjs';
 
 const SPEC_DIR = 'docs/specs';
 const PIN_FRAGMENT_RE = /^slice-(.+)$/;
@@ -56,7 +57,14 @@ function splitPin(pin) {
   const [bare, fragment] = String(pin).split('#');
   assertNoTraversal(bare);
   if (fragment !== undefined) assertNoTraversal(fragment);
-  return { bare, sliceId: PIN_FRAGMENT_RE.exec(fragment ?? '')?.[1] ?? null };
+  const sliceId = PIN_FRAGMENT_RE.exec(fragment ?? '')?.[1] ?? null;
+  // Guarded HERE, at the one place a slice id enters the system, so every
+  // downstream consumer inherits it. Wiring it per call site instead is the
+  // failure recorded in `security-fixes-are-per-call-site-and-new-modules-
+  // inherit-none`: `drift_check` interpolates this value into a markdown code
+  // span, and a crafted id there makes a failure message read as a clean one.
+  if (sliceId !== null) assertInertSliceId(sliceId, 'pinned sliceId');
+  return { bare, sliceId };
 }
 
 const noSpec = () => ({ path: null, rel: null, sliceId: null, source: null });
@@ -84,29 +92,4 @@ export function resolveSpecPath({ rootDir = process.cwd(), slug } = {}) {
   return { path: join(rootDir, bare), rel: bare, sliceId, source: 'pin' };
 }
 
-// The `## Slice <id>` body, bounded by the next `##` heading. Returns null when the
-// spec carries no such section, so a caller can tell "scoped to nothing" from
-// "scoped to an empty slice". The heading may carry a title after the id, which
-// every epic spec on disk writes; `(?![\w-])` is what keeps `B1` off `## Slice B10`.
-export function sliceSection(specText, sliceId) {
-  if (!sliceId) return null;
-  const pattern = new RegExp(
-    `^##\\s+Slice\\s+${String(sliceId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])[^\\n]*$([\\s\\S]*?)(?=^##\\s|$(?![\\s\\S]))`,
-    'im',
-  );
-  return pattern.exec(String(specText))?.[1] ?? null;
-}
 
-// A slice section lists its ACs on a bold-labelled line — `**ACs**: AC-004, AC-005`,
-// with or without a leading bullet, and under either label the specs on disk use. It
-// carries no `| AC-004 |` table rows; those live once, at the spec's top level.
-//
-// This is the whole reason the function exists. Scoping a table-row regex to the
-// section text matches zero rows and reports clean, which is the same vacuous green
-// one layer deeper. The label supplies the id set; the caller filters the spec's
-// top-level table by it.
-export function sliceAcIds(sectionText) {
-  const label = /^[-*]?\s*\*\*(?:ACs?|Acceptance criteria)\*\*\s*:\s*(.+)$/im.exec(String(sectionText ?? ''));
-  if (!label) return [];
-  return [...new Set(label[1].match(/AC-\d+/g) ?? [])];
-}

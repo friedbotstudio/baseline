@@ -1,0 +1,56 @@
+{
+  "request": "Close the epic slice-section grammar as a defect class: pin every machine gate's reader to the format its writer actually emits, and add a conformance mechanism that fails in this repo rather than in a consumer's install.",
+  "slug": "gate-fidelity",
+  "track_id": "intake-full",
+  "novelty": "novel",
+  "novelty_evidence": "Searched audit-baseline checks, the spec-review checkers and tests/ for anything asserting that two readers of one artifact agree on its grammar; found none. The single-declaration-site pattern has one precedent, .claude/skills/lib/epic-heading.mjs (workflow unify-epic-heading-grammar), which covers the roadmap epic heading only. The individual defects are evidenced: spec-lint's checkEpicSliceAssignment and checkEpicStateConsistency FAIL against all three live epic specs in docs/specs/, and .claude/state/epic/*.json writes slices[].acs as AC ids in three epics and as criterion prose in three others.",
+  "track_reason": "epic was the leaner-ceremony pick for five separable slices; the user chose intake-full so scope stays open until /scout reports, and the work lands as one reviewed diff.",
+  "skip_brainstorm": true,
+  "write_surface": [
+    ".claude/hooks/lib/pinned-spec.mjs",
+    ".claude/hooks/lib/design-calls.mjs",
+    ".claude/skills/spec-lint/lint.mjs",
+    ".claude/skills/lib/**",
+    ".claude/skills/spec/SKILL.md",
+    ".claude/skills/spec/template.md",
+    ".claude/skills/tdd/drift_check.mjs",
+    ".claude/skills/triage/SKILL.md",
+    ".claude/skills/audit-baseline/**",
+    "docs/init/seed.md",
+    "src/seed.template.md",
+    "tests/**"
+  ],
+  "exceptions": [
+    "chore",
+    "org-dispatch"
+  ],
+  "completed": [
+    "intake",
+    "approve-direction",
+    "scout",
+    "research",
+    "spec",
+    "spec-shippability-review",
+    "tdd",
+    "simplify",
+    "security",
+    "integrate",
+    "document",
+    "archive",
+    "roadmap-sync",
+    "memory-sync",
+    "cli-copy-review"
+  ],
+  "skipped_alternates": [],
+  "source_backlog_keys": [],
+  "created_at": 1788364809,
+  "updated_at": "2026-09-02T21:48:24.178Z",
+  "rightsize_base": [],
+  "tdd_ticks": [
+    "scenario",
+    "implement",
+    "verify",
+    "drift-check",
+    "finalize"
+  ]
+}

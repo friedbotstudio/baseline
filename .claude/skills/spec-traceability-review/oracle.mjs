@@ -9,14 +9,24 @@ import { normalizeFinding } from '../spec-diagram-review/oracle.mjs';
 const CHECKER = 'spec-traceability';
 
 /** Numbered ACs under the upstream's "## Acceptance criteria" heading: "1. ...". */
-function extractUpstreamAcNumbers(intake) {
-  const nums = new Set();
+/** The lines inside `## Acceptance criteria`, by line scan. Exported so the
+ * conformance check calls this reader rather than a copy of its logic. */
+export function acceptanceCriteriaLines(text) {
+  const lines = [];
   let inAcs = false;
-  for (const line of intake.split(/\r?\n/)) {
+  for (const line of String(text ?? '').split(/\r?\n/)) {
     if (/^##\s+Acceptance criteria/i.test(line)) { inAcs = true; continue; }
     if (inAcs && /^##\s/.test(line)) break;
+    if (inAcs) lines.push(line);
+  }
+  return lines;
+}
+
+function extractUpstreamAcNumbers(intake) {
+  const nums = new Set();
+  for (const line of acceptanceCriteriaLines(intake)) {
     const m = /^\s*(\d+)\.\s+\S/.exec(line);
-    if (inAcs && m) nums.add(Number(m[1]));
+    if (m) nums.add(Number(m[1]));
   }
   return nums;
 }

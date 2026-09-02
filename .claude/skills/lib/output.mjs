@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 // Foundation — the presentation half of the shared dispatcher layer: usage text
 // and the writer that turns a subcommand result into bytes.
 //
@@ -10,7 +11,18 @@
 // The write sink is a parameter, defaulted rather than hardcoded, so `emit` is
 // testable without capturing the process's stdout. Nothing in the shipped path
 // passes a second sink.
-const DEFAULT_SINK = process.stdout;
+// A SYNCHRONOUS sink. `dispatch` writes through here and then calls
+// `process.exit` immediately; on POSIX `process.stdout` is async when stdout is
+// a pipe, so anything past the 64 KiB pipe buffer is dropped and the reader gets
+// valid-looking JSON cut mid-string. `workspace graph --json` crossed 64 KiB and
+// hit exactly that. `writeFileSync` on fd 1 completes before it returns, which
+// keeps the exit path unchanged — the alternative, letting the event loop drain,
+// would change exit timing for every dispatcher that shares this module.
+const DEFAULT_SINK = {
+  write(text) {
+    writeFileSync(1, text);
+  },
+};
 
 export function renderUsage(name, subcommands) {
   const width = Math.max(...Object.keys(subcommands).map((key) => key.length));

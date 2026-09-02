@@ -41,7 +41,8 @@ import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 
-import { resolveSpecPath, sliceAcIds, sliceSection } from '../../hooks/lib/pinned-spec.mjs';
+import { resolveSpecPath } from '../../hooks/lib/pinned-spec.mjs';
+import { sliceSection, sliceAcIds, sliceHeadingPresent } from '../lib/slice-grammar.mjs';
 
 // Spec/archive prose is excluded from the scored diff (backlog a1b2). An AC id
 // resolves only when it appears in an IMPLEMENTATION or TEST added-line — never
@@ -364,7 +365,7 @@ export function scoreContractRow(row, diffAdded, rootDir) {
 // `epic-child` commit. Scoring an epic against its own landing commit therefore
 // measures the track's shape, not the resolver — it produced all 8 apparent
 // offenders in the first live run, every one from `system-spec-delta`.
-const SLICE_HEADING_RE = /^##\s+Slice\s+\S/m;
+
 
 export function sweepArchivedSpecs(rootDir) {
   const archive = join(rootDir, 'docs', 'archive');
@@ -385,7 +386,7 @@ export function sweepArchivedSpecs(rootDir) {
   for (const specPath of specs) {
     const rel = specPath.slice(rootDir.length + 1);
     const specText = readFileSync(specPath, 'utf8');
-    if (SLICE_HEADING_RE.test(specText)) {
+    if (sliceHeadingPresent(specText)) {
       epicsSkipped += 1;
       continue;
     }

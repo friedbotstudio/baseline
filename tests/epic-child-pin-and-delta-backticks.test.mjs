@@ -37,6 +37,7 @@ import { makeWorkspace, writeWorkspaceConcept, writeWorkspaceElement } from './h
 
 const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const PINNED = '.claude/hooks/lib/pinned-spec.mjs';
+const GRAMMAR = '.claude/skills/lib/slice-grammar.mjs';
 const DELTA = '.claude/skills/workspace/delta.mjs';
 const DRIFT = join(REPO_ROOT, '.claude/skills/tdd/drift_check.mjs');
 const LINT = join(REPO_ROOT, '.claude/skills/spec-lint/lint.mjs');
@@ -101,12 +102,17 @@ function slicedSpec() {
   ].join('\n');
 }
 
+// `pinned-spec.mjs` resolves spec PATHS. The `## Slice <id>` grammar moved to
+// `.claude/skills/lib/slice-grammar.mjs` (seed.md §18.9) so its three readers
+// share one declaration; a path resolver re-exporting parse functions was the
+// layering it left behind.
 async function loadPinned() {
-  const mod = await tryImport(PINNED);
-  assert.ok(mod?.resolveSpecPath, `${PINNED} does not export resolveSpecPath yet`);
-  assert.ok(mod?.sliceSection, `${PINNED} does not export sliceSection yet`);
-  assert.ok(mod?.sliceAcIds, `${PINNED} does not export sliceAcIds yet`);
-  return mod;
+  const resolver = await tryImport(PINNED);
+  assert.ok(resolver?.resolveSpecPath, `${PINNED} does not export resolveSpecPath yet`);
+  const grammar = await tryImport(GRAMMAR);
+  assert.ok(grammar?.sliceSection, `${GRAMMAR} does not export sliceSection yet`);
+  assert.ok(grammar?.sliceAcIds, `${GRAMMAR} does not export sliceAcIds yet`);
+  return { ...resolver, ...grammar };
 }
 
 // ─── The shared resolver ───

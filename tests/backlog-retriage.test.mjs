@@ -79,8 +79,8 @@ const PROPOSAL = {
   epicSlug: 'roadmap-debt',
   title: 'Roadmap debt',
   slices: [
-    { id: 'A', title: 'Fix the sync helper', acs: ['sync.mjs stops disagreeing.'], backlogKeys: ['open-one'] },
-    { id: 'B', title: 'Fix the recap', acs: ['gather.mjs reports the real count.'], backlogKeys: ['open-two'] },
+    { id: 'A', title: 'Fix the sync helper', acs: ['AC-001'], backlogKeys: ['open-one'] },
+    { id: 'B', title: 'Fix the recap', acs: ['AC-001'], backlogKeys: ['open-two'] },
   ],
 };
 
@@ -127,7 +127,7 @@ test('test_when_grouping_confirmed_then_workflow_and_epic_state_written', () => 
   assert.equal(state.epic, 'roadmap-debt');
   assert.equal(state.approved, false);
   assert.deepEqual(state.slices.map((s) => s.id), ['A', 'B']);
-  assert.deepEqual(state.slices[0].acs, ['sync.mjs stops disagreeing.']);
+  assert.deepEqual(state.slices[0].acs, ['AC-001']);
 });
 
 test('test_when_slices_share_a_backlog_key_then_source_keys_are_deduped', () => {
@@ -135,8 +135,8 @@ test('test_when_slices_share_a_backlog_key_then_source_keys_are_deduped', () => 
   const proposal = {
     ...PROPOSAL,
     slices: [
-      { id: 'A', title: 'One', acs: ['x'], backlogKeys: ['open-one'] },
-      { id: 'B', title: 'Two', acs: ['y'], backlogKeys: ['open-one', 'open-two'] },
+      { id: 'A', title: 'One', acs: ['AC-001'], backlogKeys: ['open-one'] },
+      { id: 'B', title: 'Two', acs: ['AC-001'], backlogKeys: ['open-one', 'open-two'] },
     ],
   };
 

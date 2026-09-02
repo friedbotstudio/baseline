@@ -1,0 +1,4 @@
+!startsub epic_acs_lib
+' @kind c4_component
+Component(epic_acs_lib, ".claude/skills/lib/epic-acs.mjs", "c4_component", "Workflow tracks")
+!endsub

@@ -15,6 +15,8 @@ import { assertSafeSlug } from '../../hooks/lib/slug.mjs';
 import { parseDelta } from '../workspace/delta.mjs';
 import { anchorSurfaceVerdict } from '../workspace/coverage.mjs';
 import { matchesAnyGlob } from '../../hooks/lib/glob-match.mjs';
+import { sliceSection, sliceAcIds, sliceIds } from '../lib/slice-grammar.mjs';
+import { isAcIdShape, offendingAcs } from '../lib/epic-acs.mjs';
 
 function fail(msg) { process.stderr.write(`spec-lint: ${msg}\n`); }
 
@@ -92,7 +94,7 @@ function unresolvedReferences(spec, root) {
 }
 
 function checkTraceability(spec, blocks) {
-  const acSectionRe = /##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
+  const acSectionRe = /^##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
   const m = spec.match(acSectionRe);
   if (!m) return ['FAIL', "no '## Acceptance criteria' section"];
   const section = m[1];
@@ -243,27 +245,35 @@ function checkCodesignDecisions(spec, root) {
 
 // --- Foundation: the epic spec's two AC-to-slice records ---------------------
 
-const AC_SECTION_RE = /##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
-const SLICE_SECTION_RE = /^##\s+Slice\s+(\S+)\s*$([\s\S]*?)(?=^##\s|$(?![\s\S]))/gim;
+// `^` anchored: an unanchored opener matches a prose mention of the heading
+// inside another section first, and the lazy body then runs past the real
+// table. Landmine spec-lint-and-guard-section-regexes-are-not-line-anchored.
+const AC_SECTION_RE = /^##\s+Acceptance criteria([\s\S]*?)(?=^##\s|$(?![\s\S]))/m;
 
-function acIdsInSpec(spec) {
+export function acIdsInSpec(spec) {
   const m = String(spec ?? '').match(AC_SECTION_RE);
   if (!m) return [];
-  return [...new Set([...m[1].matchAll(/\|\s*(AC-\d+)\s*\|/g)].map((r) => r[1]))];
+  // `^` anchored: an unanchored cell scan also claims an AC id sitting alone in a
+  // LATER column (a Supersedes or Blocked-by cell), inflating the id set against
+  // drift_check and the traceability oracle, which both read row starts.
+  return [...new Set([...m[1].matchAll(/^\|\s*(AC-\d+)\s*\|/gm)].map((r) => r[1]))];
 }
 
 // Spec-side ownership: slice id -> the ACs its section claims.
-function sliceOwnershipInSpec(spec) {
+// The grammar is `.claude/skills/lib/slice-grammar.mjs` (seed.md §18.9), so only
+// the section's bold AC label supplies ids. Scraping the whole section body — as
+// this did before — claimed an AC the slice merely referred to in prose, and its
+// local heading pattern refused the titled headings every epic spec on disk writes.
+export function sliceOwnershipInSpec(spec) {
   const owners = new Map();
-  for (const m of String(spec ?? '').matchAll(SLICE_SECTION_RE)) {
-    const acs = [...m[2].matchAll(/AC-\d+/g)].map((r) => r[0]);
-    owners.set(m[1], [...new Set(acs)]);
+  for (const id of sliceIds(spec)) {
+    owners.set(id, sliceAcIds(sliceSection(spec, id)));
   }
   return owners;
 }
 
 // State-side ownership, from the file an epic-child actually inherits.
-function sliceOwnershipInState(slug, rootDir) {
+export function sliceOwnershipInState(slug, rootDir) {
   const path = join(rootDir, '.claude', 'state', 'epic', `${slug}.json`);
   if (!existsSync(path)) return null;
   let state;
@@ -317,6 +327,17 @@ export function checkEpicStateConsistency(spec, workflow) {
   const root = workflow?.rootDir ?? process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
   const stateOwners = sliceOwnershipInState(workflow?.slug, root);
   if (!stateOwners) return ['SKIP', 'no readable epic state file'];
+
+  // A prose-shaped `acs` array is a schema violation, not a hundred missing ACs.
+  // Four of six state files on disk held criterion sentences at 02f3c68, and
+  // reporting each sentence as an unassigned AC buried the real cause.
+  // seed.md §18.9 publishes the shape; `epic-acs.mjs` is the predicate.
+  const malformed = [...stateOwners]
+    .filter(([, acs]) => !isAcIdShape(acs))
+    .map(([sliceId, acs]) => `slice ${sliceId} holds ${JSON.stringify(String(offendingAcs(acs)[0]).slice(0, 40))}`);
+  if (malformed.length) {
+    return ['FAIL', `epic-state-schema: slices[].acs must hold AC-NNN ids — ${malformed.join('; ')}`];
+  }
 
   const specClaims = claimantsOf(sliceOwnershipInSpec(spec));
   const problems = [];

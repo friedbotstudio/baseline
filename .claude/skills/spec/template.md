@@ -290,6 +290,32 @@ For specs with no UI surface:
 
 - *(none)*
 
+## Epic slice sections *(epic track only — delete this heading and the example below on every other track)*
+
+One section per slice, on the `epic` track only (seed.md §18.9). Omit the whole
+heading on every other track.
+
+The grammar is declared once at `.claude/skills/lib/slice-grammar.mjs` and read by
+`pinned-spec`, `spec-lint` and `drift_check`. Write it exactly this way:
+
+- **Heading** — `## Slice <id>`, optionally followed by a title. Both
+  `## Slice B1` and `## Slice B1 — ports and the composition root` resolve. The id
+  is a word not followed by another word character or a hyphen, so `B1` never
+  matches `## Slice B10`. The anchor is `slice-<id>`, which is the fragment an
+  `epic-child` pins.
+- **AC list** — ONE bold-labelled line, bullet optional, under either label. An
+  `AC-NNN` written anywhere else in the section is prose, not a claim.
+- **Write surface** — the paths this slice may touch, so the child reads its
+  contract without needing its siblings.
+
+Each AC in the spec's AC table belongs to exactly one slice.
+
+## Slice A — <what this child delivers>
+
+<One paragraph: the slice's behavior, standing on its own.>
+
+**Acceptance criteria**: AC-001, AC-002. **Write surface**: `<paths>`.
+
 ## System delta
 
 What this spec changes about the standing model at `docs/system/`. The reference affordance

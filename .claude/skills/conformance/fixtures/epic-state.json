@@ -1,0 +1,57 @@
+{
+  "artifact": "epic-state",
+  "note": "Adversarial by construction: every reader agrees on the real specs in docs/specs/ while a live divergence goes undetected, so a representative fixture proves nothing. Each expected value is REVIEWED against the spec Decisions (D6 reader-facing-wins, D7 reject-never-repair) and the enumerated deltas — never captured from whatever the readers happen to do. Edit these values by hand; a reader that disagrees is the finding.",
+  "rows": [
+    {
+      "id": "epic-state/acs-hold-ids",
+      "why": "the published shape — 2 of 6 state files on disk (erp-portables, system-spec-delta).",
+      "doc": "{\n  \"epic\": \"x\",\n  \"slices\": [\n    {\n      \"id\": \"A\",\n      \"title\": \"one\",\n      \"acs\": [\n        \"AC-001\",\n        \"AC-002\"\n      ],\n      \"risk\": []\n    },\n    {\n      \"id\": \"B\",\n      \"title\": \"two\",\n      \"acs\": [\n        \"AC-003\"\n      ],\n      \"risk\": []\n    }\n  ]\n}",
+      "artifact": "epic-state",
+      "expect": {
+        "epic-acs:shape": {
+          "A": true,
+          "B": true
+        },
+        "spec-lint:state-ownership": {
+          "A": [
+            "AC-001",
+            "AC-002"
+          ],
+          "B": [
+            "AC-003"
+          ]
+        }
+      }
+    },
+    {
+      "id": "epic-state/acs-hold-criterion-prose",
+      "why": "scout — 4 of 6 state files on disk hold sentences. The reader treated each as an AC the spec failed to assign.",
+      "doc": "{\n  \"epic\": \"y\",\n  \"slices\": [\n    {\n      \"id\": \"A\",\n      \"title\": \"one\",\n      \"acs\": [\n        \"A sprint manifest decomposes the MVP into prioritized features\"\n      ],\n      \"risk\": []\n    }\n  ]\n}",
+      "artifact": "epic-state",
+      "expect": {
+        "epic-acs:shape": {
+          "A": false
+        },
+        "spec-lint:state-ownership": {
+          "A": [
+            "A sprint manifest decomposes the MVP into prioritized features"
+          ]
+        }
+      }
+    },
+    {
+      "id": "epic-state/acs-empty",
+      "why": "an empty list is well-shaped and claims nothing — it must not read as a schema violation.",
+      "doc": "{\n  \"epic\": \"z\",\n  \"slices\": [\n    {\n      \"id\": \"A\",\n      \"title\": \"one\",\n      \"acs\": [],\n      \"risk\": []\n    }\n  ]\n}",
+      "artifact": "epic-state",
+      "expect": {
+        "epic-acs:shape": {
+          "A": true
+        },
+        "spec-lint:state-ownership": {
+          "A": []
+        }
+      }
+    }
+  ]
+}

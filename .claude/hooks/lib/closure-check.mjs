@@ -3,16 +3,26 @@
 // (hard-block enforcement) and .claude/skills/commit/closure-precommit-check.mjs
 // (SOP preflight). Pure: no git, no I/O — callers inject staged content.
 
+import { parseFrontmatter } from './frontmatter-parser.mjs';
+
 const BACKLOG_REL = '.claude/memory/backlog.md';
 const BACKLOG_DIR = '.claude/memory/backlog/';
 
-function isStampedFrontmatter(text) {
-  return /^status:\s*picked-up\s*$/m.test(String(text || '')) && /^superseded-at:\s*\S/m.test(String(text || ''));
+// Read from the entry's frontmatter BLOCK, never from anywhere in the file.
+// Matching `^status: picked-up$` against the whole text let an entry whose
+// frontmatter read `status: open` satisfy the commit obligation as long as its
+// body quoted the two stamp lines while discussing them. `git_commit_guard`
+// hard-blocks on this reader, so a prose-satisfiable stamp is a commit-path
+// defect. Measured at 02f3c68.
+export function hasClosureStamp(text) {
+  const { frontmatter } = parseFrontmatter(String(text || ''));
+  return frontmatter.status === 'picked-up' && Boolean(frontmatter['superseded-at']);
 }
 
 function frontmatterKey(text) {
-  const m = /^key:\s*(.+)$/m.exec(String(text || ''));
-  return m ? m[1].trim() : null;
+  const { frontmatter } = parseFrontmatter(String(text || ''));
+  const key = frontmatter.key;
+  return typeof key === 'string' && key ? key.trim() : null;
 }
 
 // Sharded store: a staged `backlog/<slug>.md` whose frontmatter `key:` matches and
@@ -74,7 +84,7 @@ export function evaluateClosure({ stagedPaths, readStaged }) {
   const sharded = stagedShardedStamps(stagedPaths, readStaged);
 
   const unsatisfied = keys.filter((key) => {
-    if (sharded[key] && isStampedFrontmatter(sharded[key])) return false;
+    if (sharded[key] && hasClosureStamp(sharded[key])) return false;
     if (flatStaged) {
       const block = entryBlock(flatText, key);
       if (block && isStamped(block)) return false;
