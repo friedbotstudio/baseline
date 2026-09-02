@@ -8,7 +8,7 @@ source: assistant-deferral
 deferred: human-directed
 raised-on: 2026-08-28
 raised-in-context: drift-check-slice-scoping
-verified-at: b3f9dbb
+verified-at: 3ac2dc3
 last-touched: 2026-09-02
 ---
 
